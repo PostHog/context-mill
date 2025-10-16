@@ -1,4 +1,4 @@
-# PostHog Next.js Pages Router Example
+# PostHog Next.js pages router example
 
 This is a [Next.js](https://nextjs.org) Pages Router example demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
@@ -67,7 +67,7 @@ src/
 
 ## Key Integration Points
 
-### Client-side Initialization (_app.tsx)
+### Client-side initialization (_app.tsx)
 
 ```typescript
 import { initPostHog } from '@/lib/posthog-client';
@@ -77,7 +77,7 @@ useEffect(() => {
 }, []);
 ```
 
-### User Identification (AuthContext.tsx)
+### User identification (AuthContext.tsx)
 
 ```typescript
 posthog.identify(username, {
@@ -85,7 +85,7 @@ posthog.identify(username, {
 });
 ```
 
-### Event Tracking (burrito.tsx)
+### Event tracking (burrito.tsx)
 
 ```typescript
 posthog.capture('burrito_considered', {
@@ -94,13 +94,13 @@ posthog.capture('burrito_considered', {
 });
 ```
 
-### Error Tracking (profile.tsx)
+### Error tracking (profile.tsx)
 
 ```typescript
 posthog.captureException(error);
 ```
 
-### Server-side Tracking (api/auth/login.ts)
+### Server-side tracking (api/auth/login.ts)
 
 ```typescript
 const posthog = getPostHogClient();
@@ -111,7 +111,7 @@ posthog.capture({
 });
 ```
 
-## Pages Router Differences from App Router
+## Pages router differences from app router
 
 This example uses Next.js Pages Router instead of App Router. Key differences:
 
