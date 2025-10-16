@@ -51,10 +51,10 @@ src/
 ├── contexts/
 │   └── AuthContext.tsx      # Authentication context with PostHog integration
 ├── lib/
-│   ├── posthog-client.ts    # Client-side PostHog initialization
 │   └── posthog-server.ts    # Server-side PostHog client
 ├── pages/
-│   ├── _app.tsx             # App wrapper with PostHog & Auth providers
+│   ├── _app.tsx             # App wrapper with Auth provider
+│   ├── _document.tsx        # Document wrapper
 │   ├── index.tsx            # Home/Login page
 │   ├── burrito.tsx          # Demo feature page with event tracking
 │   ├── profile.tsx          # User profile with error tracking demo
@@ -63,18 +63,24 @@ src/
 │           └── login.ts     # Login API with server-side tracking
 └── styles/
     └── globals.css          # Global styles
+
+instrumentation-client.ts    # Client-side PostHog initialization
 ```
 
 ## Key Integration Points
 
-### Client-side initialization (_app.tsx)
+### Client-side initialization (instrumentation-client.ts)
 
 ```typescript
-import { initPostHog } from '@/lib/posthog-client';
+import posthog from "posthog-js"
 
-useEffect(() => {
-  initPostHog();
-}, []);
+posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+  api_host: "/ingest",
+  ui_host: "https://us.posthog.com",
+  defaults: '2025-05-24',
+  capture_exceptions: true,
+  debug: process.env.NODE_ENV === "development",
+});
 ```
 
 ### User identification (AuthContext.tsx)
