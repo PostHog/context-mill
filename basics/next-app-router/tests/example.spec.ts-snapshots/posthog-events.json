@@ -9,27 +9,27 @@
     {
       "event": "$pageview",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"$pageview\" {uuid: [UUID], event: $pageview, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"$pageview\" {uuid: [UUID], event: $pageview, properties: Object, timestamp: [TIMESTAMP]}"
     },
     {
       "event": "$autocapture",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
     },
     {
       "event": "$autocapture",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
     },
     {
       "event": "$autocapture",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
     },
     {
       "event": "$autocapture",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
     },
     {
       "event": "$identify",
@@ -42,7 +42,7 @@
     {
       "event": "user_logged_in",
       "properties": "[Object - see full message for details]",
-      "fullMessage": "[PostHog.js] send \"user_logged_in\" {uuid: [UUID], event: user_logged_in, properties: Object, timestamp: [TIMESTAMP] (Eastern Daylight Time)}"
+      "fullMessage": "[PostHog.js] send \"user_logged_in\" {uuid: [UUID], event: user_logged_in, properties: Object, timestamp: [TIMESTAMP]}"
     }
   ]
 }

@@ -40,7 +40,7 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      snapshotPathTemplate: '{testDir}/{testFile}-snapshots/{arg}{ext}',
+      snapshotPathTemplate: '{testDir}/{testFileName}-snapshots/{arg}{ext}',
     },
   ],
 

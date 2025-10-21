@@ -62,10 +62,8 @@ function sanitizeMessage(message: string): string {
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '[UUID]')
     // Replace PostHog UUIDs (longer format)
     .replace(/[0-9a-f]{24}/gi, '[POSTHOG_UUID]')
-    // Replace timestamps with placeholder
-    .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g, '[TIMESTAMP]')
-    // Replace other timestamp formats
-    .replace(/Mon \w{3} \d{1,2} \d{4} \d{2}:\d{2}:\d{2} GMT[+-]\d{4}/g, '[TIMESTAMP]');
+    // Replace all timestamp formats with placeholder (including timezone descriptions)
+    .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z|[A-Za-z]{3} \w{3} \d{1,2} \d{4} \d{2}:\d{2}:\d{2} GMT[+-]\d{4}( \([^)]+\))?/g, '[TIMESTAMP]');
 }
 
 // Wait for expected PostHog events
