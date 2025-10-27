@@ -6,9 +6,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { PostHogProvider } from 'posthog-js/react';
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import "./globals.css";
+import { AuthProvider } from "./contexts/AuthContext";
+import Header from "./components/Header";
+import posthog from "./lib/posthog-client";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,7 +47,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <PostHogProvider client={posthog}>
+      <AuthProvider>
+        <Header />
+        <main>
+          <Outlet />
+        </main>
+      </AuthProvider>
+    </PostHogProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
