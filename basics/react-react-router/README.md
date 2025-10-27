@@ -1,19 +1,19 @@
-# PostHog React Router v7 Example
+# PostHog React Router example
 
-This is a React Router v7 example demonstrating PostHog integration with product analytics, session replay, and error tracking using vanilla React principles. This is a **client-side only** implementation.
+This is a React and [React Router v7](https://reactrouter.com) v7 example demonstrating PostHog integration with product analytics, session replay, and error tracking.
 
 ## Features
 
-- **Product Analytics**: Track user events and behaviors
-- **Session Replay**: Record and replay user sessions
-- **Error Tracking**: Capture and track errors
-- **User Authentication**: Demo login system with PostHog user identification
-- **Client-side Tracking**: Pure client-side React implementation
-- **Reverse Proxy**: PostHog ingestion through Vite proxy
+- **Product analytics**: Track user events and behaviors
+- **Session replay**: Record and replay user sessions
+- **Error tracking**: Capture and track errors
+- **User authentication**: Demo login system with PostHog user identification
+- **Client-side tracking**: Pure client-side React implementation
+- **Reverse proxy**: PostHog ingestion through Vite proxy
 
-## Getting Started
+## Getting started
 
-### 1. Install Dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
@@ -21,7 +21,7 @@ npm install
 pnpm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure environment variables
 
 Create a `.env` file in the root directory:
 
@@ -32,7 +32,7 @@ VITE_POSTHOG_HOST=https://us.i.posthog.com
 
 Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
 
-### 3. Run the Development Server
+### 3. Run the development server
 
 ```bash
 npm run dev
@@ -42,174 +42,99 @@ pnpm dev
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the app.
 
-## Project Structure
+## Project structure
 
 ```
 src/
 ├── components/
-│   └── Header.tsx              # Navigation header with auth state
+│   └── Header.tsx         # Navigation header with auth state
 ├── contexts/
-│   └── AuthContext.tsx         # Authentication context with PostHog integration
+│   └── AuthContext.tsx    # Authentication context with PostHog integration
 ├── lib/
-│   └── posthog-client.ts       # Client-side PostHog initialization
+│   └── posthog-client.ts  # Client-side PostHog initialization
 ├── routes/
-│   ├── home.tsx                # Home/Login page
-│   ├── burrito.tsx             # Demo feature page with event tracking
-│   └── profile.tsx             # User profile with error tracking demo
-├── app.css                     # Tailwind styles
-├── globals.css                 # Custom global styles
-├── root.tsx                    # Root layout with providers
-└── routes.ts                   # Route configuration
-
-react-router.config.ts          # React Router config (appDirectory: "src")
-vite.config.ts                  # Vite config with PostHog proxy
-tsconfig.json                   # TypeScript config (paths: ~/* -> ./src/*)
+│   ├── home.tsx           # Home/Login page
+│   ├── burrito.tsx        # Demo feature page with event tracking
+│   └── profile.tsx        # User profile with error tracking demo
+├── root.tsx               # Root layout with providers
+├── routes.ts              # Route configuration
+└── globals.css            # Global styles
 ```
 
-## Key Integration Points
+## Key integration points
 
-### Client-side Initialization (lib/posthog-client.ts)
+### Client-side initialization (lib/posthog-client.ts)
 
 ```typescript
-import posthog from "posthog-js";
+import posthog from "posthog-js"
 
-// Initialize PostHog client-side
-if (typeof window !== 'undefined' && !posthog.__loaded) {
-  posthog.init(import.meta.env.VITE_POSTHOG_KEY || '', {
-    api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-    ui_host: "https://us.posthog.com",
-    person_profiles: 'identified_only',
-    capture_exceptions: true,
-    debug: import.meta.env.DEV,
-  });
-}
-
-export default posthog;
+posthog.init(import.meta.env.VITE_POSTHOG_KEY!, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST,
+  ui_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
+  person_profiles: 'identified_only',
+  capture_exceptions: true,
+  debug: import.meta.env.DEV,
+});
 ```
 
-### PostHog Provider Setup (root.tsx)
+### PostHog provider setup (root.tsx)
 
 ```typescript
-import { PostHogProvider } from 'posthog-js/react';
-import posthog from "./lib/posthog-client";
+import { PostHogProvider } from 'posthog-js/react'
+import posthog from "./lib/posthog-client"
 
 export default function App() {
   return (
     <PostHogProvider client={posthog}>
       <AuthProvider>
         <Header />
-        <main>
-          <Outlet />
-        </main>
+        <main><Outlet /></main>
       </AuthProvider>
     </PostHogProvider>
-  );
+  )
 }
 ```
 
-### Using PostHog Hooks (contexts/AuthContext.tsx)
+### User identification (AuthContext.tsx)
 
 ```typescript
-import { usePostHog } from 'posthog-js/react';
+const posthog = usePostHog()
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const posthog = usePostHog();
-
-  const login = async (username: string, password: string): Promise<boolean> => {
-    // ... login logic
-
-    // Track with PostHog
-    posthog.identify(username, { username });
-    posthog.capture('user_logged_in', { username });
-
-    return true;
-  };
-
-  // ...
-}
+posthog.identify(username, {
+  username: username,
+})
 ```
 
-### Event Tracking (routes/burrito.tsx)
+### Event tracking (routes/burrito.tsx)
 
 ```typescript
-import { usePostHog } from 'posthog-js/react';
-
-export default function BurritoPage() {
-  const posthog = usePostHog();
-
-  const handleConsideration = () => {
-    posthog.capture('burrito_considered', {
-      total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
-    });
-  };
-}
+posthog.capture('burrito_considered', {
+  total_considerations: count,
+  username: username,
+})
 ```
 
-### Error Tracking (routes/profile.tsx)
+### Error tracking (routes/profile.tsx)
 
 ```typescript
-import { usePostHog } from 'posthog-js/react';
-
-export default function ProfilePage() {
-  const posthog = usePostHog();
-
-  const triggerTestError = () => {
-    try {
-      throw new Error('Test error for PostHog error tracking');
-    } catch (err) {
-      posthog.captureException(err);
-    }
-  };
-}
+posthog.captureException(error)
 ```
 
 
-## React Router v7 Approach
+## React Router details
 
-This example uses React Router v7 with vanilla React patterns and **client-side only** logic:
+This example uses React Router v7. Key details:
 
-1. **File-based Routing**: Routes defined in `app/routes.ts` and route files in `app/routes/`
-2. **Root Layout**: `root.tsx` wraps all pages with providers and layout
-3. **Client-side State**: All state managed in React Context and localStorage
-4. **React Context**: Using standard React Context API for state management
-5. **React Hooks**: `useState`, `useEffect`, `useNavigate` for component logic
-6. **Standard React Patterns**: No framework-specific conventions, just React
-7. **No Server Logic**: Pure client-side implementation, no server-side rendering of user data
+1. **Client-side only**: No server-side logic, no API routes, no posthog-node
+2. **Route configuration**: Routes defined in `src/routes.ts` config file
+3. **Standard hooks**: Uses `useNavigate()` from react-router
+4. **Vite proxy**: Uses Vite's proxy config for PostHog calls
+5. **Environment variables**: Uses `import.meta.env.VITE_*` 
+6. **Meta exports**: Uses `meta` function exports for page metadata
+7. **PostHog provider**: Uses `PostHogProvider` wrapper 
 
-## Differences from Next.js Examples
-
-Unlike the Next.js App Router and Pages Router examples:
-
-1. **Client-side Only**: No server-side logic, no API routes, no posthog-node
-2. **No 'use client'**: React Router v7 doesn't require client directives
-3. **Standard Hooks**: Uses `useNavigate()` from react-router instead of Next's router
-4. **Route Config**: Routes defined in `routes.ts` instead of file system based
-5. **Vite Proxy**: Uses Vite's proxy config instead of Next.js rewrites
-6. **Import Meta Env**: Uses `import.meta.env` for environment variables instead of `process.env.NEXT_PUBLIC_*`
-7. **Local State Only**: All authentication and user data stored in memory and localStorage
-8. **Meta Exports**: Uses `meta` function exports for page metadata
-
-## Learn More
+## Learn more
 
 - [PostHog Documentation](https://posthog.com/docs)
-- [React Router v7 Documentation](https://reactrouter.com/home)
+- [React Router Documentation](https://reactrouter.com)
 - [PostHog React Integration Guide](https://posthog.com/docs/libraries/react)
-
-## Deploy
-
-Build the production application:
-
-```bash
-npm run build
-# or
-pnpm build
-```
-
-Start the production server:
-
-```bash
-npm start
-# or
-pnpm start
-```
