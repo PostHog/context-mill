@@ -51,3 +51,4 @@ coverage/
 *.pem
 *.key
 .cache
+*repomix*
