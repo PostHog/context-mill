@@ -4,7 +4,7 @@
   "private": true,
   "description": "PostHog example projects",
   "scripts": {
-    "build:docs": "node scripts/build-markdown-docs.js"
+    "build:docs": "node scripts/build-examples-mcp-resources.js"
   },
   "devDependencies": {
     "archiver": "^7.0.1"
