@@ -1,12 +1,9 @@
-name: Build and Release Markdown Documentation
+name: Build and Release MCP Resources
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
-    paths:
-      - 'basics/**'
-      - 'scripts/build-markdown-docs.js'
-      - 'package.json'
   workflow_dispatch:
     inputs:
       version:
@@ -16,6 +13,12 @@ on:
 
 jobs:
   build-and-release:
+    # Manual trigger OR (PR merged with label 'mcp-publish')
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true && 
+       contains(github.event.pull_request.labels.*.name, 'mcp-publish'))
+
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -86,8 +89,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/examples-markdown.zip
-          asset_name: examples-markdown.zip
+          asset_path: ./dist/examples-mcp-resources.zip
+          asset_name: examples-mcp-resources.zip
           asset_content_type: application/zip
 
       - name: Update latest tag
@@ -103,7 +106,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Artifact:** examples-markdown.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact:** examples-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Files Generated" >> $GITHUB_STEP_SUMMARY
           ls -lh dist/ >> $GITHUB_STEP_SUMMARY
