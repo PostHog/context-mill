@@ -47,6 +47,9 @@ lerna-debug.log*
 # Testing
 coverage/
 
+# Build artifacts
+dist/
+
 # Misc
 *.pem
 *.key
