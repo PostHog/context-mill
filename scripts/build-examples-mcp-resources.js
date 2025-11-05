@@ -8,11 +8,14 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
+const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } = require('./plugins/index');
 
 /**
  * Build configuration
  */
 const defaultConfig = {
+    // Global plugins applied to all examples
+    plugins: [ignoreFilePlugin, ignoreBlockPlugin, ignoreLinePlugin],
     examples: [
         {
             path: 'basics/next-app-router',
@@ -23,6 +26,8 @@ const defaultConfig = {
                 includes: [],
                 regex: [],
             },
+            // Example-specific plugins (optional)
+            plugins: [],
         },
         {
             path: 'basics/next-pages-router',
@@ -33,6 +38,8 @@ const defaultConfig = {
                 includes: [],
                 regex: [],
             },
+            // Example-specific plugins (optional)
+            plugins: [],
         },
     ],
     globalSkipPatterns: {
@@ -100,14 +107,38 @@ function buildMarkdownHeader(frameworkName, repoUrl, relativePath) {
 
 /**
  * Convert a file to a markdown code block
+ * Now supports plugins for content transformation
+ *
+ * @param {string} relativePath - The relative path of the file
+ * @param {string} content - The file content
+ * @param {string} extension - The file extension
+ * @param {Array} plugins - Optional array of plugins to transform content
+ * @returns {string|null} - The markdown representation of the file, or null if content is empty after transformation
  */
-function fileToMarkdown(relativePath, content, extension) {
+function fileToMarkdown(relativePath, content, extension, plugins = []) {
+    // Create context object for plugins
+    const context = {
+        relativePath,
+        extension,
+    };
+
+    // Apply plugins to content if provided
+    const transformedContent = plugins.length > 0
+        ? composePlugins(plugins)(content, context)
+        : content;
+
+    // If content is empty after transformation, return null to skip the file
+    if (!transformedContent || transformedContent.trim() === '') {
+        return null;
+    }
+
+    // Build markdown output
     let markdown = `## ${relativePath}\n\n`;
     if (extension === 'md') {
-        markdown += content;
+        markdown += transformedContent;
     } else {
         markdown += `\`\`\`${extension}\n`;
-        markdown += content;
+        markdown += transformedContent;
         markdown += '\n```\n\n';
     }
     markdown += '\n---\n\n';
@@ -181,7 +212,7 @@ function getAllFiles(dirPath, arrayOfFiles = [], baseDir = dirPath, skipPatterns
 /**
  * Convert an example project directory to markdown
  */
-function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, skipPatterns) {
+function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, skipPatterns, plugins = []) {
     const repoUrl = 'https://github.com/PostHog/examples';
     let markdown = buildMarkdownHeader(frameworkInfo.displayName, repoUrl, relativePath);
 
@@ -203,7 +234,12 @@ function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, ski
         try {
             const content = fs.readFileSync(file.fullPath, 'utf8');
             const extension = path.extname(file.fullPath).slice(1) || '';
-            markdown += fileToMarkdown(file.relativePath, content, extension);
+            const fileMarkdown = fileToMarkdown(file.relativePath, content, extension, plugins);
+
+            // Skip file if plugins returned empty content
+            if (fileMarkdown !== null) {
+                markdown += fileMarkdown;
+            }
         } catch (e) {
             // Skip files that can't be read as text
             console.warn(`Skipping ${file.relativePath}: ${e.message}`);
@@ -243,12 +279,19 @@ async function build() {
             example.skipPatterns
         );
 
+        // Merge global and example-specific plugins
+        const plugins = [
+            ...(defaultConfig.plugins || []),
+            ...(example.plugins || [])
+        ];
+
         console.log(`Processing ${example.displayName}...`);
         const markdown = convertProjectToMarkdown(
             absolutePath,
             example,
             example.path,
-            skipPatterns
+            skipPatterns,
+            plugins
         );
 
         const outputFilename = `${example.id}.md`;
