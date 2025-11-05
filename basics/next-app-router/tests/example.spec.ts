@@ -1,3 +1,4 @@
+// @ignoreFile
 import { test, expect } from '@playwright/test';
 
 // Global variables to store the generated username
