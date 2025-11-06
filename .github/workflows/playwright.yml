@@ -1,47 +1,72 @@
-name: Next.js App Router - PostHog Tests
+name: PostHog Examples - Playwright Tests
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # Runs nightly at 12am PST (which is 8am UTC)
+    - cron: '0 8 * * *'
 
 jobs:
-  test:
-    timeout-minutes: 60
+  discover:
     runs-on: ubuntu-latest
+    outputs:
+      examples: ${{ steps.set-examples.outputs.examples }}
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Discover examples with Playwright configs
+      id: set-examples
+      run: |
+        examples=$(find basics -maxdepth 2 -name "playwright.config.ts" -exec dirname {} \; | sed 's|^basics/||' | jq -R -s -c 'split("\n")[:-1]')
+        echo "examples=$examples" >> $GITHUB_OUTPUT
+        echo "Found examples: $examples"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.examples != '[]'
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJson(needs.discover.outputs.examples) }}
+    steps:
+    - uses: actions/checkout@v4
+
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
-        
+
     - uses: pnpm/action-setup@v4
       with:
         version: latest
-        
+
     - name: Install dependencies
       run: |
-        cd basics/next-app-router
+        cd basics/${{ matrix.example }}
         pnpm install
-        
+
     - name: Install Playwright Browsers
       run: |
-        cd basics/next-app-router
+        cd basics/${{ matrix.example }}
         pnpm exec playwright install chromium --with-deps
-        
+
     - name: Run Playwright tests
       run: |
-        cd basics/next-app-router
+        cd basics/${{ matrix.example }}
         pnpm exec playwright test
       env:
         NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
         NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
-        
+
     - uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: playwright-report
-        path: basics/next-app-router/playwright-report/
+        name: playwright-report-${{ matrix.example }}
+        path: basics/${{ matrix.example }}/playwright-report/
         retention-days: 30
+
+# TODO: report to PostHog which will warn in channel for failure.
