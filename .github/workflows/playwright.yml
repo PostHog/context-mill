@@ -1,4 +1,6 @@
 name: PostHog Examples - Playwright Tests
+permissions:
+  contents: read
 
 on:
   push:
