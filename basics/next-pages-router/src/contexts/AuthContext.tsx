@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import posthog from 'posthog-js';
 
 interface User {
@@ -18,17 +18,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const users: Map<string, User> = new Map();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  // Use lazy initializer to read from localStorage only once on mount
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
 
-  useEffect(() => {
     const storedUsername = localStorage.getItem('currentUser');
     if (storedUsername) {
       const existingUser = users.get(storedUsername);
       if (existingUser) {
-        setUser(existingUser);
+        return existingUser;
       }
     }
-  }, []);
+    return null;
+  });
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
