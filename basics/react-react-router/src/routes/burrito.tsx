@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { usePostHog } from 'posthog-js/react';
 import type { Route } from "./+types/burrito";
@@ -17,13 +17,9 @@ export default function BurritoPage() {
   const posthog = usePostHog();
   const [hasConsidered, setHasConsidered] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
+  // Redirect to home if not logged in
   if (!user) {
+    navigate('/');
     return null;
   }
 

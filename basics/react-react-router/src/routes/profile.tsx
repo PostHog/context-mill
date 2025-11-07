@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { usePostHog } from 'posthog-js/react';
 import type { Route } from "./+types/profile";
@@ -16,13 +15,9 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const posthog = usePostHog();
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
+  // Redirect to home if not logged in
   if (!user) {
+    navigate('/');
     return null;
   }
 
