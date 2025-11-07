@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
 import { useAuth } from '../contexts/AuthContext'
@@ -12,13 +11,9 @@ function ProfilePage() {
   const navigate = useNavigate()
   const posthog = usePostHog()
 
-  useEffect(() => {
-    if (!user) {
-      navigate({ to: '/' })
-    }
-  }, [user, navigate])
-
+  // Redirect to home if not logged in
   if (!user) {
+    navigate({ to: '/' })
     return null
   }
 
