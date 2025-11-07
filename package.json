@@ -1,0 +1,15 @@
+{
+  "name": "@posthog/examples",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PostHog example projects",
+  "scripts": {
+    "build:docs": "node scripts/build-examples-mcp-resources.js",
+    "test:plugins": "vitest run scripts/plugins/tests",
+    "test:plugins:watch": "vitest scripts/plugins/tests"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "vitest": "^2.0.0"
+  }
+}

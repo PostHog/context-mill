@@ -1,0 +1,48 @@
+{
+  "eventCounts": {
+    "$pageview": 1,
+    "$autocapture": 4,
+    "$identify": 1,
+    "user_logged_in": 1
+  },
+  "events": [
+    {
+      "event": "$pageview",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"$pageview\" {uuid: [UUID], event: $pageview, properties: Object, timestamp: [TIMESTAMP]}"
+    },
+    {
+      "event": "$autocapture",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
+    },
+    {
+      "event": "$autocapture",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
+    },
+    {
+      "event": "$autocapture",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
+    },
+    {
+      "event": "$autocapture",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"$autocapture\" {uuid: [UUID], event: $autocapture, properties: Object, timestamp: [TIMESTAMP]}"
+    },
+    {
+      "event": "$identify",
+      "properties": {
+        "$set": "[Object]",
+        "$set_once": "[Object]"
+      },
+      "fullMessage": "[PostHog.js] send \"$identify\" {uuid: [UUID], event: $identify, properties: Object, $set: Object, $set_once: Object}"
+    },
+    {
+      "event": "user_logged_in",
+      "properties": "[Object - see full message for details]",
+      "fullMessage": "[PostHog.js] send \"user_logged_in\" {uuid: [UUID], event: user_logged_in, properties: Object, timestamp: [TIMESTAMP]}"
+    }
+  ]
+}

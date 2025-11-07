@@ -12,6 +12,7 @@ export function getPostHogClient() {
         flushInterval: 0
       }
     );
+    posthogClient.debug(true);
   }
   return posthogClient;
 }
