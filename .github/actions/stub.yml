@@ -1,0 +1,5 @@
+name: "Stub Action"
+description: "Placeholder action to satisfy CodeQL's GitHub Actions analyzer"
+runs:
+  using: "node16"
+  main: "index.js"

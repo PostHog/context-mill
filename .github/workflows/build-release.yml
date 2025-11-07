@@ -45,18 +45,54 @@ jobs:
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
+            echo "Using manually specified version: ${VERSION}"
           else
-            # Get the latest tag, or use 1.0.0 if no tags exist
+            # Get the latest tag, or use 0.0.0 if no tags exist
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
             # Remove 'v' prefix if present
             LATEST_VERSION=${LATEST_TAG#v}
-            # Increment patch version
+            
+            # Parse version components
             IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_VERSION"
             MAJOR=${VERSION_PARTS[0]:-0}
             MINOR=${VERSION_PARTS[1]:-0}
             PATCH=${VERSION_PARTS[2]:-0}
-            PATCH=$((PATCH + 1))
+            
+            # Determine bump type from PR labels
+            BUMP_TYPE="patch"  # Default to patch
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+              echo "PR Labels: ${PR_LABELS}"
+              
+              if echo "${PR_LABELS}" | grep -q "major"; then
+                BUMP_TYPE="major"
+              elif echo "${PR_LABELS}" | grep -q "minor"; then
+                BUMP_TYPE="minor"
+              elif echo "${PR_LABELS}" | grep -q "patch"; then
+                BUMP_TYPE="patch"
+              fi
+            fi
+            
+            echo "Bump type: ${BUMP_TYPE}"
+            
+            # Increment version based on bump type
+            case "${BUMP_TYPE}" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              patch)
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+            
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "Bumping from ${LATEST_VERSION} to ${VERSION} (${BUMP_TYPE})"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
@@ -73,12 +109,9 @@ jobs:
           body: |
             Automated release of PostHog example projects as markdown documentation.
 
-            This release contains pre-processed markdown files for all example projects.
+            This release contains pre-processed markdown files for all example projects included in the build-examples-mcp-resources.js script.
 
-            **Contents:**
-            - `nextjs-app-router.md` - Next.js App Router example
-            - `nextjs-pages-router.md` - Next.js Pages Router example
-
+            **Version:** ${{ steps.version.outputs.version }}
             **SHA:** ${{ github.sha }}
           draft: false
           prerelease: false
