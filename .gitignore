@@ -47,6 +47,9 @@ lerna-debug.log*
 # Testing
 coverage/
 
+# TanStack Router generated files
+routeTree.gen.ts
+
 # Build artifacts
 dist/
 
