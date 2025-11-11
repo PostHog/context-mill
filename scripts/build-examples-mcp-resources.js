@@ -250,6 +250,29 @@ function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, ski
 }
 
 /**
+ * Recursively get all files in a directory (used for LLM prompts)
+ */
+function getAllFilesInDirectory(dirPath, arrayOfFiles = [], baseDir = dirPath) {
+    const files = fs.readdirSync(dirPath);
+
+    files.forEach(file => {
+        const filePath = path.join(dirPath, file);
+        const relativePath = path.relative(baseDir, filePath);
+
+        if (fs.statSync(filePath).isDirectory()) {
+            arrayOfFiles = getAllFilesInDirectory(filePath, arrayOfFiles, baseDir);
+        } else if (file.endsWith('.md') && file !== 'README.md') {
+            arrayOfFiles.push({
+                fullPath: filePath,
+                relativePath: relativePath,
+            });
+        }
+    });
+
+    return arrayOfFiles;
+}
+
+/**
  * Main build function
  */
 async function build() {
@@ -301,6 +324,25 @@ async function build() {
         markdownFiles.push({ filename: outputFilename, path: outputPath });
 
         console.log(`  ✓ Generated ${outputFilename} (${(markdown.length / 1024).toFixed(1)} KB)`);
+    }
+
+    // Process LLM prompts
+    console.log('\nProcessing LLM prompts...');
+    const promptsPath = path.join(__dirname, '..', 'llm-prompts');
+
+    if (fs.existsSync(promptsPath)) {
+        const promptFiles = getAllFilesInDirectory(promptsPath, [], promptsPath);
+
+        for (const file of promptFiles) {
+            markdownFiles.push({
+                filename: `prompts/${file.relativePath}`,
+                path: file.fullPath
+            });
+        }
+
+        console.log(`  ✓ Added ${promptFiles.length} prompt files`);
+    } else {
+        console.warn('  Warning: LLM prompts directory not found');
     }
 
     // Create ZIP archive

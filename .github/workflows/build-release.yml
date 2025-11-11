@@ -40,6 +40,9 @@ jobs:
       - name: Build markdown documentation
         run: npm run build:docs
 
+      - name: List build artifacts
+        run: ls -lh dist/
+
       - name: Determine version
         id: version
         run: |
@@ -113,9 +116,11 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           release_name: Release ${{ steps.version.outputs.tag }}
           body: |
-            Automated release of PostHog example projects as markdown documentation.
+            Automated release of PostHog example projects and LLM prompts as markdown documentation.
 
-            This release contains pre-processed markdown files for all example projects included in the build-examples-mcp-resources.js script.
+            This release contains **examples-mcp-resources.zip** with:
+            - Pre-processed markdown files for all example projects
+            - LLM workflow guide prompts (in `prompts/` directory)
 
             **Version:** ${{ steps.version.outputs.version }}
             **SHA:** ${{ github.sha }}
