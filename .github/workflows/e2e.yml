@@ -64,7 +64,7 @@ jobs:
         PROJECT_ID: ${{ vars.PROJECT_ID }}
 
     - name: Send failure event to PostHog
-      if: failure() && github.event_name == 'schedule'
+      if: failure()
       uses: PostHog/posthog-github-action@v0.1
       # A CDP destination is set-up to alert when we get this event
       with:

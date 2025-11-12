@@ -66,8 +66,7 @@ jobs:
         NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
 
     - name: Send failure event to PostHog
-      # if: failure() && github.event_name == 'schedule'
-      if: true
+      if: failure() 
       uses: PostHog/posthog-github-action@v0.1
       # A CDP destination is set-up to alert when we get this event
       with:
