@@ -8,7 +8,40 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
+const matter = require('gray-matter');
 const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } = require('./plugins/index');
+
+/**
+ * Manifest configuration constants
+ */
+const MANIFEST_VERSION = '1.0';
+const URI_SCHEME = 'posthog://';
+
+/**
+ * Documentation URLs configuration
+ */
+const DOCS_CONFIG = {
+    identify: {
+        id: 'identify',
+        name: 'Identify Users docs',
+        description: 'PostHog documentation on identifying users',
+        url: 'https://posthog.com/docs/getting-started/identify-users.md'
+    },
+    frameworks: {
+        'nextjs-app-router': {
+            id: 'nextjs-app-router',
+            name: 'PostHog Next.js App Router integration documentation',
+            description: 'PostHog integration documentation for Next.js App Router',
+            url: 'https://posthog.com/docs/libraries/next-js.md'
+        },
+        'nextjs-pages-router': {
+            id: 'nextjs-pages-router',
+            name: 'PostHog Next.js Pages Router integration documentation',
+            description: 'PostHog integration documentation for Next.js Pages Router',
+            url: 'https://posthog.com/docs/libraries/next-js.md'
+        }
+    }
+};
 
 /**
  * Build configuration
@@ -250,6 +283,128 @@ function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, ski
 }
 
 /**
+ * Discover prompts from mcp-commands directory
+ */
+function discoverPrompts(promptsPath) {
+    const prompts = [];
+
+    if (!fs.existsSync(promptsPath)) {
+        return prompts;
+    }
+
+    const files = fs.readdirSync(promptsPath).filter(f => f.endsWith('.json'));
+
+    for (const filename of files) {
+        const filePath = path.join(promptsPath, filename);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const promptData = JSON.parse(content);
+
+        prompts.push({
+            id: promptData.name,
+            name: promptData.name,
+            title: promptData.title,
+            description: promptData.description,
+            file: `mcp-commands/${filename}`,
+            fullPath: filePath,
+            messages: promptData.messages,
+        });
+    }
+
+    return prompts;
+}
+
+/**
+ * Generate manifest JSON from discovered workflows, examples, and prompts
+ * This generates ALL URIs so MCP just reflects them
+ */
+function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
+    const workflows = discoveredWorkflows.map(workflow => ({
+        id: workflow.id,
+        name: workflow.title,
+        description: workflow.description,
+        file: workflow.file,
+        order: workflow.order,
+        // Use category/name structure: workflows/basic-integration/event-setup-begin
+        uri: `${URI_SCHEME}workflows/${workflow.category}/${workflow.name}`,
+        nextStepId: workflow.nextStepId,
+        nextStepUri: workflow.nextStepId
+            ? `${URI_SCHEME}workflows/${workflow.category}/${discoveredWorkflows.find(w => w.id === workflow.nextStepId)?.name}`
+            : undefined,
+    }));
+
+    const examples = exampleIds.map(framework => ({
+        id: framework,
+        name: `PostHog ${framework} example project`,
+        description: `Example project code for ${framework}`,
+        file: `${framework}.md`,
+        uri: `${URI_SCHEME}examples/${framework}`,
+    }));
+
+    // Build docs array from configuration
+    const docs = [
+        {
+            id: DOCS_CONFIG.identify.id,
+            name: DOCS_CONFIG.identify.name,
+            description: DOCS_CONFIG.identify.description,
+            uri: `${URI_SCHEME}docs/${DOCS_CONFIG.identify.id}`,
+            url: DOCS_CONFIG.identify.url,
+        },
+        ...Object.values(DOCS_CONFIG.frameworks).map(framework => ({
+            id: framework.id,
+            name: framework.name,
+            description: framework.description,
+            uri: `${URI_SCHEME}docs/frameworks/${framework.id}`,
+            url: framework.url,
+        }))
+    ];
+
+    // Build URI lookup map for template substitution
+    const uriMap = {
+        'workflows.basic-integration.begin': workflows.find(w => w.id === 'basic-integration-event-setup-begin')?.uri,
+        'workflows.basic-integration.edit': workflows.find(w => w.id === 'basic-integration-event-setup-edit')?.uri,
+        'workflows.basic-integration.revise': workflows.find(w => w.id === 'basic-integration-event-setup-revise')?.uri,
+        'docs.frameworks': 'posthog://docs/frameworks/{framework}',
+        'examples': 'posthog://examples/{framework}',
+    };
+
+    // Helper to replace template variables
+    const replaceTemplateVars = (text) => {
+        let result = text;
+        for (const [key, value] of Object.entries(uriMap)) {
+            if (value) {
+                result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
+            }
+        }
+        return result;
+    };
+
+    // Build prompts array with template variables replaced
+    const prompts = discoveredPrompts.map(prompt => ({
+        id: prompt.id,
+        name: prompt.name,
+        title: prompt.title,
+        description: prompt.description,
+        messages: prompt.messages.map(msg => ({
+            ...msg,
+            content: {
+                ...msg.content,
+                text: replaceTemplateVars(msg.content.text),
+            },
+        })),
+    }));
+
+    return {
+        version: MANIFEST_VERSION,
+        resources: {
+            workflows,
+            examples,
+            docs,
+            prompts,
+        },
+    };
+}
+
+/**
  * Recursively get all files in a directory (used for LLM prompts)
  */
 function getAllFilesInDirectory(dirPath, arrayOfFiles = [], baseDir = dirPath) {
@@ -270,6 +425,109 @@ function getAllFilesInDirectory(dirPath, arrayOfFiles = [], baseDir = dirPath) {
     });
 
     return arrayOfFiles;
+}
+
+/**
+ * Parse workflow metadata from filename
+ * Format: [order].[step]-[name].md
+ * Example: 1.0-event-setup-begin.md -> { order: 1.0, step: 0, name: 'event-setup-begin' }
+ */
+function parseWorkflowFilename(filename) {
+    const match = filename.match(/^(\d+)\.(\d+)-(.+)\.md$/);
+    if (!match) return null;
+
+    const [, major, minor, name] = match;
+    return {
+        order: parseFloat(`${major}.${minor}`),
+        step: parseInt(minor),
+        name: name,
+    };
+}
+
+/**
+ * Extract title and description from markdown frontmatter
+ * Throws error if frontmatter is missing required fields
+ */
+function extractMetadataFromMarkdown(content, filename) {
+    const parsed = matter(content);
+
+    if (!parsed.data.title) {
+        throw new Error(`Missing 'title' in frontmatter for ${filename}`);
+    }
+
+    if (!parsed.data.description) {
+        throw new Error(`Missing 'description' in frontmatter for ${filename}`);
+    }
+
+    return {
+        title: parsed.data.title,
+        description: parsed.data.description,
+    };
+}
+
+/**
+ * Discover workflows from llm-prompts directory structure
+ * Convention: llm-prompts/[category]/[order].[step]-[name].md
+ */
+function discoverWorkflows(promptsPath) {
+    const workflows = [];
+    const categories = fs.readdirSync(promptsPath).filter(name => {
+        const fullPath = path.join(promptsPath, name);
+        return fs.statSync(fullPath).isDirectory() && name !== 'node_modules';
+    });
+
+    for (const category of categories) {
+        const categoryPath = path.join(promptsPath, category);
+        const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.md') && f !== 'README.md');
+
+        for (const filename of files) {
+            const parsed = parseWorkflowFilename(filename);
+            if (!parsed) {
+                console.warn(`  Warning: Skipping ${category}/${filename} - doesn't match workflow naming convention`);
+                continue;
+            }
+
+            const filePath = path.join(categoryPath, filename);
+            const content = fs.readFileSync(filePath, 'utf8');
+            const metadata = extractMetadataFromMarkdown(content, `${category}/${filename}`);
+
+            workflows.push({
+                category,
+                filename,
+                order: parsed.order,
+                step: parsed.step,
+                name: parsed.name,
+                id: `${category}-${parsed.name}`,
+                title: metadata.title || parsed.name.replace(/-/g, ' '),
+                description: metadata.description || `Workflow step for ${parsed.name}`,
+                file: `prompts/${category}/${filename}`,
+                fullPath: filePath,
+            });
+        }
+    }
+
+    // Sort by category and order
+    workflows.sort((a, b) => {
+        if (a.category !== b.category) return a.category.localeCompare(b.category);
+        return a.order - b.order;
+    });
+
+    // Link next steps within each category
+    const categorized = {};
+    workflows.forEach(w => {
+        if (!categorized[w.category]) categorized[w.category] = [];
+        categorized[w.category].push(w);
+    });
+
+    Object.values(categorized).forEach(categoryWorkflows => {
+        categoryWorkflows.forEach((workflow, i) => {
+            if (i < categoryWorkflows.length - 1) {
+                workflow.nextStepId = categoryWorkflows[i + 1].id;
+            }
+        });
+    });
+
+    return workflows;
 }
 
 /**
@@ -326,24 +584,70 @@ async function build() {
         console.log(`  ✓ Generated ${outputFilename} (${(markdown.length / 1024).toFixed(1)} KB)`);
     }
 
-    // Process LLM prompts
-    console.log('\nProcessing LLM prompts...');
+    // Discover and process LLM prompts (workflows)
+    console.log('\nDiscovering workflows...');
     const promptsPath = path.join(__dirname, '..', 'llm-prompts');
+    let discoveredWorkflows = [];
 
     if (fs.existsSync(promptsPath)) {
-        const promptFiles = getAllFilesInDirectory(promptsPath, [], promptsPath);
+        discoveredWorkflows = discoverWorkflows(promptsPath);
+        console.log(`  ✓ Discovered ${discoveredWorkflows.length} workflow steps`);
 
-        for (const file of promptFiles) {
+        // Process each workflow file with next-step appending
+        for (const workflow of discoveredWorkflows) {
+            // Read the file content
+            let content = fs.readFileSync(workflow.fullPath, 'utf8');
+
+            if (workflow.nextStepId) {
+                // Generate next step URI
+                const nextStepUri = `${URI_SCHEME}workflows/${workflow.nextStepId}`;
+
+                // Append next step message
+                content += `\n\n---\n\n**Upon completion, access the following resource to continue:** ${nextStepUri}`;
+            }
+
+            // Write the modified content to a temp file in dist
+            const tempFilePath = path.join(outputDir, `temp-${workflow.filename}`);
+            const tempDir = path.dirname(tempFilePath);
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            fs.writeFileSync(tempFilePath, content, 'utf8');
+
             markdownFiles.push({
-                filename: `prompts/${file.relativePath}`,
-                path: file.fullPath
+                filename: workflow.file,
+                path: tempFilePath
             });
         }
-
-        console.log(`  ✓ Added ${promptFiles.length} prompt files`);
     } else {
         console.warn('  Warning: LLM prompts directory not found');
     }
+
+    // Discover prompts
+    console.log('\nDiscovering prompts...');
+    const promptsDir = path.join(__dirname, '..', 'mcp-commands');
+    const discoveredPrompts = discoverPrompts(promptsDir);
+    if (discoveredPrompts.length > 0) {
+        console.log(`  ✓ Discovered ${discoveredPrompts.length} prompts`);
+    } else {
+        console.log('  No prompts found');
+    }
+
+    // Collect example IDs
+    const exampleIds = defaultConfig.examples.map(ex => ex.id);
+
+    // Generate and write manifest
+    console.log('\nGenerating manifest...');
+    const manifest = generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts);
+    const manifestPath = path.join(outputDir, 'manifest.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+    console.log(`  ✓ Generated manifest.json`);
+
+    // Add manifest to files to be archived
+    markdownFiles.push({
+        filename: 'manifest.json',
+        path: manifestPath
+    });
 
     // Create ZIP archive
     console.log('\nCreating ZIP archive...');
