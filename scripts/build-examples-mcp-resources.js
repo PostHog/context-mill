@@ -1,8 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Build script to transform example projects into markdown documentation
- * This generates a ZIP file containing one markdown file per framework example
+ * ============================================================================
+ * PostHog MCP Resources Build Script
+ * ============================================================================
+ *
+ * This script transforms example projects into MCP resources by:
+ * 1. Converting example projects to markdown documentation
+ * 2. Discovering and processing workflow guides from llm-prompts/
+ * 3. Discovering MCP command prompts from mcp-commands/
+ * 4. Generating a manifest with all URIs and metadata
+ * 5. Creating a ZIP archive for the MCP server to consume
+ *
+ * The examples repository is the single source of truth for all URIs.
+ * The MCP server purely reflects what's in the manifest - no logic, no URIs.
  */
 
 const fs = require('fs');
@@ -10,6 +21,8 @@ const path = require('path');
 const archiver = require('archiver');
 const matter = require('gray-matter');
 const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } = require('./plugins/index');
+
+//#region Configuration
 
 /**
  * Manifest configuration constants
@@ -19,6 +32,7 @@ const URI_SCHEME = 'posthog://';
 
 /**
  * Documentation URLs configuration
+ * These docs are fetched at runtime by the MCP server
  */
 const DOCS_CONFIG = {
     identify: {
@@ -39,12 +53,19 @@ const DOCS_CONFIG = {
             name: 'PostHog Next.js Pages Router integration documentation',
             description: 'PostHog integration documentation for Next.js Pages Router',
             url: 'https://posthog.com/docs/libraries/next-js.md'
+        },
+        'react-react-router': {
+            id: 'react-react-router',
+            name: 'PostHog React with React Router integration documentation',
+            description: 'PostHog integration documentation for React with React Router',
+            url: 'https://posthog.com/docs/libraries/react.md'
         }
     }
 };
 
 /**
  * Build configuration
+ * Defines which example projects to process and how to filter their files
  */
 const defaultConfig = {
     // Global plugins applied to all examples
@@ -74,6 +95,17 @@ const defaultConfig = {
             // Example-specific plugins (optional)
             plugins: [],
         },
+        {
+            path: 'basics/react-react-router',
+            id: 'react-react-router',
+            displayName: 'React with React Router',
+            tags: ['react', 'react-router', 'spa'],
+            skipPatterns: {
+                includes: [],
+                regex: [],
+            },
+            plugins: [],
+        }
     ],
     globalSkipPatterns: {
         includes: [
@@ -125,6 +157,10 @@ const defaultConfig = {
     },
 };
 
+//#endregion
+
+//#region Example Project Processing
+
 /**
  * Build markdown header for an example project
  */
@@ -140,7 +176,7 @@ function buildMarkdownHeader(frameworkName, repoUrl, relativePath) {
 
 /**
  * Convert a file to a markdown code block
- * Now supports plugins for content transformation
+ * Supports plugins for content transformation (e.g., removing ignore comments)
  *
  * @param {string} relativePath - The relative path of the file
  * @param {string} content - The file content
@@ -244,6 +280,7 @@ function getAllFiles(dirPath, arrayOfFiles = [], baseDir = dirPath, skipPatterns
 
 /**
  * Convert an example project directory to markdown
+ * Main function that orchestrates the conversion process
  */
 function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, skipPatterns, plugins = []) {
     const repoUrl = 'https://github.com/PostHog/examples';
@@ -282,155 +319,14 @@ function convertProjectToMarkdown(absolutePath, frameworkInfo, relativePath, ski
     return markdown;
 }
 
-/**
- * Discover prompts from mcp-commands directory
- */
-function discoverPrompts(promptsPath) {
-    const prompts = [];
+//#endregion
 
-    if (!fs.existsSync(promptsPath)) {
-        return prompts;
-    }
-
-    const files = fs.readdirSync(promptsPath).filter(f => f.endsWith('.json'));
-
-    for (const filename of files) {
-        const filePath = path.join(promptsPath, filename);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const promptData = JSON.parse(content);
-
-        prompts.push({
-            id: promptData.name,
-            name: promptData.name,
-            title: promptData.title,
-            description: promptData.description,
-            file: `mcp-commands/${filename}`,
-            fullPath: filePath,
-            messages: promptData.messages,
-        });
-    }
-
-    return prompts;
-}
-
-/**
- * Generate manifest JSON from discovered workflows, examples, and prompts
- * This generates ALL URIs so MCP just reflects them
- */
-function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
-    const workflows = discoveredWorkflows.map(workflow => ({
-        id: workflow.id,
-        name: workflow.title,
-        description: workflow.description,
-        file: workflow.file,
-        order: workflow.order,
-        // Use category/name structure: workflows/basic-integration/event-setup-begin
-        uri: `${URI_SCHEME}workflows/${workflow.category}/${workflow.name}`,
-        nextStepId: workflow.nextStepId,
-        nextStepUri: workflow.nextStepId
-            ? `${URI_SCHEME}workflows/${workflow.category}/${discoveredWorkflows.find(w => w.id === workflow.nextStepId)?.name}`
-            : undefined,
-    }));
-
-    const examples = exampleIds.map(framework => ({
-        id: framework,
-        name: `PostHog ${framework} example project`,
-        description: `Example project code for ${framework}`,
-        file: `${framework}.md`,
-        uri: `${URI_SCHEME}examples/${framework}`,
-    }));
-
-    // Build docs array from configuration
-    const docs = [
-        {
-            id: DOCS_CONFIG.identify.id,
-            name: DOCS_CONFIG.identify.name,
-            description: DOCS_CONFIG.identify.description,
-            uri: `${URI_SCHEME}docs/${DOCS_CONFIG.identify.id}`,
-            url: DOCS_CONFIG.identify.url,
-        },
-        ...Object.values(DOCS_CONFIG.frameworks).map(framework => ({
-            id: framework.id,
-            name: framework.name,
-            description: framework.description,
-            uri: `${URI_SCHEME}docs/frameworks/${framework.id}`,
-            url: framework.url,
-        }))
-    ];
-
-    // Build URI lookup map for template substitution
-    const uriMap = {
-        'workflows.basic-integration.begin': workflows.find(w => w.id === 'basic-integration-event-setup-begin')?.uri,
-        'workflows.basic-integration.edit': workflows.find(w => w.id === 'basic-integration-event-setup-edit')?.uri,
-        'workflows.basic-integration.revise': workflows.find(w => w.id === 'basic-integration-event-setup-revise')?.uri,
-        'docs.frameworks': 'posthog://docs/frameworks/{framework}',
-        'examples': 'posthog://examples/{framework}',
-    };
-
-    // Helper to replace template variables
-    const replaceTemplateVars = (text) => {
-        let result = text;
-        for (const [key, value] of Object.entries(uriMap)) {
-            if (value) {
-                result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
-            }
-        }
-        return result;
-    };
-
-    // Build prompts array with template variables replaced
-    const prompts = discoveredPrompts.map(prompt => ({
-        id: prompt.id,
-        name: prompt.name,
-        title: prompt.title,
-        description: prompt.description,
-        messages: prompt.messages.map(msg => ({
-            ...msg,
-            content: {
-                ...msg.content,
-                text: replaceTemplateVars(msg.content.text),
-            },
-        })),
-    }));
-
-    return {
-        version: MANIFEST_VERSION,
-        resources: {
-            workflows,
-            examples,
-            docs,
-            prompts,
-        },
-    };
-}
-
-/**
- * Recursively get all files in a directory (used for LLM prompts)
- */
-function getAllFilesInDirectory(dirPath, arrayOfFiles = [], baseDir = dirPath) {
-    const files = fs.readdirSync(dirPath);
-
-    files.forEach(file => {
-        const filePath = path.join(dirPath, file);
-        const relativePath = path.relative(baseDir, filePath);
-
-        if (fs.statSync(filePath).isDirectory()) {
-            arrayOfFiles = getAllFilesInDirectory(filePath, arrayOfFiles, baseDir);
-        } else if (file.endsWith('.md') && file !== 'README.md') {
-            arrayOfFiles.push({
-                fullPath: filePath,
-                relativePath: relativePath,
-            });
-        }
-    });
-
-    return arrayOfFiles;
-}
+//#region Workflow Discovery and Processing
 
 /**
  * Parse workflow metadata from filename
  * Format: [order].[step]-[name].md
- * Example: 1.0-event-setup-begin.md -> { order: 1.0, step: 0, name: 'event-setup-begin' }
+ * Example: 1.0-begin.md -> { order: 1.0, step: 0, name: 'begin' }
  */
 function parseWorkflowFilename(filename) {
     const match = filename.match(/^(\d+)\.(\d+)-(.+)\.md$/);
@@ -468,6 +364,7 @@ function extractMetadataFromMarkdown(content, filename) {
 /**
  * Discover workflows from llm-prompts directory structure
  * Convention: llm-prompts/[category]/[order].[step]-[name].md
+ * Automatically links workflow steps within each category
  */
 function discoverWorkflows(promptsPath) {
     const workflows = [];
@@ -530,8 +427,257 @@ function discoverWorkflows(promptsPath) {
     return workflows;
 }
 
+//#endregion
+
+//#region MCP Commands (Prompts) Discovery
+
+/**
+ * Discover prompts from mcp-commands directory
+ * Each .json file represents a prompt with template variables for URIs
+ */
+function discoverPrompts(promptsPath) {
+    const prompts = [];
+
+    if (!fs.existsSync(promptsPath)) {
+        return prompts;
+    }
+
+    const files = fs.readdirSync(promptsPath).filter(f => f.endsWith('.json'));
+
+    for (const filename of files) {
+        const filePath = path.join(promptsPath, filename);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const promptData = JSON.parse(content);
+
+        prompts.push({
+            id: promptData.name,
+            name: promptData.name,
+            title: promptData.title,
+            description: promptData.description,
+            file: `mcp-commands/${filename}`,
+            fullPath: filePath,
+            messages: promptData.messages,
+        });
+    }
+
+    return prompts;
+}
+
+//#endregion
+
+//#region Manifest Generation and URI Management
+
+/**
+ * Generate manifest JSON from discovered workflows, examples, and prompts
+ * This generates ALL URIs - the MCP server purely reflects what's here
+ */
+function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
+    // Generate workflow resources with hierarchical URIs
+    const workflows = discoveredWorkflows.map(workflow => ({
+        id: workflow.id,
+        name: workflow.title,
+        description: workflow.description,
+        file: workflow.file,
+        order: workflow.order,
+        uri: `${URI_SCHEME}workflows/${workflow.category}/${workflow.name}`,
+        nextStepId: workflow.nextStepId,
+        nextStepUri: workflow.nextStepId
+            ? `${URI_SCHEME}workflows/${workflow.category}/${discoveredWorkflows.find(w => w.id === workflow.nextStepId)?.name}`
+            : undefined,
+    }));
+
+    // TEMPORARY: Backward compatibility alias for legacy URI
+    // TODO: Remove once external tools are updated to use new URI structure
+    const beginWorkflow = discoveredWorkflows.find(w => w.id === 'basic-integration-begin');
+    if (beginWorkflow) {
+        workflows.push({
+            id: 'legacy-setup-begin',
+            name: 'Event Setup - Begin (Legacy URI)',
+            description: 'Start the event tracking setup process (legacy URI for backward compatibility)',
+            file: beginWorkflow.file,
+            order: beginWorkflow.order,
+            uri: 'posthog://integration/workflow/setup/begin', // Old hardcoded URI
+            nextStepId: beginWorkflow.nextStepId,
+            nextStepUri: beginWorkflow.nextStepId
+                ? `${URI_SCHEME}workflows/${beginWorkflow.category}/${discoveredWorkflows.find(w => w.id === beginWorkflow.nextStepId)?.name}`
+                : undefined,
+        });
+    }
+
+    // Generate example resources
+    const examples = exampleIds.map(framework => ({
+        id: framework,
+        name: `PostHog ${framework} example project`,
+        description: `Example project code for ${framework}`,
+        file: `${framework}.md`,
+        uri: `${URI_SCHEME}examples/${framework}`,
+    }));
+
+    // Generate documentation resources (fetched at runtime from URLs)
+    const docs = [
+        {
+            id: DOCS_CONFIG.identify.id,
+            name: DOCS_CONFIG.identify.name,
+            description: DOCS_CONFIG.identify.description,
+            uri: `${URI_SCHEME}docs/${DOCS_CONFIG.identify.id}`,
+            url: DOCS_CONFIG.identify.url,
+        },
+        ...Object.values(DOCS_CONFIG.frameworks).map(framework => ({
+            id: framework.id,
+            name: framework.name,
+            description: framework.description,
+            uri: `${URI_SCHEME}docs/frameworks/${framework.id}`,
+            url: framework.url,
+        }))
+    ];
+
+    // Build URI lookup map for template variable substitution in prompts
+    // This dynamically generates mappings from discovered workflows
+    const uriMap = {};
+
+    // Add workflow template mappings with pattern: workflows.{category}.{last-part-of-id}
+    for (const workflow of workflows) {
+        // Skip legacy aliases
+        if (workflow.id.startsWith('legacy-')) continue;
+
+        // Extract the last part of the ID for the template key
+        // e.g., "begin" from "basic-integration-begin"
+        const idParts = workflow.id.split('-');
+        const shortName = idParts[idParts.length - 1];
+
+        // Find the original workflow to get category
+        const originalWorkflow = discoveredWorkflows.find(w => w.id === workflow.id);
+        if (!originalWorkflow) continue;
+
+        const templateKey = `workflows.${originalWorkflow.category}.${shortName}`;
+        uriMap[templateKey] = workflow.uri;
+        console.log(`[DEBUG] Template mapping: {{${templateKey}}} -> ${workflow.uri}`);
+    }
+
+    // Add static template mappings for docs and examples
+    uriMap['docs.frameworks'] = 'posthog://docs/frameworks/{framework}';
+    uriMap['examples'] = 'posthog://examples/{framework}';
+
+    /**
+     * Helper to replace template variables in prompt text
+     * Replaces {{template.key}} with actual URIs
+     */
+    const replaceTemplateVars = (text) => {
+        let result = text;
+        for (const [key, value] of Object.entries(uriMap)) {
+            if (value) {
+                const before = result;
+                result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+                if (before !== result) {
+                    console.log(`[DEBUG] Replaced {{${key}}} with ${value}`);
+                }
+            }
+        }
+        return result;
+    };
+
+    // Build prompts array with template variables replaced
+    const prompts = discoveredPrompts.map(prompt => ({
+        id: prompt.id,
+        name: prompt.name,
+        title: prompt.title,
+        description: prompt.description,
+        messages: prompt.messages.map(msg => ({
+            ...msg,
+            content: {
+                ...msg.content,
+                text: replaceTemplateVars(msg.content.text),
+            },
+        })),
+    }));
+
+    // Build resource templates
+    // Examples and framework docs should be templated for easy parameterized access
+    const templates = [
+        {
+            name: 'PostHog example projects',
+            uriPattern: 'posthog://examples/{framework}',
+            description: 'Example project code showing PostHog integration for various frameworks',
+            parameterName: 'framework',
+            items: examples.map(ex => ({
+                id: ex.id,
+                file: ex.file,
+            })),
+        },
+        {
+            name: 'PostHog framework integration documentation',
+            uriPattern: 'posthog://docs/frameworks/{framework}',
+            description: 'PostHog integration documentation for various frameworks',
+            parameterName: 'framework',
+            items: docs
+                .filter(doc => doc.uri.includes('/frameworks/'))
+                .map(doc => ({
+                    id: doc.id,
+                    url: doc.url,
+                })),
+        },
+    ];
+
+    return {
+        version: MANIFEST_VERSION,
+        resources: {
+            workflows,
+            examples,
+            docs,
+            prompts,
+        },
+        templates,
+    };
+}
+
+//#endregion
+
+//#region Build Orchestration
+
+/**
+ * Process workflow files by appending next-step continuations
+ * Workflows need next-step URIs appended to guide users through multi-step processes
+ */
+function processWorkflowFiles(discoveredWorkflows, outputDir) {
+    const processedFiles = [];
+
+    for (const workflow of discoveredWorkflows) {
+        // Read the file content
+        let content = fs.readFileSync(workflow.fullPath, 'utf8');
+
+        if (workflow.nextStepId) {
+            // Generate next step URI
+            const nextStepUri = `${URI_SCHEME}workflows/${workflow.nextStepId}`;
+
+            // Append next step message
+            content += `\n\n---\n\n**Upon completion, access the following resource to continue:** ${nextStepUri}`;
+        }
+
+        // Write the modified content to a temp file in dist
+        const tempFilePath = path.join(outputDir, `temp-${workflow.filename}`);
+        const tempDir = path.dirname(tempFilePath);
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+        fs.writeFileSync(tempFilePath, content, 'utf8');
+
+        processedFiles.push({
+            filename: workflow.file,
+            path: tempFilePath
+        });
+    }
+
+    return processedFiles;
+}
+
 /**
  * Main build function
+ * Orchestrates the entire build process:
+ * 1. Convert example projects to markdown
+ * 2. Discover and process workflows
+ * 3. Discover MCP command prompts
+ * 4. Generate manifest with all URIs
+ * 5. Create ZIP archive
  */
 async function build() {
     console.log('Building markdown documentation from example projects...\n');
@@ -543,7 +689,9 @@ async function build() {
         fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Process each framework example
+    // ========================================================================
+    // Step 1: Process Example Projects
+    // ========================================================================
     const markdownFiles = [];
 
     for (const example of defaultConfig.examples) {
@@ -584,7 +732,9 @@ async function build() {
         console.log(`  ✓ Generated ${outputFilename} (${(markdown.length / 1024).toFixed(1)} KB)`);
     }
 
-    // Discover and process LLM prompts (workflows)
+    // ========================================================================
+    // Step 2: Discover and Process Workflows
+    // ========================================================================
     console.log('\nDiscovering workflows...');
     const promptsPath = path.join(__dirname, '..', 'llm-prompts');
     let discoveredWorkflows = [];
@@ -593,37 +743,16 @@ async function build() {
         discoveredWorkflows = discoverWorkflows(promptsPath);
         console.log(`  ✓ Discovered ${discoveredWorkflows.length} workflow steps`);
 
-        // Process each workflow file with next-step appending
-        for (const workflow of discoveredWorkflows) {
-            // Read the file content
-            let content = fs.readFileSync(workflow.fullPath, 'utf8');
-
-            if (workflow.nextStepId) {
-                // Generate next step URI
-                const nextStepUri = `${URI_SCHEME}workflows/${workflow.nextStepId}`;
-
-                // Append next step message
-                content += `\n\n---\n\n**Upon completion, access the following resource to continue:** ${nextStepUri}`;
-            }
-
-            // Write the modified content to a temp file in dist
-            const tempFilePath = path.join(outputDir, `temp-${workflow.filename}`);
-            const tempDir = path.dirname(tempFilePath);
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true });
-            }
-            fs.writeFileSync(tempFilePath, content, 'utf8');
-
-            markdownFiles.push({
-                filename: workflow.file,
-                path: tempFilePath
-            });
-        }
+        // Process workflow files with next-step appending
+        const workflowFiles = processWorkflowFiles(discoveredWorkflows, outputDir);
+        markdownFiles.push(...workflowFiles);
     } else {
         console.warn('  Warning: LLM prompts directory not found');
     }
 
-    // Discover prompts
+    // ========================================================================
+    // Step 3: Discover MCP Command Prompts
+    // ========================================================================
     console.log('\nDiscovering prompts...');
     const promptsDir = path.join(__dirname, '..', 'mcp-commands');
     const discoveredPrompts = discoverPrompts(promptsDir);
@@ -633,11 +762,11 @@ async function build() {
         console.log('  No prompts found');
     }
 
-    // Collect example IDs
-    const exampleIds = defaultConfig.examples.map(ex => ex.id);
-
-    // Generate and write manifest
+    // ========================================================================
+    // Step 4: Generate Manifest
+    // ========================================================================
     console.log('\nGenerating manifest...');
+    const exampleIds = defaultConfig.examples.map(ex => ex.id);
     const manifest = generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts);
     const manifestPath = path.join(outputDir, 'manifest.json');
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
@@ -649,7 +778,9 @@ async function build() {
         path: manifestPath
     });
 
-    // Create ZIP archive
+    // ========================================================================
+    // Step 5: Create ZIP Archive
+    // ========================================================================
     console.log('\nCreating ZIP archive...');
     const zipPath = path.join(outputDir, 'examples-mcp-resources.zip');
     const output = fs.createWriteStream(zipPath);
@@ -676,8 +807,14 @@ async function build() {
     await archive.finalize();
 }
 
+//#endregion
+
+//#region Entry Point
+
 // Run the build
 build().catch(err => {
     console.error('Build failed:', err);
     process.exit(1);
 });
+
+//#endregion
