@@ -1,7 +1,7 @@
 {
   "name": "posthog-setup",
   "title": "Setup a deep PostHog integration",
-  "description": "Automatically instrument your Next.js project with PostHog event tracking, user identification, and error tracking",
+  "description": "Automatically instrument your project with PostHog event tracking, user identification, and error tracking",
   "messages": [
     {
       "role": "user",
