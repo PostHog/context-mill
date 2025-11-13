@@ -37,12 +37,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build markdown documentation
-        run: npm run build:docs
-
-      - name: List build artifacts
-        run: ls -lh dist/
-
       - name: Determine version
         id: version
         run: |
@@ -107,6 +101,14 @@ jobs:
           echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
           echo "Building version: ${VERSION}"
 
+      - name: Build markdown documentation
+        run: npm run build:docs
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: List build artifacts
+        run: ls -lh dist/
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -156,6 +158,11 @@ jobs:
           echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Artifact:** examples-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Manifest Metadata" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat dist/manifest.json | jq '{version, buildVersion, buildTimestamp}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Files Generated" >> $GITHUB_STEP_SUMMARY
           ls -lh dist/ >> $GITHUB_STEP_SUMMARY

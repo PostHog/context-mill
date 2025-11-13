@@ -112,7 +112,7 @@ Coming soon.
 
 Coming soon.
 
-## Getting Started
+## Getting started
 
 Each example includes its own README with setup instructions. Generally:
 
@@ -122,4 +122,49 @@ Each example includes its own README with setup instructions. Generally:
 4. Run the dev server: `pnpm run dev`
 
 See individual example READMEs for detailed instructions.
+
+## MCP manifest architecture
+
+This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/main/products/mcp).
+
+### How it works
+
+1. **Build process** (`npm run build:docs`):
+   - Converts example projects to markdown
+   - Discovers workflow guides from `llm-prompts/`
+   - Discovers MCP prompts from `mcp-commands/`
+   - Generates `manifest.json` with all URIs and metadata
+   - Packages everything into `examples-mcp-resources.zip`
+
+2. **MCP server** (runtime):
+   - Fetches the ZIP from GitHub releases
+   - Loads `manifest.json`
+   - **Purely reflects** the manifest - no hardcoded URIs or logic
+
+### Manifest structure
+
+The manifest defines:
+- **Workflows**: Step-by-step guides with automatic next-step linking
+- **Docs**: PostHog documentation URLs
+- **Prompts**: MCP command prompts with template variable substitution
+- **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
+
+### Adding new resources
+
+**Workflows**: Add markdown files to `llm-prompts/[category]/` following the naming convention `[order].[step]-[name].md`
+
+**Examples**: Add new example projects to `basics/` and configure in `scripts/build-examples-mcp-resources.js`
+
+**Prompts**: Add JSON files to `mcp-commands/`
+
+The build script automatically discovers, orders, and generates URIs for all resources.
+
+### Why this architecture?
+
+- **Single source of truth**: All URIs defined in examples repo
+- **Zero hardcoding**: MCP server has no URIs or business logic
+- **Easy to extend**: Add resources by creating properly named files
+- **Version controlled**: Resources evolve with the examples
+
+See `llm-prompts/README.md` for detailed workflow conventions.
 
