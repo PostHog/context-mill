@@ -26,8 +26,13 @@ const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } 
 
 /**
  * Manifest configuration constants
+ *
+ * - MANIFEST_VERSION: Schema version for manifest structure
+ * - BUILD_VERSION: Git release version (set by CI, defaults to 'dev' locally)
+ * - URI_SCHEME: Base scheme for all resource URIs
  */
 const MANIFEST_VERSION = '1.0';
+const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 const URI_SCHEME = 'posthog://';
 
 /**
@@ -637,6 +642,8 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
 
     return {
         version: MANIFEST_VERSION,
+        buildVersion: BUILD_VERSION,
+        buildTimestamp: new Date().toISOString(),
         resources: {
             workflows,
             docs,
@@ -696,7 +703,9 @@ function processWorkflowFiles(discoveredWorkflows, outputDir) {
  * 5. Create ZIP archive
  */
 async function build() {
-    console.log('Building markdown documentation from example projects...\n');
+    console.log('Building markdown documentation from example projects...');
+    console.log(`Build Version: ${BUILD_VERSION}`);
+    console.log('');
 
     const outputDir = path.join(__dirname, '..', 'dist');
 
