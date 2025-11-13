@@ -65,13 +65,11 @@ jobs:
 
     - name: Send failure event to PostHog
       if: failure()
-      uses: PostHog/posthog-github-action@v0.1
-      # A CDP destination is set-up to alert when we get this event
-      with:
-        posthog-token: '${{ secrets.PERSONAL_ACCESS_KEY }}'
-        event: 'posthog-examples-repo-test-failure'
-        properties: >-
-          {
+      run: |
+        curl -X POST https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b \
+          -H "Content-Type: application/json" \
+          -d '{
+            "event": "posthog-examples-repo-test-failure",
             "commitSha": "${{ github.sha }}",
             "jobStatus": "${{ job.status }}",
             "commitMessage": "${{ github.event.head_commit.message }}",
@@ -80,8 +78,9 @@ jobs:
             "workflow": "${{ github.workflow }}",
             "runId": "${{ github.run_id }}",
             "runNumber": "${{ github.run_number }}",
+            "jobUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "matrixExample": "${{ matrix.example }}"
-          }
+          }'
 
     - uses: actions/upload-artifact@v4
       if: always()
