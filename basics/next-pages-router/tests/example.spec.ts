@@ -1,5 +1,6 @@
 // @ignoreFile
 import { test, expect } from '@playwright/test';
+import packageJson from '../package.json';
 
 // Global variables to store the generated username
 let generatedUsername: string;
@@ -40,6 +41,11 @@ test('verify user is logged in', async ({ page }) => {
 
   // Verify expected events were captured
   verifyExpectedEvents();
+});
+
+test.afterEach(async () => {
+  // Wait 5 seconds after each test
+  await new Promise(resolve => setTimeout(resolve, 5000));
 });
 
 // Helper functions
@@ -211,7 +217,11 @@ async function loginAsTestAgent(page: any) {
 
   const randomPassword = 'test_password_123';
 
-  generatedUsername = 'test_user';
+  // Generate username in format: {package.json name}-{yyyy-mm-dd}-test-user
+  const packageName = packageJson.name;
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0]; // yyyy-mm-dd format (UTC)
+  generatedUsername = `${packageName}-${dateStr}-test-user`;
 
   // Fill in the username field
   await page.getByLabel('Username:').fill(generatedUsername);
@@ -225,3 +235,4 @@ async function loginAsTestAgent(page: any) {
   // Expect to see the welcome message after successful login
   await expect(page.getByText(`Welcome back, ${generatedUsername}!`)).toBeVisible();
 }
+

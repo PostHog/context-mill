@@ -1,5 +1,6 @@
 // @ignoreFile
 import { test, expect } from '@playwright/test';
+import packageJson from '../package.json';
 
 // Global variables to store the generated username
 let generatedUsername: string;
@@ -211,8 +212,12 @@ async function loginAsTestAgent(page: any) {
 
   const randomPassword = 'test_password_123';
 
-  generatedUsername = 'test_user';
-
+  // Generate username in format: {package.json name}-{yyyy-mm-dd}-test-user
+  const packageName = packageJson.name;
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0]; // yyyy-mm-dd format (UTC)
+  generatedUsername = `${packageName}-${dateStr}-test-user`;
+  
   // Fill in the username field
   await page.getByLabel('Username:').fill(generatedUsername);
 

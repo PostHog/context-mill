@@ -9,6 +9,8 @@
     "lint": "eslint",
     "postinstall": "playwright install chromium",
     "test": "playwright test",
+    "test:integration": "playwright test example.spec.ts",
+    "test:e2e": "playwright test e2e-query.spec.ts",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report"
   },

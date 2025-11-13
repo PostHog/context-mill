@@ -1,0 +1,92 @@
+name: PostHog Examples - Integration tests
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Runs nightly at 12am PST (which is 8am UTC)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      examples: ${{ steps.set-examples.outputs.examples }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Discover examples with Playwright configs
+      id: set-examples
+      run: |
+        examples=$(find basics -maxdepth 2 -name "playwright.config.ts" -exec dirname {} \; | sed 's|^basics/||' | jq -R -s -c 'split("\n")[:-1]')
+        echo "examples=$examples" >> $GITHUB_OUTPUT
+        echo "Found examples: $examples"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.examples != '[]'
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJson(needs.discover.outputs.examples) }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+    - uses: pnpm/action-setup@v4
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: |
+        cd basics/${{ matrix.example }}
+        pnpm install
+
+    - name: Install Playwright Browsers
+      run: |
+        cd basics/${{ matrix.example }}
+        pnpm exec playwright install chromium --with-deps
+
+    - name: Run Integration Playwright tests
+      run: |
+        cd basics/${{ matrix.example }}
+        pnpm run test:integration
+      env:
+        NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+        NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
+
+    - name: Send failure event to PostHog
+      if: failure()
+      run: |
+        curl -X POST https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b \
+          -H "Content-Type: application/json" \
+          -d '{
+            "event": "posthog-examples-repo-test-failure",
+            "commitSha": "${{ github.sha }}",
+            "jobStatus": "${{ job.status }}",
+            "commitMessage": "${{ github.event.head_commit.message }}",
+            "commitAuthor": "${{ github.event.head_commit.author.name }}",
+            "ref": "${{ github.ref }}",
+            "workflow": "${{ github.workflow }}",
+            "runId": "${{ github.run_id }}",
+            "runNumber": "${{ github.run_number }}",
+            "jobUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "example": "${{ matrix.example }}"
+          }'
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-${{ matrix.example }}
+        path: basics/${{ matrix.example }}/playwright-report/
+        retention-days: 30
