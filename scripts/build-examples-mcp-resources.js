@@ -532,16 +532,8 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
         });
     }
 
-    // Generate example resources
-    const examples = exampleIds.map(framework => ({
-        id: framework,
-        name: `PostHog ${framework} example project`,
-        description: `Example project code for ${framework}`,
-        file: `${framework}.md`,
-        uri: `${URI_SCHEME}examples/${framework}`,
-    }));
-
-    // Generate documentation resources (fetched at runtime from URLs)
+    // Generate non-templated documentation resources (fetched at runtime from URLs)
+    // Only include docs that aren't covered by templates
     const docs = [
         {
             id: DOCS_CONFIG.identify.id,
@@ -550,13 +542,6 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
             uri: `${URI_SCHEME}docs/${DOCS_CONFIG.identify.id}`,
             url: DOCS_CONFIG.identify.url,
         },
-        ...Object.values(DOCS_CONFIG.frameworks).map(framework => ({
-            id: framework.id,
-            name: framework.name,
-            description: framework.description,
-            uri: `${URI_SCHEME}docs/frameworks/${framework.id}`,
-            url: framework.url,
-        }))
     ];
 
     // Build URI lookup map for template variable substitution in prompts
@@ -604,10 +589,35 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
         return result;
     };
 
+    // Build resource templates
+    // Examples and framework docs should be templated for easy parameterized access
+    const templates = [
+        {
+            name: 'PostHog example projects',
+            uriPattern: 'posthog://examples/{framework}',
+            description: 'Example project code showing PostHog integration for various frameworks',
+            parameterName: 'framework',
+            items: exampleIds.map(id => ({
+                id: id,
+                file: `${id}.md`,
+            })),
+        },
+        {
+            name: 'PostHog framework integration documentation',
+            uriPattern: 'posthog://docs/frameworks/{framework}',
+            description: 'PostHog integration documentation for various frameworks',
+            parameterName: 'framework',
+            items: Object.values(DOCS_CONFIG.frameworks).map(framework => ({
+                id: framework.id,
+                url: framework.url,
+            })),
+        },
+    ];
+
     // Build prompts array with template variables replaced
     // Add available frameworks to description so the agent knows what's available
     const prompts = discoveredPrompts.map(prompt => {
-        const availableFrameworks = examples.map(ex => ex.id);
+        const availableFrameworks = templates[0].items.map(item => item.id);
         const frameworksList = availableFrameworks.join(', ');
 
         return {
@@ -625,38 +635,10 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
         };
     });
 
-    // Build resource templates
-    // Examples and framework docs should be templated for easy parameterized access
-    const templates = [
-        {
-            name: 'PostHog example projects',
-            uriPattern: 'posthog://examples/{framework}',
-            description: 'Example project code showing PostHog integration for various frameworks',
-            parameterName: 'framework',
-            items: examples.map(ex => ({
-                id: ex.id,
-                file: ex.file,
-            })),
-        },
-        {
-            name: 'PostHog framework integration documentation',
-            uriPattern: 'posthog://docs/frameworks/{framework}',
-            description: 'PostHog integration documentation for various frameworks',
-            parameterName: 'framework',
-            items: docs
-                .filter(doc => doc.uri.includes('/frameworks/'))
-                .map(doc => ({
-                    id: doc.id,
-                    url: doc.url,
-                })),
-        },
-    ];
-
     return {
         version: MANIFEST_VERSION,
         resources: {
             workflows,
-            examples,
             docs,
             prompts,
         },
