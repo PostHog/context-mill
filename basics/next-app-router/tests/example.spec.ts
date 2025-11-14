@@ -43,6 +43,11 @@ test('verify user is logged in', async ({ page }) => {
   verifyExpectedEvents();
 });
 
+test.afterEach(async () => {
+  // Wait 5 seconds after each test for queue to flush
+  await new Promise(resolve => setTimeout(resolve, 5000));
+});
+
 // Helper functions
 
 // PostHog Events Snapshot Helper - Using Playwright's built-in snapshot functionality

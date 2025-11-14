@@ -22,7 +22,7 @@ test('e2e-query', async () => {
   
   const query = {
     kind: 'HogQLQuery',
-    query: `SELECT * FROM events WHERE distinct_id = '${yesterdayUsername}'`
+    query: `SELECT * FROM events WHERE distinct_id = '${yesterdayUsername}' limit 100`
   };
   
   const url = `${posthogHost}/api/projects/${posthogProjectId}/query/`;

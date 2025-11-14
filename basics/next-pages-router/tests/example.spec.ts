@@ -44,7 +44,7 @@ test('verify user is logged in', async ({ page }) => {
 });
 
 test.afterEach(async () => {
-  // Wait 5 seconds after each test
+  // Wait 5 seconds after each test for queue to flush
   await new Promise(resolve => setTimeout(resolve, 5000));
 });
 
