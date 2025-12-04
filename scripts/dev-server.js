@@ -7,6 +7,12 @@
  * for changes, automatically rebuilding when needed.
  *
  * Usage: npm run dev
+ *
+ * To use a different port:
+ *   PORT=3000 npm run dev
+ *
+ * Then update the MCP server command to match:
+ *   pnpm run dev:local-resources (and update wrangler --var flag)
  */
 
 const http = require('http');
@@ -14,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const PORT = 8765;
+const PORT = process.env.PORT || 8765;
 const ZIP_PATH = path.join(__dirname, '..', 'dist', 'examples-mcp-resources.zip');
 
 // Directories to watch for changes
