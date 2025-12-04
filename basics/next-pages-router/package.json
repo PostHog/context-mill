@@ -15,11 +15,11 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
-    "next": "15.5.5",
+    "next": "15.5.7",
     "posthog-js": "^1.261.6",
     "posthog-node": "^5.8.1",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.1.2",
+    "react-dom": "19.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -29,7 +29,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.2.3",
     "eslint": "^9",
-    "eslint-config-next": "15.5.5",
+    "eslint-config-next": "15.5.7",
     "typescript": "^5"
   }
 }
