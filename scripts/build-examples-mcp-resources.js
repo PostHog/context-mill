@@ -36,6 +36,25 @@ const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 const URI_SCHEME = 'posthog://';
 
 /**
+ * URI pattern constants - SINGLE SOURCE OF TRUTH for all URI formats
+ */
+const URI_PATTERNS = {
+    workflow: (category, name) => `${URI_SCHEME}workflows/${category}/${name}`,
+    doc: (id) => `${URI_SCHEME}docs/${id}`,
+    frameworkDocs: `${URI_SCHEME}docs/frameworks/{framework}`,
+    examples: `${URI_SCHEME}examples/{framework}`,
+};
+
+/**
+ * Generate a workflow URI from a workflow object
+ * @param {Object} workflow - Workflow object with category and name properties
+ * @returns {string} The full URI for the workflow
+ */
+function getWorkflowUri(workflow) {
+    return URI_PATTERNS.workflow(workflow.category, workflow.name);
+}
+
+/**
  * Documentation URLs configuration
  * These docs are fetched at runtime by the MCP server
  */
@@ -505,6 +524,13 @@ function discoverPrompts(promptsPath) {
  * This generates ALL URIs - the MCP server purely reflects what's here
  */
 function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
+    // Helper to get next step URI by looking up the workflow
+    const getNextStepUri = (nextStepId) => {
+        if (!nextStepId) return undefined;
+        const nextWorkflow = discoveredWorkflows.find(w => w.id === nextStepId);
+        return nextWorkflow ? getWorkflowUri(nextWorkflow) : undefined;
+    };
+
     // Generate workflow resources with hierarchical URIs
     const workflows = discoveredWorkflows.map(workflow => ({
         id: workflow.id,
@@ -512,11 +538,9 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
         description: workflow.description,
         file: workflow.file,
         order: workflow.order,
-        uri: `${URI_SCHEME}workflows/${workflow.category}/${workflow.name}`,
+        uri: getWorkflowUri(workflow),
         nextStepId: workflow.nextStepId,
-        nextStepUri: workflow.nextStepId
-            ? `${URI_SCHEME}workflows/${workflow.category}/${discoveredWorkflows.find(w => w.id === workflow.nextStepId)?.name}`
-            : undefined,
+        nextStepUri: getNextStepUri(workflow.nextStepId),
     }));
 
     // TEMPORARY: Backward compatibility alias for legacy URI
@@ -531,9 +555,7 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
             order: beginWorkflow.order,
             uri: 'posthog://integration/workflow/setup/begin', // Old hardcoded URI
             nextStepId: beginWorkflow.nextStepId,
-            nextStepUri: beginWorkflow.nextStepId
-                ? `${URI_SCHEME}workflows/${beginWorkflow.category}/${discoveredWorkflows.find(w => w.id === beginWorkflow.nextStepId)?.name}`
-                : undefined,
+            nextStepUri: getNextStepUri(beginWorkflow.nextStepId),
         });
     }
 
@@ -544,7 +566,7 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
             id: DOCS_CONFIG.identify.id,
             name: DOCS_CONFIG.identify.name,
             description: DOCS_CONFIG.identify.description,
-            uri: `${URI_SCHEME}docs/${DOCS_CONFIG.identify.id}`,
+            uri: URI_PATTERNS.doc(DOCS_CONFIG.identify.id),
             url: DOCS_CONFIG.identify.url,
         },
     ];
@@ -573,8 +595,8 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
     }
 
     // Add static template mappings for docs and examples
-    uriMap['docs.frameworks'] = 'posthog://docs/frameworks/{framework}';
-    uriMap['examples'] = 'posthog://examples/{framework}';
+    uriMap['docs.frameworks'] = URI_PATTERNS.frameworkDocs;
+    uriMap['examples'] = URI_PATTERNS.examples;
 
     /**
      * Helper to replace template variables in prompt text
@@ -599,7 +621,7 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
     const templates = [
         {
             name: 'PostHog example projects',
-            uriPattern: 'posthog://examples/{framework}',
+            uriPattern: URI_PATTERNS.examples,
             description: 'Example project code showing PostHog integration for various frameworks',
             parameterName: 'framework',
             items: exampleIds.map(id => ({
@@ -609,7 +631,7 @@ function generateManifest(discoveredWorkflows, exampleIds, discoveredPrompts) {
         },
         {
             name: 'PostHog framework integration documentation',
-            uriPattern: 'posthog://docs/frameworks/{framework}',
+            uriPattern: URI_PATTERNS.frameworkDocs,
             description: 'PostHog integration documentation for various frameworks',
             parameterName: 'framework',
             items: Object.values(DOCS_CONFIG.frameworks).map(framework => ({
@@ -669,8 +691,15 @@ function processWorkflowFiles(discoveredWorkflows, outputDir) {
         let content = fs.readFileSync(workflow.fullPath, 'utf8');
 
         if (workflow.nextStepId) {
-            // Generate next step URI
-            const nextStepUri = `${URI_SCHEME}workflows/${workflow.nextStepId}`;
+            // Find the next workflow to generate its URI
+            const nextWorkflow = discoveredWorkflows.find(w => w.id === workflow.nextStepId);
+            if (!nextWorkflow) {
+                console.warn(`[WARNING] Next step workflow not found: ${workflow.nextStepId}`);
+                continue;
+            }
+
+            // Generate next step URI using the single source of truth
+            const nextStepUri = getWorkflowUri(nextWorkflow);
 
             // Append next step message
             content += `\n\n---\n\n**Upon completion, access the following resource to continue:** ${nextStepUri}`;
