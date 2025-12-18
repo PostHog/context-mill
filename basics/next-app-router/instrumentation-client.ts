@@ -15,3 +15,5 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   opt_out_useragent_filter: true,  // This disables bot detection
   // @ignoreBlockEnd
 });
+
+//IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches, especially components like a PostHogProvider. instrumentation-client.ts is the correct solution for initializating client-side PostHog in Next.js 15.3+ apps.
