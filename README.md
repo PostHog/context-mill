@@ -2,7 +2,7 @@
 
 We've got live, working example code that demonstrates PostHog in action. You can run these yourself to see events flow into your PostHog project.
 
-## These are not production-grade
+## Example apps are not production-grade
 
 These are more like model airplanes. They're dramatically simplified to make it easy to see PostHog in action. You shouldn't use these as starter projects or put them into production. The authentication is fake!
 
@@ -10,61 +10,17 @@ But the leanness makes these useful for agent-driven development. Use these as c
 
 ## Contents
 
-More examples coming soon.
-
 ```
 examples/
 ├── basics/
-│   ├── next-app-router/              # Next.js 15 with App Router
-│   │   ├── src/
-│   │   │   ├── app/
-│   │   │   │   ├── api/
-│   │   │   │   │   └── auth/
-│   │   │   │   │       └── login/
-│   │   │   │   │           └── route.ts         # Server-side login API
-│   │   │   │   ├── burrito/
-│   │   │   │   │   └── page.tsx                 # Burrito consideration page
-│   │   │   │   ├── profile/
-│   │   │   │   │   └── page.tsx                 # User profile page
-│   │   │   │   ├── layout.tsx                    # Root layout with providers
-│   │   │   │   ├── page.tsx                      # Home/Login page
-│   │   │   │   └── globals.css                   # Global styles
-│   │   │   ├── components/
-│   │   │   │   └── Header.tsx                    # Navigation header
-│   │   │   ├── contexts/
-│   │   │   │   └── AuthContext.tsx               # Auth context with PostHog
-│   │   │   └── lib/
-│   │   │       ├── posthog-server.ts             # Server-side PostHog client
-│   │   │       └── instrumentation-client.ts     # Client-side PostHog init
-│   │   ├── next.config.ts                        # Next.js config with rewrites
-│   │   ├── package.json
-│   │   └── README.md
-│   │
-│   └── next-pages-router/            # Next.js 15 with Pages Router
-│       ├── src/
-│       │   ├── pages/
-│       │   │   ├── api/
-│       │   │   │   └── auth/
-│       │   │   │       └── login.ts              # Server-side login API
-│       │   │   ├── _app.tsx                      # App wrapper with providers
-│       │   │   ├── _document.tsx                 # Document wrapper
-│       │   │   ├── index.tsx                     # Home/Login page
-│       │   │   ├── burrito.tsx                   # Burrito consideration page
-│       │   │   └── profile.tsx                   # User profile page
-│       │   ├── components/
-│       │   │   └── Header.tsx                    # Navigation header
-│       │   ├── contexts/
-│       │   │   └── AuthContext.tsx               # Auth context with PostHog
-│       │   ├── lib/
-│       │   │   ├── posthog-client.ts             # Client-side PostHog init
-│       │   │   └── posthog-server.ts             # Server-side PostHog client
-│       │   └── styles/
-│       │       └── globals.css                   # Global styles
-│       ├── next.config.ts                        # Next.js config with rewrites
-│       ├── package.json
-│       └── README.md
-│
-└── README.md                          # This file
+│   ├── next-app-router/         # Next.js 15 with App Router
+│   ├── next-pages-router/       # Next.js 15 with Pages Router
+│   ├── react-react-router/      # React with React Router
+│   ├── react-tanstack-router/   # React with TanStack Router
+│   └── tanstack-start/          # TanStack Start
+├── llm-prompts/                 # Workflow guides for AI agents
+├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)
+└── scripts/                     # Build scripts
 ```
 
 ## Examples
@@ -79,73 +35,41 @@ Next.js 15 with App Router demonstrating:
 - Reverse proxy setup for PostHog ingestion
 - Session replay (automatic)
 
-**Key differences:**
-- Uses App Router (`src/app/` directory structure)
-- Server Components by default
-- `'use client'` directive for client components
-- Route handlers (`route.ts`) for API routes
-- Metadata via `layout.tsx` exports
-
 ### basics/next-pages-router
 
-Same functionality as App Router example, but using Pages Router:
-- Client-side and server-side PostHog initialization
-- User identification and authentication
-- Event tracking (login, logout, custom events)
-- Error tracking with `posthog.captureException()`
-- Reverse proxy setup for PostHog ingestion
-- Session replay (automatic)
-
-**Key differences:**
-- Uses Pages Router (`src/pages/` directory structure)
-- Client-side rendering by default
-- No `'use client'` directive needed
-- API routes in `src/pages/api/`
-- Metadata via `next/head` component
-- Custom `_app.tsx` and `_document.tsx`
+Same functionality as App Router example, using Pages Router patterns.
 
 ### basics/react-react-router
 
-Coming soon.
+React SPA with React Router demonstrating PostHog integration in a client-side app.
 
 ### basics/react-tanstack-router
 
-Coming soon.
+React SPA with TanStack Router demonstrating PostHog integration with file-based routing.
 
-## Getting started
+### basics/tanstack-start
 
-Each example includes its own README with setup instructions. Generally:
+Full-stack TanStack Start app with PostHog integration.
 
-1. Navigate to the example directory
-2. Install dependencies: `pnpm install`
-3. Create `.env.local` with your PostHog credentials
-4. Run the dev server: `pnpm run dev`
+## MCP resources
 
-See individual example READMEs for detailed instructions.
+This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/products/mcp).
 
-## MCP manifest architecture
+### Build outputs
 
-This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/main/products/mcp).
+Run `npm run build:docs` to generate:
 
-### How it works
-
-1. **Build process** (`npm run build:docs`):
-   - Converts example projects to markdown
-   - Discovers workflow guides from `llm-prompts/`
-   - Discovers MCP prompts from `mcp-commands/`
-   - Generates `manifest.json` with all URIs and metadata
-   - Packages everything into `examples-mcp-resources.zip`
-
-2. **MCP server** (runtime):
-   - Fetches the ZIP from GitHub releases
-   - Loads `manifest.json`
-   - **Purely reflects** the manifest - no hardcoded URIs or logic
+| Output | Description |
+|--------|-------------|
+| `dist/*.md` | Example projects converted to markdown |
+| `dist/manifest.json` | Resource URIs and metadata |
+| `dist/examples-mcp-resources.zip` | Complete archive for MCP server |
 
 ### Manifest structure
 
 The manifest defines:
 - **Workflows**: Step-by-step guides with automatic next-step linking
-- **Docs**: PostHog documentation URLs
+- **Docs**: PostHog documentation URLs (fetched at runtime)
 - **Prompts**: MCP command prompts with template variable substitution
 - **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
 
@@ -159,12 +83,11 @@ The manifest defines:
 
 The build script automatically discovers, orders, and generates URIs for all resources.
 
-### Why this architecture?
+### Architecture
 
-- **Single source of truth**: All URIs defined in examples repo
-- **Zero hardcoding**: MCP server has no URIs or business logic
+- **Single source of truth**: All URIs defined in this repo
+- **Zero hardcoding**: MCP server purely reflects the manifest for `resources` and `prompts` (as defined in the MCP [spec](https://modelcontextprotocol.io/specification/2025-11-25#features))
 - **Easy to extend**: Add resources by creating properly named files
 - **Version controlled**: Resources evolve with the examples
 
 See `llm-prompts/README.md` for detailed workflow conventions.
-
