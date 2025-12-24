@@ -1,12 +1,12 @@
+import { PostHog } from "posthog-node";
 import type { Route } from "./+types/api.auth.login";
-import { withPostHog } from "../lib/posthog-server";
 import { getBurritoConsiderations } from "../lib/db";
 
 const users = new Map<string, { username: string }>();
 
 export { users };
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const body = await request.json();
   const { username, password } = body;
 
@@ -21,17 +21,15 @@ export async function action({ request }: Route.ActionArgs) {
     users.set(username, user);
   }
 
+  const posthog = (context as any).posthog as PostHog | undefined;
+  if (posthog) {
+    posthog.capture({ event: 'server_login' });
+  }
+
   const burritoConsiderations = await getBurritoConsiderations(username);
 
-  return withPostHog(request, async (posthog) => {
-    posthog.capture({
-      distinctId: username,
-      event: 'server_login',
-    });
-
-    return Response.json({ 
-      success: true, 
-      user: { ...user, burritoConsiderations } 
-    });
+  return Response.json({ 
+    success: true, 
+    user: { ...user, burritoConsiderations } 
   });
 }

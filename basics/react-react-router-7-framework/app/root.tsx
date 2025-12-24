@@ -13,6 +13,11 @@ import "./app.css";
 import "./globals.css";
 import Header from "./components/Header";
 import { AuthProvider } from "./contexts/AuthContext";
+import { posthogMiddleware } from "./lib/posthog-middleware";
+
+export const middleware: Route.MiddlewareFunction[] = [
+  posthogMiddleware,
+];
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },

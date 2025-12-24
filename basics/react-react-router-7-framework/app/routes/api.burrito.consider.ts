@@ -1,9 +1,9 @@
+import { PostHog } from "posthog-node";
 import type { Route } from "./+types/api.burrito.consider";
 import { users } from "./api.auth.login";
-import { withPostHog } from "../lib/posthog-server";
 import { incrementBurritoConsiderations } from "../lib/db";
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const body = await request.json();
   const { username } = body;
 
@@ -19,20 +19,14 @@ export async function action({ request }: Route.ActionArgs) {
 
   const burritoConsiderations = await incrementBurritoConsiderations(username);
 
-  return withPostHog(request, async (posthog) => {
-    posthog.capture({
-      distinctId: username,
-      event: 'burrito_considered',
-      properties: {
-        total_considerations: burritoConsiderations,
-        username: username,
-      },
-    });
 
-    return Response.json({ 
-      success: true, 
-      user: { ...user, burritoConsiderations } 
-    });
+  const posthog = (context as any).posthog as PostHog | undefined;
+  if (posthog) {
+    posthog.capture({ event: 'burrito_considered' });
+  }
+  return Response.json({ 
+    success: true, 
+    user: { ...user, burritoConsiderations } 
   });
 }
 
