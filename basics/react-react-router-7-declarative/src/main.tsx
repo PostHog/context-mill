@@ -9,7 +9,7 @@ import Burrito from './routes/Burrito';
 import Profile from './routes/Profile';
 
 import posthog from 'posthog-js';
-import { PostHogProvider } from '@posthog/react'
+import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -22,6 +22,7 @@ if (!root) throw new Error("Root element not found");
 ReactDOM.createRoot(root).render(
   <StrictMode>
     <PostHogProvider client={posthog}>
+    <PostHogErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Root />}>
@@ -31,6 +32,7 @@ ReactDOM.createRoot(root).render(
           </Route>
         </Routes>
       </BrowserRouter>
+      </PostHogErrorBoundary> 
     </PostHogProvider>
   </StrictMode>,
 );
