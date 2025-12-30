@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { usePostHog } from '@posthog/react';
 
 interface User {
   username: string;
@@ -10,7 +9,6 @@ interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  incrementBurritoConsiderations: () => void;
   setUser: (user: User) => void;
 }
 
@@ -19,7 +17,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const users: Map<string, User> = new Map();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const posthog = usePostHog();
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === 'undefined') return null;
 
@@ -43,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const { user: userData } = await response.json();
-
+        
         let localUser = users.get(username);
         if (!localUser) {
           localUser = userData as User;
@@ -52,16 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(localUser);
         localStorage.setItem('currentUser', username);
-        
-        // Identify user in PostHog using username as distinct ID
-        posthog?.identify(username, {
-          username: username,
-        });
-        
-        // Capture login event
-        posthog?.capture('user_logged_in', {
-          username: username,
-        });
         
         return true;
       }
@@ -77,21 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('currentUser');
   };
 
-  const incrementBurritoConsiderations = () => {
-    if (user) {
-      user.burritoConsiderations++;
-      users.set(user.username, user);
-      setUser({ ...user });
-    }
-  };
-
   const setUserState = (newUser: User) => {
     setUser(newUser);
     users.set(newUser.username, newUser);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, incrementBurritoConsiderations, setUser: setUserState }}>
+    <AuthContext.Provider value={{ user, login, logout, setUser: setUserState }}>
       {children}
     </AuthContext.Provider>
   );

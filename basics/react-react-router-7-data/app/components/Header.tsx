@@ -7,7 +7,6 @@ export default function Header() {
   const posthog = usePostHog();
 
   const handleLogout = () => {
-    posthog?.capture('user_logged_out');
     posthog?.reset();
     logout();
   };
@@ -21,7 +20,6 @@ export default function Header() {
             <>
               <Link to="/burrito">Burrito Consideration</Link>
               <Link to="/profile">Profile</Link>
-              <Link to="/error">Error</Link>
             </>
           )}
         </nav>
@@ -41,4 +39,3 @@ export default function Header() {
     </header>
   );
 }
-

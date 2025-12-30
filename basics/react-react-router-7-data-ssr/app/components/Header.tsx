@@ -1,13 +1,14 @@
 import { Link } from 'react-router';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 import { usePostHog } from '@posthog/react';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  // usePostHog returns undefined during SSR (when PHProvider client is undefined)
+  // After hydration, it returns the actual PostHog client
   const posthog = usePostHog();
 
   const handleLogout = () => {
-    posthog?.capture('user_logged_out');
     posthog?.reset();
     logout();
   };
@@ -21,7 +22,6 @@ export default function Header() {
             <>
               <Link to="/burrito">Burrito Consideration</Link>
               <Link to="/profile">Profile</Link>
-              <Link to="/error">Error</Link>
             </>
           )}
         </nav>

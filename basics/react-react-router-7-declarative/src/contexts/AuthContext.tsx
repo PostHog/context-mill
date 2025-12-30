@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
 import { usePostHog } from '@posthog/react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface User {
   username: string;
@@ -10,7 +10,6 @@ interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  incrementBurritoConsiderations: () => void;
   setUser: (user: User) => void;
 }
 
@@ -34,55 +33,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (response.ok) {
-        const { user: userData } = await response.json();
-
-        let localUser = users.get(username);
-        if (!localUser) {
-          localUser = userData as User;
-          users.set(username, localUser);
-        }
-
-        setUser(localUser);
-        localStorage.setItem('currentUser', username);
-        
-        // Identify user in PostHog using username as distinct ID
-        posthog?.identify(username, {
-          username: username,
-        });
-        
-        // Capture login event
-        posthog?.capture('user_logged_in', {
-          username: username,
-        });
-        
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
+    // Client-side only fake auth - no server calls
+    if (!username || !password) {
       return false;
     }
+
+    let localUser = users.get(username);
+    if (!localUser) {
+      localUser = { 
+        username, 
+        burritoConsiderations: 0 
+      };
+      users.set(username, localUser);
+    }
+
+    setUser(localUser);
+    localStorage.setItem('currentUser', username);
+    
+    posthog.identify(username);
+    posthog.capture('user_logged_in');
+    
+    return true;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('currentUser');
-  };
-
-  const incrementBurritoConsiderations = () => {
-    if (user) {
-      user.burritoConsiderations++;
-      users.set(user.username, user);
-      setUser({ ...user });
-    }
   };
 
   const setUserState = (newUser: User) => {
@@ -91,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, incrementBurritoConsiderations, setUser: setUserState }}>
+    <AuthContext.Provider value={{ user, login, logout, setUser: setUserState }}>
       {children}
     </AuthContext.Provider>
   );
