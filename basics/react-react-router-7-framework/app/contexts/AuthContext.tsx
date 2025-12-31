@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { usePostHog } from '@posthog/react';
 
 interface User {
   username: string;
@@ -19,7 +18,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const users: Map<string, User> = new Map();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const posthog = usePostHog();
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === 'undefined') return null;
 
@@ -52,16 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(localUser);
         localStorage.setItem('currentUser', username);
-        
-        // Identify user in PostHog using username as distinct ID
-        posthog?.identify(username, {
-          username: username,
-        });
-        
-        // Capture login event
-        posthog?.capture('user_logged_in', {
-          username: username,
-        });
         
         return true;
       }

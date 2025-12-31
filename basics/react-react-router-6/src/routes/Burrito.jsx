@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePostHog } from '@posthog/react';
 
 export default function BurritoPage() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
-  const posthog = usePostHog();
   const [hasConsidered, setHasConsidered] = useState(false);
+  const posthog = usePostHog()
 
   useEffect(() => {
     if (!user) {
@@ -20,7 +20,6 @@ export default function BurritoPage() {
   }
 
   const handleConsideration = () => {
-    // Client-side only - no server calls
     const updatedUser = {
       ...user,
       burritoConsiderations: user.burritoConsiderations + 1
@@ -28,11 +27,10 @@ export default function BurritoPage() {
     setUser(updatedUser);
     setHasConsidered(true);
     setTimeout(() => setHasConsidered(false), 2000);
-    
-    // Capture burrito consideration event
-    posthog?.capture('burrito_considered', {
+    posthog.capture('burrito_considered', {
       total_considerations: updatedUser.burritoConsiderations,
       username: user.username,
+      distinct_id: user.username,
     });
   };
 
@@ -63,3 +61,4 @@ export default function BurritoPage() {
     </div>
   );
 }
+

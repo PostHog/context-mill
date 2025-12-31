@@ -1,14 +1,6 @@
 import { useState } from 'react';
-import type { Route } from "./+types/home";
 import { useAuth } from '../contexts/AuthContext';
 import { usePostHog } from '@posthog/react';
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Burrito Consideration App" },
-    { name: "description", content: "Consider the potential of burritos" },
-  ];
-}
 
 export default function Home() {
   const { user, login } = useAuth();
@@ -17,27 +9,20 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    try {
-      const success = await login(username, password);
-      if (success) {
-        // Identify user in PostHog using username as distinct ID
-        posthog?.identify(username);
-        
-        // Capture login event
-        posthog?.capture('user_logged_in');
-        
-        setUsername('');
-        setPassword('');
-      } else {
-        setError('Please provide both username and password');
-      }
-    } catch (err) {
-      console.error('Login failed:', err);
-      setError('An error occurred during login');
+    const success = await login(username, password);
+    if (success) {
+      posthog.capture('user_logged_in', {
+        username: username,
+        distinct_id: username,
+      });
+      setUsername('');
+      setPassword('');
+    } else {
+      setError('Please provide both username and password');
     }
   };
 
@@ -93,3 +78,4 @@ export default function Home() {
     </div>
   );
 }
+

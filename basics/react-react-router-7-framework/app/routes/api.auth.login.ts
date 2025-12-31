@@ -1,6 +1,6 @@
-import { PostHog } from "posthog-node";
 import type { Route } from "./+types/api.auth.login";
 import { getBurritoConsiderations } from "../lib/db";
+import type { PostHogContext } from "../lib/posthog-middleware";
 
 const users = new Map<string, { username: string }>();
 
@@ -21,7 +21,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     users.set(username, user);
   }
 
-  const posthog = (context as any).posthog as PostHog | undefined;
+  const posthog = (context as PostHogContext).posthog;
   if (posthog) {
     posthog.capture({ event: 'server_login' });
   }

@@ -1,12 +1,10 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { usePostHog } from '@posthog/react';
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const posthog = usePostHog();
 
   useEffect(() => {
     if (!user) {
@@ -18,16 +16,6 @@ export default function ProfilePage() {
     return null;
   }
 
-  const triggerTestError = () => {
-    try {
-      throw new Error('Test error for PostHog error tracking');
-    } catch (err) {
-      posthog?.captureException(err);
-      console.error('Captured error:', err);
-      alert('Error captured and sent to PostHog!');
-    }
-  };
-
   return (
     <div className="container">
       <h1>User Profile</h1>
@@ -36,12 +24,6 @@ export default function ProfilePage() {
         <h2>Your Information</h2>
         <p><strong>Username:</strong> {user.username}</p>
         <p><strong>Burrito Considerations:</strong> {user.burritoConsiderations}</p>
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <button onClick={triggerTestError} className="btn-primary" style={{ backgroundColor: '#dc3545' }}>
-          Trigger Test Error (for PostHog)
-        </button>
       </div>
 
       <div style={{ marginTop: '2rem' }}>
@@ -61,3 +43,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePostHog } from '@posthog/react';
 
@@ -7,8 +7,12 @@ export default function Header() {
   const posthog = usePostHog();
 
   const handleLogout = () => {
-    posthog?.capture('user_logged_out');
-    posthog?.reset();
+    if (user) {
+      posthog.capture('user_logged_out', {
+        username: user.username,
+        distinct_id: user.username,
+      });
+    }
     logout();
   };
 
@@ -40,3 +44,4 @@ export default function Header() {
     </header>
   );
 }
+
