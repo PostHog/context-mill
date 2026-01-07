@@ -78,11 +78,29 @@ const DOCS_CONFIG = {
             description: 'PostHog integration documentation for Next.js Pages Router',
             url: 'https://posthog.com/docs/libraries/next-js.md'
         },
-        'react-react-router': {
-            id: 'react-react-router',
-            name: 'PostHog React with React Router integration documentation',
-            description: 'PostHog integration documentation for React with React Router',
-            url: 'https://posthog.com/docs/libraries/react.md'
+        'react-react-router-v6': {
+            id: 'react-react-router-v6',
+            name: 'PostHog React Router v6 integration documentation',
+            description: 'PostHog integration documentation for React Router v6',
+            url: 'https://posthog.com/docs/libraries/react-router/react-router-v6'
+        },
+        'react-react-router-v7-framework': {
+            id: 'react-react-router-v7-framework',
+            name: 'PostHog React Router v7 Framework mode integration documentation',
+            description: 'PostHog integration documentation for React Router v7 Framework mode',
+            url: 'https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode'
+        },
+        'react-react-router-v7-data': {
+            id: 'react-react-router-v7-data',
+            name: 'PostHog React Router v7 Data mode integration documentation',
+            description: 'PostHog integration documentation for React Router v7 Data mode',
+            url: 'https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode'
+        },
+        'react-react-router-v7-declarative': {
+            id: 'react-react-router-v7-declarative',
+            name: 'PostHog React Router v7 Declarative mode integration documentation',
+            description: 'PostHog integration documentation for React Router v7 Declarative mode',
+            url: 'https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode'
         }
     }
 };
@@ -120,10 +138,43 @@ const defaultConfig = {
             plugins: [],
         },
         {
-            path: 'basics/react-react-router',
-            id: 'react-react-router',
-            displayName: 'React with React Router',
-            tags: ['react', 'react-router', 'spa'],
+            path: 'basics/react-react-router-6',
+            id: 'react-react-router-6',
+            displayName: 'React Router v6',
+            tags: ['react', 'react-router', 'v6', 'spa'],
+            skipPatterns: {
+                includes: [],
+                regex: [],
+            },
+            plugins: [],
+        },
+        {
+            path: 'basics/react-react-router-7-framework',
+            id: 'react-react-router-7-framework',
+            displayName: 'React Router v7 - Framework mode',
+            tags: ['react', 'react-router', 'v7', 'framework', 'ssr'],
+            skipPatterns: {
+                includes: [],
+                regex: [],
+            },
+            plugins: [],
+        },
+        {
+            path: 'basics/react-react-router-7-data',
+            id: 'react-react-router-7-data',
+            displayName: 'React Router v7 - Data mode',
+            tags: ['react', 'react-router', 'v7', 'data', 'spa'],
+            skipPatterns: {
+                includes: [],
+                regex: [],
+            },
+            plugins: [],
+        },
+        {
+            path: 'basics/react-react-router-7-declarative',
+            id: 'react-react-router-7-declarative',
+            displayName: 'React Router v7 - Declarative mode',
+            tags: ['react', 'react-router', 'v7', 'declarative', 'spa'],
             skipPatterns: {
                 includes: [],
                 regex: [],
