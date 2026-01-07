@@ -71,7 +71,7 @@ import posthog from "posthog-js"
 posthog.init(import.meta.env.VITE_POSTHOG_KEY!, {
   api_host: "/ingest",
   ui_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-  person_profiles: 'identified_only',
+  defaults: '2025-11-30',
   capture_exceptions: true,
   debug: import.meta.env.DEV,
 });
