@@ -24,8 +24,7 @@ export default function Home() {
     try {
       const success = await login(username, password);
       if (success) {
-        // Important: You should only identify once on the client side upon login to consolidate the new user ID and the automatically generated anonymous ID. 
-        // Server capture should pass in session and distinctID passed in from client side.
+        // Identifying the user once on login/sign up is enough.
         posthog?.identify(username);
         
         // Capture login event
