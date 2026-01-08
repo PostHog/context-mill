@@ -90,7 +90,7 @@ The session and distinct ID can be passed to the backend by including the `X-POS
 
 You should use these headers in the backend to identify events. 
 
-**Important**: do not identify users on the server-side.
+**Important**: Identify the user once on the client-side to consolidate the new user ID and the automatically generated anonymous ID. Don't identify again on the server-side.
 
 ### Event tracking (Burrito.tsx)
 
