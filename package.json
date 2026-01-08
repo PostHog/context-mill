@@ -11,13 +11,9 @@
   },
   "devDependencies": {
     "archiver": "^7.0.1",
-    "vitest": "^4.0.16"
+    "vitest": "^2.0.0"
   },
   "dependencies": {
-    "@posthog/react": "^1.5.2",
-    "gray-matter": "^4.0.3",
-    "posthog-js": "^1.311.0",
-    "posthog-node": "^5.18.0",
-    "react-router": "^7.11.0"
+    "gray-matter": "^4.0.3"
   }
 }
