@@ -23,6 +23,7 @@ if (!root) throw new Error("Root element not found");
 ReactDOM.createRoot(root).render(
   <StrictMode>
     <PostHogProvider client={posthog}> 
+    <PostHogErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Root />}>
@@ -32,6 +33,7 @@ ReactDOM.createRoot(root).render(
         </Route>
       </Routes>
     </BrowserRouter>
+    </PostHogErrorBoundary>
     </PostHogProvider>
   </StrictMode>,
 );

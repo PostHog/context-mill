@@ -1,16 +1,111 @@
-# React + Vite
+# PostHog React Router 6 example
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a [React Router 6](https://reactrouter.com) example demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Product Analytics**: Track user events and behaviors
+- **Session Replay**: Record and replay user sessions
+- **Error Tracking**: Capture and track errors
+- **User Authentication**: Demo login system with PostHog user identification
+- **Client-side Tracking**: Examples of client-side tracking methods
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Install Dependencies
 
-## Expanding the ESLint configuration
+```bash
+npm install
+# or
+pnpm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Configure Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+VITE_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+
+### 3. Run the Development Server
+
+```bash
+npm run dev
+# or
+pnpm dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the app.
+
+## Project Structure
+
+```
+src/
+├── components/
+│   └── Header.jsx           # Navigation header with auth state
+├── contexts/
+│   └── AuthContext.jsx      # Authentication context with PostHog integration
+├── routes/
+│   ├── Root.jsx             # Root route component
+│   ├── Home.jsx             # Home/Login page
+│   ├── Burrito.jsx          # Demo feature page with event tracking
+│   └── Profile.jsx            # User profile with error tracking demo
+├── main.jsx                 # App entry point with PostHog initialization
+└── globals.css              # Global styles
+```
+
+## Key Integration Points
+
+### Client-side initialization (main.jsx)
+
+```javascript
+import posthog from "posthog-js"
+import { PostHogProvider } from "@posthog/react"
+
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  defaults: '2025-11-30',
+});
+
+<PostHogProvider client={posthog}>
+  <RouterProvider router={router} />
+</PostHogProvider>
+```
+
+### User identification (AuthContext.jsx)
+
+The user is identified when the user logs in on the **client-side**.
+
+```javascript
+posthog.identify(username);
+posthog.capture('user_logged_in');
+```
+
+The session and distinct ID can be passed to the backend by including the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers.
+
+You should use these headers in the backend to identify events. 
+
+**Important**: do not identify users on the server-side.
+
+### Event tracking (Burrito.jsx)
+
+```javascript
+posthog?.capture('burrito_considered', {
+  total_considerations: updatedUser.burritoConsiderations,
+  username: user.username,
+});
+```
+
+### Error tracking
+
+**Note**: The app can be wrapped with `PostHogErrorBoundary` from `@posthog/react` (imported in `main.jsx`) to automatically capture unhandled React errors. Manual error capture can be added to components using `posthog?.captureException(err)`.
+
+## Learn More
+
+- [PostHog Documentation](https://posthog.com/docs)
+- [React Router 6 Documentation](https://reactrouter.com/en/6.28.0)
+- [PostHog React Integration Guide](https://posthog.com/docs/libraries/react)
