@@ -1,4 +1,24 @@
-# Welcome to the PostHog example collection
+# Welcome to the PostHog examples repo
+
+The examples repo assembles PostHog context for AI agents and LLMs. It gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into a versioned manifest, which can be shipped anywhere as a zip file. 
+
+The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/products/mcp) currently fetches the examples repo manifest and exposes it to any MCP-compatible client as resources and slash commands. This is what currently powers the PostHog [wizard](https://github.com/PostHog/wizard). 
+
+## Context engine 
+
+![context engine diagram](https://res.cloudinary.com/dmukukwp6/image/upload/q_auto,f_auto/context_engine_29f6d6ddc0.png)
+
+The examples repo effectively acts as a context engine, an assembly line for turning disparate PostHog knowledge into something portable, something AI systems can reliably consume. 
+
+You can break its context engineering flow into three main stages.
+
+**1. Context sourcing**: The examples repo pulls from the entire PostHog developer docs, with pages delivered from posthog.com as raw Markdown. It also includes curated, hand-crafted prompts and working example apps.
+
+**2. Context assembly**: The examples repo transforms and packages the sourced context into a zip file manifest, which is meant to be portable and self-contained. We can structure and shape the manifest however we need.
+
+**3. Context delivery**: The examples repo creates a versioned release for the manifest, which can be consumed by any agent or MCP server as a skill or resource.
+
+## Example apps
 
 We've got live, working example code that demonstrates PostHog in action. You can run these yourself to see events flow into your PostHog project.
 
@@ -7,8 +27,6 @@ We've got live, working example code that demonstrates PostHog in action. You ca
 These are more like model airplanes. They're dramatically simplified to make it easy to see PostHog in action. You shouldn't use these as starter projects or put them into production. The authentication is fake!
 
 But the leanness makes these useful for agent-driven development. Use these as context to help your agent make better integration decisions about PostHog.
-
-## Contents
 
 ```
 examples/
@@ -23,37 +41,9 @@ examples/
 └── scripts/                     # Build scripts
 ```
 
-## Examples
-
-### basics/next-app-router
-
-Next.js 15 with App Router demonstrating:
-- Client-side and server-side PostHog initialization
-- User identification and authentication
-- Event tracking (login, logout, custom events)
-- Error tracking with `posthog.captureException()`
-- Reverse proxy setup for PostHog ingestion
-- Session replay (automatic)
-
-### basics/next-pages-router
-
-Same functionality as App Router example, using Pages Router patterns.
-
-### basics/react-react-router
-
-React SPA with React Router demonstrating PostHog integration in a client-side app.
-
-### basics/react-tanstack-router
-
-React SPA with TanStack Router demonstrating PostHog integration with file-based routing.
-
-### basics/tanstack-start
-
-Full-stack TanStack Start app with PostHog integration.
-
 ## MCP resources
 
-This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/products/mcp).
+This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp).
 
 ### Build outputs
 
