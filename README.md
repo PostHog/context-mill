@@ -8,11 +8,11 @@ The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/products
 
 ![context engine diagram](https://res.cloudinary.com/dmukukwp6/image/upload/q_auto,f_auto/context_engine_29f6d6ddc0.png)
 
-The examples repo effectively acts as a context engine, an assembly line for turning disparate PostHog knowledge into something portable and something AI systems can reliably consume. 
+The examples repo effectively acts as a context engine, an assembly line for turning disparate PostHog knowledge into something portable, something AI systems can reliably consume. 
 
 You can break its context engineering flow into three main stages.
 
-**1. Context sourcing**: The examples repo pulls from the full PostHog developer docs, with pages delivered from posthog.com as raw Markdown. It also includes curated, hand-crafted prompts and working example apps.
+**1. Context sourcing**: The examples repo pulls from the entire PostHog developer docs, with pages delivered from posthog.com as raw Markdown. It also includes curated, hand-crafted prompts and working example apps.
 
 **2. Context assembly**: The examples repo transforms and packages the sourced context into a zip file manifest, which is meant to be portable and self-contained. We can structure and shape the manifest however we need.
 
