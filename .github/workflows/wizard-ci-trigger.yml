@@ -74,10 +74,13 @@ jobs:
 
       - name: Post wizard-ci hint
         uses: actions/github-script@v7
+        env:
+          TABLE_OUTPUT: ${{ steps.fetch-apps.outputs.table }}
+          CATEGORIES_OUTPUT: ${{ steps.fetch-apps.outputs.categories }}
         with:
           script: |
-            const table = `${{ steps.fetch-apps.outputs.table }}`;
-            const categories = `${{ steps.fetch-apps.outputs.categories }}`;
+            const table = process.env.TABLE_OUTPUT;
+            const categories = process.env.CATEGORIES_OUTPUT;
 
             const body = [
               '## 🧙 Wizard CI',
