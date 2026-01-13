@@ -33,9 +33,13 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             | jq -r '[.[] | select(.type == "dir") | .name] | sort | .[]')
 
-          # Build markdown table by category
-          TABLE=""
+          # Build lists by category
           CATEGORY_LIST=""
+          APP_LIST_VISIBLE=""
+          APP_LIST_COLLAPSED=""
+          APP_COUNT=0
+          VISIBLE_COUNT=3
+
           for category in $CATEGORIES; do
             # Fetch apps in this category
             APPS=$(curl -s "https://api.github.com/repos/PostHog/wizard-workbench/contents/apps/$category" \
@@ -43,65 +47,82 @@ jobs:
               | jq -r '[.[] | select(.type == "dir") | .name] | sort | .[]' 2>/dev/null || echo "")
 
             if [ -n "$APPS" ]; then
-              # Format apps as category/app with backticks
-              FORMATTED=""
-              for app in $APPS; do
-                if [ -n "$FORMATTED" ]; then
-                  FORMATTED="$FORMATTED · \`$category/$app\`"
-                else
-                  FORMATTED="\`$category/$app\`"
-                fi
-              done
-              TABLE="$TABLE| \`$category\` | $FORMATTED |\n"
+              # Add to category list
+              CATEGORY_LIST="$CATEGORY_LIST- \`/wizard-ci $category\`\n"
 
-              # Build category list
-              if [ -n "$CATEGORY_LIST" ]; then
-                CATEGORY_LIST="$CATEGORY_LIST · \`/wizard-ci $category\`"
-              else
-                CATEGORY_LIST="\`/wizard-ci $category\`"
-              fi
+              # Add apps to visible or collapsed list
+              for app in $APPS; do
+                if [ $APP_COUNT -lt $VISIBLE_COUNT ]; then
+                  APP_LIST_VISIBLE="$APP_LIST_VISIBLE- \`/wizard-ci $category/$app\`\n"
+                else
+                  APP_LIST_COLLAPSED="$APP_LIST_COLLAPSED- \`/wizard-ci $category/$app\`\n"
+                fi
+                APP_COUNT=$((APP_COUNT + 1))
+              done
             fi
           done
 
-          # Use heredoc for multiline output
+          # Use heredoc for multiline outputs
           {
-            echo "table<<EOF"
-            echo -e "$TABLE"
+            echo "categories<<EOF"
+            echo -e "$CATEGORY_LIST"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-          echo "categories=$CATEGORY_LIST" >> $GITHUB_OUTPUT
+          {
+            echo "apps_visible<<EOF"
+            echo -e "$APP_LIST_VISIBLE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+          {
+            echo "apps_collapsed<<EOF"
+            echo -e "$APP_LIST_COLLAPSED"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Post wizard-ci hint
         uses: actions/github-script@v7
         env:
-          TABLE_OUTPUT: ${{ steps.fetch-apps.outputs.table }}
           CATEGORIES_OUTPUT: ${{ steps.fetch-apps.outputs.categories }}
+          APPS_VISIBLE_OUTPUT: ${{ steps.fetch-apps.outputs.apps_visible }}
+          APPS_COLLAPSED_OUTPUT: ${{ steps.fetch-apps.outputs.apps_collapsed }}
           PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
-            const table = process.env.TABLE_OUTPUT || '';
             const categories = process.env.CATEGORIES_OUTPUT || '';
+            const appsVisible = process.env.APPS_VISIBLE_OUTPUT || '';
+            const appsCollapsed = process.env.APPS_COLLAPSED_OUTPUT || '';
             const inputPrNumber = process.env.PR_NUMBER;
 
-            const body = [
+            const bodyParts = [
               '## 🧙 Wizard CI',
               '',
-              'Test your changes against example apps by commenting:',
+              'Run the Wizard CI and test your changes against [wizard-workbench](https://github.com/PostHog/wizard-workbench) example apps by commenting:',
               '',
-              '**Run all apps:**',
-              '`/wizard-ci all`',
+              '**Test all apps:**',
+              '- `/wizard-ci all`',
               '',
-              '**Run by category:**',
-              categories,
+              '**Test all apps in a directory:**',
+              categories.trim(),
               '',
-              '**Run specific app:**',
-              '| Category | Apps |',
-              '|----------|------|',
-              table,
-              '',
-              'Results will be posted here when complete. Run the command multiple times as needed.'
-            ].join('\n');
+              '**Test an individual app:**',
+              appsVisible.trim()
+            ];
+
+            if (appsCollapsed.trim()) {
+              bodyParts.push('');
+              bodyParts.push('<details>');
+              bodyParts.push('<summary>Show more apps</summary>');
+              bodyParts.push('');
+              bodyParts.push(appsCollapsed.trim());
+              bodyParts.push('</details>');
+            }
+
+            bodyParts.push('');
+            bodyParts.push('Results will be posted here when complete.');
+
+            const body = bodyParts.join('\n');
 
             const prNumber = context.eventName === 'workflow_dispatch'
               ? parseInt(inputPrNumber, 10)
