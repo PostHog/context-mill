@@ -5,6 +5,12 @@ on:
     types: [opened]
   issue_comment:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to post the hint comment on'
+        required: true
+        type: number
 
 permissions:
   contents: read
@@ -16,7 +22,7 @@ jobs:
   # POST WELCOME: First-time hint with all available apps
   # ============================================================================
   post-welcome:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch available apps from wizard-workbench
@@ -73,27 +79,33 @@ jobs:
             const table = `${{ steps.fetch-apps.outputs.table }}`;
             const categories = `${{ steps.fetch-apps.outputs.categories }}`;
 
-            const body = `## 🧙 Wizard CI
+            const body = [
+              '## 🧙 Wizard CI',
+              '',
+              'Test your changes against example apps by commenting:',
+              '',
+              '**Run all apps:**',
+              '`/wizard-ci all`',
+              '',
+              '**Run by category:**',
+              categories,
+              '',
+              '**Run specific app:**',
+              '| Category | Apps |',
+              '|----------|------|',
+              table,
+              '',
+              'Results will be posted here when complete. Run the command multiple times as needed.'
+            ].join('\n');
 
-Test your changes against example apps by commenting:
-
-**Run all apps:**
-` + '`/wizard-ci all`' + `
-
-**Run by category:**
-${categories}
-
-**Run specific app:**
-| Category | Apps |
-|----------|------|
-${table}
-
-Results will be posted here when complete. Run the command multiple times as needed.`;
+            const prNumber = context.eventName === 'workflow_dispatch'
+              ? ${{ inputs.pr_number || 0 }}
+              : context.payload.pull_request.number;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
+              issue_number: prNumber,
               body
             });
 
