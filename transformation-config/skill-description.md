@@ -20,7 +20,7 @@ Review the example project first to understand the pattern, then consult the doc
 
 ## Identifying users
 
-Call `posthog.identify()` on the client side during login and signup events. Use form contents to identify users on submit. If server-side code exists, pass the client-side session and distinct ID to maintain correlation.
+Call `posthog.identify()` on the client side during login and signup events. Use form contents to identify users on submit. If server-side code exists, pass the client-side session and distinct ID using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to maintain correlation.
 
 ## Error tracking
 
