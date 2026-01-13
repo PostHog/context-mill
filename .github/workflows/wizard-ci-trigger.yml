@@ -73,16 +73,12 @@ jobs:
             const table = `${{ steps.fetch-apps.outputs.table }}`;
             const categories = `${{ steps.fetch-apps.outputs.categories }}`;
 
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `## 🧙 Wizard CI
+            const body = `## 🧙 Wizard CI
 
 Test your changes against example apps by commenting:
 
 **Run all apps:**
-\`/wizard-ci all\`
+` + '`/wizard-ci all`' + `
 
 **Run by category:**
 ${categories}
@@ -92,7 +88,13 @@ ${categories}
 |----------|------|
 ${table}
 
-Results will be posted here when complete. Run the command multiple times as needed.`
+Results will be posted here when complete. Run the command multiple times as needed.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body
             });
 
   # ============================================================================
