@@ -36,8 +36,6 @@ jobs:
           # Build lists by category
           CATEGORY_LIST=""
           APP_LIST=""
-          APP_COUNT=0
-          MAX_APPS=6
 
           for category in $CATEGORIES; do
             # Fetch apps in this category
@@ -49,20 +47,12 @@ jobs:
               # Add to category list
               CATEGORY_LIST="$CATEGORY_LIST- \`/wizard-ci $category\`\n"
 
-              # Add apps to app list (up to max)
+              # Add all apps to app list
               for app in $APPS; do
-                if [ $APP_COUNT -lt $MAX_APPS ]; then
-                  APP_LIST="$APP_LIST- \`/wizard-ci $category/$app\`\n"
-                  APP_COUNT=$((APP_COUNT + 1))
-                fi
+                APP_LIST="$APP_LIST- \`/wizard-ci $category/$app\`\n"
               done
             fi
           done
-
-          # Add ellipsis if we hit the limit
-          if [ $APP_COUNT -ge $MAX_APPS ]; then
-            APP_LIST="$APP_LIST- ...\n"
-          fi
 
           # Use heredoc for multiline outputs
           {
