@@ -77,10 +77,12 @@ jobs:
         env:
           TABLE_OUTPUT: ${{ steps.fetch-apps.outputs.table }}
           CATEGORIES_OUTPUT: ${{ steps.fetch-apps.outputs.categories }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
-            const table = process.env.TABLE_OUTPUT;
-            const categories = process.env.CATEGORIES_OUTPUT;
+            const table = process.env.TABLE_OUTPUT || '';
+            const categories = process.env.CATEGORIES_OUTPUT || '';
+            const inputPrNumber = process.env.PR_NUMBER;
 
             const body = [
               '## 🧙 Wizard CI',
@@ -102,7 +104,7 @@ jobs:
             ].join('\n');
 
             const prNumber = context.eventName === 'workflow_dispatch'
-              ? ${{ inputs.pr_number || 0 }}
+              ? parseInt(inputPrNumber, 10)
               : context.payload.pull_request.number;
 
             await github.rest.issues.createComment({
