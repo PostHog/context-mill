@@ -33,9 +33,12 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             | jq -r '[.[] | select(.type == "dir") | .name] | sort | .[]')
 
-          # Build markdown table by category
-          TABLE=""
+          # Build lists by category
           CATEGORY_LIST=""
+          APP_LIST=""
+          APP_COUNT=0
+          MAX_APPS=6
+
           for category in $CATEGORIES; do
             # Fetch apps in this category
             APPS=$(curl -s "https://api.github.com/repos/PostHog/wizard-workbench/contents/apps/$category" \
@@ -43,64 +46,64 @@ jobs:
               | jq -r '[.[] | select(.type == "dir") | .name] | sort | .[]' 2>/dev/null || echo "")
 
             if [ -n "$APPS" ]; then
-              # Format apps as category/app with backticks
-              FORMATTED=""
+              # Add to category list
+              CATEGORY_LIST="$CATEGORY_LIST- \`/wizard-ci $category\`\n"
+
+              # Add apps to app list (up to max)
               for app in $APPS; do
-                if [ -n "$FORMATTED" ]; then
-                  FORMATTED="$FORMATTED · \`$category/$app\`"
-                else
-                  FORMATTED="\`$category/$app\`"
+                if [ $APP_COUNT -lt $MAX_APPS ]; then
+                  APP_LIST="$APP_LIST- \`/wizard-ci $category/$app\`\n"
+                  APP_COUNT=$((APP_COUNT + 1))
                 fi
               done
-              TABLE="$TABLE| \`$category\` | $FORMATTED |\n"
-
-              # Build category list
-              if [ -n "$CATEGORY_LIST" ]; then
-                CATEGORY_LIST="$CATEGORY_LIST · \`/wizard-ci $category\`"
-              else
-                CATEGORY_LIST="\`/wizard-ci $category\`"
-              fi
             fi
           done
 
-          # Use heredoc for multiline output
+          # Add ellipsis if we hit the limit
+          if [ $APP_COUNT -ge $MAX_APPS ]; then
+            APP_LIST="$APP_LIST- ...\n"
+          fi
+
+          # Use heredoc for multiline outputs
           {
-            echo "table<<EOF"
-            echo -e "$TABLE"
+            echo "categories<<EOF"
+            echo -e "$CATEGORY_LIST"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-          echo "categories=$CATEGORY_LIST" >> $GITHUB_OUTPUT
+          {
+            echo "apps<<EOF"
+            echo -e "$APP_LIST"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Post wizard-ci hint
         uses: actions/github-script@v7
         env:
-          TABLE_OUTPUT: ${{ steps.fetch-apps.outputs.table }}
           CATEGORIES_OUTPUT: ${{ steps.fetch-apps.outputs.categories }}
+          APPS_OUTPUT: ${{ steps.fetch-apps.outputs.apps }}
           PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
-            const table = process.env.TABLE_OUTPUT || '';
             const categories = process.env.CATEGORIES_OUTPUT || '';
+            const apps = process.env.APPS_OUTPUT || '';
             const inputPrNumber = process.env.PR_NUMBER;
 
             const body = [
               '## 🧙 Wizard CI',
               '',
-              'Test your changes against example apps by commenting:',
+              'Run the Wizard CI and test your changes against [wizard-workbench](https://github.com/PostHog/wizard-workbench) example apps by commenting:',
               '',
-              '**Run all apps:**',
-              '`/wizard-ci all`',
+              '**Test all apps:**',
+              '- `/wizard-ci all`',
               '',
-              '**Run by category:**',
-              categories,
+              '**Test all apps in a directory:**',
+              categories.trim(),
               '',
-              '**Run specific app:**',
-              '| Category | Apps |',
-              '|----------|------|',
-              table,
+              '**Test an individual app:**',
+              apps.trim(),
               '',
-              'Results will be posted here when complete. Run the command multiple times as needed.'
+              'Results will be posted here when complete.'
             ].join('\n');
 
             const prNumber = context.eventName === 'workflow_dispatch'
