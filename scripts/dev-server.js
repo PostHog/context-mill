@@ -21,20 +21,20 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const PORT = process.env.PORT || 8765;
-const ZIP_PATH = path.join(__dirname, '..', 'dist', 'examples-mcp-resources.zip');
+const ZIP_PATH = path.join(__dirname, '..', 'dist', 'skills-mcp-resources.zip');
+const SKILLS_DIR = path.join(__dirname, '..', 'dist', 'skills');
 
 // Directories to watch for changes
 const WATCH_DIRS = [
     path.join(__dirname, '..', 'llm-prompts'),
-    path.join(__dirname, '..', 'mcp-commands'),
-    path.join(__dirname, '..', 'basics'),
+    path.join(__dirname, '..', 'transformation-config'),
 ];
 
 let isRebuilding = false;
 let rebuildQueued = false;
 
 /**
- * Run the build script
+ * Run the build script with local URLs
  */
 function rebuild() {
     if (isRebuilding) {
@@ -42,12 +42,16 @@ function rebuild() {
         return;
     }
 
-    console.log('\n🔨 Rebuilding resources...');
+    console.log('\n🔨 Rebuilding skills with local URLs...');
     isRebuilding = true;
 
-    const buildProcess = spawn('node', [path.join(__dirname, 'build-examples-mcp-resources.js')], {
+    // Use local URL for skill downloads during development
+    const localSkillsUrl = `http://localhost:${PORT}/skills`;
+
+    const buildProcess = spawn('node', [path.join(__dirname, 'build-skills.js')], {
         stdio: 'inherit',
-        cwd: path.join(__dirname, '..')
+        cwd: path.join(__dirname, '..'),
+        env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl }
     });
 
     buildProcess.on('close', (code) => {
@@ -68,7 +72,7 @@ function rebuild() {
 }
 
 /**
- * Watch directories for markdown file changes
+ * Watch directories for file changes
  */
 function setupWatchers() {
     console.log('\n👀 Watching for changes in:');
@@ -85,8 +89,8 @@ function setupWatchers() {
         fs.watch(dir, { recursive: true }, (eventType, filename) => {
             if (!filename) return;
 
-            // Only trigger on markdown or JSON files
-            if (filename.endsWith('.md') || filename.endsWith('.json')) {
+            // Trigger on markdown, JSON, or YAML files
+            if (filename.endsWith('.md') || filename.endsWith('.json') || filename.endsWith('.yaml') || filename.endsWith('.yml')) {
                 console.log(`\n📝 Changed: ${filename}`);
                 rebuild();
             }
@@ -95,11 +99,39 @@ function setupWatchers() {
 }
 
 /**
- * Create HTTP server to serve the ZIP file
+ * Create HTTP server to serve the ZIP files
  */
 function createServer() {
     const server = http.createServer((req, res) => {
-        // Only serve the ZIP file
+        // Serve individual skill ZIPs at /skills/{id}.zip
+        const skillMatch = req.url?.match(/^\/skills\/(.+\.zip)$/);
+        if (skillMatch) {
+            const skillFile = skillMatch[1];
+            const skillPath = path.join(SKILLS_DIR, skillFile);
+
+            if (!fs.existsSync(skillPath)) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end(`Skill ZIP not found: ${skillFile}`);
+                return;
+            }
+
+            const stat = fs.statSync(skillPath);
+            const fileSize = stat.size;
+            const fileStream = fs.createReadStream(skillPath);
+
+            res.writeHead(200, {
+                'Content-Type': 'application/zip',
+                'Content-Length': fileSize,
+                'Content-Disposition': `attachment; filename="${skillFile}"`,
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+            });
+
+            fileStream.pipe(res);
+            console.log(`📦 Served skill: ${skillFile} (${(fileSize / 1024).toFixed(1)} KB)`);
+            return;
+        }
+
+        // Serve bundled skills ZIP at the examples URL (skills replaces examples)
         if (req.url === '/examples-mcp-resources.zip' || req.url === '/') {
             if (!fs.existsSync(ZIP_PATH)) {
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -114,7 +146,7 @@ function createServer() {
             res.writeHead(200, {
                 'Content-Type': 'application/zip',
                 'Content-Length': fileSize,
-                'Content-Disposition': 'attachment; filename="examples-mcp-resources.zip"',
+                'Content-Disposition': 'attachment; filename="skills-mcp-resources.zip"',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0'
@@ -122,16 +154,17 @@ function createServer() {
 
             fileStream.pipe(res);
 
-            console.log(`📦 Served ZIP file (${(fileSize / 1024).toFixed(1)} KB)`);
+            console.log(`📦 Served bundle (${(fileSize / 1024).toFixed(1)} KB)`);
         } else {
             res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Not found. Use /examples-mcp-resources.zip');
+            res.end('Not found. Use /examples-mcp-resources.zip or /skills/{id}.zip');
         }
     });
 
     server.listen(PORT, () => {
         console.log('\n🚀 Development server started!');
-        console.log(`\n📍 ZIP available at: http://localhost:${PORT}/examples-mcp-resources.zip`);
+        console.log(`\n📍 Bundle: http://localhost:${PORT}/examples-mcp-resources.zip`);
+        console.log(`📍 Skills: http://localhost:${PORT}/skills/{id}.zip`);
         console.log('\n💡 To use with MCP server, set environment variable:');
         console.log(`   POSTHOG_MCP_LOCAL_EXAMPLES_URL=http://localhost:${PORT}/examples-mcp-resources.zip`);
     });
@@ -141,20 +174,26 @@ function createServer() {
  * Main entry point
  */
 async function main() {
-    console.log('🎯 PostHog MCP Resources Development Server');
-    console.log('==========================================');
+    console.log('🎯 PostHog MCP Skills Development Server');
+    console.log('=========================================');
 
-    // Initial build if ZIP doesn't exist
+    // Initial build with local URLs
+    const localSkillsUrl = `http://localhost:${PORT}/skills`;
+
     if (!fs.existsSync(ZIP_PATH)) {
         console.log('\n⚠️  ZIP file not found. Running initial build...');
-        await new Promise((resolve) => {
-            const buildProcess = spawn('node', [path.join(__dirname, 'build-examples-mcp-resources.js')], {
-                stdio: 'inherit',
-                cwd: path.join(__dirname, '..')
-            });
-            buildProcess.on('close', resolve);
-        });
+    } else {
+        console.log('\n🔄 Rebuilding with local URLs...');
     }
+
+    await new Promise((resolve) => {
+        const buildProcess = spawn('node', [path.join(__dirname, 'build-skills.js')], {
+            stdio: 'inherit',
+            cwd: path.join(__dirname, '..'),
+            env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl }
+        });
+        buildProcess.on('close', resolve);
+    });
 
     // Start server
     createServer();

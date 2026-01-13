@@ -101,13 +101,17 @@ jobs:
           echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
           echo "Building version: ${VERSION}"
 
-      - name: Build markdown documentation
-        run: npm run build:docs
+      - name: Build skills
+        run: npm run build:skills
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
       - name: List build artifacts
-        run: ls -lh dist/
+        run: |
+          echo "=== dist/ ==="
+          ls -lh dist/
+          echo "=== dist/skills/ ==="
+          ls -lh dist/skills/
 
       - name: Create Release
         id: create_release
@@ -118,26 +122,37 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           release_name: Release ${{ steps.version.outputs.tag }}
           body: |
-            Automated release of PostHog example projects and LLM prompts as markdown documentation.
+            Automated release of PostHog integration skills for AI agents.
 
-            This release contains **examples-mcp-resources.zip** with:
-            - Pre-processed markdown files for all example projects
-            - LLM workflow guide prompts (in `prompts/` directory)
+            This release contains:
+            - **skills-mcp-resources.zip** - Bundle containing manifest + all skill ZIPs
+            - Individual skill ZIPs for direct download
 
             **Version:** ${{ steps.version.outputs.version }}
             **SHA:** ${{ github.sha }}
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
+      - name: Upload skills bundle
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/examples-mcp-resources.zip
-          asset_name: examples-mcp-resources.zip
+          asset_path: ./dist/skills-mcp-resources.zip
+          asset_name: skills-mcp-resources.zip
           asset_content_type: application/zip
+
+      - name: Upload individual skill ZIPs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Upload each skill ZIP as a release asset
+          for file in dist/skills/*.zip; do
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            gh release upload ${{ steps.version.outputs.tag }} "$file" --clobber
+          done
 
       - name: Update latest tag
         run: |
@@ -157,12 +172,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Artifact:** examples-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle:** skills-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Manifest Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "### Skills Manifest" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          cat dist/manifest.json | jq '{version, buildVersion, buildTimestamp}' >> $GITHUB_STEP_SUMMARY
+          cat dist/skills/manifest.json | jq '{version, buildVersion, buildTimestamp, skillCount: (.skills | length)}' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Files Generated" >> $GITHUB_STEP_SUMMARY
-          ls -lh dist/ >> $GITHUB_STEP_SUMMARY
+          echo "### Individual Skills" >> $GITHUB_STEP_SUMMARY
+          ls -lh dist/skills/*.zip >> $GITHUB_STEP_SUMMARY
