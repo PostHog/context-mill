@@ -8,6 +8,9 @@ on:
     - cron: '0 8 * * *'
   workflow_dispatch:
 
+# Temporarily disabled - remove this line to re-enable
+if: false
+
 jobs:
   discover:
     runs-on: ubuntu-latest
