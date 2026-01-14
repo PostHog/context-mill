@@ -101,8 +101,8 @@ jobs:
           echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
           echo "Building version: ${VERSION}"
 
-      - name: Build skills
-        run: npm run build:skills
+      - name: Build all (skills + docs)
+        run: npm run build
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
@@ -112,6 +112,8 @@ jobs:
           ls -lh dist/
           echo "=== dist/skills/ ==="
           ls -lh dist/skills/
+          echo "=== examples-mcp-resources.zip ==="
+          ls -lh dist/examples-mcp-resources.zip || echo "Not found"
 
       - name: Create Release
         id: create_release
@@ -122,10 +124,11 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           release_name: Release ${{ steps.version.outputs.tag }}
           body: |
-            Automated release of PostHog integration skills for AI agents.
+            Automated release of PostHog integration resources for AI agents.
 
             This release contains:
-            - **skills-mcp-resources.zip** - Bundle containing manifest + all skill ZIPs
+            - **skills-mcp-resources.zip** - Bundle containing skills manifest + all skill ZIPs
+            - **examples-mcp-resources.zip** - Legacy bundle with example docs and workflows
             - Individual skill ZIPs for direct download
 
             **Version:** ${{ steps.version.outputs.version }}
@@ -141,6 +144,16 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/skills-mcp-resources.zip
           asset_name: skills-mcp-resources.zip
+          asset_content_type: application/zip
+
+      - name: Upload examples bundle (legacy)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/examples-mcp-resources.zip
+          asset_name: examples-mcp-resources.zip
           asset_content_type: application/zip
 
       - name: Upload individual skill ZIPs
