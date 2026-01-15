@@ -2,11 +2,17 @@
 
 This skill helps you add PostHog analytics to {display_name} applications.
 
+## Workflow
+
+Follow these steps in order to complete the integration:
+
+{workflow}
+
 ## Reference files
 
 {references}
 
-Review the example project first to understand the pattern, then consult the documentation for API details.
+The example project shows the target implementation pattern. Consult the documentation for API details.
 
 ## Key principles
 

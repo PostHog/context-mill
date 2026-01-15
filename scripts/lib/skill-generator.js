@@ -171,6 +171,47 @@ function formatCommandments(rules) {
 }
 
 /**
+ * Format workflow files as numbered steps for SKILL.md
+ */
+function formatWorkflowSteps(workflows) {
+    if (workflows.length === 0) {
+        return '_No workflow defined._';
+    }
+
+    // Group by category and sort
+    const byCategory = {};
+    for (const wf of workflows) {
+        if (!byCategory[wf.category]) {
+            byCategory[wf.category] = [];
+        }
+        byCategory[wf.category].push(wf);
+    }
+
+    const lines = [];
+    for (const category of Object.keys(byCategory).sort()) {
+        const categoryWorkflows = byCategory[category].sort((a, b) => a.order - b.order);
+
+        for (let i = 0; i < categoryWorkflows.length; i++) {
+            const wf = categoryWorkflows[i];
+            const filename = `${wf.category}-${wf.filename}`;
+            const stepNum = i + 1;
+            const isFirst = i === 0;
+
+            let line = `${stepNum}. \`${filename}\``;
+            if (wf.title) {
+                line += ` - ${wf.title}`;
+            }
+            if (isFirst) {
+                line += ' ← **Start here**';
+            }
+            lines.push(line);
+        }
+    }
+
+    return lines.join('\n');
+}
+
+/**
  * Parse workflow filename to extract order
  * Format: [major].[minor]-[name].md
  */
@@ -393,6 +434,9 @@ async function generateSkill({
     const rules = collectCommandments(skill.tags || [], commandmentsConfig);
     const commandmentsText = formatCommandments(rules);
 
+    // Format workflow steps
+    const workflowText = formatWorkflowSteps(workflows);
+
     // Build SKILL.md content
     let skillContent = generateFrontmatter(skill, version);
 
@@ -400,7 +444,8 @@ async function generateSkill({
     let body = skillTemplate
         .replace(/{display_name}/g, skill.display_name)
         .replace(/{references}/g, referencesText)
-        .replace(/{commandments}/g, commandmentsText);
+        .replace(/{commandments}/g, commandmentsText)
+        .replace(/{workflow}/g, workflowText);
 
     skillContent += body;
 
