@@ -5,7 +5,8 @@
   "description": "PostHog example projects",
   "scripts": {
     "build:docs": "node scripts/build-examples-mcp-resources.js",
-    "build": "npm run build:docs",
+    "build:skills": "node scripts/build-skills.js",
+    "build": "npm run build:skills && npm run build:docs",
     "dev": "node scripts/dev-server.js",
     "test:plugins": "vitest run scripts/plugins/tests",
     "test:plugins:watch": "vitest scripts/plugins/tests"
@@ -15,6 +16,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.1"
   }
 }

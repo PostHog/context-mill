@@ -2,7 +2,7 @@
 
 /**
  * ============================================================================
- * PostHog MCP Resources Build Script
+ * PostHog MCP Resources Build Script (LEGACY)
  * ============================================================================
  *
  * This script transforms example projects into MCP resources by:
