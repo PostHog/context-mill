@@ -39,9 +39,13 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION="${{ github.event.inputs.version }}"
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
             echo "Using manually specified version: ${VERSION}"
           else
             # Get the latest semver tag (ignore 'latest' tag), or use 0.0.0 if no tags exist
@@ -54,19 +58,18 @@ jobs:
             echo "Latest semver tag found: ${LATEST_TAG}"
             # Remove 'v' prefix if present
             LATEST_VERSION=${LATEST_TAG#v}
-            
+
             # Parse version components
             IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_VERSION"
             MAJOR=${VERSION_PARTS[0]:-0}
             MINOR=${VERSION_PARTS[1]:-0}
             PATCH=${VERSION_PARTS[2]:-0}
-            
+
             # Determine bump type from PR labels
             BUMP_TYPE="patch"  # Default to patch
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+            if [ "$EVENT_NAME" == "pull_request" ]; then
               echo "PR Labels: ${PR_LABELS}"
-              
+
               if echo "${PR_LABELS}" | grep -q "major"; then
                 BUMP_TYPE="major"
               elif echo "${PR_LABELS}" | grep -q "minor"; then
@@ -75,9 +78,9 @@ jobs:
                 BUMP_TYPE="patch"
               fi
             fi
-            
+
             echo "Bump type: ${BUMP_TYPE}"
-            
+
             # Increment version based on bump type
             case "${BUMP_TYPE}" in
               major)
@@ -93,7 +96,7 @@ jobs:
                 PATCH=$((PATCH + 1))
                 ;;
             esac
-            
+
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
             echo "Bumping from ${LATEST_VERSION} to ${VERSION} (${BUMP_TYPE})"
           fi
