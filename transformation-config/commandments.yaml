@@ -10,5 +10,17 @@ commandments:
 
   javascript:
     - Remember that source code is available in the node_modules directory
+    - Check package.json for type checking or build scripts to validate changes
+    - posthog-js is the JavaScript SDK package name
 
+  python:
+    - Remember that source code is available in the venv/site-packages directory
+    - posthog is the Python SDK package name
+
+  django:
+    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
+    - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
+    - Use the context API pattern with new_context(), identify_context(user_id), then capture()
+    - For login/logout views, create a new context since user state changes during the request
+    - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
   

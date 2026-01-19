@@ -61,6 +61,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
 
+  - id: django
+    type: example
+    example_path: basics/django
+    display_name: Django
+    description: PostHog integration for Django applications
+    tags: [django, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/django.md
+
   # Guide-only skills (docs without example code)
   # - id: identify-users
   #   type: guide

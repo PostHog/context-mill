@@ -26,7 +26,7 @@ The example project shows the target implementation pattern. Consult the documen
 
 ## Identifying users
 
-Call `posthog.identify()` on the client side during login and signup events. Use form contents to identify users on submit. If server-side code exists, pass the client-side session and distinct ID using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to maintain correlation.
+Identify users during login and signup events. Refer to the example code and documentation for the correct identify pattern for this framework. If both frontend and backend code exist, pass the client-side session and distinct ID using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to maintain correlation.
 
 ## Error tracking
 

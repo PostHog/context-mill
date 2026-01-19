@@ -27,6 +27,14 @@ node_modules/
 .pnp
 .pnp.*
 
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+db.sqlite3
+
 # Environment variables
 .env
 .env.local

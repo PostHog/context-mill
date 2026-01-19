@@ -1,0 +1,3 @@
+Django>=4.2,<5.0
+posthog  # Always use latest version
+python-dotenv>=1.0.0

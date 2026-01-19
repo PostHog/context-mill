@@ -58,6 +58,23 @@ global:
     - eslint
     - repomix-output.xml
 
+    # Python
+    - venv
+    - .venv
+    - __pycache__
+    - .pyc
+    - .egg-info
+    - .eggs
+    - .pytest_cache
+    - .mypy_cache
+    - .ruff_cache
+    - .tox
+    - .nox
+    - htmlcov
+    - .coverage
+    - pip-log.txt
+    - .Python
+
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
   regex:

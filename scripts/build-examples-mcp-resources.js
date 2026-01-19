@@ -101,6 +101,12 @@ const DOCS_CONFIG = {
             name: 'PostHog React Router v7 Declarative mode integration documentation',
             description: 'PostHog integration documentation for React Router v7 Declarative mode',
             url: 'https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode'
+        },
+        'django': {
+            id: 'django',
+            name: 'PostHog Django integration documentation',
+            description: 'PostHog integration documentation for Django',
+            url: 'https://posthog.com/docs/libraries/django'
         }
     }
 };
@@ -177,6 +183,24 @@ const defaultConfig = {
             tags: ['react', 'react-router', 'v7', 'declarative', 'spa'],
             skipPatterns: {
                 includes: [],
+                regex: [],
+            },
+            plugins: [],
+        },
+        {
+            path: 'basics/django',
+            id: 'django',
+            displayName: 'Django',
+            tags: ['django', 'python', 'server-side'],
+            skipPatterns: {
+                includes: [
+                    '__pycache__',
+                    '.pyc',
+                    'db.sqlite3',
+                    '.venv',
+                    'venv',
+                    'env',
+                ],
                 regex: [],
             },
             plugins: [],

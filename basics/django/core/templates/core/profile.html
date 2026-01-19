@@ -1,0 +1,97 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Profile - PostHog Django example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Profile</h1>
+    <p>This page demonstrates error tracking with PostHog.</p>
+</div>
+
+<div class="card">
+    <h2>User information</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Username:</strong></td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.username }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.email|default:"Not set" }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Date Joined:</strong></td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.date_joined }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px;"><strong>Staff Status:</strong></td>
+            <td style="padding: 10px;">{{ user.is_staff|yesno:"Yes,No" }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Error tracking demo</h2>
+    <p>Click the buttons below to trigger different types of errors. These errors are caught and sent to PostHog.</p>
+
+    <div style="margin-top: 20px;">
+        <button class="danger" onclick="triggerError('value')">
+            Trigger ValueError
+        </button>
+        <button class="danger" onclick="triggerError('key')" style="margin-left: 10px;">
+            Trigger KeyError
+        </button>
+        <button class="danger" onclick="triggerError('generic')" style="margin-left: 10px;">
+            Trigger Generic Error
+        </button>
+    </div>
+
+    <div id="error-result" style="margin-top: 20px; display: none;"></div>
+</div>
+
+<div class="card">
+    <h3>How error tracking works</h3>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>import posthog
+
+try:
+    risky_operation()
+except Exception as e:
+    posthog.capture_exception(e)</code></pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function triggerError(errorType) {
+    const resultDiv = document.getElementById('error-result');
+
+    try {
+        const response = await fetch('{% url "trigger_error" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'error_type=' + errorType,
+        });
+
+        const data = await response.json();
+
+        resultDiv.style.display = 'block';
+        if (data.success) {
+            resultDiv.innerHTML = '<div class="message success">No error occurred</div>';
+        } else {
+            resultDiv.innerHTML = `
+                <div class="message error">
+                    <strong>Error captured:</strong> ${data.error}<br>
+                    <small>${data.message}</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `<div class="message error">Request failed: ${error}</div>`;
+    }
+}
+</script>
+{% endblock %}
