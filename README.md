@@ -36,6 +36,7 @@ examples/
 │   ├── react-react-router/      # React with React Router
 │   ├── react-tanstack-router/   # React with TanStack Router
 │   └── tanstack-start/          # TanStack Start
+│   └── django/                  # Django
 ├── llm-prompts/                 # Workflow guides for AI agents
 ├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)
 └── scripts/                     # Build scripts
