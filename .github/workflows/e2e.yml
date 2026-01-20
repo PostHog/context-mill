@@ -2,14 +2,19 @@ name: PostHog Examples - E2E tests
 permissions:
   contents: read
 
-on:
-  schedule:
-    # Runs nightly at 12am PST (which is 8am UTC)
-    - cron: '0 8 * * *'
-  workflow_dispatch:
+# Temporarily disabled - uncomment triggers to re-enable
+# on:
+#   schedule:
+#     # Runs nightly at 12am PST (which is 8am UTC)
+#     - cron: '0 8 * * *'
+#   workflow_dispatch:
 
-# Temporarily disabled - remove this line to re-enable
-if: false
+on:
+  workflow_dispatch:
+    inputs:
+      placeholder:
+        description: 'Workflow is disabled. This input is a placeholder.'
+        required: false
 
 jobs:
   discover:
