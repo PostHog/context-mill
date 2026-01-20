@@ -70,6 +70,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/django.md
 
+  - id: flask
+    type: example
+    example_path: basics/flask
+    display_name: Flask
+    description: PostHog integration for Flask applications
+    tags: [flask, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flask.md
+
   # Guide-only skills (docs without example code)
   # - id: identify-users
   #   type: guide

@@ -204,6 +204,27 @@ const defaultConfig = {
                 regex: [],
             },
             plugins: [],
+        },
+        {
+            path: 'basics/flask',
+            id: 'flask',
+            displayName: 'Flask',
+            tags: ['flask', 'python', 'server-side'],
+            skipPatterns: {
+                includes: [
+                    '__pycache__',
+                    '.pyc',
+                    '.pyo',
+                    '.pyd',
+                    '.env',
+                    '.db',
+                    '.venv',
+                    'venv',
+                    'instance',
+                ],
+                regex: [],
+            },
+            plugins: [],
         }
     ],
     globalSkipPatterns: {
