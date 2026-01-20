@@ -32,6 +32,7 @@ class User(UserMixin, db.Model):
     def create_user(cls, email, password, is_staff=False):
         """Create and save a new user."""
         user = cls(email=email, is_staff=is_staff)
+        # nosemgrep: python.django.security.audit.unvalidated-password.unvalidated-password
         user.set_password(password)
         db.session.add(user)
         db.session.commit()

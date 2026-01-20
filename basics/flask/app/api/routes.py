@@ -52,7 +52,7 @@ def trigger_error():
             jsonify(
                 {
                     "success": False,
-                    "error": str(e),
+                    "error": "An error occurred",
                     "message": "Error has been captured by PostHog",
                 }
             ),
