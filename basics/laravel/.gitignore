@@ -1,0 +1,11 @@
+# Keep directory structure with .gitkeep files
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+!/bootstrap/cache/.gitkeep
+
+# Laravel-specific
+/public/hot
+/public/storage
+.env.backup

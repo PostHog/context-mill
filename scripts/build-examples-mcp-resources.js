@@ -107,6 +107,12 @@ const DOCS_CONFIG = {
             name: 'PostHog Django integration documentation',
             description: 'PostHog integration documentation for Django',
             url: 'https://posthog.com/docs/libraries/django'
+        },
+        'laravel': {
+            id: 'laravel',
+            name: 'PostHog Laravel integration documentation',
+            description: 'PostHog integration documentation for Laravel',
+            url: 'https://posthog.com/docs/libraries/laravel'
         }
     }
 };
@@ -225,7 +231,26 @@ const defaultConfig = {
                 regex: [],
             },
             plugins: [],
-        }
+        },
+        {
+            path: 'basics/laravel',
+            id: 'laravel',
+            displayName: 'Laravel',
+            tags: ['laravel', 'php', 'server-side'],
+            skipPatterns: {
+                includes: [
+                    'storage/framework',
+                    'storage/logs',
+                    'bootstrap/cache',
+                    'public/hot',
+                    'public/storage',
+                    'public/build',
+                    '.env.backup',
+                ],
+                regex: [],
+            },
+            plugins: [],
+        },
     ],
     globalSkipPatterns: {
         includes: [
@@ -260,6 +285,10 @@ const defaultConfig = {
             '.pcss',
             '.postcss',
             '.tailwindcss',
+            // Database
+            '.sqlite',
+            '.sqlite-journal',
+            // Build artifacts
             'node_modules',
             '.git',
             '.next',
@@ -270,6 +299,31 @@ const defaultConfig = {
             '.gitignore',
             'eslint',
             'repomix-output.xml',
+            // Python
+            'venv',
+            '.venv',
+            '__pycache__',
+            '.pyc',
+            '.egg-info',
+            '.eggs',
+            '.pytest_cache',
+            '.mypy_cache',
+            '.ruff_cache',
+            '.tox',
+            '.nox',
+            'htmlcov',
+            '.coverage',
+            'pip-log.txt',
+            '.Python',
+            // PHP
+            'vendor',
+            '.phpunit.result.cache',
+            '.php-cs-fixer.cache',
+            '.phpstan.cache',
+            '.php_cs.cache',
+            'phpstan.neon',
+            'psalm.xml',
+            '.psalm',
         ],
         regex: [
             /^.env(?!\.example$)/
