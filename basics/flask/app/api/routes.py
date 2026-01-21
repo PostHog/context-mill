@@ -27,29 +27,34 @@ def consider_burrito():
 @api_bp.route("/test-error", methods=["POST"])
 @login_required
 def test_error():
-    """Test endpoint to manually trigger errors for PostHog error tracking verification.
+    """Test endpoint demonstrating manual exception capture in PostHog.
 
-    Only server errors (5xx) are captured in PostHog.
-    Client errors (4xx) are not captured as they represent user issues, not bugs.
+    Shows how to intentionally capture specific errors in PostHog.
+    Use this pattern for critical operations where you want error tracking.
 
     Query params:
-    - error_type: "server" (500), "client" (400), "not_found" (404)
+    - capture: "true" to capture the exception in PostHog, "false" to just raise it
     """
-    error_type = request.args.get("error_type", "server")
+    should_capture = request.args.get("capture", "true").lower() == "true"
 
-    if error_type == "client":
-        # Client error (400) - NOT captured in PostHog
-        from werkzeug.exceptions import BadRequest
-        raise BadRequest("Invalid request - this is a client error and won't be captured")
-    elif error_type == "not_found":
-        # 404 error - NOT captured in PostHog
-        from werkzeug.exceptions import NotFound
-        raise NotFound("Resource not found - this won't be captured")
-    else:
-        # Server error (500) - WILL be captured in PostHog
-        raise Exception("Test server error - this WILL be captured in PostHog")
+    try:
+        # Simulate a critical operation failure
+        raise Exception("Test exception from critical operation")
+    except Exception as e:
+        if should_capture:
+            # Manually capture this specific exception in PostHog
+            with new_context():
+                identify_context(current_user.email)
+                event_id = posthog.capture_exception(e)
 
-    return jsonify({"success": True})
+            return jsonify({
+                "error": "Operation failed",
+                "error_id": event_id,
+                "message": f"Error captured in PostHog. Reference ID: {event_id}"
+            }), 500
+        else:
+            # Just return error without PostHog capture
+            return jsonify({"error": str(e)}), 500
 
 
 @api_bp.route("/group-analytics", methods=["GET", "POST"])
