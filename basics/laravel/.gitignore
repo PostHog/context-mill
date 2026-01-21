@@ -1,0 +1,13 @@
+/vendor/
+/node_modules/
+.env
+.env.backup
+.DS_Store
+Thumbs.db
+/database/*.sqlite
+/database/*.sqlite-journal
+/storage/*.key
+/public/hot
+/public/storage
+npm-debug.log
+yarn-error.log
