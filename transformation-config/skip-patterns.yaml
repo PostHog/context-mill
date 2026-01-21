@@ -63,6 +63,8 @@ global:
     - .venv
     - __pycache__
     - .pyc
+    - .pyo
+    - .pyd
     - .egg-info
     - .eggs
     - .pytest_cache
@@ -74,6 +76,10 @@ global:
     - .coverage
     - pip-log.txt
     - .Python
+
+    # Flask
+    - instance
+    - .db
 
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax

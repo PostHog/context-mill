@@ -16,6 +16,7 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
 
   django:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
@@ -24,3 +25,7 @@ commandments:
     - For login/logout views, create a new context since user state changes during the request
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
   
+  flask:
+    - Initialize PostHog globally in create_app() using posthog.api_key and posthog.host (NOT per-request)
+    - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
+    - Blueprint registration happens AFTER PostHog initialization in create_app()
