@@ -16,6 +16,7 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
 
   django:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
@@ -23,6 +24,11 @@ commandments:
     - Use the context API pattern with new_context(), identify_context(user_id), then capture()
     - For login/logout views, create a new context since user state changes during the request
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
+
+  flask:
+    - Initialize PostHog globally in create_app() using posthog.api_key and posthog.host (NOT per-request)
+    - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
+    - Blueprint registration happens AFTER PostHog initialization in create_app()
 
   php:
     - Remember that source code is available in the vendor directory after composer install
@@ -35,3 +41,4 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+  

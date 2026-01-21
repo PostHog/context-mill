@@ -212,6 +212,27 @@ const defaultConfig = {
             plugins: [],
         },
         {
+            path: 'basics/flask',
+            id: 'flask',
+            displayName: 'Flask',
+            tags: ['flask', 'python', 'server-side'],
+            skipPatterns: {
+                includes: [
+                    '__pycache__',
+                    '.pyc',
+                    '.pyo',
+                    '.pyd',
+                    '.env',
+                    '.db',
+                    '.venv',
+                    'venv',
+                    'instance',
+                ],
+                regex: [],
+            },
+            plugins: [],
+        },
+        {
             path: 'basics/laravel',
             id: 'laravel',
             displayName: 'Laravel',
@@ -229,7 +250,7 @@ const defaultConfig = {
                 regex: [],
             },
             plugins: [],
-        }
+        },
     ],
     globalSkipPatterns: {
         includes: [

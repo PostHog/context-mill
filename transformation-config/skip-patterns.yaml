@@ -68,6 +68,8 @@ global:
     - .venv
     - __pycache__
     - .pyc
+    - .pyo
+    - .pyd
     - .egg-info
     - .eggs
     - .pytest_cache
@@ -80,6 +82,10 @@ global:
     - pip-log.txt
     - .Python
 
+    # Flask
+    - instance
+    - .db
+
     # PHP General
     - vendor
     - .phpunit.result.cache
@@ -89,7 +95,6 @@ global:
     - phpstan.neon
     - psalm.xml
     - .psalm
-
 
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax

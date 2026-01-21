@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PostHog Flask Example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Dashboard</h1>
+    <p>Welcome back, {{ current_user.username }}!</p>
+</div>
+
+<div class="card">
+    <h2>Feature Flags</h2>
+
+    {% if show_new_feature %}
+    <div class="feature-flag">
+        <strong>New Feature Enabled!</strong>
+        <p>You're seeing this because the <code>new-dashboard-feature</code> flag is enabled for you.</p>
+        {% if feature_config %}
+        <p><strong>Feature Configuration:</strong></p>
+        <pre>{{ feature_config | tojson(indent=2) }}</pre>
+        {% endif %}
+    </div>
+    {% else %}
+    <p>The <code>new-dashboard-feature</code> flag is not enabled for your account.</p>
+    {% endif %}
+
+    <h3 style="margin-top: 20px;">Code Example</h3>
+    <pre>
+# Check if feature flag is enabled
+show_new_feature = posthog.feature_enabled(
+    'new-dashboard-feature',
+    user_id,
+    person_properties={
+        'email': current_user.email,
+        'is_staff': current_user.is_staff
+    }
+)
+
+# Get feature flag payload
+feature_config = posthog.get_feature_flag_payload(
+    'new-dashboard-feature',
+    user_id
+)</pre>
+</div>
+{% endblock %}

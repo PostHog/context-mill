@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - PostHog Flask Example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Create an Account</h1>
+    <p>Sign up to explore the PostHog Flask integration example.</p>
+
+    <form method="POST">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Password *</label>
+        <input type="password" id="password" name="password" required>
+
+        <label for="password_confirm">Confirm Password *</label>
+        <input type="password" id="password_confirm" name="password_confirm" required>
+
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <p style="margin-top: 16px; font-size: 14px; color: #666;">
+        Already have an account? <a href="{{ url_for('main.home') }}">Login here</a>
+    </p>
+</div>
+
+<div class="card">
+    <h2>PostHog Integration</h2>
+    <p>When you sign up, the following PostHog events are captured:</p>
+    <ul style="margin-left: 20px; color: #666;">
+        <li><code>identify_context()</code> - Associates your email with the context</li>
+        <li><code>tag()</code> - Sets person properties (email, etc.)</li>
+        <li><code>user_signed_up</code> event - Tracks the signup action</li>
+    </ul>
+
+    <h3 style="margin-top: 20px;">Code Example</h3>
+    <pre>
+# After creating the user
+with new_context():
+    identify_context(user.email)
+
+    tag('email', user.email)
+    tag('is_staff', user.is_staff)
+    tag('date_joined', user.date_joined.isoformat())
+
+    capture('user_signed_up', properties={'signup_method': 'form'})</pre>
+</div>
+{% endblock %}
