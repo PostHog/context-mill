@@ -16,6 +16,7 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
 
   django:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
