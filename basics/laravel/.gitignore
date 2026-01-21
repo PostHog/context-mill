@@ -1,13 +1,11 @@
-/vendor/
-/node_modules/
-.env
-.env.backup
-.DS_Store
-Thumbs.db
-/database/*.sqlite
-/database/*.sqlite-journal
-/storage/*.key
+# Keep directory structure with .gitkeep files
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+!/bootstrap/cache/.gitkeep
+
+# Laravel-specific
 /public/hot
 /public/storage
-npm-debug.log
-yarn-error.log
+.env.backup

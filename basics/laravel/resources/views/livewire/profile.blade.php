@@ -21,21 +21,30 @@
 
     <div class="card">
         <h2>Error Tracking Demo</h2>
-        <p class="text-gray mb-4">The error tracking demo uses the API endpoint directly. Test it using:</p>
+        <p class="text-gray">Test manual exception capture in PostHog. These buttons trigger errors in the context of your logged-in user.</p>
 
-        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <p class="text-sm" style="margin-bottom: 10px;"><strong>Capture error in PostHog:</strong></p>
-            <code style="display: block; background: white; padding: 8px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
-                curl -X POST http://localhost:8000/api/test-error?capture=true
-            </code>
+        @if($successMessage)
+            <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                {{ $successMessage }}
+            </div>
+        @endif
 
-            <p class="text-sm" style="margin-bottom: 10px;"><strong>Skip PostHog capture:</strong></p>
-            <code style="display: block; background: white; padding: 8px; border-radius: 4px; font-size: 12px;">
-                curl -X POST http://localhost:8000/api/test-error?capture=false
-            </code>
+        @if($errorMessage)
+            <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                {{ $errorMessage }}
+            </div>
+        @endif
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button wire:click="testErrorWithCapture" class="btn" style="background: #dc3545; color: white;">
+                Capture Error in PostHog
+            </button>
+            <button wire:click="testErrorWithoutCapture" class="btn" style="background: #c82333; color: white;">
+                Skip PostHog Capture
+            </button>
         </div>
 
-        <p class="text-sm text-gray">
+        <p class="text-gray" style="margin-top: 15px;">
             This demonstrates manual exception capture where you have control over whether errors are sent to PostHog.
         </p>
     </div>

@@ -1,13 +1,14 @@
 # PostHog Laravel Example
 
-A Laravel application demonstrating PostHog integration for analytics, feature flags, and error tracking using the TALL stack (Tailwind-like styling, Alpine.js concepts via Livewire, Laravel, Livewire).
+A Laravel application demonstrating PostHog integration for analytics, feature flags, and error tracking using Livewire for reactive UI components.
 
 ## Features
 
 - User registration and authentication with Livewire
 - SQLite database persistence with Eloquent ORM
 - User identification and property tracking
-- Custom event tracking
+- Custom event tracking (burrito consideration tracker)
+- Page view tracking (dashboard, profile)
 - Feature flags with payload support
 - Error tracking with manual exception capture
 - Reactive UI components with Livewire
@@ -27,7 +28,7 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
 
 1. Install dependencies:
    ```bash
-   composer require livewire/livewire posthog/posthog-php
+   composer install
    ```
 
 2. Set up environment:
@@ -43,86 +44,144 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
    POSTHOG_DISABLED=false
    ```
 
-4. Create database and run migrations:
+4. Generate application key:
+   ```bash
+   php artisan key:generate
+   ```
+
+5. Create database and run migrations:
    ```bash
    touch database/database.sqlite
    php artisan migrate --seed
    ```
 
-5. Start the development server:
+6. Start the development server:
    ```bash
    php artisan serve
    ```
 
-6. Open http://localhost:8000 and either:
+7. Open http://localhost:8000 and either:
    - Login with default credentials: `admin@example.com` / `admin`
    - Or click "Sign up here" to create a new account
 
+## PostHog Service
+
+The `PostHogService` class (`app/Services/PostHogService.php`) wraps the PostHog PHP SDK and provides:
+
+| Method | Description |
+|--------|-------------|
+| `identify($distinctId, $properties)` | Identify a user with properties |
+| `capture($distinctId, $event, $properties)` | Capture custom events |
+| `captureException($exception, $distinctId)` | Capture exceptions with stack traces |
+| `isFeatureEnabled($key, $distinctId, $properties)` | Check feature flag status |
+| `getFeatureFlagPayload($key, $distinctId)` | Get feature flag payload |
+
+All methods check `config('posthog.disabled')` and return early if PostHog is disabled.
+
 ## PostHog Integration Points
 
-### User Registration
+### User Registration (`app/Http/Livewire/Auth/Register.php`)
 New users are identified and tracked on signup:
 ```php
 $posthog->identify($user->email, $user->getPostHogProperties());
 $posthog->capture($user->email, 'user_signed_up', [
-    'signup_method' => 'form'
+    'signup_method' => 'form',
 ]);
 ```
 
-### User Identification
+### User Login (`app/Http/Livewire/Auth/Login.php`)
 Users are identified on login with their properties:
 ```php
 $posthog->identify($user->email, $user->getPostHogProperties());
 $posthog->capture($user->email, 'user_logged_in', [
-    'login_method' => 'password'
+    'login_method' => 'password',
 ]);
 ```
 
-### Event Tracking
-Custom events are captured throughout the app:
+### User Logout (`routes/web.php`)
+Logout events are tracked:
 ```php
+$posthog->capture($user->email, 'user_logged_out');
+```
+
+### Page View Tracking
+Dashboard and profile views are tracked (`app/Http/Livewire/Dashboard.php`, `app/Http/Livewire/Profile.php`):
+```php
+$posthog->capture($user->email, 'dashboard_viewed', [
+    'is_staff' => $user->is_staff,
+]);
+
+$posthog->capture($user->email, 'profile_viewed');
+```
+
+### Custom Event Tracking (`app/Http/Livewire/BurritoTracker.php`)
+The burrito tracker demonstrates custom event capture:
+```php
+$posthog->identify($user->email, $user->getPostHogProperties());
 $posthog->capture($user->email, 'burrito_considered', [
-    'total_considerations' => $burritoCount
+    'total_considerations' => $this->burritoCount,
 ]);
 ```
 
-### Feature Flags
+### Feature Flags (`app/Http/Livewire/Dashboard.php`)
 The dashboard demonstrates feature flag checking:
 ```php
-$showNewFeature = $posthog->isFeatureEnabled(
+$this->showNewFeature = $posthog->isFeatureEnabled(
     'new-dashboard-feature',
     $user->email,
     $user->getPostHogProperties()
-);
+) ?? false;
 
-$featureConfig = $posthog->getFeatureFlagPayload(
+$this->featureConfig = $posthog->getFeatureFlagPayload(
     'new-dashboard-feature',
     $user->email
 );
 ```
 
 ### Error Tracking
+Manual exception capture is demonstrated in multiple places:
 
-Manual capture for specific critical operations (`app/Http/Controllers/Api/ErrorTestController.php`):
-
+**Livewire Components** (`app/Http/Livewire/Dashboard.php`, `app/Http/Livewire/Profile.php`):
 ```php
 try {
-    // Critical operation that might fail
-    processPayment();
-} catch (\Throwable $e) {
-    // Manually capture this specific exception
-    $posthog->identify($user->email, $user->getPostHogProperties());
-    $eventId = $posthog->captureException($e, $user->email);
+    throw new \Exception('This is a test error for PostHog tracking');
+} catch (\Exception $e) {
+    $errorId = $posthog->captureException($e, $user->email);
+    $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
+}
+```
 
-    return response()->json([
-        'error' => 'Operation failed',
-        'error_id' => $eventId,
-        'message' => "Error captured in PostHog. Reference ID: {$eventId}"
-    ], 500);
+**API Endpoint** (`app/Http/Controllers/Api/ErrorTestController.php`):
+```php
+try {
+    throw new \Exception('Test exception from critical operation');
+} catch (\Throwable $e) {
+    if ($shouldCapture) {
+        $posthog->identify($user->email, $user->getPostHogProperties());
+        $eventId = $posthog->captureException($e, $user->email);
+
+        return response()->json([
+            'error' => 'Operation failed',
+            'error_id' => $eventId,
+            'message' => "Error captured in PostHog. Reference ID: {$eventId}",
+        ], 500);
+    }
 }
 ```
 
 The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capture=true` to capture in PostHog, or `?capture=false` to skip tracking.
+
+
+## Pages
+
+| Route | Component | PostHog Events |
+|-------|-----------|----------------|
+| `/` | Login | `user_logged_in` |
+| `/register` | Register | `user_signed_up` |
+| `/dashboard` | Dashboard | `dashboard_viewed`, feature flag checks |
+| `/burrito` | BurritoTracker | `burrito_considered` |
+| `/profile` | Profile | `profile_viewed` |
+| `/logout` | (route) | `user_logged_out` |
 
 ## Project Structure
 
@@ -130,40 +189,47 @@ The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capt
 basics/laravel/
 ├── app/
 │   ├── Http/
-│   │   ├── Controllers/Api/     # API controllers
-│   │   └── Livewire/            # Livewire components
-│   ├── Models/                  # Eloquent models
-│   └── Services/                # PostHog service
+│   │   ├── Controllers/
+│   │   │   └── Api/
+│   │   │       ├── BurritoController.php   # Burrito API endpoint
+│   │   │       └── ErrorTestController.php # Error testing endpoint
+│   │   └── Livewire/
+│   │       ├── Auth/
+│   │       │   ├── Login.php               # Login component
+│   │       │   └── Register.php            # Registration component
+│   │       ├── BurritoTracker.php          # Burrito tracker component
+│   │       ├── Dashboard.php               # Dashboard with feature flags
+│   │       └── Profile.php                 # User profile component
+│   ├── Models/
+│   │   └── User.php                        # User model with PostHog properties
+│   └── Services/
+│       └── PostHogService.php              # PostHog wrapper service
 ├── database/
-│   ├── migrations/              # Database migrations
-│   └── seeders/                 # Database seeders
+│   ├── migrations/                         # Database migrations
+│   └── seeders/
+│       └── DatabaseSeeder.php              # Seeds admin user
 ├── resources/
 │   └── views/
-│       ├── components/          # Blade components
-│       ├── livewire/            # Livewire views
-│       └── errors/              # Error pages
+│       ├── components/
+│       │   └── layouts/
+│       │       ├── app.blade.php           # Authenticated layout
+│       │       └── guest.blade.php         # Guest layout
+│       ├── errors/
+│       │   ├── 404.blade.php               # Not found page
+│       │   └── 500.blade.php               # Server error page
+│       └── livewire/
+│           ├── auth/
+│           │   ├── login.blade.php         # Login form
+│           │   └── register.blade.php      # Registration form
+│           ├── burrito-tracker.blade.php   # Burrito tracker UI
+│           ├── dashboard.blade.php         # Dashboard UI
+│           └── profile.blade.php           # Profile UI
 ├── routes/
-│   ├── web.php                  # Web routes
-│   └── api.php                  # API routes
+│   ├── web.php                             # Web routes (auth, pages)
+│   └── api.php                             # API routes
 └── config/
-    └── posthog.php              # PostHog config
+    └── posthog.php                         # PostHog configuration
 ```
-
-## Key Differences from Flask Version
-
-| Aspect | Flask | Laravel |
-|--------|-------|---------|
-| Project Structure | Application factory + blueprints | MVC + Service Container |
-| Database | SQLite via Flask-SQLAlchemy | SQLite via Eloquent ORM |
-| User Model | Custom SQLAlchemy model | Eloquent User model |
-| Authentication | Flask-Login | Laravel Breeze concepts |
-| Session Management | Cookie-based | Database/file sessions |
-| Configuration | Config classes | .env + config files |
-| URL Routing | Blueprint decorators | Route definitions |
-| PostHog Init | Application factory | Service class |
-| Error Capture | Manual in endpoints | Manual in endpoints |
-| Templates | Jinja2 | Blade + Livewire |
-| Reactivity | JavaScript fetch API | Livewire |
 
 ## Development Commands
 
@@ -180,18 +246,3 @@ php artisan migrate:fresh --seed
 # Clear caches
 php artisan optimize:clear
 ```
-
-## Implementation Notes
-
-This is a demonstration project showing PostHog integration patterns. For a full production application, you would need:
-
-1. Complete Laravel installation via Composer
-2. Proper asset compilation setup (Vite)
-3. Additional middleware and authentication scaffolding
-4. Comprehensive error handling
-5. Testing suite
-6. Production deployment configuration
-
-## License
-
-This example is provided for demonstration purposes.

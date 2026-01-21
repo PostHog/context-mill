@@ -7,17 +7,16 @@ use Illuminate\Support\Facades\Auth;
 
 class PostHogService
 {
-    protected $client;
+    protected static $initialized = false;
 
     public function __construct()
     {
         if (config('posthog.disabled')) {
-            $this->client = null;
             return;
         }
 
-        // Initialize PostHog if not already initialized
-        if (!PostHog::isInitialized()) {
+        // Initialize PostHog once
+        if (!self::$initialized) {
             PostHog::init(
                 config('posthog.api_key'),
                 [
@@ -25,18 +24,17 @@ class PostHogService
                     'debug' => config('posthog.debug'),
                 ]
             );
+            self::$initialized = true;
         }
-
-        $this->client = PostHog::getInstance();
     }
 
     public function identify(string $distinctId, array $properties = []): void
     {
-        if (!$this->client) {
+        if (config('posthog.disabled')) {
             return;
         }
 
-        $this->client->identify([
+        PostHog::identify([
             'distinctId' => $distinctId,
             'properties' => $properties,
         ]);
@@ -44,11 +42,11 @@ class PostHogService
 
     public function capture(string $distinctId, string $event, array $properties = []): void
     {
-        if (!$this->client) {
+        if (config('posthog.disabled')) {
             return;
         }
 
-        $this->client->capture([
+        PostHog::capture([
             'distinctId' => $distinctId,
             'event' => $event,
             'properties' => $properties,
@@ -57,7 +55,7 @@ class PostHogService
 
     public function captureException(\Throwable $exception, ?string $distinctId = null): ?string
     {
-        if (!$this->client) {
+        if (config('posthog.disabled')) {
             return null;
         }
 
@@ -77,21 +75,21 @@ class PostHogService
         return $eventId;
     }
 
-    public function isFeatureEnabled(string $key, string $distinctId, array $properties = []): bool
+    public function isFeatureEnabled(string $key, string $distinctId, array $properties = []): ?bool
     {
-        if (!$this->client) {
+        if (config('posthog.disabled')) {
             return false;
         }
 
-        return $this->client->isFeatureEnabled($key, $distinctId, $properties);
+        return PostHog::isFeatureEnabled($key, $distinctId, $properties);
     }
 
     public function getFeatureFlagPayload(string $key, string $distinctId)
     {
-        if (!$this->client) {
+        if (config('posthog.disabled')) {
             return null;
         }
 
-        return $this->client->getFeatureFlagPayload($key, $distinctId);
+        return PostHog::getFeatureFlagPayload($key, $distinctId);
     }
 }
