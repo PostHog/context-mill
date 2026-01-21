@@ -43,8 +43,6 @@ def create_app(config_name="default"):
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        # Capture 500 errors in PostHog - remove this if you want manual control
-        posthog.capture_exception(e)
         if request.path.startswith('/api/'):
             return jsonify({"error": "Internal server error"}), 500
         return render_template('errors/500.html'), 500
