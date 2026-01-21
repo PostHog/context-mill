@@ -24,40 +24,30 @@ def consider_burrito():
     return jsonify({"success": True, "count": burrito_count})
 
 
-@api_bp.route("/trigger-error", methods=["POST"])
+@api_bp.route("/test-error", methods=["POST"])
 @login_required
-def trigger_error():
-    """Demonstrate error tracking."""
-    error_type = request.form.get("error_type", "generic")
+def test_error():
+    """Test endpoint to manually trigger errors for PostHog error tracking verification.
 
-    try:
-        if error_type == "value":
-            raise ValueError("Invalid value provided by user")
-        elif error_type == "key":
-            data = {}
-            _ = data["nonexistent_key"]
-        else:
-            raise Exception("A generic error occurred")
-    except Exception as e:
-        # PostHog: Capture exception and track error event with user context
-        with new_context():
-            identify_context(current_user.email)
-            posthog.capture_exception(e)
-            capture(
-                "error_triggered",
-                properties={"error_type": error_type, "error_message": str(e)},
-            )
+    Only server errors (5xx) are captured in PostHog.
+    Client errors (4xx) are not captured as they represent user issues, not bugs.
 
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "An error occurred",
-                    "message": "Error has been captured by PostHog",
-                }
-            ),
-            400,
-        )
+    Query params:
+    - error_type: "server" (500), "client" (400), "not_found" (404)
+    """
+    error_type = request.args.get("error_type", "server")
+
+    if error_type == "client":
+        # Client error (400) - NOT captured in PostHog
+        from werkzeug.exceptions import BadRequest
+        raise BadRequest("Invalid request - this is a client error and won't be captured")
+    elif error_type == "not_found":
+        # 404 error - NOT captured in PostHog
+        from werkzeug.exceptions import NotFound
+        raise NotFound("Resource not found - this won't be captured")
+    else:
+        # Server error (500) - WILL be captured in PostHog
+        raise Exception("Test server error - this WILL be captured in PostHog")
 
     return jsonify({"success": True})
 

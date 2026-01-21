@@ -1,9 +1,10 @@
 """Flask application factory."""
 
 import posthog
-from flask import Flask, jsonify
+from flask import Flask, g, jsonify, render_template, request
 from flask_login import current_user
 from posthog import identify_context, new_context
+from werkzeug.exceptions import HTTPException
 
 from app.config import config
 from app.extensions import db, login_manager
@@ -33,35 +34,49 @@ def create_app(config_name="default"):
         return User.get_by_id(user_id)
 
     # Global error handler for PostHog exception capture
-    # Flask's built-in error handlers bypass PostHog's default autocapture,
-    # so we need to manually capture exceptions here
+    # Production best practice: Only capture server errors (5xx), not client errors (4xx)
     @app.errorhandler(Exception)
     def handle_exception(e):
-        # Capture the exception in PostHog and get the event UUID
-        # This UUID can be shown to users for bug reports
-        # Use context to attribute exception to the current user
+        # Skip capturing client errors (4xx) - these are user issues, not bugs
+        # Only capture server errors (5xx) and unhandled exceptions
+        event_id = None
+        if isinstance(e, HTTPException):
+            if e.code < 500:
+                # Client error (4xx) - don't capture, just handle normally
+                if request.path.startswith('/api/'):
+                    return jsonify({"error": e.description}), e.code
+                return e.get_response()
+
+        # Server error (5xx) or unhandled exception - capture in PostHog
         with new_context():
             if current_user.is_authenticated:
                 identify_context(current_user.email)
             event_id = posthog.capture_exception(e)
 
         # For API routes, return JSON error response
-        if hasattr(e, "code"):
-            status_code = e.code
-        else:
-            status_code = 500
-
-        return (
-            jsonify(
-                {
-                    "error": str(e),
+        if request.path.startswith('/api/'):
+            if isinstance(e, HTTPException):
+                return jsonify({
+                    "error": e.description,
                     "error_id": event_id,
-                    "message": "An error occurred. Reference ID: "
-                    + (event_id or "unknown"),
-                }
-            ),
-            status_code,
-        )
+                    "message": f"An error occurred. Reference ID: {event_id}"
+                }), e.code
+            return jsonify({
+                "error": "Internal server error",
+                "error_id": event_id,
+                "message": f"An error occurred. Reference ID: {event_id}"
+            }), 500
+
+        # For web routes, render 500 error page with error_id
+        # (All 5xx HTTPExceptions reach here; 4xx are handled above)
+        return render_template('errors/500.html', error_id=event_id, error=str(e) if not isinstance(e, HTTPException) else None), 500
+
+    # Specific handler for 404 - no PostHog capture
+    @app.errorhandler(404)
+    def page_not_found(e):
+        if request.path.startswith('/api/'):
+            return jsonify({"error": "Not found"}), 404
+        return render_template('errors/404.html'), 404
 
     # Register blueprints
     from app.api import api_bp
