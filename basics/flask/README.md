@@ -84,18 +84,8 @@ feature_config = posthog.get_feature_flag_payload('new-dashboard-feature', curre
 
 The example demonstrates two approaches to error tracking:
 
-**1. Automatic capture for all 500 errors** (`app/__init__.py`):
-```python
-@app.errorhandler(500)
-def internal_server_error(e):
-    # Capture 500 errors in PostHog - remove this if you want manual control
-    posthog.capture_exception(e)
-    if request.path.startswith('/api/'):
-        return jsonify({"error": "Internal server error"}), 500
-    return render_template('errors/500.html'), 500
-```
+Manual capture for specific critical operations** (`app/api/routes.py`).
 
-**2. Manual capture for specific critical operations** (`app/api/routes.py`):
 ```python
 try:
     # Critical operation that might fail
@@ -137,18 +127,3 @@ basics/flask/
 ├── README.md
 └── run.py                       # Entry point
 ```
-
-## Key Differences from Django Version
-
-| Aspect | Django | Flask |
-|--------|--------|-------|
-| Project Structure | Single app in project | Application factory + blueprints |
-| Database | SQLite via Django ORM | SQLite via Flask-SQLAlchemy |
-| User Model | Built-in `auth.User` model | Custom SQLAlchemy `User` model |
-| User Registration | Django admin / `createsuperuser` | `/signup` route with form |
-| Authentication | Django auth system | Flask-Login |
-| Session Management | Django sessions | Flask sessions (cookie-based) |
-| Configuration | settings.py | Config classes with app factory |
-| URL Routing | urls.py patterns | Blueprint route decorators |
-| PostHog Init | AppConfig.ready() | Application factory |
-| Error Capture | PostHog middleware auto-captures | Manual with `@app.errorhandler(500)` or try/except |
