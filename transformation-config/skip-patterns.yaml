@@ -10,6 +10,7 @@ global:
     - .yaml
     - .yml
     - .tsbuildinfo
+    - .lock
 
     # Images
     - .png
@@ -46,6 +47,10 @@ global:
     - .postcss
     - .tailwindcss
 
+    # Database
+    - .sqlite
+    - .sqlite-journal
+
     # Build artifacts and tooling
     - node_modules
     - .git
@@ -75,6 +80,17 @@ global:
     - pip-log.txt
     - .Python
 
+    # PHP General
+    - vendor
+    - .phpunit.result.cache
+    - .php-cs-fixer.cache
+    - .phpstan.cache
+    - .php_cs.cache
+    - phpstan.neon
+    - psalm.xml
+    - .psalm
+
+
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
   regex:
@@ -89,3 +105,14 @@ global:
 #       - some-specific-file.ts
 #     regex:
 #       - ^specific-pattern
+
+examples:
+  laravel:
+    includes:
+      - storage/framework
+      - storage/logs
+      - bootstrap/cache
+      - public/hot
+      - public/storage
+      - public/build
+      - .env.backup

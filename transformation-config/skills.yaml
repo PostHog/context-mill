@@ -70,6 +70,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/django.md
 
+  - id: laravel
+    type: example
+    example_path: basics/laravel
+    display_name: Laravel
+    description: PostHog integration for Laravel applications
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/libraries/laravel.md
+
   # Guide-only skills (docs without example code)
   # - id: identify-users
   #   type: guide

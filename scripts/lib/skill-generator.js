@@ -345,7 +345,7 @@ async function generateSkill({
             displayName: skill.display_name,
             id: skill.id,
             repoRoot,
-            skipPatterns: mergeSkipPatterns(skipPatterns.global),
+            skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[skill.id]),
             plugins: defaultPlugins,
         });
 
