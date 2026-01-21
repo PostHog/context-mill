@@ -57,24 +57,3 @@ def test_error():
             return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route("/group-analytics", methods=["GET", "POST"])
-@login_required
-def group_analytics():
-    """Demonstrate group analytics."""
-    # PostHog: Group identify
-    posthog.group_identify(
-        "company",
-        "acme-corp",
-        {"name": "Acme Corporation", "plan": "enterprise", "employee_count": 500},
-    )
-
-    # Capture event with group association
-    with new_context():
-        identify_context(current_user.email)
-        capture(
-            "feature_used",
-            properties={"feature_name": "group_analytics"},
-            groups={"company": "acme-corp"},
-        )
-
-    return jsonify({"success": True, "message": "Group analytics event captured"})

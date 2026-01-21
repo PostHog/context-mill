@@ -9,8 +9,7 @@ A Flask application demonstrating PostHog integration for analytics, feature fla
 - User identification and property tracking
 - Custom event tracking
 - Feature flags with payload support
-- Error tracking and exception capture
-- Group analytics
+- Error tracking with manual exception capture
 
 ## Quick Start
 
@@ -82,24 +81,39 @@ feature_config = posthog.get_feature_flag_payload('new-dashboard-feature', curre
 ```
 
 ### Error Tracking
-Exceptions are captured for monitoring:
+
+The example demonstrates two approaches to error tracking:
+
+**1. Automatic capture for all 500 errors** (`app/__init__.py`):
 ```python
-posthog.capture_exception(exception)
+@app.errorhandler(500)
+def internal_server_error(e):
+    # Capture 500 errors in PostHog - remove this if you want manual control
+    posthog.capture_exception(e)
+    if request.path.startswith('/api/'):
+        return jsonify({"error": "Internal server error"}), 500
+    return render_template('errors/500.html'), 500
 ```
 
-### Group Analytics
-Company-level analytics tracking:
+**2. Manual capture for specific critical operations** (`app/api/routes.py`):
 ```python
-posthog.group_identify('company', 'acme-corp', {
-    'name': 'Acme Corporation',
-    'plan': 'enterprise'
-})
+try:
+    # Critical operation that might fail
+    result = process_payment()
+except Exception as e:
+    # Manually capture this specific exception
+    with new_context():
+        identify_context(current_user.email)
+        event_id = posthog.capture_exception(e)
 
-with new_context():
-    identify_context(current_user.email)
-    capture('feature_used', properties={'feature_name': 'analytics'},
-            groups={'company': 'acme-corp'})
+    return jsonify({
+        "error": "Operation failed",
+        "error_id": event_id,
+        "message": f"Error captured in PostHog. Reference ID: {event_id}"
+    }), 500
 ```
+
+The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capture=true` to capture in PostHog, or `?capture=false` to skip tracking.
 
 ## Project Structure
 
@@ -137,4 +151,4 @@ basics/flask/
 | Configuration | settings.py | Config classes with app factory |
 | URL Routing | urls.py patterns | Blueprint route decorators |
 | PostHog Init | AppConfig.ready() | Application factory |
-| Error Capture | PostHog middleware auto-captures | Requires global `@app.errorhandler(Exception)` |
+| Error Capture | PostHog middleware auto-captures | Manual with `@app.errorhandler(500)` or try/except |
