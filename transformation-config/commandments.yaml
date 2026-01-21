@@ -24,3 +24,7 @@ commandments:
     - For login/logout views, create a new context since user state changes during the request
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
   
+  flask:
+    - Initialize PostHog globally in create_app() using posthog.api_key and posthog.host (NOT per-request)
+    - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
+    - Blueprint registration happens AFTER PostHog initialization in create_app()
