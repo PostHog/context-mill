@@ -1,0 +1,18 @@
+# URI Schema Configuration
+# Defines how resources are addressed in the MCP system
+
+# Schema versioning
+manifest_version: "1.0"
+
+# Base URI scheme for all resources
+scheme: posthog://
+
+# URI patterns for each resource type
+# Variables use {name} syntax for substitution
+patterns:
+  skill: skills/{id}
+  workflow: workflows/{category}/{name}
+  doc: docs/{id}
+  framework_docs: docs/frameworks/{framework}
+  examples: examples/{framework}
+

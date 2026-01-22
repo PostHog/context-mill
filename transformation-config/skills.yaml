@@ -1,0 +1,99 @@
+# Skills Configuration
+# Defines what gets bundled into each skill package
+
+# Docs included in ALL skills
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+
+skills:
+  # Example-based skills (code + docs)
+  - id: nextjs-app-router
+    type: example
+    example_path: basics/next-app-router
+    display_name: Next.js App Router
+    description: PostHog integration for Next.js App Router applications
+    tags: [nextjs, react, ssr, app-router, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+
+  - id: nextjs-pages-router
+    type: example
+    example_path: basics/next-pages-router
+    display_name: Next.js Pages Router
+    description: PostHog integration for Next.js Pages Router applications
+    tags: [nextjs, react, ssr, pages-router, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+
+  - id: react-react-router-6
+    type: example
+    example_path: basics/react-react-router-6
+    display_name: React Router v6
+    description: PostHog integration for React Router v6 applications
+    tags: [react, react-router, v6, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+
+  - id: react-react-router-7-framework
+    type: example
+    example_path: basics/react-react-router-7-framework
+    display_name: React Router v7 - Framework mode
+    description: PostHog integration for React Router v7 Framework mode applications
+    tags: [react, react-router, v7, framework, ssr, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+
+  - id: react-react-router-7-data
+    type: example
+    example_path: basics/react-react-router-7-data
+    display_name: React Router v7 - Data mode
+    description: PostHog integration for React Router v7 Data mode applications
+    tags: [react, react-router, v7, data, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+
+  - id: react-react-router-7-declarative
+    type: example
+    example_path: basics/react-react-router-7-declarative
+    display_name: React Router v7 - Declarative mode
+    description: PostHog integration for React Router v7 Declarative mode applications
+    tags: [react, react-router, v7, declarative, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+
+  - id: django
+    type: example
+    example_path: basics/django
+    display_name: Django
+    description: PostHog integration for Django applications
+    tags: [django, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/django.md
+
+  - id: flask
+    type: example
+    example_path: basics/flask
+    display_name: Flask
+    description: PostHog integration for Flask applications
+    tags: [flask, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flask.md
+
+  - id: laravel
+    type: example
+    example_path: basics/laravel
+    display_name: Laravel
+    description: PostHog integration for Laravel applications
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/libraries/laravel.md
+
+  # Guide-only skills (docs without example code)
+  # - id: identify-users
+  #   type: guide
+  #   display_name: Identifying Users
+  #   description: How to identify users and associate events with them
+  #   tags: [core, users, identity]
+  #   docs_urls:
+  #     - https://posthog.com/docs/getting-started/identify-users.md
+  #     - https://posthog.com/docs/getting-started/group-analytics.md

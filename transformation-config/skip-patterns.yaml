@@ -1,0 +1,123 @@
+# Skip Patterns Configuration
+# Files and directories to exclude when processing example projects
+
+# Global patterns applied to all examples
+global:
+  # Substring matching - skip if path contains any of these
+  includes:
+    # Data/config files
+    - .json
+    - .yaml
+    - .yml
+    - .tsbuildinfo
+    - .lock
+
+    # Images
+    - .png
+    - .jpg
+    - .jpeg
+    - .gif
+    - .ico
+    - .svg
+
+    # Fonts
+    - .woff
+    - .woff2
+    - .ttf
+    - .eot
+
+    # Archives/binaries
+    - .pdf
+    - .zip
+    - .tar
+    - .gz
+    - .exe
+    - .dll
+    - .so
+    - .dylib
+
+    # Stylesheets
+    - .css
+    - .scss
+    - .sass
+    - .less
+    - .styl
+    - .stylus
+    - .pcss
+    - .postcss
+    - .tailwindcss
+
+    # Database
+    - .sqlite
+    - .sqlite-journal
+
+    # Build artifacts and tooling
+    - node_modules
+    - .git
+    - .next
+    - playwright-report
+    - test-results
+    - coverage
+    - .DS_Store
+    - .gitignore
+    - eslint
+    - repomix-output.xml
+
+    # Python
+    - venv
+    - .venv
+    - __pycache__
+    - .pyc
+    - .pyo
+    - .pyd
+    - .egg-info
+    - .eggs
+    - .pytest_cache
+    - .mypy_cache
+    - .ruff_cache
+    - .tox
+    - .nox
+    - htmlcov
+    - .coverage
+    - pip-log.txt
+    - .Python
+
+    # Flask
+    - instance
+    - .db
+
+    # PHP General
+    - vendor
+    - .phpunit.result.cache
+    - .php-cs-fixer.cache
+    - .phpstan.cache
+    - .php_cs.cache
+    - phpstan.neon
+    - psalm.xml
+    - .psalm
+
+  # Regex patterns - skip if path matches
+  # Note: Patterns are JavaScript regex syntax
+  regex:
+    # Skip .env files but allow .env.example
+    - ^.env(?!\.example$)
+
+# Example-specific overrides
+# Add patterns here to skip files only for specific examples
+# examples:
+#   nextjs-app-router:
+#     includes:
+#       - some-specific-file.ts
+#     regex:
+#       - ^specific-pattern
+
+examples:
+  laravel:
+    includes:
+      - storage/framework
+      - storage/logs
+      - bootstrap/cache
+      - public/hot
+      - public/storage
+      - public/build
+      - .env.backup

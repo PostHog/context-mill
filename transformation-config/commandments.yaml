@@ -1,0 +1,44 @@
+# Commandments Configuration
+# Tag-based rules that get folded into skill descriptions
+# Skills collect all commandments matching their tags
+
+commandments:
+  react:
+    - Never use useEffect() for analytics capture - it's brittle and causes errors
+    - Prefer event handlers or routing mechanisms to trigger analytics calls
+    - Add handlers where user actions occur rather than reacting to state changes
+
+  javascript:
+    - Remember that source code is available in the node_modules directory
+    - Check package.json for type checking or build scripts to validate changes
+    - posthog-js is the JavaScript SDK package name
+
+  python:
+    - Remember that source code is available in the venv/site-packages directory
+    - posthog is the Python SDK package name
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
+
+  django:
+    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
+    - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
+    - Use the context API pattern with new_context(), identify_context(user_id), then capture()
+    - For login/logout views, create a new context since user state changes during the request
+    - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
+
+  flask:
+    - Initialize PostHog globally in create_app() using posthog.api_key and posthog.host (NOT per-request)
+    - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
+    - Blueprint registration happens AFTER PostHog initialization in create_app()
+
+  php:
+    - Remember that source code is available in the vendor directory after composer install
+    - posthog/posthog-php is the PHP SDK package name
+    - Check composer.json for existing dependencies and autoload configuration before adding new files
+    - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init()
+    - PHP SDK methods take associative arrays with 'distinctId', 'event', 'properties' keys - not positional arguments
+
+  laravel:
+    - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
+    - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
+    - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+  

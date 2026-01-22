@@ -27,6 +27,25 @@ node_modules/
 .pnp
 .pnp.*
 
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+db.sqlite3
+
+# PHP / Laravel
+vendor/
+composer.phar
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+*.sqlite
+*.sqlite-journal
+
 # Environment variables
 .env
 .env.local

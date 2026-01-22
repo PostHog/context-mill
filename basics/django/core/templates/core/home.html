@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Login - PostHog Django example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>PostHog Django example</h1>
+    <p>Welcome! This example demonstrates PostHog integration with Django.</p>
+</div>
+
+<div class="card">
+    <h2>Login</h2>
+    <p>Login to see PostHog analytics in action.</p>
+
+    <form method="post" style="margin-top: 20px;">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <p style="margin-top: 15px; color: #666; font-size: 14px;">
+        Tip: Create a user with <code>python manage.py createsuperuser</code>
+    </p>
+</div>
+
+<div class="card">
+    <h3>What this example demonstrates</h3>
+    <ul style="padding-left: 20px;">
+        <li><strong>User identification</strong> - Users are identified with <code>identify_context()</code> on login</li>
+        <li><strong>Pageview tracking</strong> - Middleware extracts session and user context</li>
+        <li><strong>Event tracking</strong> - Custom events captured with <code>capture()</code> in context</li>
+        <li><strong>Feature flags</strong> - Conditional features with <code>posthog.feature_enabled()</code></li>
+        <li><strong>Error tracking</strong> - Exceptions captured with <code>capture_exception()</code></li>
+    </ul>
+</div>
+{% endblock %}

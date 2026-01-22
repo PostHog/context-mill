@@ -1,0 +1,1 @@
+# PostHog Django example project
