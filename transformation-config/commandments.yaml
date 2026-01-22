@@ -41,4 +41,21 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+
+  migration:
+    - Remove ALL source SDK packages after migration is complete
+    - Remove source SDK environment variables (e.g., AMPLITUDE_API_KEY)
+    - Delete generated SDK directories (e.g., 'ampli' folder for Amplitude)
+    - Preserve existing code structure - only replace analytics calls, don't restructure files
+    - Use environment variables for PostHog keys - never hardcode them
+    - Include defaults '2025-05-24' in PostHog initialization for latest recommended settings
+
+  amplitude:
+    - Replace amplitude.getInstance() patterns with posthog direct calls
+    - Replace Amplitude Identify class with posthog.identify() properties object
+    - Replace Amplitude Revenue class with posthog.capture() with $set properties
+    - Replace setGroup/groupIdentify with posthog.group()
+    - Replace setOptOut with posthog.opt_out_capturing()/opt_in_capturing()
+    - Remove Ampli generated SDK imports and delete the ampli directory entirely
+    - Map Ampli type-safe methods to posthog.capture() with appropriate event names
   

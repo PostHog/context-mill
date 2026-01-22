@@ -300,6 +300,16 @@ function generateFrontmatter(skill, version) {
 }
 
 /**
+ * Filter workflows by category based on skill config
+ * If skill.workflows is specified, only include those categories
+ * If not specified, defaults to ['basic-integration']
+ */
+function filterWorkflowsForSkill(allWorkflows, skill) {
+    const allowedCategories = skill.workflows || ['basic-integration'];
+    return allWorkflows.filter(wf => allowedCategories.includes(wf.category));
+}
+
+/**
  * Generate a complete skill package
  *
  * @param {Object} options
@@ -312,7 +322,7 @@ function generateFrontmatter(skill, version) {
  * @param {Object} options.commandmentsConfig - Commandments config
  * @param {string} options.skillTemplate - Skill description template
  * @param {Array} options.sharedDocs - Shared docs URLs
- * @param {Array} options.workflows - Discovered workflows
+ * @param {Array} options.allWorkflows - All discovered workflows (will be filtered per-skill)
  */
 async function generateSkill({
     skill,
@@ -324,8 +334,10 @@ async function generateSkill({
     commandmentsConfig,
     skillTemplate,
     sharedDocs,
-    workflows,
+    allWorkflows,
 }) {
+    // Filter workflows for this specific skill
+    const workflows = filterWorkflowsForSkill(allWorkflows, skill);
     const skillDir = path.join(outputDir, skill.id);
     const referencesDir = path.join(skillDir, 'references');
 
@@ -507,7 +519,7 @@ async function generateAllSkills({
             commandmentsConfig,
             skillTemplate,
             sharedDocs,
-            workflows,
+            allWorkflows: workflows,
         });
 
         console.log(`  ✓ ${skill.id}`);
@@ -530,6 +542,7 @@ module.exports = {
     loadSkillTemplate,
     collectCommandments,
     discoverWorkflows,
+    filterWorkflowsForSkill,
     generateSkill,
     generateAllSkills,
 };

@@ -88,6 +88,16 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  # Migration skills (guide type - docs without example code)
+  - id: migrate-amplitude-to-posthog
+    type: guide
+    display_name: Migrate from Amplitude
+    description: Migrate analytics from Amplitude SDK to PostHog. Replaces Amplitude imports, initialization, event tracking, user identification, and group analytics with PostHog equivalents.
+    tags: [migration, amplitude, react, javascript]
+    workflows: [migrate-amplitude]
+    docs_urls:
+      - https://posthog.com/docs/migrate/migrate-from-amplitude.md
+
   # Guide-only skills (docs without example code)
   # - id: identify-users
   #   type: guide
