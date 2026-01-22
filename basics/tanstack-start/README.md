@@ -78,7 +78,7 @@ export function initPostHog() {
     posthog.init(import.meta.env.VITE_POSTHOG_KEY!, {
       api_host: '/ingest',
       ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
-      defaults: '2025-05-24',
+      defaults: '2025-11-30',
       capture_exceptions: true,
       debug: import.meta.env.DEV,
       loaded: (posthog) => {
