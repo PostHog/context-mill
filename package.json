@@ -1,8 +1,8 @@
 {
-  "name": "@posthog/examples",
+  "name": "@posthog/context-mill",
   "version": "1.2.0",
   "private": true,
-  "description": "PostHog example projects",
+  "description": "PostHog Context Mill: assembling and packaging context for AI agents and LLMs",
   "scripts": {
     "build:docs": "node scripts/build-examples-mcp-resources.js",
     "build:skills": "node scripts/build-skills.js",
