@@ -1,4 +1,4 @@
-name: PostHog Examples - E2E tests
+name: PostHog Context Mill - E2E tests
 permissions:
   contents: read
 
@@ -88,7 +88,7 @@ jobs:
         curl -X POST https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b \
           -H "Content-Type: application/json" \
           -d "$(jq -n \
-            --arg event "posthog-examples-repo-test-failure" \
+            --arg event "posthog-context-mill-repo-test-failure" \
             --arg commitSha "$COMMIT_SHA" \
             --arg jobStatus "$JOB_STATUS" \
             --arg commitMessage "$COMMIT_MESSAGE" \
