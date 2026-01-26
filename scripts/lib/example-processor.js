@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } = require('../plugins/index');
+const { REPO_URL } = require('./constants');
 
 /**
  * Load skip patterns from YAML config
@@ -140,7 +141,7 @@ function buildHeader(displayName, repoUrl, examplePath) {
  */
 function processExample({ examplePath, displayName, id, repoRoot, skipPatterns, plugins = [] }) {
     const absolutePath = path.join(repoRoot, examplePath);
-    const repoUrl = 'https://github.com/PostHog/examples';
+    const repoUrl = REPO_URL;
 
     if (!fs.existsSync(absolutePath)) {
         throw new Error(`Example directory not found: ${absolutePath}`);

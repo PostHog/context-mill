@@ -23,7 +23,6 @@ const { spawn } = require('child_process');
 const PORT = process.env.PORT || 8765;
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 const SKILLS_ZIP_PATH = path.join(DIST_DIR, 'skills-mcp-resources.zip');
-const EXAMPLES_ZIP_PATH = path.join(DIST_DIR, 'examples-mcp-resources.zip');
 const SKILLS_DIR = path.join(DIST_DIR, 'skills');
 
 // Directories to watch for changes
@@ -145,28 +144,21 @@ function createServer() {
         }
 
         // Serve skills bundle
-        if (req.url === '/skills-mcp-resources.zip') {
+        if (req.url === '/skills-mcp-resources.zip' || req.url === '/') {
             serveZip(res, SKILLS_ZIP_PATH, 'skills-mcp-resources.zip');
             return;
         }
 
-        // Serve examples bundle (legacy)
-        if (req.url === '/examples-mcp-resources.zip' || req.url === '/') {
-            serveZip(res, EXAMPLES_ZIP_PATH, 'examples-mcp-resources.zip');
-            return;
-        }
-
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not found. Available endpoints:\n  /skills-mcp-resources.zip\n  /examples-mcp-resources.zip\n  /skills/{id}.zip');
+        res.end('Not found. Available endpoints:\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
     });
 
     server.listen(PORT, () => {
         console.log('\n🚀 Development server started!');
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
-        console.log(`📍 Examples bundle: http://localhost:${PORT}/examples-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log('\n💡 To use with MCP server, set environment variable:');
-        console.log(`   POSTHOG_MCP_LOCAL_EXAMPLES_URL=http://localhost:${PORT}/examples-mcp-resources.zip`);
+        console.log(`   POSTHOG_MCP_LOCAL_SKILLS_URL=http://localhost:${PORT}/skills-mcp-resources.zip`);
     });
 }
 
