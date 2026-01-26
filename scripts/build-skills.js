@@ -14,6 +14,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 const archiver = require('archiver');
 const { generateAllSkills } = require('./lib/skill-generator');
+const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
@@ -77,7 +78,7 @@ function generateManifest(skills, uriSchema, version) {
     // Base URL for skill ZIP downloads
     // Production: GitHub releases (default)
     // Development: Local server (set via SKILLS_BASE_URL env var)
-    const baseDownloadUrl = process.env.SKILLS_BASE_URL || 'https://github.com/PostHog/examples/releases/latest/download';
+    const baseDownloadUrl = process.env.SKILLS_BASE_URL || `${REPO_URL}/releases/latest/download`;
 
     return {
         version: uriSchema.manifest_version,
