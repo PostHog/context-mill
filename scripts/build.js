@@ -70,7 +70,25 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
 }
 
 /**
- * Generate manifest with skill URIs and download URLs
+ * Generate a shell command to install a skill from its download URL.
+ * This command can be run by any agent with Bash access.
+ */
+function generateInstallCommand(skillId, downloadUrl) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(skillId)) {
+        throw new Error(`Invalid skill ID: ${skillId}`);
+    }
+
+    // Escape single quotes in URL for safe shell interpolation
+    const escapedUrl = downloadUrl.replace(/'/g, "'\\''");
+
+    const targetDir = `.claude/skills/posthog-${skillId}`;
+    const tempFile = `/tmp/posthog-skill-${skillId}.zip`;
+
+    return `mkdir -p ${targetDir} && curl -sL '${escapedUrl}' -o ${tempFile} && unzip -o ${tempFile} -d ${targetDir} && rm ${tempFile}`;
+}
+
+/**
+ * Generate manifest with skill URIs, download URLs, and MCP resource representations
  */
 function generateManifest(skills, uriSchema, version) {
     const scheme = uriSchema.scheme;
@@ -84,16 +102,25 @@ function generateManifest(skills, uriSchema, version) {
         version: uriSchema.manifest_version,
         buildVersion: version,
         buildTimestamp: new Date().toISOString(),
-        skills: skills.map(skill => ({
-            id: skill.id,
-            name: skill.name,
-            description: skill.description,
-            tags: skill.tags,
-            uri: `${scheme}${skillPattern.replace('{id}', skill.id)}`,
-            file: `${skill.id}.zip`,
-            // URL where the ZIP can be downloaded directly
-            downloadUrl: `${baseDownloadUrl}/${skill.id}.zip`,
-        })),
+        resources: skills.map(skill => {
+            const downloadUrl = `${baseDownloadUrl}/${skill.id}.zip`;
+            return {
+                id: skill.id,
+                name: skill.name,
+                description: skill.description,
+                tags: skill.tags,
+                uri: `${scheme}${skillPattern.replace('{id}', skill.id)}`,
+                file: `${skill.id}.zip`,
+                // LEGACY: kept for old MCP servers that generate install commands themselves
+                downloadUrl,
+                // Complete MCP resource representation — new MCP servers use this directly
+                resource: {
+                    mimeType: 'text/plain',
+                    description: `${skill.description}. Run this command in Bash to install the skill.`,
+                    text: generateInstallCommand(skill.id, downloadUrl),
+                },
+            };
+        }),
     };
 }
 
@@ -164,7 +191,7 @@ async function main() {
         console.log('Skills:', skills.length);
         console.log('\nIndividual skill ZIPs (for direct download):');
         for (const skill of skills) {
-            const downloadUrl = manifest.skills.find(s => s.id === skill.id)?.downloadUrl;
+            const downloadUrl = manifest.resources.find(s => s.id === skill.id)?.downloadUrl;
             console.log(`  - ${skill.id}.zip → ${downloadUrl}`);
         }
 
