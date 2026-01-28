@@ -87,13 +87,3 @@ skills:
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
-
-  # Guide-only skills (docs without example code)
-  # - id: identify-users
-  #   type: guide
-  #   display_name: Identifying Users
-  #   description: How to identify users and associate events with them
-  #   tags: [core, users, identity]
-  #   docs_urls:
-  #     - https://posthog.com/docs/getting-started/identify-users.md
-  #     - https://posthog.com/docs/getting-started/group-analytics.md

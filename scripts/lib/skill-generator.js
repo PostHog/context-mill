@@ -518,6 +518,7 @@ async function generateAllSkills({
     // Return full skill metadata for manifest generation
     return skills.map(s => ({
         id: s.id,
+        type: s.type || 'example',
         name: `PostHog integration for ${s.display_name}`,
         description: s.description,
         tags: s.tags || [],
@@ -532,4 +533,5 @@ module.exports = {
     discoverWorkflows,
     generateSkill,
     generateAllSkills,
+    fetchDoc,
 };

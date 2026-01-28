@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const archiver = require('archiver');
-const { generateAllSkills } = require('./lib/skill-generator');
+const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
 const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
@@ -90,7 +90,7 @@ function generateInstallCommand(skillId, downloadUrl) {
 /**
  * Generate manifest with skill URIs, download URLs, and MCP resource representations
  */
-function generateManifest(skills, uriSchema, version) {
+function generateManifest(skills, uriSchema, version, guideContents = {}) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
     // Base URL for skill ZIP downloads
@@ -103,17 +103,32 @@ function generateManifest(skills, uriSchema, version) {
         buildVersion: version,
         buildTimestamp: new Date().toISOString(),
         resources: skills.map(skill => {
-            const downloadUrl = `${baseDownloadUrl}/${skill.id}.zip`;
-            return {
+            const isGuide = skill.type === 'doc' && guideContents[skill.id];
+            const base = {
                 id: skill.id,
                 name: skill.name,
                 description: skill.description,
                 tags: skill.tags,
                 uri: `${scheme}${skillPattern.replace('{id}', skill.id)}`,
+            };
+
+            if (isGuide) {
+                return {
+                    ...base,
+                    resource: {
+                        mimeType: 'text/markdown',
+                        description: skill.description,
+                        text: guideContents[skill.id],
+                    },
+                };
+            }
+
+            const downloadUrl = `${baseDownloadUrl}/${skill.id}.zip`;
+            return {
+                ...base,
                 file: `${skill.id}.zip`,
                 // LEGACY: kept for old MCP servers that generate install commands themselves
                 downloadUrl,
-                // Complete MCP resource representation — new MCP servers use this directly
                 resource: {
                     mimeType: 'text/plain',
                     description: `${skill.description}. Run this command in Bash to install the skill.`,
@@ -124,8 +139,23 @@ function generateManifest(skills, uriSchema, version) {
     };
 }
 
+/**
+ * Fetch and concatenate docs for a guide resource
+ */
+async function fetchDocContent(doc) {
+    const parts = [];
+    for (const url of (doc.urls || [])) {
+        console.log(`  Fetching doc: ${url}`);
+        const result = await fetchDoc(url);
+        if (result) {
+            parts.push(result.content);
+        }
+    }
+    return parts.join('\n\n---\n\n');
+}
+
 async function main() {
-    console.log('Building Agent Skills...');
+    console.log('Building resources...');
     console.log(`Version: ${BUILD_VERSION}\n`);
 
     const repoRoot = path.join(__dirname, '..');
@@ -136,10 +166,9 @@ async function main() {
     const promptsDir = path.join(repoRoot, 'llm-prompts');
 
     try {
-        // Ensure skills output directory exists
         fs.mkdirSync(skillsDir, { recursive: true });
 
-        // Generate skill directories to temp location
+        // Generate skill packages via generator
         const skills = await generateAllSkills({
             repoRoot,
             configDir,
@@ -148,10 +177,15 @@ async function main() {
             version: BUILD_VERSION,
         });
 
-        // Load URI schema
+        // Load docs config
+        const docsConfigPath = path.join(configDir, 'docs.yaml');
+        const docEntries = fs.existsSync(docsConfigPath)
+            ? yaml.load(fs.readFileSync(docsConfigPath, 'utf8')).docs || []
+            : [];
+
         const uriSchema = loadUriSchema(configDir);
 
-        // Create ZIP for each skill - both as buffer and as standalone file
+        // Create ZIP for each skill
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
         for (const skill of skills) {
@@ -160,24 +194,42 @@ async function main() {
             const filename = `${skill.id}.zip`;
             skillZips[filename] = buffer;
 
-            // Write standalone ZIP file to skills directory
             const standaloneZipPath = path.join(skillsDir, filename);
             fs.writeFileSync(standaloneZipPath, buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
 
-        // Clean up temp directory
         fs.rmSync(tempDir, { recursive: true, force: true });
 
-        // Generate manifest
-        const manifest = generateManifest(skills, uriSchema, BUILD_VERSION);
+        // Fetch doc content directly (no generator, no ZIP)
+        const docContents = {};
+        if (docEntries.length > 0) {
+            console.log('\nFetching doc resources...');
+            for (const doc of docEntries) {
+                console.log(`\nDoc: ${doc.id}`);
+                docContents[doc.id] = await fetchDocContent(doc);
+                console.log(`  ✓ ${doc.id} (${docContents[doc.id].length} chars)`);
+            }
+        }
 
-        // Write standalone manifest to skills directory
+        // Build unified resource list for manifest
+        const docResources = docEntries.map(d => ({
+            id: d.id,
+            type: 'doc',
+            name: d.display_name,
+            description: d.description,
+            tags: d.tags || [],
+        }));
+        const allResources = [...skills, ...docResources];
+
+        // Generate manifest
+        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents);
+
         const manifestPath = path.join(skillsDir, 'manifest.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-        console.log(`  ✓ manifest.json`);
+        console.log(`\n  ✓ manifest.json`);
 
-        // Create bundled archive (for backwards compatibility)
+        // Create bundled archive
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
         const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
@@ -186,13 +238,19 @@ async function main() {
         // Summary
         console.log('\n' + '='.repeat(50));
         console.log('Build complete!\n');
-        console.log('Standalone skills:', skillsDir);
+        console.log('Output:', skillsDir);
         console.log('Bundle:', bundlePath);
-        console.log('Skills:', skills.length);
-        console.log('\nIndividual skill ZIPs (for direct download):');
+        console.log(`Resources: ${allResources.length} (${skills.length} skills, ${docEntries.length} docs)`);
+        console.log('\nSkill ZIPs:');
         for (const skill of skills) {
             const downloadUrl = manifest.resources.find(s => s.id === skill.id)?.downloadUrl;
             console.log(`  - ${skill.id}.zip → ${downloadUrl}`);
+        }
+        if (docEntries.length > 0) {
+            console.log('\nInline docs:');
+            for (const doc of docEntries) {
+                console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
+            }
         }
 
     } catch (e) {
