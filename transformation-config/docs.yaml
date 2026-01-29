@@ -1,0 +1,10 @@
+# Docs Configuration
+# Standalone documentation resources served inline via MCP (no ZIP packaging)
+
+docs:
+  - id: identify-users
+    display_name: Identifying Users
+    description: How to identify users and associate events with them
+    tags: [core, users, identity]
+    urls:
+      - https://posthog.com/docs/getting-started/identify-users.md

@@ -4,7 +4,7 @@
   "private": true,
   "description": "PostHog Context Mill: assembling and packaging context for AI agents and LLMs",
   "scripts": {
-    "build": "node scripts/build-skills.js",
+    "build": "node scripts/build.js",
     "dev": "node scripts/dev-server.js",
     "test:plugins": "vitest run scripts/plugins/tests",
     "test:plugins:watch": "vitest scripts/plugins/tests"
