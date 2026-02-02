@@ -23,10 +23,21 @@ function loadYaml(configPath) {
 }
 
 /**
- * Load skills configuration
+ * Load skills configuration from individual files in skills/ directory.
+ * Each YAML file represents a skill group. Returns a merged config object
+ * keyed by filename (without extension).
  */
 function loadSkillsConfig(configDir) {
-    return loadYaml(path.join(configDir, 'skills.yaml'));
+    const skillsDir = path.join(configDir, 'skills');
+    const files = fs.readdirSync(skillsDir).filter(f => f.endsWith('.yaml'));
+    const config = {};
+
+    for (const file of files) {
+        const key = file.replace('.yaml', '');
+        config[key] = loadYaml(path.join(skillsDir, file));
+    }
+
+    return config;
 }
 
 /**
@@ -40,7 +51,7 @@ function loadCommandments(configDir) {
  * Load a skill description template by filename
  */
 function loadSkillTemplate(configDir, templateFile) {
-    return fs.readFileSync(path.join(configDir, templateFile), 'utf8');
+    return fs.readFileSync(path.join(configDir, 'skills', templateFile), 'utf8');
 }
 
 /**

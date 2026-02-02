@@ -1,0 +1,63 @@
+# LLM analytics skills - docs-only (no example projects)
+type: docs-only
+template: llm-analytics-skill-description.md
+description: PostHog LLM analytics for {display_name}
+tags: [llm-analytics]
+shared_docs:
+  - https://posthog.com/docs/llm-analytics/basics.md
+  - https://posthog.com/docs/llm-analytics/traces.md
+  - https://posthog.com/docs/llm-analytics/calculating-costs.md
+variations:
+  - id: openai-llm-analytics
+    display_name: OpenAI
+    tags: [python, javascript]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openai.md
+
+  - id: openai-agents-llm-analytics
+    display_name: OpenAI Agents SDK
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openai-agents.md
+
+  - id: anthropic-llm-analytics
+    display_name: Anthropic
+    tags: [python, javascript]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/anthropic.md
+
+  - id: google-llm-analytics
+    display_name: Google (Gemini)
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/google.md
+
+  - id: langchain-llm-analytics
+    display_name: LangChain
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/langchain.md
+
+  - id: litellm-llm-analytics
+    display_name: LiteLLM
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/litellm.md
+
+  - id: vercel-ai-llm-analytics
+    display_name: Vercel AI
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/vercel-ai.md
+
+  - id: openrouter-llm-analytics
+    display_name: OpenRouter
+    tags: [python, javascript]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openrouter.md
+
+  - id: manual-capture-llm-analytics
+    display_name: Manual Capture
+    tags: [python, javascript]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/manual-capture.md

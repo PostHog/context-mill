@@ -1,0 +1,50 @@
+# Logs skills - docs-only (no example projects)
+type: docs-only
+template: logs-skill-description.md
+description: PostHog logs for {display_name}
+tags: [logs]
+shared_docs:
+  - https://posthog.com/docs/logs/start-here.md
+  - https://posthog.com/docs/logs/search.md
+variations:
+  - id: nextjs-logs
+    display_name: Next.js
+    tags: [nextjs, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nextjs.md
+
+  - id: nodejs-logs
+    display_name: Node.js
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nodejs.md
+
+  - id: python-logs
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/python.md
+
+  - id: go-logs
+    display_name: Go
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/go.md
+
+  - id: java-logs
+    display_name: Java
+    tags: [java]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/java.md
+
+  - id: datadog-logs
+    display_name: Datadog
+    tags: [datadog]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/datadog.md
+
+  - id: other-logs
+    display_name: Other Languages
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/other.md

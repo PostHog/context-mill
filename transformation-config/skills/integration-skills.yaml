@@ -1,0 +1,69 @@
+# Integration skills - example-based (code + docs)
+type: example
+template: integration-skill-description.md
+description: PostHog integration for {display_name} applications
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+variations:
+  - id: nextjs-app-router
+    example_path: basics/next-app-router
+    display_name: Next.js App Router
+    tags: [nextjs, react, ssr, app-router, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+
+  - id: nextjs-pages-router
+    example_path: basics/next-pages-router
+    display_name: Next.js Pages Router
+    tags: [nextjs, react, ssr, pages-router, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+
+  - id: react-react-router-6
+    example_path: basics/react-react-router-6
+    display_name: React Router v6
+    tags: [react, react-router, v6, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+
+  - id: react-react-router-7-framework
+    example_path: basics/react-react-router-7-framework
+    display_name: React Router v7 - Framework mode
+    tags: [react, react-router, v7, framework, ssr, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+
+  - id: react-react-router-7-data
+    example_path: basics/react-react-router-7-data
+    display_name: React Router v7 - Data mode
+    tags: [react, react-router, v7, data, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+
+  - id: react-react-router-7-declarative
+    example_path: basics/react-react-router-7-declarative
+    display_name: React Router v7 - Declarative mode
+    tags: [react, react-router, v7, declarative, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+
+  - id: django
+    example_path: basics/django
+    display_name: Django
+    tags: [django, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/django.md
+
+  - id: flask
+    example_path: basics/flask
+    display_name: Flask
+    tags: [flask, python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flask.md
+
+  - id: laravel
+    example_path: basics/laravel
+    display_name: Laravel
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/libraries/laravel.md
