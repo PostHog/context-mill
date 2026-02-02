@@ -557,7 +557,7 @@ async function generateAllSkills({
     return skills.map(s => ({
         id: s.id,
         type: s.type || 'example',
-        name: `PostHog integration for ${s.display_name}`,
+        name: s.description,
         description: s.description,
         tags: s.tags || [],
     }));
