@@ -60,6 +60,8 @@ function expandSkillGroups(config, configDir) {
         const baseType = group.type || 'example';
         const baseDescription = group.description || null;
 
+        const baseSharedDocs = group.shared_docs || [];
+
         for (const variation of group.variations) {
             const mergedTags = [...baseTags, ...(variation.tags || [])];
             let description = variation.description;
@@ -73,6 +75,7 @@ function expandSkillGroups(config, configDir) {
                 tags: mergedTags,
                 description,
                 _template: template,
+                _sharedDocs: baseSharedDocs,
             });
         }
     }
@@ -518,7 +521,6 @@ async function generateAllSkills({
 
     // Expand grouped skills into flat array
     const skills = expandSkillGroups(skillsConfig, configDir);
-    const sharedDocs = skillsConfig.shared_docs || [];
 
     // Discover workflows
     console.log('Discovering workflows...');
@@ -542,7 +544,7 @@ async function generateAllSkills({
             skipPatterns,
             commandmentsConfig,
             skillTemplate: skill._template,
-            sharedDocs,
+            sharedDocs: skill._sharedDocs || [],
             workflows,
         });
 

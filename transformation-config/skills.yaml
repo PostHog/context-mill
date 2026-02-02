@@ -1,14 +1,12 @@
 # Skills Configuration
 # Defines what gets bundled into each skill package
 
-# Docs included in ALL skills
-shared_docs:
-  - https://posthog.com/docs/getting-started/identify-users.md
-
 # Integration skills - example-based (code + docs)
 integration-skills:
   type: example
   template: integration-skill-description.md
+  shared_docs:
+    - https://posthog.com/docs/getting-started/identify-users.md
   variations:
     - id: nextjs-app-router
       example_path: basics/next-app-router

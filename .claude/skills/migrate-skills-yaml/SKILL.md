@@ -27,12 +27,11 @@ skills:
 ## New format (grouped with variations)
 
 ```yaml
-shared_docs:
-  - https://posthog.com/docs/getting-started/identify-users.md
-
 integration-skills:
   type: example
   template: integration-skill-description.md
+  shared_docs:
+    - https://posthog.com/docs/getting-started/identify-users.md
   variations:
     - id: nextjs-app-router
       example_path: basics/next-app-router
@@ -45,9 +44,9 @@ integration-skills:
 
 ## Migration steps
 
-1. Keep `shared_docs` at the top level unchanged
+1. Remove the top-level `shared_docs` key
 2. Remove the top-level `skills:` key
-3. Create `integration-skills:` with `type: example` and `template: integration-skill-description.md`
+3. Create `integration-skills:` with `type: example`, `template: integration-skill-description.md`, and `shared_docs` (moved from top level)
 4. Move all former `skills` entries under `integration-skills.variations`
 5. Remove `type: example` from each variation (it's inherited from the group)
 6. Keep all other fields (`id`, `example_path`, `display_name`, `description`, `tags`, `docs_urls`) on each variation
