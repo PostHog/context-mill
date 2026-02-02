@@ -87,3 +87,508 @@ skills:
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
+
+  # ── LLM Analytics: Core providers ──────────────────────────────────────
+
+  - id: openai-python
+    type: example
+    example_path: llm-analytics/openai-python
+    display_name: OpenAI (Python)
+    description: PostHog LLM analytics for OpenAI using Python
+    tags: [llm-analytics, openai, python, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openai.md
+
+  - id: openai-node
+    type: example
+    example_path: llm-analytics/openai-node
+    display_name: OpenAI (Node)
+    description: PostHog LLM analytics for OpenAI using Node
+    tags: [llm-analytics, openai, node, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openai.md
+
+  - id: anthropic-python
+    type: example
+    example_path: llm-analytics/anthropic-python
+    display_name: Anthropic (Python)
+    description: PostHog LLM analytics for Anthropic Claude using Python
+    tags: [llm-analytics, anthropic, python, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/anthropic.md
+
+  - id: anthropic-node
+    type: example
+    example_path: llm-analytics/anthropic-node
+    display_name: Anthropic (Node)
+    description: PostHog LLM analytics for Anthropic Claude using Node
+    tags: [llm-analytics, anthropic, node, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/anthropic.md
+
+  - id: google-gemini-python
+    type: example
+    example_path: llm-analytics/google-gemini-python
+    display_name: Google Gemini (Python)
+    description: PostHog LLM analytics for Google Gemini using Python
+    tags: [llm-analytics, google-gemini, python, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/google.md
+
+  - id: google-gemini-node
+    type: example
+    example_path: llm-analytics/google-gemini-node
+    display_name: Google Gemini (Node)
+    description: PostHog LLM analytics for Google Gemini using Node
+    tags: [llm-analytics, google-gemini, node, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/google.md
+
+  - id: bedrock-python
+    type: example
+    example_path: llm-analytics/bedrock-python
+    display_name: Amazon Bedrock (Python)
+    description: PostHog LLM analytics for Amazon Bedrock using Python
+    tags: [llm-analytics, bedrock, python, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/bedrock.md
+
+  - id: azure-openai-node
+    type: example
+    example_path: llm-analytics/azure-openai-node
+    display_name: Azure OpenAI (Node)
+    description: PostHog LLM analytics for Azure OpenAI using Node
+    tags: [llm-analytics, azure-openai, node, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+
+  # ── LLM Analytics: OpenAI-compatible providers ─────────────────────────
+
+  - id: groq-python
+    type: example
+    example_path: llm-analytics/groq-python
+    display_name: Groq (Python)
+    description: PostHog LLM analytics for Groq using Python
+    tags: [llm-analytics, groq, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/groq.md
+
+  - id: groq-node
+    type: example
+    example_path: llm-analytics/groq-node
+    display_name: Groq (Node)
+    description: PostHog LLM analytics for Groq using Node
+    tags: [llm-analytics, groq, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/groq.md
+
+  - id: mistral-python
+    type: example
+    example_path: llm-analytics/mistral-python
+    display_name: Mistral (Python)
+    description: PostHog LLM analytics for Mistral using Python
+    tags: [llm-analytics, mistral, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/mistral.md
+
+  - id: mistral-node
+    type: example
+    example_path: llm-analytics/mistral-node
+    display_name: Mistral (Node)
+    description: PostHog LLM analytics for Mistral using Node
+    tags: [llm-analytics, mistral, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/mistral.md
+
+  - id: ollama-python
+    type: example
+    example_path: llm-analytics/ollama-python
+    display_name: Ollama (Python)
+    description: PostHog LLM analytics for Ollama using Python
+    tags: [llm-analytics, ollama, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/ollama.md
+
+  - id: ollama-node
+    type: example
+    example_path: llm-analytics/ollama-node
+    display_name: Ollama (Node)
+    description: PostHog LLM analytics for Ollama using Node
+    tags: [llm-analytics, ollama, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/ollama.md
+
+  - id: deepseek-python
+    type: example
+    example_path: llm-analytics/deepseek-python
+    display_name: DeepSeek (Python)
+    description: PostHog LLM analytics for DeepSeek using Python
+    tags: [llm-analytics, deepseek, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/deepseek.md
+
+  - id: deepseek-node
+    type: example
+    example_path: llm-analytics/deepseek-node
+    display_name: DeepSeek (Node)
+    description: PostHog LLM analytics for DeepSeek using Node
+    tags: [llm-analytics, deepseek, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/deepseek.md
+
+  - id: together-ai-python
+    type: example
+    example_path: llm-analytics/together-ai-python
+    display_name: Together AI (Python)
+    description: PostHog LLM analytics for Together AI using Python
+    tags: [llm-analytics, together-ai, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/together-ai.md
+
+  - id: together-ai-node
+    type: example
+    example_path: llm-analytics/together-ai-node
+    display_name: Together AI (Node)
+    description: PostHog LLM analytics for Together AI using Node
+    tags: [llm-analytics, together-ai, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/together-ai.md
+
+  - id: fireworks-ai-python
+    type: example
+    example_path: llm-analytics/fireworks-ai-python
+    display_name: Fireworks AI (Python)
+    description: PostHog LLM analytics for Fireworks AI using Python
+    tags: [llm-analytics, fireworks-ai, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/fireworks-ai.md
+
+  - id: fireworks-ai-node
+    type: example
+    example_path: llm-analytics/fireworks-ai-node
+    display_name: Fireworks AI (Node)
+    description: PostHog LLM analytics for Fireworks AI using Node
+    tags: [llm-analytics, fireworks-ai, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/fireworks-ai.md
+
+  - id: cerebras-python
+    type: example
+    example_path: llm-analytics/cerebras-python
+    display_name: Cerebras (Python)
+    description: PostHog LLM analytics for Cerebras using Python
+    tags: [llm-analytics, cerebras, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/cerebras.md
+
+  - id: cerebras-node
+    type: example
+    example_path: llm-analytics/cerebras-node
+    display_name: Cerebras (Node)
+    description: PostHog LLM analytics for Cerebras using Node
+    tags: [llm-analytics, cerebras, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/cerebras.md
+
+  - id: perplexity-python
+    type: example
+    example_path: llm-analytics/perplexity-python
+    display_name: Perplexity (Python)
+    description: PostHog LLM analytics for Perplexity using Python
+    tags: [llm-analytics, perplexity, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/perplexity.md
+
+  - id: perplexity-node
+    type: example
+    example_path: llm-analytics/perplexity-node
+    display_name: Perplexity (Node)
+    description: PostHog LLM analytics for Perplexity using Node
+    tags: [llm-analytics, perplexity, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/perplexity.md
+
+  - id: cohere-python
+    type: example
+    example_path: llm-analytics/cohere-python
+    display_name: Cohere (Python)
+    description: PostHog LLM analytics for Cohere using Python
+    tags: [llm-analytics, cohere, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/cohere.md
+
+  - id: cohere-node
+    type: example
+    example_path: llm-analytics/cohere-node
+    display_name: Cohere (Node)
+    description: PostHog LLM analytics for Cohere using Node
+    tags: [llm-analytics, cohere, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/cohere.md
+
+  - id: hugging-face-python
+    type: example
+    example_path: llm-analytics/hugging-face-python
+    display_name: Hugging Face (Python)
+    description: PostHog LLM analytics for Hugging Face using Python
+    tags: [llm-analytics, hugging-face, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/hugging-face.md
+
+  - id: hugging-face-node
+    type: example
+    example_path: llm-analytics/hugging-face-node
+    display_name: Hugging Face (Node)
+    description: PostHog LLM analytics for Hugging Face using Node
+    tags: [llm-analytics, hugging-face, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/hugging-face.md
+
+  - id: xai-python
+    type: example
+    example_path: llm-analytics/xai-python
+    display_name: xAI (Python)
+    description: PostHog LLM analytics for xAI using Python
+    tags: [llm-analytics, xai, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/xai.md
+
+  - id: xai-node
+    type: example
+    example_path: llm-analytics/xai-node
+    display_name: xAI (Node)
+    description: PostHog LLM analytics for xAI using Node
+    tags: [llm-analytics, xai, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/xai.md
+
+  - id: openrouter-python
+    type: example
+    example_path: llm-analytics/openrouter-python
+    display_name: OpenRouter (Python)
+    description: PostHog LLM analytics for OpenRouter using Python
+    tags: [llm-analytics, openrouter, python, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openrouter.md
+
+  - id: openrouter-node
+    type: example
+    example_path: llm-analytics/openrouter-node
+    display_name: OpenRouter (Node)
+    description: PostHog LLM analytics for OpenRouter using Node
+    tags: [llm-analytics, openrouter, node, openai-compatible, ai-provider]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openrouter.md
+
+  # ── LLM Analytics: Frameworks ──────────────────────────────────────────
+
+  - id: langchain-python
+    type: example
+    example_path: llm-analytics/langchain-python
+    display_name: LangChain (Python)
+    description: PostHog LLM analytics for LangChain using Python
+    tags: [llm-analytics, langchain, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/langchain.md
+
+  - id: langchain-node
+    type: example
+    example_path: llm-analytics/langchain-node
+    display_name: LangChain (Node)
+    description: PostHog LLM analytics for LangChain using Node
+    tags: [llm-analytics, langchain, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/langchain.md
+
+  - id: langgraph-python
+    type: example
+    example_path: llm-analytics/langgraph-python
+    display_name: LangGraph (Python)
+    description: PostHog LLM analytics for LangGraph using Python
+    tags: [llm-analytics, langgraph, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/langgraph.md
+
+  - id: langgraph-node
+    type: example
+    example_path: llm-analytics/langgraph-node
+    display_name: LangGraph (Node)
+    description: PostHog LLM analytics for LangGraph using Node
+    tags: [llm-analytics, langgraph, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/langgraph.md
+
+  - id: crewai-python
+    type: example
+    example_path: llm-analytics/crewai-python
+    display_name: CrewAI (Python)
+    description: PostHog LLM analytics for CrewAI using Python
+    tags: [llm-analytics, crewai, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/crewai.md
+
+  - id: instructor-python
+    type: example
+    example_path: llm-analytics/instructor-python
+    display_name: Instructor (Python)
+    description: PostHog LLM analytics for Instructor using Python
+    tags: [llm-analytics, instructor, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/instructor.md
+
+  - id: instructor-node
+    type: example
+    example_path: llm-analytics/instructor-node
+    display_name: Instructor (Node)
+    description: PostHog LLM analytics for Instructor using Node
+    tags: [llm-analytics, instructor, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/instructor.md
+
+  - id: llamaindex-python
+    type: example
+    example_path: llm-analytics/llamaindex-python
+    display_name: LlamaIndex (Python)
+    description: PostHog LLM analytics for LlamaIndex using Python
+    tags: [llm-analytics, llamaindex, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/llamaindex.md
+
+  - id: llamaindex-node
+    type: example
+    example_path: llm-analytics/llamaindex-node
+    display_name: LlamaIndex (Node)
+    description: PostHog LLM analytics for LlamaIndex using Node
+    tags: [llm-analytics, llamaindex, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/llamaindex.md
+
+  - id: pydantic-ai-python
+    type: example
+    example_path: llm-analytics/pydantic-ai-python
+    display_name: Pydantic AI (Python)
+    description: PostHog LLM analytics for Pydantic AI using Python
+    tags: [llm-analytics, pydantic-ai, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/pydantic-ai.md
+
+  - id: pydantic-ai-node
+    type: example
+    example_path: llm-analytics/pydantic-ai-node
+    display_name: Pydantic AI (Node)
+    description: PostHog LLM analytics for Pydantic AI pattern using Node
+    tags: [llm-analytics, pydantic-ai, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/pydantic-ai.md
+
+  - id: litellm-python
+    type: example
+    example_path: llm-analytics/litellm-python
+    display_name: LiteLLM (Python)
+    description: PostHog LLM analytics for LiteLLM using Python
+    tags: [llm-analytics, litellm, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/litellm.md
+
+  - id: dspy-python
+    type: example
+    example_path: llm-analytics/dspy-python
+    display_name: DSPy (Python)
+    description: PostHog LLM analytics for DSPy using Python
+    tags: [llm-analytics, dspy, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/dspy.md
+
+  - id: vercel-ai-node
+    type: example
+    example_path: llm-analytics/vercel-ai-node
+    display_name: Vercel AI SDK (Node)
+    description: PostHog LLM analytics for Vercel AI SDK using Node
+    tags: [llm-analytics, vercel-ai, node, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/vercel-ai.md
+
+  - id: openai-agents-python
+    type: example
+    example_path: llm-analytics/openai-agents-python
+    display_name: OpenAI Agents SDK (Python)
+    description: PostHog LLM analytics for OpenAI Agents SDK using Python
+    tags: [llm-analytics, openai-agents, python, ai-framework]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/openai-agents.md
+
+  # ── LLM Analytics: Gateways ────────────────────────────────────────────
+
+  - id: helicone-python
+    type: example
+    example_path: llm-analytics/helicone-python
+    display_name: Helicone (Python)
+    description: PostHog LLM analytics for Helicone gateway using Python
+    tags: [llm-analytics, helicone, python, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/helicone.md
+
+  - id: helicone-node
+    type: example
+    example_path: llm-analytics/helicone-node
+    display_name: Helicone (Node)
+    description: PostHog LLM analytics for Helicone gateway using Node
+    tags: [llm-analytics, helicone, node, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/helicone.md
+
+  - id: portkey-python
+    type: example
+    example_path: llm-analytics/portkey-python
+    display_name: Portkey (Python)
+    description: PostHog LLM analytics for Portkey gateway using Python
+    tags: [llm-analytics, portkey, python, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/portkey.md
+
+  - id: portkey-node
+    type: example
+    example_path: llm-analytics/portkey-node
+    display_name: Portkey (Node)
+    description: PostHog LLM analytics for Portkey gateway using Node
+    tags: [llm-analytics, portkey, node, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/portkey.md
+
+  - id: vercel-ai-gateway-python
+    type: example
+    example_path: llm-analytics/vercel-ai-gateway-python
+    display_name: Vercel AI Gateway (Python)
+    description: PostHog LLM analytics for Vercel AI Gateway using Python
+    tags: [llm-analytics, vercel-ai-gateway, python, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/vercel-ai-gateway.md
+
+  - id: vercel-ai-gateway-node
+    type: example
+    example_path: llm-analytics/vercel-ai-gateway-node
+    display_name: Vercel AI Gateway (Node)
+    description: PostHog LLM analytics for Vercel AI Gateway using Node
+    tags: [llm-analytics, vercel-ai-gateway, node, openai-compatible, ai-gateway]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/vercel-ai-gateway.md
+
+  # ── LLM Analytics: Manual capture ──────────────────────────────────────
+
+  - id: manual-python
+    type: example
+    example_path: llm-analytics/manual-python
+    display_name: Manual Capture (Python)
+    description: Manually capture LLM analytics events with PostHog using Python
+    tags: [llm-analytics, manual, python]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/manual-capture.md
+
+  - id: manual-node
+    type: example
+    example_path: llm-analytics/manual-node
+    display_name: Manual Capture (Node)
+    description: Manually capture LLM analytics events with PostHog using Node
+    tags: [llm-analytics, manual, node]
+    docs_urls:
+      - https://posthog.com/docs/llm-analytics/installation/manual-capture.md

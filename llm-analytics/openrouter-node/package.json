@@ -1,0 +1,13 @@
+{
+  "name": "openrouter-posthog-example",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx index.ts"
+  },
+  "dependencies": {
+    "@posthog/ai": "latest",
+    "posthog-node": "latest",
+    "openai": "latest",
+    "dotenv": "latest"
+  }
+}

@@ -41,4 +41,26 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
-  
+
+  llm-analytics:
+    - Use environment variables for ALL API keys and PostHog credentials, never hardcode them
+    - PostHog AI wrappers do NOT proxy LLM calls — they only send analytics events asynchronously
+    - Always pass posthog_distinct_id (Python) or posthogDistinctId (Node) to associate events with users
+    - Use posthog_trace_id / posthogTraceId to group related LLM calls into a single trace
+
+  node:
+    - Import AI wrappers from '@posthog/ai', not from provider SDKs directly
+    - Always call phClient.shutdown() before process exit to flush pending events
+    - Use 'posthog-node' for the PostHog client, '@posthog/ai' for LLM wrappers
+
+  openai-compatible:
+    - Use PostHog's OpenAI wrapper with a custom base_url/baseURL — the provider's own SDK is not needed
+    - Model names are provider-specific — check the provider's docs for available models
+
+  ai-framework:
+    - For callback-based frameworks (LangChain, CrewAI, LangGraph), pass the callback handler in the config
+    - For client-injection frameworks (Instructor, LlamaIndex, Pydantic AI), create a PostHog OpenAI wrapper first
+
+  ai-gateway:
+    - Gateway integrations use the OpenAI wrapper with a custom base_url pointing to the gateway
+    - Additional headers may be required (e.g., Portkey needs x-portkey-api-key and x-portkey-virtual-key)

@@ -39,8 +39,17 @@ examples/
 │   ├── next-pages-router/       # Next.js 15 with Pages Router
 │   ├── react-react-router/      # React with React Router
 │   ├── react-tanstack-router/   # React with TanStack Router
-│   └── tanstack-start/          # TanStack Start
+│   ├── tanstack-start/          # TanStack Start
 │   └── django/                  # Django
+├── llm-analytics/
+│   ├── openai-python/           # OpenAI (Python)
+│   ├── openai-node/             # OpenAI (Node)
+│   ├── anthropic-python/        # Anthropic (Python)
+│   ├── groq-python/             # Groq via OpenAI-compatible API
+│   ├── langchain-python/        # LangChain (Python)
+│   ├── vercel-ai-node/          # Vercel AI SDK (Node)
+│   ├── ...                      # 55 examples total (providers, frameworks, gateways)
+│   └── manual-node/             # Manual capture (Node)
 ├── llm-prompts/                 # Workflow guides for AI agents
 ├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)
 └── scripts/                     # Build scripts

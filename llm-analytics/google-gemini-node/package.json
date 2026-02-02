@@ -1,0 +1,13 @@
+{
+  "name": "google-gemini-posthog-example",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx index.ts"
+  },
+  "dependencies": {
+    "@posthog/ai": "latest",
+    "posthog-node": "latest",
+    "@google/genai": "latest",
+    "dotenv": "latest"
+  }
+}

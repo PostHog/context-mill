@@ -8,3 +8,10 @@ docs:
     tags: [core, users, identity]
     urls:
       - https://posthog.com/docs/getting-started/identify-users.md
+
+  - id: llm-analytics-overview
+    display_name: LLM Analytics Overview
+    description: Overview of PostHog's LLM analytics and observability features
+    tags: [llm-analytics, core]
+    urls:
+      - https://posthog.com/docs/llm-analytics.md
