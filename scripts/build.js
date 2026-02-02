@@ -93,6 +93,7 @@ function generateInstallCommand(skillId, downloadUrl) {
 function generateManifest(skills, uriSchema, version, guideContents = {}) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
+    const docPattern = uriSchema.patterns.doc;
     // Base URL for skill ZIP downloads
     // Production: GitHub releases (default)
     // Development: Local server (set via SKILLS_BASE_URL env var)
@@ -104,12 +105,15 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
         buildTimestamp: new Date().toISOString(),
         resources: skills.map(skill => {
             const isGuide = skill.type === 'doc' && guideContents[skill.id];
+            const uri = isGuide
+                ? `${scheme}${docPattern.replace('{id}', skill.id)}`
+                : `${scheme}${skillPattern.replace('{group}', skill.group).replace('{id}', skill.id)}`;
             const base = {
                 id: skill.id,
                 name: skill.name,
                 description: skill.description,
                 tags: skill.tags,
-                uri: `${scheme}${skillPattern.replace('{id}', skill.id)}`,
+                uri,
             };
 
             if (isGuide) {

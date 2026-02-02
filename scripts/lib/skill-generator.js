@@ -87,6 +87,7 @@ function expandSkillGroups(config, configDir) {
                 description,
                 _template: template,
                 _sharedDocs: baseSharedDocs,
+                _group: key,
             });
         }
     }
@@ -568,6 +569,7 @@ async function generateAllSkills({
     return skills.map(s => ({
         id: s.id,
         type: s.type || 'example',
+        group: s._group,
         name: s.description,
         description: s.description,
         tags: s.tags || [],
