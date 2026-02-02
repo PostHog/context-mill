@@ -40,7 +40,7 @@ function loadCommandments(configDir) {
  * Load skill description template
  */
 function loadSkillTemplate(configDir) {
-    return fs.readFileSync(path.join(configDir, 'skill-description.md'), 'utf8');
+    return fs.readFileSync(path.join(configDir, 'integration-skill-description.md'), 'utf8');
 }
 
 /**
