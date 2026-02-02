@@ -37,10 +37,47 @@ function loadCommandments(configDir) {
 }
 
 /**
- * Load skill description template
+ * Load a skill description template by filename
  */
-function loadSkillTemplate(configDir) {
-    return fs.readFileSync(path.join(configDir, 'integration-skill-description.md'), 'utf8');
+function loadSkillTemplate(configDir, templateFile) {
+    return fs.readFileSync(path.join(configDir, templateFile), 'utf8');
+}
+
+/**
+ * Expand grouped skill config into a flat array of skill objects.
+ * Each top-level key (except shared_docs) is a skill group with
+ * base properties and a variations array.
+ */
+function expandSkillGroups(config, configDir) {
+    const skills = [];
+
+    for (const [key, group] of Object.entries(config)) {
+        if (key === 'shared_docs') continue;
+        if (!group.variations) continue;
+
+        const template = loadSkillTemplate(configDir, group.template);
+        const baseTags = group.tags || [];
+        const baseType = group.type || 'example';
+        const baseDescription = group.description || null;
+
+        for (const variation of group.variations) {
+            const mergedTags = [...baseTags, ...(variation.tags || [])];
+            let description = variation.description;
+            if (!description && baseDescription) {
+                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+            }
+
+            skills.push({
+                ...variation,
+                type: variation.type || baseType,
+                tags: mergedTags,
+                description,
+                _template: template,
+            });
+        }
+    }
+
+    return skills;
 }
 
 /**
@@ -477,8 +514,11 @@ async function generateAllSkills({
     // Load all configs
     const skillsConfig = loadSkillsConfig(configDir);
     const commandmentsConfig = loadCommandments(configDir);
-    const skillTemplate = loadSkillTemplate(configDir);
     const skipPatterns = loadSkipPatterns(path.join(configDir, 'skip-patterns.yaml'));
+
+    // Expand grouped skills into flat array
+    const skills = expandSkillGroups(skillsConfig, configDir);
+    const sharedDocs = skillsConfig.shared_docs || [];
 
     // Discover workflows
     console.log('Discovering workflows...');
@@ -487,10 +527,6 @@ async function generateAllSkills({
 
     // Create output directory
     fs.mkdirSync(outputDir, { recursive: true });
-
-    // Generate each skill
-    const skills = skillsConfig.skills || [];
-    const sharedDocs = skillsConfig.shared_docs || [];
 
     console.log(`\nGenerating ${skills.length} skills...`);
 
@@ -505,7 +541,7 @@ async function generateAllSkills({
             outputDir,
             skipPatterns,
             commandmentsConfig,
-            skillTemplate,
+            skillTemplate: skill._template,
             sharedDocs,
             workflows,
         });
@@ -529,6 +565,7 @@ module.exports = {
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
+    expandSkillGroups,
     collectCommandments,
     discoverWorkflows,
     generateSkill,

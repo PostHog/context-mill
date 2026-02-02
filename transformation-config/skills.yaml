@@ -5,85 +5,87 @@
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 
-skills:
-  # Example-based skills (code + docs)
-  - id: nextjs-app-router
-    type: example
-    example_path: basics/next-app-router
-    display_name: Next.js App Router
-    description: PostHog integration for Next.js App Router applications
-    tags: [nextjs, react, ssr, app-router, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/next-js.md
+# Integration skills - example-based (code + docs)
+integration-skills:
+  type: example
+  template: integration-skill-description.md
+  variations:
+    - id: nextjs-app-router
+      example_path: basics/next-app-router
+      display_name: Next.js App Router
+      description: PostHog integration for Next.js App Router applications
+      tags: [nextjs, react, ssr, app-router, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/next-js.md
 
-  - id: nextjs-pages-router
-    type: example
-    example_path: basics/next-pages-router
-    display_name: Next.js Pages Router
-    description: PostHog integration for Next.js Pages Router applications
-    tags: [nextjs, react, ssr, pages-router, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/next-js.md
+    - id: nextjs-pages-router
+      example_path: basics/next-pages-router
+      display_name: Next.js Pages Router
+      description: PostHog integration for Next.js Pages Router applications
+      tags: [nextjs, react, ssr, pages-router, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/next-js.md
 
-  - id: react-react-router-6
-    type: example
-    example_path: basics/react-react-router-6
-    display_name: React Router v6
-    description: PostHog integration for React Router v6 applications
-    tags: [react, react-router, v6, spa, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+    - id: react-react-router-6
+      example_path: basics/react-react-router-6
+      display_name: React Router v6
+      description: PostHog integration for React Router v6 applications
+      tags: [react, react-router, v6, spa, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/react-router/react-router-v6.md
 
-  - id: react-react-router-7-framework
-    type: example
-    example_path: basics/react-react-router-7-framework
-    display_name: React Router v7 - Framework mode
-    description: PostHog integration for React Router v7 Framework mode applications
-    tags: [react, react-router, v7, framework, ssr, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+    - id: react-react-router-7-framework
+      example_path: basics/react-react-router-7-framework
+      display_name: React Router v7 - Framework mode
+      description: PostHog integration for React Router v7 Framework mode applications
+      tags: [react, react-router, v7, framework, ssr, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
 
-  - id: react-react-router-7-data
-    type: example
-    example_path: basics/react-react-router-7-data
-    display_name: React Router v7 - Data mode
-    description: PostHog integration for React Router v7 Data mode applications
-    tags: [react, react-router, v7, data, spa, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+    - id: react-react-router-7-data
+      example_path: basics/react-react-router-7-data
+      display_name: React Router v7 - Data mode
+      description: PostHog integration for React Router v7 Data mode applications
+      tags: [react, react-router, v7, data, spa, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
 
-  - id: react-react-router-7-declarative
-    type: example
-    example_path: basics/react-react-router-7-declarative
-    display_name: React Router v7 - Declarative mode
-    description: PostHog integration for React Router v7 Declarative mode applications
-    tags: [react, react-router, v7, declarative, spa, javascript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+    - id: react-react-router-7-declarative
+      example_path: basics/react-react-router-7-declarative
+      display_name: React Router v7 - Declarative mode
+      description: PostHog integration for React Router v7 Declarative mode applications
+      tags: [react, react-router, v7, declarative, spa, javascript]
+      docs_urls:
+        - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
 
-  - id: django
-    type: example
-    example_path: basics/django
-    display_name: Django
-    description: PostHog integration for Django applications
-    tags: [django, python]
-    docs_urls:
-      - https://posthog.com/docs/libraries/django.md
+    - id: django
+      example_path: basics/django
+      display_name: Django
+      description: PostHog integration for Django applications
+      tags: [django, python]
+      docs_urls:
+        - https://posthog.com/docs/libraries/django.md
 
-  - id: flask
-    type: example
-    example_path: basics/flask
-    display_name: Flask
-    description: PostHog integration for Flask applications
-    tags: [flask, python]
-    docs_urls:
-      - https://posthog.com/docs/libraries/flask.md
+    - id: flask
+      example_path: basics/flask
+      display_name: Flask
+      description: PostHog integration for Flask applications
+      tags: [flask, python]
+      docs_urls:
+        - https://posthog.com/docs/libraries/flask.md
 
-  - id: laravel
-    type: example
-    example_path: basics/laravel
-    display_name: Laravel
-    description: PostHog integration for Laravel applications
-    tags: [laravel, php]
-    docs_urls:
-      - https://posthog.com/docs/libraries/laravel.md
+    - id: laravel
+      example_path: basics/laravel
+      display_name: Laravel
+      description: PostHog integration for Laravel applications
+      tags: [laravel, php]
+      docs_urls:
+        - https://posthog.com/docs/libraries/laravel.md
+
+# Feature flag skills - docs-only (no example projects)
+feature-flag-skills:
+  type: docs-only
+  template: feature-flag-skill-description.md
+  description: PostHog feature flags for {display_name} applications
+  tags: [feature-flags]
+  variations: []  # TODO: add framework variations
