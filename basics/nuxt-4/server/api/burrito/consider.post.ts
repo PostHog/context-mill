@@ -1,5 +1,6 @@
 import { useServerPostHog } from '../../utils/posthog'
 import { users, incrementBurritoConsiderations } from '../../utils/users'
+import { defineEventHandler, readBody, createError, getHeader } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ username: string }>(event)

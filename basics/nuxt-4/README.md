@@ -75,10 +75,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 │       └── main.css              # Global styles
 ├── server/
 │   ├── api/
-│   │   └── auth/
-│   │       └── login.post.ts     # Login API with server-side tracking
+│   │   ├── auth/
+│   │   │   └── login.post.ts     # Login API with server-side tracking
+│   │   └── burrito/
+│   │       └── consider.post.ts  # Burrito consideration API with server-side tracking
 │   └── utils/
-│       └── posthog.ts            # Server-side PostHog utility
+│       ├── posthog.ts            # Server-side PostHog utility
+│       └── users.ts              # In-memory user storage utilities
 ├── nuxt.config.ts               # Nuxt configuration with PostHog module
 └── package.json
 ```
@@ -158,51 +161,91 @@ The session and distinct ID are automatically passed to the backend via the `X-P
 Server-side API routes use the `useServerPostHog()` utility to get a PostHog Node client and extract session and user context from request headers:
 
 ```typescript
-import { useServerPostHog } from '~/server/utils/posthog'
-import { getHeader } from 'h3'
+import { useServerPostHog } from '../../utils/posthog'
+import { getOrCreateUser, users } from '../../utils/users'
 
 export default defineEventHandler(async (event) => {
-  const posthog = useServerPostHog()
+  const body = await readBody<{ username: string; password: string }>(event)
+  const { username, password } = body || {}
 
-  // Relies on __add_tracing_headers being set in the client-side SDK
+  if (!username || !password) {
+    throw createError({
+      statusCode: 400,
+      message: 'Username and password required',
+    })
+  }
+
+  const user = getOrCreateUser(username)
+  const isNewUser = !users.has(username)
+
   const sessionId = getHeader(event, 'x-posthog-session-id')
   const distinctId = getHeader(event, 'x-posthog-distinct-id')
 
-  await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    async () => {
-      posthog.capture({
-        event: 'server_login',
-        distinctId: distinctId ?? username,
-      })
-    }
-  )
+  // Capture server-side login event
+  const posthog = useServerPostHog()
+  
+  posthog.capture({
+    distinctId: distinctId,
+    event: 'server_login',
+    properties: {
+      $session_id: sessionId,
+      username: username,
+      isNewUser: isNewUser,
+      source: 'api',
+    },
+  })
+
+  return {
+    success: true,
+    user,
+  }
 })
 ```
 
 **Key Points:**
 - Uses `useServerPostHog()` utility to get a shared PostHog Node client instance
-- Extracts `sessionId` and `distinctId` from request headers using `getHeader()` from `h3`
-- Uses `withContext()` to associate server-side events with the correct session/user
+- Extracts `sessionId` and `distinctId` from request headers using `getHeader()` (auto-imported from h3)
 - The PostHog client is reused across requests (singleton pattern)
-- Always shutdown the client after each request to ensure all events are flushed
+- h3 functions like `defineEventHandler`, `readBody`, `createError`, `getHeader` are auto-imported in server routes
 
 ### Event tracking (app/pages/burrito.vue)
+
+The burrito consideration page demonstrates both client-side and server-side event tracking:
 
 ```typescript
 const posthog = usePostHog()
 
-const handleConsideration = () => {
-  auth.incrementBurritoConsiderations()
-  
-  if (user.value) {
-    posthog?.capture('burrito_considered', {
-      total_considerations: user.value.burritoConsiderations,
-      username: user.value.username,
+const handleConsideration = async () => {
+  if (!user.value) return
+
+  try {
+    // Call server-side API route
+    const response = await $fetch('/api/burrito/consider', {
+      method: 'POST',
+      body: { username: user.value.username },
     })
+
+    if (response.success && response.user) {
+      auth.setUser(response.user)
+      hasConsidered.value = true
+
+      // Client-side tracking (in addition to server-side tracking)
+      posthog?.capture('burrito_considered', {
+        total_considerations: response.user.burritoConsiderations,
+        username: response.user.username,
+      })
+
+      setTimeout(() => {
+        hasConsidered.value = false
+      }, 2000)
+    }
+  } catch (err) {
+    console.error('Error considering burrito:', err)
   }
 }
 ```
+
+The server-side route (`server/api/burrito/consider.post.ts`) also captures the event, demonstrating dual tracking.
 
 ### Error tracking
 
@@ -227,27 +270,44 @@ const triggerTestError = () => {
 
 ### Server-side tracking (server/api/auth/login.post.ts)
 
-Server-side events use the shared PostHog Node client:
+Server-side events use the shared PostHog Node client. Note that h3 functions are auto-imported in Nuxt server routes:
 
 ```typescript
-import { useServerPostHog } from '~/server/utils/posthog'
+import { useServerPostHog } from '../../utils/posthog'
+import { getOrCreateUser, users } from '../../utils/users'
 
-const posthog = useServerPostHog()
+export default defineEventHandler(async (event) => {
+  const body = await readBody<{ username: string; password: string }>(event)
+  const { username, password } = body || {}
 
-await posthog.withContext(
-  { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-  async () => {
-    posthog.capture({
-      event: 'server_login',
-      distinctId: distinctId ?? username,
-    })
-  }
-)
+  // ... validation logic ...
+
+  // Extract headers using getHeader (auto-imported from h3)
+  const sessionId = getHeader(event, 'x-posthog-session-id')
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')
+
+  // Capture server-side event
+  const posthog = useServerPostHog()
+  
+  posthog.capture({
+    distinctId: distinctId,
+    event: 'server_login',
+    properties: {
+      $session_id: sessionId,
+      username: username,
+      isNewUser: isNewUser,
+      source: 'api',
+    },
+  })
+
+  return { success: true, user }
+})
 ```
 
 **Key Points:**
 - The PostHog Node client is shared across requests via `useServerPostHog()` utility
-- Events are automatically associated with the correct user/session via `withContext()`
+- `getHeader()` is auto-imported from h3 in Nuxt server routes (no need to import from 'h3')
+- h3 functions like `defineEventHandler`, `readBody`, `createError` are also auto-imported
 - The `distinctId` and `sessionId` are extracted from request headers and used to maintain context between client and server
 - No need to manually shutdown the client (it's managed by the module)
 
@@ -292,7 +352,7 @@ This ensures a single PostHog client instance is reused across all server reques
 - **Source map uploads**: Automatic source map uploads for better error tracking
 - **Simplified API**: Uses `usePostHog()` composable instead of `useNuxtApp().$posthog`
 - **Shared server client**: Reuses PostHog Node client across requests instead of creating per-request
-- **Automatic import patterns**: Nuxt has some weird automatic import patterns that vary version to version. Nuxt 4 automatic imports work slightly differently to Nuxt 3.
+- **Automatic imports**: In Nuxt 4 server routes, h3 functions (`defineEventHandler`, `readBody`, `createError`, `getHeader`, etc.) are auto-imported - no need to import them explicitly
 
 ## Learn More
 
