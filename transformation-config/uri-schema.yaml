@@ -10,9 +10,5 @@ scheme: posthog://
 # URI patterns for each resource type
 # Variables use {name} syntax for substitution
 patterns:
-  skill: skills/{id}
-  workflow: workflows/{category}/{name}
+  skill: skills/{group}/{id}
   doc: docs/{id}
-  framework_docs: docs/frameworks/{framework}
-  examples: examples/{framework}
-

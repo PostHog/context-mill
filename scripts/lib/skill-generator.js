@@ -23,10 +23,21 @@ function loadYaml(configPath) {
 }
 
 /**
- * Load skills configuration
+ * Load skills configuration from individual files in skills/ directory.
+ * Each YAML file represents a skill group. Returns a merged config object
+ * keyed by filename (without extension).
  */
 function loadSkillsConfig(configDir) {
-    return loadYaml(path.join(configDir, 'skills.yaml'));
+    const skillsDir = path.join(configDir, 'skills');
+    const files = fs.readdirSync(skillsDir).filter(f => f.endsWith('.yaml'));
+    const config = {};
+
+    for (const file of files) {
+        const key = file.replace('.yaml', '');
+        config[key] = loadYaml(path.join(skillsDir, file));
+    }
+
+    return config;
 }
 
 /**
@@ -37,10 +48,51 @@ function loadCommandments(configDir) {
 }
 
 /**
- * Load skill description template
+ * Load a skill description template by filename
  */
-function loadSkillTemplate(configDir) {
-    return fs.readFileSync(path.join(configDir, 'skill-description.md'), 'utf8');
+function loadSkillTemplate(configDir, templateFile) {
+    return fs.readFileSync(path.join(configDir, 'skills', templateFile), 'utf8');
+}
+
+/**
+ * Expand grouped skill config into a flat array of skill objects.
+ * Each top-level key (except shared_docs) is a skill group with
+ * base properties and a variations array.
+ */
+function expandSkillGroups(config, configDir) {
+    const skills = [];
+
+    for (const [key, group] of Object.entries(config)) {
+        if (key === 'shared_docs') continue;
+        if (!group.variations) continue;
+
+        const template = loadSkillTemplate(configDir, group.template);
+        const baseTags = group.tags || [];
+        const baseType = group.type || 'example';
+        const baseDescription = group.description || null;
+
+        const baseSharedDocs = group.shared_docs || [];
+
+        for (const variation of group.variations) {
+            const mergedTags = [...baseTags, ...(variation.tags || [])];
+            let description = variation.description;
+            if (!description && baseDescription) {
+                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+            }
+
+            skills.push({
+                ...variation,
+                type: variation.type || baseType,
+                tags: mergedTags,
+                description,
+                _template: template,
+                _sharedDocs: baseSharedDocs,
+                _group: key,
+            });
+        }
+    }
+
+    return skills;
 }
 
 /**
@@ -477,8 +529,10 @@ async function generateAllSkills({
     // Load all configs
     const skillsConfig = loadSkillsConfig(configDir);
     const commandmentsConfig = loadCommandments(configDir);
-    const skillTemplate = loadSkillTemplate(configDir);
     const skipPatterns = loadSkipPatterns(path.join(configDir, 'skip-patterns.yaml'));
+
+    // Expand grouped skills into flat array
+    const skills = expandSkillGroups(skillsConfig, configDir);
 
     // Discover workflows
     console.log('Discovering workflows...');
@@ -487,10 +541,6 @@ async function generateAllSkills({
 
     // Create output directory
     fs.mkdirSync(outputDir, { recursive: true });
-
-    // Generate each skill
-    const skills = skillsConfig.skills || [];
-    const sharedDocs = skillsConfig.shared_docs || [];
 
     console.log(`\nGenerating ${skills.length} skills...`);
 
@@ -505,8 +555,8 @@ async function generateAllSkills({
             outputDir,
             skipPatterns,
             commandmentsConfig,
-            skillTemplate,
-            sharedDocs,
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
             workflows,
         });
 
@@ -519,7 +569,8 @@ async function generateAllSkills({
     return skills.map(s => ({
         id: s.id,
         type: s.type || 'example',
-        name: `PostHog integration for ${s.display_name}`,
+        group: s._group,
+        name: s.description,
         description: s.description,
         tags: s.tags || [],
     }));
@@ -529,6 +580,7 @@ module.exports = {
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
+    expandSkillGroups,
     collectCommandments,
     discoverWorkflows,
     generateSkill,
