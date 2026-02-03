@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Burrito - PostHog FastAPI Example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Burrito Consideration Tracker</h1>
+    <p>This page demonstrates custom event tracking with PostHog.</p>
+
+    <div class="count" id="burrito-count">{{ burrito_count }}</div>
+    <p style="text-align: center; color: #666;">Times you've considered a burrito</p>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="considerBurrito()">Consider a Burrito</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Code Example</h3>
+    <pre>
+# API endpoint captures the event
+with new_context():
+    identify_context(current_user.email)
+    capture('burrito_considered', properties={
+        'total_considerations': burrito_count
+    })</pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function considerBurrito() {
+    try {
+        const response = await fetch('/api/burrito/consider', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('burrito-count').textContent = data.count;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+</script>
+{% endblock %}

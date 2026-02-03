@@ -1,0 +1,1 @@
+"""FastAPI PostHog example application."""

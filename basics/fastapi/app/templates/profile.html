@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - PostHog FastAPI Example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Your Profile</h1>
+    <p>This page demonstrates error tracking with PostHog.</p>
+
+    <table>
+        <tr>
+            <th>Email</th>
+            <td>{{ current_user.email }}</td>
+        </tr>
+        <tr>
+            <th>Date Joined</th>
+            <td>{{ current_user.date_joined.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        <tr>
+            <th>Staff Status</th>
+            <td>{{ 'Yes' if current_user.is_staff else 'No' }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Error Tracking Demo</h2>
+    <p>Click a button to trigger an error and see it captured in PostHog:</p>
+
+    <div style="margin: 20px 0;">
+        <button class="danger" onclick="triggerError('value')">
+            Trigger ValueError
+        </button>
+        <button class="danger" onclick="triggerError('key')">
+            Trigger KeyError
+        </button>
+        <button class="danger" onclick="triggerError('generic')">
+            Trigger Generic Error
+        </button>
+    </div>
+
+    <div id="error-result" style="display: none;" class="message"></div>
+</div>
+
+<div class="card">
+    <h3>Code Example</h3>
+    <pre>
+try:
+    raise ValueError('Invalid value provided')
+except Exception as e:
+    # Capture exception and event with user context
+    with new_context():
+        identify_context(current_user.email)
+        posthog.capture_exception(e)
+        capture('error_triggered', properties={
+            'error_type': 'value',
+            'error_message': str(e)
+        })</pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function triggerError(errorType) {
+    const resultDiv = document.getElementById('error-result');
+    try {
+        const formData = new FormData();
+        formData.append('error_type', errorType);
+
+        const response = await fetch('/api/trigger-error', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'message ' + (data.success ? 'success' : 'error');
+        resultDiv.textContent = data.message + ': ' + data.error;
+    } catch (error) {
+        console.error('Error:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'message error';
+        resultDiv.textContent = 'Request failed: ' + error.message;
+    }
+}
+</script>
+{% endblock %}

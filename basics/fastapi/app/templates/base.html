@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PostHog FastAPI Example{% endblock %}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        nav {
+            background: #1d4ed8;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            margin-bottom: 15px;
+            color: #1d4ed8;
+        }
+        button, .btn {
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+            text-decoration: none;
+        }
+        button:hover, .btn:hover {
+            background: #1e40af;
+        }
+        button.danger {
+            background: #dc2626;
+        }
+        button.danger:hover {
+            background: #b91c1c;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .messages {
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .message.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .feature-flag {
+            background: #fef3c7;
+            border: 2px dashed #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .count {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1d4ed8;
+            text-align: center;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    {% if current_user %}
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/burrito">Burrito</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout" style="float: right;">Logout ({{ current_user.email }})</a>
+    </nav>
+    {% endif %}
+
+    <div class="container">
+        {% if error %}
+        <div class="messages">
+            <div class="message error">{{ error }}</div>
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="messages">
+            <div class="message success">{{ success }}</div>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
