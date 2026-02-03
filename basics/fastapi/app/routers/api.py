@@ -11,6 +11,8 @@ from app.dependencies import RequiredUser
 
 router = APIRouter()
 
+MAX_BURRITO_COUNT = 10000
+
 
 @router.post("/burrito/consider")
 async def consider_burrito(
@@ -18,10 +20,9 @@ async def consider_burrito(
     burrito_count: Annotated[int, Cookie()] = 0,
 ):
     """Track burrito consideration event."""
-    # Increment counter
-    new_count = burrito_count + 1
+    safe_count = max(0, min(burrito_count, MAX_BURRITO_COUNT))
+    new_count = safe_count + 1
 
-    # PostHog: Capture custom event
     with new_context():
         identify_context(current_user.email)
         capture("burrito_considered", properties={"total_considerations": new_count})
@@ -41,22 +42,13 @@ async def test_error(
     current_user: RequiredUser,
     capture_param: Annotated[str, Query(alias="capture")] = "true",
 ):
-    """Test endpoint demonstrating manual exception capture in PostHog.
-
-    Shows how to intentionally capture specific errors in PostHog.
-    Use this pattern for critical operations where you want error tracking.
-
-    Query params:
-    - capture: "true" to capture the exception in PostHog, "false" to just raise it
-    """
+    """Test endpoint demonstrating manual exception capture in PostHog."""
     should_capture = capture_param.lower() == "true"
 
     try:
-        # Simulate a critical operation failure
         raise Exception("Test exception from critical operation")
     except Exception as e:
         if should_capture:
-            # Manually capture this specific exception in PostHog
             with new_context():
                 identify_context(current_user.email)
                 event_id = posthog.capture_exception(e)
@@ -70,8 +62,7 @@ async def test_error(
                 status_code=500,
             )
         else:
-            # Just return error without PostHog capture
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return JSONResponse({"error": "Operation failed"}, status_code=500)
 
 
 @router.post("/trigger-error")
@@ -79,32 +70,36 @@ async def trigger_error(
     current_user: RequiredUser,
     error_type: Annotated[str, Form()] = "generic",
 ):
-    """Trigger different error types for testing error tracking.
+    """Trigger different error types for testing error tracking."""
+    error_messages = {
+        "value": "Invalid value provided",
+        "key": "Missing required key",
+        "generic": "Generic test error",
+    }
 
-    Form params:
-    - error_type: "value", "key", or "generic"
-    """
+    safe_error_type = error_type if error_type in error_messages else "generic"
+    error_message = error_messages[safe_error_type]
+
     try:
-        if error_type == "value":
-            raise ValueError("Invalid value provided")
-        elif error_type == "key":
+        if safe_error_type == "value":
+            raise ValueError(error_message)
+        elif safe_error_type == "key":
             raise KeyError("missing_key")
         else:
-            raise Exception("Generic test error")
+            raise Exception(error_message)
     except Exception as e:
-        # Capture exception and event with user context
         with new_context():
             identify_context(current_user.email)
             posthog.capture_exception(e)
             capture(
                 "error_triggered",
-                properties={"error_type": error_type, "error_message": str(e)},
+                properties={"error_type": safe_error_type, "error_message": error_message},
             )
 
         return JSONResponse(
             {
                 "success": True,
                 "message": "Error captured in PostHog",
-                "error": str(e),
+                "error": error_message,
             }
         )
