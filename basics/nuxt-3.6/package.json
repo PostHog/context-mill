@@ -1,0 +1,22 @@
+{
+  "name": "nuxt-3-6",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^3.6.5",
+    "posthog-js": "^1.337.1",
+    "posthog-node": "^5.24.9",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
