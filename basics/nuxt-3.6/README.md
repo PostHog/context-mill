@@ -2,6 +2,10 @@
 
 This is a [Nuxt 3.6](https://nuxt.com) example demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
+Nuxt 3.0 - 3.6 **does not** support the `@posthog/nuxt` package. You must use the `posthog-js` and `posthog-node` packages directly instead. This example also does not cover automatic source map uploads, only available through the `@posthog/nuxt` package.
+
+Nuxt 2.x is also distinctly different, [follow this guide instead](https://posthog.com/docs/libraries/nuxt-js-2).
+
 ## Features
 
 - **Product Analytics**: Track user events and behaviors
