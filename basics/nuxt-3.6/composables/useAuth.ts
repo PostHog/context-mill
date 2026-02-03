@@ -20,26 +20,32 @@ export const useAuth = () => {
   })
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Client-side only fake auth - no server calls
     if (!username || !password) {
       return false
     }
 
-    let localUser = users.get(username)
-    if (!localUser) {
-      localUser = {
-        username,
-        burritoConsiderations: 0
+    try {
+      const response = await $fetch('/api/auth/login', {
+        method: 'POST',
+        body: { username, password },
+      })
+
+      if (response.success && response.user) {
+        // Update client-side state
+        user.value = response.user
+        users.set(username, response.user)
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', username)
+        }
+
+        return true
       }
-      users.set(username, localUser)
+      return false
+    } catch (err) {
+      console.error('Login error:', err)
+      return false
     }
-
-    user.value = localUser
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('currentUser', username)
-    }
-
-    return true
   }
 
   const logout = () => {

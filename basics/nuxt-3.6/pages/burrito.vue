@@ -37,19 +37,31 @@ watchEffect(() => {
   }
 })
 
-const handleConsideration = () => {
-  // Client-side only - no server calls
-  if (user.value) {
-    auth.incrementBurritoConsiderations()
-    hasConsidered.value = true
+const handleConsideration = async () => {
+  if (!user.value) return
 
-    $posthog?.capture('burrito_considered', {
-      total_considerations: user.value?.burritoConsiderations + 1,
-      username: user.value?.username,
+  try {
+    const response = await $fetch('/api/burrito/consider', {
+      method: 'POST',
+      body: { username: user.value.username },
     })
-    setTimeout(() => {
-      hasConsidered.value = false
-    }, 2000)
+
+    if (response.success && response.user) {
+      auth.setUser(response.user)
+      hasConsidered.value = true
+
+      // Client-side tracking (in addition to server-side tracking)
+      $posthog?.capture('burrito_considered', {
+        total_considerations: response.user.burritoConsiderations,
+        username: response.user.username,
+      })
+
+      setTimeout(() => {
+        hasConsidered.value = false
+      }, 2000)
+    }
+  } catch (err) {
+    console.error('Error considering burrito:', err)
   }
 }
 </script>
