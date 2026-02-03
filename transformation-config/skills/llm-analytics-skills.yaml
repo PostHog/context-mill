@@ -8,55 +8,55 @@ shared_docs:
   - https://posthog.com/docs/llm-analytics/traces.md
   - https://posthog.com/docs/llm-analytics/calculating-costs.md
 variations:
-  - id: openai-llm-analytics
+  - id: openai
     display_name: OpenAI
     tags: [python, javascript]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/openai.md
 
-  - id: openai-agents-llm-analytics
+  - id: openai-agents
     display_name: OpenAI Agents SDK
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/openai-agents.md
 
-  - id: anthropic-llm-analytics
+  - id: anthropic
     display_name: Anthropic
     tags: [python, javascript]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/anthropic.md
 
-  - id: google-llm-analytics
+  - id: google
     display_name: Google (Gemini)
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/google.md
 
-  - id: langchain-llm-analytics
+  - id: langchain
     display_name: LangChain
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/langchain.md
 
-  - id: litellm-llm-analytics
+  - id: litellm
     display_name: LiteLLM
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/litellm.md
 
-  - id: vercel-ai-llm-analytics
+  - id: vercel-ai
     display_name: Vercel AI
     tags: [javascript]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/vercel-ai.md
 
-  - id: openrouter-llm-analytics
+  - id: openrouter
     display_name: OpenRouter
     tags: [python, javascript]
     docs_urls:
       - https://posthog.com/docs/llm-analytics/installation/openrouter.md
 
-  - id: manual-capture-llm-analytics
+  - id: manual-capture
     display_name: Manual Capture
     tags: [python, javascript]
     docs_urls:
