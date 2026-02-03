@@ -61,6 +61,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
 
+  - id: nuxt-3.6
+    type: example
+    example_path: basics/nuxt-3.6
+    display_name: Nuxt 3.6
+    description: PostHog integration for Nuxt versions 3.0 to 3.6
+    tags: [nuxt, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js-3-6
+
   - id: django
     type: example
     example_path: basics/django
