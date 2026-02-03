@@ -1,10 +1,9 @@
 import { useServerPostHog } from '../../utils/posthog'
-
-const users = new Map<string, { username: string; burritoConsiderations: number }>()
+import { getOrCreateUser, users } from '../../utils/users'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { username, password } = body
+  const body = await readBody<{ username: string; password: string }>(event)
+  const { username, password } = body || {}
 
   if (!username || !password) {
     throw createError({
@@ -13,13 +12,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  let user = users.get(username)
-  const isNewUser = !user
-
-  if (!user) {
-    user = { username, burritoConsiderations: 0 }
-    users.set(username, user)
-  }
+  const user = getOrCreateUser(username)
+  const isNewUser = !users.has(username)
 
   const sessionId = getHeader(event, 'x-posthog-session-id')
   const distinctId = getHeader(event, 'x-posthog-distinct-id')

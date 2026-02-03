@@ -30,20 +30,31 @@ const user = computed(() => auth.user.value)
 const posthog = usePostHog()
 const hasConsidered = ref(false)
 
-const handleConsideration = () => {
-  auth.incrementBurritoConsiderations()
-  
-  // Capture burrito consideration event
-  if (user.value) {
-    posthog?.capture('burrito_considered', {
-      total_considerations: user.value.burritoConsiderations,
-      username: user.value.username,
+const handleConsideration = async () => {
+  if (!user.value) return
+
+  try {
+    const response = await $fetch('/api/burrito/consider', {
+      method: 'POST',
+      body: { username: user.value.username },
     })
+
+    if (response.success && response.user) {
+      auth.setUser(response.user)
+      hasConsidered.value = true
+
+      // Client-side tracking (in addition to server-side tracking)
+      posthog?.capture('burrito_considered', {
+        total_considerations: response.user.burritoConsiderations,
+        username: response.user.username,
+      })
+
+      setTimeout(() => {
+        hasConsidered.value = false
+      }, 2000)
+    }
+  } catch (err) {
+    console.error('Error considering burrito:', err)
   }
-  
-  hasConsidered.value = true
-  setTimeout(() => {
-    hasConsidered.value = false
-  }, 2000)
 }
 </script>

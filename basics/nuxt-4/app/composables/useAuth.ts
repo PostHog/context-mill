@@ -63,10 +63,16 @@ export function useAuth() {
     }
   }
 
+  const setUser = (newUser: User) => {
+    user.value = newUser
+    users.set(newUser.username, newUser)
+  }
+
   return {
     user,
     login,
     logout,
     incrementBurritoConsiderations,
+    setUser,
   }
 }

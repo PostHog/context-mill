@@ -1,75 +1,302 @@
-# Nuxt Minimal Starter
+# PostHog Nuxt 4 example
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+This is a [Nuxt 4](https://nuxt.com) example demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
-## Setup
+Nuxt 4 supports the `@posthog/nuxt` package, which provides automatic PostHog integration with built-in error tracking, source map uploads, and simplified configuration. This is the recommended approach for Nuxt 4+.
 
-Make sure to install dependencies:
+For Nuxt 3.0 - 3.6, you must use the `posthog-js` and `posthog-node` packages directly instead. See the [Nuxt 3.6 example](../nuxt-3.6) for that approach.
+
+## Features
+
+- **Product Analytics**: Track user events and behaviors
+- **Session Replay**: Record and replay user sessions
+- **Error Tracking**: Automatic error capture on both client and server
+- **Source Maps**: Automatic source map uploads when *building for production*
+- **User Authentication**: Demo login system with PostHog user identification
+- **Server-side & Client-side Tracking**: Examples of both tracking methods
+- **SSR Support**: Server-side rendering with Nuxt 4
+
+## Getting Started
+
+### 1. Install Dependencies
 
 ```bash
-# npm
 npm install
-
-# pnpm
+# or
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+### 2. Configure Environment Variables
 
-Start the development server on `http://localhost:3000`:
+Create a `.env` file in the root directory:
 
 ```bash
-# npm
+NUXT_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+NUXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+
+# Optional: For source map uploads
+PROJECT_ID=your_project_id
+PERSONAL_API_KEY=your_personal_api_key
+```
+
+Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+
+For source map uploads, get your project ID from [PostHog environment variables](https://app.posthog.com/settings/environment#variables) and your personal API key from [PostHog user API keys](https://app.posthog.com/settings/user-api-keys) (requires `organization:read` and `error_tracking:write` scopes).
+
+### 3. Run the Development Server
+
+```bash
 npm run dev
-
-# pnpm
+# or
 pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the app.
 
-Build the application for production:
+## Project Structure
 
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+```
+├── app/
+│   ├── components/
+│   │   └── AppHeader.vue        # Navigation header with auth state
+│   ├── composables/
+│   │   └── useAuth.ts           # Authentication composable
+│   ├── middleware/
+│   │   └── auth.ts              # Authentication middleware
+│   ├── pages/
+│   │   ├── index.vue            # Home/Login page
+│   │   ├── burrito.vue          # Demo feature page with event tracking
+│   │   └── profile.vue           # User profile with error tracking demo
+│   ├── utils/
+│   │   └── formValidation.ts    # Form validation utilities
+│   └── app.vue                  # Root component
+├── assets/
+│   └── css/
+│       └── main.css              # Global styles
+├── server/
+│   ├── api/
+│   │   └── auth/
+│   │       └── login.post.ts     # Login API with server-side tracking
+│   └── utils/
+│       └── posthog.ts            # Server-side PostHog utility
+├── nuxt.config.ts               # Nuxt configuration with PostHog module
+└── package.json
 ```
 
-Locally preview production build:
+## Key Integration Points
 
-```bash
-# npm
-npm run preview
+### Module Configuration (nuxt.config.ts)
 
-# pnpm
-pnpm preview
+Nuxt 4 uses the `@posthog/nuxt` module for automatic PostHog integration:
 
-# yarn
-yarn preview
-
-# bun
-bun run preview
+```typescript
+export default defineNuxtConfig({
+  modules: ['@posthog/nuxt'],
+  runtimeConfig: {
+    public: {
+      posthog: {
+        publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+        host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+      },
+    },
+  },
+  posthogConfig: {
+    publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+    host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+    clientConfig: {
+      capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)
+      __add_tracing_headers: ['localhost', 'yourdomain.com'], // Add your domain here
+    },
+    serverConfig: {
+      enableExceptionAutocapture: true, // Enables automatic exception capture on the server side (Nitro)
+    },
+    sourcemaps: {
+      enabled: true,
+      envId: process.env.PROJECT_ID || '',
+      personalApiKey: process.env.PERSONAL_API_KEY || '',
+      project: 'my-application',
+      version: '1.0.0',
+    },
+  },
+})
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+**Key Points:**
+- The `@posthog/nuxt` module handles PostHog initialization automatically
+- Client-side error tracking is enabled via `capture_exceptions: true`
+- Server-side error tracking is enabled via `enableExceptionAutocapture: true`
+- Source map uploads are configured for better error tracking
+- The `__add_tracing_headers` option automatically adds `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers to requests
+
+**Important**: do not identify users on the server-side.
+
+### User identification (app/pages/index.vue)
+
+The user is identified when the user logs in on the **client-side**.
+
+```typescript
+const posthog = usePostHog()
+
+const handleSubmit = async () => {
+  const success = await auth.login(formData.username, formData.password)
+  if (success) {
+    // Identifying the user once on login/sign up is enough.
+    posthog?.identify(formData.username)
+    
+    // Capture login event
+    posthog?.capture('user_logged_in')
+  }
+}
+```
+
+The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers because we set the `__add_tracing_headers` option in the PostHog configuration.
+
+**Important**: do not identify users on the server-side.
+
+### Server-side API routes (server/api/auth/login.post.ts)
+
+Server-side API routes use the `useServerPostHog()` utility to get a PostHog Node client and extract session and user context from request headers:
+
+```typescript
+import { useServerPostHog } from '~/server/utils/posthog'
+import { getHeader } from 'h3'
+
+export default defineEventHandler(async (event) => {
+  const posthog = useServerPostHog()
+
+  // Relies on __add_tracing_headers being set in the client-side SDK
+  const sessionId = getHeader(event, 'x-posthog-session-id')
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')
+
+  await posthog.withContext(
+    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
+    async () => {
+      posthog.capture({
+        event: 'server_login',
+        distinctId: distinctId ?? username,
+      })
+    }
+  )
+})
+```
+
+**Key Points:**
+- Uses `useServerPostHog()` utility to get a shared PostHog Node client instance
+- Extracts `sessionId` and `distinctId` from request headers using `getHeader()` from `h3`
+- Uses `withContext()` to associate server-side events with the correct session/user
+- The PostHog client is reused across requests (singleton pattern)
+- Always shutdown the client after each request to ensure all events are flushed
+
+### Event tracking (app/pages/burrito.vue)
+
+```typescript
+const posthog = usePostHog()
+
+const handleConsideration = () => {
+  auth.incrementBurritoConsiderations()
+  
+  if (user.value) {
+    posthog?.capture('burrito_considered', {
+      total_considerations: user.value.burritoConsiderations,
+      username: user.value.username,
+    })
+  }
+}
+```
+
+### Error tracking
+
+Errors are captured automatically in multiple ways:
+
+1. **Automatic client-side capture** - The `@posthog/nuxt` module automatically captures Vue errors when `capture_exceptions: true` is set in `posthogConfig.clientConfig`.
+
+2. **Automatic server-side capture** - The module automatically captures Nitro errors when `enableExceptionAutocapture: true` is set in `posthogConfig.serverConfig`.
+
+3. **Manual error capture** in components (app/pages/profile.vue):
+```typescript
+const posthog = usePostHog()
+
+const triggerTestError = () => {
+  try {
+    throw new Error('Test error for PostHog error tracking')
+  } catch (err) {
+    posthog?.captureException(err)
+  }
+}
+```
+
+### Server-side tracking (server/api/auth/login.post.ts)
+
+Server-side events use the shared PostHog Node client:
+
+```typescript
+import { useServerPostHog } from '~/server/utils/posthog'
+
+const posthog = useServerPostHog()
+
+await posthog.withContext(
+  { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
+  async () => {
+    posthog.capture({
+      event: 'server_login',
+      distinctId: distinctId ?? username,
+    })
+  }
+)
+```
+
+**Key Points:**
+- The PostHog Node client is shared across requests via `useServerPostHog()` utility
+- Events are automatically associated with the correct user/session via `withContext()`
+- The `distinctId` and `sessionId` are extracted from request headers and used to maintain context between client and server
+- No need to manually shutdown the client (it's managed by the module)
+
+### Accessing PostHog in components
+
+PostHog is accessed via the `usePostHog()` composable provided by `@posthog/nuxt`:
+
+```typescript
+const posthog = usePostHog()
+posthog?.capture('event_name', { property: 'value' })
+```
+
+The composable is automatically typed and available throughout your Nuxt application.
+
+### Server-side PostHog utility (server/utils/posthog.ts)
+
+The server utility provides a shared PostHog Node client instance:
+
+```typescript
+import { PostHog } from 'posthog-node'
+
+let client: PostHog | null = null
+
+export function useServerPostHog(): PostHog {
+  if (!client) {
+    const config = useRuntimeConfig()
+    const posthogConfig = config.public.posthog
+    client = new PostHog(posthogConfig.publicKey, {
+      host: posthogConfig.host,
+    })
+  }
+  return client
+}
+```
+
+This ensures a single PostHog client instance is reused across all server requests, improving performance.
+
+## Differences from Nuxt 3.6
+
+- **Module-based**: Uses `@posthog/nuxt` module instead of manual plugin setup
+- **Automatic error tracking**: Built-in error capture on both client and server
+- **Source map uploads**: Automatic source map uploads for better error tracking
+- **Simplified API**: Uses `usePostHog()` composable instead of `useNuxtApp().$posthog`
+- **Shared server client**: Reuses PostHog Node client across requests instead of creating per-request
+- **Automatic import patterns**: Nuxt has some weird automatic import patterns that vary version to version. Nuxt 4 automatic imports work slightly differently to Nuxt 3.
+
+## Learn More
+
+- [PostHog Documentation](https://posthog.com/docs)
+- [Nuxt 4 Documentation](https://nuxt.com/docs)
+- [PostHog Nuxt Integration Guide](https://posthog.com/docs/libraries/nuxt-js)
+- [@posthog/nuxt Package](https://www.npmjs.com/package/@posthog/nuxt)
