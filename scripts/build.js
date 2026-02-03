@@ -73,7 +73,7 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
  * Generate a shell command to install a skill from its download URL.
  * This command can be run by any agent with Bash access.
  */
-function generateInstallCommand(skillId, downloadUrl) {
+function generateInstallCommand(skillId, downloadUrl, group) {
     if (!/^[a-zA-Z0-9_-]+$/.test(skillId)) {
         throw new Error(`Invalid skill ID: ${skillId}`);
     }
@@ -81,7 +81,10 @@ function generateInstallCommand(skillId, downloadUrl) {
     // Escape single quotes in URL for safe shell interpolation
     const escapedUrl = downloadUrl.replace(/'/g, "'\\''");
 
-    const targetDir = `.claude/skills/posthog-${skillId}`;
+    // Generate install directory name: posthog-{category}-{skillId}
+    // e.g., posthog-integration-nextjs-app-router, posthog-feature-flag-react
+    const category = group ? group.replace(/-skills$/, '') : 'skill';
+    const targetDir = `.claude/skills/posthog-${category}-${skillId}`;
     const tempFile = `/tmp/posthog-skill-${skillId}.zip`;
 
     return `mkdir -p ${targetDir} && curl -sL '${escapedUrl}' -o ${tempFile} && unzip -o ${tempFile} -d ${targetDir} && rm ${tempFile}`;
@@ -136,7 +139,7 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
                 resource: {
                     mimeType: 'text/plain',
                     description: `${skill.description}. Run this command in Bash to install the skill.`,
-                    text: generateInstallCommand(skill.id, downloadUrl),
+                    text: generateInstallCommand(skill.id, downloadUrl, skill.group),
                 },
             };
         }),
