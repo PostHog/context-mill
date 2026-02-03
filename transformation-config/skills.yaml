@@ -25,6 +25,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
+  - id: nuxt-4
+    type: example
+    example_path: basics/nuxt-4
+    display_name: Nuxt 4
+    description: PostHog integration for Nuxt 4 applications
+    tags: [nuxt, vue, ssr, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js
+
   - id: react-react-router-6
     type: example
     example_path: basics/react-react-router-6
