@@ -13,6 +13,13 @@ variations:
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/react.md
 
+  - id: nextjs
+    display_name: Next.js
+    tags: [nextjs, nextjs-feature-flags, react, javascript]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/react.md
+      - https://posthog.com/docs/libraries/next-js.md
+
   - id: react-native
     display_name: React Native
     tags: [react, react-native, javascript]

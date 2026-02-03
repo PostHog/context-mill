@@ -4,9 +4,33 @@
 
 commandments:
   react:
-    - Never use useEffect() for analytics capture - it's brittle and causes errors
-    - Prefer event handlers or routing mechanisms to trigger analytics calls
-    - Add handlers where user actions occur rather than reacting to state changes
+    # PostHog-specific
+    - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
+    - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes
+    # General React patterns (react.dev/learn/you-might-not-need-an-effect)
+    - Do NOT use useEffect for data transformation - calculate derived values during render instead
+    - Do NOT use useEffect to respond to user events - put that logic in the event handler itself
+    - Do NOT use useEffect to chain state updates - calculate all related updates together in the event handler
+    - Do NOT use useEffect to notify parent components - call the parent callback alongside setState in the event handler
+    - To reset component state when a prop changes, pass the prop as the component's key instead of using useEffect
+    - useEffect is ONLY for synchronizing with external systems (non-React widgets, browser APIs, network subscriptions)
+
+  nextjs:
+    # Initialization
+    - For Next.js 15.3+, initialize PostHog in instrumentation-client.ts for the simplest setup
+
+  nextjs-feature-flags:
+    # Client-side feature flags
+    - The PostHog React hooks (useFeatureFlagEnabled, useFeatureFlagPayload) work WITHOUT PostHogProvider if posthog-js is already initialized (e.g., via instrumentation-client.ts)
+    - In client components, import and use hooks directly - the React context defaults to the posthog-js singleton
+    - Do NOT wrap components in PostHogProvider just for feature flags - it's unnecessary if posthog-js is initialized globally
+    # Server-side feature flags
+    - Server Components and Route Handlers cannot use React hooks - use posthog-node SDK instead
+    - Create a server-side PostHog client with posthog-node, call getAllFlags() or getFeatureFlag(), then await posthog.shutdown()
+    - Pass flag values from server to client components as props to avoid hydration mismatches
+    # Avoiding flicker
+    - For flags that affect initial render, evaluate server-side and pass as props to prevent UI flicker
+    - Client-side hooks may return undefined initially while flags load - handle this loading state
 
   javascript:
     - Remember that source code is available in the node_modules directory
