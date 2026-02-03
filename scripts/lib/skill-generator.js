@@ -70,8 +70,10 @@ function expandSkillGroups(config, configDir) {
         const baseTags = group.tags || [];
         const baseType = group.type || 'example';
         const baseDescription = group.description || null;
-
         const baseSharedDocs = group.shared_docs || [];
+
+        // Derive category from group key (e.g., "feature-flag-skills" → "feature-flag")
+        const category = key.replace(/-skills$/, '');
 
         for (const variation of group.variations) {
             const mergedTags = [...baseTags, ...(variation.tags || [])];
@@ -80,8 +82,14 @@ function expandSkillGroups(config, configDir) {
                 description = baseDescription.replace(/{display_name}/g, variation.display_name);
             }
 
+            // Namespace the ID: "nextjs" + "feature-flag" → "nextjs-feature-flag"
+            const namespacedId = `${variation.id}-${category}`;
+
             skills.push({
                 ...variation,
+                id: namespacedId,
+                _shortId: variation.id,
+                _category: category,
                 type: variation.type || baseType,
                 tags: mergedTags,
                 description,
