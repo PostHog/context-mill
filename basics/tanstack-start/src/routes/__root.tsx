@@ -41,10 +41,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <PostHogProvider
-          apiKey={import.meta.env.VITE_POSTHOG_KEY!}
+          apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY!}
           options={{
             api_host: '/ingest',
-            ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
+            ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
             defaults: '2025-05-24',
             capture_exceptions: true,
             debug: import.meta.env.DEV,

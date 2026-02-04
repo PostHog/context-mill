@@ -24,8 +24,8 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_POSTHOG_KEY=your_posthog_project_api_key
-VITE_POSTHOG_HOST=https://us.i.posthog.com
+VITE_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
@@ -74,10 +74,10 @@ PostHog is initialized using `PostHogProvider` from `@posthog/react`. The provid
 import { PostHogProvider } from '@posthog/react'
 
 <PostHogProvider
-  apiKey={import.meta.env.VITE_POSTHOG_KEY!}
+  apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY!}
   options={{
     api_host: '/ingest',
-    ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
+    ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
     defaults: '2025-05-24',
     capture_exceptions: true,
     debug: import.meta.env.DEV,
@@ -97,9 +97,9 @@ import { PostHog } from 'posthog-node'
 export function getPostHogClient() {
   if (!posthogClient) {
     posthogClient = new PostHog(
-      process.env.VITE_POSTHOG_KEY || import.meta.env.VITE_POSTHOG_KEY!,
+      process.env.VITE_PUBLIC_POSTHOG_KEY || import.meta.env.VITE_PUBLIC_POSTHOG_KEY!,
       {
-        host: process.env.VITE_POSTHOG_HOST || import.meta.env.VITE_POSTHOG_HOST,
+        host: process.env.VITE_PUBLIC_POSTHOG_HOST || import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
         flushAt: 1,
         flushInterval: 0,
       }

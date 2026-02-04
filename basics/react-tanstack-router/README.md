@@ -24,8 +24,8 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_POSTHOG_KEY=your_posthog_project_api_key
-VITE_POSTHOG_HOST=https://us.i.posthog.com
+VITE_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
@@ -67,10 +67,10 @@ import { PostHogProvider } from '@posthog/react'
 export const Route = createRootRoute({
   component: () => (
     <PostHogProvider
-      apiKey={import.meta.env.VITE_POSTHOG_KEY!}
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY!}
       options={{
         api_host: '/ingest',
-        ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
+        ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
         defaults: '2025-11-30',
         capture_exceptions: true,
         debug: import.meta.env.DEV,
