@@ -17,8 +17,6 @@ This is a React and [TanStack Router](https://tanstack.com/router) example demon
 
 ```bash
 npm install
-# or
-pnpm install
 ```
 
 ### 2. Configure environment variables
@@ -36,8 +34,6 @@ Get your PostHog API key from your [PostHog project settings](https://app.postho
 
 ```bash
 npm run dev
-# or
-pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the app.
@@ -50,10 +46,8 @@ src/
 │   └── Header.tsx         # Navigation header with auth state
 ├── contexts/
 │   └── AuthContext.tsx    # Authentication context with PostHog integration
-├── lib/
-│   └── posthog-client.ts  # Client-side PostHog initialization
 ├── routes/
-│   ├── __root.tsx         # Root layout with PostHog provider
+│   ├── __root.tsx         # Root layout with PostHogProvider
 │   ├── index.tsx          # Home/Login page
 │   ├── burrito.tsx        # Demo feature page with event tracking
 │   └── profile.tsx        # User profile with error tracking demo
@@ -63,33 +57,26 @@ src/
 
 ## Key integration points
 
-### Client-side initialization (lib/posthog-client.ts)
-
-```typescript
-import posthog from "posthog-js"
-
-posthog.init(import.meta.env.VITE_POSTHOG_KEY!, {
-  api_host: "/ingest",
-  ui_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-  defaults: '2025-11-30',
-  capture_exceptions: true,
-  debug: import.meta.env.DEV,
-});
-```
-
 ### PostHog provider setup (routes/__root.tsx)
 
+PostHog is initialized using `PostHogProvider` from `@posthog/react`. The provider wraps the entire app and handles calling `posthog.init()` automatically:
+
 ```typescript
-import { PostHogProvider } from 'posthog-js/react'
-import posthog from '../lib/posthog-client'
+import { PostHogProvider } from '@posthog/react'
 
 export const Route = createRootRoute({
   component: () => (
-    <PostHogProvider client={posthog}>
-      <AuthProvider>
-        <Header />
-        <main><Outlet /></main>
-      </AuthProvider>
+    <PostHogProvider
+      apiKey={import.meta.env.VITE_POSTHOG_KEY!}
+      options={{
+        api_host: '/ingest',
+        ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
+        defaults: '2025-11-30',
+        capture_exceptions: true,
+        debug: import.meta.env.DEV,
+      }}
+    >
+      {/* your app */}
     </PostHogProvider>
   ),
 })
@@ -98,6 +85,8 @@ export const Route = createRootRoute({
 ### User identification (contexts/AuthContext.tsx)
 
 ```typescript
+import { usePostHog } from '@posthog/react'
+
 const posthog = usePostHog()
 
 posthog.identify(username, {
@@ -108,6 +97,10 @@ posthog.identify(username, {
 ### Event tracking (routes/burrito.tsx)
 
 ```typescript
+import { usePostHog } from '@posthog/react'
+
+const posthog = usePostHog()
+
 posthog.capture('burrito_considered', {
   total_considerations: count,
   username: username,
@@ -130,7 +123,7 @@ This example uses TanStack Router. Key details:
 3. **Standard hooks**: Uses `useNavigate()` from @tanstack/react-router
 4. **Vite proxy**: Uses Vite's proxy config for PostHog calls
 5. **Environment variables**: Uses `import.meta.env.VITE_*`
-6. **PostHog provider**: Uses `PostHogProvider` wrapper in root route
+6. **PostHog provider**: Uses `PostHogProvider` from `@posthog/react` in root route
 
 ## Learn more
 
