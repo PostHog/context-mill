@@ -57,14 +57,14 @@ function loadSkillTemplate(configDir, templateFile) {
 /**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
- * base properties and a variations array.
+ * base properties and a variants array.
  */
 function expandSkillGroups(config, configDir) {
     const skills = [];
 
     for (const [key, group] of Object.entries(config)) {
         if (key === 'shared_docs') continue;
-        if (!group.variations) continue;
+        if (!group.variants) continue;
 
         const baseTemplate = group.template ? loadSkillTemplate(configDir, group.template) : null;
         const baseTags = group.tags || [];
@@ -75,7 +75,7 @@ function expandSkillGroups(config, configDir) {
         // Derive category from group key (e.g., "feature-flag-skills" → "feature-flag")
         const category = key.replace(/-skills$/, '');
 
-        for (const variation of group.variations) {
+        for (const variation of group.variants) {
             const mergedTags = [...baseTags, ...(variation.tags || [])];
             let description = variation.description;
             if (!description && baseDescription) {

@@ -1,7 +1,7 @@
 # Other skills - catch-all for non-framework-specific skills
 type: docs-only
 tags: []
-variations:
+variants:
   - id: hogql
     display_name: HogQL
     description: HogQL queries for PostHog analytics

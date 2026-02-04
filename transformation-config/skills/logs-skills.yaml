@@ -6,7 +6,7 @@ tags: [logs]
 shared_docs:
   - https://posthog.com/docs/logs/start-here.md
   - https://posthog.com/docs/logs/search.md
-variations:
+variants:
   - id: nextjs
     display_name: Next.js
     tags: [nextjs, javascript]

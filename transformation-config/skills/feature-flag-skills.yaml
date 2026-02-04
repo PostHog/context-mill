@@ -6,7 +6,7 @@ tags: [feature-flags]
 shared_docs:
   - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
   - https://posthog.com/docs/feature-flags/best-practices.md
-variations:
+variants:
   - id: react
     display_name: React
     tags: [react, javascript]

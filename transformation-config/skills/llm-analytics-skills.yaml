@@ -7,7 +7,7 @@ shared_docs:
   - https://posthog.com/docs/llm-analytics/basics.md
   - https://posthog.com/docs/llm-analytics/traces.md
   - https://posthog.com/docs/llm-analytics/calculating-costs.md
-variations:
+variants:
   - id: openai
     display_name: OpenAI
     tags: [python, javascript]

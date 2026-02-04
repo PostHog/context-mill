@@ -4,7 +4,7 @@ template: integration-skill-description.md
 description: PostHog integration for {display_name} applications
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-variations:
+variants:
   - id: nextjs-app-router
     example_path: basics/next-app-router
     display_name: Next.js App Router
