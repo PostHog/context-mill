@@ -9,7 +9,8 @@ interface User {
 const users = new Map<string, User>()
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(() => {
+
+  const getInitialUser = (): User | null => {
     if (typeof window === 'undefined') return null
 
     const storedUsername = localStorage.getItem('currentUser')
@@ -23,7 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     return null
-  })
+  }
+
+  const user = ref<User | null>(getInitialUser())
 
   const isAuthenticated = computed(() => user.value !== null)
 

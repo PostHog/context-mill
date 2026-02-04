@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import posthog from 'posthog-js'
 
 const authStore = useAuthStore()
 const username = ref('')
@@ -66,6 +67,10 @@ const handleSubmit = async () => {
 
   const success = await authStore.login(username.value, password.value)
   if (success) {
+    // Identifying the user once on login/sign up is enough.
+    posthog.identify(username.value)
+    posthog.capture('user_logged_in')
+    
     username.value = ''
     password.value = ''
   } else {

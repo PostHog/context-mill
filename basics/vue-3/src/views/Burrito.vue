@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import posthog from 'posthog-js'
 
 const authStore = useAuthStore()
 const hasConsidered = ref(false)
@@ -40,6 +41,12 @@ const handleConsideration = () => {
   setTimeout(() => {
     hasConsidered.value = false
   }, 2000)
+
+  // Capture burrito consideration event
+  posthog.capture('burrito_considered', {
+    total_considerations: updatedUser.burritoConsiderations,
+    username: updatedUser.username
+  })
 }
 </script>
 

@@ -29,12 +29,15 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import posthog from 'posthog-js'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const handleLogout = () => {
   authStore.logout()
+  // IMPORTANT: Reset the PostHog instance to clear the user session
+  posthog.reset()
   router.push({ name: 'home' })
 }
 </script>
