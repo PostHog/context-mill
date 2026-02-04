@@ -113,14 +113,32 @@ This client is used in API routes to track server-side events.
 
 ### Server-side capture (routes/api/*)
 
+Server-side events include the client's `$session_id` so they appear in the same session in PostHog. The frontend sends it via a header:
+
 ```typescript
+// Frontend: include session ID in API requests
+await fetch('/api/burrito/consider', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
+  },
+  body: JSON.stringify({ ... }),
+})
+```
+
+```typescript
+// Server: read session ID from header and include in capture
 import { getPostHogClient } from '../../utils/posthog-server'
+
+const sessionId = request.headers.get('X-PostHog-Session-Id')
 
 const posthog = getPostHogClient()
 posthog.capture({
   distinctId: username,
-  event: 'server_login',
+  event: 'burrito_considered',
   properties: {
+    $session_id: sessionId || undefined,
     username: username,
     source: 'api',
   },
