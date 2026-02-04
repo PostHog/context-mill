@@ -48,7 +48,10 @@ function BurritoPage() {
 
     await fetch('/api/burrito/consider', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
+      },
       body: JSON.stringify({
         username: user.username,
         totalConsiderations: user.burritoConsiderations + 1,

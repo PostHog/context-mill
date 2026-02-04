@@ -46,7 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
+        },
         body: JSON.stringify({ username, password }),
       })
 

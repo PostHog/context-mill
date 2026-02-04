@@ -16,11 +16,14 @@ export const Route = createFileRoute('/api/burrito/consider')({
           )
         }
 
+        const sessionId = request.headers.get('X-PostHog-Session-Id')
+
         const posthog = getPostHogClient()
         posthog.capture({
           distinctId: username,
           event: 'burrito_considered',
           properties: {
+            $session_id: sessionId || undefined,
             total_considerations: totalConsiderations,
             username: username,
             source: 'api',
