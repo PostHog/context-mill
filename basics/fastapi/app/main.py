@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
 from app.database import SessionLocal, init_db
+from app.middleware import PostHogMiddleware
 from app.models import User
 from app.routers import api, main
 
@@ -56,6 +57,8 @@ app = FastAPI(
     description="Example application demonstrating PostHog integration with FastAPI",
     lifespan=lifespan,
 )
+
+app.add_middleware(PostHogMiddleware)
 
 # Include routers
 app.include_router(main.router)

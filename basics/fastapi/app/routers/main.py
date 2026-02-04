@@ -7,7 +7,7 @@ import posthog
 from fastapi import APIRouter, Cookie, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from posthog import capture, identify_context, new_context, tag
+from posthog import capture
 
 from app.dependencies import (
     CurrentUser,
@@ -46,16 +46,8 @@ async def login(
     user = User.authenticate(db, email, password)
 
     if user:
-        # PostHog: Identify user and capture login event
-        with new_context():
-            identify_context(user.email)
-
-            # Set person properties (PII goes in tag, not capture)
-            tag("email", user.email)
-            tag("is_staff", user.is_staff)
-            tag("date_joined", user.date_joined.isoformat())
-
-            capture("user_logged_in", properties={"login_method": "password"})
+        posthog.identify(user.email, {"email": user.email, "is_staff": user.is_staff})
+        posthog.capture(user.email, "user_logged_in", properties={"login_method": "password"})
 
         # Create session and redirect
         response = RedirectResponse(url="/dashboard", status_code=302)
@@ -112,15 +104,8 @@ async def signup(
     # Create new user
     user = User.create_user(db, email=email, password=password, is_staff=False)
 
-    # PostHog: Identify new user and capture signup event
-    with new_context():
-        identify_context(user.email)
-
-        tag("email", user.email)
-        tag("is_staff", user.is_staff)
-        tag("date_joined", user.date_joined.isoformat())
-
-        capture("user_signed_up", properties={"signup_method": "form"})
+    posthog.identify(user.email, {"email": user.email, "is_staff": user.is_staff})
+    posthog.capture(user.email, "user_signed_up", properties={"signup_method": "form"})
 
     # Create session and redirect
     response = RedirectResponse(url="/dashboard", status_code=302)
@@ -136,10 +121,7 @@ async def signup(
 @router.get("/logout")
 async def logout(current_user: RequiredUser):
     """Logout and capture event."""
-    # PostHog: Capture logout event before session ends
-    with new_context():
-        identify_context(current_user.email)
-        capture("user_logged_out")
+    capture("user_logged_out")
 
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie(key="session_token")
@@ -152,10 +134,7 @@ async def dashboard(
     current_user: RequiredUser,
 ):
     """Dashboard with feature flag demonstration."""
-    # PostHog: Capture dashboard view
-    with new_context():
-        identify_context(current_user.email)
-        capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
+    capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
 
     # Check feature flag
     show_new_feature = posthog.feature_enabled(
@@ -200,10 +179,7 @@ async def burrito(
 @router.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, current_user: RequiredUser):
     """User profile page."""
-    # PostHog: Capture profile view
-    with new_context():
-        identify_context(current_user.email)
-        capture("profile_viewed")
+    capture("profile_viewed")
 
     return templates.TemplateResponse(
         request, "profile.html", {"current_user": current_user}

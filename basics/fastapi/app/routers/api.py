@@ -5,7 +5,7 @@ from typing import Annotated
 import posthog
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import JSONResponse
-from posthog import capture, identify_context, new_context
+from posthog import capture
 
 from app.dependencies import RequiredUser
 
@@ -23,9 +23,7 @@ async def consider_burrito(
     safe_count = max(0, min(burrito_count, MAX_BURRITO_COUNT))
     new_count = safe_count + 1
 
-    with new_context():
-        identify_context(current_user.email)
-        capture("burrito_considered", properties={"total_considerations": new_count})
+    capture("burrito_considered", properties={"total_considerations": new_count})
 
     response = JSONResponse({"success": True, "count": new_count})
     response.set_cookie(
@@ -49,10 +47,7 @@ async def test_error(
         raise Exception("Test exception from critical operation")
     except Exception as e:
         if should_capture:
-            with new_context():
-                identify_context(current_user.email)
-                event_id = posthog.capture_exception(e)
-
+            event_id = posthog.capture_exception(e)
             return JSONResponse(
                 {
                     "error": "Operation failed",
@@ -88,13 +83,11 @@ async def trigger_error(
         else:
             raise Exception(error_message)
     except Exception as e:
-        with new_context():
-            identify_context(current_user.email)
-            posthog.capture_exception(e)
-            capture(
-                "error_triggered",
-                properties={"error_type": safe_error_type, "error_message": error_message},
-            )
+        posthog.capture_exception(e)
+        capture(
+            "error_triggered",
+            properties={"error_type": safe_error_type, "error_message": error_message},
+        )
 
         return JSONResponse(
             {
