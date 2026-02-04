@@ -66,7 +66,7 @@ function expandSkillGroups(config, configDir) {
         if (key === 'shared_docs') continue;
         if (!group.variations) continue;
 
-        const template = loadSkillTemplate(configDir, group.template);
+        const baseTemplate = group.template ? loadSkillTemplate(configDir, group.template) : null;
         const baseTags = group.tags || [];
         const baseType = group.type || 'example';
         const baseDescription = group.description || null;
@@ -82,8 +82,19 @@ function expandSkillGroups(config, configDir) {
                 description = baseDescription.replace(/{display_name}/g, variation.display_name);
             }
 
+            // Support per-variation template override
+            const template = variation.template
+                ? loadSkillTemplate(configDir, variation.template)
+                : baseTemplate;
+
+            // Support per-variation shared_docs (merged with base)
+            const sharedDocs = [...baseSharedDocs, ...(variation.shared_docs || [])];
+
             // Namespace the ID: "nextjs" + "feature-flag" → "nextjs-feature-flag"
-            const namespacedId = `${variation.id}-${category}`;
+            // Skip suffix for "other" category
+            const namespacedId = category === 'other'
+                ? variation.id
+                : `${variation.id}-${category}`;
 
             skills.push({
                 ...variation,
@@ -94,7 +105,7 @@ function expandSkillGroups(config, configDir) {
                 tags: mergedTags,
                 description,
                 _template: template,
-                _sharedDocs: baseSharedDocs,
+                _sharedDocs: sharedDocs,
                 _group: key,
             });
         }
@@ -421,31 +432,12 @@ async function generateSkill({
         });
     }
 
-    // Fetch and write skill-specific docs
-    if (skill.docs_urls && skill.docs_urls.length > 0) {
-        for (const url of skill.docs_urls) {
-            console.log(`  Fetching doc: ${url}`);
+    // Helper to process a doc entry (string URL or {url, title} object)
+    async function processDoc(docEntry, logPrefix = '') {
+        const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
+        const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
 
-            const result = await fetchDoc(url);
-            if (result) {
-                const filename = urlToFilename(url);
-                fs.writeFileSync(
-                    path.join(referencesDir, filename),
-                    result.content,
-                    'utf8'
-                );
-
-                references.push({
-                    filename,
-                    description: result.title,
-                });
-            }
-        }
-    }
-
-    // Fetch and write shared docs
-    for (const url of sharedDocs) {
-        console.log(`  Fetching shared doc: ${url}`);
+        console.log(`  ${logPrefix}Fetching doc: ${url}`);
 
         const result = await fetchDoc(url);
         if (result) {
@@ -458,31 +450,46 @@ async function generateSkill({
 
             references.push({
                 filename,
-                description: result.title,
+                description: titleOverride || result.title,
             });
         }
     }
 
-    // Include relevant workflows (flattened with category prefix, linked to next step)
-    for (const workflow of workflows) {
-        let content = fs.readFileSync(workflow.fullPath, 'utf8');
-
-        // Append continuation message if there's a next step
-        if (workflow.nextFilename) {
-            content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
+    // Fetch and write skill-specific docs
+    if (skill.docs_urls && skill.docs_urls.length > 0) {
+        for (const docEntry of skill.docs_urls) {
+            await processDoc(docEntry);
         }
+    }
 
-        const filename = `${workflow.category}-${workflow.filename}`;
-        fs.writeFileSync(
-            path.join(referencesDir, filename),
-            content,
-            'utf8'
-        );
+    // Fetch and write shared docs
+    for (const docEntry of sharedDocs) {
+        await processDoc(docEntry, 'shared ');
+    }
 
-        references.push({
-            filename,
-            description: toSentenceCase(workflow.title),
-        });
+    // Include relevant workflows (flattened with category prefix, linked to next step)
+    // Skip workflows for docs-only skills
+    if (skill.type !== 'docs-only') {
+        for (const workflow of workflows) {
+            let content = fs.readFileSync(workflow.fullPath, 'utf8');
+
+            // Append continuation message if there's a next step
+            if (workflow.nextFilename) {
+                content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
+            }
+
+            const filename = `${workflow.category}-${workflow.filename}`;
+            fs.writeFileSync(
+                path.join(referencesDir, filename),
+                content,
+                'utf8'
+            );
+
+            references.push({
+                filename,
+                description: toSentenceCase(workflow.title),
+            });
+        }
     }
 
     // Build references list for SKILL.md
