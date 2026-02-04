@@ -55,6 +55,7 @@ global:
     - node_modules
     - .git
     - .next
+    - dist
     - playwright-report
     - test-results
     - coverage
