@@ -46,8 +46,16 @@ async def login(
     user = User.authenticate(db, email, password)
 
     if user:
+        is_new_user = user.record_login(db)
         posthog.identify(user.email, {"email": user.email, "is_staff": user.is_staff})
-        posthog.capture(user.email, "user_logged_in", properties={"login_method": "password"})
+        posthog.capture(
+            user.email,
+            "user_logged_in",
+            properties={
+                "username": user.email,
+                "is_new_user": is_new_user,
+            },
+        )
 
         # Create session and redirect
         response = RedirectResponse(url="/dashboard", status_code=302)
@@ -105,7 +113,14 @@ async def signup(
     user = User.create_user(db, email=email, password=password, is_staff=False)
 
     posthog.identify(user.email, {"email": user.email, "is_staff": user.is_staff})
-    posthog.capture(user.email, "user_signed_up", properties={"signup_method": "form"})
+    posthog.capture(
+        user.email,
+        "user_signed_up",
+        properties={
+            "username": user.email,
+            "signup_method": "form",
+        },
+    )
 
     # Create session and redirect
     response = RedirectResponse(url="/dashboard", status_code=302)
@@ -183,4 +198,33 @@ async def profile(request: Request, current_user: RequiredUser):
 
     return templates.TemplateResponse(
         request, "profile.html", {"current_user": current_user}
+    )
+
+
+@router.post("/profile", response_class=HTMLResponse)
+async def update_profile(
+    request: Request,
+    db: DbSession,
+    current_user: RequiredUser,
+    name: Annotated[str, Form()],
+):
+    """Handle profile update."""
+    fields_changed = current_user.update_profile(db, name=name)
+
+    if fields_changed:
+        capture(
+            "profile_updated",
+            properties={
+                "username": current_user.email,
+                "fields_changed": fields_changed,
+            },
+        )
+
+    return templates.TemplateResponse(
+        request,
+        "profile.html",
+        {
+            "current_user": current_user,
+            "success": "Profile updated" if fields_changed else None,
+        },
     )

@@ -5,22 +5,51 @@
 {% block content %}
 <div class="card">
     <h1>Your Profile</h1>
-    <p>This page demonstrates error tracking with PostHog.</p>
+    <p>This page demonstrates profile updates and report generation with PostHog.</p>
 
-    <table>
-        <tr>
-            <th>Email</th>
-            <td>{{ current_user.email }}</td>
-        </tr>
-        <tr>
-            <th>Date Joined</th>
-            <td>{{ current_user.date_joined.strftime('%Y-%m-%d %H:%M') }}</td>
-        </tr>
-        <tr>
-            <th>Staff Status</th>
-            <td>{{ 'Yes' if current_user.is_staff else 'No' }}</td>
-        </tr>
-    </table>
+    {% if success %}
+    <div class="message success">{{ success }}</div>
+    {% endif %}
+
+    <form method="POST" action="/profile">
+        <table>
+            <tr>
+                <th>Email</th>
+                <td>{{ current_user.email }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>
+                    <input type="text" name="name" value="{{ current_user.name or '' }}" placeholder="Enter your name">
+                </td>
+            </tr>
+            <tr>
+                <th>Date Joined</th>
+                <td>{{ current_user.date_joined.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            <tr>
+                <th>Login Count</th>
+                <td>{{ current_user.login_count }}</td>
+            </tr>
+            <tr>
+                <th>Staff Status</th>
+                <td>{{ 'Yes' if current_user.is_staff else 'No' }}</td>
+            </tr>
+        </table>
+        <button type="submit">Update Profile</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Activity Reports</h2>
+    <p>Generate a report of your account activity:</p>
+
+    <div style="margin: 20px 0;">
+        <button onclick="generateReport('summary')">Summary Report</button>
+        <button onclick="generateReport('detailed')">Detailed Report</button>
+    </div>
+
+    <div id="report-result" style="display: none;" class="message"></div>
 </div>
 
 <div class="card">
@@ -76,6 +105,29 @@ async function triggerError(errorType) {
         resultDiv.style.display = 'block';
         resultDiv.className = 'message ' + (data.success ? 'success' : 'error');
         resultDiv.textContent = data.message + ': ' + data.error;
+    } catch (error) {
+        console.error('Error:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'message error';
+        resultDiv.textContent = 'Request failed: ' + error.message;
+    }
+}
+
+async function generateReport(reportType) {
+    const resultDiv = document.getElementById('report-result');
+    try {
+        const formData = new FormData();
+        formData.append('report_type', reportType);
+
+        const response = await fetch('/api/reports/activity', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'message success';
+        resultDiv.innerHTML = '<strong>' + data.report_type + ' report generated</strong> (' + data.row_count + ' rows)<br><pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
     } catch (error) {
         console.error('Error:', error);
         resultDiv.style.display = 'block';

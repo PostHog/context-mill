@@ -96,3 +96,47 @@ async def trigger_error(
                 "error": error_message,
             }
         )
+
+
+@router.post("/reports/activity")
+async def generate_activity_report(
+    current_user: RequiredUser,
+    report_type: Annotated[str, Form()] = "summary",
+):
+    """Generate user activity report."""
+    valid_report_types = {"summary", "detailed", "export"}
+    safe_report_type = report_type if report_type in valid_report_types else "summary"
+
+    report_data = {
+        "user": current_user.email,
+        "name": current_user.name,
+        "date_joined": current_user.date_joined.isoformat(),
+        "login_count": current_user.login_count,
+        "is_staff": current_user.is_staff,
+    }
+
+    if safe_report_type == "detailed":
+        report_data["account_age_days"] = (
+            __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+            - current_user.date_joined
+        ).days
+
+    row_count = len(report_data)
+
+    capture(
+        "report_generated",
+        properties={
+            "report_type": safe_report_type,
+            "row_count": row_count,
+            "username": current_user.email,
+        },
+    )
+
+    return JSONResponse(
+        {
+            "success": True,
+            "report_type": safe_report_type,
+            "row_count": row_count,
+            "data": report_data,
+        }
+    )

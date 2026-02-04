@@ -18,8 +18,10 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    login_count: Mapped[int] = mapped_column(Integer, default=0)
     date_joined: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
@@ -62,6 +64,23 @@ class User(Base):
         if user and user.check_password(password):
             return user
         return None
+
+    def record_login(self, db: Session) -> bool:
+        """Record a login and return whether this is the user's first login."""
+        is_first_login = self.login_count == 0
+        self.login_count += 1
+        db.commit()
+        return is_first_login
+
+    def update_profile(self, db: Session, name: Optional[str] = None) -> list:
+        """Update user profile and return list of changed fields."""
+        changed_fields = []
+        if name is not None and name != self.name:
+            self.name = name
+            changed_fields.append("name")
+        if changed_fields:
+            db.commit()
+        return changed_fields
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
