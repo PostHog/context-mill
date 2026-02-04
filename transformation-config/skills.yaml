@@ -79,6 +79,24 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/flask.md
 
+  - id: react-tanstack-router
+    type: example
+    example_path: basics/react-tanstack-router
+    display_name: React with TanStack Router
+    description: PostHog integration for React applications using TanStack Router
+    tags: [react, tanstack-router, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-router.md
+
+  - id: tanstack-start
+    type: example
+    example_path: basics/tanstack-start
+    display_name: TanStack Start
+    description: PostHog integration for TanStack Start full-stack applications
+    tags: [react, tanstack-start, tanstack-router, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-start.md
+
   - id: laravel
     type: example
     example_path: basics/laravel
