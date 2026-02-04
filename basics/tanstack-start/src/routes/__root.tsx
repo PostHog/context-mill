@@ -1,11 +1,10 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { useEffect } from 'react'
+import { PostHogProvider } from '@posthog/react'
 
 import Header from '../components/Header'
 import { AuthProvider } from '../contexts/AuthContext'
-import { initPostHog } from '../lib/posthog-client'
 
 import appCss from '../styles.css?url'
 
@@ -35,19 +34,25 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    initPostHog()
-  }, [])
-
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <AuthProvider>
-          <Header />
-          {children}
+        <PostHogProvider
+          apiKey={import.meta.env.VITE_POSTHOG_KEY!}
+          options={{
+            api_host: '/ingest',
+            ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
+            defaults: '2025-05-24',
+            capture_exceptions: true,
+            debug: import.meta.env.DEV,
+          }}
+        >
+          <AuthProvider>
+            <Header />
+            {children}
           <TanStackDevtools
             config={{
               position: 'bottom-right',
@@ -59,7 +64,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               },
             ]}
           />
-        </AuthProvider>
+          </AuthProvider>
+        </PostHogProvider>
         <Scripts />
       </body>
     </html>

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
-import { getPostHogClient } from '../../../lib/posthog-server'
+import { getPostHogClient } from '../../../utils/posthog-server'
 
 export const Route = createFileRoute('/api/auth/login')({
   server: {

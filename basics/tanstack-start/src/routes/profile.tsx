@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { posthog } from '../lib/posthog-client'
+import { usePostHog } from '@posthog/react'
 import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/profile')({
@@ -20,6 +20,7 @@ export const Route = createFileRoute('/profile')({
 function ProfilePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const posthog = usePostHog()
 
   // Redirect to home if not logged in
   if (!user) {
