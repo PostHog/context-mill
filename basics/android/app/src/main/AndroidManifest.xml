@@ -11,11 +11,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PostHog">
+        <!-- We have to export the MainActivity to be able to start it from the system launcher.
+             Ignores added for semgrep. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.PostHog">
+            android:theme="@style/Theme.PostHog"
+            tools:ignore="ExportedActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
