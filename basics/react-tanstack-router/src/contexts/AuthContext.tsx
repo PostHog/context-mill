@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { usePostHog } from 'posthog-js/react';
+import { usePostHog } from '@posthog/react';
 
 interface User {
   username: string;

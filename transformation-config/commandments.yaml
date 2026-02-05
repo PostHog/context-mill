@@ -44,6 +44,15 @@ commandments:
     - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init()
     - PHP SDK methods take associative arrays with 'distinctId', 'event', 'properties' keys - not positional arguments
 
+  tanstack-router:
+    - Use TanStack Router's built-in navigation events for pageview tracking instead of useEffect
+    - Use PostHogProvider in the root route (__root.tsx) so all child routes have access to the PostHog context
+
+  tanstack-start:
+    - Use PostHogProvider in the root route (__root.tsx) for client-side tracking
+    - Use posthog-node for server-side event capture in API routes (src/routes/api/) - do NOT use posthog-js on the server
+    - Create a singleton PostHog server client to avoid re-initialization on every request
+
   laravel:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)

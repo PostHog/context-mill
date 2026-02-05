@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as BurritoRouteImport } from './routes/burrito'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiBurritoConsiderRouteImport } from './routes/api/burrito/consider'
 import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBurritoConsiderRoute = ApiBurritoConsiderRouteImport.update({
+  id: '/api/burrito/consider',
+  path: '/api/burrito/consider',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
   id: '/api/auth/login',
   path: '/api/auth/login',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/burrito': typeof BurritoRoute
   '/profile': typeof ProfileRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/burrito/consider': typeof ApiBurritoConsiderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/burrito': typeof BurritoRoute
   '/profile': typeof ProfileRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/burrito/consider': typeof ApiBurritoConsiderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,30 @@ export interface FileRoutesById {
   '/burrito': typeof BurritoRoute
   '/profile': typeof ProfileRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/burrito/consider': typeof ApiBurritoConsiderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/burrito' | '/profile' | '/api/auth/login'
+  fullPaths:
+    | '/'
+    | '/burrito'
+    | '/profile'
+    | '/api/auth/login'
+    | '/api/burrito/consider'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/burrito' | '/profile' | '/api/auth/login'
-  id: '__root__' | '/' | '/burrito' | '/profile' | '/api/auth/login'
+  to:
+    | '/'
+    | '/burrito'
+    | '/profile'
+    | '/api/auth/login'
+    | '/api/burrito/consider'
+  id:
+    | '__root__'
+    | '/'
+    | '/burrito'
+    | '/profile'
+    | '/api/auth/login'
+    | '/api/burrito/consider'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +92,7 @@ export interface RootRouteChildren {
   BurritoRoute: typeof BurritoRoute
   ProfileRoute: typeof ProfileRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
+  ApiBurritoConsiderRoute: typeof ApiBurritoConsiderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/burrito/consider': {
+      id: '/api/burrito/consider'
+      path: '/api/burrito/consider'
+      fullPath: '/api/burrito/consider'
+      preLoaderRoute: typeof ApiBurritoConsiderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/login': {
       id: '/api/auth/login'
       path: '/api/auth/login'
@@ -107,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   BurritoRoute: BurritoRoute,
   ProfileRoute: ProfileRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
+  ApiBurritoConsiderRoute: ApiBurritoConsiderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
-import { getPostHogClient } from '../../../lib/posthog-server'
+import { getPostHogClient } from '../../../utils/posthog-server'
 
 export const Route = createFileRoute('/api/auth/login')({
   server: {
@@ -26,12 +26,15 @@ export const Route = createFileRoute('/api/auth/login')({
           burritoConsiderations: 0,
         }
 
+        const sessionId = request.headers.get('X-PostHog-Session-Id')
+
         // Capture server-side login event
         const posthog = getPostHogClient()
         posthog.capture({
           distinctId: username,
           event: 'server_login',
           properties: {
+            $session_id: sessionId || undefined,
             username: username,
             isNewUser: isNewUser,
             source: 'api',

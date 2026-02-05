@@ -4,7 +4,7 @@ import {
   useState,
   ReactNode,
 } from 'react'
-import { posthog } from '../lib/posthog-client'
+import { usePostHog } from '@posthog/react'
 
 interface User {
   username: string
@@ -23,6 +23,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const users: Map<string, User> = new Map()
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const posthog = usePostHog()
+
   // Use lazy initializer to read from localStorage only once on mount
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === 'undefined') return null
@@ -44,7 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
+        },
         body: JSON.stringify({ username, password }),
       })
 

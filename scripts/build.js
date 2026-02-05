@@ -74,7 +74,7 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
  * This command can be run by any agent with Bash access.
  */
 function generateInstallCommand(skillId, downloadUrl) {
-    if (!/^[a-zA-Z0-9_-]+$/.test(skillId)) {
+    if (!/^[a-zA-Z0-9_.-]+$/.test(skillId)) {
         throw new Error(`Invalid skill ID: ${skillId}`);
     }
 
