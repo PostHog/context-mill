@@ -123,3 +123,14 @@ skills:
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
+
+  # Language fallback skills, used when no specific framework is detected
+  - id: python
+    type: example
+    example_path: basics/python
+    display_name: Python
+    description: PostHog integration for any Python application using the Python SDK
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
