@@ -1,5 +1,5 @@
 {
-  "name": "react-tanstack",
+  "name": "react-tanstack-file-based",
   "private": true,
   "type": "module",
   "scripts": {
