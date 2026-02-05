@@ -11,12 +11,11 @@ This example serves as:
 
 ## Features Demonstrated
 
-- **Instance-based API** - Uses `Posthog(...)` instead of module-level API
+- **Instance-based API** - Uses `Posthog(...)` class instead of module-level API
 - **Exception autocapture** - Automatic tracking of unhandled exceptions
-- **Proper shutdown** - Uses `shutdown()` instead of `flush()`
-- **Context pattern** - Always uses `new_context()` + `identify_context()`
-- **User identification** - Tracks events per user
-- **Event tracking** - Captures user actions with properties
+- **Proper shutdown** - Uses `shutdown()` to flush events before exit
+- **Event tracking** - Captures user actions with `distinct_id` and properties
+- **User identification** - Associates properties with users via `identify()`
 - **Error handling** - Manual exception capture for handled errors
 
 ## Quick Start
@@ -102,12 +101,12 @@ posthog = Posthog(
 ### 2. Event Tracking Pattern
 
 ```python
-from posthog import new_context, identify_context, capture
-
-# Always use this pattern for tracking events
-with new_context():
-    identify_context(user_id)
-    capture("event_name", properties={"key": "value"})
+# Track events with distinct_id
+posthog_client.capture(
+    distinct_id="user_123",
+    event="event_name",
+    properties={"key": "value"}
+)
 ```
 
 ### 3. Proper Shutdown
@@ -121,7 +120,17 @@ finally:
     posthog.shutdown()
 ```
 
-### 4. Exception Handling
+### 4. Identifying Users
+
+```python
+# Identify users (optional - adds user properties)
+posthog_client.identify(
+    distinct_id="user_123",
+    properties={"email": "user@example.com", "plan": "pro"}
+)
+```
+
+### 5. Exception Handling
 
 ```python
 try:
@@ -129,9 +138,7 @@ try:
     risky_operation()
 except Exception as e:
     # Manually capture handled errors you want to track
-    with new_context():
-        identify_context(user_id)
-        posthog.capture_exception(e)
+    posthog_client.capture_exception(e, distinct_id="user_123")
 ```
 
 ## Running Without PostHog

@@ -12,7 +12,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from posthog import Posthog, new_context, identify_context, capture
+from posthog import Posthog
 
 # Load environment variables
 load_dotenv()
@@ -75,16 +75,18 @@ def save_todos(data):
 
 
 def track_event(posthog, event_name, properties=None):
-    """Track an event with PostHog using proper context pattern.
+    """Track an event with PostHog.
 
-    Demonstrates the opinionated pattern: new_context() -> identify_context() -> capture()
+    Uses the real PostHog Python SDK API.
     """
     if not posthog:
         return
 
-    with new_context():
-        identify_context(get_user_id())
-        capture(event_name, properties=properties or {})
+    posthog.capture(
+        distinct_id=get_user_id(),
+        event=event_name,
+        properties=properties or {}
+    )
 
 
 def cmd_add(args, posthog):
@@ -262,9 +264,7 @@ def main():
 
         # Manually capture handled errors
         if posthog:
-            with new_context():
-                identify_context(get_user_id())
-                posthog.capture_exception(e, get_user_id())
+            posthog.capture_exception(e, get_user_id())
 
         sys.exit(1)
 
