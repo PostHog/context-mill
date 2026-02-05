@@ -1,0 +1,4 @@
+posthog>=3.0.0
+dspy>=2.0.0
+litellm>=1.77.3
+python-dotenv>=1.0.0
