@@ -33,8 +33,8 @@ commandments:
   fastapi:
     - Initialize PostHog in the lifespan context manager on startup using posthog.api_key and posthog.host
     - Call posthog.flush() in the lifespan shutdown to ensure all events are sent before the app exits
-    - Use Pydantic Settings for configuration (loads from .env automatically)
-    - Use FastAPI dependency injection (Depends) for accessing current_user in route handlers
+    - Use Pydantic Settings with @lru_cache decorator on get_settings() for caching and easy test overrides
+    - Use FastAPI dependency injection (Depends) for accessing current_user and settings in route handlers
     - Use the same context API pattern as Flask/Django (with new_context(), identify_context(user_id), then capture())
 
   php:
