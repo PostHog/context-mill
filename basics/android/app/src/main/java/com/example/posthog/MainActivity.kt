@@ -1,5 +1,6 @@
 package com.example.posthog
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +31,18 @@ import com.posthog.android.PostHogAndroidConfig
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Security: Validate intent to ensure it's only from the system launcher
+        // This activity is exported for launcher purposes but should not process external intents
+        val intent = intent
+        val isLauncherIntent = intent.action == Intent.ACTION_MAIN && 
+                               intent.categories?.contains(Intent.CATEGORY_LAUNCHER) == true
+        if (!isLauncherIntent) {
+            // If this is not a launcher intent, finish immediately to prevent external access
+            finish()
+            return
+        }
+        
         enableEdgeToEdge()
         setContent {
             PostHogTheme {
