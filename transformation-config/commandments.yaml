@@ -57,4 +57,10 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+
+  swift:
+    - Read configuration from environment variables via a `PostHogEnv` enum with a `value` computed property that calls `ProcessInfo.processInfo.environment[rawValue]` and `fatalError`s if missing — cases should be `apiKey = "POSTHOG_API_KEY"` and `host = "POSTHOG_HOST"`, set in the Xcode scheme's Run environment variables
+    - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
+    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
+    - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
   

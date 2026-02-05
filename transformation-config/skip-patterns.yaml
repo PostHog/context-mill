@@ -87,6 +87,13 @@ global:
     - instance
     - .db
 
+    # Xcode / Swift
+    - xcuserdata
+    - DerivedData
+    - .build
+    - .swiftpm
+    - .pbxproj
+
     # PHP General
     - vendor
     - .phpunit.result.cache
