@@ -106,6 +106,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-router.md
 
+  - id: react-tanstack-router-code-based
+    type: example
+    example_path: basics/react-tanstack-router-code-based
+    display_name: React with TanStack Router (code-based)
+    description: PostHog integration for React applications using TanStack Router with code-based routing
+    tags: [react, tanstack-router, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-router.md
+
   - id: tanstack-start
     type: example
     example_path: basics/tanstack-start

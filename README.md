@@ -38,7 +38,9 @@ examples/
 │   ├── next-app-router/         # Next.js 15 with App Router
 │   ├── next-pages-router/       # Next.js 15 with Pages Router
 │   ├── react-react-router/      # React with React Router
-│   └── tanstack-start/          # TanStack Start
+│   ├── react-tanstack-router-file-based/   # React with TanStack Router (file-based)
+│   ├── react-tanstack-router-code-based/   # React with TanStack Router (code-based)
+│   ├── tanstack-start/          # TanStack Start
 │   └── django/                  # Django
 ├── llm-prompts/                 # Workflow guides for AI agents
 ├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)

@@ -39,7 +39,7 @@ commandments:
 
   tanstack-router:
     - Use TanStack Router's built-in navigation events for pageview tracking instead of useEffect
-    - Use PostHogProvider in the root route (__root.tsx) so all child routes have access to the PostHog context
+    - Use PostHogProvider in the root component defined in either the file-based convention (__root.tsx) or code-based convention (wherever createRootRoute() is called) so all child routes have access to the PostHog client
 
   tanstack-start:
     - Use PostHogProvider in the root route (__root.tsx) for client-side tracking
