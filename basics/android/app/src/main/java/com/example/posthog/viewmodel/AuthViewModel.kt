@@ -42,7 +42,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             _isAuthenticated.value = true
 
             PostHog.identify(username)
-            PostHog.capture("user_logged_in")
+            PostHog.capture(event = "user_logged_in")
         }
     }
 
