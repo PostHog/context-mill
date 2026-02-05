@@ -15,17 +15,7 @@ commandments:
 
   python:
     - Remember that source code is available in the venv/site-packages directory
-    - posthog is the Python SDK package name
-    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
-    - Use the instance-based API (Posthog(...)) instead of module-level API (posthog.api_key)
-    - Use enable_exception_autocapture=True during initialization for comprehensive error tracking
-    - Manual capture_exception() is for specific, handled errors only - autocapture handles unhandled exceptions
-    - ALWAYS call posthog.shutdown() (NOT flush()) before script/application exit - shutdown() flushes events AND closes connections
-    - Use new_context() and identify_context() for all event capture to properly associate events with users
-    - Set person properties with $set/$set_once in event properties, NOT with tag() - tag() only sets event properties for the context
-    - NEVER send PII (email, name, phone) in event properties unless explicitly required
-    - Hash or omit sensitive data in deletion/deactivation events
-    - Use user_id/distinct_id instead of email for user references
+    - In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost
 
   django:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
