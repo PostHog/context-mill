@@ -25,15 +25,6 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
-  - id: nuxt-4
-    type: example
-    example_path: basics/nuxt-4
-    display_name: Nuxt 4
-    description: PostHog integration for Nuxt 4 applications
-    tags: [nuxt, vue, ssr, javascript, typescript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/nuxt-js.md
-
   - id: react-react-router-6
     type: example
     example_path: basics/react-react-router-6
@@ -78,6 +69,24 @@ skills:
     tags: [nuxt, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+
+  - id: nuxt-4
+    type: example
+    example_path: basics/nuxt-4
+    display_name: Nuxt 4
+    description: PostHog integration for Nuxt 4 applications
+    tags: [nuxt, vue, ssr, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js.md
+
+  - id: vue-3
+    type: example
+    example_path: basics/vue-3
+    display_name: Vue 3
+    description: PostHog integration for Vue 3 applications
+    tags: [vue, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
     type: example
