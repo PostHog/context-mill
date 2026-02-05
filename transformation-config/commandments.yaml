@@ -30,6 +30,13 @@ commandments:
     - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
     - Blueprint registration happens AFTER PostHog initialization in create_app()
 
+  fastapi:
+    - Initialize PostHog in the lifespan context manager on startup using posthog.api_key and posthog.host
+    - Call posthog.flush() in the lifespan shutdown to ensure all events are sent before the app exits
+    - Use Pydantic Settings with @lru_cache decorator on get_settings() for caching and easy test overrides
+    - Use FastAPI dependency injection (Depends) for accessing current_user and settings in route handlers
+    - Use the same context API pattern as Flask/Django (with new_context(), identify_context(user_id), then capture())
+
   php:
     - Remember that source code is available in the vendor directory after composer install
     - posthog/posthog-php is the PHP SDK package name
