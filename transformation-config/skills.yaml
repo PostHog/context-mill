@@ -97,11 +97,11 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/flask.md
 
-  - id: react-tanstack-router
+  - id: react-tanstack-router-file-based
     type: example
-    example_path: basics/react-tanstack-router
-    display_name: React with TanStack Router
-    description: PostHog integration for React applications using TanStack Router
+    example_path: basics/react-tanstack-router-file-based
+    display_name: React with TanStack Router (file-based)
+    description: PostHog integration for React applications using TanStack Router with file-based routing
     tags: [react, tanstack-router, spa, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-router.md

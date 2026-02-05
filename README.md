@@ -38,7 +38,6 @@ examples/
 │   ├── next-app-router/         # Next.js 15 with App Router
 │   ├── next-pages-router/       # Next.js 15 with Pages Router
 │   ├── react-react-router/      # React with React Router
-│   ├── react-tanstack-router/   # React with TanStack Router
 │   └── tanstack-start/          # TanStack Start
 │   └── django/                  # Django
 ├── llm-prompts/                 # Workflow guides for AI agents
