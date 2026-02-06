@@ -68,7 +68,7 @@ skills:
     description: PostHog integration for Nuxt versions 3.0 to 3.6
     tags: [nuxt, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/nuxt-js-3-6
+      - https://posthog.com/docs/libraries/nuxt-js-3-6.md
 
   - id: nuxt-4
     type: example
@@ -77,8 +77,7 @@ skills:
     description: PostHog integration for Nuxt 4 applications
     tags: [nuxt, vue, ssr, javascript, typescript]
     docs_urls:
-      - https://posthog.com/docs/libraries/nuxt-js
-
+      - https://posthog.com/docs/libraries/nuxt-js.md
 
   - id: vue-3
     type: example
@@ -87,7 +86,7 @@ skills:
     description: PostHog integration for Vue 3 applications
     tags: [vue, javascript, typescript]
     docs_urls:
-      - https://posthog.com/docs/libraries/vue-js
+      - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
     type: example
@@ -151,3 +150,12 @@ skills:
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
+
+  - id: swift
+    type: example
+    example_path: basics/swift
+    display_name: Swift (iOS/macOS)
+    description: PostHog integration for Swift iOS and macOS applications
+    tags: [swift, ios, macos, swiftui]
+    docs_urls:
+      - https://posthog.com/docs/libraries/ios.md
