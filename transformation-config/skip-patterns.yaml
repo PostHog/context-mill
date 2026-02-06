@@ -178,3 +178,5 @@ examples:
       # Gradle configuration files (not PostHog-specific)
       - gradle.properties
       - libs.versions.toml
+      # XML files (Android resources and configs, not critical for PostHog understanding)
+      - .xml
