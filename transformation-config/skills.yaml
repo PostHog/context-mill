@@ -151,6 +151,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: sveltekit
+    type: example
+    example_path: basics/sveltekit
+    display_name: SvelteKit
+    description: PostHog integration for SvelteKit applications
+    tags: [sveltekit, svelte, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/svelte.md
+
   # Language fallback skills, used when no specific framework is detected
   - id: python
     type: example
