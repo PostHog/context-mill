@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Login - PostHog FastAPI Example{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Welcome to PostHog FastAPI Example</h1>
+    <p>This example demonstrates how to integrate PostHog with a FastAPI application.</p>
+
+    <form method="POST">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <p style="margin-top: 16px; font-size: 14px; color: #666;">
+        Don't have an account? <a href="/signup">Sign up here</a>
+    </p>
+    <p style="font-size: 14px; color: #666;">
+        <strong>Tip:</strong> Default credentials are admin@example.com/admin
+    </p>
+</div>
+
+<div class="card">
+    <h2>Features Demonstrated</h2>
+    <ul style="margin-left: 20px; color: #666;">
+        <li>User registration and identification</li>
+        <li>Event tracking</li>
+        <li>Feature flags</li>
+        <li>Error tracking</li>
+        <li>Group analytics</li>
+    </ul>
+</div>
+{% endblock %}

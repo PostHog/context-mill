@@ -31,6 +31,13 @@ commandments:
     - Manually capture exceptions with `posthog.capture_exception(e)` for error tracking since Flask has built-in error handlers
     - Blueprint registration happens AFTER PostHog initialization in create_app()
 
+  fastapi:
+    - Initialize PostHog in the lifespan context manager on startup using posthog.api_key and posthog.host
+    - Call posthog.flush() in the lifespan shutdown to ensure all events are sent before the app exits
+    - Use Pydantic Settings with @lru_cache decorator on get_settings() for caching and easy test overrides
+    - Use FastAPI dependency injection (Depends) for accessing current_user and settings in route handlers
+    - Use the same context API pattern as Flask/Django (with new_context(), identify_context(user_id), then capture())
+
   php:
     - Remember that source code is available in the vendor directory after composer install
     - posthog/posthog-php is the PHP SDK package name
@@ -40,7 +47,7 @@ commandments:
 
   tanstack-router:
     - Use TanStack Router's built-in navigation events for pageview tracking instead of useEffect
-    - Use PostHogProvider in the root route (__root.tsx) so all child routes have access to the PostHog context
+    - Use PostHogProvider in the root component defined in either the file-based convention (__root.tsx) or code-based convention (wherever createRootRoute() is called) so all child routes have access to the PostHog client
 
   tanstack-start:
     - Use PostHogProvider in the root route (__root.tsx) for client-side tracking
@@ -51,4 +58,10 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+
+  swift:
+    - Read configuration from environment variables via a `PostHogEnv` enum with a `value` computed property that calls `ProcessInfo.processInfo.environment[rawValue]` and `fatalError`s if missing — cases should be `apiKey = "POSTHOG_API_KEY"` and `host = "POSTHOG_HOST"`, set in the Xcode scheme's Run environment variables
+    - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
+    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
+    - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
   
