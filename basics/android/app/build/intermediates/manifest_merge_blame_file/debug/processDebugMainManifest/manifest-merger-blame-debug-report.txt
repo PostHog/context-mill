@@ -1,0 +1,157 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.posthog"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:5:5-67
+11-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:5:22-64
+12
+13    <permission
+13-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+14        android:name="com.example.posthog.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+14-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+15        android:protectionLevel="signature" />
+15-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+16
+17    <uses-permission android:name="com.example.posthog.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+17-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+17-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+18
+19    <application
+19-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:7:5-31:19
+20        android:name="com.example.posthog.BurritoApplication"
+20-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:8:9-43
+21        android:allowBackup="true"
+21-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:9:9-35
+22        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+22-->[androidx.core:core:1.13.1] /Users/vincent/.gradle/caches/9.1.0/transforms/e85a6cb17f9820e032e7037d316e4c89/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+23        android:dataExtractionRules="@xml/data_extraction_rules"
+23-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:10:9-65
+24        android:debuggable="true"
+25        android:extractNativeLibs="false"
+26        android:fullBackupContent="@xml/backup_rules"
+26-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:11:9-54
+27        android:icon="@mipmap/ic_launcher"
+27-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:12:9-43
+28        android:label="@string/app_name"
+28-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:13:9-41
+29        android:roundIcon="@mipmap/ic_launcher_round"
+29-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:14:9-54
+30        android:supportsRtl="true"
+30-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:15:9-35
+31        android:testOnly="true"
+32        android:theme="@style/Theme.PostHog" >
+32-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:16:9-45
+33
+34        <!--
+35             We have to export the MainActivity to be able to start it from the system launcher.
+36             Ignores added for semgrep.
+37        -->
+38        <activity
+38-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:19:9-30:20
+39            android:name="com.example.posthog.MainActivity"
+39-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:20:13-41
+40            android:exported="true"
+40-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:21:13-36
+41            android:label="@string/app_name"
+41-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:22:13-45
+42            android:theme="@style/Theme.PostHog" >
+42-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:23:13-49
+43            <intent-filter>
+43-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:25:13-29:29
+44                <action android:name="android.intent.action.MAIN" />
+44-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:26:17-69
+44-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:26:25-66
+45
+46                <category android:name="android.intent.category.LAUNCHER" />
+46-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:28:17-77
+46-->/Users/vincent/work-code/workbench/context-mill/basics/android/app/src/main/AndroidManifest.xml:28:27-74
+47            </intent-filter>
+48        </activity>
+49        <activity
+49-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/adb2fed2b3eb5c186bd72680b42ebeaa/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+50            android:name="androidx.compose.ui.tooling.PreviewActivity"
+50-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/adb2fed2b3eb5c186bd72680b42ebeaa/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+51            android:exported="true" />
+51-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/adb2fed2b3eb5c186bd72680b42ebeaa/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+52        <activity
+52-->[androidx.compose.ui:ui-test-manifest:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/644d55900690a693faa522b363f8fedb/transformed/ui-test-manifest-1.7.0/AndroidManifest.xml:23:9-25:39
+53            android:name="androidx.activity.ComponentActivity"
+53-->[androidx.compose.ui:ui-test-manifest:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/644d55900690a693faa522b363f8fedb/transformed/ui-test-manifest-1.7.0/AndroidManifest.xml:24:13-63
+54            android:exported="true" />
+54-->[androidx.compose.ui:ui-test-manifest:1.7.0] /Users/vincent/.gradle/caches/9.1.0/transforms/644d55900690a693faa522b363f8fedb/transformed/ui-test-manifest-1.7.0/AndroidManifest.xml:25:13-36
+55
+56        <provider
+56-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+57            android:name="androidx.startup.InitializationProvider"
+57-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+58            android:authorities="com.example.posthog.androidx-startup"
+58-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+59            android:exported="false" >
+59-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+60            <meta-data
+60-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+61                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+61-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+62                android:value="androidx.startup" />
+62-->[androidx.emoji2:emoji2:1.3.0] /Users/vincent/.gradle/caches/9.1.0/transforms/5423211f8f3b0edc865d3197b43ca614/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+63            <meta-data
+63-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/vincent/.gradle/caches/9.1.0/transforms/f31ea66dfe15f7b15b129423efccd405/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:29:13-31:52
+64                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+64-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/vincent/.gradle/caches/9.1.0/transforms/f31ea66dfe15f7b15b129423efccd405/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:30:17-78
+65                android:value="androidx.startup" />
+65-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/vincent/.gradle/caches/9.1.0/transforms/f31ea66dfe15f7b15b129423efccd405/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:31:17-49
+66            <meta-data
+66-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+67                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+67-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+68                android:value="androidx.startup" />
+68-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+69        </provider>
+70
+71        <receiver
+71-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+72            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+72-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+73            android:directBootAware="false"
+73-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+74            android:enabled="true"
+74-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+75            android:exported="true"
+75-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+76            android:permission="android.permission.DUMP" >
+76-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+77            <intent-filter>
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+78                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+78-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+78-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+79            </intent-filter>
+80            <intent-filter>
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+81                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+81-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+81-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+82            </intent-filter>
+83            <intent-filter>
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+84                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+84-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+84-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+85            </intent-filter>
+86            <intent-filter>
+86-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+87                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/vincent/.gradle/caches/9.1.0/transforms/7e5f685e5a5a0f7e0e768485e486f0ec/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+88            </intent-filter>
+89        </receiver>
+90    </application>
+91
+92</manifest>
