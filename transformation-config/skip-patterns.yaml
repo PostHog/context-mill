@@ -19,6 +19,7 @@ global:
     - .gif
     - .ico
     - .svg
+    - .webp
 
     # Fonts
     - .woff
@@ -35,6 +36,7 @@ global:
     - .dll
     - .so
     - .dylib
+    - .jar
 
     # Stylesheets
     - .css
@@ -63,6 +65,18 @@ global:
     - .gitignore
     - eslint
     - repomix-output.xml
+    - .gradle
+    # Gradle wrapper
+    - gradlew
+    - gradlew.bat
+    - gradle/wrapper
+    # Test files
+    - /test/
+    - /androidTest/
+    - Test.kt
+    - Test.java
+    - test.kt
+    - test.java
 
     # Python
     - venv
@@ -122,3 +136,45 @@ examples:
       - public/storage
       - public/build
       - .env.backup
+
+  android:
+    includes:
+      # Build artifacts
+      - app/build
+      - build
+      # IDE and tooling
+      - .idea
+      - .gradle
+      - .kotlin
+      # Local configuration (gitignored)
+      - local.properties
+      # Generated files
+      - .iml
+      - proguard
+      - lint-results
+      - lint-results.html
+      - lint-results_files
+      - lint-results.xml
+      - lint-temp
+      - lint-output.txt
+      - lint-cache
+      - lintVitalRelease
+      - lintVitalDebug
+      - lint
+      - generated
+      - intermediates
+      - outputs
+      - tmp
+      # Launcher icons (boilerplate, not relevant to PostHog integration)
+      - ic_launcher
+      - ic_launcher_background
+      - ic_launcher_foreground
+      - mipmap-anydpi-v26
+      # Standard Android resource files (boilerplate)
+      - backup_rules.xml
+      - data_extraction_rules.xml
+      - colors.xml
+      - themes.xml
+      # Gradle configuration files (not PostHog-specific)
+      - gradle.properties
+      - libs.versions.toml
