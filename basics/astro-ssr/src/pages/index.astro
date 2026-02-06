@@ -1,0 +1,135 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+---
+<PostHogLayout title="Home - Astro PostHog SSR Example">
+  <div class="container">
+    <div id="logged-in-view" style="display: none;">
+      <h1>Welcome back, <span id="welcome-username"></span>!</h1>
+      <p>You are now logged in. Feel free to explore:</p>
+      <ul>
+        <li>Consider the potential of burritos</li>
+        <li>View your profile and statistics</li>
+      </ul>
+    </div>
+
+    <div id="logged-out-view">
+      <h1>Welcome to Burrito Consideration App</h1>
+      <p>Please sign in to begin your burrito journey</p>
+
+      <form id="login-form" class="form">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input
+            type="text"
+            id="username"
+            placeholder="Enter any username"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter any password"
+            required
+          />
+        </div>
+
+        <p id="error-message" class="error" style="display: none;"></p>
+
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+
+      <p class="note">
+        Note: This is a demo app with server-side tracking. Use any username and password to sign in.
+      </p>
+    </div>
+  </div>
+</PostHogLayout>
+
+<script is:inline>
+  function updateView() {
+    const currentUser = localStorage.getItem('currentUser');
+    const loggedInView = document.getElementById('logged-in-view');
+    const loggedOutView = document.getElementById('logged-out-view');
+    const welcomeUsername = document.getElementById('welcome-username');
+
+    if (currentUser) {
+      loggedInView.style.display = 'block';
+      loggedOutView.style.display = 'none';
+      welcomeUsername.textContent = currentUser;
+    } else {
+      loggedInView.style.display = 'none';
+      loggedOutView.style.display = 'block';
+    }
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorMessage = document.getElementById('error-message');
+
+    if (!username || !password) {
+      errorMessage.textContent = 'Please provide both username and password';
+      errorMessage.style.display = 'block';
+      return;
+    }
+
+    try {
+      // Get the session ID from PostHog to pass to the server
+      const sessionId = window.posthog?.get_session_id?.() || null;
+
+      // Call the server-side login API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': sessionId || ''
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Store in localStorage for client-side state
+      localStorage.setItem('currentUser', username);
+      if (!localStorage.getItem('burritoConsiderations')) {
+        localStorage.setItem('burritoConsiderations', '0');
+      }
+
+      // Also identify on the client side (for session continuity)
+      window.posthog?.identify(username);
+      window.posthog?.capture('user_logged_in');
+
+      // Clear form
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      errorMessage.style.display = 'none';
+
+      // Update view
+      updateView();
+
+      // Trigger header update
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      errorMessage.textContent = error.message || 'Login failed';
+      errorMessage.style.display = 'block';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateView();
+    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+  });
+
+  // Listen for storage changes
+  window.addEventListener('storage', updateView);
+</script>

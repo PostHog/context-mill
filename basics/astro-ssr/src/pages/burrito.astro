@@ -1,0 +1,100 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+---
+<PostHogLayout title="Burrito Consideration - Astro PostHog SSR Example">
+  <div class="container">
+    <h1>Burrito consideration zone</h1>
+    <p>Take a moment to truly consider the potential of burritos.</p>
+
+    <div style="text-align: center;">
+      <button id="consider-btn" class="btn-burrito">
+        I have considered the burrito potential
+      </button>
+
+      <p id="success-message" class="success" style="display: none;">
+        Thank you for your consideration! Count: <span id="consideration-count"></span>
+      </p>
+    </div>
+
+    <div class="stats">
+      <h3>Consideration stats</h3>
+      <p>Total considerations: <span id="total-considerations">0</span></p>
+    </div>
+
+    <p class="note" style="margin-top: 1rem;">
+      Events are tracked both client-side and server-side for demonstration.
+    </p>
+  </div>
+</PostHogLayout>
+
+<script is:inline>
+  function checkAuth() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      window.location.href = '/';
+      return false;
+    }
+    return true;
+  }
+
+  function updateStats() {
+    const count = localStorage.getItem('burritoConsiderations') || '0';
+    document.getElementById('total-considerations').textContent = count;
+  }
+
+  async function handleConsideration() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) return;
+
+    // Increment the count
+    const currentCount = parseInt(localStorage.getItem('burritoConsiderations') || '0', 10);
+    const newCount = currentCount + 1;
+    localStorage.setItem('burritoConsiderations', newCount.toString());
+
+    // Update the UI
+    updateStats();
+
+    const successMessage = document.getElementById('success-message');
+    const considerationCount = document.getElementById('consideration-count');
+    considerationCount.textContent = newCount;
+    successMessage.style.display = 'block';
+
+    // Hide success message after 2 seconds
+    setTimeout(() => {
+      successMessage.style.display = 'none';
+    }, 2000);
+
+    // Client-side event tracking
+    window.posthog?.capture('burrito_considered', {
+      total_considerations: newCount,
+      username: currentUser,
+      source: 'client'
+    });
+
+    // Also send to server-side API for server tracking
+    try {
+      const sessionId = window.posthog?.get_session_id?.() || null;
+
+      await fetch('/api/events/burrito', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': sessionId || ''
+        },
+        body: JSON.stringify({
+          username: currentUser,
+          totalConsiderations: newCount
+        })
+      });
+    } catch (error) {
+      console.error('Failed to send server-side event:', error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+
+    updateStats();
+    document.getElementById('consider-btn')?.addEventListener('click', handleConsideration);
+  });
+</script>

@@ -1,0 +1,89 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+
+// This page is prerendered (static) by default in hybrid mode
+---
+<PostHogLayout title="Profile - Astro PostHog Hybrid Example">
+  <div class="container">
+    <h1>User Profile</h1>
+
+    <div class="stats">
+      <h2>Your Information</h2>
+      <p><strong>Username:</strong> <span id="profile-username"></span></p>
+      <p><strong>Burrito Considerations:</strong> <span id="profile-considerations">0</span></p>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <h3>Your Burrito Journey</h3>
+      <p id="journey-message"></p>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <h3>Error Tracking Demo</h3>
+      <p>Click the button below to trigger a test error and send it to PostHog:</p>
+      <button id="error-btn" class="btn-error">
+        Trigger Test Error
+      </button>
+      <p id="error-feedback" class="success" style="display: none;">
+        Error captured and sent to PostHog!
+      </p>
+    </div>
+  </div>
+</PostHogLayout>
+
+<script is:inline>
+  function checkAuth() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      window.location.href = '/';
+      return false;
+    }
+    return true;
+  }
+
+  function updateProfile() {
+    const username = localStorage.getItem('currentUser') || '';
+    const considerations = parseInt(localStorage.getItem('burritoConsiderations') || '0', 10);
+
+    document.getElementById('profile-username').textContent = username;
+    document.getElementById('profile-considerations').textContent = considerations;
+
+    // Update journey message based on consideration count
+    const journeyMessage = document.getElementById('journey-message');
+    if (considerations === 0) {
+      journeyMessage.textContent = "You haven't considered any burritos yet. Visit the Burrito Consideration page to start!";
+    } else if (considerations === 1) {
+      journeyMessage.textContent = "You've considered the burrito potential once. Keep going!";
+    } else if (considerations < 5) {
+      journeyMessage.textContent = "You're getting the hang of burrito consideration!";
+    } else if (considerations < 10) {
+      journeyMessage.textContent = "You're becoming a burrito consideration expert!";
+    } else {
+      journeyMessage.textContent = "You are a true burrito consideration master!";
+    }
+  }
+
+  function triggerTestError() {
+    try {
+      throw new Error('Test error for PostHog error tracking');
+    } catch (err) {
+      // Capture the error in PostHog
+      window.posthog?.captureException(err);
+      console.error('Captured error:', err);
+
+      // Show feedback to user
+      const feedback = document.getElementById('error-feedback');
+      feedback.style.display = 'block';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+
+    updateProfile();
+    document.getElementById('error-btn')?.addEventListener('click', triggerTestError);
+  });
+</script>
