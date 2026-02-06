@@ -25,15 +25,6 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
-  - id: nuxt-4
-    type: example
-    example_path: basics/nuxt-4
-    display_name: Nuxt 4
-    description: PostHog integration for Nuxt 4 applications
-    tags: [nuxt, vue, ssr, javascript, typescript]
-    docs_urls:
-      - https://posthog.com/docs/libraries/nuxt-js
-
   - id: react-react-router-6
     type: example
     example_path: basics/react-react-router-6
@@ -77,7 +68,25 @@ skills:
     description: PostHog integration for Nuxt versions 3.0 to 3.6
     tags: [nuxt, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/nuxt-js-3-6
+      - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+
+  - id: nuxt-4
+    type: example
+    example_path: basics/nuxt-4
+    display_name: Nuxt 4
+    description: PostHog integration for Nuxt 4 applications
+    tags: [nuxt, vue, ssr, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js.md
+
+  - id: vue-3
+    type: example
+    example_path: basics/vue-3
+    display_name: Vue 3
+    description: PostHog integration for Vue 3 applications
+    tags: [vue, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
     type: example
@@ -150,3 +159,22 @@ skills:
     tags: [android, java, kotlin]
     docs_urls:
       - https://posthog.com/docs/libraries/android.md
+      
+  # Language fallback skills, used when no specific framework is detected
+  - id: python
+    type: example
+    example_path: basics/python
+    display_name: Python
+    description: PostHog integration for any Python application using the Python SDK
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
+  - id: swift
+    type: example
+    example_path: basics/swift
+    display_name: Swift (iOS/macOS)
+    description: PostHog integration for Swift iOS and macOS applications
+    tags: [swift, ios, macos, swiftui]
+    docs_urls:
+      - https://posthog.com/docs/libraries/ios.md
