@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/server",
+    "types": ["node"]
+  },
+  "files": [
+    "src/main.server.ts",
+    "src/vite-env.d.ts"
+  ],
+  "include": [
+    "src/app/**/*.ts",
+    "src/environments/**/*.ts"
+  ]
+}

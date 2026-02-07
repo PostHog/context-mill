@@ -104,6 +104,9 @@ global:
     - psalm.xml
     - .psalm
 
+    # Angular
+    - .angular/
+
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
   regex:
