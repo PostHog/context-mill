@@ -69,3 +69,4 @@ commandments:
     - Use inject() instead of constructor injection. PostHog service should be injected via inject() in components/services that need it.
     - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
     - Always use standalone components over NgModules.
+    - Configure PostHog credentials in src/environments/environment.ts files, as Angular reads environment variables from these configuration files

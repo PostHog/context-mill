@@ -4,9 +4,7 @@
   "private": true,
   "scripts": {
     "ng": "ng",
-    "prestart": "node scripts/generate-env.js",
     "start": "ng serve",
-    "prebuild": "node scripts/generate-env.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -31,8 +29,8 @@
     "@angular-devkit/build-angular": "^21.0.0",
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
+    "@ngx-env/builder": "21.0.1",
     "@types/node": "^22.0.0",
-    "dotenv-cli": "^11.0.0",
     "typescript": "~5.9.0"
   }
 }

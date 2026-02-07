@@ -15,7 +15,6 @@ out-tsc/
 # Environment
 .env
 .env.local
-src/environments/environment.generated.ts
 
 # OS
 .DS_Store
