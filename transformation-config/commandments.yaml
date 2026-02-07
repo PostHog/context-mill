@@ -65,3 +65,7 @@ commandments:
     - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
   
+  angular:
+    - Use inject() instead of constructor injection. PostHog service should be injected via inject() in components/services that need it.
+    - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
+    - Always use standalone components over NgModules.
