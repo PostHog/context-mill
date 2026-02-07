@@ -26,7 +26,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      console.log('Initializing PostHog', environment.posthogKey, environment.posthogHost);
       this.posthogService.init(environment.posthogKey, {
         api_host: '/ingest',
         ui_host: environment.posthogHost || 'https://us.posthog.com',
