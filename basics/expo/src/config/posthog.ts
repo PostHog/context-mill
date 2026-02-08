@@ -9,7 +9,7 @@ const isPostHogConfigured = apiKey && apiKey !== 'phc_your_api_key_here'
 
 if (__DEV__) {
   console.log('PostHog config:', {
-    apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET',
+    apiKey: apiKey ? `SET` : 'NOT SET',
     host,
     isConfigured: isPostHogConfigured,
   })
