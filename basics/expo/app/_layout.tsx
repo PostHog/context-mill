@@ -1,4 +1,4 @@
-import { Stack, usePathname } from 'expo-router'
+import { Stack, usePathname, useGlobalSearchParams } from 'expo-router'
 import { useEffect, useRef } from 'react'
 import { StatusBar } from 'expo-status-bar'
 import { PostHogProvider } from 'posthog-react-native'
@@ -11,18 +11,22 @@ import { colors } from '../src/styles/theme'
 
 export default function RootLayout() {
   const pathname = usePathname()
+  const params = useGlobalSearchParams()
   const previousPathname = useRef<string | undefined>(undefined)
 
   // Manual screen tracking for Expo Router
+  // @see https://docs.expo.dev/router/reference/screen-tracking/
   // React Compiler will auto-optimize this effect
   useEffect(() => {
     if (previousPathname.current !== pathname) {
       posthog.screen(pathname, {
         previous_screen: previousPathname.current ?? null,
+        // Include route params for analytics (filter sensitive data if needed)
+        ...params,
       })
       previousPathname.current = pathname
     }
-  }, [pathname])
+  }, [pathname, params])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
