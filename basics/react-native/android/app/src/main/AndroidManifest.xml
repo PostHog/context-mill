@@ -11,6 +11,8 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
+      <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
+      <!-- MainActivity must be exported as it's the launcher activity with MAIN/LAUNCHER intent filter -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
