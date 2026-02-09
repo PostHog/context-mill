@@ -170,6 +170,7 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+
   - id: swift
     type: example
     example_path: basics/swift
@@ -178,3 +179,12 @@ skills:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+    
+  - id: angular
+    type: example
+    example_path: basics/angular
+    display_name: Angular
+    description: PostHog integration for Angular applications
+    tags: [angular, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/angular.md

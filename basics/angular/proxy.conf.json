@@ -1,0 +1,10 @@
+{
+  "/ingest": {
+    "target": "https://us.i.posthog.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/ingest": ""
+    }
+  }
+}
