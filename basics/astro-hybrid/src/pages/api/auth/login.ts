@@ -1,6 +1,8 @@
 import type { APIRoute } from "astro";
 import { getPostHogServer } from "../../../lib/posthog-server";
 
+export const prerender = false;
+
 // In-memory user store for demo purposes
 const users = new Map<string, { username: string; createdAt: string }>();
 
