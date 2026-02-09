@@ -151,6 +151,26 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: sveltekit
+    type: example
+    example_path: basics/sveltekit
+    display_name: SvelteKit
+    description: PostHog integration for SvelteKit applications
+    tags: [sveltekit, svelte, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/svelte.md
+
+  # Language fallback skills, used when no specific framework is detected
+  - id: python
+    type: example
+    example_path: basics/python
+    display_name: Python
+    description: PostHog integration for any Python application using the Python SDK
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
+
   - id: swift
     type: example
     example_path: basics/swift
@@ -195,3 +215,12 @@ skills:
     tags: [astro, astro-hybrid, javascript, typescript]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
+    
+  - id: angular
+    type: example
+    example_path: basics/angular
+    display_name: Angular
+    description: PostHog integration for Angular applications
+    tags: [angular, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/angular.md
