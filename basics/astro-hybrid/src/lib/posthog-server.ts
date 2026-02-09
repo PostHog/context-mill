@@ -8,8 +8,8 @@ let posthogClient: PostHog | null = null;
  */
 export function getPostHogServer(): PostHog {
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.POSTHOG_API_KEY || "", {
-      host: import.meta.env.POSTHOG_HOST || "https://us.i.posthog.com",
+    posthogClient = new PostHog(import.meta.env.PUBLIC_POSTHOG_KEY || "", {
+      host: import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
       // Flush immediately for demo purposes
       // In production, you might want to batch events
       flushAt: 1,

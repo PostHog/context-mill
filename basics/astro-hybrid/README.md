@@ -41,13 +41,8 @@ pnpm install
 Create a `.env` file in the project root:
 
 ```bash
-# Client-side (PUBLIC_ prefix exposes to browser)
 PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-
-# Server-side (no PUBLIC_ prefix, server-only)
-POSTHOG_API_KEY=your_posthog_project_api_key
-POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog API key from your project settings in PostHog.
@@ -125,8 +120,8 @@ let posthogClient: PostHog | null = null;
 
 export function getPostHogServer(): PostHog {
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.POSTHOG_API_KEY, {
-      host: import.meta.env.POSTHOG_HOST,
+    posthogClient = new PostHog(import.meta.env.PUBLIC_POSTHOG_KEY, {
+      host: import.meta.env.PUBLIC_POSTHOG_HOST,
       flushAt: 1,
       flushInterval: 0,
     });
