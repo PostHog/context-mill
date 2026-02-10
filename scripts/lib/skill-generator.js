@@ -200,19 +200,14 @@ function inferDescription(url) {
  * Returns both content and inferred metadata
  */
 async function fetchDoc(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const content = await response.text();
-        const title = extractTitle(content) || inferDescription(url);
-
-        return { content, title };
-    } catch (e) {
-        console.error(`[ERROR] Failed to fetch ${url}:`, e.message);
-        return null;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
     }
+    const content = await response.text();
+    const title = extractTitle(content) || inferDescription(url);
+
+    return { content, title };
 }
 
 /**
