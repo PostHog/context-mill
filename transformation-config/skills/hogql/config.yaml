@@ -1,0 +1,22 @@
+type: docs-only
+template: description.md
+tags: []
+shared_docs:
+  # Core SQL reference
+  - https://posthog.com/docs/sql/expressions.md
+  - https://posthog.com/docs/sql/aggregations.md
+  - https://posthog.com/docs/sql/clickhouse-functions.md
+  # Data access patterns
+  - https://posthog.com/docs/data-warehouse/sql/data-access.md
+  - https://posthog.com/docs/data-warehouse/sql/variables.md
+  - https://posthog.com/docs/data-warehouse/sql/useful-functions.md
+  # Table schemas
+  - url: https://posthog.com/docs/data-warehouse/sources/posthog.md
+    title: PostHog table schemas (events, persons, groups, sessions)
+  - https://posthog.com/docs/data/sessions.md
+variants:
+  - id: hogql
+    display_name: HogQL
+    description: HogQL queries for PostHog analytics
+    tags: [hogql]
+    docs_urls: []

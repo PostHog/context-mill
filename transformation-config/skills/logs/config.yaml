@@ -1,6 +1,6 @@
 # Logs skills - docs-only (no example projects)
 type: docs-only
-template: logs-skill-description.md
+template: description.md
 description: PostHog logs for {display_name}
 tags: [logs]
 shared_docs:

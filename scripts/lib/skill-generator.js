@@ -23,18 +23,36 @@ function loadYaml(configPath) {
 }
 
 /**
- * Load skills configuration from individual files in skills/ directory.
- * Each YAML file represents a skill group. Returns a merged config object
- * keyed by filename (without extension).
+ * Load skills configuration by recursively scanning the skills/ directory.
+ * A directory containing config.yaml with a `variants` array is a skill group.
+ * The composite key is the relative path from skills/ to that directory.
+ * Each config is self-contained — no inheritance between parent and child.
  */
 function loadSkillsConfig(configDir) {
     const skillsDir = path.join(configDir, 'skills');
-    const files = fs.readdirSync(skillsDir).filter(f => f.endsWith('.yaml'));
     const config = {};
 
-    for (const file of files) {
-        const key = file.replace('.yaml', '');
-        config[key] = loadYaml(path.join(skillsDir, file));
+    function scan(dir, keyParts) {
+        const configFile = path.join(dir, 'config.yaml');
+        if (fs.existsSync(configFile)) {
+            const localConfig = loadYaml(configFile);
+            if (localConfig?.variants) {
+                config[keyParts.join('/')] = localConfig;
+            }
+        }
+
+        // Always descend into subdirectories
+        const children = fs.readdirSync(dir, { withFileTypes: true })
+            .filter(e => e.isDirectory());
+        for (const child of children) {
+            scan(path.join(dir, child.name), [...keyParts, child.name]);
+        }
+    }
+
+    const topLevel = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory());
+    for (const entry of topLevel) {
+        scan(path.join(skillsDir, entry.name), [entry.name]);
     }
 
     return config;
@@ -48,10 +66,14 @@ function loadCommandments(configDir) {
 }
 
 /**
- * Load a skill description template by filename
+ * Load a skill description template from the directory identified by composite key.
  */
-function loadSkillTemplate(configDir, templateFile) {
-    return fs.readFileSync(path.join(configDir, 'skills', templateFile), 'utf8');
+function loadSkillTemplate(configDir, compositeKey, templateFile) {
+    const filePath = path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Template "${templateFile}" not found for key "${compositeKey}"`);
+    }
+    return fs.readFileSync(filePath, 'utf8');
 }
 
 /**
@@ -66,14 +88,21 @@ function expandSkillGroups(config, configDir) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
 
-        const baseTemplate = group.template ? loadSkillTemplate(configDir, group.template) : null;
+        const baseTemplate = group.template ? loadSkillTemplate(configDir, key, group.template) : null;
         const baseTags = group.tags || [];
         const baseType = group.type || 'example';
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
 
-        // Derive category from group key (e.g., "feature-flag-skills" → "feature-flag")
-        const category = key.replace(/-skills$/, '');
+        // Category is the first segment of the composite key, or an explicit override
+        const category = group.category || key.split('/')[0];
+
+        // Topic is the sub-path after the first segment (null for flat keys)
+        const parts = key.split('/');
+        const topic = parts.length > 1 ? parts.slice(1).join('/') : null;
+
+        // Composite key with slashes replaced by dashes, for use in IDs and filenames
+        const compositeKeyDashed = key.replace(/\//g, '-');
 
         for (const variation of group.variants) {
             const mergedTags = [...baseTags, ...(variation.tags || [])];
@@ -84,23 +113,21 @@ function expandSkillGroups(config, configDir) {
 
             // Support per-variation template override
             const template = variation.template
-                ? loadSkillTemplate(configDir, variation.template)
+                ? loadSkillTemplate(configDir, key, variation.template)
                 : baseTemplate;
 
             // Support per-variation shared_docs (merged with base)
             const sharedDocs = [...baseSharedDocs, ...(variation.shared_docs || [])];
 
-            // Namespace the ID: "nextjs" + "feature-flag" → "nextjs-feature-flag"
-            // Skip suffix for "other" category
-            const namespacedId = category === 'other'
-                ? variation.id
-                : `${variation.id}-${category}`;
+            // Skill ID: {compositeKey-dashed}-{shortId}
+            const skillId = `${compositeKeyDashed}-${variation.id}`;
 
             skills.push({
                 ...variation,
-                id: namespacedId,
+                id: skillId,
                 _shortId: variation.id,
                 _category: category,
+                _topic: topic,
                 type: variation.type || baseType,
                 tags: mergedTags,
                 description,
