@@ -12,3 +12,4 @@
 # This is standard React Native / Android boilerplate, not a security issue
 basics/react-native/android/app/src/main/AndroidManifest.xml
 basics/expo/android/app/src/main/AndroidManifest.xml
+basics/android/app/src/main/AndroidManifest.xml
