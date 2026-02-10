@@ -153,3 +153,9 @@ commandments:
     - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
     - Always use standalone components over NgModules.
     - Configure PostHog credentials in src/environments/environment.ts files, as Angular reads environment variables from these configuration files
+
+  android:
+    - Adapt dependency configuration to the appropriate build.gradle(.kts) file according to the project gradle version
+    - Call `PostHogAndroid.setup()` only once in the Application class's `onCreate()` method, so it's initialized as early as possible and only once.
+    - Initialize PostHog in the Application class's `onCreate()` method
+    - Ensure every activity has a `android:label` to accurately track screen views.

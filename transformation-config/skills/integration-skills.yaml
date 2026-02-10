@@ -124,6 +124,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: android
+    type: example
+    example_path: basics/android
+    display_name: Android
+    description: PostHog integration for Android applications
+    tags: [android, java, kotlin]
+    docs_urls:
+      - https://posthog.com/docs/libraries/android.md
+      
   - id: sveltekit
     example_path: basics/sveltekit
     display_name: SvelteKit
