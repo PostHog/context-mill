@@ -47,6 +47,23 @@ basics/expo/
 - iOS: Xcode (for iOS Simulator)
 - Android: Android Studio with emulator
 
+**For Android builds:** Set environment variables (required):
+
+Add to `~/.zshrc` or `~/.bashrc`:
+```bash
+# Java from Android Studio (required for Gradle)
+export JAVA_HOME="<path-to-android-studio-jdk>"
+
+# Android SDK location
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+```
+
+Examples:
+- `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
+- `export ANDROID_HOME="$HOME/Library/Android/sdk"`
+
+Then run `source ~/.zshrc` to apply.
+
 ### Installation
 
 1. Install dependencies:
