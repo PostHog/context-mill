@@ -59,11 +59,27 @@ You need a Mac with the following installed:
 
 4. **Environment Variables** (add to `~/.zshrc` or `~/.bashrc`)
    ```bash
+   # Android SDK
    export ANDROID_HOME=$HOME/Library/Android/sdk
    export PATH=$PATH:$ANDROID_HOME/emulator
    export PATH=$PATH:$ANDROID_HOME/platform-tools
+   
+   # Java from Android Studio (required for Gradle)
+   export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+   export PATH=$JAVA_HOME/bin:$PATH
    ```
    Then run `source ~/.zshrc` to apply.
+
+5. **Create local.properties file** (if SDK location is not detected)
+   Create `android/local.properties` with:
+   ```
+   sdk.dir=$HOME/Library/Android/sdk
+   ```
+
+6. **Clear Gradle cache** (required when jumping between different versions of Gradle)
+   ```bash
+   rm -rf ~/.gradle/caches/modules-2/files-2.1/org.gradle.toolchains/foojay-resolver
+   ```
 
 ## Getting started
 
