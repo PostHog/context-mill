@@ -179,6 +179,24 @@ skills:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+  
+  - id: react-native
+    type: example
+    example_path: basics/react-native
+    display_name: React Native
+    description: PostHog integration for React Native applications
+    tags: [react-native, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
+
+  - id: expo
+    type: example
+    example_path: basics/expo
+    display_name: Expo
+    description: PostHog integration for Expo applications
+    tags: [expo, react-native, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
 
   - id: astro-static
     type: example

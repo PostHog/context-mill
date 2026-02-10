@@ -1,0 +1,14 @@
+# Semgrep ignore patterns
+# https://semgrep.dev/docs/ignoring-files-folders-code
+
+# Test files
+**/tests/**
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+
+# Android launcher activity exported=true is required for MAIN/LAUNCHER intent filter
+# This is standard React Native / Android boilerplate, not a security issue
+basics/react-native/android/app/src/main/AndroidManifest.xml
+basics/expo/android/app/src/main/AndroidManifest.xml
