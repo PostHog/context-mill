@@ -34,8 +34,13 @@ jobs:
         with:
           node-version: 'lts/*'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Determine version
         id: version
@@ -105,7 +110,7 @@ jobs:
           echo "Building version: ${VERSION}"
 
       - name: Build skills
-        run: npm run build
+        run: pnpm run build
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
