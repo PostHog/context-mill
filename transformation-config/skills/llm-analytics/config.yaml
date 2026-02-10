@@ -1,6 +1,6 @@
 # LLM analytics - single consolidated skill with all provider references
 type: docs-only
-template: llm-analytics-skill-description.md
+template: description.md
 description: PostHog LLM analytics for {display_name}
 tags: [llm-analytics, python, javascript]
 shared_docs:

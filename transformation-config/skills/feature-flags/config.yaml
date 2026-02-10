@@ -1,6 +1,6 @@
 # Feature flag skills - docs-only (no example projects)
 type: docs-only
-template: feature-flag-skill-description.md
+template: description.md
 description: PostHog feature flags for {display_name} applications
 tags: [feature-flags]
 shared_docs:

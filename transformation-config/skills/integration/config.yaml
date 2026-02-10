@@ -1,6 +1,6 @@
 # Integration skills - example-based (code + docs)
 type: example
-template: integration-skill-description.md
+template: description.md
 description: PostHog integration for {display_name} applications
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md

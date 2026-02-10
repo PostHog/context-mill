@@ -12,11 +12,11 @@ const path = require('path');
  * Mapping from YAML skill group names to plugin names
  */
 const GROUP_TO_PLUGIN = {
-    'integration-skills': 'posthog-integration',
-    'feature-flag-skills': 'posthog-feature-flags',
-    'llm-analytics-skills': 'posthog-llm-analytics',
-    'logs-skills': 'posthog-logs',
-    'other-skills': 'posthog-tools',
+    'integration': 'posthog-integration',
+    'feature-flags': 'posthog-feature-flags',
+    'llm-analytics': 'posthog-llm-analytics',
+    'logs': 'posthog-logs',
+    'tools-and-features': 'posthog-tools',
 };
 
 /**
@@ -148,7 +148,7 @@ function generateMarketplace({ skills, tempDir, version, outputDir }) {
     // Group skills by plugin name
     const pluginGroups = {};
     for (const skill of skills) {
-        const pluginName = GROUP_TO_PLUGIN[skill.group];
+        const pluginName = GROUP_TO_PLUGIN[skill.category];
         if (!pluginName) {
             console.warn(`  [WARN] No plugin mapping for group "${skill.group}", skipping ${skill.id}`);
             continue;
