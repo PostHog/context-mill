@@ -63,6 +63,25 @@ global:
     - .gitignore
     - eslint
     - repomix-output.xml
+    
+    # React Native / Expo
+    - .expo
+    - .expo-shared
+    - android/build
+    - android/.gradle
+    - android/.cxx
+    - android/app/build
+    - android/local.properties
+    - ios/build
+    - ios/Pods
+    - ios/DerivedData
+    - ios/*.xcworkspace
+    - ios/*.xcodeproj/xcuserdata
+    - .gradle
+    - build
+    - .metro-health-check
+    - .watchmanconfig
+    - .bundle
 
     # Python
     - venv
@@ -132,3 +151,17 @@ examples:
       - public/storage
       - public/build
       - .env.backup
+  
+  react-native:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock
+  
+  expo:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock
