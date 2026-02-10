@@ -8,7 +8,7 @@ shared_docs:
   - https://posthog.com/docs/llm-analytics/traces.md
   - https://posthog.com/docs/llm-analytics/calculating-costs.md
 variants:
-  - id: providers
+  - id: setup
     display_name: all supported providers
     tags: []
     docs_urls:
