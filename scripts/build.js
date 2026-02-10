@@ -14,6 +14,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 const archiver = require('archiver');
 const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
+const { generateMarketplace } = require('./lib/marketplace-generator');
 const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
@@ -206,6 +207,15 @@ async function main() {
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
 
+        // Generate marketplace plugin directories (before tempDir cleanup)
+        console.log('\nGenerating marketplace plugins...');
+        const marketplaceResult = generateMarketplace({
+            skills,
+            tempDir,
+            version: BUILD_VERSION,
+            outputDir: distDir,
+        });
+
         fs.rmSync(tempDir, { recursive: true, force: true });
 
         // Fetch doc content directly (no generator, no ZIP)
@@ -259,6 +269,8 @@ async function main() {
                 console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
             }
         }
+        console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
+        console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
 
     } catch (e) {
         console.error('\n[FATAL] Build failed:', e.message);

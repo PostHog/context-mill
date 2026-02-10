@@ -583,6 +583,9 @@ async function generateAllSkills({
     // Return full skill metadata for manifest generation
     return skills.map(s => ({
         id: s.id,
+        shortId: s._shortId,
+        category: s._category,
+        displayName: s.display_name,
         type: s.type || 'example',
         group: s._group,
         name: s.description,
