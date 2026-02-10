@@ -1,0 +1,73 @@
+name: PostHog Context Mill - Build
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    outputs:
+      examples: ${{ steps.set-examples.outputs.examples }}
+    
+    steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+    - uses: pnpm/action-setup@v4
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Build
+      run: pnpm build
+
+      # No individual skill should be larger than 1MB, and the bundle should be less than 2MB.
+    - name: Check bundle and skill sizes
+      run: |
+        set -e
+
+        BUNDLE="dist/skills-mcp-resources.zip"
+        if [ ! -f "$BUNDLE" ]; then
+          echo "::error::Bundle $BUNDLE not found after build"
+          exit 1
+        fi
+
+        # Get bundle size in bytes (supports both GNU and BSD stat)
+        bundle_bytes=$(stat -c%s "$BUNDLE" 2>/dev/null || stat -f%z "$BUNDLE")
+        echo "skills-mcp-resources.zip size: ${bundle_bytes} bytes"
+
+        if [ "$bundle_bytes" -gt $((2 * 1024 * 1024)) ]; then
+          echo "::error::skills-mcp-resources.zip is larger than 2MB (current: ${bundle_bytes} bytes)"
+          exit 1
+        fi
+
+        # Check each individual skill ZIP under dist/skills/
+        if [ -d "dist/skills" ]; then
+          for file in dist/skills/*.zip; do
+            [ -e "$file" ] || continue
+            size_bytes=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
+            echo "$(basename "$file") size: ${size_bytes} bytes"
+            if [ "$size_bytes" -gt $((1 * 1024 * 1024)) ]; then
+              echo "::error::Skill archive $file is larger than 1MB (current: ${size_bytes} bytes)"
+              exit 1
+            fi
+          done
+        else
+          echo "::warning::dist/skills directory not found; skipping per-skill size checks"
+        fi
+
+    - name: Archive Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.sha }}
+        path: |
+          ${{ github.workspace }}/*.tgz
