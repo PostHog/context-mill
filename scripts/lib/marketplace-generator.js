@@ -16,7 +16,7 @@ const GROUP_TO_PLUGIN = {
     'feature-flags': 'posthog-feature-flags',
     'llm-analytics': 'posthog-llm-analytics',
     'logs': 'posthog-logs',
-    'hogql': 'posthog-tools',
+    'tools-and-features': 'posthog-tools',
 };
 
 /**
