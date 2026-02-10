@@ -9,7 +9,7 @@ const app = createApp(App);
 
 posthog.init(import.meta.env.VITE_POSTHOG_KEY || '', {
   api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
-  defaults: '2025-11-30',
+  defaults: '2026-01-30',
 });
 
 app.use(createPinia())

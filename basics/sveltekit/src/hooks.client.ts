@@ -7,7 +7,7 @@ export async function init() {
 	posthog.init(PUBLIC_POSTHOG_KEY, {
 		api_host: '/ingest',
 		ui_host: 'https://us.posthog.com',
-		defaults: '2025-11-30',
+  defaults: '2026-01-30',
 		capture_exceptions: true
 	});
 }

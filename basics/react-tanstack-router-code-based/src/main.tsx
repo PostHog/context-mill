@@ -33,7 +33,7 @@ function RootComponent() {
         api_host: '/ingest',
         ui_host:
           import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
-        defaults: '2025-11-30',
+        defaults: '2026-01-30',
         capture_exceptions: true,
         debug: import.meta.env.DEV,
       }}

@@ -84,7 +84,7 @@ When using Astro's View Transitions (ClientRouter), you **must** wrap the PostHo
     !function(t,e){...}(document,window.posthog||[]);
     posthog.init('<ph_project_api_key>', {
       api_host: 'https://us.i.posthog.com',
-      defaults: '2025-11-30',
+      defaults: '2026-01-30',
       // IMPORTANT: Use 'history_change' for automatic pageview tracking during soft navigation
       capture_pageview: 'history_change'
     })
