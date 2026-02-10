@@ -77,6 +77,25 @@ global:
     - Test.java
     - test.kt
     - test.java
+    
+    # React Native / Expo
+    - .expo
+    - .expo-shared
+    - android/build
+    - android/.gradle
+    - android/.cxx
+    - android/app/build
+    - android/local.properties
+    - ios/build
+    - ios/Pods
+    - ios/DerivedData
+    - ios/*.xcworkspace
+    - ios/*.xcodeproj/xcuserdata
+    - .gradle
+    - build
+    - .metro-health-check
+    - .watchmanconfig
+    - .bundle
 
     # Python
     - venv
@@ -117,6 +136,9 @@ global:
     - phpstan.neon
     - psalm.xml
     - .psalm
+
+    # Angular
+    - .angular/
 
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
@@ -187,3 +209,17 @@ examples:
       - libs.versions.toml
       # XML files (Android resources and configs, not critical for PostHog understanding)
       - .xml
+  
+  react-native:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock
+  
+  expo:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock

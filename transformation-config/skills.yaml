@@ -114,7 +114,7 @@ skills:
     tags: [fastapi, python]
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
-      
+
   - id: react-tanstack-router-file-based
     type: example
     example_path: basics/react-tanstack-router-file-based
@@ -160,6 +160,15 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/android.md
       
+  - id: sveltekit
+    type: example
+    example_path: basics/sveltekit
+    display_name: SvelteKit
+    description: PostHog integration for SvelteKit applications
+    tags: [sveltekit, svelte, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/svelte.md
+
   # Language fallback skills, used when no specific framework is detected
   - id: python
     type: example
@@ -170,6 +179,7 @@ skills:
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+
   - id: swift
     type: example
     example_path: basics/swift
@@ -178,3 +188,66 @@ skills:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+  
+  - id: react-native
+    type: example
+    example_path: basics/react-native
+    display_name: React Native
+    description: PostHog integration for React Native applications
+    tags: [react-native, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
+
+  - id: expo
+    type: example
+    example_path: basics/expo
+    display_name: Expo
+    description: PostHog integration for Expo applications
+    tags: [expo, react-native, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
+
+  - id: astro-static
+    type: example
+    example_path: basics/astro-static
+    display_name: Astro (Static)
+    description: PostHog integration for static Astro sites using SSG
+    tags: [astro, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+
+  - id: astro-view-transitions
+    type: example
+    example_path: basics/astro-view-transitions
+    display_name: Astro (View Transitions)
+    description: PostHog integration for Astro with ClientRouter view transitions
+    tags: [astro, astro-view-transitions, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+
+  - id: astro-ssr
+    type: example
+    example_path: basics/astro-ssr
+    display_name: Astro (SSR)
+    description: PostHog integration for server-rendered Astro applications with API routes
+    tags: [astro, astro-ssr, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+
+  - id: astro-hybrid
+    type: example
+    example_path: basics/astro-hybrid
+    display_name: Astro (Hybrid)
+    description: PostHog integration for Astro hybrid rendering with both static and server-rendered pages
+    tags: [astro, astro-hybrid, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+    
+  - id: angular
+    type: example
+    example_path: basics/angular
+    display_name: Angular
+    description: PostHog integration for Angular applications
+    tags: [angular, javascript, typescript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/angular.md

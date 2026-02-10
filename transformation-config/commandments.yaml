@@ -59,9 +59,52 @@ commandments:
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
 
+  sveltekit:
+    - Set paths.relative to false in svelte.config.js — this is required for PostHog session replay to work correctly with SSR and is easy to miss
+    - Use the Svelte MCP server tools to check Svelte documentation (list-sections, get-documentation) and validate components (svelte-autofixer) — always run svelte-autofixer on new or modified .svelte files before finishing
+
   swift:
     - Read configuration from environment variables via a `PostHogEnv` enum with a `value` computed property that calls `ProcessInfo.processInfo.environment[rawValue]` and `fatalError`s if missing — cases should be `apiKey = "POSTHOG_API_KEY"` and `host = "POSTHOG_HOST"`, set in the Xcode scheme's Run environment variables
     - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
     - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
   
+  react-native:
+    - posthog-react-native is the React Native SDK package name
+    - Use react-native-config to load POSTHOG_API_KEY and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
+    - Place PostHogProvider INSIDE NavigationContainer for React Navigation v7 compatibility
+    
+  expo:
+    - posthog-react-native is the React Native SDK package name (same as bare RN)
+    - Use expo-constants with app.config.js extras for POSTHOG_API_KEY and POSTHOG_HOST (NOT react-native-config)
+    - Access config via `Constants.expoConfig?.extra?.posthogApiKey` in your posthog.ts config file
+    - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
+
+  astro:
+    - Always use the is:inline directive on PostHog script tags to prevent Astro from processing them and causing TypeScript errors
+    - Use PUBLIC_ prefix for client-side environment variables in Astro (e.g., PUBLIC_POSTHOG_KEY)
+    - Create a posthog.astro component in src/components/ for reusable initialization across pages
+    - Import the PostHog component in a Layout and wrap all pages with that layout
+
+  astro-view-transitions:
+    - Wrap PostHog initialization with a window.__posthog_initialized guard to prevent stack overflow during soft navigation
+    - Set capture_pageview option to 'history_change' for automatic pageview tracking during soft navigation
+    - Use the astro page-load event instead of just DOMContentLoaded to re-run scripts after soft navigation
+
+  astro-ssr:
+    - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
+    - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
+    - Pass the client session ID to server via X-PostHog-Session-Id header for unified session tracking
+
+  astro-hybrid:
+    - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
+    - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
+    - In Astro 5, use output static (the default) with an adapter - pages are prerendered by default
+    - Use export const prerender = false to opt specific pages into SSR when they need server-side rendering
+    - Only pages that need server-side PostHog tracking (like API-backed forms) should opt out of prerendering
+  
+  angular:
+    - Use inject() instead of constructor injection. PostHog service should be injected via inject() in components/services that need it.
+    - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
+    - Always use standalone components over NgModules.
+    - Configure PostHog credentials in src/environments/environment.ts files, as Angular reads environment variables from these configuration files
