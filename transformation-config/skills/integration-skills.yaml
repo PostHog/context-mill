@@ -99,7 +99,7 @@ variants:
     description: PostHog integration for React applications using TanStack Router with file-based routing
     tags: [react, tanstack-router, spa, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/tanstack-router.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: react-tanstack-router-code-based
     example_path: basics/react-tanstack-router-code-based
@@ -107,7 +107,7 @@ variants:
     description: PostHog integration for React applications using TanStack Router with code-based routing
     tags: [react, tanstack-router, spa, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/tanstack-router.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: tanstack-start
     example_path: basics/tanstack-start
