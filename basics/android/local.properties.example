@@ -1,0 +1,8 @@
+# Copy this file to local.properties and fill in your values
+# local.properties is gitignored and will not be committed
+
+sdk.dir=/path/to/your/android/sdk
+
+# PostHog configuration
+posthog.apiKey=your_posthog_api_key_here
+posthog.host=https://us.i.posthog.com
