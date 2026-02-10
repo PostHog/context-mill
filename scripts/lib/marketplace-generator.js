@@ -20,15 +20,15 @@ const GROUP_TO_PLUGIN = {
 };
 
 /**
- * Human-readable display names for plugins
+ * Plugin keywords for discovery
  */
-const PLUGIN_DISPLAY_NAMES = {
-    'posthog-integration': 'PostHog Integration',
-    'posthog-feature-flags': 'PostHog Feature Flags',
-    'posthog-llm-analytics': 'PostHog LLM Analytics',
-    'posthog-logs': 'PostHog Logs',
-    'posthog-tools': 'PostHog Tools',
-    'posthog-all': 'PostHog All Skills',
+const PLUGIN_KEYWORDS = {
+    'posthog-integration': ['posthog', 'analytics', 'integration', 'tracking'],
+    'posthog-feature-flags': ['posthog', 'feature-flags', 'experiments', 'ab-testing'],
+    'posthog-llm-analytics': ['posthog', 'llm', 'ai', 'observability'],
+    'posthog-logs': ['posthog', 'logs', 'logging', 'observability'],
+    'posthog-tools': ['posthog', 'hogql', 'analytics', 'tools'],
+    'posthog-all': ['posthog', 'analytics', 'feature-flags', 'llm', 'logs'],
 };
 
 /**
@@ -62,27 +62,69 @@ function copyDirSync(src, dest) {
 /**
  * Generate a plugin.json for a plugin directory
  */
-function writePluginJson(pluginDir, pluginName, skillEntries, version) {
+function writePluginJson(pluginDir, pluginName, version) {
     const metaDir = path.join(pluginDir, '.claude-plugin');
     fs.mkdirSync(metaDir, { recursive: true });
 
     const pluginJson = {
         name: pluginName,
-        displayName: PLUGIN_DISPLAY_NAMES[pluginName] || pluginName,
         description: PLUGIN_DESCRIPTIONS[pluginName] || '',
         version,
-        author: 'PostHog',
-        skills: skillEntries.map(s => ({
-            id: s.dirName,
-            name: s.displayName,
-            description: s.description,
-        })),
+        author: {
+            name: 'PostHog',
+        },
+        keywords: PLUGIN_KEYWORDS[pluginName] || ['posthog'],
     };
 
     fs.writeFileSync(
         path.join(metaDir, 'plugin.json'),
         JSON.stringify(pluginJson, null, 2)
     );
+}
+
+/**
+ * Write a UserPromptSubmit hook into a plugin that reminds the agent to check skills.
+ */
+function writeSkillReminderHook(pluginDir) {
+    const hooksDir = path.join(pluginDir, 'hooks');
+    fs.mkdirSync(hooksDir, { recursive: true });
+
+    const hooksJson = {
+        hooks: {
+            UserPromptSubmit: [
+                {
+                    hooks: [
+                        {
+                            type: 'command',
+                            command: '${CLAUDE_PLUGIN_ROOT}/hooks/skill-reminder.sh',
+                        },
+                    ],
+                },
+            ],
+        },
+    };
+
+    fs.writeFileSync(
+        path.join(hooksDir, 'hooks.json'),
+        JSON.stringify(hooksJson, null, 2)
+    );
+
+    const script = `#!/usr/bin/env bash
+set -euo pipefail
+
+cat <<'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "<IMPORTANT>\\nBefore responding, check if any of your PostHog skills apply to this task. Your available skills are listed in your system context. If a skill is relevant and has not been activated in this session, use the Skill tool to activate it.\\n</IMPORTANT>"
+  }
+}
+EOF
+`;
+
+    const scriptPath = path.join(hooksDir, 'skill-reminder.sh');
+    fs.writeFileSync(scriptPath, script);
+    fs.chmodSync(scriptPath, 0o755);
 }
 
 /**
@@ -151,7 +193,7 @@ function generateMarketplace({ skills, tempDir, version, outputDir }) {
             });
         }
 
-        writePluginJson(pluginDir, pluginName, skillEntries, version);
+        writePluginJson(pluginDir, pluginName, version);
         console.log(`  ✓ ${pluginName} (${skillEntries.length} skills)`);
     }
 
@@ -161,7 +203,8 @@ function generateMarketplace({ skills, tempDir, version, outputDir }) {
         const destDir = path.join(allPluginDir, 'skills', entry.dirName);
         copyDirSync(entry.srcDir, destDir);
     }
-    writePluginJson(allPluginDir, 'posthog-all', allSkillEntries, version);
+    writePluginJson(allPluginDir, 'posthog-all', version);
+    writeSkillReminderHook(allPluginDir);
     console.log(`  ✓ posthog-all (${allSkillEntries.length} skills)`);
 
     // Generate top-level marketplace.json
@@ -171,14 +214,18 @@ function generateMarketplace({ skills, tempDir, version, outputDir }) {
 
     const marketplaceJson = {
         name: 'posthog',
-        displayName: 'PostHog',
-        description: 'PostHog analytics, feature flags, LLM analytics, and more',
-        version,
+        owner: {
+            name: 'PostHog',
+        },
+        metadata: {
+            description: 'PostHog analytics, feature flags, LLM analytics, and more',
+            version,
+        },
         plugins: allPluginNames.map(name => ({
             name,
-            displayName: PLUGIN_DISPLAY_NAMES[name] || name,
+            source: `./plugins/${name}`,
             description: PLUGIN_DESCRIPTIONS[name] || '',
-            path: `plugins/${name}`,
+            keywords: PLUGIN_KEYWORDS[name] || ['posthog'],
         })),
     };
 
