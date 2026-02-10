@@ -14,6 +14,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 const archiver = require('archiver');
 const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
+const { generateMarketplace } = require('./lib/marketplace-generator');
 const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
@@ -93,6 +94,7 @@ function generateInstallCommand(skillId, downloadUrl) {
 function generateManifest(skills, uriSchema, version, guideContents = {}) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
+    const docPattern = uriSchema.patterns.doc;
     // Base URL for skill ZIP downloads
     // Production: GitHub releases (default)
     // Development: Local server (set via SKILLS_BASE_URL env var)
@@ -104,12 +106,15 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
         buildTimestamp: new Date().toISOString(),
         resources: skills.map(skill => {
             const isGuide = skill.type === 'doc' && guideContents[skill.id];
+            const uri = isGuide
+                ? `${scheme}${docPattern.replace('{id}', skill.id)}`
+                : `${scheme}${skillPattern.replace('{group}', skill.group).replace('{id}', skill.shortId)}`;
             const base = {
                 id: skill.id,
                 name: skill.name,
                 description: skill.description,
                 tags: skill.tags,
-                uri: `${scheme}${skillPattern.replace('{id}', skill.id)}`,
+                uri,
             };
 
             if (isGuide) {
@@ -199,6 +204,15 @@ async function main() {
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
 
+        // Generate marketplace plugin directories (before tempDir cleanup)
+        console.log('\nGenerating marketplace plugins...');
+        const marketplaceResult = generateMarketplace({
+            skills,
+            tempDir,
+            version: BUILD_VERSION,
+            outputDir: distDir,
+        });
+
         fs.rmSync(tempDir, { recursive: true, force: true });
 
         // Fetch doc content directly (no generator, no ZIP)
@@ -252,6 +266,8 @@ async function main() {
                 console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
             }
         }
+        console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
+        console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
 
     } catch (e) {
         console.error('\n[FATAL] Build failed:', e.message);

@@ -1,0 +1,54 @@
+# Logs skills - docs-only (no example projects)
+type: docs-only
+template: description.md
+description: PostHog logs for {display_name}
+tags: [logs]
+shared_docs:
+  - https://posthog.com/docs/logs/start-here.md
+  - https://posthog.com/docs/logs/search.md
+  - https://posthog.com/docs/logs/best-practices.md
+  - https://posthog.com/docs/logs/troubleshooting.md
+  - https://posthog.com/docs/logs/link-session-replay.md
+  - https://posthog.com/docs/logs/debugging-with-mcp.md
+variants:
+  - id: nextjs
+    display_name: Next.js
+    tags: [nextjs, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nextjs.md
+
+  - id: nodejs
+    display_name: Node.js
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nodejs.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/python.md
+
+  - id: go
+    display_name: Go
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/go.md
+
+  - id: java
+    display_name: Java
+    tags: [java]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/java.md
+
+  - id: datadog
+    display_name: Datadog
+    tags: [datadog]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/datadog.md
+
+  - id: other
+    display_name: Other Languages
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/other.md

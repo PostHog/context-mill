@@ -1,0 +1,52 @@
+# LLM analytics - single consolidated skill with all provider references
+type: docs-only
+template: description.md
+description: PostHog LLM analytics for {display_name}
+tags: [llm-analytics, python, javascript]
+shared_docs:
+  - https://posthog.com/docs/llm-analytics/basics.md
+  - https://posthog.com/docs/llm-analytics/traces.md
+  - https://posthog.com/docs/llm-analytics/calculating-costs.md
+variants:
+  - id: setup
+    display_name: all supported providers
+    tags: []
+    docs_urls:
+      # --- Model providers ---
+      - https://posthog.com/docs/llm-analytics/installation/openai.md
+      - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+      - https://posthog.com/docs/llm-analytics/installation/anthropic.md
+      - https://posthog.com/docs/llm-analytics/installation/google.md
+      - https://posthog.com/docs/llm-analytics/installation/cohere.md
+      - https://posthog.com/docs/llm-analytics/installation/mistral.md
+      - https://posthog.com/docs/llm-analytics/installation/perplexity.md
+      - https://posthog.com/docs/llm-analytics/installation/deepseek.md
+      - https://posthog.com/docs/llm-analytics/installation/groq.md
+      - https://posthog.com/docs/llm-analytics/installation/together-ai.md
+      - https://posthog.com/docs/llm-analytics/installation/fireworks-ai.md
+      - https://posthog.com/docs/llm-analytics/installation/xai.md
+      - https://posthog.com/docs/llm-analytics/installation/cerebras.md
+      - https://posthog.com/docs/llm-analytics/installation/hugging-face.md
+      - https://posthog.com/docs/llm-analytics/installation/ollama.md
+      - https://posthog.com/docs/llm-analytics/installation/openrouter.md
+      # --- AI frameworks ---
+      - https://posthog.com/docs/llm-analytics/installation/langchain.md
+      - https://posthog.com/docs/llm-analytics/installation/llamaindex.md
+      - https://posthog.com/docs/llm-analytics/installation/crewai.md
+      - https://posthog.com/docs/llm-analytics/installation/autogen.md
+      - https://posthog.com/docs/llm-analytics/installation/dspy.md
+      - https://posthog.com/docs/llm-analytics/installation/langgraph.md
+      - https://posthog.com/docs/llm-analytics/installation/pydantic-ai.md
+      - https://posthog.com/docs/llm-analytics/installation/vercel-ai.md
+      - https://posthog.com/docs/llm-analytics/installation/litellm.md
+      - https://posthog.com/docs/llm-analytics/installation/instructor.md
+      - https://posthog.com/docs/llm-analytics/installation/semantic-kernel.md
+      - https://posthog.com/docs/llm-analytics/installation/mirascope.md
+      - https://posthog.com/docs/llm-analytics/installation/mastra.md
+      - https://posthog.com/docs/llm-analytics/installation/smolagents.md
+      - https://posthog.com/docs/llm-analytics/installation/openai-agents.md
+      # --- Proxy / gateway providers ---
+      - https://posthog.com/docs/llm-analytics/installation/portkey.md
+      - https://posthog.com/docs/llm-analytics/installation/helicone.md
+      # --- Manual / generic ---
+      - https://posthog.com/docs/llm-analytics/installation/manual-capture.md

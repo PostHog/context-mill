@@ -23,10 +23,39 @@ function loadYaml(configPath) {
 }
 
 /**
- * Load skills configuration
+ * Load skills configuration by recursively scanning the skills/ directory.
+ * A directory containing config.yaml with a `variants` array is a skill group.
+ * The composite key is the relative path from skills/ to that directory.
+ * Each config is self-contained — no inheritance between parent and child.
  */
 function loadSkillsConfig(configDir) {
-    return loadYaml(path.join(configDir, 'skills.yaml'));
+    const skillsDir = path.join(configDir, 'skills');
+    const config = {};
+
+    function scan(dir, keyParts) {
+        const configFile = path.join(dir, 'config.yaml');
+        if (fs.existsSync(configFile)) {
+            const localConfig = loadYaml(configFile);
+            if (localConfig?.variants) {
+                config[keyParts.join('/')] = localConfig;
+            }
+        }
+
+        // Always descend into subdirectories
+        const children = fs.readdirSync(dir, { withFileTypes: true })
+            .filter(e => e.isDirectory());
+        for (const child of children) {
+            scan(path.join(dir, child.name), [...keyParts, child.name]);
+        }
+    }
+
+    const topLevel = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory());
+    for (const entry of topLevel) {
+        scan(path.join(skillsDir, entry.name), [entry.name]);
+    }
+
+    return config;
 }
 
 /**
@@ -37,10 +66,79 @@ function loadCommandments(configDir) {
 }
 
 /**
- * Load skill description template
+ * Load a skill description template from the directory identified by composite key.
  */
-function loadSkillTemplate(configDir) {
-    return fs.readFileSync(path.join(configDir, 'skill-description.md'), 'utf8');
+function loadSkillTemplate(configDir, compositeKey, templateFile) {
+    const filePath = path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Template "${templateFile}" not found for key "${compositeKey}"`);
+    }
+    return fs.readFileSync(filePath, 'utf8');
+}
+
+/**
+ * Expand grouped skill config into a flat array of skill objects.
+ * Each top-level key (except shared_docs) is a skill group with
+ * base properties and a variants array.
+ */
+function expandSkillGroups(config, configDir) {
+    const skills = [];
+
+    for (const [key, group] of Object.entries(config)) {
+        if (key === 'shared_docs') continue;
+        if (!group.variants) continue;
+
+        const baseTemplate = group.template ? loadSkillTemplate(configDir, key, group.template) : null;
+        const baseTags = group.tags || [];
+        const baseType = group.type || 'example';
+        const baseDescription = group.description || null;
+        const baseSharedDocs = group.shared_docs || [];
+
+        // Category is the first segment of the composite key, or an explicit override
+        const category = group.category || key.split('/')[0];
+
+        // Topic is the sub-path after the first segment (null for flat keys)
+        const parts = key.split('/');
+        const topic = parts.length > 1 ? parts.slice(1).join('/') : null;
+
+        // Composite key with slashes replaced by dashes, for use in IDs and filenames
+        const compositeKeyDashed = key.replace(/\//g, '-');
+
+        for (const variation of group.variants) {
+            const mergedTags = [...baseTags, ...(variation.tags || [])];
+            let description = variation.description;
+            if (!description && baseDescription) {
+                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+            }
+
+            // Support per-variation template override
+            const template = variation.template
+                ? loadSkillTemplate(configDir, key, variation.template)
+                : baseTemplate;
+
+            // Support per-variation shared_docs (merged with base)
+            const sharedDocs = [...baseSharedDocs, ...(variation.shared_docs || [])];
+
+            // Skill ID: {compositeKey-dashed}-{shortId}
+            const skillId = `${compositeKeyDashed}-${variation.id}`;
+
+            skills.push({
+                ...variation,
+                id: skillId,
+                _shortId: variation.id,
+                _category: category,
+                _topic: topic,
+                type: variation.type || baseType,
+                tags: mergedTags,
+                description,
+                _template: template,
+                _sharedDocs: sharedDocs,
+                _group: key,
+            });
+        }
+    }
+
+    return skills;
 }
 
 /**
@@ -129,19 +227,14 @@ function inferDescription(url) {
  * Returns both content and inferred metadata
  */
 async function fetchDoc(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const content = await response.text();
-        const title = extractTitle(content) || inferDescription(url);
-
-        return { content, title };
-    } catch (e) {
-        console.error(`[ERROR] Failed to fetch ${url}:`, e.message);
-        return null;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
     }
+    const content = await response.text();
+    const title = extractTitle(content) || inferDescription(url);
+
+    return { content, title };
 }
 
 /**
@@ -161,13 +254,25 @@ function collectCommandments(tags, commandmentsConfig) {
 }
 
 /**
+ * Coerce a commandment rule to a string.
+ * YAML parses unquoted "key: value" lines as objects — rejoin them.
+ */
+function ruleToString(rule) {
+    if (typeof rule === 'string') return rule;
+    if (typeof rule === 'object' && rule !== null) {
+        return Object.entries(rule).map(([k, v]) => `${k}: ${v}`).join(', ');
+    }
+    return String(rule);
+}
+
+/**
  * Format commandments as markdown bullet list
  */
 function formatCommandments(rules) {
     if (rules.length === 0) {
         return '_No specific framework guidelines._';
     }
-    return rules.map(rule => `- ${rule}`).join('\n');
+    return rules.map(rule => `- ${ruleToString(rule)}`).join('\n');
 }
 
 /**
@@ -361,31 +466,12 @@ async function generateSkill({
         });
     }
 
-    // Fetch and write skill-specific docs
-    if (skill.docs_urls && skill.docs_urls.length > 0) {
-        for (const url of skill.docs_urls) {
-            console.log(`  Fetching doc: ${url}`);
+    // Helper to process a doc entry (string URL or {url, title} object)
+    async function processDoc(docEntry, logPrefix = '') {
+        const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
+        const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
 
-            const result = await fetchDoc(url);
-            if (result) {
-                const filename = urlToFilename(url);
-                fs.writeFileSync(
-                    path.join(referencesDir, filename),
-                    result.content,
-                    'utf8'
-                );
-
-                references.push({
-                    filename,
-                    description: result.title,
-                });
-            }
-        }
-    }
-
-    // Fetch and write shared docs
-    for (const url of sharedDocs) {
-        console.log(`  Fetching shared doc: ${url}`);
+        console.log(`  ${logPrefix}Fetching doc: ${url}`);
 
         const result = await fetchDoc(url);
         if (result) {
@@ -398,31 +484,46 @@ async function generateSkill({
 
             references.push({
                 filename,
-                description: result.title,
+                description: titleOverride || result.title,
             });
         }
     }
 
-    // Include relevant workflows (flattened with category prefix, linked to next step)
-    for (const workflow of workflows) {
-        let content = fs.readFileSync(workflow.fullPath, 'utf8');
-
-        // Append continuation message if there's a next step
-        if (workflow.nextFilename) {
-            content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
+    // Fetch and write skill-specific docs
+    if (skill.docs_urls && skill.docs_urls.length > 0) {
+        for (const docEntry of skill.docs_urls) {
+            await processDoc(docEntry);
         }
+    }
 
-        const filename = `${workflow.category}-${workflow.filename}`;
-        fs.writeFileSync(
-            path.join(referencesDir, filename),
-            content,
-            'utf8'
-        );
+    // Fetch and write shared docs
+    for (const docEntry of sharedDocs) {
+        await processDoc(docEntry, 'shared ');
+    }
 
-        references.push({
-            filename,
-            description: toSentenceCase(workflow.title),
-        });
+    // Include relevant workflows (flattened with category prefix, linked to next step)
+    // Skip workflows for docs-only skills
+    if (skill.type !== 'docs-only') {
+        for (const workflow of workflows) {
+            let content = fs.readFileSync(workflow.fullPath, 'utf8');
+
+            // Append continuation message if there's a next step
+            if (workflow.nextFilename) {
+                content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
+            }
+
+            const filename = `${workflow.category}-${workflow.filename}`;
+            fs.writeFileSync(
+                path.join(referencesDir, filename),
+                content,
+                'utf8'
+            );
+
+            references.push({
+                filename,
+                description: toSentenceCase(workflow.title),
+            });
+        }
     }
 
     // Build references list for SKILL.md
@@ -477,8 +578,10 @@ async function generateAllSkills({
     // Load all configs
     const skillsConfig = loadSkillsConfig(configDir);
     const commandmentsConfig = loadCommandments(configDir);
-    const skillTemplate = loadSkillTemplate(configDir);
     const skipPatterns = loadSkipPatterns(path.join(configDir, 'skip-patterns.yaml'));
+
+    // Expand grouped skills into flat array
+    const skills = expandSkillGroups(skillsConfig, configDir);
 
     // Discover workflows
     console.log('Discovering workflows...');
@@ -487,10 +590,6 @@ async function generateAllSkills({
 
     // Create output directory
     fs.mkdirSync(outputDir, { recursive: true });
-
-    // Generate each skill
-    const skills = skillsConfig.skills || [];
-    const sharedDocs = skillsConfig.shared_docs || [];
 
     console.log(`\nGenerating ${skills.length} skills...`);
 
@@ -505,8 +604,8 @@ async function generateAllSkills({
             outputDir,
             skipPatterns,
             commandmentsConfig,
-            skillTemplate,
-            sharedDocs,
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
             workflows,
         });
 
@@ -518,8 +617,12 @@ async function generateAllSkills({
     // Return full skill metadata for manifest generation
     return skills.map(s => ({
         id: s.id,
+        shortId: s._shortId,
+        category: s._category,
+        displayName: s.display_name,
         type: s.type || 'example',
-        name: `PostHog integration for ${s.display_name}`,
+        group: s._group,
+        name: s.description,
         description: s.description,
         tags: s.tags || [],
     }));
@@ -529,6 +632,7 @@ module.exports = {
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
+    expandSkillGroups,
     collectCommandments,
     discoverWorkflows,
     generateSkill,

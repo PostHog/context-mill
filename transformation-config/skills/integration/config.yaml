@@ -1,68 +1,53 @@
-# Skills Configuration
-# Defines what gets bundled into each skill package
-
-# Docs included in ALL skills
+# Integration skills - example-based (code + docs)
+type: example
+template: description.md
+description: PostHog integration for {display_name} applications
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-
-skills:
-  # Example-based skills (code + docs)
+variants:
   - id: nextjs-app-router
-    type: example
     example_path: basics/next-app-router
     display_name: Next.js App Router
-    description: PostHog integration for Next.js App Router applications
     tags: [nextjs, react, ssr, app-router, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
   - id: nextjs-pages-router
-    type: example
     example_path: basics/next-pages-router
     display_name: Next.js Pages Router
-    description: PostHog integration for Next.js Pages Router applications
     tags: [nextjs, react, ssr, pages-router, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
   - id: react-react-router-6
-    type: example
     example_path: basics/react-react-router-6
     display_name: React Router v6
-    description: PostHog integration for React Router v6 applications
     tags: [react, react-router, v6, spa, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v6.md
 
   - id: react-react-router-7-framework
-    type: example
     example_path: basics/react-react-router-7-framework
     display_name: React Router v7 - Framework mode
-    description: PostHog integration for React Router v7 Framework mode applications
     tags: [react, react-router, v7, framework, ssr, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
 
   - id: react-react-router-7-data
-    type: example
     example_path: basics/react-react-router-7-data
     display_name: React Router v7 - Data mode
-    description: PostHog integration for React Router v7 Data mode applications
     tags: [react, react-router, v7, data, spa, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
 
   - id: react-react-router-7-declarative
-    type: example
     example_path: basics/react-react-router-7-declarative
     display_name: React Router v7 - Declarative mode
-    description: PostHog integration for React Router v7 Declarative mode applications
     tags: [react, react-router, v7, declarative, spa, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
 
   - id: nuxt-3.6
-    type: example
     example_path: basics/nuxt-3.6
     display_name: Nuxt 3.6
     description: PostHog integration for Nuxt versions 3.0 to 3.6
@@ -71,7 +56,6 @@ skills:
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
 
   - id: nuxt-4
-    type: example
     example_path: basics/nuxt-4
     display_name: Nuxt 4
     description: PostHog integration for Nuxt 4 applications
@@ -80,7 +64,6 @@ skills:
       - https://posthog.com/docs/libraries/nuxt-js.md
 
   - id: vue-3
-    type: example
     example_path: basics/vue-3
     display_name: Vue 3
     description: PostHog integration for Vue 3 applications
@@ -89,25 +72,20 @@ skills:
       - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
-    type: example
     example_path: basics/django
     display_name: Django
-    description: PostHog integration for Django applications
     tags: [django, python]
     docs_urls:
       - https://posthog.com/docs/libraries/django.md
 
   - id: flask
-    type: example
     example_path: basics/flask
     display_name: Flask
-    description: PostHog integration for Flask applications
     tags: [flask, python]
     docs_urls:
       - https://posthog.com/docs/libraries/flask.md
 
   - id: fastapi
-    type: example
     example_path: basics/fastapi
     display_name: FastAPI
     description: PostHog integration for FastAPI applications
@@ -116,25 +94,22 @@ skills:
       - https://posthog.com/docs/libraries/python.md
 
   - id: react-tanstack-router-file-based
-    type: example
     example_path: basics/react-tanstack-router-file-based
     display_name: React with TanStack Router (file-based)
     description: PostHog integration for React applications using TanStack Router with file-based routing
     tags: [react, tanstack-router, spa, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/tanstack-router.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: react-tanstack-router-code-based
-    type: example
     example_path: basics/react-tanstack-router-code-based
     display_name: React with TanStack Router (code-based)
     description: PostHog integration for React applications using TanStack Router with code-based routing
     tags: [react, tanstack-router, spa, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/tanstack-router.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: tanstack-start
-    type: example
     example_path: basics/tanstack-start
     display_name: TanStack Start
     description: PostHog integration for TanStack Start full-stack applications
@@ -143,10 +118,8 @@ skills:
       - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: laravel
-    type: example
     example_path: basics/laravel
     display_name: Laravel
-    description: PostHog integration for Laravel applications
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
@@ -161,7 +134,6 @@ skills:
       - https://posthog.com/docs/libraries/android.md
       
   - id: sveltekit
-    type: example
     example_path: basics/sveltekit
     display_name: SvelteKit
     description: PostHog integration for SvelteKit applications
@@ -171,7 +143,6 @@ skills:
 
   # Language fallback skills, used when no specific framework is detected
   - id: python
-    type: example
     example_path: basics/python
     display_name: Python
     description: PostHog integration for any Python application using the Python SDK
@@ -181,7 +152,6 @@ skills:
       - https://posthog.com/docs/references/posthog-python.md
 
   - id: swift
-    type: example
     example_path: basics/swift
     display_name: Swift (iOS/macOS)
     description: PostHog integration for Swift iOS and macOS applications
@@ -190,7 +160,6 @@ skills:
       - https://posthog.com/docs/libraries/ios.md
   
   - id: react-native
-    type: example
     example_path: basics/react-native
     display_name: React Native
     description: PostHog integration for React Native applications
@@ -199,7 +168,6 @@ skills:
       - https://posthog.com/docs/libraries/react-native.md
 
   - id: expo
-    type: example
     example_path: basics/expo
     display_name: Expo
     description: PostHog integration for Expo applications
@@ -208,7 +176,6 @@ skills:
       - https://posthog.com/docs/libraries/react-native.md
 
   - id: astro-static
-    type: example
     example_path: basics/astro-static
     display_name: Astro (Static)
     description: PostHog integration for static Astro sites using SSG
@@ -217,7 +184,6 @@ skills:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-view-transitions
-    type: example
     example_path: basics/astro-view-transitions
     display_name: Astro (View Transitions)
     description: PostHog integration for Astro with ClientRouter view transitions
@@ -226,7 +192,6 @@ skills:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-ssr
-    type: example
     example_path: basics/astro-ssr
     display_name: Astro (SSR)
     description: PostHog integration for server-rendered Astro applications with API routes
@@ -235,7 +200,6 @@ skills:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-hybrid
-    type: example
     example_path: basics/astro-hybrid
     display_name: Astro (Hybrid)
     description: PostHog integration for Astro hybrid rendering with both static and server-rendered pages
@@ -244,7 +208,6 @@ skills:
       - https://posthog.com/docs/libraries/astro.md
     
   - id: angular
-    type: example
     example_path: basics/angular
     display_name: Angular
     description: PostHog integration for Angular applications

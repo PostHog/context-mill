@@ -4,9 +4,33 @@
 
 commandments:
   react:
-    - Never use useEffect() for analytics capture - it's brittle and causes errors
-    - Prefer event handlers or routing mechanisms to trigger analytics calls
-    - Add handlers where user actions occur rather than reacting to state changes
+    # PostHog-specific
+    - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
+    - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes
+    # General React patterns (react.dev/learn/you-might-not-need-an-effect)
+    - Do NOT use useEffect for data transformation - calculate derived values during render instead
+    - Do NOT use useEffect to respond to user events - put that logic in the event handler itself
+    - Do NOT use useEffect to chain state updates - calculate all related updates together in the event handler
+    - Do NOT use useEffect to notify parent components - call the parent callback alongside setState in the event handler
+    - To reset component state when a prop changes, pass the prop as the component's key instead of using useEffect
+    - useEffect is ONLY for synchronizing with external systems (non-React widgets, browser APIs, network subscriptions)
+
+  nextjs:
+    # Initialization
+    - For Next.js 15.3+, initialize PostHog in instrumentation-client.ts for the simplest setup
+
+  nextjs-feature-flags:
+    # Client-side feature flags
+    - The PostHog React hooks (useFeatureFlagEnabled, useFeatureFlagPayload) work WITHOUT PostHogProvider if posthog-js is already initialized (e.g., via instrumentation-client.ts)
+    - In client components, import and use hooks directly - the React context defaults to the posthog-js singleton
+    - Do NOT wrap components in PostHogProvider just for feature flags - it's unnecessary if posthog-js is initialized globally
+    # Server-side feature flags
+    - Server Components and Route Handlers cannot use React hooks - use posthog-node SDK instead
+    - Create a server-side PostHog client with posthog-node, call getAllFlags() or getFeatureFlag(), then await posthog.shutdown()
+    - Pass flag values from server to client components as props to avoid hydration mismatches
+    # Avoiding flicker
+    - For flags that affect initial render, evaluate server-side and pass as props to prevent UI flicker
+    - Client-side hooks may return undefined initially while flags load - handle this loading state
 
   javascript:
     - Remember that source code is available in the node_modules directory
@@ -59,6 +83,27 @@ commandments:
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
 
+  hogql:
+    # Property access
+    - Use properties.$name syntax for event properties, person.properties.$name for person properties
+    - Use bracket notation for special characters like properties['$feature/cool-flag']
+    - For cohorts, filter with person_id IN COHORT 'cohort-name'
+    - For actions, use matchesAction('action-name') in WHERE clauses
+    # Variables and filters
+    - Include {filters} placeholder in WHERE clauses to enable UI-based filtering in dashboards
+    - Use {variables.name} for reusable SQL variables across dashboards
+    - Access dashboard date range with {filters.dateRange.from} and {filters.dateRange.to}
+    # Performance optimization
+    - ALWAYS include a time range filter - shorter is faster (e.g., timestamp >= now() - INTERVAL 7 DAY)
+    - Prefer uniq() over count(distinct) for counting unique values - it's more efficient
+    - Don't scan the same table multiple times - use materialized views for reusable subsets
+    - Use timestamp-based pagination instead of OFFSET for large datasets
+    - Name queries descriptively for easier debugging in query_log
+    # Functions
+    - Use dateTrunc() for time-based grouping (e.g., dateTrunc('day', timestamp))
+    - For funnel queries, use windowFunnel() or sequenceMatch() functions
+    - Test queries in the PostHog SQL editor before using them in insights or the API
+
   sveltekit:
     - Set paths.relative to false in svelte.config.js — this is required for PostHog session replay to work correctly with SSR and is easy to miss
     - Use the Svelte MCP server tools to check Svelte documentation (list-sections, get-documentation) and validate components (svelte-autofixer) — always run svelte-autofixer on new or modified .svelte files before finishing
@@ -68,12 +113,12 @@ commandments:
     - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
     - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
-  
+
   react-native:
     - posthog-react-native is the React Native SDK package name
     - Use react-native-config to load POSTHOG_API_KEY and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
     - Place PostHogProvider INSIDE NavigationContainer for React Navigation v7 compatibility
-    
+
   expo:
     - posthog-react-native is the React Native SDK package name (same as bare RN)
     - Use expo-constants with app.config.js extras for POSTHOG_API_KEY and POSTHOG_HOST (NOT react-native-config)
@@ -102,7 +147,7 @@ commandments:
     - In Astro 5, use output static (the default) with an adapter - pages are prerendered by default
     - Use export const prerender = false to opt specific pages into SSR when they need server-side rendering
     - Only pages that need server-side PostHog tracking (like API-backed forms) should opt out of prerendering
-  
+
   angular:
     - Use inject() instead of constructor injection. PostHog service should be injected via inject() in components/services that need it.
     - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
