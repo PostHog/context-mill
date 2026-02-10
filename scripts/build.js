@@ -96,9 +96,12 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
     const skillPattern = uriSchema.patterns.skill;
     const docPattern = uriSchema.patterns.doc;
     // Base URL for skill ZIP downloads
-    // Production: GitHub releases (default)
-    // Development: Local server (set via SKILLS_BASE_URL env var)
-    const baseDownloadUrl = process.env.SKILLS_BASE_URL || `${REPO_URL}/releases/latest/download`;
+    // Production: GitHub releases pinned to the build version
+    // Development: Local server (set via SKILLS_BASE_URL env var), or latest release
+    const baseDownloadUrl = process.env.SKILLS_BASE_URL
+        || (version && version !== 'dev'
+            ? `${REPO_URL}/releases/download/v${version}`
+            : `${REPO_URL}/releases/latest/download`);
 
     return {
         version: uriSchema.manifest_version,
