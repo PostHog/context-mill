@@ -254,13 +254,25 @@ function collectCommandments(tags, commandmentsConfig) {
 }
 
 /**
+ * Coerce a commandment rule to a string.
+ * YAML parses unquoted "key: value" lines as objects — rejoin them.
+ */
+function ruleToString(rule) {
+    if (typeof rule === 'string') return rule;
+    if (typeof rule === 'object' && rule !== null) {
+        return Object.entries(rule).map(([k, v]) => `${k}: ${v}`).join(', ');
+    }
+    return String(rule);
+}
+
+/**
  * Format commandments as markdown bullet list
  */
 function formatCommandments(rules) {
     if (rules.length === 0) {
         return '_No specific framework guidelines._';
     }
-    return rules.map(rule => `- ${rule}`).join('\n');
+    return rules.map(rule => `- ${ruleToString(rule)}`).join('\n');
 }
 
 /**
