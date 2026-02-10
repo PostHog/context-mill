@@ -55,6 +55,7 @@ global:
     - node_modules
     - .git
     - .next
+    - dist
     - playwright-report
     - test-results
     - coverage
@@ -62,6 +63,25 @@ global:
     - .gitignore
     - eslint
     - repomix-output.xml
+    
+    # React Native / Expo
+    - .expo
+    - .expo-shared
+    - android/build
+    - android/.gradle
+    - android/.cxx
+    - android/app/build
+    - android/local.properties
+    - ios/build
+    - ios/Pods
+    - ios/DerivedData
+    - ios/*.xcworkspace
+    - ios/*.xcodeproj/xcuserdata
+    - .gradle
+    - build
+    - .metro-health-check
+    - .watchmanconfig
+    - .bundle
 
     # Python
     - venv
@@ -86,6 +106,13 @@ global:
     - instance
     - .db
 
+    # Xcode / Swift
+    - xcuserdata
+    - DerivedData
+    - .build
+    - .swiftpm
+    - .pbxproj
+
     # PHP General
     - vendor
     - .phpunit.result.cache
@@ -95,6 +122,9 @@ global:
     - phpstan.neon
     - psalm.xml
     - .psalm
+
+    # Angular
+    - .angular/
 
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
@@ -121,3 +151,17 @@ examples:
       - public/storage
       - public/build
       - .env.backup
+  
+  react-native:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock
+  
+  expo:
+    includes:
+      - android
+      - ios
+      - .bundle
+      - Gemfile.lock

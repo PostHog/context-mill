@@ -24,8 +24,8 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_POSTHOG_KEY=your_posthog_project_api_key
-VITE_POSTHOG_HOST=https://us.i.posthog.com
+VITE_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
@@ -46,18 +46,18 @@ src/
 │   └── Header.tsx           # Navigation header with auth state
 ├── contexts/
 │   └── AuthContext.tsx      # Authentication context with PostHog integration
-├── lib/
-│   ├── posthog-client.ts    # Client-side PostHog initialization
-│   └── posthog-server.ts    # Server-side PostHog client
+├── utils/
+│   └── posthog-server.ts   # Server-side PostHog client
 ├── routes/
-│   ├── __root.tsx           # Root route with AuthProvider
+│   ├── __root.tsx           # Root route with PostHogProvider
 │   ├── index.tsx            # Home/login page
 │   ├── burrito.tsx          # Demo feature page with event tracking
 │   ├── profile.tsx          # User profile with error tracking demo
-│   ├── api/
-│   │   └── auth/
-│   │       └── login.ts     # Login API with server-side tracking
-│   └── _demo/               # TanStack Start demo examples
+│   └── api/
+│       ├── auth/
+│       │   └── login.ts     # Login API with server-side tracking
+│       └── burrito/
+│           └── consider.ts  # Burrito API with server-side tracking
 └── styles.css               # Global styles
 
 vite.config.ts               # Vite config with PostHog proxy
@@ -66,32 +66,28 @@ vite.config.ts               # Vite config with PostHog proxy
 
 ## Key integration points
 
-### Client-side initialization
+### Client-side initialization (routes/__root.tsx)
 
-PostHog is initialized on the client side in `lib/posthog-client.ts`:
+PostHog is initialized using `PostHogProvider` from `@posthog/react`. The provider wraps the entire app in the root shell component and handles calling `posthog.init()` automatically:
 
 ```typescript
-import posthog from 'posthog-js'
+import { PostHogProvider } from '@posthog/react'
 
-export function initPostHog() {
-  if (typeof window !== 'undefined') {
-    posthog.init(import.meta.env.VITE_POSTHOG_KEY!, {
-      api_host: '/ingest',
-      ui_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.posthog.com',
-      defaults: '2025-11-30',
-      capture_exceptions: true,
-      debug: import.meta.env.DEV,
-      loaded: (posthog) => {
-        if (import.meta.env.DEV) posthog.debug()
-      },
-    })
-  }
-}
+<PostHogProvider
+  apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY!}
+  options={{
+    api_host: '/ingest',
+    ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
+    defaults: '2025-05-24',
+    capture_exceptions: true,
+    debug: import.meta.env.DEV,
+  }}
+>
+  {children}
+</PostHogProvider>
 ```
 
-The initialization happens in the root route's `useEffect` hook to ensure it runs only in the browser.
-
-### Server-side setup
+### Server-side setup (utils/posthog-server.ts)
 
 For server-side tracking, we use the `posthog-node` SDK with a singleton pattern:
 
@@ -101,11 +97,11 @@ import { PostHog } from 'posthog-node'
 export function getPostHogClient() {
   if (!posthogClient) {
     posthogClient = new PostHog(
-      process.env.VITE_POSTHOG_KEY || import.meta.env.VITE_POSTHOG_KEY!,
+      process.env.VITE_PUBLIC_POSTHOG_KEY || import.meta.env.VITE_PUBLIC_POSTHOG_KEY!,
       {
-        host: process.env.VITE_POSTHOG_HOST || import.meta.env.VITE_POSTHOG_HOST,
-        flushAt: 1,        // Send immediately
-        flushInterval: 0   // No batching delay
+        host: process.env.VITE_PUBLIC_POSTHOG_HOST || import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+        flushAt: 1,
+        flushInterval: 0,
       }
     )
   }
@@ -114,6 +110,40 @@ export function getPostHogClient() {
 ```
 
 This client is used in API routes to track server-side events.
+
+### Server-side capture (routes/api/*)
+
+Server-side events include the client's `$session_id` so they appear in the same session in PostHog. The frontend sends it via a header:
+
+```typescript
+// Frontend: include session ID in API requests
+await fetch('/api/burrito/consider', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
+  },
+  body: JSON.stringify({ ... }),
+})
+```
+
+```typescript
+// Server: read session ID from header and include in capture
+import { getPostHogClient } from '../../utils/posthog-server'
+
+const sessionId = request.headers.get('X-PostHog-Session-Id')
+
+const posthog = getPostHogClient()
+posthog.capture({
+  distinctId: username,
+  event: 'burrito_considered',
+  properties: {
+    $session_id: sessionId || undefined,
+    username: username,
+    source: 'api',
+  },
+})
+```
 
 ### Reverse proxy configuration
 
@@ -132,42 +162,34 @@ server: {
 }
 ```
 
-This setup:
-- Avoids CORS issues
-- Bypasses ad blockers that might block PostHog
-- Improves data collection reliability
-- Keeps all requests on the same domain
-
-### Authentication flow
-
-1. User enters credentials on home page (`/`)
-2. Form submits to `/api/auth/login` API route
-3. Server captures `server_login` event with PostHog
-4. Client identifies user and captures `user_logged_in` event
-5. User is redirected to authenticated pages
-
-### User identification
+### User identification (contexts/AuthContext.tsx)
 
 ```typescript
-// User identification on login
+import { usePostHog } from '@posthog/react'
+
+const posthog = usePostHog()
+
 posthog.identify(username, {
   username: username,
 })
 ```
 
-### Event tracking
+### Event tracking (routes/burrito.tsx)
 
 ```typescript
-// Custom event tracking
+import { usePostHog } from '@posthog/react'
+
+const posthog = usePostHog()
+
 posthog.capture('burrito_considered', {
   total_considerations: user.burritoConsiderations + 1,
   username: user.username,
 })
 ```
 
-### Error tracking
+### Error tracking (routes/profile.tsx)
+
 ```typescript
-// Error tracking
 posthog.captureException(error)
 ```
 

@@ -1,0 +1,125 @@
+---
+// Header component with navigation and logout functionality
+// Works with View Transitions by using data-astro-reload for logout
+---
+<header class="header">
+  <div class="header-container">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/burrito" class="auth-link" style="display: none;">Burrito Consideration</a>
+      <a href="/profile" class="auth-link" style="display: none;">Profile</a>
+    </nav>
+    <div class="user-section">
+      <span class="welcome-text" style="display: none;">Welcome, <span class="username"></span>!</span>
+      <span class="not-logged-in">Not logged in</span>
+      <button class="btn-logout" style="display: none;">Logout</button>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  function updateHeader() {
+    const currentUser = localStorage.getItem('currentUser');
+    const authLinks = document.querySelectorAll('.auth-link');
+    const welcomeText = document.querySelector('.welcome-text');
+    const notLoggedIn = document.querySelector('.not-logged-in');
+    const logoutBtn = document.querySelector('.btn-logout');
+    const usernameSpan = document.querySelector('.username');
+
+    if (currentUser) {
+      authLinks.forEach(link => link.style.display = 'inline');
+      welcomeText.style.display = 'inline';
+      notLoggedIn.style.display = 'none';
+      logoutBtn.style.display = 'inline';
+      usernameSpan.textContent = currentUser;
+    } else {
+      authLinks.forEach(link => link.style.display = 'none');
+      welcomeText.style.display = 'none';
+      notLoggedIn.style.display = 'inline';
+      logoutBtn.style.display = 'none';
+    }
+  }
+
+  function handleLogout() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      window.posthog?.capture('user_logged_out');
+    }
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('burritoConsiderations');
+    // IMPORTANT: Reset the PostHog instance to clear the user session
+    window.posthog?.reset();
+    window.location.href = '/';
+  }
+
+  function setupHeader() {
+    updateHeader();
+    const logoutBtn = document.querySelector('.btn-logout');
+    // Remove existing listeners to prevent duplicates during view transitions
+    logoutBtn?.removeEventListener('click', handleLogout);
+    logoutBtn?.addEventListener('click', handleLogout);
+  }
+
+  // Run on initial page load
+  document.addEventListener('DOMContentLoaded', setupHeader);
+
+  // Run after view transitions complete (for soft navigation)
+  document.addEventListener('astro:page-load', setupHeader);
+
+  // Listen for storage changes (login/logout in other tabs)
+  window.addEventListener('storage', updateHeader);
+</script>
+
+<style>
+  .header {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+  }
+
+  .header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header nav {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .header a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .header a:hover {
+    background-color: #555;
+    text-decoration: none;
+  }
+
+  .user-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn-logout {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .btn-logout:hover {
+    background-color: #c82333;
+  }
+</style>
