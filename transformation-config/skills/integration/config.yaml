@@ -151,11 +151,11 @@ variants:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
 
-  - id: javascript
-    example_path: basics/javascript
-    display_name: JavaScript
-    description: PostHog integration for any browser JavaScript application using posthog-js
-    tags: [javascript]
+  - id: javascript_web
+    example_path: basics/javascript-web
+    display_name: JavaScript Web
+    description: PostHog integration for client-side web JavaScript applications using posthog-js
+    tags: [javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
