@@ -32,10 +32,12 @@ commandments:
     - For flags that affect initial render, evaluate server-side and pass as props to prevent UI flicker
     - Client-side hooks may return undefined initially while flags load - handle this loading state
 
-  javascript:
+  javascript_web:
     - Remember that source code is available in the node_modules directory
     - Check package.json for type checking or build scripts to validate changes
     - posthog-js is the JavaScript SDK package name
+    - posthog.init() MUST be called before any other PostHog methods (capture, identify, etc.)
+    - posthog-js is browser-only — do NOT import it in Node.js or server-side contexts (use posthog-node instead)
 
   python:
     - Remember that source code is available in the venv/site-packages directory
