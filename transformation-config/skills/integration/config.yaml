@@ -151,6 +151,15 @@ variants:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
 
+  - id: javascript
+    example_path: basics/javascript
+    display_name: JavaScript
+    description: PostHog integration for any browser JavaScript application using posthog-js
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/references/posthog-js.md
+
   - id: swift
     example_path: basics/swift
     display_name: Swift (iOS/macOS)
