@@ -18,6 +18,7 @@ commandments:
   nextjs:
     # Initialization
     - For Next.js 15.3+, initialize PostHog in instrumentation-client.ts for the simplest setup
+    - PostHogProvider is no longer needed for Next.js 15.3+ - use the global posthog-js singleton instead by importing posthog from 'posthog-js'. Hooks that would normally require PostHogProvider will now work without it, simply by importing and using the hooks directly.
 
   nextjs-feature-flags:
     # Client-side feature flags
