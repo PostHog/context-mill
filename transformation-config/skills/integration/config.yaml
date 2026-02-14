@@ -124,6 +124,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: ruby-on-rails
+    example_path: basics/ruby-on-rails
+    display_name: Ruby on Rails
+    tags: [ruby-on-rails, ruby]
+    docs_urls:
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby.md
+
   - id: android
     type: example
     example_path: basics/android
@@ -150,6 +158,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+
+  - id: ruby
+    example_path: basics/ruby
+    display_name: Ruby
+    description: PostHog integration for any Ruby application using the Ruby SDK
+    tags: [ruby]
+    docs_urls:
+      - https://posthog.com/docs/libraries/ruby.md
 
   - id: swift
     example_path: basics/swift
