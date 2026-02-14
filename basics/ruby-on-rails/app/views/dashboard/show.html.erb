@@ -1,0 +1,80 @@
+<% content_for(:title) { 'Dashboard - PostHog Rails example' } %>
+
+<div class="card">
+    <h1>Dashboard</h1>
+    <p>Welcome back, <strong><%= current_user.email %></strong>!</p>
+</div>
+
+<div class="card">
+    <h2>Feature flags</h2>
+    <p>Feature flags allow you to control feature rollouts and run A/B tests.</p>
+
+    <% if @show_new_feature %>
+    <div class="feature-flag">
+        <h3>New feature enabled!</h3>
+        <p>
+            This section is only visible because the <code>new-dashboard-feature</code>
+            flag is enabled for your user.
+        </p>
+        <% if @feature_config %>
+        <p><strong>Feature config:</strong> <%= @feature_config %></p>
+        <% end %>
+    </div>
+    <% else %>
+    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-top: 15px;">
+        <p>
+            The <code>new-dashboard-feature</code> flag is not enabled for your user.
+            Create this flag in your PostHog project to see it in action.
+        </p>
+    </div>
+    <% end %>
+</div>
+
+<div class="card">
+    <h2>ActiveJob instrumentation</h2>
+    <p>
+        Click below to enqueue a background job that will fail.
+        <code>posthog-rails</code> automatically captures the exception — no extra code needed.
+    </p>
+    <button onclick="enqueueTestJob()" style="margin-top: 10px;">Enqueue failing job</button>
+    <div id="job-result" style="margin-top: 15px; display: none;"></div>
+</div>
+
+<div class="card">
+    <h3>How feature flags work</h3>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># Check if a feature flag is enabled
+show_feature = PostHog.is_feature_enabled(
+  'new-dashboard-feature',
+  user.posthog_distinct_id,
+  person_properties: user.posthog_properties
+)
+
+# Get feature flag payload for configuration
+config = PostHog.get_feature_flag_payload(
+  'new-dashboard-feature',
+  user.posthog_distinct_id
+)</code></pre>
+</div>
+
+<% content_for :scripts do %>
+<script>
+async function enqueueTestJob() {
+    const resultDiv = document.getElementById('job-result');
+    try {
+        const response = await fetch('/api/test-job', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+            },
+        });
+        const data = await response.json();
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="flash success">' + data.message + '</div>';
+    } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="flash error">Request failed: ' + error + '</div>';
+    }
+}
+</script>
+<% end %>
