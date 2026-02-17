@@ -15,7 +15,7 @@ This example serves as:
 - **Exception autocapture** - Automatic tracking of unhandled exceptions
 - **Proper shutdown** - Uses `shutdown()` to flush events before exit
 - **Event tracking** - Captures user actions with `distinct_id` and properties
-- **User identification** - Associates properties with users via `identify()`
+- **User identification** - Associates properties with users via `set()`
 - **Error handling** - Manual exception capture for handled errors
 
 ## Quick Start
@@ -123,8 +123,8 @@ finally:
 ### 4. Identifying Users
 
 ```python
-# Identify users (optional - adds user properties)
-posthog_client.identify(
+# Set person properties on a user profile
+posthog_client.set(
     distinct_id="user_123",
     properties={"email": "user@example.com", "plan": "pro"}
 )
