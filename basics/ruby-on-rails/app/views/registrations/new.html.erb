@@ -1,0 +1,18 @@
+<% content_for(:title) { 'Sign Up - PostHog Rails example' } %>
+
+<div class="card">
+    <h1>Sign Up</h1>
+    <p>Create an account to see PostHog analytics in action.</p>
+
+    <form action="<%= signup_path %>" method="post" style="margin-top: 20px;">
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="password_confirmation" placeholder="Confirm Password" required>
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <p style="margin-top: 15px; color: #666; font-size: 14px;">
+        Already have an account? <a href="<%= login_path %>">Login</a>
+    </p>
+</div>
