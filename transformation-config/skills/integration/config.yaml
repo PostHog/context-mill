@@ -159,7 +159,6 @@ variants:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
 
-<<<<<<< js-skill
   - id: javascript_web
     example_path: basics/javascript-web
     display_name: JavaScript Web
@@ -168,7 +167,7 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
-=======
+
   - id: ruby
     example_path: basics/ruby
     display_name: Ruby
@@ -176,7 +175,6 @@ variants:
     tags: [ruby]
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
->>>>>>> main
 
   - id: swift
     example_path: basics/swift
