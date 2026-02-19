@@ -4,6 +4,8 @@ template: description.md
 category: logs
 description: Set up PostHog log capture for any platform
 tags: [logs]
+metadata:
+  consumer: agent
 shared_docs:
   - https://posthog.com/docs/logs/start-here.md
   - https://posthog.com/docs/logs/search.md

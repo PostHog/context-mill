@@ -117,6 +117,7 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
                 name: skill.name,
                 description: skill.description,
                 tags: skill.tags,
+                ...(skill.metadata ? { metadata: skill.metadata } : {}),
                 uri,
             };
 

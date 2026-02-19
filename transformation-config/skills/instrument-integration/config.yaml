@@ -4,6 +4,8 @@ template: description.md
 category: integration
 description: Integrate PostHog analytics into any application
 tags: []
+metadata:
+  consumer: agent
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:

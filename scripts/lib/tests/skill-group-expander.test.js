@@ -124,4 +124,63 @@ describe('expandSkillGroups', () => {
         // id still uses composite key, not category
         expect(skills[0].id).toBe('feature-flags-installation-react');
     });
+
+    it('passes group-level metadata through to _metadata', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                metadata: { consumer: 'agent' },
+                variants: [{ id: 'all', display_name: 'all frameworks' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._metadata).toEqual({ consumer: 'agent' });
+    });
+
+    it('merges variant-level metadata over group-level metadata', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                metadata: { consumer: 'agent', author: 'base' },
+                variants: [{ id: 'all', display_name: 'all', metadata: { author: 'override' } }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._metadata).toEqual({ consumer: 'agent', author: 'override' });
+    });
+
+    it('defaults _metadata to empty object when not specified', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'django', display_name: 'Django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._metadata).toEqual({});
+    });
 });

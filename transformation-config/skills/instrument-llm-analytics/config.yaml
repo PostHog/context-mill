@@ -4,6 +4,8 @@ template: description.md
 category: llm-analytics
 description: Add PostHog LLM analytics to any AI application
 tags: [llm-analytics]
+metadata:
+  consumer: agent
 shared_docs:
   - https://posthog.com/docs/llm-analytics/basics.md
   - https://posthog.com/docs/llm-analytics/traces.md

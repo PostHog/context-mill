@@ -4,6 +4,8 @@ template: description.md
 category: feature-flags
 description: Instrument PostHog feature flags across any platform
 tags: [feature-flags]
+metadata:
+  consumer: agent
 shared_docs:
   - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
   - https://posthog.com/docs/feature-flags/best-practices.md
