@@ -15,7 +15,7 @@ This example serves as:
 - **Exception autocapture** - Automatic tracking of unhandled exceptions
 - **Proper shutdown** - Uses `shutdown()` to flush events before exit
 - **Event tracking** - Captures user actions with `distinct_id` and properties
-- **User identification** - Associates properties with users via `set()`
+- **User identification** - Sets properties on users via `identify()`, and updates them later with `set()` and `setOnce()`
 - **Error handling** - Manual exception capture for handled errors
 
 ## Quick Start
