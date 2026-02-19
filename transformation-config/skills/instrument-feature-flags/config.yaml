@@ -1,0 +1,31 @@
+# Aggregated feature flag skill - all platforms in one skill
+type: docs-only
+template: description.md
+category: feature-flags
+description: Instrument PostHog feature flags across any platform
+tags: [feature-flags]
+shared_docs:
+  - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
+  - https://posthog.com/docs/feature-flags/best-practices.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/react.md
+      - https://posthog.com/docs/feature-flags/installation/react-native.md
+      - https://posthog.com/docs/feature-flags/installation/web.md
+      - https://posthog.com/docs/feature-flags/installation/nodejs.md
+      - https://posthog.com/docs/feature-flags/installation/python.md
+      - https://posthog.com/docs/feature-flags/installation/php.md
+      - https://posthog.com/docs/feature-flags/installation/ruby.md
+      - https://posthog.com/docs/feature-flags/installation/go.md
+      - https://posthog.com/docs/feature-flags/installation/java.md
+      - https://posthog.com/docs/feature-flags/installation/rust.md
+      - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/feature-flags/installation/elixir.md
+      - https://posthog.com/docs/feature-flags/installation/android.md
+      - https://posthog.com/docs/feature-flags/installation/ios.md
+      - https://posthog.com/docs/feature-flags/installation/flutter.md
+      - https://posthog.com/docs/feature-flags/installation/api.md
+      - https://posthog.com/docs/libraries/next-js.md
