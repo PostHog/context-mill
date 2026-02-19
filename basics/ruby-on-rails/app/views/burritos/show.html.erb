@@ -1,0 +1,48 @@
+<% content_for(:title) { 'Burrito - PostHog Rails example' } %>
+
+<div class="card">
+    <h1>Burrito consideration tracker</h1>
+    <p>This page demonstrates custom event tracking with PostHog.</p>
+</div>
+
+<div class="card" style="text-align: center;">
+    <h2>Times considered</h2>
+    <div class="count" id="burrito-count"><%= @burrito_count %></div>
+    <button onclick="considerBurrito()" style="font-size: 18px; padding: 15px 30px;">
+        Consider a burrito
+    </button>
+</div>
+
+<div class="card">
+    <h3>How event tracking works</h3>
+    <p>Each time you click the button, a <code>burrito_considered</code> event is sent to PostHog:</p>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; margin-top: 15px;"><code>PostHog.capture(
+  distinct_id: user.posthog_distinct_id,
+  event: 'burrito_considered',
+  properties: { total_considerations: count }
+)</code></pre>
+</div>
+
+<% content_for :scripts do %>
+<script>
+async function considerBurrito() {
+    try {
+        const response = await fetch('/api/burrito/consider', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('burrito-count').textContent = data.count;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+</script>
+<% end %>

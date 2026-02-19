@@ -1,0 +1,95 @@
+<% content_for(:title) { 'Profile - PostHog Rails example' } %>
+
+<div class="card">
+    <h1>Profile</h1>
+    <p>This page demonstrates error tracking with PostHog and <code>posthog-rails</code>.</p>
+</div>
+
+<div class="card">
+    <h2>User information</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><%= current_user.email %></td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Date Joined:</strong></td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;"><%= current_user.created_at %></td>
+        </tr>
+        <tr>
+            <td style="padding: 10px;"><strong>Staff Status:</strong></td>
+            <td style="padding: 10px;"><%= current_user.is_staff ? 'Yes' : 'No' %></td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Error tracking demo</h2>
+    <p>Click the buttons below to trigger different types of errors and see how PostHog captures them.</p>
+
+    <div style="margin-top: 20px;">
+        <button class="danger" onclick="triggerError('manual')">
+            Manual capture_exception
+        </button>
+        <button class="danger" onclick="triggerError('rails')" style="margin-left: 10px;">
+            Rails.error.handle
+        </button>
+    </div>
+
+    <div id="error-result" style="margin-top: 20px; display: none;"></div>
+</div>
+
+<div class="card">
+    <h3>How error tracking works</h3>
+    <p><strong>Auto-capture (no code needed):</strong></p>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># config/initializers/posthog.rb
+PostHog::Rails.configure do |config|
+  config.auto_capture_exceptions = true
+  config.capture_user_context = true
+end
+# That's it! Unhandled exceptions are captured automatically.</code></pre>
+
+    <p style="margin-top: 15px;"><strong>Manual capture:</strong></p>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>begin
+  risky_operation
+rescue => e
+  PostHog.capture_exception(e, user.posthog_distinct_id)
+end</code></pre>
+
+    <p style="margin-top: 15px;"><strong>Rails.error integration:</strong></p>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># posthog-rails subscribes to Rails.error automatically
+Rails.error.handle(context: { user_id: user.id }) do
+  risky_operation
+end</code></pre>
+</div>
+
+<% content_for :scripts do %>
+<script>
+async function triggerError(type) {
+    const resultDiv = document.getElementById('error-result');
+    const url = type === 'rails' ? '/api/test-rails-error' : '/api/test-error';
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        resultDiv.style.display = 'block';
+        if (data.success) {
+            resultDiv.innerHTML = '<div class="flash success">' + data.message + '</div>';
+        } else {
+            resultDiv.innerHTML = '<div class="flash error"><strong>Error captured:</strong> ' + data.error + '<br><small>' + data.message + '</small></div>';
+        }
+    } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="flash error">Request failed: ' + error + '</div>';
+    }
+}
+</script>
+<% end %>
