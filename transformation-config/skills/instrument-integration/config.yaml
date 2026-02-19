@@ -12,6 +12,41 @@ variants:
   - id: all
     display_name: all supported frameworks
     tags: []
+    example_paths:
+      # JavaScript / Frontend
+      - basics/next-app-router
+      - basics/next-pages-router
+      - basics/react-react-router-6
+      - basics/react-react-router-7-framework
+      - basics/react-react-router-7-data
+      - basics/react-react-router-7-declarative
+      - basics/nuxt-3.6
+      - basics/nuxt-4
+      - basics/vue-3
+      - basics/react-tanstack-router-file-based
+      - basics/react-tanstack-router-code-based
+      - basics/tanstack-start
+      - basics/sveltekit
+      - basics/astro-static
+      - basics/astro-view-transitions
+      - basics/astro-ssr
+      - basics/astro-hybrid
+      - basics/angular
+      # Python
+      - basics/django
+      - basics/flask
+      - basics/fastapi
+      - basics/python
+      # PHP
+      - basics/laravel
+      # Ruby
+      - basics/ruby-on-rails
+      - basics/ruby
+      # Mobile
+      - basics/android
+      - basics/swift
+      - basics/react-native
+      - basics/expo
     docs_urls:
       # JavaScript / Frontend
       - https://posthog.com/docs/libraries/next-js.md

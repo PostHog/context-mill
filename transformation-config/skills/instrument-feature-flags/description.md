@@ -47,7 +47,3 @@ Each platform reference contains SDK-specific installation, flag evaluation, and
 - **Minimal changes**: Add feature flag code alongside existing logic. Don't replace or restructure existing code.
 - **Boolean flags first**: Default to boolean flag checks unless the user specifically asks for multivariate flags.
 - **Server-side when possible**: Prefer server-side flag evaluation to avoid UI flicker.
-
-## Framework guidelines
-
-{commandments}

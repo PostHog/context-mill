@@ -54,7 +54,3 @@ If the user's provider isn't listed, use `manual-capture.md` as a fallback — i
 - **Trace all generations**: Capture input tokens, output tokens, model name, latency, and costs for every LLM call.
 - **Link to users**: Associate LLM generations with identified users via distinct IDs when possible.
 - **One provider at a time**: Only instrument the provider(s) the user is actually using. Don't add instrumentation for providers not present in the codebase.
-
-## Framework guidelines
-
-{commandments}

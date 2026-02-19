@@ -64,7 +64,3 @@ Each framework reference contains SDK-specific installation, initialization, and
 - **Environment variables**: Always use environment variables for PostHog keys. Never hardcode them.
 - **Minimal changes**: Add PostHog code alongside existing integrations. Don't replace or restructure existing code.
 - **Match the docs**: Follow the framework reference's initialization and capture patterns exactly.
-
-## Framework guidelines
-
-{commandments}

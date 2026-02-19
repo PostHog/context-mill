@@ -165,6 +165,65 @@ describe('expandSkillGroups', () => {
         expect(skills[0]._metadata).toEqual({ consumer: 'agent', author: 'override' });
     });
 
+    it('passes group-level example_paths through to _examplePaths', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: ['basics/django', 'basics/flask'],
+                variants: [{ id: 'all', display_name: 'all frameworks' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+    });
+
+    it('merges variant-level example_paths on top of group-level', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: ['basics/django'],
+                variants: [{ id: 'all', display_name: 'all', example_paths: ['basics/flask'] }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+    });
+
+    it('defaults _examplePaths to empty array when not specified', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'django', display_name: 'Django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual([]);
+    });
+
     it('defaults _metadata to empty object when not specified', () => {
         createFixture({
             skills: {

@@ -94,6 +94,7 @@ function expandSkillGroups(config, configDir) {
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseMetadata = group.metadata || {};
+        const baseExamplePaths = group.example_paths || [];
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -134,6 +135,7 @@ function expandSkillGroups(config, configDir) {
                 description,
                 _template: template,
                 _sharedDocs: sharedDocs,
+                _examplePaths: [...baseExamplePaths, ...(variation.example_paths || [])],
                 _group: key,
                 _metadata: { ...baseMetadata, ...(variation.metadata || {}) },
             });
@@ -502,6 +504,35 @@ async function generateSkill({
     // Fetch and write shared docs
     for (const docEntry of sharedDocs) {
         await processDoc(docEntry, 'shared ');
+    }
+
+    // Process multiple example paths (used by aggregated skills)
+    if (skill._examplePaths && skill._examplePaths.length > 0) {
+        for (const examplePath of skill._examplePaths) {
+            const dirName = path.basename(examplePath);
+            console.log(`  Processing example: ${examplePath}`);
+
+            const exampleMarkdown = processExample({
+                examplePath,
+                displayName: dirName,
+                id: skill.id,
+                repoRoot,
+                skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[dirName]),
+                plugins: defaultPlugins,
+            });
+
+            const filename = `EXAMPLE-${dirName}.md`;
+            fs.writeFileSync(
+                path.join(referencesDir, filename),
+                exampleMarkdown,
+                'utf8'
+            );
+
+            references.push({
+                filename,
+                description: `${dirName} example project code`,
+            });
+        }
     }
 
     // Include relevant workflows (flattened with category prefix, linked to next step)

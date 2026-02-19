@@ -51,7 +51,3 @@ Each platform reference contains specific OTLP configuration, SDK setup, and int
 - **Minimal changes**: Add log export alongside existing logging. Don't replace or restructure existing logging code.
 - **OpenTelemetry**: PostHog logs use the OpenTelemetry protocol. Configure an OTLP exporter pointed at PostHog's ingest endpoint.
 - **Structured logging**: Prefer structured log formats with key-value properties over plain text messages.
-
-## Framework guidelines
-
-{commandments}
