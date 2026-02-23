@@ -37,6 +37,14 @@ commandments:
     - Check package.json for type checking or build scripts to validate changes
     - posthog-js is the JavaScript SDK package name
 
+  javascript_node:
+    - posthog-node is the Node.js server-side SDK package name – do NOT use posthog-js on the server
+    - In long-running servers, the SDK batches events automatically – do NOT set flushAt or flushInterval unless you have a specific reason to
+    - For short-lived processes (scripts, CLIs, serverless), set flushAt to 1 and flushInterval to 0 to send events immediately
+    - Reverse proxy is NOT needed for server-side Node.js – only client-side JavaScript needs a proxy to avoid ad blockers
+    - Remember that source code is available in the node_modules directory
+    - Check package.json for type checking or build scripts to validate changes
+
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name

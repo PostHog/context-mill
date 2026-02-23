@@ -159,6 +159,15 @@ variants:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
 
+  - id: javascript_node
+    example_path: basics/javascript-node
+    display_name: JavaScript Node
+    description: PostHog integration for server-side Node.js applications using posthog-node
+    tags: [javascript_node]
+    docs_urls:
+      - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/references/posthog-node.md
+
   - id: ruby
     example_path: basics/ruby
     display_name: Ruby
