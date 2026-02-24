@@ -77,6 +77,15 @@ function loadSkillTemplate(configDir, compositeKey, templateFile) {
 }
 
 /**
+ * Normalize example_paths to an array.
+ * Accepts undefined, a string, or an array of strings.
+ */
+function normalizeExamplePaths(value) {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+}
+
+/**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
  * base properties and a variants array.
@@ -94,7 +103,7 @@ function expandSkillGroups(config, configDir) {
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseMetadata = group.metadata || {};
-        const baseExamplePaths = group.example_paths || [];
+        const baseExamplePaths = normalizeExamplePaths(group.example_paths);
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -137,7 +146,7 @@ function expandSkillGroups(config, configDir) {
                 description,
                 _template: template,
                 _sharedDocs: sharedDocs,
-                _examplePaths: [...baseExamplePaths, ...(variation.example_paths || [])],
+                _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _group: key,
                 _metadata: { ...baseMetadata, ...(variation.metadata || {}) },
             });
@@ -448,29 +457,34 @@ async function generateSkill({
     // Track reference files for the SKILL.md listing
     const references = [];
 
-    // Process example code if this is an example-based skill
-    if (skill.type === 'example' && skill.example_path) {
-        console.log(`  Processing example: ${skill.example_path}`);
+    // Process example projects
+    if (skill._examplePaths && skill._examplePaths.length > 0) {
+        const isSingle = skill._examplePaths.length === 1;
+        for (const examplePath of skill._examplePaths) {
+            const dirName = path.basename(examplePath);
+            console.log(`  Processing example: ${examplePath}`);
 
-        const exampleMarkdown = processExample({
-            examplePath: skill.example_path,
-            displayName: skill.display_name,
-            id: skill.id,
-            repoRoot,
-            skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[skill.id]),
-            plugins: defaultPlugins,
-        });
+            const exampleMarkdown = processExample({
+                examplePath,
+                displayName: isSingle ? skill.display_name : dirName,
+                id: skill.id,
+                repoRoot,
+                skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[isSingle ? skill.id : dirName]),
+                plugins: defaultPlugins,
+            });
 
-        fs.writeFileSync(
-            path.join(referencesDir, 'EXAMPLE.md'),
-            exampleMarkdown,
-            'utf8'
-        );
+            const filename = isSingle ? 'EXAMPLE.md' : `EXAMPLE-${dirName}.md`;
+            fs.writeFileSync(
+                path.join(referencesDir, filename),
+                exampleMarkdown,
+                'utf8'
+            );
 
-        references.push({
-            filename: 'EXAMPLE.md',
-            description: `${skill.display_name} example project code`,
-        });
+            references.push({
+                filename,
+                description: `${isSingle ? skill.display_name : dirName} example project code`,
+            });
+        }
     }
 
     // Helper to process a doc entry (string URL or {url, title} object)
@@ -506,35 +520,6 @@ async function generateSkill({
     // Fetch and write shared docs
     for (const docEntry of sharedDocs) {
         await processDoc(docEntry, 'shared ');
-    }
-
-    // Process multiple example paths (used by aggregated skills)
-    if (skill._examplePaths && skill._examplePaths.length > 0) {
-        for (const examplePath of skill._examplePaths) {
-            const dirName = path.basename(examplePath);
-            console.log(`  Processing example: ${examplePath}`);
-
-            const exampleMarkdown = processExample({
-                examplePath,
-                displayName: dirName,
-                id: skill.id,
-                repoRoot,
-                skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[dirName]),
-                plugins: defaultPlugins,
-            });
-
-            const filename = `EXAMPLE-${dirName}.md`;
-            fs.writeFileSync(
-                path.join(referencesDir, filename),
-                exampleMarkdown,
-                'utf8'
-            );
-
-            references.push({
-                filename,
-                description: `${dirName} example project code`,
-            });
-        }
     }
 
     // Include relevant workflows (flattened with category prefix, linked to next step)

@@ -225,6 +225,45 @@ describe('expandSkillGroups', () => {
         expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
     });
 
+    it('normalizes string example_paths to array', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: 'basics/django',
+                variants: [{ id: 'django', display_name: 'Django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+    });
+
+    it('normalizes variant-level string example_paths to array', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'django', display_name: 'Django', example_paths: 'basics/django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+    });
+
     it('defaults _examplePaths to empty array when not specified', () => {
         createFixture({
             skills: {
