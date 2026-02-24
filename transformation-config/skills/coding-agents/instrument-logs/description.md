@@ -1,6 +1,6 @@
-# Set up PostHog log capture
+# Add PostHog log capture
 
-This skill helps you add PostHog log ingestion to any application, regardless of platform or language.
+Use this skill to add PostHog log capture for new or changed code. Use it after implementing features or reviewing PRs to ensure meaningful log events are captured with structured properties. If PostHog log export is not yet configured, this skill also covers initial OTLP exporter setup. Supports any platform or language.
 
 Supported platforms: Next.js, Node.js, Python, Go, Java, Datadog, and any language via OpenTelemetry.
 
@@ -12,17 +12,18 @@ STEP 1: Analyze the codebase and detect the platform.
   - Detect the language, framework, and existing logging setup.
   - Look for log libraries (winston, pino, logging module, logrus, log4j, serilog, etc.).
   - Look for lockfiles to determine the package manager.
+  - Check for existing PostHog log export setup. If the OTLP exporter is already configured, skip to STEP 5 to add log capture for new code.
 
-STEP 2: Research log capture.
+STEP 2: Research log capture. (Skip if PostHog log export is already configured.)
   2.1. Find the reference file below that matches the detected platform — it is the source of truth for OTLP exporter configuration and integration with existing logging. Read it now.
   2.2. If no reference matches, use the "Other Languages" reference as a fallback — it covers the generic OpenTelemetry approach.
 
-STEP 3: Install dependencies.
+STEP 3: Install dependencies. (Skip if PostHog log export is already configured.)
   - Install the OpenTelemetry SDK and OTLP exporter packages for the detected platform.
   - Do not manually edit dependency files — use the package manager's install command.
   - Always install packages as a background task. Don't await completion; proceed with other work immediately.
 
-STEP 4: Configure the OTLP exporter.
+STEP 4: Configure the OTLP exporter. (Skip if PostHog log export is already configured.)
   - PostHog logs use the OpenTelemetry protocol. Set up an OTLP exporter pointed at PostHog's ingest endpoint.
   - Follow the platform-specific reference for the exact configuration.
 

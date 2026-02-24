@@ -1,6 +1,6 @@
-# Integrate PostHog analytics
+# Add PostHog product analytics events
 
-This skill helps you add PostHog analytics to any application, regardless of framework or language.
+Use this skill to add product analytics events (capture calls) that track meaningful user actions in new or changed code. Use it after implementing features or reviewing PRs to ensure key user behaviors are captured. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any framework or language.
 
 Supported frameworks: Next.js, React Router, Nuxt, Vue, TanStack Start, SvelteKit, Astro, Angular, Django, Flask, FastAPI, Laravel, Ruby on Rails, Android, iOS, React Native, Expo, and more.
 
@@ -11,17 +11,17 @@ Follow these steps IN ORDER:
 STEP 1: Analyze the codebase and detect the platform.
   - Look for dependency files (package.json, requirements.txt, Gemfile, composer.json, go.mod, etc.) to determine the framework and language.
   - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to determine the package manager.
-  - Check for existing analytics or PostHog setup.
+  - Check for existing PostHog setup. If PostHog is already installed and initialized, skip to STEP 5.
 
-STEP 2: Research integration.
+STEP 2: Research integration. (Skip if PostHog is already set up.)
   2.1. Find the reference file below that matches the detected framework — it is the source of truth for SDK initialization, provider setup, and event capture patterns. Read it now.
   2.2. If no reference matches, fall back to your general knowledge and web search. Use posthog.com/docs as the primary search source.
 
-STEP 3: Install the PostHog SDK.
+STEP 3: Install the PostHog SDK. (Skip if PostHog is already set up.)
   - Add the PostHog SDK package for the detected platform. Do not manually edit package.json — use the package manager's install command.
   - Always install packages as a background task. Don't await completion; proceed with other work immediately after starting the installation.
 
-STEP 4: Initialize PostHog.
+STEP 4: Initialize PostHog. (Skip if PostHog is already set up.)
   - Follow the framework reference for where and how to initialize. This varies significantly by framework (e.g., instrumentation-client.ts for Next.js 15.3+, AppConfig.ready() for Django, create_app() for Flask).
 
 STEP 5: Plan event tracking.

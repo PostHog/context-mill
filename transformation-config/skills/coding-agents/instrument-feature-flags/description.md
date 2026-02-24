@@ -1,6 +1,6 @@
-# Instrument PostHog feature flags
+# Add PostHog feature flags
 
-This skill helps you add PostHog feature flags to any application, regardless of platform or language.
+Use this skill to add PostHog feature flags that gate new or changed functionality. Use it after implementing features or reviewing PRs to ensure safe rollouts with feature flag controls. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any platform or language.
 
 Supported platforms: React, Next.js, React Native, Web (JavaScript), Node.js, Python, PHP, Ruby, Go, Java, Rust, .NET, Elixir, Android, iOS, Flutter, and the REST API.
 
@@ -11,9 +11,9 @@ Follow these steps IN ORDER:
 STEP 1: Analyze the codebase and detect the platform.
   - Look for dependency files (package.json, requirements.txt, go.mod, Gemfile, composer.json, etc.) to determine the language and framework.
   - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to determine the package manager.
-  - Check for existing PostHog setup (SDK initialization, env vars, etc.).
+  - Check for existing PostHog setup (SDK initialization, env vars, etc.). If PostHog is already installed and initialized, skip to STEP 3.
 
-STEP 2: Research instrumentation.
+STEP 2: Research instrumentation. (Skip if PostHog is already set up.)
   2.1. Find the reference file below that matches the detected platform — it is the source of truth for SDK initialization, flag evaluation methods, and framework-specific patterns. Read it now.
   2.2. If no reference matches, fall back to your general knowledge and web search. Use posthog.com/docs as the primary search source.
 

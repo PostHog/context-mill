@@ -1,6 +1,6 @@
 # Add PostHog LLM analytics
 
-This skill helps you add PostHog LLM analytics to any AI application, regardless of provider or framework.
+Use this skill to add PostHog LLM analytics that trace AI model usage in new or changed code. Use it after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any provider or framework.
 
 Supported providers: OpenAI, Azure OpenAI, Anthropic, Google, Cohere, Mistral, Perplexity, DeepSeek, Groq, Together AI, Fireworks AI, xAI, Cerebras, Hugging Face, Ollama, OpenRouter.
 
@@ -15,13 +15,13 @@ Follow these steps IN ORDER:
 STEP 1: Analyze the codebase and detect the LLM stack.
   - Look for LLM provider SDKs (openai, anthropic, google-generativeai, etc.) and AI frameworks (langchain, llamaindex, crewai, etc.) in dependency files and imports.
   - Look for lockfiles to determine the package manager.
-  - Check for existing PostHog or observability setup.
+  - Check for existing PostHog or observability setup. If PostHog is already installed and LLM tracing is configured, skip to STEP 4 to add tracing for any new LLM calls.
 
-STEP 2: Research instrumentation.
+STEP 2: Research instrumentation. (Skip if PostHog LLM tracing is already set up.)
   2.1. Find the reference file below that matches the detected provider or framework — it is the source of truth for callback setup, middleware configuration, and event capture. Read it now.
   2.2. If no reference matches, use manual-capture.md as a fallback — it covers the generic event capture approach that works with any provider.
 
-STEP 3: Install the PostHog SDK.
+STEP 3: Install the PostHog SDK. (Skip if PostHog is already set up.)
   - Add the PostHog SDK and any required callback/integration packages.
   - Do not manually edit dependency files — use the package manager's install command.
   - Always install packages as a background task. Don't await completion; proceed with other work immediately.

@@ -2,7 +2,7 @@
 type: docs-only
 template: description.md
 category: feature-flags
-description: Instrument PostHog feature flags across any platform
+description: Add PostHog feature flags to gate new functionality. Use after implementing features or reviewing PRs to ensure safe rollouts with feature flag controls. Also handles initial PostHog SDK setup if not yet installed.
 tags: [feature-flags]
 metadata:
   consumer: agent
