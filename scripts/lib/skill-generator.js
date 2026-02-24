@@ -121,8 +121,10 @@ function expandSkillGroups(config, configDir) {
             // Support per-variation shared_docs (merged with base)
             const sharedDocs = [...baseSharedDocs, ...(variation.shared_docs || [])];
 
-            // Skill ID: {compositeKey-dashed}-{shortId}
-            const skillId = `${compositeKeyDashed}-${variation.id}`;
+            // Skill ID: {compositeKey-dashed}-{shortId}, dropping the "-all" suffix
+            const skillId = variation.id === 'all'
+                ? compositeKeyDashed
+                : `${compositeKeyDashed}-${variation.id}`;
 
             skills.push({
                 ...variation,

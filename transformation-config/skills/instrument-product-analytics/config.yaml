@@ -5,7 +5,7 @@ category: integration
 description: Add PostHog product analytics events to track user behavior. Use after implementing new features or reviewing PRs to ensure meaningful user actions are captured. Also handles initial PostHog SDK setup if not yet installed.
 tags: []
 metadata:
-  consumer: agent
+  consumer: coding-agent
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:

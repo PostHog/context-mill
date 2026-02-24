@@ -125,6 +125,26 @@ describe('expandSkillGroups', () => {
         expect(skills[0].id).toBe('feature-flags-installation-react');
     });
 
+    it('omits variant id from skill id when variant id is "all"', () => {
+        createFixture({
+            skills: {
+                'instrument-product-analytics': {
+                    'description.md': '# Product analytics',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            'instrument-product-analytics': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'all frameworks' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0].id).toBe('instrument-product-analytics');
+        expect(skills[0]._shortId).toBe('all');
+    });
+
     it('passes group-level metadata through to _metadata', () => {
         createFixture({
             skills: {
