@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App - PostHog JavaScript Example</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Todo App</h1>
+        <div id="auth-section">
+          <div id="logged-out">
+            <input type="text" id="username-input" placeholder="Enter username" />
+            <button id="login-btn">Log In</button>
+          </div>
+          <div id="logged-in" hidden>
+            <span id="username-display"></span>
+            <button id="logout-btn">Log Out</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <form id="todo-form">
+          <input type="text" id="todo-input" placeholder="What needs to be done?" required />
+          <button type="submit">Add</button>
+        </form>
+
+        <ul id="todo-list"></ul>
+
+        <div id="stats">
+          <span id="total-count">0 items</span>
+          <span id="completed-count">0 completed</span>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
