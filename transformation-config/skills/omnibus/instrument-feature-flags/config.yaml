@@ -4,8 +4,6 @@ template: description.md
 category: feature-flags
 description: Add PostHog feature flags to gate new functionality. Use after implementing features or reviewing PRs to ensure safe rollouts with feature flag controls. Also handles initial PostHog SDK setup if not yet installed.
 tags: [feature-flags]
-metadata:
-  consumer: coding-agent
 shared_docs:
   - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
   - https://posthog.com/docs/feature-flags/best-practices.md

@@ -4,8 +4,6 @@ template: description.md
 category: logs
 description: Add PostHog log capture to track application logs. Use after implementing features or reviewing PRs to ensure meaningful log events are captured with structured properties. Also handles initial OTLP exporter setup if not yet configured.
 tags: [logs]
-metadata:
-  consumer: coding-agent
 shared_docs:
   - https://posthog.com/docs/logs/start-here.md
   - https://posthog.com/docs/logs/search.md

@@ -102,7 +102,6 @@ function expandSkillGroups(config, configDir) {
         const baseType = group.type || 'example';
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
-        const baseMetadata = group.metadata || {};
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
 
         // Category is the first segment of the composite key, or an explicit override
@@ -148,7 +147,6 @@ function expandSkillGroups(config, configDir) {
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _group: key,
-                _metadata: { ...baseMetadata, ...(variation.metadata || {}) },
             });
         }
     }
@@ -413,7 +411,6 @@ function generateFrontmatter(skill, version) {
         metadata: {
             author: 'PostHog',
             version: version,
-            ...(skill._metadata || {}),
         },
     };
 
@@ -646,7 +643,6 @@ async function generateAllSkills({
         name: s.description,
         description: s.description,
         tags: s.tags || [],
-        metadata: s._metadata && Object.keys(s._metadata).length > 0 ? s._metadata : undefined,
     }));
 }
 
