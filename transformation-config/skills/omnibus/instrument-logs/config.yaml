@@ -1,0 +1,25 @@
+# Aggregated logs skill - all platforms in one skill
+type: docs-only
+template: description.md
+category: logs
+description: Add PostHog log capture to track application logs. Use after implementing features or reviewing PRs to ensure meaningful log events are captured with structured properties. Also handles initial OTLP exporter setup if not yet configured.
+tags: [logs]
+shared_docs:
+  - https://posthog.com/docs/logs/start-here.md
+  - https://posthog.com/docs/logs/search.md
+  - https://posthog.com/docs/logs/best-practices.md
+  - https://posthog.com/docs/logs/troubleshooting.md
+  - https://posthog.com/docs/logs/link-session-replay.md
+  - https://posthog.com/docs/logs/debugging-with-mcp.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nextjs.md
+      - https://posthog.com/docs/logs/installation/nodejs.md
+      - https://posthog.com/docs/logs/installation/python.md
+      - https://posthog.com/docs/logs/installation/go.md
+      - https://posthog.com/docs/logs/installation/java.md
+      - https://posthog.com/docs/logs/installation/datadog.md
+      - https://posthog.com/docs/logs/installation/other.md
