@@ -8,6 +8,7 @@ shared_docs:
   - https://posthog.com/docs/error-tracking/alerts.md
   - https://posthog.com/docs/error-tracking/monitoring.md
   - https://posthog.com/docs/error-tracking/assigning-issues.md
+  - https://posthog.com/docs/error-tracking/upload-source-maps.md
 variants:
   - id: react
     display_name: React
@@ -89,7 +90,7 @@ variants:
 
   - id: android
     display_name: Android
-    tags: [android, java]
+    tags: [android, java, kotlin]
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/android.md
 

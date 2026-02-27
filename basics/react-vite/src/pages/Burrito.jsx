@@ -1,10 +1,9 @@
 import { useAuth } from '../contexts/AuthContext'
-import { usePostHog, useFeatureFlagEnabled } from '@posthog/react'
+import { usePostHog } from '@posthog/react'
 
 export default function Burrito() {
   const { user, setUser } = useAuth()
   const posthog = usePostHog()
-  const showSpecialBurrito = useFeatureFlagEnabled('special-burrito')
 
   if (!user) return null
 
@@ -30,13 +29,6 @@ export default function Burrito() {
           Consider a Burrito
         </button>
       </div>
-
-      {showSpecialBurrito && (
-        <div className="special-burrito">
-          <h2>Special Burrito Unlocked!</h2>
-          <p>You have access to the exclusive burrito experience.</p>
-        </div>
-      )}
 
       <div className="burrito-info">
         <h2>Why Consider Burritos?</h2>

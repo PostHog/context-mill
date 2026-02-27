@@ -10,9 +10,9 @@ export default function Header() {
       posthog.capture('user_logged_out', {
         username: user.username,
       })
-      posthog.reset()
     }
     logout()
+    posthog.reset()
   }
 
   const navigate = (target) => {
