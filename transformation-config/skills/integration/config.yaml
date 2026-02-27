@@ -8,14 +8,14 @@ variants:
   - id: nextjs-app-router
     example_path: basics/next-app-router
     display_name: Next.js App Router
-    tags: [nextjs, react, ssr, app-router, javascript]
+    tags: [nextjs, react, ssr, app-router, javascript, turborepo]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
   - id: nextjs-pages-router
     example_path: basics/next-pages-router
     display_name: Next.js Pages Router
-    tags: [nextjs, react, ssr, pages-router, javascript]
+    tags: [nextjs, react, ssr, pages-router, javascript, turborepo]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
 
@@ -29,7 +29,7 @@ variants:
   - id: react-react-router-7-framework
     example_path: basics/react-react-router-7-framework
     display_name: React Router v7 - Framework mode
-    tags: [react, react-router, v7, framework, ssr, javascript]
+    tags: [react, react-router, v7, framework, ssr, javascript, turborepo]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
 

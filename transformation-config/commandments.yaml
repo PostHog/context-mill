@@ -7,6 +7,7 @@ commandments:
     # PostHog-specific
     - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
     - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes
+    - PostHog autocapture tracks pageviews automatically. Do not add manual pageview or page_viewed events — they create duplicate data. Only track domain-specific actions that autocapture cannot infer.
     # General React patterns (react.dev/learn/you-might-not-need-an-effect)
     - Do NOT use useEffect for data transformation - calculate derived values during render instead
     - Do NOT use useEffect to respond to user events - put that logic in the event handler itself
@@ -18,6 +19,8 @@ commandments:
   nextjs:
     # Initialization
     - For Next.js 15.3+, initialize PostHog in instrumentation-client.ts for the simplest setup
+    # Architecture
+    - Never add "use client" to an existing server component. If you need client-side interactivity (event handlers, hooks), extract a small client component and import it into the server component.
 
   nextjs-feature-flags:
     # Client-side feature flags
@@ -36,6 +39,13 @@ commandments:
     - Remember that source code is available in the node_modules directory
     - Check package.json for type checking or build scripts to validate changes
     - posthog-js is the JavaScript SDK package name
+    - posthog-node is the Node.js server-side SDK package name
+    - Always use the package manager to add dependencies (npm install, yarn add, pnpm add). Never manually write version ranges to package.json.
+    - Never directly write PostHog API keys or hosts to code files — always use environment variables
+
+  turborepo:
+    - If the project is inside a Turborepo monorepo, create a turbo.json in the project directory to declare PostHog-related environment variables (e.g., NEXT_PUBLIC_POSTHOG_KEY, NEXT_PUBLIC_POSTHOG_HOST) under the env key so Turborepo includes them in the build hash
+    - Do not modify the root turbo.json — per-project turbo.json files extend it automatically
 
   python:
     - Remember that source code is available in the venv/site-packages directory
@@ -82,6 +92,12 @@ commandments:
     - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
     - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
     - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
+    - Laravel 11+ uses simplified bootstrap/app.php instead of separate service providers — register PostHog in the boot method of AppServiceProvider
+    - For pre-Laravel 11, use app/Http/Kernel.php for middleware, app/Providers for service providers
+
+  posthog-api:
+    - Before creating dashboards or insights, check what already exists using dashboards-get-all and insights-get-all. Search by name — if a matching dashboard or insight exists, reuse it instead of creating a duplicate.
+    - Focus on the most impactful integration points (main entry, key routes, error handlers) rather than exhaustively instrumenting every file. 3-5 well-placed capture calls are better than 20 scattered ones.
 
   hogql:
     # Property access
@@ -153,6 +169,17 @@ commandments:
     - Create a dedicated PosthogService as a singleton root service that wraps the PostHog SDK.
     - Always use standalone components over NgModules.
     - Configure PostHog credentials in src/environments/environment.ts files, as Angular reads environment variables from these configuration files
+
+  ruby:
+    - The gem is named posthog-ruby but you require it as 'posthog' in code (NOT require 'posthog-ruby')
+    - Use PostHog::Client.new for scripts and standalone applications with api_key from ENV['POSTHOG_API_KEY'] and host from ENV['POSTHOG_HOST']
+    - In scripts and CLIs, MUST call client.shutdown before exit or all events will be lost — use begin/ensure blocks
+    - capture_exception takes positional args: client.capture_exception(exception, distinct_id, additional_properties) — do NOT use keyword arguments
+    - NEVER include emails, names, phone numbers, or user content in event properties
+
+  ruby-on-rails:
+    - Use Bundler to install gems: add gem 'posthog-ruby' and gem 'posthog-rails' to the Gemfile and run bundle install
+    - For API-only Rails apps, skip frontend posthog-js integration — use server-side posthog-ruby only
 
   android:
     - Adapt dependency configuration to the appropriate build.gradle(.kts) file according to the project gradle version
