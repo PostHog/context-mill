@@ -26,7 +26,7 @@ export default function Burrito() {
 
       <div className="burrito-stats">
         <p>Times considered: <strong>{user.burritoConsiderations}</strong></p>
-        <button onClick={handleConsider} className="btn-primary">
+        <button onClick={handleConsider} className="btn-burrito">
           Consider a Burrito
         </button>
       </div>
