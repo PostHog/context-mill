@@ -47,6 +47,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
 
+  - id: react-vite
+    example_path: basics/react-vite
+    display_name: React (Vite)
+    description: PostHog integration for React applications built with Vite (no router)
+    tags: [react, vite, spa, javascript]
+    docs_urls:
+      - https://posthog.com/docs/libraries/react.md
+
   - id: nuxt-3.6
     example_paths: basics/nuxt-3.6
     display_name: Nuxt 3.6
