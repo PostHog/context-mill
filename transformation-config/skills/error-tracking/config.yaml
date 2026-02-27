@@ -1,0 +1,100 @@
+# Error tracking skills - docs-only (no example projects)
+type: docs-only
+template: description.md
+description: PostHog error tracking for {display_name}
+tags: [error-tracking]
+shared_docs:
+  - https://posthog.com/docs/error-tracking/fingerprints.md
+  - https://posthog.com/docs/error-tracking/alerts.md
+  - https://posthog.com/docs/error-tracking/monitoring.md
+  - https://posthog.com/docs/error-tracking/assigning-issues.md
+variants:
+  - id: react
+    display_name: React
+    tags: [react, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/react.md
+
+  - id: web
+    display_name: Web (JavaScript)
+    tags: [javascript_web, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/web.md
+
+  - id: nextjs
+    display_name: Next.js
+    tags: [nextjs, react, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/nextjs.md
+
+  - id: node
+    display_name: Node.js
+    tags: [javascript_node, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/node.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/python.md
+
+  - id: ruby
+    display_name: Ruby
+    tags: [ruby]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/ruby.md
+
+  - id: ruby-on-rails
+    display_name: Ruby on Rails
+    tags: [ruby-on-rails, ruby]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+
+  - id: go
+    display_name: Go
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/go.md
+
+  - id: angular
+    display_name: Angular
+    tags: [angular, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/angular.md
+
+  - id: svelte
+    display_name: Svelte
+    tags: [sveltekit, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/svelte.md
+
+  - id: nuxt
+    display_name: Nuxt
+    tags: [nuxt, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+
+  - id: react-native
+    display_name: React Native
+    tags: [react-native, javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/react-native.md
+
+  - id: flutter
+    display_name: Flutter
+    tags: [flutter, dart]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/flutter.md
+
+  - id: android
+    display_name: Android
+    tags: [android, java]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/android.md
+
+  - id: hono
+    display_name: Hono
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/hono.md
