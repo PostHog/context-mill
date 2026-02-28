@@ -126,8 +126,8 @@ commandments:
 
   swift:
     - Read configuration from environment variables via a `PostHogEnv` enum with a `value` computed property that calls `ProcessInfo.processInfo.environment[rawValue]` and `fatalError`s if missing — cases should be `apiKey = "POSTHOG_API_KEY"` and `host = "POSTHOG_HOST"`, set in the Xcode scheme's Run environment variables
-    - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
-    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
+    - "Add the posthog-ios package via Swift Package Manager. For Xcode projects (.xcodeproj), add XCRemoteSwiftPackageReference and XCSwiftPackageProductDependency to the .pbxproj file — create three distinct objects with unique UUIDs: a PBXBuildFile (with productRef), an XCSwiftPackageProductDependency (with package and productName), and an XCRemoteSwiftPackageReference (with repositoryURL and requirement). For Swift packages, add `.package(url: \"https://github.com/PostHog/posthog-ios\", from: \"<VERSION>\")` to Package.swift dependencies."
+    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the version — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   react-native:
@@ -182,7 +182,7 @@ commandments:
     - For API-only Rails apps, skip frontend posthog-js integration — use server-side posthog-ruby only
 
   android:
-    - Adapt dependency configuration to the appropriate build.gradle(.kts) file according to the project gradle version
+    - "Add the PostHog Android SDK dependency to the app-level build.gradle(.kts) file. Check the existing dependency format: `.gradle` files use Groovy syntax (`implementation 'com.posthog:posthog-android:<VERSION>'`), `.gradle.kts` files use Kotlin DSL (`implementation(\"com.posthog:posthog-android:<VERSION>\")`) — match whichever the project already uses"
     - Call `PostHogAndroid.setup()` only once in the Application class's `onCreate()` method, so it's initialized as early as possible and only once.
     - Initialize PostHog in the Application class's `onCreate()` method
     - Ensure every activity has a `android:label` to accurately track screen views.
