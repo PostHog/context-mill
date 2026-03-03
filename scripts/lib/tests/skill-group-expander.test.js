@@ -124,4 +124,123 @@ describe('expandSkillGroups', () => {
         // id still uses composite key, not category
         expect(skills[0].id).toBe('feature-flags-installation-react');
     });
+
+    it('omits variant id from skill id when variant id is "all"', () => {
+        createFixture({
+            skills: {
+                'instrument-product-analytics': {
+                    'description.md': '# Product analytics',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            'instrument-product-analytics': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'all frameworks' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0].id).toBe('instrument-product-analytics');
+        expect(skills[0]._shortId).toBe('all');
+    });
+
+    it('passes group-level example_paths through to _examplePaths', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: ['basics/django', 'basics/flask'],
+                variants: [{ id: 'all', display_name: 'all frameworks' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+    });
+
+    it('merges variant-level example_paths on top of group-level', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: ['basics/django'],
+                variants: [{ id: 'all', display_name: 'all', example_paths: ['basics/flask'] }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+    });
+
+    it('normalizes string example_paths to array', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                example_paths: 'basics/django',
+                variants: [{ id: 'django', display_name: 'Django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+    });
+
+    it('normalizes variant-level string example_paths to array', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'django', display_name: 'Django', example_paths: 'basics/django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+    });
+
+    it('defaults _examplePaths to empty array when not specified', () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# Integration',
+                },
+            },
+        }, tmpDir);
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'django', display_name: 'Django' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._examplePaths).toEqual([]);
+    });
+
 });

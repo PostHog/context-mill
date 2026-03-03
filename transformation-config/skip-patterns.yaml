@@ -223,3 +223,12 @@ examples:
       - ios
       - .bundle
       - Gemfile.lock
+
+  ruby-on-rails:
+    includes:
+      - tmp/
+      - log/
+      - storage/
+      - public/assets
+      - .ruby-version
+      - .ruby-gemset

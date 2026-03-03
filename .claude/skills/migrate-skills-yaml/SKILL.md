@@ -16,7 +16,7 @@ shared_docs:
 skills:
   - id: nextjs-app-router
     type: example
-    example_path: basics/next-app-router
+    example_paths: basics/next-app-router
     display_name: Next.js App Router
     description: PostHog integration for Next.js App Router applications
     tags: [nextjs, react, ssr, app-router, javascript]
@@ -45,7 +45,7 @@ shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
   - id: nextjs-app-router
-    example_path: basics/next-app-router
+    example_paths: basics/next-app-router
     display_name: Next.js App Router
     tags: [nextjs, react, ssr, app-router, javascript]
     docs_urls:
@@ -101,5 +101,5 @@ variants:
 1. Identify which group each skill belongs to (integration, feature-flag, llm-analytics, logs, or other)
 2. Add each skill as a variant in the appropriate `transformation-config/skills/{group}-skills.yaml` file
 3. Remove `type` from the variant (inherited from group) unless it needs to differ
-4. Keep `id`, `display_name`, `description` (optional), `tags`, `docs_urls`, and `example_path` (for example-type skills)
+4. Keep `id`, `display_name`, `description` (optional), `tags`, `docs_urls`, and `example_paths` (for example-type skills)
 5. Remove the old flat file

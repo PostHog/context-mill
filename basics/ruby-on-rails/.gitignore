@@ -1,0 +1,33 @@
+# Ruby / Rails
+/.bundle
+/vendor/bundle
+/tmp/
+/log/
+/storage/
+*.gem
+*.rbc
+
+# Database
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-shm
+/db/*.sqlite3-wal
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Ruby version managers
+.ruby-version
+.ruby-gemset
+
+# Not necessary for the sake of this tutorial, should be commited in a normal repository
+Gemfile.lock
