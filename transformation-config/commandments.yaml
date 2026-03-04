@@ -163,7 +163,7 @@ commandments:
 
   react-native:
     - posthog-react-native is the React Native SDK package name
-    - react-native-svg is a required peer dependency of posthog-react-native (used by the surveys feature) and must be installed alongside it.
+    - react-native-svg is a required peer dependency of posthog-react-native (used by the surveys feature) and must be installed alongside it
     - Use react-native-config to load POSTHOG_API_KEY and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
     - Place PostHogProvider INSIDE NavigationContainer for React Navigation v7 compatibility
 
