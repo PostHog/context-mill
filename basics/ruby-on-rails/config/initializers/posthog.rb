@@ -6,7 +6,7 @@
 # - User context detection from current_user
 # - Rails.error integration for rescued exceptions 
 PostHog.init do |config|
-  config.api_key = ENV.fetch('POSTHOG_API_KEY', nil)
+  config.api_key = ENV.fetch('POSTHOG_PROJECT_TOKEN', nil)
   config.host = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
 end
 

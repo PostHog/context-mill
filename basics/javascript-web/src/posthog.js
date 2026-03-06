@@ -6,12 +6,12 @@
  */
 import posthog from 'posthog-js';
 
-const apiKey = import.meta.env.VITE_POSTHOG_KEY;
+const apiKey = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 if (!apiKey) {
   console.warn(
-    'PostHog not configured (VITE_POSTHOG_KEY not set).',
+    'PostHog not configured (VITE_POSTHOG_PROJECT_TOKEN not set).',
     'App will work but analytics will not be tracked.',
   );
 } else {

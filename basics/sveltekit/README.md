@@ -25,14 +25,14 @@ Copy the example environment file and add your PostHog credentials:
 cp .env.example .env
 ```
 
-Edit `.env` with your PostHog project API key:
+Edit `.env` with your PostHog project token:
 
 ```
-PUBLIC_POSTHOG_KEY=your_posthog_project_api_key_here
+PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token_here
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-You can find your API key in your [PostHog project settings](https://app.posthog.com/project/settings).
+You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Run the development server
 
@@ -79,7 +79,7 @@ PostHog is initialized in the SvelteKit client hooks `init` function, which runs
 import posthog from 'posthog-js';
 
 export async function init() {
-  posthog.init(PUBLIC_POSTHOG_KEY, {
+  posthog.init(PUBLIC_POSTHOG_PROJECT_TOKEN, {
     api_host: '/ingest',
     ui_host: 'https://us.posthog.com',
     defaults: '2026-01-30',
@@ -99,7 +99,7 @@ let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
   if (!posthogClient) {
-    posthogClient = new PostHog(PUBLIC_POSTHOG_KEY, {
+    posthogClient = new PostHog(PUBLIC_POSTHOG_PROJECT_TOKEN, {
       host: PUBLIC_POSTHOG_HOST,
       flushAt: 1,
       flushInterval: 0

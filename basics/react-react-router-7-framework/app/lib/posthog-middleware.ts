@@ -7,7 +7,7 @@ export interface PostHogContext extends RouterContextProvider {
 }
 
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_KEY!, {
+  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
     host: process.env.VITE_PUBLIC_POSTHOG_HOST!,
     flushAt: 1,
     flushInterval: 0,

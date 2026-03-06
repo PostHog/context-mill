@@ -9,7 +9,7 @@ import SwiftUI
 import PostHog
 
 enum PostHogEnv: String {
-    case apiKey = "POSTHOG_API_KEY"
+    case apiKey = "POSTHOG_PROJECT_TOKEN"
     case host = "POSTHOG_HOST"
 
     var value: String {

@@ -3,9 +3,9 @@ import Constants from 'expo-constants'
 
 // Configuration loaded from app.config.js extras via expo-constants
 // Environment variables are read at build time in app.config.js
-const apiKey = Constants.expoConfig?.extra?.posthogApiKey as string | undefined
+const apiKey = Constants.expoConfig?.extra?.posthogProjectToken as string | undefined
 const host = (Constants.expoConfig?.extra?.posthogHost as string) || 'https://us.i.posthog.com'
-const isPostHogConfigured = apiKey && apiKey !== 'phc_your_api_key_here'
+const isPostHogConfigured = apiKey && apiKey !== 'phc_your_project_token_here'
 
 if (__DEV__) {
   console.log('PostHog config:', {
@@ -17,8 +17,8 @@ if (__DEV__) {
 
 if (!isPostHogConfigured) {
   console.warn(
-    'PostHog API key not configured. Analytics will be disabled. ' +
-      'Set POSTHOG_API_KEY in your .env file to enable analytics.'
+    'PostHog project token not configured. Analytics will be disabled. ' +
+      'Set POSTHOG_PROJECT_TOKEN in your .env file to enable analytics.'
   )
 }
 
@@ -38,7 +38,7 @@ export const posthog = new PostHog(apiKey || 'placeholder_key', {
   // PostHog API host
   host,
 
-  // Disable PostHog if API key is not configured
+  // Disable PostHog if project token is not configured
   disabled: !isPostHogConfigured,
 
   // Capture app lifecycle events:

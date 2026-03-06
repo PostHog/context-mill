@@ -19,7 +19,7 @@ To add it manually to a new project: File > Add Package Dependencies > enter `ht
 
 ### 2. Configure environment variables
 
-Set your PostHog API key and host as environment variables in the Xcode scheme:
+Set your PostHog project token and host as environment variables in the Xcode scheme:
 
 1. In Xcode, go to **Product > Scheme > Edit Scheme…**
 2. Select **Run** in the sidebar
@@ -28,10 +28,10 @@ Set your PostHog API key and host as environment variables in the Xcode scheme:
 
 | Variable | Value |
 |----------|-------|
-| `POSTHOG_API_KEY` | Your PostHog project API key |
+| `POSTHOG_PROJECT_TOKEN` | Your PostHog project token |
 | `POSTHOG_HOST` | `https://us.i.posthog.com` |
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 The app reads these via `ProcessInfo.processInfo.environment` and will crash with a clear message if they're missing.
 
@@ -60,12 +60,12 @@ BurritoConsiderationClient/
 ```swift
 import PostHog
 
-guard let POSTHOG_API_KEY = ProcessInfo.processInfo.environment["POSTHOG_API_KEY"],
+guard let POSTHOG_PROJECT_TOKEN = ProcessInfo.processInfo.environment["POSTHOG_PROJECT_TOKEN"],
       let POSTHOG_HOST = ProcessInfo.processInfo.environment["POSTHOG_HOST"] else {
-    fatalError("Set POSTHOG_API_KEY and POSTHOG_HOST in the Xcode scheme environment variables.")
+    fatalError("Set POSTHOG_PROJECT_TOKEN and POSTHOG_HOST in the Xcode scheme environment variables.")
 }
 
-let config = PostHogConfig(apiKey: POSTHOG_API_KEY, host: POSTHOG_HOST)
+let config = PostHogConfig(apiKey: POSTHOG_PROJECT_TOKEN, host: POSTHOG_HOST)
 config.captureApplicationLifecycleEvents = true
 PostHogSDK.shared.setup(config)
 ```

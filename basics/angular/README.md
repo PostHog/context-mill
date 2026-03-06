@@ -24,11 +24,11 @@ pnpm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_POSTHOG_KEY=your_posthog_project_api_key
+VITE_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_POSTHOG_HOST=https://us.posthog.com
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Run the development server
 

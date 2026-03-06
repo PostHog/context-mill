@@ -2,15 +2,15 @@ import PostHog from 'posthog-react-native'
 import Config from 'react-native-config'
 
 // Environment variables are embedded at build time via react-native-config
-// Ensure .env file exists with POSTHOG_API_KEY and POSTHOG_HOST
-const apiKey = Config.POSTHOG_API_KEY
+// Ensure .env file exists with POSTHOG_PROJECT_TOKEN and POSTHOG_HOST
+const apiKey = Config.POSTHOG_PROJECT_TOKEN
 const host = Config.POSTHOG_HOST || 'https://us.i.posthog.com'
-const isPostHogConfigured = apiKey && apiKey !== 'phc_your_api_key_here'
+const isPostHogConfigured = apiKey && apiKey !== 'phc_your_project_token_here'
 
 if (!isPostHogConfigured) {
   console.warn(
-    'PostHog API key not configured. Analytics will be disabled. ' +
-    'Set POSTHOG_API_KEY in your .env file to enable analytics.'
+    'PostHog project token not configured. Analytics will be disabled. ' +
+    'Set POSTHOG_PROJECT_TOKEN in your .env file to enable analytics.'
   )
 }
 
@@ -27,7 +27,7 @@ export const posthog = new PostHog(apiKey || 'placeholder_key', {
   // PostHog API host (usually 'https://us.i.posthog.com' or 'https://eu.i.posthog.com')
   host,
 
-  // Disable PostHog if API key is not configured
+  // Disable PostHog if project token is not configured
   disabled: !isPostHogConfigured,
 
   // Capture app lifecycle events:

@@ -10,7 +10,7 @@ class BurritoApplication : Application() {
         
         // Initialize PostHog early in Application lifecycle
         val config = PostHogAndroidConfig(
-            apiKey = BuildConfig.POSTHOG_API_KEY,
+            apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
             host = BuildConfig.POSTHOG_HOST,
         ).apply {
             debug = true

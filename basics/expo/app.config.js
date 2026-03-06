@@ -32,7 +32,7 @@ export default {
     },
     scheme: 'burritoapp',
     extra: {
-      posthogApiKey: process.env.POSTHOG_API_KEY,
+      posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
     },
     plugins: ['expo-router', 'expo-localization'],

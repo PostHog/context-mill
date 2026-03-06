@@ -24,11 +24,11 @@ pip install posthog
 Create a `.env` file in the root directory:
 
 ```bash
-POSTHOG_API_KEY=your_posthog_project_api_key
+POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Run migrations
 
@@ -84,7 +84,7 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        posthog.api_key = settings.POSTHOG_API_KEY
+        posthog.api_key = settings.POSTHOG_PROJECT_TOKEN
         posthog.host = settings.POSTHOG_HOST
 ```
 
@@ -94,7 +94,7 @@ class CoreConfig(AppConfig):
 import os
 
 # PostHog configuration
-POSTHOG_API_KEY = os.environ.get('POSTHOG_API_KEY', '<ph_project_api_key>')
+POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN', '<ph_project_token>')
 POSTHOG_HOST = os.environ.get('POSTHOG_HOST', 'https://us.i.posthog.com')
 
 MIDDLEWARE = [
@@ -183,7 +183,7 @@ def profile_view(request):
 If you're using PostHog's JavaScript SDK on the frontend, enable tracing headers to connect frontend sessions with backend events:
 
 ```javascript
-posthog.init('<ph_project_api_key>', {
+posthog.init('<ph_project_token>', {
     api_host: 'https://us.i.posthog.com',
     __add_tracing_headers: ['your-backend-domain.com'],
 })

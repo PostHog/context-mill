@@ -32,11 +32,11 @@ pnpm install
 Create a `.env` file in the project root:
 
 ```bash
-PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog API key from your project settings in PostHog.
+Get your PostHog project token from your project settings in PostHog.
 
 ### 3. Run the development server
 
@@ -76,7 +76,7 @@ The PostHog snippet is included as an inline script to prevent Astro from proces
 ```astro
 <script is:inline>
   !function(t,e){...}(document,window.posthog||[]);
-  posthog.init('<ph_project_api_key>', {
+  posthog.init('<ph_project_token>', {
     api_host: 'https://us.i.posthog.com',
     defaults: '2026-01-30'
   })

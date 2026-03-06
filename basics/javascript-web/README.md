@@ -31,8 +31,8 @@ npm install
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your PostHog API key
-# VITE_POSTHOG_KEY=phc_your_api_key_here
+# Edit .env and add your PostHog project token
+# VITE_POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
 # VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -79,7 +79,7 @@ basics/javascript/
 ```javascript
 import posthog from 'posthog-js'
 
-posthog.init('your-api-key', {
+posthog.init('your-project-token', {
   api_host: 'https://us.i.posthog.com',
 })
 ```

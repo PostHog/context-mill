@@ -36,6 +36,9 @@ jobs:
     - name: Scan skills for prompt injection
       run: bash scripts/scan-prompt-injection.sh dist/skills
 
+    - name: Lint env var naming conventions
+      run: bash scripts/lint-env-naming.sh
+
       # No individual skill should be larger than 1MB, and the bundle should be less than 2MB.
     - name: Check bundle and skill sizes
       run: |

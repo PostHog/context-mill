@@ -13,13 +13,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       posthog: {
-        publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+        publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '',
         host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
       },
     },
   },
   posthogConfig: {
-    publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '', // Find it in project settings https://app.posthog.com/settings/project
+    publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '', // Find it in project settings https://app.posthog.com/settings/project
     host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com', // Optional: defaults to https://us.i.posthog.com. Use https://eu.i.posthog.com for EU region
     clientConfig: {
       capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)

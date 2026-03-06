@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan events for startup/shutdown."""
     # Startup: Initialize PostHog
     if not settings.posthog_disabled:
-        posthog.api_key = settings.posthog_api_key
+        posthog.api_key = settings.posthog_project_token
         posthog.host = settings.posthog_host
         posthog.debug = settings.debug
 

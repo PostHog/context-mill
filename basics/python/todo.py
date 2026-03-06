@@ -24,18 +24,18 @@ DATA_FILE = Path.home() / ".todo_app.json"
 def initialize_posthog():
     """Initialize PostHog with instance-based API.
 
-    Returns PostHog instance or None if API key not configured.
+    Returns PostHog instance or None if project token not configured.
     """
-    api_key = os.getenv('POSTHOG_API_KEY')
+    project_token = os.getenv('POSTHOG_PROJECT_TOKEN')
 
-    if not api_key:
-        print("WARNING: PostHog not configured (POSTHOG_API_KEY not set)")
+    if not project_token:
+        print("WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)")
         print("         App will work but analytics won't be tracked")
         return None
 
     # Create PostHog instance with opinionated defaults
     posthog = Posthog(
-        api_key,
+        project_token,
         host=os.getenv('POSTHOG_HOST', 'https://us.i.posthog.com'),
         debug=os.getenv('POSTHOG_DEBUG', 'False').lower() == 'true',
         enable_exception_autocapture=True  # Auto-capture unhandled exceptions

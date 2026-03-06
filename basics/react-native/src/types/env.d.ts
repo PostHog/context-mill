@@ -1,6 +1,6 @@
 declare module 'react-native-config' {
   export interface NativeConfig {
-    POSTHOG_API_KEY?: string
+    POSTHOG_PROJECT_TOKEN?: string
     POSTHOG_HOST?: string
   }
 

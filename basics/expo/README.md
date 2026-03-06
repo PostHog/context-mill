@@ -75,7 +75,7 @@ Then run `source ~/.zshrc` to apply.
 2. Configure PostHog (optional):
    ```bash
    cp .env.example .env
-   # Edit .env with your PostHog API key
+   # Edit .env with your PostHog project token
    ```
 
 3. Start the development server:
@@ -105,7 +105,7 @@ PostHog is configured in `src/config/posthog.ts` using environment variables fro
 ```typescript
 import Constants from 'expo-constants'
 
-const apiKey = Constants.expoConfig?.extra?.posthogApiKey
+const apiKey = Constants.expoConfig?.extra?.posthogProjectToken
 ```
 
 ### Event Tracking
