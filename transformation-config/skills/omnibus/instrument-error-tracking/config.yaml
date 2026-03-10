@@ -1,0 +1,31 @@
+type: docs-only
+template: description.md
+category: error-tracking
+description: Add PostHog error tracking to capture and monitor exceptions. Use after implementing features or reviewing PRs to ensure errors are tracked with stack traces and source maps. Also handles initial PostHog SDK setup if not yet installed.
+tags: [error-tracking]
+shared_docs:
+  - https://posthog.com/docs/error-tracking/fingerprints.md
+  - https://posthog.com/docs/error-tracking/alerts.md
+  - https://posthog.com/docs/error-tracking/monitoring.md
+  - https://posthog.com/docs/error-tracking/assigning-issues.md
+  - https://posthog.com/docs/error-tracking/upload-source-maps.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/react.md
+      - https://posthog.com/docs/error-tracking/installation/web.md
+      - https://posthog.com/docs/error-tracking/installation/nextjs.md
+      - https://posthog.com/docs/error-tracking/installation/node.md
+      - https://posthog.com/docs/error-tracking/installation/python.md
+      - https://posthog.com/docs/error-tracking/installation/ruby.md
+      - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+      - https://posthog.com/docs/error-tracking/installation/go.md
+      - https://posthog.com/docs/error-tracking/installation/angular.md
+      - https://posthog.com/docs/error-tracking/installation/svelte.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+      - https://posthog.com/docs/error-tracking/installation/react-native.md
+      - https://posthog.com/docs/error-tracking/installation/flutter.md
+      - https://posthog.com/docs/error-tracking/installation/android.md
+      - https://posthog.com/docs/error-tracking/installation/hono.md

@@ -16,6 +16,7 @@ const GROUP_TO_PLUGIN = {
     'feature-flags': 'posthog-feature-flags',
     'llm-analytics': 'posthog-llm-analytics',
     'logs': 'posthog-logs',
+    'error-tracking': 'posthog-error-tracking',
     'tools-and-features': 'posthog-tools',
 };
 
@@ -27,8 +28,9 @@ const PLUGIN_KEYWORDS = {
     'posthog-feature-flags': ['posthog', 'feature-flags', 'experiments', 'ab-testing'],
     'posthog-llm-analytics': ['posthog', 'llm', 'ai', 'observability'],
     'posthog-logs': ['posthog', 'logs', 'logging', 'observability'],
+    'posthog-error-tracking': ['posthog', 'error-tracking', 'exceptions', 'monitoring'],
     'posthog-tools': ['posthog', 'hogql', 'analytics', 'tools'],
-    'posthog-all': ['posthog', 'analytics', 'feature-flags', 'llm', 'logs'],
+    'posthog-all': ['posthog', 'analytics', 'feature-flags', 'llm', 'logs', 'error-tracking'],
 };
 
 /**
@@ -39,6 +41,7 @@ const PLUGIN_DESCRIPTIONS = {
     'posthog-feature-flags': 'Skills for implementing PostHog feature flags across frameworks',
     'posthog-llm-analytics': 'Skills for monitoring LLM usage with PostHog',
     'posthog-logs': 'Skills for setting up PostHog log capture',
+    'posthog-error-tracking': 'Skills for setting up PostHog error tracking across frameworks',
     'posthog-tools': 'Utility skills for working with PostHog (HogQL, etc.)',
     'posthog-all': 'Complete set of all PostHog skills for agents and power users',
 };
