@@ -23,8 +23,7 @@ STEP 3: Install and initialize the PostHog SDK. (Skip if PostHog is already set 
   - Follow the framework reference for where and how to initialize.
 
 STEP 4: Enable exception autocapture.
-  - Enable `autocapture_exceptions` in the PostHog SDK initialization if the platform supports it.
-  - This captures unhandled exceptions automatically without additional code.
+  - Follow the platform reference to enable exception autocapture. This automatically captures unhandled exceptions without additional code.
 
 STEP 5: Add manual error captures.
   - Identify error boundaries, catch blocks, and critical user flows where errors should be explicitly captured.
@@ -49,12 +48,12 @@ STEP 8: Verify and clean up.
 
 {references}
 
-Each platform reference contains SDK-specific installation, autocapture configuration, and manual capture patterns. Find the one matching the user's stack.
+Each platform reference contains SDK-specific installation and manual capture patterns. Find the one matching the user's stack.
 
 ## Key principles
 
 - **Environment variables**: Always use environment variables for PostHog keys. Never hardcode them.
 - **Minimal changes**: Add error tracking alongside existing error handling. Don't replace or restructure existing code.
-- **Autocapture first**: Enable exception autocapture in the SDK initialization before adding manual captures.
+- **Autocapture first**: Enable exception autocapture before adding manual captures.
 - **Source maps**: Upload source maps so stack traces resolve to original source code, not minified bundles.
 - **Manual capture for boundaries**: Use `captureException()` at error boundaries and catch blocks for errors that don't propagate to the global handler.
