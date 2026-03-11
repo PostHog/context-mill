@@ -1,0 +1,84 @@
+type: docs-only
+template: description.md
+category: integration
+description: Add PostHog SDK integration to your application. Use when setting up PostHog for the first time or reviewing PRs that need PostHog initialization. Covers SDK installation, provider setup, and basic configuration for any framework.
+tags: []
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: all supported frameworks
+    tags: []
+    example_paths:
+      # JavaScript / Frontend
+      - basics/next-app-router
+      - basics/next-pages-router
+      - basics/react-react-router-6
+      - basics/react-react-router-7-framework
+      - basics/react-react-router-7-data
+      - basics/react-react-router-7-declarative
+      - basics/react-vite
+      - basics/nuxt-3.6
+      - basics/nuxt-4
+      - basics/vue-3
+      - basics/react-tanstack-router-file-based
+      - basics/react-tanstack-router-code-based
+      - basics/tanstack-start
+      - basics/sveltekit
+      - basics/astro-static
+      - basics/astro-view-transitions
+      - basics/astro-ssr
+      - basics/astro-hybrid
+      - basics/angular
+      # JavaScript / Server + Client
+      - basics/javascript-node
+      - basics/javascript-web
+      # Python
+      - basics/django
+      - basics/flask
+      - basics/fastapi
+      - basics/python
+      # PHP
+      - basics/laravel
+      # Ruby
+      - basics/ruby-on-rails
+      - basics/ruby
+      # Mobile
+      - basics/android
+      - basics/swift
+      - basics/react-native
+      - basics/expo
+    docs_urls:
+      # JavaScript / Frontend
+      - https://posthog.com/docs/libraries/next-js.md
+      - https://posthog.com/docs/libraries/react.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+      - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+      - https://posthog.com/docs/libraries/nuxt-js.md
+      - https://posthog.com/docs/libraries/vue-js.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
+      - https://posthog.com/docs/libraries/svelte.md
+      - https://posthog.com/docs/libraries/astro.md
+      - https://posthog.com/docs/libraries/angular.md
+      # JavaScript / Server + Client
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/references/posthog-js.md
+      - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/references/posthog-node.md
+      # Python
+      - https://posthog.com/docs/libraries/django.md
+      - https://posthog.com/docs/libraries/flask.md
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
+      # PHP
+      - https://posthog.com/docs/libraries/laravel.md
+      # Ruby
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby.md
+      # Mobile
+      - https://posthog.com/docs/libraries/android.md
+      - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/react-native.md
