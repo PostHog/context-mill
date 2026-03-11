@@ -11,7 +11,7 @@ Follow these steps IN ORDER:
 STEP 1: Analyze the codebase and detect the platform.
   - Look for dependency files (package.json, requirements.txt, Gemfile, composer.json, go.mod, etc.) to determine the framework and language.
   - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to determine the package manager.
-  - Check for existing PostHog setup. If PostHog is already installed and initialized, inform the user and skip to verification.
+  - Check for existing PostHog setup. If PostHog is already installed and initialized, do not modify its code. Inform the user and skip to verification.
 
 STEP 2: Research integration.
   2.1. Find the reference file below that matches the detected framework — it is the source of truth for SDK initialization, provider setup, and configuration patterns. Read it now.
@@ -30,7 +30,7 @@ STEP 5: Identify users.
   - If both frontend and backend exist, pass the client-side session and distinct ID using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to the server-side code.
 
 STEP 6: Set up environment variables.
-  - If an env-file-tools MCP server is connected, use check_env_keys to see which keys already exist, then use set_env_values to create or update the PostHog API key and host.
+  - Store the PostHog API key and host in environment variables (e.g. `.env` or framework-specific env files).
   - Reference these environment variables in code instead of hardcoding them.
 
 STEP 7: Verify and clean up.
@@ -49,3 +49,4 @@ Each framework reference contains SDK-specific installation, initialization, and
 - **Environment variables**: Always use environment variables for PostHog keys. Never hardcode them.
 - **Minimal changes**: Add PostHog code alongside existing integrations. Don't replace or restructure existing code.
 - **Match the example**: Your implementation should follow the example project's patterns as closely as possible.
+- **Analytics contract**: Treat event names, property names, and feature flag keys as part of an analytics contract. Reuse existing names and patterns found in the project. When introducing new ones, make them clear, descriptive, and consistent with existing conventions.
