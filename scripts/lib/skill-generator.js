@@ -546,7 +546,7 @@ async function generateSkill({
 
     // Build references list for SKILL.md
     const referencesText = references
-        .map(ref => `- \`${ref.filename}\` - ${ref.description}`)
+        .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
         .join('\n');
 
     // Collect commandments for this skill's tags
