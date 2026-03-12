@@ -25,17 +25,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 'lts/*'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: latest
 
@@ -126,7 +126,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -145,7 +145,7 @@ jobs:
           prerelease: false
 
       - name: Upload skills bundle
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -157,32 +157,38 @@ jobs:
       - name: Upload individual skill ZIPs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           # Upload each skill ZIP as a release asset
           for file in dist/skills/*.zip; do
             filename=$(basename "$file")
             echo "Uploading $filename..."
-            gh release upload ${{ steps.version.outputs.tag }} "$file" --clobber
+            gh release upload "$RELEASE_TAG" "$file" --clobber
           done
 
       - name: Update latest tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Create the version tag locally first
-          git tag ${{ steps.version.outputs.tag }}
+          git tag "$RELEASE_TAG"
           # Point latest to the current commit (same as the version tag)
           git tag -f latest
           # Push both tags
-          git push origin ${{ steps.version.outputs.tag }}
+          git push origin "$RELEASE_TAG"
           git push -f origin latest
 
       - name: Build Summary
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** $RELEASE_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** $RELEASE_TAG" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle:** skills-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Skills Manifest" >> $GITHUB_STEP_SUMMARY
