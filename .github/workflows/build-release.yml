@@ -154,7 +154,7 @@ jobs:
           asset_name: skills-mcp-resources.zip
           asset_content_type: application/zip
 
-      - name: Upload individual skill ZIPs
+      - name: Upload individual skill ZIPs and skill menu
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
@@ -165,6 +165,9 @@ jobs:
             echo "Uploading $filename..."
             gh release upload "$RELEASE_TAG" "$file" --clobber
           done
+          # Upload skill-menu.json (used by the wizard to discover available skills)
+          echo "Uploading skill-menu.json..."
+          gh release upload "$RELEASE_TAG" dist/skills/skill-menu.json --clobber
 
       - name: Update latest tag
         env:
