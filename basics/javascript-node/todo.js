@@ -22,15 +22,15 @@ let nextId = 1;
 // --- PostHog Setup ---
 
 function initializePosthog() {
-  const apiKey = process.env.POSTHOG_API_KEY;
+  const projectToken = process.env.POSTHOG_PROJECT_TOKEN;
 
-  if (!apiKey) {
-    console.log('WARNING: PostHog not configured (POSTHOG_API_KEY not set)');
+  if (!projectToken) {
+    console.log('WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)');
     console.log('         App will work but analytics won\'t be tracked');
     return null;
   }
 
-  const client = new PostHog(apiKey, {
+  const client = new PostHog(projectToken, {
     host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
     enableExceptionAutocapture: true,
   });

@@ -17,17 +17,17 @@ DATA_FILE = File.join(Dir.home, '.todo_app.json')
 
 def initialize_posthog
   # Initialize PostHog with instance-based API.
-  # Returns PostHog client or nil if API key not configured.
-  api_key = ENV['POSTHOG_API_KEY']
+  # Returns PostHog client or nil if project token not configured.
+  project_token = ENV['POSTHOG_PROJECT_TOKEN']
 
-  unless api_key
-    puts 'WARNING: PostHog not configured (POSTHOG_API_KEY not set)'
+  unless project_token
+    puts 'WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)'
     puts '         App will work but analytics won\'t be tracked'
     return nil
   end
 
   PostHog::Client.new(
-    api_key: api_key,
+    api_key: project_token,
     host: ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com'),
     on_error: proc { |status, msg| puts "PostHog error: #{status} - #{msg}" }
   )

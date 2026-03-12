@@ -28,7 +28,7 @@ The PostHog configuration is stored in `local.properties` (this file is gitignor
 
 ```properties
 # PostHog configuration
-posthog.apiKey=your_posthog_project_api_key
+posthog.apiKey=your_posthog_project_token
 posthog.host=https://us.i.posthog.com
 ```
 
@@ -37,13 +37,13 @@ Alternatively, you can configure PostHog in your `build.gradle` file:
 ```gradle
 android {
     defaultConfig {
-        buildConfigField "String", "POSTHOG_API_KEY", "\"your_posthog_project_api_key\""
+        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"your_posthog_project_token\""
         buildConfigField "String", "POSTHOG_HOST", "\"https://us.i.posthog.com\""
     }
 }
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Build and Run
 
@@ -89,7 +89,7 @@ class BurritoApplication : Application() {
         super.onCreate()
         
         val posthogConfig = PostHogConfig(
-            apiKey = BuildConfig.POSTHOG_API_KEY,
+            apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
             host = BuildConfig.POSTHOG_HOST
         ).apply {
             // Enable session replay
@@ -185,7 +185,7 @@ PostHog automatically captures uncaught exceptions when configured:
 
 ```kotlin
 val posthogConfig = PostHogConfig(
-    apiKey = BuildConfig.POSTHOG_API_KEY,
+    apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
     host = BuildConfig.POSTHOG_HOST
 ).apply {
     // Automatic exception capture is enabled by default
@@ -229,7 +229,7 @@ Session replay is enabled in the PostHog configuration:
 
 ```kotlin
 val posthogConfig = PostHogConfig(
-    apiKey = BuildConfig.POSTHOG_API_KEY,
+    apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
     host = BuildConfig.POSTHOG_HOST
 ).apply {
     sessionReplay = true
@@ -259,7 +259,7 @@ The instance is available throughout your application after initialization.
 android {
     defaultConfig {
         // PostHog configuration
-        buildConfigField "String", "POSTHOG_API_KEY", "\"${project.findProperty("posthog.apiKey") ?: ""}\""
+        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${project.findProperty("posthog.apiKey") ?: ""}\""
         buildConfigField "String", "POSTHOG_HOST", "\"${project.findProperty("posthog.host") ?: "https://us.i.posthog.com"}\""
     }
 }
@@ -282,7 +282,7 @@ localProperties.load(new FileInputStream(rootProject.file("local.properties")))
 
 android {
     defaultConfig {
-        buildConfigField "String", "POSTHOG_API_KEY", "\"${localProperties.getProperty("posthog.apiKey", "")}\""
+        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${localProperties.getProperty("posthog.apiKey", "")}\""
         buildConfigField "String", "POSTHOG_HOST", "\"${localProperties.getProperty("posthog.host", "https://us.i.posthog.com")}\""
     }
 }

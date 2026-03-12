@@ -28,7 +28,7 @@ const rootRoute = createRootRoute({
 function RootComponent() {
   return (
     <PostHogProvider
-      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY!}
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!}
       options={{
         api_host: '/ingest',
         ui_host:

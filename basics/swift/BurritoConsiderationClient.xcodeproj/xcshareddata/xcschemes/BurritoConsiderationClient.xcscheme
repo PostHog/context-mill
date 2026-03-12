@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <EnvironmentVariables>
          <EnvironmentVariable
-            key = "POSTHOG_API_KEY"
+            key = "POSTHOG_PROJECT_TOKEN"
             value = "phc_jE9kXU0depRekiuabVROlxxkIXn95NqsNO3qB4qNKtl"
             isEnabled = "YES">
          </EnvironmentVariable>

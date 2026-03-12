@@ -32,11 +32,11 @@ pnpm install
 Create a `.env` file in the project root:
 
 ```bash
-VITE_POSTHOG_KEY=your_posthog_project_api_key
+VITE_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog API key from your project settings in PostHog.
+Get your PostHog project token from your project settings in PostHog.
 
 ### 3. Run the development server
 
@@ -75,7 +75,7 @@ src/
 ```ts
 import posthog from 'posthog-js'
 
-posthog.init(import.meta.env.VITE_POSTHOG_KEY || '', {
+posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN || '', {
   api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
 })
 

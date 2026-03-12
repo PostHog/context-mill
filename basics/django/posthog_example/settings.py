@@ -19,7 +19,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # PostHog configuration
-POSTHOG_API_KEY = os.environ.get('POSTHOG_API_KEY', '<ph_project_api_key>')
+POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN', '<ph_project_token>')
 POSTHOG_HOST = os.environ.get('POSTHOG_HOST', 'https://us.i.posthog.com')
 POSTHOG_DISABLED = os.environ.get('POSTHOG_DISABLED', 'False').lower() == 'true'
 

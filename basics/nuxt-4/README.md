@@ -31,7 +31,7 @@ pnpm install
 Create a `.env` file in the root directory:
 
 ```bash
-NUXT_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 NUXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 # Optional: For source map uploads
@@ -39,7 +39,7 @@ PROJECT_ID=your_project_id
 PERSONAL_API_KEY=your_personal_api_key
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 For source map uploads, get your project ID from [PostHog environment variables](https://app.posthog.com/settings/environment#variables) and your personal API key from [PostHog user API keys](https://app.posthog.com/settings/user-api-keys) (requires `organization:read` and `error_tracking:write` scopes).
 
@@ -98,13 +98,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       posthog: {
-        publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+        publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '',
         host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
       },
     },
   },
   posthogConfig: {
-    publicKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+    publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '',
     host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
     clientConfig: {
       capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)

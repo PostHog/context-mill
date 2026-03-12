@@ -34,12 +34,12 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
 2. Set up environment:
    ```bash
    cp .env.example .env
-   # Edit .env with your PostHog API key
+   # Edit .env with your PostHog project token
    ```
 
 3. Configure PostHog in `.env`:
    ```env
-   POSTHOG_API_KEY=your_posthog_api_key
+   POSTHOG_PROJECT_TOKEN=your_posthog_project_token
    POSTHOG_HOST=https://us.i.posthog.com
    POSTHOG_DISABLED=false
    ```

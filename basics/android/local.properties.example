@@ -4,5 +4,5 @@
 sdk.dir=/path/to/your/android/sdk
 
 # PostHog configuration
-posthog.apiKey=your_posthog_api_key_here
+posthog.apiKey=your_posthog_project_token_here
 posthog.host=https://us.i.posthog.com

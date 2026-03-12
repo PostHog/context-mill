@@ -97,16 +97,16 @@ Create a `.env` file:
 cp .env.example .env
 ```
 
-Edit `.env` and add your PostHog API key:
+Edit `.env` and add your PostHog project token:
 
 ```bash
-POSTHOG_API_KEY=phc_your_api_key_here
+POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
-> **Note:** The app will still run without a PostHog API key - analytics will simply be disabled.
+> **Note:** The app will still run without a PostHog project token - analytics will simply be disabled.
 
 ### 3. Run on iOS
 
@@ -194,18 +194,18 @@ android/                     # Native Android project (Android Studio)
 
 ### PostHog client setup (config/posthog.ts)
 
-The PostHog client is configured with V4 SDK options. If no API key is provided, analytics are disabled gracefully:
+The PostHog client is configured with V4 SDK options. If no project token is provided, analytics are disabled gracefully:
 
 ```typescript
 import PostHog from 'posthog-react-native'
 import Config from 'react-native-config'
 
-const apiKey = Config.POSTHOG_API_KEY
-const isPostHogConfigured = apiKey && apiKey !== 'phc_your_api_key_here'
+const apiKey = Config.POSTHOG_PROJECT_TOKEN
+const isPostHogConfigured = apiKey && apiKey !== 'phc_your_project_token_here'
 
 export const posthog = new PostHog(apiKey || 'placeholder_key', {
   host: Config.POSTHOG_HOST || 'https://us.i.posthog.com',
-  disabled: !isPostHogConfigured,  // Disable if no API key
+  disabled: !isPostHogConfigured,  // Disable if no project token
   captureAppLifecycleEvents: true,
   debug: __DEV__,
   flushAt: 20,

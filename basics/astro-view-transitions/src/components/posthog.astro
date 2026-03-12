@@ -3,7 +3,7 @@
 // Uses is:inline to prevent Astro from processing the script
 // Includes initialization guard to prevent stack overflow with ClientRouter
 ---
-<script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_KEY, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST }}>
+<script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST }}>
   // IMPORTANT: Guard against multiple initializations during view transitions
   // Without this guard, ClientRouter's soft navigation can re-execute the inline script
   // during page transitions, causing a stack overflow error.

@@ -26,11 +26,11 @@ pnpm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_PUBLIC_POSTHOG_KEY=your_posthog_project_api_key
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Run the Development Server
 
@@ -72,7 +72,7 @@ app/
 import posthog from 'posthog-js';
 import { PostHogProvider } from '@posthog/react'
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: '2026-01-30',
   __add_tracing_headers: [ window.location.host, 'localhost' ],
@@ -106,7 +106,7 @@ The PostHog middleware creates a server-side PostHog client for each request and
 
 ```typescript
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_KEY!, {
+  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
     host: process.env.VITE_PUBLIC_POSTHOG_HOST!,
     flushAt: 1,
     flushInterval: 0,

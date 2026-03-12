@@ -25,7 +25,7 @@ class CoreConfig(AppConfig):
         import posthog
 
         # Configure PostHog with settings from Django settings
-        posthog.api_key = settings.POSTHOG_API_KEY
+        posthog.api_key = settings.POSTHOG_PROJECT_TOKEN
         posthog.host = settings.POSTHOG_HOST
 
         # Disable PostHog if configured (useful for testing)

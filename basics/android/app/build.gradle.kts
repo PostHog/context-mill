@@ -49,7 +49,7 @@ android {
     defaultConfig {
         buildConfigField(
             "String",
-            "POSTHOG_API_KEY",
+            "POSTHOG_PROJECT_TOKEN",
             "\"${localProperties.getProperty("posthog.apiKey", "")}\""
         )
         buildConfigField(

@@ -3,7 +3,7 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 // react-native-config: Load .env variables for Android builds
-// This makes Config.POSTHOG_API_KEY and Config.POSTHOG_HOST available
+// This makes Config.POSTHOG_PROJECT_TOKEN and Config.POSTHOG_HOST available
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 /**

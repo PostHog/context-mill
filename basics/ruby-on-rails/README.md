@@ -26,10 +26,10 @@ bundle install
 
 ```bash
 cp .env.example .env
-# Edit .env and add your PostHog API key
+# Edit .env and add your PostHog project token
 ```
 
-Get your PostHog API key from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 ### 3. Setup database
 
@@ -97,7 +97,7 @@ PostHog::Rails.configure do |config|
 end
 
 PostHog.init do |config|
-  config.api_key = ENV.fetch('POSTHOG_API_KEY', nil)
+  config.api_key = ENV.fetch('POSTHOG_PROJECT_TOKEN', nil)
   config.host = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
 end
 ```

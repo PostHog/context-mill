@@ -32,8 +32,8 @@ npm install
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your PostHog API key
-# POSTHOG_API_KEY=phc_your_api_key_here
+# Edit .env and add your PostHog project token
+# POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
 # POSTHOG_HOST=https://us.i.posthog.com
 ```
 

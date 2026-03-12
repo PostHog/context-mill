@@ -21,7 +21,7 @@ def create_app(config_name="default"):
 
     # Initialize PostHog
     if not app.config["POSTHOG_DISABLED"]:
-        posthog.api_key = app.config["POSTHOG_API_KEY"]
+        posthog.api_key = app.config["POSTHOG_PROJECT_TOKEN"]
         posthog.host = app.config["POSTHOG_HOST"]
         posthog.debug = app.config["DEBUG"]
 
