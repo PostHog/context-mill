@@ -143,6 +143,24 @@ function createServer() {
             return;
         }
 
+        // Serve skill menu
+        if (req.url === '/skill-menu.json') {
+            const menuPath = path.join(SKILLS_DIR, 'skill-menu.json');
+            if (!fs.existsSync(menuPath)) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('skill-menu.json not found. Run build first.');
+                return;
+            }
+            const content = fs.readFileSync(menuPath, 'utf8');
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+            });
+            res.end(content);
+            console.log(`📋 Served skill-menu.json`);
+            return;
+        }
+
         // Serve skills bundle
         if (req.url === '/skills-mcp-resources.zip' || req.url === '/') {
             serveZip(res, SKILLS_ZIP_PATH, 'skills-mcp-resources.zip');
@@ -150,7 +168,7 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not found. Available endpoints:\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
     });
 
     server.listen(PORT, () => {
