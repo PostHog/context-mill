@@ -70,23 +70,6 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
     });
 }
 
-/**
- * Generate a shell command to install a skill from its download URL.
- * This command can be run by any agent with Bash access.
- */
-function generateInstallCommand(skillId, downloadUrl) {
-    if (!/^[a-zA-Z0-9_.-]+$/.test(skillId)) {
-        throw new Error(`Invalid skill ID: ${skillId}`);
-    }
-
-    // Escape single quotes in URL for safe shell interpolation
-    const escapedUrl = downloadUrl.replace(/'/g, "'\\''");
-
-    const targetDir = `.claude/skills/posthog-${skillId}`;
-    const tempFile = `/tmp/posthog-skill-${skillId}.zip`;
-
-    return `mkdir -p ${targetDir} && curl -sL '${escapedUrl}' -o ${tempFile} && unzip -o ${tempFile} -d ${targetDir} && rm ${tempFile}`;
-}
 
 /**
  * Generate manifest with skill URIs, download URLs, and MCP resource representations
@@ -135,12 +118,11 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
             return {
                 ...base,
                 file: `${skill.id}.zip`,
-                // LEGACY: kept for old MCP servers that generate install commands themselves
                 downloadUrl,
                 resource: {
                     mimeType: 'text/plain',
-                    description: `${skill.description}. Run this command in Bash to install the skill.`,
-                    text: generateInstallCommand(skill.id, downloadUrl),
+                    description: skill.description,
+                    text: downloadUrl,
                 },
             };
         }),
@@ -245,6 +227,27 @@ async function main() {
         const manifestPath = path.join(skillsDir, 'manifest.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
         console.log(`\n  ✓ manifest.json`);
+
+        // Generate skill-menu.json: condensed list grouped by category
+        // The wizard agent filters by category to keep context small
+        const skillsByCategory = {};
+        for (const skill of skills) {
+            const cat = skill.group;
+            if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+            skillsByCategory[cat].push({
+                id: skill.id,
+                name: skill.name,
+                downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
+            });
+        }
+        const skillMenu = {
+            version: manifest.version,
+            buildVersion: manifest.buildVersion,
+            categories: skillsByCategory,
+        };
+        const skillMenuPath = path.join(skillsDir, 'skill-menu.json');
+        fs.writeFileSync(skillMenuPath, JSON.stringify(skillMenu, null, 2));
+        console.log(`  ✓ skill-menu.json (${Object.keys(skillsByCategory).length} categories, ${skills.length} skills)`);
 
         // Create bundled archive
         console.log('\nCreating bundled archive...');
