@@ -9,7 +9,7 @@ shared_docs:
   - https://posthog.com/docs/logs/best-practices.md
   - https://posthog.com/docs/logs/troubleshooting.md
   - https://posthog.com/docs/logs/link-session-replay.md
-  - https://posthog.com/docs/logs/debugging-with-mcp.md
+  - https://posthog.com/docs/logs/debug-logs-mcp.md
 variants:
   - id: nextjs
     display_name: Next.js
