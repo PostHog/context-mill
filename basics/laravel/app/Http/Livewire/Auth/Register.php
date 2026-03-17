@@ -29,8 +29,8 @@ class Register extends Component
         ]);
 
         // PostHog: Identify new user and track signup
-        $posthog->identify($user->email, $user->getPostHogProperties());
-        $posthog->capture($user->email, 'user_signed_up', [
+        $posthog->identify((string) $user->id, $user->getPostHogProperties());
+        $posthog->capture((string) $user->id, 'user_signed_up', [
             'signup_method' => 'form',
         ]);
 

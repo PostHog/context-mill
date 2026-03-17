@@ -1,11 +1,11 @@
 """API endpoints demonstrating PostHog integration patterns."""
 
-import posthog
 from flask import jsonify, request, session
 from flask_login import current_user, login_required
-from posthog import capture, identify_context, new_context
+from posthog import identify_context
 
 from app.api import api_bp
+from app.posthog_client import posthog
 
 
 @api_bp.route("/burrito/consider", methods=["POST"])
@@ -17,9 +17,9 @@ def consider_burrito():
     session["burrito_count"] = burrito_count
 
     # PostHog: Capture custom event
-    with new_context():
-        identify_context(current_user.email)
-        capture("burrito_considered", properties={"total_considerations": burrito_count})
+    with posthog.new_context():
+        identify_context(str(current_user.id))
+        posthog.capture("burrito_considered", properties={"total_considerations": burrito_count})
 
     return jsonify({"success": True, "count": burrito_count})
 
@@ -43,8 +43,8 @@ def test_error():
     except Exception as e:
         if should_capture:
             # Manually capture this specific exception in PostHog
-            with new_context():
-                identify_context(current_user.email)
+            with posthog.new_context():
+                identify_context(str(current_user.id))
                 event_id = posthog.capture_exception(e)
 
             return jsonify({

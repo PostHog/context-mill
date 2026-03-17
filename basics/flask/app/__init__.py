@@ -1,13 +1,12 @@
 """Flask application factory."""
 
-import posthog
 from flask import Flask, g, jsonify, render_template, request
 from flask_login import current_user
-from posthog import identify_context, new_context
 from werkzeug.exceptions import HTTPException
 
 from app.config import config
 from app.extensions import db, login_manager
+from app.posthog_client import posthog
 
 
 def create_app(config_name="default"):
@@ -19,12 +18,6 @@ def create_app(config_name="default"):
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Initialize PostHog
-    if not app.config["POSTHOG_DISABLED"]:
-        posthog.api_key = app.config["POSTHOG_PROJECT_TOKEN"]
-        posthog.host = app.config["POSTHOG_HOST"]
-        posthog.debug = app.config["DEBUG"]
-
     # Import models after db is initialized
     from app.models import User
 
@@ -33,8 +26,20 @@ def create_app(config_name="default"):
     def load_user(user_id):
         return User.get_by_id(user_id)
 
-    # Simple error handlers - no automatic PostHog capture
-    # Capture exceptions manually only where it makes sense (e.g., test endpoints)
+    # Error handlers with automatic PostHog exception capture
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        """Capture unhandled exceptions in PostHog for error tracking."""
+        if not isinstance(e, HTTPException):
+            posthog.capture_exception(e)
+        if isinstance(e, HTTPException) and e.code == 404:
+            if request.path.startswith('/api/'):
+                return jsonify({"error": "Not found"}), 404
+            return render_template('errors/404.html'), 404
+        if request.path.startswith('/api/'):
+            return jsonify({"error": "Internal server error"}), 500
+        return render_template('errors/500.html'), 500
+
     @app.errorhandler(404)
     def page_not_found(e):
         if request.path.startswith('/api/'):
@@ -43,6 +48,7 @@ def create_app(config_name="default"):
 
     @app.errorhandler(500)
     def internal_server_error(e):
+        posthog.capture_exception(e)
         if request.path.startswith('/api/'):
             return jsonify({"error": "Internal server error"}), 500
         return render_template('errors/500.html'), 500

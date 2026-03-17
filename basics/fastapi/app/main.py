@@ -3,7 +3,6 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import posthog
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +12,7 @@ from app.config import get_settings
 from app.database import SessionLocal, init_db
 from app.middleware import PostHogMiddleware
 from app.models import User
+from app.posthog_client import posthog
 from app.routers import api, main
 
 settings = get_settings()
@@ -25,12 +25,6 @@ templates = Jinja2Templates(directory=str(templates_dir))
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events for startup/shutdown."""
-    # Startup: Initialize PostHog
-    if not settings.posthog_disabled:
-        posthog.api_key = settings.posthog_project_token
-        posthog.host = settings.posthog_host
-        posthog.debug = settings.debug
-
     # Initialize database and seed default user
     init_db()
     db = SessionLocal()
@@ -47,9 +41,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown: Flush PostHog events
-    if not settings.posthog_disabled:
-        posthog.flush()
+    # Shutdown: Gracefully close PostHog client
+    posthog.shutdown()
 
 
 app = FastAPI(

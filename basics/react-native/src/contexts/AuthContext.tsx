@@ -54,9 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Re-identify user in PostHog on session restore
           // This ensures events are correctly attributed after app restart
           posthog.identify(storedUsername, {
-            $set: {
-              username: storedUsername,
-            },
+            $set: { username: storedUsername },
           })
         }
       }
@@ -90,15 +88,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(userData)
 
         // PostHog identify - use username as distinct ID
-        // $set updates properties every time, $set_once only sets if not already set
+        // Properties use $set (updates every time) and $set_once (only sets if not already set)
         // @see https://posthog.com/docs/libraries/react-native#identifying-users
         posthog.identify(username, {
-          $set: {
-            username: username,
-          },
-          $set_once: {
-            first_login_date: new Date().toISOString(),
-          },
+          $set: { username: username },
+          $set_once: { first_login_date: new Date().toISOString() },
         })
 
         // Capture login event with properties

@@ -6,7 +6,9 @@ Uses pure ASGI middleware instead of BaseHTTPMiddleware for better performance/b
 from http.cookies import SimpleCookie
 from typing import Callable, Optional
 
-from posthog import identify_context, new_context, tag
+from posthog import identify_context, tag
+
+from app.posthog_client import posthog
 
 from app.config import get_settings
 from app.database import SessionLocal
@@ -34,9 +36,9 @@ class PostHogMiddleware:
 
         user = self._get_user_from_scope(scope)
 
-        with new_context():
+        with posthog.new_context():
             if user:
-                identify_context(user.email)
+                identify_context(str(user.id))
                 tag("email", user.email)
                 tag("is_staff", user.is_staff)
 

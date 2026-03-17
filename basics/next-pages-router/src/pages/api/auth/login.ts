@@ -25,24 +25,30 @@ export default async function handler(
     users.set(username, user);
   }
 
-  // Capture server-side login event
+  // Extract distinct_id from PostHog cookie for proper user attribution
+  let distinctId = username;
+  const phCookieName = Object.keys(req.cookies || {}).find(
+    name => name.startsWith('ph_') && name.endsWith('_posthog')
+  );
+  if (phCookieName && req.cookies[phCookieName]) {
+    try {
+      const parsed = JSON.parse(req.cookies[phCookieName]);
+      if (parsed.distinct_id) {
+        distinctId = parsed.distinct_id;
+      }
+    } catch {}
+  }
+
+  // Capture server-side login event with person properties
   const posthog = getPostHogClient();
   posthog.capture({
-    distinctId: username,
+    distinctId,
     event: 'server_login',
     properties: {
-      username: username,
       isNewUser: isNewUser,
-      source: 'api'
-    }
-  });
-
-  // Identify user on server side
-  posthog.identify({
-    distinctId: username,
-    properties: {
-      username: username,
-      createdAt: isNewUser ? new Date().toISOString() : undefined
+      source: 'api',
+      $set: { username: username },
+      $set_once: { createdAt: new Date().toISOString() },
     }
   });
 

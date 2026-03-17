@@ -59,7 +59,8 @@ class PostHogService
             return null;
         }
 
-        $distinctId = $distinctId ?? Auth::user()?->email ?? 'anonymous';
+        $user = Auth::user();
+        $distinctId = $distinctId ?? ($user ? (string) $user->id : 'anonymous');
 
         $eventId = uniqid('error_', true);
 

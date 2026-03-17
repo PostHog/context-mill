@@ -1,12 +1,12 @@
 """Core view functions demonstrating PostHog integration patterns."""
 
-import posthog
 from flask import flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
-from posthog import capture, identify_context, new_context, tag
+from posthog import identify_context, tag
 
 from app.main import main_bp
 from app.models import User
+from app.posthog_client import posthog
 
 
 @main_bp.route("/", methods=["GET", "POST"])
@@ -24,15 +24,15 @@ def home():
             login_user(user)
 
             # PostHog: Identify user and capture login event
-            with new_context():
-                identify_context(user.email)
+            with posthog.new_context():
+                identify_context(str(user.id))
 
                 # Set person properties (PII goes in tag, not capture)
                 tag("email", user.email)
                 tag("is_staff", user.is_staff)
                 tag("date_joined", user.date_joined.isoformat())
 
-                capture("user_logged_in", properties={"login_method": "password"})
+                posthog.capture("user_logged_in", properties={"login_method": "password"})
 
             return redirect(url_for("main.dashboard"))
         else:
@@ -68,14 +68,14 @@ def signup():
             )
 
             # PostHog: Identify new user and capture signup event
-            with new_context():
-                identify_context(user.email)
+            with posthog.new_context():
+                identify_context(str(user.id))
 
                 tag("email", user.email)
                 tag("is_staff", user.is_staff)
                 tag("date_joined", user.date_joined.isoformat())
 
-                capture("user_signed_up", properties={"signup_method": "form"})
+                posthog.capture("user_signed_up", properties={"signup_method": "form"})
 
             # Log the user in
             login_user(user)
@@ -90,9 +90,9 @@ def signup():
 def logout():
     """Logout and capture event."""
     # PostHog: Capture logout event before session ends
-    with new_context():
-        identify_context(current_user.email)
-        capture("user_logged_out")
+    with posthog.new_context():
+        identify_context(str(current_user.id))
+        posthog.capture("user_logged_out")
 
     logout_user()
     return redirect(url_for("main.home"))
@@ -103,14 +103,14 @@ def logout():
 def dashboard():
     """Dashboard with feature flag demonstration."""
     # PostHog: Capture dashboard view
-    with new_context():
-        identify_context(current_user.email)
-        capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
+    with posthog.new_context():
+        identify_context(str(current_user.id))
+        posthog.capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
 
     # Check feature flag
     show_new_feature = posthog.feature_enabled(
         "new-dashboard-feature",
-        current_user.email,
+        str(current_user.id),
         person_properties={
             "email": current_user.email,
             "is_staff": current_user.is_staff,
@@ -119,7 +119,7 @@ def dashboard():
 
     # Get feature flag payload
     feature_config = posthog.get_feature_flag_payload(
-        "new-dashboard-feature", current_user.email
+        "new-dashboard-feature", str(current_user.id)
     )
 
     return render_template(
@@ -142,8 +142,8 @@ def burrito():
 def profile():
     """User profile page."""
     # PostHog: Capture profile view
-    with new_context():
-        identify_context(current_user.email)
-        capture("profile_viewed")
+    with posthog.new_context():
+        identify_context(str(current_user.id))
+        posthog.capture("profile_viewed")
 
     return render_template("profile.html")

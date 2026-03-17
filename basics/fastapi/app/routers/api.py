@@ -2,10 +2,10 @@
 
 from typing import Annotated
 
-import posthog
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import JSONResponse
-from posthog import capture
+
+from app.posthog_client import posthog
 
 from app.dependencies import RequiredUser
 
@@ -23,7 +23,7 @@ async def consider_burrito(
     safe_count = max(0, min(burrito_count, MAX_BURRITO_COUNT))
     new_count = safe_count + 1
 
-    capture("burrito_considered", properties={"total_considerations": new_count})
+    posthog.capture("burrito_considered", properties={"total_considerations": new_count})
 
     response = JSONResponse({"success": True, "count": new_count})
     response.set_cookie(
@@ -84,7 +84,7 @@ async def trigger_error(
             raise Exception(error_message)
     except Exception as e:
         posthog.capture_exception(e)
-        capture(
+        posthog.capture(
             "error_triggered",
             properties={"error_type": safe_error_type, "error_message": error_message},
         )
@@ -123,12 +123,11 @@ async def generate_activity_report(
 
     row_count = len(report_data)
 
-    capture(
+    posthog.capture(
         "report_generated",
         properties={
             "report_type": safe_report_type,
             "row_count": row_count,
-            "username": current_user.email,
         },
     )
 

@@ -19,8 +19,8 @@ class BurritoController extends Controller
         session(['burrito_count' => $burritoCount]);
 
         // PostHog: Track event
-        $posthog->identify($user->email, $user->getPostHogProperties());
-        $posthog->capture($user->email, 'burrito_considered', [
+        $posthog->identify((string) $user->id, $user->getPostHogProperties());
+        $posthog->capture((string) $user->id, 'burrito_considered', [
             'total_considerations' => $burritoCount,
         ]);
 

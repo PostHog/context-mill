@@ -25,8 +25,8 @@ class Login extends Component
             $user = Auth::user();
 
             // PostHog: Identify and track login
-            $posthog->identify($user->email, $user->getPostHogProperties());
-            $posthog->capture($user->email, 'user_logged_in', [
+            $posthog->identify((string) $user->id, $user->getPostHogProperties());
+            $posthog->capture((string) $user->id, 'user_logged_in', [
                 'login_method' => 'password',
             ]);
 

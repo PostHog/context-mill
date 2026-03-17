@@ -22,8 +22,8 @@ class BurritoTracker extends Component
 
         // PostHog: Track burrito consideration
         $user = Auth::user();
-        $posthog->identify($user->email, $user->getPostHogProperties());
-        $posthog->capture($user->email, 'burrito_considered', [
+        $posthog->identify((string) $user->id, $user->getPostHogProperties());
+        $posthog->capture((string) $user->id, 'burrito_considered', [
             'total_considerations' => $this->burritoCount,
         ]);
 

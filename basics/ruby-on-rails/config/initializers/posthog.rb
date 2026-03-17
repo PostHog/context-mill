@@ -22,7 +22,14 @@ PostHog::Rails.configure do |config|
 
   # Automatically associate errors with the current user
   config.capture_user_context = true
-  config.current_user_method = :current_user
   config.user_id_method = :posthog_distinct_id
+
+  # Detect authentication pattern: current_user helper vs Current.user
+  # Apps using Rails' CurrentAttributes pattern need a lambda instead of a symbol
+  if defined?(Current) && Current.respond_to?(:user)
+    config.current_user_method = ->(controller) { Current.user }
+  else
+    config.current_user_method = :current_user
+  end
 end
 

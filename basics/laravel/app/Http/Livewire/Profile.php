@@ -16,7 +16,7 @@ class Profile extends Component
         $user = Auth::user();
 
         // PostHog: Track profile view
-        $posthog->capture($user->email, 'profile_viewed');
+        $posthog->capture((string) $user->id, 'profile_viewed');
     }
 
     public function testErrorWithCapture(PostHogService $posthog)
@@ -28,7 +28,7 @@ class Profile extends Component
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->email);
+            $errorId = $posthog->captureException($e, (string) $user->id);
 
             $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
             $this->errorMessage = null;

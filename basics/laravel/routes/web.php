@@ -25,7 +25,7 @@ Route::middleware('auth')->group(function () {
         $user = Auth::user();
 
         // PostHog: Track logout
-        $posthog->capture($user->email, 'user_logged_out');
+        $posthog->capture((string) $user->id, 'user_logged_out');
 
         Auth::logout();
         request()->session()->invalidate();

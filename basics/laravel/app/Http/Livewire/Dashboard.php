@@ -18,21 +18,21 @@ class Dashboard extends Component
         $user = Auth::user();
 
         // PostHog: Track dashboard view
-        $posthog->capture($user->email, 'dashboard_viewed', [
+        $posthog->capture((string) $user->id, 'dashboard_viewed', [
             'is_staff' => $user->is_staff,
         ]);
 
         // Check feature flag
         $this->showNewFeature = $posthog->isFeatureEnabled(
             'new-dashboard-feature',
-            $user->email,
+            (string) $user->id,
             $user->getPostHogProperties()
         ) ?? false;
 
         // Get feature flag payload
         $this->featureConfig = $posthog->getFeatureFlagPayload(
             'new-dashboard-feature',
-            $user->email
+            (string) $user->id
         );
     }
 
@@ -45,7 +45,7 @@ class Dashboard extends Component
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->email);
+            $errorId = $posthog->captureException($e, (string) $user->id);
 
             $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
             $this->errorMessage = null;
