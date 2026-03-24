@@ -1,0 +1,49 @@
+# Marketplace configuration
+# Maps skill groups to plugin definitions and their destinations in the skills repo.
+
+target_repo: PostHog/skills
+
+# Mega-plugin containing all skills
+mega_plugin:
+  name: posthog-all
+  description: Complete set of all PostHog skills for agents and power users
+  destination: skills/posthog/all
+  keywords: [posthog, analytics, feature-flags, llm, logs, error-tracking]
+  include_skill_reminder_hook: true
+
+plugins:
+  integration:
+    name: posthog-integration
+    description: Skills for integrating PostHog analytics into your application
+    destination: skills/posthog/integration
+    keywords: [posthog, analytics, integration, tracking]
+
+  feature-flags:
+    name: posthog-feature-flags
+    description: Skills for implementing PostHog feature flags across frameworks
+    destination: skills/posthog/feature-flags
+    keywords: [posthog, feature-flags, experiments, ab-testing]
+
+  llm-analytics:
+    name: posthog-llm-analytics
+    description: Skills for monitoring LLM usage with PostHog
+    destination: skills/posthog/llm-analytics
+    keywords: [posthog, llm, ai, observability]
+
+  logs:
+    name: posthog-logs
+    description: Skills for setting up PostHog log capture
+    destination: skills/posthog/logs
+    keywords: [posthog, logs, logging, observability]
+
+  error-tracking:
+    name: posthog-error-tracking
+    description: Skills for setting up PostHog error tracking across frameworks
+    destination: skills/posthog/error-tracking
+    keywords: [posthog, error-tracking, exceptions, monitoring]
+
+  tools-and-features:
+    name: posthog-tools
+    description: Utility skills for working with PostHog (HogQL, etc.)
+    destination: skills/posthog/tools-and-features
+    keywords: [posthog, hogql, analytics, tools]

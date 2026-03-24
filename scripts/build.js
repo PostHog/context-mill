@@ -196,6 +196,7 @@ async function main() {
             tempDir,
             version: BUILD_VERSION,
             outputDir: distDir,
+            configDir,
         });
 
         fs.rmSync(tempDir, { recursive: true, force: true });
