@@ -11,7 +11,7 @@ jobs:
     name: Semgrep General
     runs-on: ubuntu-24.04
     container:
-      image: returntocorp/semgrep
+      image: semgrep/semgrep
     env:
       SEMGREP_ENABLE_VERSION_CHECK: 'false'
     steps:
