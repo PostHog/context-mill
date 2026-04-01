@@ -23,7 +23,7 @@ async def consider_burrito(
     safe_count = max(0, min(burrito_count, MAX_BURRITO_COUNT))
     new_count = safe_count + 1
 
-    posthog.capture("burrito_considered", properties={"total_considerations": new_count})
+    posthog.capture("burrito_considered", distinct_id=str(current_user.id), properties={"total_considerations": new_count})
 
     response = JSONResponse({"success": True, "count": new_count})
     response.set_cookie(
@@ -47,7 +47,7 @@ async def test_error(
         raise Exception("Test exception from critical operation")
     except Exception as e:
         if should_capture:
-            event_id = posthog.capture_exception(e)
+            event_id = posthog.capture_exception(e, distinct_id=str(current_user.id))
             return JSONResponse(
                 {
                     "error": "Operation failed",
@@ -83,9 +83,10 @@ async def trigger_error(
         else:
             raise Exception(error_message)
     except Exception as e:
-        posthog.capture_exception(e)
+        posthog.capture_exception(e, distinct_id=str(current_user.id))
         posthog.capture(
             "error_triggered",
+            distinct_id=str(current_user.id),
             properties={"error_type": safe_error_type, "error_message": error_message},
         )
 
@@ -125,6 +126,7 @@ async def generate_activity_report(
 
     posthog.capture(
         "report_generated",
+        distinct_id=str(current_user.id),
         properties={
             "report_type": safe_report_type,
             "row_count": row_count,

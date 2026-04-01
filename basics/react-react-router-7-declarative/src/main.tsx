@@ -13,7 +13,6 @@ import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  capture_exceptions: true,
   defaults: '2026-01-30',
 });
 

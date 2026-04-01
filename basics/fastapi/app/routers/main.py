@@ -136,7 +136,7 @@ async def signup(
 @router.get("/logout")
 async def logout(current_user: RequiredUser):
     """Logout and capture event."""
-    posthog.capture("user_logged_out")
+    posthog.capture("user_logged_out", distinct_id=str(current_user.id))
 
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie(key="session_token")
@@ -149,7 +149,7 @@ async def dashboard(
     current_user: RequiredUser,
 ):
     """Dashboard with feature flag demonstration."""
-    posthog.capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
+    posthog.capture("dashboard_viewed", distinct_id=str(current_user.id), properties={"is_staff": current_user.is_staff})
 
     # Check feature flag
     show_new_feature = posthog.feature_enabled(
@@ -194,7 +194,7 @@ async def burrito(
 @router.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, current_user: RequiredUser):
     """User profile page."""
-    posthog.capture("profile_viewed")
+    posthog.capture("profile_viewed", distinct_id=str(current_user.id))
 
     return templates.TemplateResponse(
         request, "profile.html", {"current_user": current_user}
@@ -214,6 +214,7 @@ async def update_profile(
     if fields_changed:
         posthog.capture(
             "profile_updated",
+            distinct_id=str(current_user.id),
             properties={
                 "fields_changed": fields_changed,
             },
