@@ -250,6 +250,20 @@ async function main() {
         fs.writeFileSync(skillMenuPath, JSON.stringify(skillMenu, null, 2));
         console.log(`  ✓ skill-menu.json (${Object.keys(skillsByCategory).length} categories, ${skills.length} skills)`);
 
+        // Write fetched docs marked as release_asset to skills dir (uploaded as release assets)
+        const releaseAssetDocs = docEntries.filter(d => d.release_asset);
+        if (releaseAssetDocs.length > 0) {
+            console.log('\nWriting release-asset docs...');
+            for (const doc of releaseAssetDocs) {
+                const content = docContents[doc.id];
+                if (content) {
+                    const filename = `${doc.id}.md`;
+                    fs.writeFileSync(path.join(skillsDir, filename), content);
+                    console.log(`  ✓ ${filename} (${content.length} chars)`);
+                }
+            }
+        }
+
         // Create bundled archive
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
