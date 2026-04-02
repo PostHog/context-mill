@@ -250,6 +250,19 @@ async function main() {
         fs.writeFileSync(skillMenuPath, JSON.stringify(skillMenu, null, 2));
         console.log(`  ✓ skill-menu.json (${Object.keys(skillsByCategory).length} categories, ${skills.length} skills)`);
 
+        // Copy standalone reference docs to skills dir (uploaded as release assets)
+        const refsDir = path.join(repoRoot, 'docs');
+        if (fs.existsSync(refsDir)) {
+            const refFiles = fs.readdirSync(refsDir).filter(f => f.endsWith('.md'));
+            if (refFiles.length > 0) {
+                console.log('\nCopying reference docs...');
+                for (const file of refFiles) {
+                    fs.copyFileSync(path.join(refsDir, file), path.join(skillsDir, file));
+                    console.log(`  ✓ ${file}`);
+                }
+            }
+        }
+
         // Create bundled archive
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');

@@ -168,6 +168,13 @@ jobs:
           # Upload skill-menu.json (used by the wizard to discover available skills)
           echo "Uploading skill-menu.json..."
           gh release upload "$RELEASE_TAG" dist/skills/skill-menu.json --clobber
+          # Upload reference docs (used by the wizard for runtime-specific overrides)
+          for file in dist/skills/*.md; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            gh release upload "$RELEASE_TAG" "$file" --clobber
+          done
 
       - name: Update latest tag
         env:
