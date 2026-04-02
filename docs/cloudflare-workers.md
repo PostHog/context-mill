@@ -10,7 +10,7 @@ Workers historically had no `process.env`, but since April 2025 (compatibility d
 |-----------|----------------------|
 | React Router 7 | `context.cloudflare.env.VAR_NAME` (in loaders, actions, middleware) |
 | SvelteKit | `platform.env.VAR_NAME` (in hooks and server routes) |
-| Nuxt | `process.env` works via `unenv` polyfill — but prefer `useRuntimeConfig(event)` (pass `event` explicitly on CF) |
+| Nuxt | `process.env` works via `unenv` polyfill — but **only inside event handlers**, not at top-level. Prefer `useRuntimeConfig(event)` (pass `event` explicitly on CF) |
 | Astro 5 | `Astro.locals.runtime.env.VAR_NAME` (in SSR pages and API routes) |
 | Astro 6+ | `import { env } from 'cloudflare:workers'` (direct import; `Astro.locals.runtime` was removed) |
 | Hono / raw Workers | `env.VAR_NAME` from the fetch handler's `env` parameter |
@@ -19,13 +19,11 @@ Define variables in `wrangler.toml` under `[vars]` (non-secret) or via `wrangler
 
 ## Node.js Compatibility
 
-`posthog-node` requires Node.js built-ins (`buffer`, `events`, `stream`, etc.). Add the compatibility flag to `wrangler.toml`:
+`posthog-node` ships a dedicated `workerd` export that avoids Node.js built-ins — it does NOT require `nodejs_compat` on its own. However, other dependencies in your project may need it. If you see missing-module errors at import time, add the compatibility flag to `wrangler.toml`:
 
 ```toml
 compatibility_flags = ["nodejs_compat"]
 ```
-
-Without this, the SDK will crash at import time with missing module errors.
 
 ## Request Lifecycle and Event Flushing
 
@@ -50,7 +48,8 @@ ctx.waitUntil(posthog.shutdown());
   - SvelteKit: `platform.ctx.waitUntil()`
   - Astro 5: `Astro.locals.runtime.ctx.waitUntil()`
   - Astro 6+: `Astro.locals.cfContext.waitUntil()`
-  - Hono / raw Workers: `ctx.executionCtx.waitUntil()` or `c.executionCtx.waitUntil()`
+  - Hono: `c.executionCtx.waitUntil()`
+  - Raw Workers: `ctx.waitUntil()` (`ctx` IS the `ExecutionContext` directly)
 - As a framework-agnostic alternative, you can `import { waitUntil } from 'cloudflare:workers'` and call it from anywhere.
 - PostHog's `captureImmediate()` method returns a Promise that can be passed directly to `waitUntil()` for single-event capture without full shutdown.
-- Create a new PostHog client per request — do NOT use a singleton. Workers may reuse globals across requests on the same isolate, but the shutdown/flush lifecycle makes per-request instantiation safer.
+- Prefer creating a new PostHog client per request. Workers may reuse globals across requests on the same isolate, but the shutdown/flush lifecycle makes per-request instantiation safer.
