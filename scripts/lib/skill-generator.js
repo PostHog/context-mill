@@ -388,13 +388,13 @@ function discoverWorkflows(promptsDir) {
         return a.order - b.order;
     });
 
-    // Link to next step within each category
+    // Link to next steps within each category (array for future parallelization)
     for (let i = 0; i < workflows.length; i++) {
         const current = workflows[i];
         const next = workflows[i + 1];
 
         if (next && next.category === current.category) {
-            current.nextFilename = `${next.category}-${next.filename}`;
+            current.nextFilenames = [`${next.category}-${next.filename}`];
         }
     }
 
@@ -404,7 +404,7 @@ function discoverWorkflows(promptsDir) {
 /**
  * Generate SKILL.md frontmatter
  */
-function generateFrontmatter(skill, version) {
+function generateFrontmatter(skill, version, workflows) {
     const frontmatter = {
         name: skill.id,
         description: skill.description,
@@ -413,6 +413,15 @@ function generateFrontmatter(skill, version) {
             version: version,
         },
     };
+
+    if (workflows.length > 0) {
+        frontmatter.workflow = workflows.map(wf => ({
+            step_id: wf.filename.replace(/\.md$/, ''),
+            reference: `${wf.category}-${wf.filename}`,
+            title: wf.title,
+            next: wf.nextFilenames ?? [],
+        }));
+    }
 
     return '---\n' + yaml.dump(frontmatter) + '---\n\n';
 }
@@ -525,10 +534,7 @@ async function generateSkill({
         for (const workflow of workflows) {
             let content = fs.readFileSync(workflow.fullPath, 'utf8');
 
-            // Append continuation message if there's a next step
-            if (workflow.nextFilename) {
-                content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
-            }
+            // Continuation links are now in SKILL.md frontmatter (workflow[].next)
 
             const filename = `${workflow.category}-${workflow.filename}`;
             fs.writeFileSync(
@@ -557,7 +563,7 @@ async function generateSkill({
     const workflowText = formatWorkflowSteps(workflows);
 
     // Build SKILL.md content
-    let skillContent = generateFrontmatter(skill, version);
+    let skillContent = generateFrontmatter(skill, version, skill.type === 'docs-only' ? [] : workflows);
 
     // Apply template substitutions
     let body = skillTemplate
