@@ -258,16 +258,22 @@ async function main() {
 
         // Generate skill-menu.json: condensed list grouped by category
         // The wizard agent filters by category to keep context small
+        // v2 base: same host, /basic-integration-v2/ path instead of /skills/
+        const v2BaseUrl = process.env.SKILLS_BASE_URL
+            ? process.env.SKILLS_BASE_URL.replace(/\/skills$/, `/${V2_WORKFLOW_CATEGORY}`)
+            : null;
+
         const skillsByCategory = {};
         for (const skill of skills) {
             const cat = skill.group;
             if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
             const downloadUrl = manifest.resources.find(r => r.id === skill.id)?.downloadUrl;
+            const downloadUrlV2 = v2BaseUrl ? `${v2BaseUrl}/${skill.id}.zip` : undefined;
             skillsByCategory[cat].push({
                 id: skill.id,
                 name: skill.name,
                 downloadUrl,
-                downloadUrlV2: downloadUrl ? downloadUrl.replace('/skills/', `/${V2_WORKFLOW_CATEGORY}/`) : undefined,
+                downloadUrlV2,
             });
         }
         const skillMenu = {
