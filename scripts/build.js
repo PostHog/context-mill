@@ -206,11 +206,10 @@ async function main() {
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
 
-            // v2
+            // v2 (separate from bundle — served independently)
             const skillDirV2 = path.join(tempDirV2, skill.id);
             if (fs.existsSync(skillDirV2)) {
                 const bufferV2 = await zipSkillToBuffer(skillDirV2);
-                skillZips[`v2/${filename}`] = bufferV2;
                 fs.writeFileSync(path.join(skillsDirV2, filename), bufferV2);
                 console.log(`  ✓ v2/${filename} (${(bufferV2.length / 1024).toFixed(1)} KB)`);
             }
