@@ -376,6 +376,7 @@ function discoverWorkflows(promptsDir) {
                 order: orderInfo?.order ?? 0,
                 title: parsed.data.title || filename,
                 description: parsed.data.description || '',
+                next: parsed.data.next || [],
                 content: parsed.content,
                 fullPath: filePath,
             });
@@ -387,16 +388,6 @@ function discoverWorkflows(promptsDir) {
         if (a.category !== b.category) return a.category.localeCompare(b.category);
         return a.order - b.order;
     });
-
-    // Link to next steps within each category (array for future parallelization)
-    for (let i = 0; i < workflows.length; i++) {
-        const current = workflows[i];
-        const next = workflows[i + 1];
-
-        if (next && next.category === current.category) {
-            current.nextFilenames = [`${next.category}-${next.filename}`];
-        }
-    }
 
     return workflows;
 }
@@ -421,7 +412,7 @@ function generateFrontmatter(skill, version, workflows) {
             step_id: wf.filename.replace(/\.md$/, ''),
             reference: `${wf.category}-${wf.filename}`,
             title: wf.title,
-            next: wf.nextFilenames ?? [],
+            next: (wf.next || []).map(f => `${wf.category}-${f}`),
         }));
     }
 
@@ -533,16 +524,19 @@ async function generateSkill({
     // Include relevant workflows (flattened with category prefix, linked to next step)
     // Skip workflows for docs-only skills
     if (skill.type !== 'docs-only') {
-        for (const workflow of workflows) {
+        for (let i = 0; i < workflows.length; i++) {
+            const workflow = workflows[i];
             let content = fs.readFileSync(workflow.fullPath, 'utf8');
 
-            // v2 categories (e.g. basic-integration-v2): no continuation links,
-            // ordering is in SKILL.md frontmatter (workflow[].next).
-            // v1 categories (e.g. basic-integration): append continuation links in body.
+            // v2 categories: next steps defined in file frontmatter, emitted in SKILL.md workflow[].
+            // v1 categories: append continuation links in body (computed from ordering).
             const isV2 = workflow.category.endsWith('-v2');
-            if (!isV2 && workflow.nextFilenames && workflow.nextFilenames.length > 0) {
-                const nextRef = workflow.nextFilenames[0];
-                content += `\n\n---\n\n**Upon completion, continue with:** [${nextRef}](${nextRef})`;
+            if (!isV2) {
+                const nextWf = workflows[i + 1];
+                if (nextWf && nextWf.category === workflow.category) {
+                    const nextRef = `${nextWf.category}-${nextWf.filename}`;
+                    content += `\n\n---\n\n**Upon completion, continue with:** [${nextRef}](${nextRef})`;
+                }
             }
 
             const filename = `${workflow.category}-${workflow.filename}`;

@@ -134,21 +134,11 @@ function serveZip(res, zipPath, filename) {
  */
 function createServer() {
     const server = http.createServer((req, res) => {
-        // Serve v2 skill ZIPs at /basic-integration-v2/{id}.zip
-        const v2Match = req.url?.match(/^\/basic-integration-v2\/(.+\.zip)$/);
-        if (v2Match) {
-            const skillFile = v2Match[1];
-            const v2Dir = path.join(DIST_DIR, 'basic-integration-v2');
-            serveZip(res, path.join(v2Dir, skillFile), `v2/${skillFile}`);
-            return;
-        }
-
-        // Serve individual skill ZIPs at /skills/{id}.zip
-        const skillMatch = req.url?.match(/^\/skills\/(.+\.zip)$/);
-        if (skillMatch) {
-            const skillFile = skillMatch[1];
-            const skillPath = path.join(SKILLS_DIR, skillFile);
-            serveZip(res, skillPath, skillFile);
+        // Serve any .zip file under dist/ (skills, basic-integration-v2, etc.)
+        const zipMatch = req.url?.match(/^\/(.+\.zip)$/);
+        if (zipMatch) {
+            const zipPath = path.join(DIST_DIR, zipMatch[1]);
+            serveZip(res, zipPath, zipMatch[1]);
             return;
         }
 

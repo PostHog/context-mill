@@ -19,6 +19,11 @@ const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
+// Workflow category names — v1 is the default (continuation links in body),
+// v2 has workflow[] frontmatter and no continuation links.
+const V1_WORKFLOW_CATEGORY = 'basic-integration';
+const V2_WORKFLOW_CATEGORY = 'basic-integration-v2';
+
 /**
  * Load URI schema configuration
  */
@@ -152,7 +157,7 @@ async function main() {
     const configDir = path.join(repoRoot, 'transformation-config');
     const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');
-    const skillsDirV2 = path.join(distDir, 'basic-integration-v2');
+    const skillsDirV2 = path.join(distDir, V2_WORKFLOW_CATEGORY);
     const tempDir = path.join(distDir, 'skills-temp');
     const tempDirV2 = path.join(distDir, 'skills-temp-v2');
     const promptsDir = path.join(repoRoot, 'llm-prompts');
@@ -168,17 +173,17 @@ async function main() {
             outputDir: tempDir,
             promptsDir,
             version: BUILD_VERSION,
-            workflowCategories: ['basic-integration'],
+            workflowCategories: [V1_WORKFLOW_CATEGORY],
         });
 
-        // Generate v2 skills (basic-integration-v2: workflow[] frontmatter, no continuation links)
+        // Generate v2 skills (workflow[] frontmatter, no continuation links)
         await generateAllSkills({
             repoRoot,
             configDir,
             outputDir: tempDirV2,
             promptsDir,
             version: BUILD_VERSION,
-            workflowCategories: ['basic-integration-v2'],
+            workflowCategories: [V2_WORKFLOW_CATEGORY],
         });
 
         // Load docs config
@@ -262,8 +267,7 @@ async function main() {
                 id: skill.id,
                 name: skill.name,
                 downloadUrl,
-                // v2 URL: served from the basic-integration-v2/ folder
-                downloadUrlV2: downloadUrl ? downloadUrl.replace('/skills/', '/basic-integration-v2/') : undefined,
+                downloadUrlV2: downloadUrl ? downloadUrl.replace('/skills/', `/${V2_WORKFLOW_CATEGORY}/`) : undefined,
             });
         }
         const skillMenu = {
