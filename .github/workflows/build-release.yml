@@ -168,6 +168,13 @@ jobs:
           # Upload skill-menu.json (used by the wizard to discover available skills)
           echo "Uploading skill-menu.json..."
           gh release upload "$RELEASE_TAG" dist/skills/skill-menu.json --clobber
+          # Upload reference docs (used by the wizard for runtime-specific overrides)
+          for file in dist/skills/*.md; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            gh release upload "$RELEASE_TAG" "$file" --clobber
+          done
 
       - name: Update latest tag
         env:
@@ -182,6 +189,58 @@ jobs:
           # Push both tags
           git push origin "$RELEASE_TAG"
           git push -f origin latest
+
+      - name: Generate skills repo token
+        id: skills_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.SKILLS_PUSH_APP_ID }}
+          private-key: ${{ secrets.SKILLS_PUSH_APP_PRIVATE_KEY }}
+          repositories: skills
+
+      - name: Push plugins to skills repo
+        env:
+          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          MANIFEST="dist/push-manifest.json"
+          TARGET_REPO=$(jq -r '.target_repo' "$MANIFEST")
+          WORK_DIR=$(mktemp -d)
+
+          echo "Cloning $TARGET_REPO..."
+          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/${TARGET_REPO}.git" "$WORK_DIR"
+
+          # Read each plugin entry from the push manifest and sync to the destination
+          jq -c '.plugins[]' "$MANIFEST" | while read -r entry; do
+            NAME=$(echo "$entry" | jq -r '.name')
+            SOURCE="dist/$(echo "$entry" | jq -r '.source')"
+            DEST="$WORK_DIR/$(echo "$entry" | jq -r '.destination')"
+
+            echo "  Syncing $NAME → $(echo "$entry" | jq -r '.destination')"
+
+            # Clear destination (preserve README.md if present)
+            if [ -d "$DEST" ]; then
+              find "$DEST" -mindepth 1 -not -name 'README.md' -not -name '.' -exec rm -rf {} + 2>/dev/null || true
+            fi
+            mkdir -p "$DEST"
+
+            # Copy plugin contents
+            cp -r "$SOURCE"/. "$DEST"/
+          done
+
+          # Commit and push
+          cd "$WORK_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to push"
+          else
+            git commit -m "Update generated plugins from context-mill v${RELEASE_VERSION}"
+            git push
+            echo "Pushed updated plugins to $TARGET_REPO"
+          fi
+          rm -rf "$WORK_DIR"
 
       - name: Build Summary
         env:

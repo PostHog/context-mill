@@ -1,0 +1,14 @@
+# Revenue analytics - docs-only skill (no example projects)
+type: docs-only
+template: description.md
+description: Set up Stripe revenue analytics with PostHog
+tags: [revenue-analytics, stripe]
+shared_docs:
+  - https://posthog.com/docs/revenue-analytics/connect-to-customers.md
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: setup
+    display_name: Stripe Revenue Analytics
+    tags: []
+    docs_urls:
+      - https://docs.stripe.com/api/metadata.md
