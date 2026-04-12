@@ -20,6 +20,8 @@ Follow these tenets for every decision:
 
 4. **Follow existing Stripe abstraction patterns.** If the codebase wraps Stripe calls behind a utility/service layer, modify that layer. Don't call the Stripe API directly from business logic just to set metadata.
 
+5. **Never refactor unrelated existing code.** The only parts of the codebase that should be changed are the ones immediately related to getting PostHog distinct_id into Stripe calls. All remaining code should be left as is regardless.
+
 ## How to find the PostHog distinct_id
 
 Before writing any code, determine what this project uses as the PostHog distinct_id:
@@ -60,6 +62,7 @@ If the project has a `checkout.session.completed` webhook handler and Stripe aut
 ### Step 3: Verify
 
 Read each modified file to verify:
+
 - No syntax errors
 - Existing code logic is preserved
 - The metadata uses the correct distinct_id value — not a fabricated property
