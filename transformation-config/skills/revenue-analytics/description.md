@@ -34,6 +34,8 @@ Before writing any code, determine what this project uses as the PostHog distinc
 
 Once you know WHAT value is the distinct_id, determine HOW to access that same value at each Stripe call site. The variable name may differ between files — trace the data flow.
 
+**Watch out!** Stripe's Checkout Sessions have a field called `client_reference_id`. This field **MAY NOT** be the same as PostHog distinct_id, so do not use it as a way to figure out what the distinc_id should be.
+
 ## What to modify
 
 ### Step 1: Add metadata to Stripe Customer creation
