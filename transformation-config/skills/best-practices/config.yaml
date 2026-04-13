@@ -1,0 +1,14 @@
+type: docs-only
+template: description.md
+tags: [best-practices]
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/new-to-posthog/getting-hogpilled.md
+  - https://posthog.com/docs/new-to-posthog/understand-posthog.md
+variants:
+  - id: best-practices
+    display_name: PostHog best practices
+    description: Framework-agnostic, distilled best practices for using PostHog
+    tags: [best-practices]
+    docs_urls: []
+
