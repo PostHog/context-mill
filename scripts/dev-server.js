@@ -177,6 +177,7 @@ function createServer() {
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log('\n💡 To use with MCP server, set environment variable:');
         console.log(`   POSTHOG_MCP_LOCAL_SKILLS_URL=http://localhost:${PORT}/skills-mcp-resources.zip`);
+        console.log(`\n📋 Skills menu:   http://localhost:${PORT}/skill-menu.json`);
     });
 }
 
