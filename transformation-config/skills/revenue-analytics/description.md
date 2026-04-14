@@ -12,7 +12,7 @@ Consult the PostHog revenue analytics documentation for the full setup guide, an
 
 Follow these tenets for every decision:
 
-1. **Never fabricate the value.** If the PostHog distinct_id is not available in the current scope, do NOT substitute another identifier (Stripe customer ID, internal user ID, org ID, etc.). A wrong value is worse than no value — it corrupts metadata and blocks correct identification downstream.
+1. **Never fabricate the value.** If the PostHog distinct_id is not available in the current scope, do NOT substitute another identifier (Stripe customer ID, internal user ID, org ID, etc.). A wrong value is worse than no value — it corrupts metadata and blocks correct identification downstream. Bring in the exact same identifier as used in the PostHog integrations.
 
 2. **Thread the value, don't invent it.** If a function needs the distinct_id but doesn't have it, add it as an optional parameter propagated from a caller that does. If no caller in the chain has it, skip that call site entirely and leave a TODO comment.
 
@@ -36,6 +36,8 @@ Once you know WHAT value is the distinct_id, determine HOW to access that same v
 
 **Watch out!** Stripe's Checkout Sessions have a field called `client_reference_id`. This field **MAY NOT** be the same as PostHog distinct_id, so do not use it as a way to figure out what the distinc_id should be.
 
+If you could not find a valid PostHog distinct_id, emit `[ABORT] Could not find a PostHog distinct_id`. The wizard middleware catches `[ABORT]` and terminates the run — you do not need to halt yourself.
+
 ## What to modify
 
 ### Step 1: Add metadata to Stripe Customer creation
@@ -45,6 +47,8 @@ For each `Customer.create` call, add `posthog_person_distinct_id` to the `metada
 - If the call already has a metadata object, ADD the `posthog_person_distinct_id` key. Do NOT overwrite existing metadata.
 - If the distinct_id is not in scope, thread it as an optional parameter (Tenet 2). If no caller has it, skip this site with a TODO.
 - Check if the codebase wraps Stripe calls behind a utility layer — if so, modify the wrapper (Tenet 4).
+
+If you could not find a valid Stripe integration, emit `[ABORT] Could not find a Stripe integration`. The wizard middleware catches `[ABORT]` and terminates the run — you do not need to halt yourself.
 
 ### Step 2: Add metadata to Stripe payment/charge objects (REQUIRED)
 
@@ -90,6 +94,12 @@ Report progress with `[STATUS]` prefixed messages:
 - Adding metadata to payment/charge objects
 - Verifying changes
 - Revenue analytics setup complete
+
+## Abort statuses
+
+Report abort states with `[ABORT]` prefixed messages:
+- Could not find PostHog distinct_id usage
+- Could not find a Stripe integration
 
 ## Framework guidelines
 
