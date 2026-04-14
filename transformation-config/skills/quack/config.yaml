@@ -1,0 +1,13 @@
+# Quack - INTERNAL TESTING ONLY - docs-only skill (no example projects)
+# This skill exists purely for internal dev testing of the skill pipeline.
+# It is NOT intended for end users or production use.
+type: docs-only
+template: description.md
+description: Add QUACK QUACK comments to your codebase (for internal dev and testing)
+tags: [quack, internal-test]
+shared_docs: []
+variants:
+  - id: quack
+    display_name: Quack Quack Duck Comments (for internal dev and testing)
+    tags: [internal-test]
+    docs_urls: []
