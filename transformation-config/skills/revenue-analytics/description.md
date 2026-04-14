@@ -12,7 +12,7 @@ Consult the PostHog revenue analytics documentation for the full setup guide, an
 
 Follow these tenets for every decision:
 
-1. **Never fabricate the value.** If the PostHog distinct_id is not available in the current scope, do NOT substitute another identifier (Stripe customer ID, internal user ID, org ID, etc.). A wrong value is worse than no value — it corrupts metadata and blocks correct identification downstream. Bring in the exact same identifier as used in the PostHog integrations.
+1. **Never fabricate the value.** If the PostHog distinct_id is not available in the current scope, do NOT substitute another identifier (Stripe customer ID, internal user ID, org ID, etc.). A wrong value is worse than no value — it corrupts metadata and blocks correct identification downstream. Bring in the exact same identifier as used in the PostHog integrations. When this is not possible, use `"TODO_POSTHOG_DISTINCT_ID"` as a string placeholder and include this in the report.
 
 2. **Thread the value, don't invent it.** If a function needs the distinct_id but doesn't have it, add it as an optional parameter propagated from a caller that does. If no caller in the chain has it, skip that call site entirely and leave a TODO comment.
 
