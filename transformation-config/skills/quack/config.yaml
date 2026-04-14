@@ -7,11 +7,7 @@ description: Add QUACK QUACK comments to your codebase (for internal dev and tes
 tags: [quack, internal-test]
 shared_docs: []
 variants:
-<<<<<<< HEAD
   - id: quack
-=======
-  - id: setup
->>>>>>> a95c1ab95faf7f8dc11154b6d39e88fb332a5917
     display_name: Quack Quack Duck Comments (for internal dev and testing)
     tags: [internal-test]
     docs_urls: []
