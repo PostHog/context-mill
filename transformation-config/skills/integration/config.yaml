@@ -55,8 +55,8 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/react.md
 
-  - id: nuxt-3.6
-    example_paths: basics/nuxt-3.6
+  - id: nuxt-3-6
+    example_paths: basics/nuxt-3-6
     display_name: Nuxt 3.6
     description: PostHog integration for Nuxt versions 3.0 to 3.6
     tags: [nuxt, javascript]
