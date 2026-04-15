@@ -83,7 +83,6 @@ Read each modified file to verify:
 - Do NOT add new packages or dependencies.
 - Do NOT invent properties or values. Use only values that already exist in the codebase.
 - Preserve all imports and error handling.
-- If you truly cannot determine the distinct_id after searching, use `"TODO_POSTHOG_DISTINCT_ID"` as a string placeholder.
 
 ## Status
 
