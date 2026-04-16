@@ -1,14 +1,14 @@
 type: docs-only
 template: description.md
+description: Framework-agnostic, distilled best practices for using PostHog
 tags: [best-practices]
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-  - https://posthog.com/docs/new-to-posthog/getting-hogpilled.md
   - https://posthog.com/docs/new-to-posthog/understand-posthog.md
+  - https://posthog.com/docs/privacy/data-collection.md
+  - https://posthog.com/docs/integrate/proxy.md
 variants:
-  - id: best-practices
+  - id: all
     display_name: PostHog best practices
-    description: Framework-agnostic, distilled best practices for using PostHog
     tags: [best-practices]
     docs_urls: []
-

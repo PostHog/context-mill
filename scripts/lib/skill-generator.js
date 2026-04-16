@@ -484,6 +484,30 @@ async function generateSkill({
         }
     }
 
+    // Copy local markdown references from a source references/ directory, if present.
+    const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
+    if (fs.existsSync(sourceReferencesDir)) {
+        const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
+            .filter(entry => entry.isFile() && entry.name.endsWith('.md'));
+
+        for (const reference of localReferences) {
+            const sourcePath = path.join(sourceReferencesDir, reference.name);
+            const content = fs.readFileSync(sourcePath, 'utf8');
+            const headingMatch = content.match(/^#\s+(.+)$/m);
+
+            fs.writeFileSync(
+                path.join(referencesDir, reference.name),
+                content,
+                'utf8'
+            );
+
+            references.push({
+                filename: reference.name,
+                description: headingMatch?.[1] || reference.name,
+            });
+        }
+    }
+
     // Helper to process a doc entry (string URL or {url, title} object)
     async function processDoc(docEntry, logPrefix = '') {
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
