@@ -90,29 +90,25 @@ See `llm-prompts/README.md` for detailed workflow conventions.
 
 ## Docs skills
 
-We also auto-generate one [Agent Skill](https://agentskills.io/specification) per section of the PostHog docs. These rebuild whenever posthog.com deploys — no manual work needed.
+We also auto-generate one [Agent Skill](https://agentskills.io/specification) per section of the PostHog docs. These ship as part of the normal build and release cycle.
 
 ### How it works
 
-The build script (`scripts/build-docs-skills.js`) fetches `posthog.com/llms.txt`, groups pages by section heading, then pulls down the raw markdown for every page. Each section becomes its own skill directory under `dist/skills/posthog-{section}/`, with a `SKILL.md` and a `references/` folder of subpages.
+The build script (`scripts/build-docs-skills.js`) parses `posthog.com/llms.txt`, groups pages by section heading, and reads the raw markdown for every page. Each section becomes its own skill directory under `dist/skills/posthog-docs-{section}/`, with a `SKILL.md` and a `references/` folder of subpages.
 
-When skill names change (new sections added, old ones removed), a GitHub Actions workflow cuts a versioned release with a ZIP per skill. A nightly cron runs as a fallback, and you can always trigger it manually.
+The script reads docs from a local directory via `--docs-dir` instead of crawling the live site. In CI, `build-release.yml` downloads a docs artifact produced by the posthog.com repo (a daily GitHub Actions artifact containing all built markdown files + `llms.txt`), extracts it, and runs the build.
 
 ### What it generates
 
-Run `pnpm run build:docs-skills` to generate locally:
-
 | Output | Description |
 |--------|-------------|
-| `dist/skills/posthog-{section}/SKILL.md` | Skill prompt + root page content |
-| `dist/skills/posthog-{section}/references/*.md` | One file per subpage |
+| `dist/skills/posthog-docs-{section}/SKILL.md` | Skill prompt + root page content |
+| `dist/skills/posthog-docs-{section}/references/*.md` | One file per subpage |
 | `dist/skills/docs-skill-menu.json` | Menu index of all generated skills |
-
-`dist/` is gitignored — only `docs-skill-menu.json` gets force-committed by the workflow as a record of each sync. The ZIPs live exclusively in GitHub Releases.
 
 ### Distribution
 
-Skills are published to GitHub Releases. The menu is always at:
+Skills are published to GitHub Releases alongside curated skills. The menu is at:
 
 ```text
 https://github.com/PostHog/context-mill/releases/latest/download/docs-skill-menu.json
@@ -121,23 +117,26 @@ https://github.com/PostHog/context-mill/releases/latest/download/docs-skill-menu
 Individual skill ZIPs follow the same pattern:
 
 ```text
-https://github.com/PostHog/context-mill/releases/latest/download/posthog-{section}.zip
+https://github.com/PostHog/context-mill/releases/latest/download/posthog-docs-{section}.zip
 ```
 
 ### Try it locally
 
 ```bash
-# Build all sections (excludes libraries, api, endpoints by default)
+# Build from a local posthog.com build output
+node scripts/build-docs-skills.js --docs-dir ~/posthog.com/public
+
+# Or fetch from the live site (no --docs-dir)
 pnpm run build:docs-skills
 
-# Or just the ones you care about
-node scripts/build-docs-skills.js feature-flags product-analytics
+# Build specific sections only
+node scripts/build-docs-skills.js --docs-dir ~/posthog.com/public feature-flags product-analytics
 
 # Test in Claude Code — copy a skill into .claude/skills/
-cp -r dist/skills/posthog-feature-flags .claude/skills/
+cp -r dist/skills/posthog-docs-feature-flags .claude/skills/
 # Claude Code picks it up immediately, no restart needed
 ```
 
 ### Why this is separate from the curated pipeline
 
-The docs skills pipeline and the curated build (`scripts/build.js`) are intentionally independent. They write to different files (`docs-skill-menu.json` vs `skill-menu.json`), cut separate releases, and run on different cadences. Curated skills change with deliberate PRs. Docs skills sync automatically with posthog.com.
+The docs skills pipeline and the curated build (`scripts/build.js`) are intentionally independent. They write to different files (`docs-skill-menu.json` vs `skill-menu.json`) and can be built separately. Curated skills change with deliberate PRs. Docs skills are auto-generated from the latest posthog.com documentation.
