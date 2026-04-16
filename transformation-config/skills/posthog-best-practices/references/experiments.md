@@ -6,6 +6,7 @@ Do not read this page unless a rule below is violated and you need further expli
 
 ## Rules
 
+- `error`: For experiment variants, use `getFeatureFlag()` or the framework equivalent such as `useFeatureFlagVariantKey()` to evaluate the variant shown to the user. Do not rely on `getAllFlags()`, `getFeatureFlags()`, or `getFeatureFlagPayload()` alone for experiment assignment, because they do not record [exposure events](https://posthog.com/docs/experiments/exposures) and those users will be excluded from experiment results.
 - `suggestion`: Only include users who can actually be affected by the change. Filter ineligible users in code **before** evaluating the experiment flag.
 - `suggestion`: Change as little as reasonably possible per experiment so outcome shifts can be attributed to the tested change.
 - `suggestion`: Remove losing code paths after the experiment concludes.
