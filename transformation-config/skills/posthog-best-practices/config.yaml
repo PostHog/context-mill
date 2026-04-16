@@ -6,7 +6,7 @@ shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
   - https://posthog.com/docs/new-to-posthog/understand-posthog.md
   - https://posthog.com/docs/privacy/data-collection.md
-  - https://posthog.com/docs/advanced/proxy
+  - https://posthog.com/docs/advanced/proxy.md
 variants:
   - id: all
     display_name: PostHog best practices
