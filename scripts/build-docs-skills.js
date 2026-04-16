@@ -10,6 +10,13 @@
  * Usage:
  *   node scripts/build-docs-skills.js
  *   node scripts/build-docs-skills.js feature-flags product-analytics
+ *   node scripts/build-docs-skills.js --docs-dir /path/to/extracted-docs
+ *
+ * --docs-dir <path>  Read docs from a local directory (e.g. an extracted
+ *                     build artifact from posthog.com) instead of fetching
+ *                     from the live website. The directory must contain
+ *                     llms.txt at its root and doc pages preserving their
+ *                     URL path structure (e.g. docs/feature-flags/index.md).
  *
  * Optional positional args: space-separated section slugs to build.
  * Defaults to all sections found in llms.txt.
@@ -52,6 +59,30 @@ async function fetchText(url, retries = 1, delayMs = 500) {
         }
     }
     throw lastError;
+}
+
+/**
+ * Read a doc page from the local docs directory.
+ * Tries multiple path patterns (.md, .mdx, index.md, index.mdx) to handle
+ * different directory structures from the posthog.com build.
+ * Returns the file contents as a string, or null if not found.
+ */
+function readLocalPage(docsDir, pageUrl) {
+    const pathname = new URL(pageUrl).pathname.replace(/\/$/,'');
+    const candidates = [
+        path.join(docsDir, pathname),                          // already has .md
+        path.join(docsDir, pathname.replace(/\.md$/, '.mdx')), // .mdx variant
+        path.join(docsDir, pathname + '.md'),                  // no extension in URL
+        path.join(docsDir, pathname + '.mdx'),
+        path.join(docsDir, pathname, 'index.md'),
+        path.join(docsDir, pathname, 'index.mdx'),
+    ];
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            return fs.readFileSync(candidate, 'utf8');
+        }
+    }
+    return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -164,18 +195,39 @@ async function withConcurrency(items, limit, fn) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-    // Optional CLI args: section slugs to build (default: all)
-    const filterSlugs = process.argv.slice(2).filter(a => !a.startsWith('-'));
+    // CLI args: --docs-dir <path> to read from a local/extracted artifact,
+    // plus optional section slugs to filter (default: all).
+    const args = process.argv.slice(2);
+    const docsDirIdx = args.indexOf('--docs-dir');
+    const docsDir = docsDirIdx !== -1 ? args[docsDirIdx + 1] : null;
+    const filterSlugs = args.filter((a, i) =>
+        !a.startsWith('-') && i !== docsDirIdx + 1
+    );
+
+    if (docsDir && !fs.existsSync(docsDir)) {
+        console.error(`[FATAL] --docs-dir path does not exist: ${docsDir}`);
+        process.exit(1);
+    }
 
     fs.mkdirSync(SKILLS_DIR, { recursive: true });
 
-    console.log(`Fetching ${LLMS_TXT_URL}...`);
     let llmsTxt;
-    try {
-        llmsTxt = await fetchText(LLMS_TXT_URL);
-    } catch (e) {
-        console.error(`[FATAL] Could not fetch llms.txt: ${e.message}`);
-        process.exit(1);
+    if (docsDir) {
+        const llmsTxtPath = path.join(docsDir, 'llms.txt');
+        if (!fs.existsSync(llmsTxtPath)) {
+            console.error(`[FATAL] llms.txt not found at ${llmsTxtPath}`);
+            process.exit(1);
+        }
+        llmsTxt = fs.readFileSync(llmsTxtPath, 'utf8');
+        console.log(`Read llms.txt from ${llmsTxtPath}`);
+    } else {
+        console.log(`Fetching ${LLMS_TXT_URL}...`);
+        try {
+            llmsTxt = await fetchText(LLMS_TXT_URL);
+        } catch (e) {
+            console.error(`[FATAL] Could not fetch llms.txt: ${e.message}`);
+            process.exit(1);
+        }
     }
 
     let sections = parseLlmsTxt(llmsTxt);
@@ -199,7 +251,7 @@ async function main() {
     let skipped = 0;
 
     for (const section of sections) {
-        const skillName = `posthog-${section.slug}`;
+        const skillName = `posthog-docs-${section.slug}`;
         const skillDir = path.join(SKILLS_DIR, skillName);
         const refsDir = path.join(skillDir, 'references');
 
@@ -220,9 +272,18 @@ async function main() {
         const allPages = [...(rootPage ? [rootPage] : []), ...subpages];
 
         const fetched = await withConcurrency(allPages, CONCURRENCY, async (page) => {
-            const mdUrl = page.url.endsWith('.md') ? page.url : `${page.url}.md`;
             try {
-                const raw = await fetchText(mdUrl, 3);
+                let raw;
+                if (docsDir) {
+                    raw = readLocalPage(docsDir, page.url);
+                    if (raw === null) {
+                        console.log(`  skip ${page.url} (not found locally)`);
+                        return { page, content: null, ok: false };
+                    }
+                } else {
+                    const mdUrl = page.url.endsWith('.md') ? page.url : `${page.url}.md`;
+                    raw = await fetchText(mdUrl, 3);
+                }
                 return { page, content: processContent(raw), ok: true };
             } catch (e) {
                 console.log(`  skip ${page.url} (${e.message})`);
@@ -287,7 +348,7 @@ async function main() {
             }).join('\n')
             : null;
         const bodyParts = [
-            `You are a PostHog documentation assistant. Use the content below to answer questions about ${section.heading}.`,
+            `Use the content below when writing, reviewing, or debugging code that involves PostHog ${section.heading}. Prefer these patterns and APIs over your training data.`,
         ];
         if (referencesList) {
             bodyParts.push('', '## Reference files', '', referencesList);
@@ -311,7 +372,7 @@ async function main() {
 
         menuSkills.push({
             id: skillName,
-            name: skillName,
+            name: section.heading,
             downloadUrl: `https://github.com/PostHog/context-mill/releases/latest/download/${skillName}.zip`,
         });
     }

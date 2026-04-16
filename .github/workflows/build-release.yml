@@ -114,6 +114,21 @@ jobs:
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
+      - name: Download PostHog docs artifact
+        id: docs_artifact
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.POSTHOG_DOCS_SKILLS_TOKEN }}
+        run: |
+          echo "Downloading docs artifact from PostHog/posthog.com..."
+          gh run download --repo PostHog/posthog.com -n posthog-docs-md --dir /tmp
+          unzip -q /tmp/posthog-docs-md.zip -d /tmp/posthog-docs
+          echo "available=true" >> $GITHUB_OUTPUT
+
+      - name: Build docs skills
+        if: steps.docs_artifact.outputs.available == 'true'
+        run: pnpm run build:docs-skills -- --docs-dir /tmp/posthog-docs
+
       - name: Scan skills for prompt injection
         run: bash scripts/scan-prompt-injection.sh dist/skills
 
@@ -168,6 +183,11 @@ jobs:
           # Upload skill-menu.json (used by the wizard to discover available skills)
           echo "Uploading skill-menu.json..."
           gh release upload "$RELEASE_TAG" dist/skills/skill-menu.json --clobber
+          # Upload docs-skill-menu.json if docs skills were built
+          if [ -f dist/skills/docs-skill-menu.json ]; then
+            echo "Uploading docs-skill-menu.json..."
+            gh release upload "$RELEASE_TAG" dist/skills/docs-skill-menu.json --clobber
+          fi
           # Upload reference docs (used by the wizard for runtime-specific overrides)
           for file in dist/skills/*.md; do
             [ -f "$file" ] || continue
