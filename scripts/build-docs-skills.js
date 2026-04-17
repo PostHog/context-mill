@@ -25,11 +25,13 @@
 const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
+const { zipSkillToBuffer } = require('./lib/zip');
 
 const LLMS_TXT_URL = 'https://posthog.com/llms.txt';
 const CATEGORY = 'posthog-docs';
 const CONCURRENCY = 10;
 const SKILLS_DIR = path.join(__dirname, '..', 'dist', 'skills');
+const TEMP_DIR = path.join(__dirname, '..', 'dist', 'docs-skills-temp');
 
 // Sections excluded by default — SDK and API reference material that is too
 // large and low signal-to-noise for skill context. Pass explicit slug args to
@@ -210,6 +212,7 @@ async function main() {
     }
 
     fs.mkdirSync(SKILLS_DIR, { recursive: true });
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
 
     let llmsTxt;
     if (docsDir) {
@@ -252,7 +255,7 @@ async function main() {
 
     for (const section of sections) {
         const skillName = `posthog-docs-${section.slug}`;
-        const skillDir = path.join(SKILLS_DIR, skillName);
+        const skillDir = path.join(TEMP_DIR, skillName);
         const refsDir = path.join(skillDir, 'references');
 
         console.log(`${skillName} (${section.pages.length} pages)`);
@@ -368,7 +371,12 @@ async function main() {
             fs.writeFileSync(path.join(refsDir, ref.filename), ref.content);
         }
 
-        console.log(`  ✓ SKILL.md + ${referenceFiles.length} references`);
+        // Zip the skill directory into a standalone .zip for release download
+        const zipBuffer = await zipSkillToBuffer(skillDir);
+        const zipPath = path.join(SKILLS_DIR, `${skillName}.zip`);
+        fs.writeFileSync(zipPath, zipBuffer);
+
+        console.log(`  ✓ SKILL.md + ${referenceFiles.length} references → ${skillName}.zip (${(zipBuffer.length / 1024).toFixed(1)} KB)`);
 
         menuSkills.push({
             id: skillName,
@@ -376,6 +384,9 @@ async function main() {
             downloadUrl: `https://github.com/PostHog/context-mill/releases/latest/download/${skillName}.zip`,
         });
     }
+
+    // Clean up temp directory (same pattern as build.js)
+    fs.rmSync(TEMP_DIR, { recursive: true, force: true });
 
     if (menuSkills.length === 0) {
         console.error('\n[FATAL] No skills generated successfully.');
