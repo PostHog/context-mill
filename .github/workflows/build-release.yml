@@ -196,7 +196,7 @@ jobs:
         with:
           app-id: ${{ secrets.SKILLS_PUSH_APP_ID }}
           private-key: ${{ secrets.SKILLS_PUSH_APP_PRIVATE_KEY }}
-          repositories: skills
+          repositories: skills,ai-plugin
 
       - name: Push plugins to skills repo
         env:
@@ -239,6 +239,42 @@ jobs:
             git commit -m "Update generated plugins from context-mill v${RELEASE_VERSION}"
             git push
             echo "Pushed updated plugins to $TARGET_REPO"
+          fi
+          rm -rf "$WORK_DIR"
+
+      - name: Push omnibus skills to ai-plugin repo
+        env:
+          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          WORK_DIR=$(mktemp -d)
+          MEGA_SKILLS="dist/marketplace/plugins/posthog-all/skills"
+
+          echo "Cloning PostHog/ai-plugin..."
+          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/PostHog/ai-plugin.git" "$WORK_DIR"
+
+          # Sync each omnibus skill, stripping the "omnibus-" prefix to match ai-plugin's layout
+          for src in "$MEGA_SKILLS"/omnibus-*; do
+            SKILL_NAME=$(basename "$src" | sed 's/^omnibus-//')
+            DEST="$WORK_DIR/skills/$SKILL_NAME"
+
+            echo "  Syncing $SKILL_NAME"
+            rm -rf "$DEST/references" "$DEST/SKILL.md"
+            mkdir -p "$DEST"
+            cp -r "$src/references" "$DEST/"
+            cp "$src/SKILL.md" "$DEST/"
+          done
+
+          cd "$WORK_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to push to PostHog/ai-plugin"
+          else
+            git commit -m "Update generated skills from context-mill v${RELEASE_VERSION}"
+            git push
+            echo "Pushed updated skills to PostHog/ai-plugin"
           fi
           rm -rf "$WORK_DIR"
 
