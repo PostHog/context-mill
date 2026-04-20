@@ -376,6 +376,7 @@ function discoverWorkflows(promptsDir) {
                 order: orderInfo?.order ?? 0,
                 title: parsed.data.title || filename,
                 description: parsed.data.description || '',
+                next: parsed.data.next || [],
                 content: parsed.content,
                 fullPath: filePath,
             });
@@ -388,23 +389,13 @@ function discoverWorkflows(promptsDir) {
         return a.order - b.order;
     });
 
-    // Link to next step within each category
-    for (let i = 0; i < workflows.length; i++) {
-        const current = workflows[i];
-        const next = workflows[i + 1];
-
-        if (next && next.category === current.category) {
-            current.nextFilename = `${next.category}-${next.filename}`;
-        }
-    }
-
     return workflows;
 }
 
 /**
  * Generate SKILL.md frontmatter
  */
-function generateFrontmatter(skill, version) {
+function generateFrontmatter(skill, version, workflows) {
     const frontmatter = {
         name: skill.id,
         description: skill.description,
@@ -413,6 +404,17 @@ function generateFrontmatter(skill, version) {
             version: version,
         },
     };
+
+    // Only emit workflow[] frontmatter for v2 categories
+    const v2Workflows = workflows.filter(wf => wf.category.endsWith('-v2'));
+    if (v2Workflows.length > 0) {
+        frontmatter.workflow = v2Workflows.map(wf => ({
+            step_id: wf.filename.replace(/\.md$/, ''),
+            reference: `${wf.category}-${wf.filename}`,
+            title: wf.title,
+            next: (wf.next || []).map(f => `${wf.category}-${f}`),
+        }));
+    }
 
     return '---\n' + yaml.dump(frontmatter) + '---\n\n';
 }
@@ -546,12 +548,19 @@ async function generateSkill({
     // Include relevant workflows (flattened with category prefix, linked to next step)
     // Skip workflows for docs-only skills
     if (skill.type !== 'docs-only') {
-        for (const workflow of workflows) {
+        for (let i = 0; i < workflows.length; i++) {
+            const workflow = workflows[i];
             let content = fs.readFileSync(workflow.fullPath, 'utf8');
 
-            // Append continuation message if there's a next step
-            if (workflow.nextFilename) {
-                content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
+            // v2 categories: next steps defined in file frontmatter, emitted in SKILL.md workflow[].
+            // v1 categories: append continuation links in body (computed from ordering).
+            const isV2 = workflow.category.endsWith('-v2');
+            if (!isV2) {
+                const nextWf = workflows[i + 1];
+                if (nextWf && nextWf.category === workflow.category) {
+                    const nextRef = `${nextWf.category}-${nextWf.filename}`;
+                    content += `\n\n---\n\n**Upon completion, continue with:** [${nextRef}](${nextRef})`;
+                }
             }
 
             const filename = `${workflow.category}-${workflow.filename}`;
@@ -581,7 +590,7 @@ async function generateSkill({
     const workflowText = formatWorkflowSteps(workflows);
 
     // Build SKILL.md content
-    let skillContent = generateFrontmatter(skill, version);
+    let skillContent = generateFrontmatter(skill, version, skill.type === 'docs-only' ? [] : workflows);
 
     // Apply template substitutions
     let body = skillTemplate
@@ -614,6 +623,7 @@ async function generateAllSkills({
     outputDir,
     promptsDir,
     version,
+    workflowCategories,
 }) {
     console.log('Loading configuration...');
 
@@ -625,9 +635,12 @@ async function generateAllSkills({
     // Expand grouped skills into flat array
     const skills = expandSkillGroups(skillsConfig, configDir);
 
-    // Discover workflows
+    // Discover workflows, optionally filtered to specific categories
     console.log('Discovering workflows...');
-    const workflows = discoverWorkflows(promptsDir);
+    let workflows = discoverWorkflows(promptsDir);
+    if (workflowCategories) {
+        workflows = workflows.filter(wf => workflowCategories.includes(wf.category));
+    }
     console.log(`  Found ${workflows.length} workflow files`);
 
     // Create output directory
