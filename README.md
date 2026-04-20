@@ -87,3 +87,56 @@ The build script automatically discovers, orders, and generates URIs for all res
 - **Version controlled**: Resources evolve with the examples
 
 See `llm-prompts/README.md` for detailed workflow conventions.
+
+## Docs skills
+
+We also auto-generate one [Agent Skill](https://agentskills.io/specification) per section of the PostHog docs. These ship as part of the normal build and release cycle.
+
+### How it works
+
+The build script (`scripts/build-docs-skills.js`) parses `posthog.com/llms.txt`, groups pages by section heading, and reads the raw markdown for every page. Each section becomes its own skill directory under `dist/skills/posthog-docs-{section}/`, with a `SKILL.md` and a `references/` folder of subpages.
+
+The script reads docs from a local directory via `--docs-dir` instead of crawling the live site. In CI, `build-release.yml` downloads a docs artifact produced by the posthog.com repo (a daily GitHub Actions artifact containing all built markdown files + `llms.txt`), extracts it, and runs the build.
+
+### What it generates
+
+| Output | Description |
+|--------|-------------|
+| `dist/skills/posthog-docs-{section}/SKILL.md` | Skill prompt + root page content |
+| `dist/skills/posthog-docs-{section}/references/*.md` | One file per subpage |
+| `dist/skills/docs-skill-menu.json` | Menu index of all generated skills |
+
+### Distribution
+
+Skills are published to GitHub Releases alongside curated skills. The menu is at:
+
+```text
+https://github.com/PostHog/context-mill/releases/latest/download/docs-skill-menu.json
+```
+
+Individual skill ZIPs follow the same pattern:
+
+```text
+https://github.com/PostHog/context-mill/releases/latest/download/posthog-docs-{section}.zip
+```
+
+### Try it locally
+
+```bash
+# Build from a local posthog.com build output
+node scripts/build-docs-skills.js --docs-dir ~/posthog.com/public
+
+# Or fetch from the live site (no --docs-dir)
+pnpm run build:docs-skills
+
+# Build specific sections only
+node scripts/build-docs-skills.js --docs-dir ~/posthog.com/public feature-flags product-analytics
+
+# Test in Claude Code — copy a skill into .claude/skills/
+cp -r dist/skills/posthog-docs-feature-flags .claude/skills/
+# Claude Code picks it up immediately, no restart needed
+```
+
+### Why this is separate from the curated pipeline
+
+The docs skills pipeline and the curated build (`scripts/build.js`) are intentionally independent. They write to different files (`docs-skill-menu.json` vs `skill-menu.json`) and can be built separately. Curated skills change with deliberate PRs. Docs skills are auto-generated from the latest posthog.com documentation.
