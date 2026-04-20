@@ -3,6 +3,9 @@
 # Skills collect all commandments matching their tags
 
 commandments:
+  javascript:
+    - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
+
   react:
     # PostHog-specific
     - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
@@ -33,6 +36,7 @@ commandments:
     - Client-side hooks may return undefined initially while flags load - handle this loading state
 
   javascript_web:
+    - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
     - Remember that source code is available in the node_modules directory
     - Check package.json for type checking or build scripts to validate changes
     - posthog-js is the JavaScript SDK package name
