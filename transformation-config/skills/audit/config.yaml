@@ -1,0 +1,12 @@
+type: docs-only
+template: description.md
+description: Audit an existing PostHog integration for correctness and best practices
+tags: [best-practices]
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/best-practices.md
+variants:
+  - id: all
+    display_name: PostHog audit
+    tags: [best-practices]
+    docs_urls: []
