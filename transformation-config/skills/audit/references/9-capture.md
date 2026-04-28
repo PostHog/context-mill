@@ -1,7 +1,5 @@
 # Step 9 — Resolve capture / flags / errors / replay / experiments checks
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 The Phase 3 entries are already seeded in `.posthog-audit-checks.json` from Step 8, with ids of the form `<file-stem>:<line>` pointing back into the best-practices skill. This step is pure scan + resolve — no new entries are added.
 
 ## Action
@@ -38,6 +36,3 @@ Run **one** scan per area — a single Grep with the right patterns, then Read t
 - Scanning experiments (if applicable)
 - Found [N] usage issues ([X] errors, [Y] warnings, [Z] suggestions)
 
----
-
-**Upon completion, continue with:** [10-report.md](10-report.md)

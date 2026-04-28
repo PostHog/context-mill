@@ -1,7 +1,5 @@
 # Step 5 — Resolve `init-correct`
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly one action: evaluate `init-correct` against the evidence already in your reasoning, then `Write` the updated ledger.
 
 **No new Reads, Greps, Globs, or Bash searches in this step.** Every rule below is evaluated against the manifests (Step 2), init-site files (Step 3), and bounded config set (Step 4).
@@ -39,6 +37,3 @@ Status to report in this phase:
 - Resolving installation checks
 - Found [N] installation issues ([X] errors, [Y] warnings, [Z] suggestions)
 
----
-
-**Upon completion, continue with:** [6-identify-seed.md](6-identify-seed.md)
