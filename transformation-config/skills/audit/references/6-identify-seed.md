@@ -1,7 +1,5 @@
 # Step 6 — Seed identification checks
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly two actions:
 
 1. `Read` the **PostHog best practices** skill's `description.md` to find which reference file covers identification (look for the file describing `identify()` / `distinct_id` / `reset()` / `group()` rules), then `Read` that file. It is the source of truth for identification rules — do not invent rules that aren't there.
@@ -31,6 +29,3 @@ When in doubt, include the entry — Step 7 will resolve N/A entries to `pass` w
 - Reading identification rules from best-practices
 - Seeding identification checks
 
----
-
-**Upon completion, continue with:** [7-identify.md](7-identify.md)

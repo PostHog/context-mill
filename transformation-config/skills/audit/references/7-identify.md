@@ -1,7 +1,5 @@
 # Step 7 — Resolve identification checks
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 The identification entries are already seeded in `.posthog-audit-checks.json` from Step 6, with ids of the form `<file-stem>:<line>` pointing back into the best-practices skill. This step is pure scan + resolve — no new entries are added.
 
 ## Action
@@ -35,6 +33,3 @@ Run targeted Greps for `posthog.identify(`, `posthog.reset(`, `posthog.group(`, 
 - Checking cross-runtime distinct_id consistency
 - Found [N] identification issues ([X] errors, [Y] warnings, [Z] suggestions)
 
----
-
-**Upon completion, continue with:** [8-capture-seed.md](8-capture-seed.md)

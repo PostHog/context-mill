@@ -1,7 +1,5 @@
 # Step 4 — Read the bounded config set
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly one action: read a fixed, short list of config files. This list is the complete remaining evidence base for the installation phase.
 
 ## TodoWrite
@@ -31,6 +29,3 @@ Status to report in this phase:
 
 - Reading bounded config set
 
----
-
-**Upon completion, continue with:** [5-resolve.md](5-resolve.md)

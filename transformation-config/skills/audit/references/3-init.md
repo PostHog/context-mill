@@ -1,7 +1,5 @@
 # Step 3 — Locate init sites
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly one action: find the PostHog init site for each runtime. No evaluation, no resolving — that happens in Step 5.
 
 ## TodoWrite
@@ -23,6 +21,3 @@ Status to report in this phase:
 
 - Locating init sites
 
----
-
-**Upon completion, continue with:** [4-config.md](4-config.md)

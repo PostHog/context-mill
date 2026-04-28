@@ -1,7 +1,5 @@
 # Step 8 — Seed capture / flags / errors / replay / experiments checks
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly two actions:
 
 1. `Read` the **PostHog best practices** skill's `description.md` to find every reference file it ships, then `Read` each one (one Read per file, no re-reads). Skip the file already read in Step 6.
@@ -33,6 +31,3 @@ When in doubt, include the entry — Step 9 will resolve N/A entries (e.g. flag 
 - Reading capture / flags / errors / replay / experiments rules from best-practices
 - Seeding capture checks
 
----
-
-**Upon completion, continue with:** [9-capture.md](9-capture.md)

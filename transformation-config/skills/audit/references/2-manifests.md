@@ -1,7 +1,5 @@
 # Step 2 — Scan manifests
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly one action: scan dependency manifests and resolve `sdk-installed` and `sdk-up-to-date`.
 
 ## TodoWrite
@@ -35,6 +33,3 @@ Status to report in this phase:
 - Scanning manifests
 - Resolved SDK install + version checks
 
----
-
-**Upon completion, continue with:** [3-init.md](3-init.md)

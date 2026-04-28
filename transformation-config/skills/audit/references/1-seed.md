@@ -1,7 +1,5 @@
 # Step 1 — Seed the ledger
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly one action: open `.posthog-audit-checks.json` at the project root with the seeded installation entries.
 
 ## TodoWrite
@@ -37,6 +35,3 @@ Status to report in this phase:
 
 - Seeding installation checks
 
----
-
-**Upon completion, continue with:** [2-manifests.md](2-manifests.md)

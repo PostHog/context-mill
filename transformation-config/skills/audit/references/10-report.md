@@ -1,7 +1,5 @@
 # Step 8 — Generate the audit report
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth.
 
 ## Action
