@@ -2,41 +2,53 @@
 
 **Read ONLY this file.** Do not read any other reference file until this one tells you to.
 
-This step has exactly one action: open `.posthog-audit-checks.json` at the project root with the seeded installation entries.
+This step has exactly two actions:
+
+1. Open the TodoWrite list.
+2. Seed the audit ledger via `mcp__wizard-tools__audit_seed_checks`.
+
+No `Read`, `Glob`, `Grep`, or `Bash` against the project before the seed call.
 
 ## TodoWrite
 
-This is the **first** TodoWrite of the run. Open the four-item list with these `content` strings verbatim, with the first task `in_progress` and the others `pending`:
+This is the **first** TodoWrite of the run. Call `TodoWrite` with `todos` set to the **array** below (not a string — pass the literal array value):
 
 ```
-[
-  { "content": "Audit installation & setup",                          "status": "in_progress", "activeForm": "Seeding audit checklist" },
-  { "content": "Audit identification logic",                          "status": "pending",     "activeForm": "Auditing identification logic" },
-  { "content": "Audit capture calls, feature flags, and error tracking", "status": "pending",  "activeForm": "Auditing capture calls" },
-  { "content": "Generate audit report",                               "status": "pending",     "activeForm": "Writing audit report" }
+todos: [
+  { content: "Setup",  status: "in_progress", activeForm: "Setting up audit" },
+  { content: "Audit",  status: "pending",     activeForm: "Running audit" },
+  { content: "Report", status: "pending",     activeForm: "Writing report" }
 ]
+```
+
+## Status
+
+Emit:
+
+```
+[STATUS] Seeding audit checklist
 ```
 
 ## Action
 
-`Write` the following to `.posthog-audit-checks.json`:
+Call `mcp__wizard-tools__audit_seed_checks` with this exact `checks` payload:
 
 ```json
 [
-  { "id": "sdk-installed",  "area": "Installation", "label": "PostHog SDK installed",     "status": "pending" },
-  { "id": "sdk-up-to-date", "area": "Installation", "label": "SDK version up to date",    "status": "pending" },
-  { "id": "init-correct",   "area": "Installation", "label": "Initialization is correct", "status": "pending" }
+  { "id": "sdk-installed",                 "area": "Installation",   "label": "PostHog SDK installed",                          "status": "pending" },
+  { "id": "sdk-up-to-date",                "area": "Installation",   "label": "SDK version up to date",                         "status": "pending" },
+  { "id": "init-correct",                  "area": "Installation",   "label": "Initialization is correct",                      "status": "pending" },
+  { "id": "identify-stable-distinct-id",   "area": "Identification", "label": "Stable distinct_id (not session UUID)",          "status": "pending" },
+  { "id": "identify-not-late",             "area": "Identification", "label": "identify() called before captures / flag evals", "status": "pending" },
+  { "id": "cross-runtime-distinct-id",     "area": "Identification", "label": "Same distinct_id across client and server",      "status": "pending" },
+  { "id": "capture-event-names-static",    "area": "Event Capture",  "label": "Event names are static strings",                 "status": "pending" },
+  { "id": "capture-anon-distinct-id",      "area": "Event Capture",  "label": "Truly anonymous events disable person processing", "status": "pending" },
+  { "id": "capture-growth-events",         "area": "Event Capture",  "label": "Signup / activation / purchase tracked",         "status": "pending" }
 ]
 ```
 
-This must be the **first project-touching tool call** of the run. No `Read`, `Glob`, `Grep`, or `Bash` against the project before this `Write`.
-
-## Status
-
-Status to report in this phase:
-
-- Seeding installation checks
+This must be the **first project-touching tool call** of the run.
 
 ---
 
-**Upon completion, continue with:** [2-manifests.md](2-manifests.md)
+**Upon completion, continue with:** [2-version.md](2-version.md)

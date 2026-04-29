@@ -1,89 +1,80 @@
 # PostHog Audit
 
-This skill audits an existing PostHog integration for correctness, identification logic, and event tracking best practices. This is a **read-only** review — do not modify any project files **except** the final audit report.
+This skill audits an existing PostHog integration for **data integrity** in event capture and identification. **Read-only** — the only file you create is the final audit report.
+
+Scope is intentionally narrow: 9 checks covering installation, identification, and event capture. Feature flags, error tracking, session replay, and experiments are **out of scope** — do not audit them.
 
 ## Workflow
 
-The audit runs as a chain of small steps. Each step's file ends with a pointer to the next — that pointer is the only way you discover what file to read.
+The audit runs as a 5-step chain. Each step file ends with a pointer to the next. The chain is split so the cheapest, highest-signal check (is the SDK installed and current?) resolves **first**, before any source-tree exploration.
 
-**Start by reading `references/1-seed.md`.** Do not Glob, ls, or find the skill directory; you don't need to enumerate the chain ahead of time. Do not re-read a step file once you've moved past it. Do not preload future steps.
+**Start by reading `references/1-seed.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
+
+`ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:TodoWrite`). Do **not** use it to browse for other tools — every tool the audit needs (`TodoWrite`, `Glob`, `Grep`, `Read`, `Write`, `Bash`, and the two `mcp__wizard-tools__audit_*` tools) is already named in this skill.
 
 ## Task list
 
-The four high-level `content` items the audit tracks (don't TodoWrite these yet — Step 1 will):
+Use TodoWrite **only** at phase boundaries. Pass the list below directly as the `todos` argument — it is an **array of objects**, not a JSON string:
 
-1. `Audit installation & setup`
-2. `Audit identification logic`
-3. `Audit capture calls, feature flags, and error tracking`
-4. `Generate audit report`
+```
+todos: [
+  { content: "Setup",  status: "in_progress", activeForm: "Setting up audit" },
+  { content: "Audit",  status: "pending",     activeForm: "Running audit" },
+  { content: "Report", status: "pending",     activeForm: "Writing report" }
+]
+```
 
-### Live activity
+Three TodoWrite calls total: open the list (Step 1), advance to `Audit` (Step 4), advance to `Report` (Step 5). **Do not call TodoWrite to update the spinner.**
 
-The wizard surfaces the in-progress task's `activeForm` as a live "Working on …" banner. **At the start of every step**, call `TodoWrite` with the full four-item list and replace the in-progress task's `activeForm` with a phrase that names the *current sub-step*, not the phase. The phase task `content` stays the same; only `activeForm` rotates.
+### Live activity — `[STATUS]`
 
-Each step's reference file gives you the exact `activeForm` string to use. The point is that the banner reads "Scanning dependency manifests" while you're in step 2 and "Locating PostHog initialization" while you're in step 3 — never the static phase label for the whole phase. Step 1 is responsible for the **first** TodoWrite of the run; do not call TodoWrite before reading `references/1-seed.md`.
+The "Working on …" banner reads from `[STATUS]` lines you emit in plain text. Whenever you start a new sub-step, write a line like:
+
+```
+[STATUS] Scanning manifests
+```
+
+The wizard intercepts these and updates the spinner. Use them freely — they are cheap. Each step file lists the exact `[STATUS]` strings to emit at each sub-step.
 
 ## Audit checks ledger
 
-The wizard renders `.posthog-audit-checks.json` at the project root as a live "Audit checks" tab. This file is the single source of truth — the final markdown report is generated from it.
+The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Up next" tab. It is owned by two MCP tools — **never `Write` this file directly**:
 
-The ledger is owned by your `Write`s. After every `Write`, the file equals exactly what you wrote: your in-memory shape **is** the canonical state, so the next ledger update is built from memory and emitted as a fresh `Write` of the whole array. There's no need to `Read` the ledger between writes.
+- `mcp__wizard-tools__audit_seed_checks({ checks })` — call once in Step 1 with the full pending checklist.
+- `mcp__wizard-tools__audit_resolve_checks({ updates })` — patch one or more checks by `id`. Each `update` is `{ id, status, file?, details? }`. Batch updates from the same step into a single call.
 
-Each phase reference file tells you which entries to seed and when to resolve them.
+Both calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Task` subagents when a step says so.
 
-Each entry must have:
+## Parallelism
 
-- `id` — for installation entries (Step 1), stable kebab-case slug (`sdk-installed`, `sdk-up-to-date`, `init-correct`). For identification and capture/flags/errors/replay/experiments entries, derived from the rule's source: `<best-practices-file-stem>:<line-number>` (e.g. `product-analytics:14`, `feature-flags:9`). This makes every entry traceable back to the rule that justified it.
-- `area` — short Title-Case label naming the PostHog product or topic the entry covers. `Installation` and `Identification` are fixed by Steps 1 and 6; for Step 8 entries, derive the `area` from the best-practices reference file's title (one `area` per file).
-- `label` — short human-readable name (≤ 60 chars).
-- `status` — exactly one of `pending`, `pass`, `error`, `warning`, `suggestion`. Start every entry as `pending` in the seed; resolve to one of the other four when you actually run the check.
-- `file` — optional `path:line` in the audited project for findings tied to a location.
+Issue independent tool calls **in a single message** whenever the step allows it — parallel `Read`s, parallel `Grep`s, or two `Task` subagents at once. The wizard pipes all of them through concurrently. The audit explicitly fans out in Steps 3 (parallel reads) and 4 (two subagents).
+
+### Check entry shape
+
+- `id` — stable kebab-case slug (provided by Step 1's seed; reuse exactly).
+- `area` — `Installation`, `Identification`, or `Event Capture`.
+- `label` — short human name.
+- `status` — `pending` | `pass` | `error` | `warning` | `suggestion`.
+- `file` — optional `path:line` for findings tied to a location.
 - `details` — optional one-line explanation.
 
-Example planned entry (before the check runs):
-
-```json
-{
-  "id": "init-location",
-  "area": "Installation",
-  "label": "Initialization location",
-  "status": "pending"
-}
-```
-
-Example resolved entry (after the check runs):
-
-```json
-{
-  "id": "init-location",
-  "area": "Installation",
-  "label": "Initialization location",
-  "status": "pass",
-  "file": "src/instrumentation-client.ts:1",
-  "details": "Top-level init in instrumentation-client.ts (Next.js 15.3+ pattern)"
-}
-```
-
-**Cleanup**: After the markdown report is written, delete `.posthog-audit-checks.json`.
+After the report is written (Step 4), delete `.posthog-audit-checks.json`.
 
 ## Severity levels
 
-Use these severity levels consistently across all findings:
-
-- `error`: Must fix. Broken functionality, security issues, or data corruption.
-- `warning`: Should fix. Incorrect patterns that may cause subtle bugs or data quality issues.
-- `suggestion`: Nice to have. Improvements that follow best practices.
+- `error`: Must fix. Broken functionality, data corruption, or security issue.
+- `warning`: Should fix. Pattern that causes subtle bugs or data-quality problems.
+- `suggestion`: Nice to have. Best-practice improvement.
 
 ## Key principles
 
 - **Read-only**: Do not edit project source files. The only file you create is the audit report.
-- **Evidence-based**: Reference specific files and line numbers for every finding.
-- **Actionable**: Every finding should include what to fix and how.
-- **Framework-aware**: Consult the PostHog docs for the project's specific framework before flagging issues.
+- **Evidence-based**: Reference specific `file:line` for every non-pass finding.
+- **Actionable**: Every finding states what to fix and how.
 
 ## Abort statuses
 
-Report abort states with `[ABORT]` prefixed messages:
+Report abort states with `[ABORT]` prefixed messages. The wizard catches these and terminates the run — do not halt yourself.
 - No PostHog SDK found
 
 ## Framework guidelines
