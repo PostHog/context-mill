@@ -2,6 +2,9 @@ type: docs-only
 template: description.md
 description: Audit an existing PostHog integration for correctness and best practices
 tags: [best-practices]
+references:
+  continuations: true
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
   - https://posthog.com/docs/product-analytics/best-practices.md

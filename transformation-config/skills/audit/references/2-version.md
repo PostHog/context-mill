@@ -1,7 +1,5 @@
 # Step 2 — SDK installed + SDK up-to-date
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step is intentionally narrow. It runs **before any other project work**. Resolve exactly two checks: `sdk-installed` and `sdk-up-to-date`. **Do not** read source code, locate init sites, look at `.env*` files, or scan for identify/capture call sites in this step — that all belongs to later steps.
 
 ## Status
@@ -56,7 +54,3 @@ Single call to `mcp__wizard-tools__audit_resolve_checks` with two updates and **
 ```
 
 Do not include `init-correct` in this call — it's resolved in Step 3.
-
----
-
-**Upon completion, continue with:** [3-init.md](3-init.md)

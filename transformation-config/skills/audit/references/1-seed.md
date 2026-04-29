@@ -1,7 +1,5 @@
 # Step 1 — Seed the ledger
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step has exactly two actions:
 
 1. Open the TodoWrite list.
@@ -48,7 +46,3 @@ Call `mcp__wizard-tools__audit_seed_checks` with this exact `checks` payload:
 ```
 
 This must be the **first project-touching tool call** of the run.
-
----
-
-**Upon completion, continue with:** [2-version.md](2-version.md)

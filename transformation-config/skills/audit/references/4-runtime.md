@@ -1,7 +1,5 @@
 # Step 4 — Identification & event capture (parallel)
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step resolves six checks split into two independent groups: **identification** (3 rules) and **event capture** (3 rules). The two groups share **no state** — run them in parallel via subagents.
 
 ## TodoWrite
@@ -93,7 +91,3 @@ Resolve all three with **one** call to mcp__wizard-tools__audit_resolve_checks. 
 
 Return when the resolve call completes. Do not write the audit report.
 ```
-
----
-
-**Upon completion of both subagents, continue with:** [5-report.md](5-report.md)

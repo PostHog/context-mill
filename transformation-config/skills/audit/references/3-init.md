@@ -1,7 +1,5 @@
 # Step 3 — Init correctness
 
-**Read ONLY this file.** Do not read any other reference file until this one tells you to.
-
 This step resolves exactly one check: `init-correct`. Manifests and SDK versions are already resolved (Step 2). Identify and capture call sites belong to Step 4 — do not scan for them here.
 
 ## Status
@@ -47,7 +45,3 @@ Single call to `mcp__wizard-tools__audit_resolve_checks` with one update:
   ]
 }
 ```
-
----
-
-**Upon completion, continue with:** [4-runtime.md](4-runtime.md)

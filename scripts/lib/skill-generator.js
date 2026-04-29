@@ -146,6 +146,7 @@ function expandSkillGroups(config, configDir) {
                 _template: template,
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
+                _references: group.references || null,
                 _group: key,
             });
         }
@@ -490,10 +491,42 @@ async function generateSkill({
         const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
             .filter(entry => entry.isFile() && entry.name.endsWith('.md'));
 
+        const refsConfig = skill._references || {};
+
+        // Build continuation map when opted in via config
+        const continuationMap = new Map();
+        if (refsConfig.continuations) {
+            const sequentialPattern = /^(\d+)-(.+)\.md$/;
+            const sequential = localReferences
+                .filter(entry => sequentialPattern.test(entry.name))
+                .sort((a, b) => {
+                    const aNum = parseInt(a.name.match(sequentialPattern)[1], 10);
+                    const bNum = parseInt(b.name.match(sequentialPattern)[1], 10);
+                    return aNum - bNum;
+                });
+
+            for (let i = 0; i < sequential.length - 1; i++) {
+                continuationMap.set(sequential[i].name, sequential[i + 1].name);
+            }
+        }
+
         for (const reference of localReferences) {
             const sourcePath = path.join(sourceReferencesDir, reference.name);
-            const content = fs.readFileSync(sourcePath, 'utf8');
+            let content = fs.readFileSync(sourcePath, 'utf8');
             const headingMatch = content.match(/^#\s+(.+)$/m);
+
+            // Inject preamble after the first heading if configured
+            if (refsConfig.preamble && headingMatch) {
+                const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
+                content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+            }
+
+            // Auto-append continuation for sequential references
+            const nextFile = continuationMap.get(reference.name);
+            if (nextFile) {
+                content = content.replace(/\n+---\n+\*\*Upon completion, continue with:\*\*\s*\[.*?\]\(.*?\)\s*$/, '');
+                content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
+            }
 
             fs.writeFileSync(
                 path.join(referencesDir, reference.name),
