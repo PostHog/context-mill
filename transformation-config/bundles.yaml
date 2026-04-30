@@ -6,6 +6,62 @@
 #
 # The MCP server reads these from the manifest and serves each bundle
 # as a synthetic git repo at /git/bundles/:name.
+#
+# The recommend_skill section defines a SKILL.md that ships with the
+# core plugin. It detects the user's stack and recommends the right
+# bundle. The build script generates {bundle_list} from the bundle
+# definitions below.
+
+recommend_skill:
+  name: recommend-posthog-skills
+  description: >
+    Detect the user's technology stack and recommend the right PostHog skill
+    bundle. Run this when the user installs the PostHog plugin, asks about
+    PostHog setup, or when you detect a project that could benefit from
+    PostHog integration.
+  allowed_tools:
+    - Bash
+    - Read
+  content: |
+    # Recommend PostHog Skills
+
+    You are helping the user install the right PostHog skills for their project.
+
+    ## Step 1: Detect the technology stack
+
+    Check the project for framework indicators:
+
+    ```bash
+    # Check for key files
+    ls package.json requirements.txt Gemfile go.mod Cargo.toml build.gradle pubspec.yaml 2>/dev/null
+
+    # If package.json exists, check dependencies
+    cat package.json 2>/dev/null | grep -E '"(next|react|react-native|expo|vue|nuxt|svelte|@sveltejs|astro|angular)"' | head -10
+
+    # If requirements.txt or setup.py exists
+    cat requirements.txt setup.py pyproject.toml 2>/dev/null | grep -iE '(django|flask|fastapi)' | head -5
+
+    # If Gemfile exists
+    cat Gemfile 2>/dev/null | grep -iE '(rails|sinatra)' | head -5
+    ```
+
+    ## Step 2: Match to a bundle
+
+    Based on what you find, recommend ONE bundle from this list:
+
+    {bundle_list}
+
+    ## Step 3: Recommend installation
+
+    Tell the user which bundle matches their stack and give them the install command:
+
+    ```
+    /plugin install posthog-{bundle-name}@posthog
+    ```
+
+    If the project uses multiple frameworks (e.g., a Next.js frontend + Python backend), recommend multiple bundles.
+
+    If no framework is detected, ask the user what they're building.
 
 bundles:
   nextjs:

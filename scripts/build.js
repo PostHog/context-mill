@@ -72,22 +72,46 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
 
 
 /**
- * Load bundle definitions from bundles.yaml
+ * Load bundle definitions and recommend skill from bundles.yaml
  */
-function loadBundles(configDir) {
+function loadBundlesConfig(configDir) {
     const bundlesPath = path.join(configDir, 'bundles.yaml');
     if (!fs.existsSync(bundlesPath)) {
-        return {};
+        return { bundles: {}, recommendSkill: null };
     }
     const content = fs.readFileSync(bundlesPath, 'utf8');
     const config = yaml.load(content);
-    return config.bundles || {};
+    const bundles = config.bundles || {};
+
+    let recommendSkill = null;
+    if (config.recommend_skill) {
+        const rs = config.recommend_skill;
+        const bundleList = Object.entries(bundles)
+            .map(([id, b]) => `- **posthog-${id}**: ${b.description} (keywords: ${b.keywords.join(', ')})`)
+            .join('\n');
+
+        const frontmatter = [
+            '---',
+            `name: ${rs.name}`,
+            `description: >`,
+            ...rs.description.trim().split('\n').map(l => `  ${l}`),
+            ...(rs.allowed_tools ? [`allowed-tools:\n${rs.allowed_tools.map(t => `  - ${t}`).join('\n')}`] : []),
+            '---',
+        ].join('\n');
+
+        recommendSkill = {
+            name: rs.name,
+            content: frontmatter + '\n\n' + rs.content.replace('{bundle_list}', bundleList),
+        };
+    }
+
+    return { bundles, recommendSkill };
 }
 
 /**
  * Generate manifest with skill URIs, download URLs, and MCP resource representations
  */
-function generateManifest(skills, uriSchema, version, guideContents = {}, bundles = {}) {
+function generateManifest(skills, uriSchema, version, guideContents = {}, bundles = {}, recommendSkill = null) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
     const docPattern = uriSchema.patterns.doc;
@@ -153,6 +177,7 @@ function generateManifest(skills, uriSchema, version, guideContents = {}, bundle
             }
             return acc;
         }, {}),
+        ...(recommendSkill ? { recommendSkill } : {}),
     };
 }
 
@@ -249,11 +274,11 @@ async function main() {
         }));
         const allResources = [...skills, ...docResources];
 
-        // Load bundle definitions
-        const bundles = loadBundles(configDir);
+        // Load bundle definitions and recommend skill
+        const { bundles, recommendSkill } = loadBundlesConfig(configDir);
 
         // Generate manifest
-        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents, bundles);
+        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents, bundles, recommendSkill);
 
         const manifestPath = path.join(skillsDir, 'manifest.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
