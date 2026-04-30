@@ -6,9 +6,11 @@ Scope is intentionally narrow in this version: 9 core checks covering installati
 
 ## Workflow
 
-The audit runs as a 5-step chain. Each step file ends with a pointer to the next. The chain is split so the cheapest, highest-signal check (is the SDK installed and current?) resolves **first**, before any source-tree exploration.
+The audit runs as a 4-step chain. Each step file ends with a pointer to the next. Follow them in the order they are written. You must resolve them in order before any source-tree exploration.
 
-**Start by reading `references/1-seed.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
+The audit ledger is already seeded with the 9 pending checks. Use `mcp__wizard-tools__audit_resolve_checks` to patch each one as you finish it.
+
+**Start by reading `references/1-version.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
 
 `ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:TodoWrite`). Do **not** use it to browse for other tools — every tool the audit needs (`TodoWrite`, `Glob`, `Grep`, `Read`, `Write`, `Bash`, and the named `mcp__wizard-tools__audit_*` tools) is already named in this skill.
 
@@ -24,7 +26,7 @@ todos: [
 ]
 ```
 
-Three TodoWrite calls total: open the list (Step 1), advance to `Audit` (Step 4), advance to `Report` (Step 5). **Do not call TodoWrite to update the spinner.**
+Three TodoWrite calls total: open the list at the start of Step 1, advance to `Audit` (Step 3), advance to `Report` (Step 4). **Do not call TodoWrite to update the spinner.**
 
 ### Live activity — `[STATUS]`
 
@@ -40,8 +42,6 @@ The wizard intercepts these and updates the spinner. Use them freely — they ar
 
 The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Audit plan" tab. It is owned by MCP tools — **never `Write` this file directly**:
 
-- `mcp__wizard-tools__audit_seed_checks({ checks })` — call once in Step 1 with the full pending checklist.
-- `mcp__wizard-tools__audit_add_checks({ checks })` — reserved for future audit extensions that append additional checks after the initial seed. Do not use it in this core-only workflow.
 - `mcp__wizard-tools__audit_resolve_checks({ updates })` — patch one or more checks by `id`. Each `update` is `{ id, status, file?, details? }`. Batch updates from the same step into a single call.
 
 All audit ledger calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Task` subagents when a step says so.
@@ -52,14 +52,14 @@ Issue independent tool calls **in a single message** whenever the step allows it
 
 ### Check entry shape
 
-- `id` — stable kebab-case slug (provided by Step 1's seed; reuse exactly).
+- `id` — stable kebab-case slug. Reuse the existing seeded ids exactly when calling `audit_resolve_checks`.
 - `area` — short group name. The current core workflow uses `Installation`, `Identification`, and `Event Capture`.
 - `label` — short human name.
 - `status` — `pending` | `pass` | `error` | `warning` | `suggestion`.
 - `file` — optional `path:line` for findings tied to a location.
 - `details` — optional one-line explanation.
 
-After the report is written (Step 5), delete `.posthog-audit-checks.json`.
+After the report is written (Step 4), delete `.posthog-audit-checks.json`.
 
 ## Severity levels
 

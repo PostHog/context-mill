@@ -1,4 +1,4 @@
-# Step 4 — Identification & event capture (parallel)
+# Step 3 — Identification & event capture (parallel)
 
 This step resolves six checks split into two independent groups: **identification** (3 rules) and **event capture** (3 rules). The two groups share **no state** — run them in parallel via subagents.
 
