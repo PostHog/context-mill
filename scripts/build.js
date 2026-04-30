@@ -72,9 +72,22 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
 
 
 /**
+ * Load bundle definitions from bundles.yaml
+ */
+function loadBundles(configDir) {
+    const bundlesPath = path.join(configDir, 'bundles.yaml');
+    if (!fs.existsSync(bundlesPath)) {
+        return {};
+    }
+    const content = fs.readFileSync(bundlesPath, 'utf8');
+    const config = yaml.load(content);
+    return config.bundles || {};
+}
+
+/**
  * Generate manifest with skill URIs, download URLs, and MCP resource representations
  */
-function generateManifest(skills, uriSchema, version, guideContents = {}) {
+function generateManifest(skills, uriSchema, version, guideContents = {}, bundles = {}) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
     const docPattern = uriSchema.patterns.doc;
@@ -126,6 +139,20 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
                 },
             };
         }),
+        bundles: Object.entries(bundles).reduce((acc, [id, bundle]) => {
+            const validSkills = bundle.skills.filter(sid =>
+                skills.some(s => s.id === sid)
+            );
+            if (validSkills.length > 0) {
+                acc[id] = {
+                    name: bundle.name,
+                    description: bundle.description,
+                    keywords: bundle.keywords || [],
+                    skills: validSkills,
+                };
+            }
+            return acc;
+        }, {}),
     };
 }
 
@@ -222,8 +249,11 @@ async function main() {
         }));
         const allResources = [...skills, ...docResources];
 
+        // Load bundle definitions
+        const bundles = loadBundles(configDir);
+
         // Generate manifest
-        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents);
+        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents, bundles);
 
         const manifestPath = path.join(skillsDir, 'manifest.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
@@ -287,6 +317,14 @@ async function main() {
                 console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
             }
         }
+        const bundleCount = Object.keys(manifest.bundles || {}).length;
+        if (bundleCount > 0) {
+            console.log(`\nBundles: ${bundleCount}`);
+            for (const [id, bundle] of Object.entries(manifest.bundles)) {
+                console.log(`  - ${id}: ${bundle.skills.length} skills`);
+            }
+        }
+
         console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
         console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
 
