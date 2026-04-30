@@ -2,7 +2,7 @@
 
 This skill audits an existing PostHog integration for **data integrity** in event capture and identification. **Read-only** — the only file you create is the final audit report.
 
-Scope is intentionally narrow: 9 checks covering installation, identification, and event capture. Feature flags, error tracking, session replay, and experiments are **out of scope** — do not audit them.
+Scope is intentionally narrow in this version: 9 core checks covering installation, identification, and event capture. Product-specific audits such as feature flags, error tracking, session replay, and experiments are deferred — do not run them or add product-specific subagents in this workflow.
 
 ## Workflow
 
@@ -10,7 +10,7 @@ The audit runs as a 5-step chain. Each step file ends with a pointer to the next
 
 **Start by reading `references/1-seed.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
 
-`ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:TodoWrite`). Do **not** use it to browse for other tools — every tool the audit needs (`TodoWrite`, `Glob`, `Grep`, `Read`, `Write`, `Bash`, and the two `mcp__wizard-tools__audit_*` tools) is already named in this skill.
+`ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:TodoWrite`). Do **not** use it to browse for other tools — every tool the audit needs (`TodoWrite`, `Glob`, `Grep`, `Read`, `Write`, `Bash`, and the named `mcp__wizard-tools__audit_*` tools) is already named in this skill.
 
 ## Task list
 
@@ -38,12 +38,13 @@ The wizard intercepts these and updates the spinner. Use them freely — they ar
 
 ## Audit checks ledger
 
-The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Up next" tab. It is owned by two MCP tools — **never `Write` this file directly**:
+The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Audit plan" tab. It is owned by MCP tools — **never `Write` this file directly**:
 
 - `mcp__wizard-tools__audit_seed_checks({ checks })` — call once in Step 1 with the full pending checklist.
+- `mcp__wizard-tools__audit_add_checks({ checks })` — reserved for future audit extensions that append additional checks after the initial seed. Do not use it in this core-only workflow.
 - `mcp__wizard-tools__audit_resolve_checks({ updates })` — patch one or more checks by `id`. Each `update` is `{ id, status, file?, details? }`. Batch updates from the same step into a single call.
 
-Both calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Task` subagents when a step says so.
+All audit ledger calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Task` subagents when a step says so.
 
 ## Parallelism
 
@@ -52,13 +53,13 @@ Issue independent tool calls **in a single message** whenever the step allows it
 ### Check entry shape
 
 - `id` — stable kebab-case slug (provided by Step 1's seed; reuse exactly).
-- `area` — `Installation`, `Identification`, or `Event Capture`.
+- `area` — short group name. The current core workflow uses `Installation`, `Identification`, and `Event Capture`.
 - `label` — short human name.
 - `status` — `pending` | `pass` | `error` | `warning` | `suggestion`.
 - `file` — optional `path:line` for findings tied to a location.
 - `details` — optional one-line explanation.
 
-After the report is written (Step 4), delete `.posthog-audit-checks.json`.
+After the report is written (Step 5), delete `.posthog-audit-checks.json`.
 
 ## Severity levels
 

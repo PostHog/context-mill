@@ -22,6 +22,8 @@ Emit:
 
 Three sections in this order: **Summary** (counts + problematic items only), **Recommended Actions** (prioritized fixes with file:line), **Full Audit** (everything checked, including passes).
 
+For **Full Audit**, group rows dynamically by each distinct `area` value in the ledger, preserving the first-seen area order from the JSON. The current core audit usually has Installation, Identification, and Event Capture, but the report must not hard-code that list.
+
 <wizard-report>
 # PostHog Audit Report
 
@@ -49,17 +51,7 @@ If there are no problematic items, write `_No issues found._`.
 
 ## Full Audit
 
-### Installation
-| Check | Status | File | Details |
-|-------|--------|------|---------|
-| [label] | [status] | [file] | [details] |
-
-### Identification
-| Check | Status | File | Details |
-|-------|--------|------|---------|
-| [label] | [status] | [file] | [details] |
-
-### Event Capture
+### [area from ledger]
 | Check | Status | File | Details |
 |-------|--------|------|---------|
 | [label] | [status] | [file] | [details] |
