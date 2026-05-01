@@ -47,6 +47,12 @@ variants:
     docs_urls:
       - https://posthog.com/docs/logs/installation/datadog.md
 
+  - id: react-native
+    display_name: React Native
+    tags: [react-native, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/react-native.md
+
   - id: other
     display_name: Other Languages
     tags: []
