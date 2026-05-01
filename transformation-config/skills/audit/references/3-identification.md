@@ -1,10 +1,11 @@
 # Step 3 — Identification
 
-This step resolves three identification checks **in parallel**, one subagent per check:
+This step resolves four identification checks **in parallel**, one subagent per check:
 
 - `identify-stable-distinct-id`
 - `identify-not-late`
 - `cross-runtime-distinct-id`
+- `identify-reset-on-logout`
 
 Each subagent owns its own grep, reads, evaluates its single rule, and emits one `audit_resolve_checks` call with one update. The ledger's mutex serializes concurrent writes — there's no race.
 
@@ -16,9 +17,9 @@ Emit before dispatching:
 [STATUS] Auditing identification
 ```
 
-## Action — dispatch three subagents in one message
+## Action — dispatch four subagents in one message
 
-Make **three `Task` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
+Make **four `Task` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `identify-users.md` reference holds PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit/references/identify-users.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/identify-users.md`. Each subagent reads it once before judging.
 
@@ -86,4 +87,26 @@ Rule:
 - Skip (`pass` with details: "single runtime"): only one runtime initializes PostHog.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-distinct-id`, including `file` (path:line of the most relevant init or capture site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
+```
+
+### Task D — `identify-reset-on-logout`
+
+`description`: `Audit identify-reset-on-logout`
+
+`prompt`:
+```
+You are an audit subagent. Resolve exactly one rule and return: identify-reset-on-logout.
+
+Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit/references/identify-users.md`).
+
+Locate logout, sign-out, and account-switching flows by issuing whatever `Grep` and `Read` calls are needed in parallel. Determine whether those flows clear PostHog state with `posthog.reset()`.
+
+Rule:
+- Logout or account-switching flows should call `posthog.reset()`. Without a reset, when user B logs in on the same device after user A, PostHog's anonymous ID is shared and the next `identify()` can merge both accounts into one person.
+- pass: every detected logout/account-switch flow calls `posthog.reset()`.
+- error: a logout/account-switch flow is missing `posthog.reset()`.
+- Skip (`pass` with details: "no logout/account-switch flow found"): no detectable logout/account-switch flow exists.
+- note: `posthog.reset(true)` is valid when a completely clean device ID reset is required.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-reset-on-logout`, including `file` (path:line of the most relevant logout or reset site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
