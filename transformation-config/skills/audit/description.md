@@ -6,7 +6,7 @@ Perform the checks described in the referenced skills and only the events refere
 
 ## Workflow
 
-The audit runs as a 4-step chain. Each step file ends with a pointer to the next. Follow them in the order they are written. You must resolve them in order before any source-tree exploration.
+The audit runs as a 5-step chain: Installation (SDK + version) → init correctness → identification → event capture → report. Each step file ends with a pointer to the next. Follow them in the order they are written. You must resolve them in order before any source-tree exploration.
 
 The audit ledger is already seeded with the 9 pending checks. Use `mcp__wizard-tools__audit_resolve_checks` to patch each one as you finish it.
 
@@ -43,7 +43,7 @@ All audit ledger calls are atomic and serialize internally — **concurrent call
 - `file` — optional `path:line` for findings tied to a location.
 - `details` — optional one-line explanation.
 
-After the report is written (Step 4), delete `.posthog-audit-checks.json`.
+After the report is written (Step 5), delete `.posthog-audit-checks.json`.
 
 ## Severity levels
 
