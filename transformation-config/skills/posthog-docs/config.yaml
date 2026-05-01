@@ -1,0 +1,16 @@
+type: docs-only
+template: description.md
+description: Authoring guidance for PostHog documentation – style, formatting, MDX components, and content-type patterns
+tags: [posthog-docs]
+shared_docs:
+  - https://posthog.com/handbook/docs-and-wizard/docs-style-guide.md
+  - https://posthog.com/handbook/docs-and-wizard/mdx-and-components.md
+  - https://posthog.com/handbook/docs-and-wizard/writing-product-docs.md
+  - https://posthog.com/handbook/docs-and-wizard/onboarding-docs.md
+  - https://posthog.com/handbook/docs-and-wizard/sdk-reference-docs.md
+  - https://posthog.com/handbook/docs-and-wizard/api-specifications.md
+variants:
+  - id: posthog-docs
+    display_name: PostHog docs authoring
+    tags: [posthog-docs]
+    docs_urls: []
