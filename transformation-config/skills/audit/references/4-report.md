@@ -2,10 +2,6 @@
 
 The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth.
 
-## TodoWrite
-
-Mark `Audit` as `completed` and `Report` as `in_progress`. After the report `Write` succeeds, mark `Report` as `completed` too.
-
 ## Status
 
 Emit:

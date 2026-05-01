@@ -12,11 +12,11 @@ Emit:
 
 ## Action
 
-If Step 1 installed an integration skill, **read its references first** to learn the canonical init location, file name, and shape for the framework. The skill lives at `.claude/skills/<integration-skill-id>/` — its `SKILL.md` and reference files are the source of truth for "what correct init looks like" for this framework. Don't guess from memory.
+Locate the project's PostHog init by issuing whatever `Grep` and `Read` calls are needed in parallel. Confirm the init exists, runs in the right runtime for the detected SDK + framework, sources its token from an env variable (not hardcoded), and (if applicable) sets an `api_host` for a reverse proxy. Also check `.env*` files to confirm the token env var is actually set.
 
-Then locate the project's actual init by issuing whatever `Grep` and `Read` calls are needed in parallel. Goal: confirm the init exists, runs in the right runtime for the framework, sources its token from an env variable, and (if applicable) sets an `api_host` for a reverse proxy. Also check `.env*` files to confirm the token env var is actually set.
+Use the detected SDK + framework from Step 1 to know what to look for: the canonical init filename, runtime, and shape vary by framework. If the host project already ships a PostHog integration skill, use that as the source of truth. Skills are typically under `.claude/skills/`; if that directory doesn't exist (some projects keep skills under `agents/skills/`, plain `skills/`, etc.), discover any candidates with one `Glob` pattern: `**/skills/**/SKILL.md`. Read the matching skill before judging.
 
-If Step 1 didn't install an integration skill (no match), use general framework knowledge — but stay conservative on `init-correct` (prefer `warning` over `error` when the framework convention is unclear).
+When no integration skill is available, rely on general framework knowledge — and stay conservative on `init-correct` (prefer `warning` over `error` when the convention is unclear).
 
 ## Resolution rules
 

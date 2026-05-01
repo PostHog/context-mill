@@ -2,10 +2,6 @@
 
 This step resolves six checks split into two independent groups: **identification** (3 rules) and **event capture** (3 rules). The two groups share **no state** — run them in parallel via subagents.
 
-## TodoWrite
-
-Mark `Setup` as `completed` and `Audit` as `in_progress`. Keep all three items in the list. Do **not** rotate any `activeForm` — use `[STATUS]` for sub-step labels instead.
-
 ## Status
 
 Emit before dispatching:
@@ -27,6 +23,8 @@ When both Task calls return, this step is done. Do not run any other tools betwe
 `prompt`:
 ```
 You are an audit subagent. Resolve three identification rules and return.
+
+Read this skill's bundled `identify-users.md` reference once for PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit/references/identify-users.md`; if that path doesn't exist (the host project may keep skills under a different root), discover it with `Glob` `**/skills/audit/references/identify-users.md`. Use it to resolve ambiguous cases instead of guessing.
 
 Run **one** Grep with this regex: `posthog\.identify\(`. Read each file that contains a hit, once. No other scans.
 
@@ -61,6 +59,8 @@ Return when the resolve call completes. Do not write the audit report — that's
 `prompt`:
 ```
 You are an audit subagent. Resolve three event capture rules and return.
+
+Read this skill's bundled `best-practices.md` reference once for PostHog's authoritative guidance on event-name shape, anonymous-event handling, and growth-event coverage. It's typically at `.claude/skills/audit/references/best-practices.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/best-practices.md`. Use it to resolve ambiguous cases instead of guessing.
 
 Run **two** Greps in parallel:
 - `posthog\.capture\(` — all capture call sites
