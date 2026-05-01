@@ -27,8 +27,8 @@ The example project demonstrates SDK usage patterns (initialization, event captu
 
 ## Identifying users
 
-Identify users during login and signup events. Refer to the SDK documentation for the correct identify pattern. If both frontend and backend code exist, pass the client-side session and distinct ID using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to maintain correlation.
+Always add `identify()` on login and signup flows. Refer to the SDK and identify documentation for the correct pattern. Never use raw emails or IP addresses as the distinct ID.
 
 ## Error tracking
 
-Add PostHog error tracking around critical user flows and API boundaries.
+Always add exception capture around critical user flows. Refer to the error tracking installation documentation for the correct pattern for this language.

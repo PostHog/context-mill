@@ -160,42 +160,46 @@ variants:
   # Language fallback skills, used when no specific framework is detected
   - id: python
     template: fallback-description.md
-    example_paths: basics/python
+    # Docs-only, no example app
     display_name: Python
     description: PostHog integration for any Python application using the Python SDK
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+      - https://posthog.com/docs/error-tracking/installation/python.md
 
   - id: javascript_node
     template: fallback-description.md
-    example_path: basics/javascript-node
+    # Docs-only, no example app
     display_name: JavaScript Node
     description: PostHog integration for server-side Node.js applications using posthog-node
     tags: [javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/node.md
       - https://posthog.com/docs/references/posthog-node.md
- 
+      - https://posthog.com/docs/error-tracking/installation/node.md
+
   - id: javascript_web
     template: fallback-description.md
-    example_path: basics/javascript-web
+    # Docs-only, no example app
     display_name: JavaScript Web
     description: PostHog integration for client-side web JavaScript applications using posthog-js
     tags: [javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
+      - https://posthog.com/docs/error-tracking/installation/web.md
 
   - id: ruby
     template: fallback-description.md
-    example_paths: basics/ruby
+    # Docs-only, no example app
     display_name: Ruby
     description: PostHog integration for any Ruby application using the Ruby SDK
     tags: [ruby]
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
+      - https://posthog.com/docs/error-tracking/installation/ruby.md
 
   - id: swift
     example_paths: basics/swift
