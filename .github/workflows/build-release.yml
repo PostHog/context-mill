@@ -114,8 +114,8 @@ jobs:
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Scan skills for prompt injection
-        run: bash scripts/scan-prompt-injection.sh dist/skills
+      - name: Scan skills with Warlock
+        run: node scripts/scan-warlock.js dist/skills
 
       - name: List build artifacts
         run: |
