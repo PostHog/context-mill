@@ -90,14 +90,22 @@ function loadBundlesConfig(configDir) {
             .map(([id, b]) => `- **posthog-${id}**: ${b.description} (keywords: ${b.keywords.join(', ')})`)
             .join('\n');
 
-        const frontmatter = [
+        const frontmatterLines = [
             '---',
             `name: ${rs.name}`,
             `description: >`,
             ...rs.description.trim().split('\n').map(l => `  ${l}`),
-            ...(rs.allowed_tools ? [`allowed-tools:\n${rs.allowed_tools.map(t => `  - ${t}`).join('\n')}`] : []),
-            '---',
-        ].join('\n');
+        ];
+        if (rs.when_to_use) {
+            frontmatterLines.push(`when_to_use: >`);
+            frontmatterLines.push(...rs.when_to_use.trim().split('\n').map(l => `  ${l}`));
+        }
+        if (rs.allowed_tools) {
+            frontmatterLines.push(`allowed-tools:`);
+            frontmatterLines.push(...rs.allowed_tools.map(t => `  - ${t}`));
+        }
+        frontmatterLines.push('---');
+        const frontmatter = frontmatterLines.join('\n');
 
         recommendSkill = {
             name: rs.name,

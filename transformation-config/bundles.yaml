@@ -15,17 +15,27 @@
 recommend_skill:
   name: recommend-posthog-skills
   description: >
-    Detect the user's technology stack and recommend the right PostHog skill
-    bundle. Run this when the user installs the PostHog plugin, asks about
-    PostHog setup, or when you detect a project that could benefit from
-    PostHog integration.
+    Recommend the right PostHog skill bundle for the user's project.
+    Use when the user wants to add analytics, event tracking, product analytics,
+    feature flags, A/B testing, experiments, error tracking, exception monitoring,
+    crash reporting, logging, observability, LLM tracing, or customer behavior
+    tracking to their application. Also use when the user mentions understanding
+    user behavior, measuring engagement, tracking conversions, monitoring errors,
+    or instrumenting their app.
+  when_to_use: >
+    The user asks about adding analytics, tracking, monitoring, or observability.
+    The user wants to understand user behavior, measure engagement, or track events.
+    The user mentions feature flags, experiments, A/B tests, or gradual rollouts.
+    The user wants error tracking, crash reporting, or exception monitoring.
+    The user asks about logging, LLM observability, or AI tracing.
+    The user says "add PostHog" or "set up PostHog" or "integrate PostHog."
   allowed_tools:
     - Bash
     - Read
   content: |
     # Recommend PostHog Skills
 
-    You are helping the user install the right PostHog skills for their project.
+    You are helping the user add analytics, feature flags, error tracking, or observability to their project using PostHog.
 
     ## Step 1: Detect the technology stack
 
