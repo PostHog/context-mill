@@ -159,6 +159,7 @@ variants:
 
   # Language fallback skills, used when no specific framework is detected
   - id: python
+    template: fallback-description.md
     example_paths: basics/python
     display_name: Python
     description: PostHog integration for any Python application using the Python SDK
@@ -168,6 +169,7 @@ variants:
       - https://posthog.com/docs/references/posthog-python.md
 
   - id: javascript_node
+    template: fallback-description.md
     example_path: basics/javascript-node
     display_name: JavaScript Node
     description: PostHog integration for server-side Node.js applications using posthog-node
@@ -177,6 +179,7 @@ variants:
       - https://posthog.com/docs/references/posthog-node.md
  
   - id: javascript_web
+    template: fallback-description.md
     example_path: basics/javascript-web
     display_name: JavaScript Web
     description: PostHog integration for client-side web JavaScript applications using posthog-js
@@ -186,6 +189,7 @@ variants:
       - https://posthog.com/docs/references/posthog-js.md
 
   - id: ruby
+    template: fallback-description.md
     example_paths: basics/ruby
     display_name: Ruby
     description: PostHog integration for any Ruby application using the Ruby SDK
