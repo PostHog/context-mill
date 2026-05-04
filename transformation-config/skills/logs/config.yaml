@@ -11,6 +11,12 @@ shared_docs:
   - https://posthog.com/docs/logs/link-session-replay.md
   - https://posthog.com/docs/logs/debug-logs-mcp.md
 variants:
+  - id: javascript
+    display_name: Web (JavaScript)
+    tags: [javascript_web, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/javascript.md
+
   - id: nextjs
     display_name: Next.js
     tags: [nextjs, javascript]
@@ -46,6 +52,12 @@ variants:
     tags: [datadog]
     docs_urls:
       - https://posthog.com/docs/logs/installation/datadog.md
+
+  - id: react-native
+    display_name: React Native
+    tags: [react-native, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/react-native.md
 
   - id: other
     display_name: Other Languages
