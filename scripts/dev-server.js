@@ -15,22 +15,22 @@
  *   pnpm run dev:local-resources (and update wrangler --var flag)
  */
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
 
 const PORT = process.env.PORT || 8765;
-const DIST_DIR = path.join(__dirname, '..', 'dist');
+const DIST_DIR = path.join(import.meta.dirname, '..', 'dist');
 const SKILLS_ZIP_PATH = path.join(DIST_DIR, 'skills-mcp-resources.zip');
 const SKILLS_DIR = path.join(DIST_DIR, 'skills');
 
 // Directories to watch for changes
 const WATCH_DIRS = [
-    path.join(__dirname, '..', 'llm-prompts'),
-    path.join(__dirname, '..', 'transformation-config'),
-    path.join(__dirname, '..', 'mcp-commands'),
-    path.join(__dirname, '..', 'basics'),
+    path.join(import.meta.dirname, '..', 'llm-prompts'),
+    path.join(import.meta.dirname, '..', 'transformation-config'),
+    path.join(import.meta.dirname, '..', 'mcp-commands'),
+    path.join(import.meta.dirname, '..', 'basics'),
 ];
 
 let isRebuilding = false;
@@ -53,7 +53,7 @@ function rebuild() {
 
     const buildProcess = spawn('npm', ['run', 'build'], {
         stdio: 'inherit',
-        cwd: path.join(__dirname, '..'),
+        cwd: path.join(import.meta.dirname, '..'),
         env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl },
         shell: true
     });
@@ -83,11 +83,11 @@ function setupWatchers() {
 
     WATCH_DIRS.forEach(dir => {
         if (!fs.existsSync(dir)) {
-            console.log(`   ⚠️  ${path.relative(path.join(__dirname, '..'), dir)} (not found, skipping)`);
+            console.log(`   ⚠️  ${path.relative(path.join(import.meta.dirname, '..'), dir)} (not found, skipping)`);
             return;
         }
 
-        console.log(`   📁 ${path.relative(path.join(__dirname, '..'), dir)}`);
+        console.log(`   📁 ${path.relative(path.join(import.meta.dirname, '..'), dir)}`);
 
         // Watch recursively
         fs.watch(dir, { recursive: true }, (eventType, filename) => {
@@ -200,7 +200,7 @@ async function main() {
     await new Promise((resolve) => {
         const buildProcess = spawn('npm', ['run', 'build'], {
             stdio: 'inherit',
-            cwd: path.join(__dirname, '..'),
+            cwd: path.join(import.meta.dirname, '..'),
             env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl },
             shell: true
         });

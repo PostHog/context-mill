@@ -35,4 +35,4 @@ const ignoreBlockPlugin = {
     },
 };
 
-module.exports = ignoreBlockPlugin;
+export default ignoreBlockPlugin;

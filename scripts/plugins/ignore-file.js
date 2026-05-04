@@ -21,4 +21,4 @@ const ignoreFilePlugin = {
     },
 };
 
-module.exports = ignoreFilePlugin;
+export default ignoreFilePlugin;
