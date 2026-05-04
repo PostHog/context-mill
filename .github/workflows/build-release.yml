@@ -39,6 +39,20 @@ jobs:
         with:
           version: latest
 
+      # TODO: Remove these two steps once @posthog/warlock is published to npm.
+      # They exist because warlock is currently installed as a private git dependency,
+      # so the CI runner needs credentials to clone it.
+      - name: Generate token for private dependencies
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_POSTHOG_WIZARD_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_APP_POSTHOG_WIZARD_CI_BOT_PRIVATE_KEY }}
+          repositories: warlock
+
+      - name: Configure git auth for private deps
+        run: git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
+
       - name: Install dependencies
         run: pnpm install
 
