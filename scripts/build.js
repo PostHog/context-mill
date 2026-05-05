@@ -19,6 +19,11 @@ const { REPO_URL } = require('./lib/constants');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
+// Workflow category names — v1 is the default (continuation links in body),
+// v2 has workflow[] frontmatter and no continuation links.
+const V1_WORKFLOW_CATEGORY = 'basic-integration';
+const V2_WORKFLOW_CATEGORY = 'basic-integration-v2';
+
 /**
  * Load URI schema configuration
  */
@@ -152,19 +157,33 @@ async function main() {
     const configDir = path.join(repoRoot, 'transformation-config');
     const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');
+    const skillsDirV2 = path.join(distDir, V2_WORKFLOW_CATEGORY);
     const tempDir = path.join(distDir, 'skills-temp');
+    const tempDirV2 = path.join(distDir, 'skills-temp-v2');
     const promptsDir = path.join(repoRoot, 'llm-prompts');
 
     try {
         fs.mkdirSync(skillsDir, { recursive: true });
+        fs.mkdirSync(skillsDirV2, { recursive: true });
 
-        // Generate skill packages via generator
+        // Generate v1 skills (basic-integration: continuation links in body, no workflow frontmatter)
         const skills = await generateAllSkills({
             repoRoot,
             configDir,
             outputDir: tempDir,
             promptsDir,
             version: BUILD_VERSION,
+            workflowCategories: [V1_WORKFLOW_CATEGORY],
+        });
+
+        // Generate v2 skills (workflow[] frontmatter, no continuation links)
+        await generateAllSkills({
+            repoRoot,
+            configDir,
+            outputDir: tempDirV2,
+            promptsDir,
+            version: BUILD_VERSION,
+            workflowCategories: [V2_WORKFLOW_CATEGORY],
         });
 
         // Load docs config
@@ -175,18 +194,25 @@ async function main() {
 
         const uriSchema = loadUriSchema(configDir);
 
-        // Create ZIP for each skill
+        // Create ZIPs — v1 into dist/skills/, v2 into dist/basic-integration-v2/
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
         for (const skill of skills) {
+            // v1
             const skillDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillDir);
             const filename = `${skill.id}.zip`;
             skillZips[filename] = buffer;
-
-            const standaloneZipPath = path.join(skillsDir, filename);
-            fs.writeFileSync(standaloneZipPath, buffer);
+            fs.writeFileSync(path.join(skillsDir, filename), buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
+
+            // v2 (separate from bundle — served independently)
+            const skillDirV2 = path.join(tempDirV2, skill.id);
+            if (fs.existsSync(skillDirV2)) {
+                const bufferV2 = await zipSkillToBuffer(skillDirV2);
+                fs.writeFileSync(path.join(skillsDirV2, filename), bufferV2);
+                console.log(`  ✓ v2/${filename} (${(bufferV2.length / 1024).toFixed(1)} KB)`);
+            }
         }
 
         // Generate marketplace plugin directories (before tempDir cleanup)
@@ -200,6 +226,7 @@ async function main() {
         });
 
         fs.rmSync(tempDir, { recursive: true, force: true });
+        fs.rmSync(tempDirV2, { recursive: true, force: true });
 
         // Fetch doc content directly (no generator, no ZIP)
         const docContents = {};
@@ -231,14 +258,22 @@ async function main() {
 
         // Generate skill-menu.json: condensed list grouped by category
         // The wizard agent filters by category to keep context small
+        // v2 base: same host, /basic-integration-v2/ path instead of /skills/
+        const v2BaseUrl = process.env.SKILLS_BASE_URL
+            ? process.env.SKILLS_BASE_URL.replace(/\/skills$/, `/${V2_WORKFLOW_CATEGORY}`)
+            : null;
+
         const skillsByCategory = {};
         for (const skill of skills) {
             const cat = skill.group;
             if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+            const downloadUrl = manifest.resources.find(r => r.id === skill.id)?.downloadUrl;
+            const downloadUrlV2 = v2BaseUrl ? `${v2BaseUrl}/${skill.id}.zip` : undefined;
             skillsByCategory[cat].push({
                 id: skill.id,
                 name: skill.name,
-                downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
+                downloadUrl,
+                downloadUrlV2,
             });
         }
         const skillMenu = {
