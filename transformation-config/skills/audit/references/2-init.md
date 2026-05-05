@@ -1,3 +1,7 @@
+---
+next_step: 3-identification.md
+---
+
 # Step 2 — Init correctness
 
 This step resolves exactly one check: `init-correct`. Manifests and SDK versions are already resolved (Step 1). Identification call sites belong to Step 3 and event-capture call sites to Step 4 — do not scan for them here.

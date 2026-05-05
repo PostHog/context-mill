@@ -486,6 +486,7 @@ async function generateSkill({
     }
 
     // Copy local markdown references from a source references/ directory, if present.
+    // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
         const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
@@ -493,38 +494,18 @@ async function generateSkill({
 
         const refsConfig = skill._references || {};
 
-        // Build continuation map when opted in via config
-        const continuationMap = new Map();
-        if (refsConfig.continuations) {
-            const sequentialPattern = /^(\d+)-(.+)\.md$/;
-            const sequential = localReferences
-                .filter(entry => sequentialPattern.test(entry.name))
-                .sort((a, b) => {
-                    const aNum = parseInt(a.name.match(sequentialPattern)[1], 10);
-                    const bNum = parseInt(b.name.match(sequentialPattern)[1], 10);
-                    return aNum - bNum;
-                });
-
-            for (let i = 0; i < sequential.length - 1; i++) {
-                continuationMap.set(sequential[i].name, sequential[i + 1].name);
-            }
-        }
-
         for (const reference of localReferences) {
             const sourcePath = path.join(sourceReferencesDir, reference.name);
-            let content = fs.readFileSync(sourcePath, 'utf8');
+            const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
+            const nextFile = parsed.data.next_step;
+            let content = parsed.content.replace(/^\n+/, '');
             const headingMatch = content.match(/^#\s+(.+)$/m);
 
-            // Inject preamble after the first heading if configured
-            if (refsConfig.preamble && headingMatch) {
-                const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
-                content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
-            }
-
-            // Auto-append continuation for sequential references
-            const nextFile = continuationMap.get(reference.name);
             if (nextFile) {
-                content = content.replace(/\n+---\n+\*\*Upon completion, continue with:\*\*\s*\[.*?\]\(.*?\)\s*$/, '');
+                if (refsConfig.preamble && headingMatch) {
+                    const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
+                    content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+                }
                 content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
             }
 

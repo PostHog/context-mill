@@ -1,3 +1,7 @@
+---
+next_step: 4-event-capture.md
+---
+
 # Step 3 — Identification
 
 This step resolves four identification checks **in parallel**, one subagent per check:

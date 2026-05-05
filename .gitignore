@@ -73,6 +73,10 @@ routeTree.gen.ts
 # Build artifacts
 dist/
 
+# Audit skill runtime ledger
+.posthog-audit-checks.json
+posthog-audit-report.md
+
 # Misc
 *.pem
 *.key

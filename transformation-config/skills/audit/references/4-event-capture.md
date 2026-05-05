@@ -1,3 +1,7 @@
+---
+next_step: 5-report.md
+---
+
 # Step 4 — Event capture
 
 This step resolves three event-capture checks **in parallel**, one subagent per check:

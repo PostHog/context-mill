@@ -1,3 +1,7 @@
+---
+next_step: 2-init.md
+---
+
 # Step 1 — SDK installed + SDK up-to-date
 
 This step is intentionally narrow. It runs **before any other project work**. Resolve exactly two checks: `sdk-installed` and `sdk-up-to-date`. **Do not** read source code, locate init sites, look at `.env*` files, or scan for identify/capture call sites in this step — that all belongs to later steps.
