@@ -111,7 +111,17 @@ The entry point. Keep it short. The real work lives in the reference chain. It m
 - Explain the skill's purpose in one or two paragraphs.
 - Tell the agent to **start by reading `references/1-<step-name>.md`** by exact path. Forbid Glob, ls, and find on the skill directory. Forbid preloading future steps.
 - Describe any cross-cutting state or conventions every step depends on. Where intermediate values live. What the final output is.
+- Declare the `[STATUS]` and `[ABORT]` conventions (see next section) so each step can use them.
 - End with `{commandments}` to inherit the framework guidelines for the skill's tags.
+
+## Status and abort lines
+
+The wizard runner reads two prefixed line patterns from the agent's output:
+
+- **`[STATUS] <message>`** updates the live "Working on…" banner. Use these often. They are cheap. Each step file should list the exact `[STATUS]` strings to emit at each sub-step (for example, `[STATUS] Scanning manifests`, `[STATUS] Writing report`).
+- **`[ABORT] <reason>`** terminates the run. The runner catches this and stops. Use it for unrecoverable preconditions (no SDK found, missing credentials, etc.). The agent does not need to halt itself after emitting `[ABORT]`.
+
+Declare both in `description.md` so every step can rely on them. Then list the specific `[STATUS]` strings (and any `[ABORT]` reasons) inline in each step file at the points they apply. Existing skills like `revenue-analytics/` and `quack/` show the shape.
 
 ## Build & verify
 
@@ -176,6 +186,16 @@ This skill walks the agent through a two-step task. First discover the target. T
 
 Each step persists its output to `<known-location>` so the next step can read it without re-opening earlier step files.
 
+## Status
+
+Report progress with `[STATUS]` prefixed messages. Each step lists the exact strings to emit.
+
+## Abort
+
+Report unrecoverable failures with `[ABORT] <reason>`. The runner terminates the run. Do not halt yourself.
+
+- No target found
+
 ## Reference files
 
 {references}
@@ -195,6 +215,8 @@ next_step: 2-emit.md
 # Step 1: Discover the target
 
 This step locates the target and writes its identifier to `<known-location>`. It does NOT format, transform, or emit the result. That belongs to step 2.
+
+Emit `[STATUS] Locating target` at the start of the search. If no target exists, emit `[ABORT] No target found` and stop.
 
 …step body, ending with a single tool call or write that produces the target identifier…
 ```
