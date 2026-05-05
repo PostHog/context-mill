@@ -33,10 +33,10 @@ The audit MUST emit `posthog-web-analytics-findings.json` at the project root wi
   "checkId": "partial_reverse_proxy",
   "severity": "warning",
   "title": "Mixed proxy configuration across hosts",
-  "affected": ["hedgebox.net", "localhost:8010"],
+  "affected": ["example.com", "go.example.com"],
   "evidence": [
-    "hedgebox.net: 385.9k pageviews, 0 proxied",
-    "localhost:8010: 1.0k pageviews, 100% proxied"
+    "example.com: 385.9k pageviews, 0 proxied",
+    "go.example.com: 1.0k pageviews, 100% proxied"
   ],
   "remediationUrl": "https://posthog.com/docs/advanced/proxy"
 }
