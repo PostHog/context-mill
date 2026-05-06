@@ -43,8 +43,22 @@ const isCI = Boolean(process.env.CI);
 
 function getGatewayUrl() {
   const host = process.env.POSTHOG_HOST || "https://us.posthog.com";
-  if (host.includes("localhost")) return "http://localhost:3308/wizard";
-  if (host.includes("eu.posthog.com") || host.includes("eu.i.posthog.com")) {
+  let hostname = "";
+
+  try {
+    hostname = new URL(host).hostname.toLowerCase();
+  } catch {
+    try {
+      hostname = new URL(`https://${host}`).hostname.toLowerCase();
+    } catch {
+      hostname = "";
+    }
+  }
+
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return "http://localhost:3308/wizard";
+  }
+  if (hostname === "eu.posthog.com" || hostname === "eu.i.posthog.com") {
     return "https://gateway.eu.posthog.com/wizard";
   }
   return "https://gateway.us.posthog.com/wizard";
