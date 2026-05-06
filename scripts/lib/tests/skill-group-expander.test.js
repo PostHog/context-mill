@@ -224,6 +224,57 @@ describe('expandSkillGroups', () => {
         expect(skills[0]._examplePaths).toEqual(['basics/django']);
     });
 
+    it('produces audit + audit-subagents-* ids for the runner+specialists layout', () => {
+        createFixture({
+            skills: {
+                audit: {
+                    'description.md': '# {display_name}',
+                    subagents: {
+                        identification: { 'description.md': '# {display_name}' },
+                        'event-capture': { 'description.md': '# {display_name}' },
+                        'web-analytics': { 'description.md': '# {display_name}' },
+                    },
+                },
+            },
+        }, tmpDir);
+        const config = {
+            audit: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'PostHog audit' }],
+            },
+            'audit/subagents/identification': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Audit — identification' }],
+            },
+            'audit/subagents/event-capture': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Audit — event capture' }],
+            },
+            'audit/subagents/web-analytics': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Audit — web analytics' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills.map(s => s.id).sort()).toEqual([
+            'audit',
+            'audit-subagents-event-capture',
+            'audit-subagents-identification',
+            'audit-subagents-web-analytics',
+        ]);
+        const runner = skills.find(s => s.id === 'audit');
+        expect(runner._category).toBe('audit');
+        expect(runner._topic).toBeNull();
+        const ident = skills.find(s => s.id === 'audit-subagents-identification');
+        expect(ident._category).toBe('audit');
+        expect(ident._topic).toBe('subagents/identification');
+        expect(ident._group).toBe('audit/subagents/identification');
+    });
+
     it('defaults _examplePaths to empty array when not specified', () => {
         createFixture({
             skills: {

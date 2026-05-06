@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Audit specialist — PostHog identification call sites (read-only, returns JSON findings)
+tags: [audit-subagent]
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: Audit — identification
+    tags: []
+    docs_urls: []

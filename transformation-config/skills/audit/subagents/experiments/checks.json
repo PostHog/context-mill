@@ -1,0 +1,4 @@
+[
+  { "id": "exp-exposure-captured", "area": "Experiments", "label": "Exposure event captured per experiment view" },
+  { "id": "exp-variant-stable", "area": "Experiments", "label": "Variant assignment is stable across sessions" }
+]

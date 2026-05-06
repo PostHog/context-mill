@@ -1,0 +1,4 @@
+[
+  { "id": "ai-trace-captured", "area": "LLM Analytics", "label": "AI generations captured with $ai_generation" },
+  { "id": "ai-cost-tracked", "area": "LLM Analytics", "label": "Token + cost properties present on AI events" }
+]

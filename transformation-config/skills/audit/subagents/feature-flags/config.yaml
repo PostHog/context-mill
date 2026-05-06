@@ -1,0 +1,10 @@
+type: docs-only
+template: description.md
+description: Audit specialist — feature flags (placeholder, returns empty findings)
+tags: [audit-subagent]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Audit — feature flags
+    tags: []
+    docs_urls: []

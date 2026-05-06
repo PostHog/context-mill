@@ -1,6 +1,6 @@
 type: docs-only
 template: description.md
-description: Audit an existing PostHog integration for correctness and best practices
+description: Audit an existing PostHog integration for correctness and best practices, dispatching specialist subagents in parallel
 tags: [best-practices]
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."

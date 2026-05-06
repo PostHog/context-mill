@@ -120,6 +120,50 @@ describe('loadSkillsConfig', () => {
         expect(Object.keys(config)).toEqual(['has-config']);
     });
 
+    it('exposes audit subagents as separate skills alongside the runner', () => {
+        createFixture({
+            skills: {
+                audit: {
+                    'config.yaml': yaml.dump({
+                        type: 'docs-only',
+                        template: 'description.md',
+                        variants: [{ id: 'all', display_name: 'PostHog audit' }],
+                    }),
+                    subagents: {
+                        identification: {
+                            'config.yaml': yaml.dump({
+                                type: 'docs-only',
+                                template: 'description.md',
+                                variants: [{ id: 'all', display_name: 'Audit — identification' }],
+                            }),
+                        },
+                        'event-capture': {
+                            'config.yaml': yaml.dump({
+                                type: 'docs-only',
+                                template: 'description.md',
+                                variants: [{ id: 'all', display_name: 'Audit — event capture' }],
+                            }),
+                        },
+                        'web-analytics': {
+                            'config.yaml': yaml.dump({
+                                type: 'docs-only',
+                                template: 'description.md',
+                                variants: [{ id: 'all', display_name: 'Audit — web analytics' }],
+                            }),
+                        },
+                    },
+                },
+            },
+        }, tmpDir);
+        const config = loadSkillsConfig(tmpDir);
+        expect(Object.keys(config).sort()).toEqual([
+            'audit',
+            'audit/subagents/event-capture',
+            'audit/subagents/identification',
+            'audit/subagents/web-analytics',
+        ]);
+    });
+
     it('handles flat and nested siblings', () => {
         createFixture({
             skills: {
