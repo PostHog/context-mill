@@ -9,13 +9,13 @@
  * - Individual skill ZIPs ({skill-id}.zip)
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const archiver = require('archiver');
-const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
-const { generateMarketplace } = require('./lib/marketplace-generator');
-const { REPO_URL } = require('./lib/constants');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import archiver from 'archiver';
+import { generateAllSkills, loadSkillsConfig, fetchDoc } from './lib/skill-generator.js';
+import { generateMarketplace } from './lib/marketplace-generator.js';
+import { REPO_URL } from './lib/constants.js';
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
@@ -148,7 +148,7 @@ async function main() {
     console.log('Building resources...');
     console.log(`Version: ${BUILD_VERSION}\n`);
 
-    const repoRoot = path.join(__dirname, '..');
+    const repoRoot = path.join(import.meta.dirname, '..');
     const configDir = path.join(repoRoot, 'transformation-config');
     const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');

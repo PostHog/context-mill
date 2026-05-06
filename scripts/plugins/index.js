@@ -2,9 +2,9 @@
  * Plugin system for content transformation
  */
 
-const ignoreLinePlugin = require('./ignore-line');
-const ignoreFilePlugin = require('./ignore-file');
-const ignoreBlockPlugin = require('./ignore-block');
+import ignoreLinePlugin from './ignore-line.js';
+import ignoreFilePlugin from './ignore-file.js';
+import ignoreBlockPlugin from './ignore-block.js';
 
 /**
  * Compose multiple plugins into a single transformation function
@@ -33,7 +33,7 @@ function composePlugins(plugins = []) {
     };
 }
 
-module.exports = {
+export {
     composePlugins,
     ignoreLinePlugin,
     ignoreFilePlugin,
