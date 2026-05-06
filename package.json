@@ -19,6 +19,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.0",
     "@posthog/warlock": "git+https://github.com/PostHog/warlock.git",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1"
