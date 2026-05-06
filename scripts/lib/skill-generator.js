@@ -146,6 +146,7 @@ function expandSkillGroups(config, configDir) {
                 _template: template,
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
+                _references: group.references || null,
                 _group: key,
             });
         }
@@ -485,15 +486,28 @@ async function generateSkill({
     }
 
     // Copy local markdown references from a source references/ directory, if present.
+    // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
         const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
             .filter(entry => entry.isFile() && entry.name.endsWith('.md'));
 
+        const refsConfig = skill._references || {};
+
         for (const reference of localReferences) {
             const sourcePath = path.join(sourceReferencesDir, reference.name);
-            const content = fs.readFileSync(sourcePath, 'utf8');
+            const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
+            const nextFile = parsed.data.next_step;
+            let content = parsed.content.replace(/^\n+/, '');
             const headingMatch = content.match(/^#\s+(.+)$/m);
+
+            if (nextFile) {
+                if (refsConfig.preamble && headingMatch) {
+                    const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
+                    content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+                }
+                content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
+            }
 
             fs.writeFileSync(
                 path.join(referencesDir, reference.name),
