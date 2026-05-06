@@ -2,9 +2,9 @@
 next_step: null
 ---
 
-# Step 5 — Generate the audit report
+# Step 6 — Generate the audit report
 
-The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth. Every check the wizard seeded ends up in the report, even passes; nothing is invented.
+The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth. Every check the wizard seeded plus every check the runner added via `audit_add_checks` in Step 5 ends up in the report, even passes; nothing is invented.
 
 ## Status
 
@@ -18,6 +18,8 @@ Emit:
 
 `Read` the ledger once, then transform every entry into the report below. Use `area`, `label`, `status`, `file`, and `details` from each entry verbatim where the report calls for them.
 
+If any ledger entry is still `pending` at this point (a specialist Task crashed or never resolved its check), patch it via `mcp__wizard-tools__audit_resolve_checks` to `{ status: "warning", details: "specialist did not complete" }` before reading the ledger again — every reportable entry must have a terminal status.
+
 `Write` `posthog-audit-report.md` at the project root with the structure shown below. After the report is written, delete `.posthog-audit-checks.json`.
 
 The report has four sections in this order:
@@ -27,7 +29,7 @@ The report has four sections in this order:
 3. **Full audit** — every check the wizard ran, grouped by `area`, including passes.
 4. **About this audit** — a short closing block explaining what the audit covered and how to interpret the report.
 
-For the Full audit section, group rows dynamically by each distinct `area` value in the ledger, preserving first-seen area order from the JSON. Today the core audit produces three areas — **Installation**, **Identification**, **Event Capture** — but the report must not hard-code that list; render whatever areas appear.
+For the Full audit section, group rows dynamically by each distinct `area` value in the ledger, preserving first-seen area order from the JSON. The core audit produces three areas — **Installation**, **Identification**, **Event Capture** — plus whichever areas the second-wave specialists contributed (`Web Analytics`, `Feature Flags`, …). The report must not hard-code that list; render whatever areas appear.
 
 For each area, write a one-paragraph framing immediately under the area heading, then the table. Use the canonical copy below verbatim when the area name matches; otherwise write a one-sentence summary derived from the area's check labels.
 
@@ -83,7 +85,7 @@ If there are no actions, write `_Nothing to fix._`.
 
 ## About this audit
 
-The PostHog wizard runs a five-stage chain: SDK installation → init correctness → identification → event capture → this report. Each stage resolves one or more checks against the project's source tree, recording every result — pass or otherwise — in the ledger this report was generated from.
+The PostHog wizard runs a stepped chain: SDK installation → init correctness → identification → event capture → dispatch agent + discoverable specialists (web analytics, feature flags, experiments, LLM analytics, error tracking — each gated by the dispatch agent based on actual usage in the project) → this report. Each stage resolves one or more checks against the project's source tree, recording every result — pass or otherwise — in the ledger this report was generated from.
 
 - `error` items break correctness now (events lost, identity broken). Fix first.
 - `warning` items work today but cause subtle data-quality bugs. Fix when convenient.

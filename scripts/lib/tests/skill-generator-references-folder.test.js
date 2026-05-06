@@ -70,4 +70,82 @@ describe('generateSkill local references', () => {
         expect(readFileSync(generatedRef, 'utf8')).toBe('# Product analytics best practices\n\nDetails');
         expect(readFileSync(generatedSkill, 'utf8')).toContain('references/product-analytics.md');
     });
+
+    it('copies a sibling checks.json into the generated skill root', async () => {
+        const checksContent = JSON.stringify([
+            { id: 'sample-check', area: 'Sample', label: 'Sample check' },
+        ], null, 2);
+        createFixture({
+            skills: {
+                'audit-subagent': {
+                    'description.md': '# {display_name}',
+                    'checks.json': checksContent,
+                },
+            },
+        }, tmpDir);
+
+        const config = {
+            'audit-subagent': {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Audit subagent' }],
+            },
+        };
+
+        const skill = expandSkillGroups(config, tmpDir)[0];
+        const outputDir = join(tmpDir, 'out');
+
+        await generateSkill({
+            skill,
+            version: 'test',
+            repoRoot: tmpDir,
+            configDir: tmpDir,
+            outputDir,
+            skipPatterns: { global: [], examples: {} },
+            commandmentsConfig: { commandments: {} },
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
+            workflows: [],
+        });
+
+        const generatedChecks = join(outputDir, 'audit-subagent', 'checks.json');
+        expect(existsSync(generatedChecks)).toBe(true);
+        expect(readFileSync(generatedChecks, 'utf8')).toBe(checksContent);
+    });
+
+    it('omits checks.json when source skill has none', async () => {
+        createFixture({
+            skills: {
+                integration: {
+                    'description.md': '# {display_name}',
+                },
+            },
+        }, tmpDir);
+
+        const config = {
+            integration: {
+                type: 'docs-only',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Integration' }],
+            },
+        };
+
+        const skill = expandSkillGroups(config, tmpDir)[0];
+        const outputDir = join(tmpDir, 'out');
+
+        await generateSkill({
+            skill,
+            version: 'test',
+            repoRoot: tmpDir,
+            configDir: tmpDir,
+            outputDir,
+            skipPatterns: { global: [], examples: {} },
+            commandmentsConfig: { commandments: {} },
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
+            workflows: [],
+        });
+
+        expect(existsSync(join(outputDir, 'integration', 'checks.json'))).toBe(false);
+    });
 });

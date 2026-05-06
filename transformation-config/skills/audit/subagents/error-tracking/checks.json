@@ -1,0 +1,4 @@
+[
+  { "id": "err-capture-installed", "area": "Error Tracking", "label": "captureException wired into the global handler" },
+  { "id": "err-source-maps-uploaded", "area": "Error Tracking", "label": "Source maps uploaded to PostHog" }
+]

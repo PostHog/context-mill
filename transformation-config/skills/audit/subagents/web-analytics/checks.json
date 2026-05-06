@@ -1,0 +1,7 @@
+[
+  { "id": "partial_reverse_proxy", "area": "Web Analytics", "label": "Partial reverse proxy" },
+  { "id": "dark_authorized_urls", "area": "Web Analytics", "label": "Dark authorized URLs" },
+  { "id": "pageleave_coverage", "area": "Web Analytics", "label": "Pageleave coverage" },
+  { "id": "web_vitals_coverage", "area": "Web Analytics", "label": "Web vitals coverage" },
+  { "id": "duplicate_canonical_urls", "area": "Web Analytics", "label": "Duplicate canonical URLs across hosts" }
+]

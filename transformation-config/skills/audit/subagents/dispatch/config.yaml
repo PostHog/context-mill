@@ -1,0 +1,10 @@
+type: docs-only
+template: description.md
+description: Audit dispatch subagent — picks which discoverable specialists to run based on wizard-supplied audit areas + actual project usage signals (read-only, returns JSON dispatch list)
+tags: [audit-subagent]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Audit — dispatch
+    tags: []
+    docs_urls: []

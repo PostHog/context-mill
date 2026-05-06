@@ -1,0 +1,10 @@
+type: docs-only
+template: description.md
+description: Audit specialist — PostHog web analytics misconfigurations via HogQL (read-only, returns JSON findings)
+tags: [audit-subagent, web-analytics]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Audit — web analytics
+    tags: []
+    docs_urls: []

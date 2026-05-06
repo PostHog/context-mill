@@ -1,0 +1,4 @@
+[
+  { "id": "ff-eval-after-init", "area": "Feature Flags", "label": "Flag evaluation runs after PostHog init" },
+  { "id": "ff-bootstrap-configured", "area": "Feature Flags", "label": "Bootstrap configured for SSR / SPA" }
+]

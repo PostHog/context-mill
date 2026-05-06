@@ -1,0 +1,10 @@
+type: docs-only
+template: description.md
+description: Audit specialist — error tracking (placeholder, returns empty findings)
+tags: [audit-subagent]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Audit — error tracking
+    tags: []
+    docs_urls: []

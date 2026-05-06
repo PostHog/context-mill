@@ -485,6 +485,13 @@ async function generateSkill({
         }
     }
 
+    // Copy a sibling checks.json from the skill source dir to the skill root, if present.
+    // The audit runner reads `.claude/skills/<id>/checks.json` to enroll discoverable specialists' checks via audit_add_checks.
+    const sourceChecksFile = path.join(configDir, 'skills', ...skill._group.split('/'), 'checks.json');
+    if (fs.existsSync(sourceChecksFile)) {
+        fs.copyFileSync(sourceChecksFile, path.join(skillDir, 'checks.json'));
+    }
+
     // Copy local markdown references from a source references/ directory, if present.
     // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
