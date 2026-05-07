@@ -10,13 +10,17 @@
     "test:plugins:watch": "vitest scripts/plugins/tests",
     "test:skills": "vitest run scripts/lib/tests",
     "test:skills:watch": "vitest scripts/lib/tests",
-    "test": "vitest run scripts/plugins/tests scripts/lib/tests"
+    "test": "vitest run scripts/plugins/tests scripts/lib/tests",
+    "security-scan": "node scripts/scan-warlock.js",
+    "security-scan:skills": "node scripts/scan-warlock.js dist/skills"
   },
   "devDependencies": {
     "archiver": "^7.0.1",
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.0",
+    "@posthog/warlock": "git+https://github.com/PostHog/warlock.git",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1"
   }
