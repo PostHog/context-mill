@@ -72,9 +72,54 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
 
 
 /**
+ * Load bundle definitions and recommend skill from bundles.yaml
+ */
+function loadBundlesConfig(configDir) {
+    const bundlesPath = path.join(configDir, 'bundles.yaml');
+    if (!fs.existsSync(bundlesPath)) {
+        return { bundles: {}, recommendSkill: null };
+    }
+    const content = fs.readFileSync(bundlesPath, 'utf8');
+    const config = yaml.load(content);
+    const bundles = config.bundles || {};
+
+    let recommendSkill = null;
+    if (config.recommend_skill) {
+        const rs = config.recommend_skill;
+        const bundleList = Object.entries(bundles)
+            .map(([id, b]) => `- **posthog-${id}**: ${b.description} (keywords: ${b.keywords.join(', ')})`)
+            .join('\n');
+
+        const frontmatterLines = [
+            '---',
+            `name: ${rs.name}`,
+            `description: >`,
+            ...rs.description.trim().split('\n').map(l => `  ${l}`),
+        ];
+        if (rs.when_to_use) {
+            frontmatterLines.push(`when_to_use: >`);
+            frontmatterLines.push(...rs.when_to_use.trim().split('\n').map(l => `  ${l}`));
+        }
+        if (rs.allowed_tools) {
+            frontmatterLines.push(`allowed-tools:`);
+            frontmatterLines.push(...rs.allowed_tools.map(t => `  - ${t}`));
+        }
+        frontmatterLines.push('---');
+        const frontmatter = frontmatterLines.join('\n');
+
+        recommendSkill = {
+            name: rs.name,
+            content: frontmatter + '\n\n' + rs.content.replace('{bundle_list}', bundleList),
+        };
+    }
+
+    return { bundles, recommendSkill };
+}
+
+/**
  * Generate manifest with skill URIs, download URLs, and MCP resource representations
  */
-function generateManifest(skills, uriSchema, version, guideContents = {}) {
+function generateManifest(skills, uriSchema, version, guideContents = {}, bundles = {}, recommendSkill = null) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
     const docPattern = uriSchema.patterns.doc;
@@ -126,6 +171,21 @@ function generateManifest(skills, uriSchema, version, guideContents = {}) {
                 },
             };
         }),
+        bundles: Object.entries(bundles).reduce((acc, [id, bundle]) => {
+            const validSkills = bundle.skills.filter(sid =>
+                skills.some(s => s.id === sid)
+            );
+            if (validSkills.length > 0) {
+                acc[id] = {
+                    name: bundle.name,
+                    description: bundle.description,
+                    keywords: bundle.keywords || [],
+                    skills: validSkills,
+                };
+            }
+            return acc;
+        }, {}),
+        ...(recommendSkill ? { recommendSkill } : {}),
     };
 }
 
@@ -222,8 +282,11 @@ async function main() {
         }));
         const allResources = [...skills, ...docResources];
 
+        // Load bundle definitions and recommend skill
+        const { bundles, recommendSkill } = loadBundlesConfig(configDir);
+
         // Generate manifest
-        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents);
+        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents, bundles, recommendSkill);
 
         const manifestPath = path.join(skillsDir, 'manifest.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
@@ -287,6 +350,14 @@ async function main() {
                 console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
             }
         }
+        const bundleCount = Object.keys(manifest.bundles || {}).length;
+        if (bundleCount > 0) {
+            console.log(`\nBundles: ${bundleCount}`);
+            for (const [id, bundle] of Object.entries(manifest.bundles)) {
+                console.log(`  - ${id}: ${bundle.skills.length} skills`);
+            }
+        }
+
         console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
         console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
 

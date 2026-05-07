@@ -1,0 +1,214 @@
+# Bundle definitions for synthetic git plugin distribution.
+#
+# Each bundle groups skills by framework/platform so users install one
+# thing and get the right set. Skills are referenced by their generated
+# ID (e.g. "integration-nextjs-app-router", "error-tracking-nextjs").
+#
+# The MCP server reads these from the manifest and serves each bundle
+# as a synthetic git repo at /git/bundles/:name.
+#
+# The recommend_skill section defines a SKILL.md that ships with the
+# core plugin. It detects the user's stack and recommends the right
+# bundle. The build script generates {bundle_list} from the bundle
+# definitions below.
+
+recommend_skill:
+  name: recommend-posthog-skills
+  description: >
+    Recommend the right PostHog skill bundle for the user's project.
+    Use when the user wants to add analytics, event tracking, product analytics,
+    feature flags, A/B testing, experiments, error tracking, exception monitoring,
+    crash reporting, logging, observability, LLM tracing, or customer behavior
+    tracking to their application. Also use when the user mentions understanding
+    user behavior, measuring engagement, tracking conversions, monitoring errors,
+    or instrumenting their app.
+  when_to_use: >
+    The user asks about adding analytics, tracking, monitoring, or observability.
+    The user wants to understand user behavior, measure engagement, or track events.
+    The user mentions feature flags, experiments, A/B tests, or gradual rollouts.
+    The user wants error tracking, crash reporting, or exception monitoring.
+    The user asks about logging, LLM observability, or AI tracing.
+    The user says "add PostHog" or "set up PostHog" or "integrate PostHog."
+  allowed_tools:
+    - Bash
+    - Read
+  content: |
+    # Recommend PostHog Skills
+
+    You are helping the user add analytics, feature flags, error tracking, or observability to their project using PostHog.
+
+    ## Step 1: Detect the technology stack
+
+    Check the project for framework indicators:
+
+    ```bash
+    # Check for key files
+    ls package.json requirements.txt Gemfile go.mod Cargo.toml build.gradle pubspec.yaml 2>/dev/null
+
+    # If package.json exists, check dependencies
+    cat package.json 2>/dev/null | grep -E '"(next|react|react-native|expo|vue|nuxt|svelte|@sveltejs|astro|angular)"' | head -10
+
+    # If requirements.txt or setup.py exists
+    cat requirements.txt setup.py pyproject.toml 2>/dev/null | grep -iE '(django|flask|fastapi)' | head -5
+
+    # If Gemfile exists
+    cat Gemfile 2>/dev/null | grep -iE '(rails|sinatra)' | head -5
+    ```
+
+    ## Step 2: Match to a bundle
+
+    Based on what you find, recommend ONE bundle from this list:
+
+    {bundle_list}
+
+    ## Step 3: Recommend installation
+
+    Tell the user which bundle matches their stack and give them the install command:
+
+    ```
+    /plugin install posthog-{bundle-name}@posthog
+    ```
+
+    If the project uses multiple frameworks (e.g., a Next.js frontend + Python backend), recommend multiple bundles.
+
+    If no framework is detected, ask the user what they're building.
+
+bundles:
+  nextjs:
+    name: PostHog for Next.js
+    description: Analytics, feature flags, error tracking, and logging for Next.js applications
+    keywords: [nextjs, react, ssr, javascript]
+    skills:
+      - integration-nextjs-app-router
+      - integration-nextjs-pages-router
+      - feature-flags-nextjs
+      - feature-flags-react
+      - error-tracking-nextjs
+      - error-tracking-react
+      - logs-nextjs
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  react:
+    name: PostHog for React
+    description: Analytics, feature flags, and error tracking for React applications
+    keywords: [react, javascript, spa]
+    skills:
+      - feature-flags-react
+      - error-tracking-react
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  python:
+    name: PostHog for Python
+    description: Analytics, feature flags, error tracking, and logging for Python applications
+    keywords: [python, django, flask, fastapi]
+    skills:
+      - integration-django
+      - integration-flask
+      - integration-fastapi
+      - integration-python
+      - feature-flags-python
+      - error-tracking-python
+      - logs-python
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  node:
+    name: PostHog for Node.js
+    description: Analytics, feature flags, error tracking, and logging for Node.js applications
+    keywords: [nodejs, javascript, typescript]
+    skills:
+      - integration-javascript_node
+      - feature-flags-nodejs
+      - error-tracking-node
+      - logs-nodejs
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  react-native:
+    name: PostHog for React Native
+    description: Analytics, feature flags, and error tracking for React Native applications
+    keywords: [react-native, mobile, ios, android]
+    skills:
+      - integration-react-native
+      - integration-expo
+      - feature-flags-react-native
+      - error-tracking-react-native
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  svelte:
+    name: PostHog for Svelte
+    description: Analytics, feature flags, and error tracking for SvelteKit applications
+    keywords: [svelte, sveltekit, javascript]
+    skills:
+      - integration-sveltekit
+      - error-tracking-svelte
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  vue:
+    name: PostHog for Vue / Nuxt
+    description: Analytics, feature flags, and error tracking for Vue.js and Nuxt applications
+    keywords: [vue, nuxt, javascript]
+    skills:
+      - integration-vue-3
+      - integration-nuxt-3-6
+      - integration-nuxt-4
+      - error-tracking-nuxt
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  ruby:
+    name: PostHog for Ruby
+    description: Analytics, feature flags, error tracking, and logging for Ruby and Rails applications
+    keywords: [ruby, rails, ruby-on-rails]
+    skills:
+      - integration-ruby
+      - integration-ruby-on-rails
+      - feature-flags-ruby
+      - error-tracking-ruby
+      - error-tracking-ruby-on-rails
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  go:
+    name: PostHog for Go
+    description: Analytics, feature flags, error tracking, and logging for Go applications
+    keywords: [go, golang]
+    skills:
+      - feature-flags-go
+      - error-tracking-go
+      - logs-go
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
+
+  llm:
+    name: PostHog LLM Analytics
+    description: Monitor LLM usage, costs, traces, and evaluations with PostHog
+    keywords: [llm, ai, observability, tracing]
+    skills:
+      - llm-analytics-setup
+      - omnibus-instrument-llm-analytics
+
+  android:
+    name: PostHog for Android
+    description: Analytics, feature flags, and error tracking for Android applications
+    keywords: [android, kotlin, java, mobile]
+    skills:
+      - integration-android
+      - feature-flags-android
+      - error-tracking-android
+      - omnibus-instrument-product-analytics
+      - omnibus-instrument-feature-flags
+      - omnibus-instrument-error-tracking
