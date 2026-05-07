@@ -277,13 +277,9 @@ async function main() {
         uniqueFiles.set(label, content);
       }
     }
-    const MAX_COMBINED_CHARS = 100_000;
-    let combinedContent = "";
-    for (const [label, content] of uniqueFiles.entries()) {
-      const snippet = `--- ${label} ---\n${content.slice(0, 2000)}\n\n`;
-      if (combinedContent.length + snippet.length > MAX_COMBINED_CHARS) break;
-      combinedContent += snippet;
-    }
+    const combinedContent = [...uniqueFiles.entries()]
+      .map(([label, content]) => `--- ${label} ---\n${content.slice(0, 2000)}`)
+      .join("\n\n");
 
     const triaged = llmProvider
       ? await triageMatches(combinedContent, rawMatches, llmProvider)
