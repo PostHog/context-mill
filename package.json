@@ -10,6 +10,7 @@
     "test:plugins:watch": "vitest scripts/plugins/tests",
     "test:skills": "vitest run scripts/lib/tests",
     "test:skills:watch": "vitest scripts/lib/tests",
+    "build:docs-skills": "node scripts/build-docs-skills.js",
     "test": "vitest run scripts/plugins/tests scripts/lib/tests"
   },
   "devDependencies": {

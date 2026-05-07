@@ -16,6 +16,7 @@ const archiver = require('archiver');
 const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
 const { generateMarketplace } = require('./lib/marketplace-generator');
 const { REPO_URL } = require('./lib/constants');
+const { zipSkillToBuffer } = require('./lib/zip');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
@@ -25,24 +26,6 @@ const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 function loadUriSchema(configDir) {
     const content = fs.readFileSync(path.join(configDir, 'uri-schema.yaml'), 'utf8');
     return yaml.load(content);
-}
-
-/**
- * Create a ZIP archive for a skill directory
- * Returns the ZIP as a Buffer
- */
-async function zipSkillToBuffer(skillDir) {
-    return new Promise((resolve, reject) => {
-        const chunks = [];
-        const archive = archiver('zip', { zlib: { level: 9 } });
-
-        archive.on('data', chunk => chunks.push(chunk));
-        archive.on('end', () => resolve(Buffer.concat(chunks)));
-        archive.on('error', reject);
-
-        archive.directory(skillDir, false);
-        archive.finalize();
-    });
 }
 
 /**
