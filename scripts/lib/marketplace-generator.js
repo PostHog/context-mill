@@ -6,9 +6,9 @@
  * Configuration is driven by transformation-config/marketplace.yaml.
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
 
 /**
  * Load marketplace config from YAML
@@ -253,4 +253,4 @@ function generateMarketplace({ skills, tempDir, version, outputDir, configDir })
     return { marketplaceDir, pluginCount: allPluginNames.length, skillCount: allSkillEntries.length };
 }
 
-module.exports = { generateMarketplace };
+export { generateMarketplace };

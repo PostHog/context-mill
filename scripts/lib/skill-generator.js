@@ -8,11 +8,11 @@
  * - Commandments (based on tags)
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const matter = require('gray-matter');
-const { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } = require('./example-processor');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import matter from 'gray-matter';
+import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
 
 /**
  * Load YAML config file
@@ -684,7 +684,7 @@ async function generateAllSkills({
     }));
 }
 
-module.exports = {
+export {
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,

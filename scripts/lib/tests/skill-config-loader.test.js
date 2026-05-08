@@ -4,7 +4,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import yaml from 'js-yaml';
 
-const { loadSkillsConfig } = require('../skill-generator.js');
+import { loadSkillsConfig } from '../skill-generator.js';
 
 function createFixture(tree, baseDir) {
     for (const [name, content] of Object.entries(tree)) {

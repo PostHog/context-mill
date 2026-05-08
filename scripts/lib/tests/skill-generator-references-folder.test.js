@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, mkdtempSync, rmSync
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-const { expandSkillGroups, generateSkill } = require('../skill-generator.js');
+import { expandSkillGroups, generateSkill } from '../skill-generator.js';
 
 function createFixture(tree, baseDir) {
     for (const [name, content] of Object.entries(tree)) {
