@@ -1,0 +1,14 @@
+type: docs-only
+template: description.md
+description: Audit PostHog events in a codebase — produce an inventory of every captured event mapped to its file, area, and 30-day volume for the PM to query
+tags: [analytics, audit, best-practices]
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/product-analytics/best-practices.md
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: PostHog events audit
+    tags: [analytics, audit, best-practices]
+    docs_urls: []
