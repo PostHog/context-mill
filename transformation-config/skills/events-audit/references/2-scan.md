@@ -103,7 +103,7 @@ Count distinct files in the base inventory.
 
 Load `Agent` once: `ToolSearch select:Agent`.
 
-Read `references/2-scan-subagent-prompt.md`. Strip the leading HTML comment block (everything between `<!--` and `-->`, inclusive), then substitute:
+Read `references/2-scan-subagent-prompt.md`, then substitute:
 
 - `{{N}}` — the partition number for that subagent (`1`, `2`, ..., up to N)
 - `{{ROW_IDS}}` — JSON array of the row IDs assigned to that subagent

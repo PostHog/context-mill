@@ -4,19 +4,57 @@ next_step: 2-scan.md
 
 # Step 1 – Detect SDKs
 
-Find every PostHog SDK in the project and remember which language(s) and framework(s) the rest of the audit will work on. **Read-only.** Don't scan code for capture sites – that's step 2.
+Seed the audit checklist, then find every PostHog SDK in the project and remember which language(s) and framework(s) the rest of the audit will work on. **Read-only on the codebase.** Don't scan code for capture sites – that's step 2.
+
+## Tools
+
+Load via `ToolSearch select:Read,Glob,mcp__wizard-tools__audit_seed_checks,mcp__wizard-tools__audit_resolve_checks` once at the start of this step.
 
 ## Status
 
-Emit:
+Emit, in order:
 
 ```
+[STATUS] Seeding audit checklist
 [STATUS] Detecting SDKs
 ```
 
 ## Action
 
-### a. Find PostHog SDKs
+### a. Seed the audit checklist
+
+The checklist lives at `.posthog-audit-checks.json` and renders live in the "Audit plan" tab. **Don't rely on the runtime pre-seeding it** — call `mcp__wizard-tools__audit_seed_checks` directly here. The tool replaces the file atomically, so calling it once at the start of every run is safe.
+
+Pass exactly these three shared checks (`identity-segmentation`, `coverage-map`, `data-quality`):
+
+```json
+{
+  "checks": [
+    { 
+      "id": "identity-segmentation", 
+      "area": "Identity",     
+      "label": "Identity & segmentation", 
+      "status": "pending" 
+    },
+    { 
+      "id": "coverage-map",          
+      "area": "Coverage",     
+      "label": "Coverage map",            
+      "status": "pending" 
+    },
+    { 
+      "id": "data-quality",          
+      "area": "Data quality", 
+      "label": "Data quality",            
+      "status": "pending" 
+    }
+  ]
+}
+```
+
+Don't invent new ids — later steps resolve checks by these exact ids. Don't `Write` the file directly; the MCP tool owns it.
+
+### b. Find PostHog SDKs
 
 `Glob` for the project's dependency manifests across every language PostHog ships an SDK for. The full list:
 

@@ -1,15 +1,3 @@
-<!--
-Subagent prompt template for events-audit step 2 enrichment.
-
-Orchestrator must substitute these placeholders before passing this content as the
-`prompt` parameter of each `Agent` tool call:
-  {{N}}        — partition number (1, 2, ..., total)
-  {{ROW_IDS}}  — JSON array of row IDs assigned to this subagent
-
-The orchestrator should strip this HTML comment block before substituting; the
-substituted result becomes the subagent's full prompt.
--->
-
 You are an events-audit enrichment subagent. You will read source files and write enriched capture rows to a part-file. Do not return the rows in your final message — write to disk only.
 
 Inputs:

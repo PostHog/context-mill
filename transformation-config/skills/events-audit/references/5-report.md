@@ -12,7 +12,7 @@ The skill's job is to give the reader a map plus a few short observations. **Don
 
 This step uses one supporting reference file (not part of the chain):
 
-- `references/5-report-template.md` — verbatim markdown template for the rendered report. Orchestrator reads it once at step (f), strips the leading HTML comment block, substitutes every `{{placeholder}}`, and writes the result to `posthog-events-audit-report.md`.
+- `references/5-report-template.md` — verbatim markdown template for the rendered report. Orchestrator reads it once at step (f), substitutes every `{{placeholder}}`, and writes the result to `posthog-events-audit-report.md`.
 
 ## Output discipline
 
@@ -151,7 +151,7 @@ After computing the Overview panels in (d) and the identity capabilities in (e),
 
 ### f. Render the report
 
-The markdown report template lives in `references/5-report-template.md`. The orchestrator reads it once, strips the leading HTML comment block (the placeholder catalog), substitutes every `{{placeholder}}` with values computed in steps (b) through (e), and writes the result to `posthog-events-audit-report.md` at the project root.
+The markdown report template lives in `references/5-report-template.md`. The orchestrator reads it once, substitutes every `{{placeholder}}` with values computed in steps (b) through (e), and writes the result to `posthog-events-audit-report.md` at the project root.
 
 #### Substitution conventions
 
