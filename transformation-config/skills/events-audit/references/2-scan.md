@@ -1,45 +1,34 @@
 ---
-next_step: 3-extract.md
+next_step: 3-enrich.md
 ---
 
-# Step 2 – Scan capture sites (two-phase)
+# Step 2 – Scan capture sites
 
-Find every PostHog capture/identify/group SDK call in the codebase, derive the codebase mapping (`area`, `route`, `enclosing`), and extract per-call fields. Write the inventory to disk **without ever materializing the full enriched JSON in a single model turn.**
+Find every PostHog capture/identify/group SDK call in the codebase via a single `Grep` and write a base inventory. **Read-only via Grep.** Don't `Read` any source files in this step — file-level enrichment happens in step 3.
 
-The previous architecture collapsed enrichment + merge into one orchestrator turn and crashed at `max_tokens` on a 51-file project. This step is split into three phases that respect that limit:
+This step is one Grep, one Write. No file Reads, no subagents, no MCP. Severity, flows, and identity analysis come later.
 
-1. **Phase 1 — orchestrator structural pass.** One Grep, write a small base inventory with `file` / `line` / `event_name_hint` per row.
-2. **Phase 2 — subagent enrichment fan-out.** All subagents dispatched in **one assistant turn**. Each subagent enriches a slice of rows and writes a part-file. Subagents return a one-line confirmation, never the JSON.
-3. **Phase 3 — orchestrator concat via `jq`.** A single Bash call merges part-files into the canonical inventory. Zero output tokens for the merge.
+## Tools
 
-Don't judge severity, don't infer flows, don't call MCP — those come later.
-
-## Supporting files
-
-This step uses two supporting reference files (not part of the chain):
-
-- `references/2-scan-subagent-prompt.md` — verbatim subagent prompt template. Orchestrator reads it once at phase 2 start, substitutes `{{N}}` and `{{ROW_IDS}}`, passes the result to each `Agent` invocation.
-- `references/2-scan-enrichment.md` — per-SDK call signatures, identification surfaces, `area` / `route` / `enclosing` rules. Subagents read it once during enrichment; the orchestrator does not.
+Load via `ToolSearch select:Grep,Write` once at the start of this step.
 
 ## Status
 
 Emit, in order:
 
 ```
-[STATUS] Scanning capture sites
-[STATUS] Writing base inventory
-[STATUS] Enriching capture sites
-[STATUS] Merging part-files
+[STATUS] Scanning SDK capture sites
+[STATUS] Writing base event inventory
 ```
 
-## Phase 1 — Orchestrator structural pass
+## Action
 
-### a. Grep for direct SDK calls
+### a. Grep for direct SDK calls (with context)
 
-Run a single `Grep` for the standard PostHog call shapes. Narrow `--include` to the languages step 1 detected — don't scan `*.kt` if the project is Python.
+Run a single `Grep` for the standard PostHog call shapes. Use `-A 3` so multi-line capture calls are visible without opening the file. Narrow `--include` to the languages step 1 detected — don't scan `*.kt` if the project is Python.
 
 ```
-Grep -rn -E 'posthog\??\.(capture|identify|alias|group|setPersonProperties|setPersonPropertiesForFlags|reset)|usePostHog\(\)\??\.(capture|identify)|client\??\.capture|PostHog\??\.(shared|capture)|Posthog\(\)\??\.capture'
+Grep -rn -B 0 -A 3 -E 'posthog\??\.(capture|identify|alias|group|setPersonProperties|setPersonPropertiesForFlags|reset)|usePostHog\(\)\??\.(capture|identify)|client\??\.capture|PostHog\??\.(shared|capture)|Posthog\(\)\??\.capture'
 ```
 
 The `\??\.` matches both `posthog.capture(...)` and `posthog?.capture(...)` (optional chaining). JS/TS codebases routinely guard SDK calls with `?.` when the SDK may be uninitialised — missing this pattern undercounts the inventory by half or more.
@@ -58,102 +47,78 @@ Common include patterns:
 
 **Exclude test files.** Drop hits in paths matching `*.test.*`, `*.spec.*`, `__tests__/**`, `tests/**`, `spec/**`. They pollute the inventory.
 
+#### Per-SDK call signatures (covered by the regex above)
+
+Canonical reference for what a PostHog capture call looks like in each SDK. The grep regex above is a union of these shapes; step 3 subagents also use this table to find `event_name` and `properties` slots when extracting (they `Read` this file once at start).
+
+| SDK | Capture pattern | Event-name position | Properties position |
+|-----|-----------------|---------------------|---------------------|
+| posthog-js | `posthog.capture("event", { props })` | positional 1 | positional 2 (object literal) |
+| posthog-js (hook) | `usePostHog().capture("event", { props })` | positional 1 | positional 2 |
+| posthog-node | `client.capture({ distinctId, event, properties })` | object key `event` | object key `properties` |
+| posthog-python | `posthog.capture(distinct_id, "event", properties)` | positional 2 | positional 3 (dict) |
+| posthog-ruby | `posthog.capture({ distinct_id:, event:, properties: })` | hash key `event` | hash key `properties` |
+| posthog-go | `client.Enqueue(posthog.Capture{Event: "...", Properties: posthog.NewProperties()...})` | struct field `Event` | struct field `Properties` |
+| posthog-ios | `PostHog.shared.capture("event", properties: ["k": "v"])` | positional 1 | named `properties` |
+| posthog-android | `PostHog.capture("event", properties = mapOf("k" to "v"))` | positional 1 | named `properties` |
+| posthog-react-native | Same shape as posthog-js | positional 1 | positional 2 |
+| posthog-flutter | `Posthog().capture(eventName: "...", properties: { ... })` | named `eventName` | named `properties` |
+| posthog-php | `PostHog::capture(['distinctId' => ..., 'event' => '...', 'properties' => [...]])` | array key `event` | array key `properties` |
+| posthog-dotnet | `client.Capture(distinctId, "event", new() { ["k"] = "v" })` | positional 2 | positional 3 |
+| posthog-elixir | `Posthog.capture("event", distinct_id, %{ k: v })` | positional 1 | positional 3 |
+
 If the result is empty:
-- And the project's manifest had a PostHog SDK in step 1 → the codebase likely wraps the SDK behind a custom helper. Write `{ "rows": [], "wrapper_undetected": true }` to `.posthog-events-inventory.json` and skip phases 2 and 3 (move on to step 3). The data-quality check in the report step will flag this.
+
+- And the project's manifest had a PostHog SDK in step 1 → the codebase likely wraps the SDK behind a custom helper. Write `{ "rows": [], "wrapper_undetected": true }` to `.posthog-events-inventory.json` and skip the rest of this step (move on to step 3, which will short-circuit on empty rows). The data-quality check in the report step will flag this.
 - And no SDK was in the manifest either → emit `[ABORT] No capture call sites found in any detected SDK`.
 
-### b. Write the base inventory
+### b. Parse grep output into row groups
 
-Build base rows directly from the grep result text. **Do not read any source files in phase 1.** Each row has only what's available from the grep line itself:
+`Grep -A 3` emits one trigger line plus up to three following lines per match, separated by `--` divider lines (when running across files) or contiguous when matches are adjacent. For each match:
+
+- The trigger line is `path:line:content` — the `.capture(` / `.identify(` / etc. site.
+- The following 0–3 lines are continuations from the same file.
+- Group them as a "slice" — the trigger line plus its trailing context lines.
+
+The slice is what you reason about in step (c). You don't need to re-grep or open the file.
+
+### c. Build base rows
+
+For each grouped slice, build one row:
 
 ```jsonc
 {
   "id": "capture-<short-file-slug>-<line>",
   "file": "src/checkout/Checkout.tsx",
   "line": 88,
-  "raw_match": "  posthog.capture(\"purchase_completed\", { revenue, currency });",
-  "event_name_hint": "purchase_completed"
+  "raw_match": "<the trigger line + up to 3 continuation lines, joined by \\n>",
+  "event_name": "purchase_completed",
+  "is_dynamic": false
 }
 ```
 
-`event_name_hint` is best-effort: extract the first quoted string from `raw_match` (single, double, or backtick-quoted). For multi-line capture calls (`posthog.capture(\n  "...", ...)`) the hint will be `null` — phase 2 resolves the canonical name by reading the file. **Don't try to be clever with regex here.** If the first quoted string is on the same line as the `.capture(` token, take it; otherwise leave `null`.
+`event_name` resolution rule: extract the **first quoted string literal** (single, double, or backtick-quoted) found anywhere in the slice. If the first non-whitespace argument inside the parentheses is a quoted literal, take it. Otherwise:
 
-`Write` `.posthog-events-inventory.json` with the base rows. This file is small (~40 bytes per row × 100 rows ≈ 4KB) so the Write fits in one turn easily.
+- The slice contains a quoted literal but it's clearly a property value (e.g. `{ revenue: "USD" }`) and not the event name → keep scanning forward to find the event-name slot, or fall through to dynamic.
+- The slice contains no quoted literal at all → set `event_name: null`, `is_dynamic: true`. Step 3's subagents will retry via Pattern A/B (same-file constant / enum) when they read the file.
+- The argument is a template literal (`` `name_${...}` ``), variable, or expression → set `event_name: null`, `is_dynamic: true`.
+
+**Don't try to be clever.** If the slice doesn't make the literal obvious, leave it dynamic — step 3 has the file open and will resolve what it can.
+
+Skip `$pageview` and `$pageleave` matches entirely — they're SDK-internal in most setups. Drop those rows; they don't go into the inventory.
+
+### d. Write the base inventory
+
+`Write` `.posthog-events-inventory.json` with the rows:
 
 ```jsonc
 {
   "rows": [ <base rows> ],
-  "wrapper_undetected": false,
-  "_phase": "base"
+  "wrapper_undetected": false
 }
 ```
 
-The `_phase: "base"` marker tells you this file is not yet enriched. Phase 3 overwrites it.
-
-## Phase 2 — Subagent enrichment fan-out
-
-### c. Decide the partition
-
-Count distinct files in the base inventory.
-
-- **≤ 8 distinct files**: skip fan-out. The orchestrator handles enrichment inline (one subagent's worth of work; the merge is small). Skip phase 2's `Agent` dispatch and proceed straight to enrichment via direct `Read` + `Write` of the part-file convention.
-- **> 8 distinct files**: fan out. `N = ceil(files / 10)`, capped at 8. Round-robin assign files alphabetically to N groups; each group's row-id list is what the subagent receives. Don't bother estimating file sizes — the orchestrator's job is dispatch, not load-balancing.
-
-### d. Spawn N sub-agents in parallel using the `Agent` tool
-
-Load `Agent` once: `ToolSearch select:Agent`.
-
-Read `references/2-scan-subagent-prompt.md`, then substitute:
-
-- `{{N}}` — the partition number for that subagent (`1`, `2`, ..., up to N)
-- `{{ROW_IDS}}` — JSON array of the row IDs assigned to that subagent
-
-The substituted text is the full prompt for that subagent.
-
-**Spawn all N sub-agents in parallel using the `Agent` tool — one assistant turn, N tool_use blocks in the same message.** Sequential dispatch (one Agent per turn) loses ~30s of orchestration latency for no reason; the prior diagnostic confirmed this. Batch them.
-
-Set `run_in_background: false` — you want their results before the merge.
-
-### e. Wait for all subagents to return
-
-Each subagent returns a single confirmation line (`"wrote part-N with M rows"`). Verify each part-file exists before phase 3:
-
-```
-Bash: for n in 1 2 ... N; do test -f .posthog-events-inventory.part-$n.json || echo "MISSING: part-$n"; done
-```
-
-If any part-file is missing, the subagent failed. Re-dispatch only the failed subagent with the same row-id slice. Don't re-run successful subagents.
-
-## Phase 3 — Concat via jq
-
-### f. Merge part-files into the canonical inventory
-
-One `Bash` call:
-
-```
-jq -s '{rows: (add | sort_by(.file, .line)), wrapper_undetected: false}' .posthog-events-inventory.part-*.json > .posthog-events-inventory.json && rm .posthog-events-inventory.part-*.json
-```
-
-This:
-- Slurps every part-file as an array of arrays
-- `add` flattens to a single rows array
-- `sort_by(.file, .line)` produces a stable, readable order
-- Wraps in `{rows, wrapper_undetected}`
-- Overwrites the base inventory with the enriched one
-- Cleans up part-files
-
-The orchestrator never has to materialize the merged JSON in a model turn — `jq` does the merge in shell, costing zero output tokens.
-
-If `jq` isn't available on the user's system, fall back to a Bash one-liner using Python:
-
-```
-python3 -c "import json,glob; rows=[]
-[rows.extend(json.load(open(f))) for f in sorted(glob.glob('.posthog-events-inventory.part-*.json'))]
-rows.sort(key=lambda r: (r['file'], r['line']))
-json.dump({'rows': rows, 'wrapper_undetected': False}, open('.posthog-events-inventory.json','w'), indent=2)" && rm .posthog-events-inventory.part-*.json
-```
-
-Don't try to merge in a model turn. That's the rule that crashed the previous run.
+This file is small (~80 bytes per row × 100 rows ≈ 8KB) so the Write fits in one turn easily.
 
 ## Notes on wrapper resolution
 

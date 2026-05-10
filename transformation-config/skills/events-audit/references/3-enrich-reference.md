@@ -1,26 +1,10 @@
-# Step 2 enrichment reference
+# Step 3 enrichment reference
 
-Lookup tables and rules subagents apply during step 2 enrichment. Read this file **once** at the start of your enrichment run.
+Lookup tables and rules subagents apply during step 3 enrichment. Read this file **once** at the start of your enrichment run.
 
-This file is supporting material for step 2; it has no `next_step` and is not part of the main step chain. The orchestrator does not read it.
+This file is supporting material for step 3; it has no `next_step` and is not part of the main step chain. The orchestrator does not read it.
 
-## Per-SDK capture call signatures
-
-| SDK | Capture pattern | Event-name position | Properties position |
-|-----|-----------------|---------------------|---------------------|
-| posthog-js | `posthog.capture("event", { props })` | positional 1 | positional 2 (object literal) |
-| posthog-js (hook) | `usePostHog().capture("event", { props })` | positional 1 | positional 2 |
-| posthog-node | `client.capture({ distinctId, event, properties })` | object key `event` | object key `properties` |
-| posthog-python | `posthog.capture(distinct_id, "event", properties)` | positional 2 | positional 3 (dict) |
-| posthog-ruby | `posthog.capture({ distinct_id:, event:, properties: })` | hash key `event` | hash key `properties` |
-| posthog-go | `client.Enqueue(posthog.Capture{Event: "...", Properties: posthog.NewProperties()...})` | struct field `Event` | struct field `Properties` |
-| posthog-ios | `PostHog.shared.capture("event", properties: ["k": "v"])` | positional 1 | named `properties` |
-| posthog-android | `PostHog.capture("event", properties = mapOf("k" to "v"))` | positional 1 | named `properties` |
-| posthog-react-native | Same shape as posthog-js | positional 1 | positional 2 |
-| posthog-flutter | `Posthog().capture(eventName: "...", properties: { ... })` | named `eventName` | named `properties` |
-| posthog-php | `PostHog::capture(['distinctId' => ..., 'event' => '...', 'properties' => [...]])` | array key `event` | array key `properties` |
-| posthog-dotnet | `client.Capture(distinctId, "event", new() { ["k"] = "v" })` | positional 2 | positional 3 |
-| posthog-elixir | `Posthog.capture("event", distinct_id, %{ k: v })` | positional 1 | positional 3 |
+The per-SDK capture call signatures (where `event_name` and `properties` live in each SDK's call shape) are in `2-scan.md` under "Per-SDK call signatures". Read that section once at the start of your enrichment run alongside this file — you'll need it to extract `event_name` and `properties`.
 
 ## Identification surfaces
 

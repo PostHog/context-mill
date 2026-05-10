@@ -13,7 +13,7 @@ This audit lists every event your code captures, where it fires, and how often P
 | Phantom events (no volume) | {{phantom_count}} |
 | Top 10 events = % of total volume | {{top_10_share}} |
 
-> **Live dashboard:** _not linked — `dashboard-create` did not succeed during this run. See the run output for the failure reason, then re-run the audit to retry._
+{{dashboard_callout}}
 
 {{overview_panels}}
 

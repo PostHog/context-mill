@@ -7,9 +7,9 @@ This skill produces a product-browseable report of every PostHog event your code
 The audit runs as a 6-step chain:
 
 1. Detect SDK
-2. Scan events
-3. Extract event names
-4. MCP query
+2. Scan capture sites (grep only)
+3. Enrich (subagent fan-out — the only step that reads source files)
+4. Query PostHog for volume
 5. Write report
 6. Create dashboard
 

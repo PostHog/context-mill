@@ -99,7 +99,7 @@ This insight surfaces events the code references but PostHog hasn't seen recentl
 
 ```json
 {
-  "name": "Events audit · Phantom watch",
+  "name": "Events audit · Phantom events",
   "description": "Events captured in code but with zero or near-zero volume in the last 30 days. A growing list here usually means dead instrumentation, a typo, or a code path that no longer fires.",
   "dashboards": [<DASHBOARD_ID>],
   "query": {
@@ -117,25 +117,30 @@ In the actual call, replace the `code_events` CTE's `SELECT 'event_a' ... UNION 
 
 If any single `insight-create` call errors, log the failure inline (`Insight "<name>" failed: <reason>`) and continue with the rest. A partial dashboard is more useful than no dashboard.
 
-### c. Patch the dashboard URL into the report
+### c. Resolve the dashboard placeholder in the report
 
-The report (written in step 5) has a one-line blockquote callout inside the Overview section, immediately after the Overview metric table:
+Step 5 writes the report with a `{{dashboard_callout}}` placeholder still in it — step 5 intentionally leaves it for step 6 to fill. The placeholder lives inside the Overview section, immediately after the metric table.
 
-```
-> **Live dashboard:** _not linked — `dashboard-create` did not succeed during this run. See the run output for the failure reason, then re-run the audit to retry._
-```
+Step 6 always `Edit`s the placeholder; the substitution depends on outcome.
 
-If at least one insight was created successfully, `Edit` `posthog-events-audit-report.md` to swap that callout for a live link. Use the `Edit` tool with:
+**On success (at least one insight created):** swap the placeholder for a live blockquote link.
 
-- `old_string`: the full blockquote line above, exactly as written (single line; do not include surrounding blank lines).
+- `old_string`: `{{dashboard_callout}}`
 - `new_string`: a single blockquote line of the form:
   ```
-  > **Live dashboard:** [<dashboard name>](<dashboard URL>) — daily volume trend, top events, and phantom watch.
+  > **Events audit dashboard:** [<dashboard name>](<dashboard URL>) — daily volume trend, top events, and phantom watch. Auto-created by the wizard.
   ```
 
 Substitute `<dashboard name>` and `<dashboard URL>` from the `dashboard-create` response. If one or two insights failed and the rest succeeded, trim the trailing list to mention only the insights that exist (e.g. "daily volume trend and top events" if phantom watch failed).
 
-If every `insight-create` call failed in (c), don't patch the report — leave the placeholder as-is. An empty dashboard isn't worth linking to. Delete the empty dashboard if the MCP project has `mcp__posthog-wizard__dashboard-delete` available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" and move on.
+**On failure (dashboard creation errored, or every `insight-create` call failed):** swap the placeholder for empty string.
+
+- `old_string`: `{{dashboard_callout}}`
+- `new_string`: (empty)
+
+The report ends up with no dashboard line at all — that's the right UX for "no dashboard available." Don't try to surface the failure reason inside the report; the wizard already shows the failure in the run output. **Always perform this Edit** even on failure — leaving an unresolved `{{dashboard_callout}}` in the report would leak templating internals to the reader.
+
+If every `insight-create` call failed but the dashboard itself was created, also try to delete the empty dashboard via `mcp__posthog-wizard__dashboard-delete` if that tool is available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" in the run output and move on.
 
 ### d. Surface the dashboard URL
 

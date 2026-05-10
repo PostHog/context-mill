@@ -94,18 +94,20 @@ Overview is the action-oriented top section. It's a small KPI grid plus a series
 
 Each panel is a short bulleted list. Panels are derived deterministically from the inventory.
 
-1. **Phantom events — in code, zero volume.** Events where `status == "phantom"`. Each bullet: `event_name — area`. Sort by area, then event name.
-2. **No properties attached — flying blind.** Events where `properties_seen[] == []`. Sort by `volume_30d` desc. Each bullet: `event_name — Xk events flying blind`. Limit to top 12; add `… (+N more)` if longer.
-3. **Name drift — same concept, different keys.** Pairs of events whose names collapse to the same string when lowercased and stripped of underscores/spaces. Each bullet: `event_a vs event_b — splits funnels on <conceptual key>`.
-4. **Type drift — numeric property with mixed types.** Property keys named `revenue`, `amount`, `price`, `count`, `duration_*`, `quantity` whose values mix number and string across call sites. Each bullet: `property — number at file:line, string at file:line — silently zeros aggregates`.
-5. **Conditional fires — undercount risk.** Events where `has_conditional == true`. Each bullet: `event_name — fires inside <condition snippet> at file:line`. Sort by volume desc; cap at 8.
-6. **Duplicate captures — same event from multiple SDK families.** Events present in both client- and server-side SDK rows, where neither row is in a test file and neither explicitly threads `distinctId` from request context. Each bullet: `event_name — fires from <SDK A> at file:line and <SDK B> at file:line — risks 2× counting`.
-7. **Unresolved dynamic captures.** Inventory rows still flagged `is_dynamic: true` after step 3. Each bullet: `file:line — event name is <reason: function arg / template literal / network value>`.
-8. **Volume concentration.** A short text line plus the top 10 events as a bulleted list with bars. Each bullet: `event_name — Xk · share% · ▓▓▓▓░░░░░░`. Bars use Unicode block characters (`▓` for filled, `░` for empty), 12 chars wide, scaled to per-event share of `total_volume_30d`.
+1. **Volume concentration.** A short text line plus the top 10 events as a bulleted list with bars. Each bullet: `event_name — Xk · share% · ▓▓▓▓░░░░░░`. Bars use Unicode block characters (`▓` for filled, `░` for empty), 12 chars wide, scaled to per-event share of `total_volume_30d`.
+2. **Phantom events — in code, zero volume.** Events where `status == "phantom"`. Each bullet: `event_name — area`. Sort by area, then event name.
+3. **No properties attached.** Events where `properties_seen[] == []`. Sort by `volume_30d` desc. Each bullet: `event_name — Xk events flying blind`. Limit to top 12; add `… (+N more)` if longer.
+4. **Name drift — same concept, different keys.** Pairs of events whose names collapse to the same string when lowercased and stripped of underscores/spaces. Each bullet: `event_a vs event_b — splits funnels on <conceptual key>`.
+5. **Type drift — numeric property with mixed types.** Property keys named `revenue`, `amount`, `price`, `count`, `duration_*`, `quantity` whose values mix number and string across call sites. Each bullet: `property — number at file:line, string at file:line — silently zeros aggregates`.
+6. **Conditional fires — undercount risk.** Events where `has_conditional == true`. Each bullet: `event_name — fires inside <condition snippet> at file:line`. Sort by volume desc; cap at 8.
+7. **Duplicate captures — same event from multiple SDK families.** Events present in both client- and server-side SDK rows, where neither row is in a test file and neither explicitly threads `distinctId` from request context. Each bullet: `event_name — fires from <SDK A> at file:line and <SDK B> at file:line — risks 2× counting`.
+8. **Unresolved dynamic captures.** Inventory rows still flagged `is_dynamic: true` after step 3. Each bullet: `file:line — event name is <reason: function arg / template literal / network value>`.
 
 Skip any panel whose source list is empty. Don't render an empty "No phantom events" header — silence is the signal.
 
-These panels carry the findings that previously lived in the standalone Coverage Map and Data Quality sections; rendering them as Overview panels keeps action items in one place at the top of the report. The `coverage-map` and `data-quality` checks are still resolved separately via `audit_resolve_checks` (their `details` mirror the relevant Overview panels).
+These panels carry the findings that previously lived in the standalone Coverage Map and Data Quality sections; rendering them as Overview panels keeps action items in one place at the top of the report. 
+
+The `coverage-map` and `data-quality` checks are still resolved separately via `audit_resolve_checks` (their `details` mirror the relevant Overview panels).
 
 ### e. Analyze identity & segmentation (shared check)
 
@@ -152,6 +154,8 @@ After computing the Overview panels in (d) and the identity capabilities in (e),
 ### f. Render the report
 
 The markdown report template lives in `references/5-report-template.md`. The orchestrator reads it once, substitutes every `{{placeholder}}` with values computed in steps (b) through (e), and writes the result to `posthog-events-audit-report.md` at the project root.
+
+**Exception: `{{dashboard_callout}}` is intentionally not substituted in this step.** Step 6 fills that placeholder after dashboard creation runs. Leave it as-is in the rendered output — step 6 always resolves it (to a link on success, or empty string on failure), so it never ships to the reader.
 
 #### Substitution conventions
 

@@ -21,7 +21,7 @@ This step is one MCP call, one in-place merge, one `Write`. Do not re-emit the e
 Emit:
 
 ```
-[STATUS] Querying PostHog for volume
+[STATUS] Querying PostHog MCP for volume
 ```
 
 ## MCP tools
