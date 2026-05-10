@@ -14,6 +14,13 @@ The previous architecture collapsed enrichment + merge into one orchestrator tur
 
 Don't judge severity, don't infer flows, don't call MCP — those come later.
 
+## Supporting files
+
+This step uses two supporting reference files (not part of the chain):
+
+- `references/2-scan-subagent-prompt.md` — verbatim subagent prompt template. Orchestrator reads it once at phase 2 start, substitutes `{{N}}` and `{{ROW_IDS}}`, passes the result to each `Agent` invocation.
+- `references/2-scan-enrichment.md` — per-SDK call signatures, identification surfaces, `area` / `route` / `enclosing` rules. Subagents read it once during enrichment; the orchestrator does not.
+
 ## Status
 
 Emit, in order:
@@ -96,50 +103,20 @@ Count distinct files in the base inventory.
 
 Load `Agent` once: `ToolSearch select:Agent`.
 
+Read `references/2-scan-subagent-prompt.md`. Strip the leading HTML comment block (everything between `<!--` and `-->`, inclusive), then substitute:
+
+- `{{N}}` — the partition number for that subagent (`1`, `2`, ..., up to N)
+- `{{ROW_IDS}}` — JSON array of the row IDs assigned to that subagent
+
+The substituted text is the full prompt for that subagent.
+
 **Spawn all N sub-agents in parallel using the `Agent` tool — one assistant turn, N tool_use blocks in the same message.** Sequential dispatch (one Agent per turn) loses ~30s of orchestration latency for no reason; the prior diagnostic confirmed this. Batch them.
 
-Each `Agent` invocation passes the subagent prompt template (below) plus that subagent's row-id list and the partition number N. Set `run_in_background: false` — you want their results before the merge.
+Set `run_in_background: false` — you want their results before the merge.
 
-### e. Subagent prompt template
+### e. Wait for all subagents to return
 
-Each subagent receives this prompt (substitute `{{N}}` and `{{ROW_IDS}}`):
-
-```
-You are an events-audit enrichment subagent. You will read source files and write enriched capture rows to a part-file. Do not return the rows in your final message — write to disk only.
-
-Inputs:
-- Read .posthog-events-inventory.json once. The "rows" array contains base rows with id, file, line, raw_match, event_name_hint.
-- Process only rows whose id is in this list: {{ROW_IDS}}.
-
-For each assigned row, read its file ONCE (cache by file path; multiple rows in the same file share one Read). For each row, produce an enriched row with these fields:
-
-- id, file, line — copy from the base row
-- sdk — one of posthog-js, posthog-node, posthog-python, posthog-ruby, posthog-go, posthog-ios, posthog-android, posthog-react-native, posthog-flutter, posthog-php, posthog-dotnet, posthog-elixir
-- call_kind — one of capture, identify, set, set_once, group, alias, reset
-- event_name — the literal string in the event-name slot (resolve from the full call expression, not just the grep line). For dynamic names (variable, template literal, expression), set null and is_dynamic: true.
-- is_dynamic — true if event_name couldn't be resolved to a literal
-- properties — array of property keys from the properties argument (object literal / dict / hash). Empty array if the call passes a variable; empty array for non-capture call_kinds.
-- conditional_fire — true if the call sits inside an if/ternary/guard that depends on something other than user identity
-- distinct_id_kind — server-side SDKs only: "variable" | "literal" | "missing". null for client-side rows.
-- area — codebase bucket from the file path (rules below)
-- route — Next.js route if applicable, otherwise null
-- enclosing — nearest enclosing function/component name from a backward scan
-- status — "pending"
-- volume_30d — null
-- last_seen — null
-
-Skip $pageview and $pageleave from the SDK — they are SDK-internal except in rare manual setups. If a base row's raw_match shows $pageview/$pageleave, drop it (don't emit a row in your part-file).
-
-When you have all enriched rows, Write .posthog-events-inventory.part-{{N}}.json with a JSON array of the rows (no wrapper object, just [...]). Pretty-print with two-space indent.
-
-Final message: respond with exactly one line — "wrote part-{{N}} with M rows" — where M is the count. Do NOT include the rows in your message. Do NOT recap. Just the one line.
-
-Reference: per-SDK signatures, identification surfaces, area/route/enclosing rules are in the parent skill file at .claude/skills/events-audit/references/2-scan.md (sections "Reference: per-SDK signatures" through "Reference: enclosing"). Read that file once if you need them.
-```
-
-### f. Wait for all subagents to return
-
-Each subagent returns a single confirmation line. Verify each part-file exists before phase 3:
+Each subagent returns a single confirmation line (`"wrote part-N with M rows"`). Verify each part-file exists before phase 3:
 
 ```
 Bash: for n in 1 2 ... N; do test -f .posthog-events-inventory.part-$n.json || echo "MISSING: part-$n"; done
@@ -149,7 +126,7 @@ If any part-file is missing, the subagent failed. Re-dispatch only the failed su
 
 ## Phase 3 — Concat via jq
 
-### g. Merge part-files into the canonical inventory
+### f. Merge part-files into the canonical inventory
 
 One `Bash` call:
 
@@ -167,7 +144,7 @@ This:
 
 The orchestrator never has to materialize the merged JSON in a model turn — `jq` does the merge in shell, costing zero output tokens.
 
-If `jq` isn't available on the user's system, fall back to a Bash one-liner using `cat` + `python3 -c`:
+If `jq` isn't available on the user's system, fall back to a Bash one-liner using Python:
 
 ```
 python3 -c "import json,glob; rows=[]
@@ -178,85 +155,8 @@ json.dump({'rows': rows, 'wrapper_undetected': False}, open('.posthog-events-inv
 
 Don't try to merge in a model turn. That's the rule that crashed the previous run.
 
-## Reference: per-SDK signatures
-
-| SDK | Capture pattern | Event-name position | Properties position |
-|-----|-----------------|---------------------|---------------------|
-| posthog-js | `posthog.capture("event", { props })` | positional 1 | positional 2 (object literal) |
-| posthog-js (hook) | `usePostHog().capture("event", { props })` | positional 1 | positional 2 |
-| posthog-node | `client.capture({ distinctId, event, properties })` | object key `event` | object key `properties` |
-| posthog-python | `posthog.capture(distinct_id, "event", properties)` | positional 2 | positional 3 (dict) |
-| posthog-ruby | `posthog.capture({ distinct_id:, event:, properties: })` | hash key `event` | hash key `properties` |
-| posthog-go | `client.Enqueue(posthog.Capture{Event: "...", Properties: posthog.NewProperties()...})` | struct field `Event` | struct field `Properties` |
-| posthog-ios | `PostHog.shared.capture("event", properties: ["k": "v"])` | positional 1 | named `properties` |
-| posthog-android | `PostHog.capture("event", properties = mapOf("k" to "v"))` | positional 1 | named `properties` |
-| posthog-react-native | Same shape as posthog-js | positional 1 | positional 2 |
-| posthog-flutter | `Posthog().capture(eventName: "...", properties: { ... })` | named `eventName` | named `properties` |
-| posthog-php | `PostHog::capture(['distinctId' => ..., 'event' => '...', 'properties' => [...]])` | array key `event` | array key `properties` |
-| posthog-dotnet | `client.Capture(distinctId, "event", new() { ["k"] = "v" })` | positional 2 | positional 3 |
-| posthog-elixir | `Posthog.capture("event", distinct_id, %{ k: v })` | positional 1 | positional 3 |
-
-## Reference: identification surfaces
-
-The scanner records (with `call_kind` set accordingly):
-
-- `posthog.identify(distinctId, $set, $set_once)` → `identify`
-- `posthog.setPersonProperties({ ... })` → `set`
-- `posthog.setPersonPropertiesForFlags` → `set_once`
-- `posthog.group(type, key, properties)` → `group`
-- `posthog.alias(alias, distinctId)` → `alias`
-- `posthog.reset()` → `reset` (no event name; the identity check uses presence to score cross-device hygiene)
-
-## Reference: `area` rules
-
-Strip a single leading `src/`, `app/`, `pages/`, or `apps/<name>/` (monorepo). Then apply the first matching rule:
-
-| Path shape after stripping | `area` |
-|---|---|
-| `app/<x>/...` (Next.js app router) | `<x>` |
-| `pages/<x>/...` (Next.js pages router) | `<x>` (use `api/<seg>` for `pages/api/<seg>/...`) |
-| `components/<x>/...` | `<x>` |
-| `features/<x>/...` | `<x>` |
-| `screens/<x>/...` | `<x>` (mobile) |
-| `routes/<x>/...`, `views/<x>/...`, `controllers/<x>/...` (backend) | `<x>` |
-| `hooks/...`, `lib/...`, `utils/...`, `analytics/...`, `services/...`, `helpers/...` | `shared` |
-| `app/layout.tsx`, `app/template.tsx`, `_app.tsx`, `_document.tsx`, `app/error.tsx`, `app/not-found.tsx` | `global` |
-| Anything else | first path segment after stripping, lowercased |
-
-Strip only the first matching prefix.
-
-## Reference: `route` rules (Next.js only)
-
-- `app/foo/page.tsx` → `/foo`
-- `app/foo/bar/page.tsx` → `/foo/bar`
-- `app/foo/[id]/page.tsx` → `/foo/[id]`
-- `app/(group)/foo/page.tsx` → `/foo` (route groups in parens are ignored)
-- `pages/foo.tsx` → `/foo`
-- `pages/foo/[id].tsx` → `/foo/[id]`
-- `pages/api/<rest>` → `/api/<rest>` (without the file extension)
-
-Set `route: null` for any path that isn't router-shaped.
-
-## Reference: `enclosing` rules
-
-Backward-scan from the capture line. Match these patterns (first match wins above the capture line):
-
-- `function (\w+)\(` (named function)
-- `const (\w+) = \(?` / `const (\w+) = async`
-- `export (?:default )?function (\w+)\(`
-- `export const (\w+) = `
-- `class (\w+)`
-- `def (\w+)\(` (Python)
-- `func (\w+)\(` (Go / Swift)
-- `fun (\w+)\(` (Kotlin)
-- `def (\w+)` (Ruby)
-
-Take the closest match above the capture line at column 0 or one indent level deeper than the capture's expected wrapper. If nothing matches within ~80 lines above, set `enclosing: null`. Don't read more file context to chase it.
-
-For unnamed default exports (`export default function () { ... }`), use the file's basename without extension as the enclosing name (e.g. `CheckoutPage`).
-
 ## Notes on wrapper resolution
 
-This step intentionally does **not** chase wrapper functions (`trackEvent`, `analytics.track`, etc.). Cross-file wrapper resolution doesn't fit cleanly in row-range subagent fan-out, and the reframing principle is "let the PM ask follow-ups."
+This step intentionally does **not** chase wrapper functions (`trackEvent`, `analytics.track`, etc.). Cross-file wrapper resolution doesn't fit cleanly in row-range subagent fan-out, and the reframing principle is "let the reader ask follow-ups."
 
-If `wrapper_undetected: true` (SDK in deps but no direct calls found), the report step's data-quality check surfaces it, and the suggested-follow-ups list points the PM at: *"find calls to `trackEvent`/`logEvent`/`analytics.track` and resolve their callers as additional capture sites."*
+If `wrapper_undetected: true` (SDK in deps but no direct calls found), the report step's data-quality check surfaces it, and the suggested-follow-ups list points the reader at: *"find calls to `trackEvent`/`logEvent`/`analytics.track` and resolve their callers as additional capture sites."*

@@ -29,7 +29,6 @@ Emit:
 | MCP tool | When | Use |
 |----------|------|-----|
 | `mcp__posthog-wizard__query-run` | (c) below | Execute HogQL/SQL. Filtered query returns volume + last_seen for inventory events. |
-| `mcp__posthog-wizard__insights-list` | (f) below, optional | List actions for the report appendix. |
 | `mcp__posthog-wizard__entity-search` | **Avoid.** | Requires project-key permissions; personal API keys get "permission denied". The SQL approach below works regardless. |
 
 The active project comes from the wizard session – don't pick or switch projects yourself.
@@ -65,15 +64,6 @@ The result covers only events the code already references – there is no `defin
 
 ### d. Merge into the inventory
 
-The inventory now grows an optional `actions[]` field. Final shape:
-
-```jsonc
-{
-  "rows": [ ... ],         // existing per-site rows, now with volume_30d + last_seen
-  "actions": [ ... ]       // optional, from insights-list
-}
-```
-
 For each `row` with `call_kind == "capture"` and a non-null `event_name`, copy `volume_30d` and `last_seen` from the SQL result keyed by `event`. Rows whose name isn't in the SQL result keep `volume_30d: 0` and `last_seen: null` – this is the phantom signal the data-quality check uses.
 
 ### e. Resort by volume
@@ -96,11 +86,7 @@ If the SQL call in (c) was skipped or errored (every row has `volume_30d: null`)
 
 `Write` the inventory back.
 
-### g. Pull actions for the report appendix (optional)
-
-Call `mcp__posthog-wizard__insights-list` for actions if available. The audit doesn't analyze actions – they only show up in the report appendix. If the call fails or the API can't filter to actions, drop the appendix and note that in the report.
-
-### h. Failure handling
+### g. Failure handling
 
 Three failure modes, in order of severity:
 

@@ -47,7 +47,7 @@ If the property access targets an object literal in the same module and every va
 - Names built with template literals: `` `signup_${variant}` ``. Leave dynamic. The data-quality check flags these as undercount risk.
 - Names imported from another module (other than the same-file enum pattern). Leave dynamic.
 - Names from network responses or feature-flag values. Leave dynamic.
-- **Wrapper / function-arg passthrough.** If the dynamic name is a function parameter (`posthog.capture(eventName, ...)` where `eventName` is the enclosing function's argument), leave dynamic — chasing callers across files is intentionally out of scope. The report step's suggested follow-ups list points the PM at this case so they can ask Claude to resolve specific wrappers on demand.
+- **Wrapper / function-arg passthrough.** If the dynamic name is a function parameter (`posthog.capture(eventName, ...)` where `eventName` is the enclosing function's argument), leave dynamic — chasing callers across files is intentionally out of scope. The report step's suggested follow-ups list points the reader at this case so they can ask Claude to resolve specific wrappers on demand.
 
 When a row can't be resolved, leave it as `is_dynamic: true` with `event_name: null`. The data-quality check counts these as undercount risk; the report's by-event table omits them (they appear only in a "dynamic captures" footnote).
 
