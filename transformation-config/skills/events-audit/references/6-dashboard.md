@@ -4,7 +4,9 @@ next_step: null
 
 # Step 6 – Live dashboard
 
-The static report shows what your code captures. This step creates a live PostHog dashboard pinned to the same code-confirmed event list, so you can watch volume over time and catch phantoms as they appear. The dashboard is part of the standard audit deliverable — don't ask the user whether to create it. If the MCP project isn't writable, fail soft (log the reason, leave the placeholder in the report) and clean up as normal.
+The static report shows what your code captures. This step creates a live PostHog dashboard pinned to the same code-confirmed event list, so you can watch volume over time and catch phantoms as they appear. The dashboard is part of the standard audit deliverable — don't ask the user whether to create it. If the MCP project isn't writable, fail soft (log the reason, resolve the `{{dashboard_callout}}` placeholder to empty string) and clean up as normal.
+
+**Pre-check:** `Read` `.posthog-events-inventory.json` and check the top-level `mcp_available` flag set by step 4. If `mcp_available: false`, skip directly to step (c) — there's no point attempting `dashboard-create` against an unavailable MCP. Step (c) resolves the placeholder to empty string (the failure path) and step (d) cleans up.
 
 ## Status
 
@@ -44,7 +46,15 @@ Call `mcp__posthog-wizard__dashboard-create` with:
 
 Capture the returned `id` as `DASHBOARD_ID` and the returned PostHog URL.
 
-If the call errors (permission denied, project misconfigured, network), emit one line — `Dashboard creation failed: <short reason>. Skipping insights.` — and skip to (e). Don't retry. Don't fall back to a different approach.
+**Emit the URL immediately for the wizard.** As soon as `dashboard-create` succeeds, write a single line on its own (no quotes, no surrounding code fence — just plain text in your assistant message):
+
+```
+[DASHBOARD_URL] <full PostHog URL from dashboard-create>
+```
+
+The wizard scans for the literal marker `[DASHBOARD_URL]` and stores the URL that follows. The marker can sit anywhere in a line, but a dedicated line is cleanest. **Emit this before attempting insight creation** — if insight creation fails afterwards, the wizard already has the dashboard URL and can surface it.
+
+If the call errors (permission denied, project misconfigured, network), emit one line — `Dashboard creation failed: <short reason>. Skipping insights.` — and skip to (c). Don't retry. Don't fall back to a different approach. Do not emit `[DASHBOARD_URL]` on failure — there's no URL to surface.
 
 ### b. Create the three insights
 
@@ -142,15 +152,7 @@ The report ends up with no dashboard line at all — that's the right UX for "no
 
 If every `insight-create` call failed but the dashboard itself was created, also try to delete the empty dashboard via `mcp__posthog-wizard__dashboard-delete` if that tool is available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" in the run output and move on.
 
-### d. Surface the dashboard URL
-
-Emit one line so the wizard can surface the dashboard to the user:
-
-```
-Created events audit dashboard: <PostHog URL from dashboard-create>
-```
-
-### e. Clean up the inventory
+### d. Clean up the inventory
 
 Whether creation succeeded, partially succeeded, or failed — delete the inventory now. It's transient scratch state.
 

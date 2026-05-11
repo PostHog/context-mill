@@ -41,8 +41,21 @@ Emit, in order:
 
 - `rows[]` – capture rows (sorted by `volume_30d` desc by step 4) with `event_name`, `properties[]`, `package`, `area`, `route`, `enclosing`, `volume_30d`, `last_seen`, `status`, etc.
 - `wrapper_undetected` – top-level boolean.
+- `mcp_available` – top-level boolean from step 4. `false` means PostHog volume data is missing; render the report in degraded mode (see below).
+- `mcp_skipped_reason` – optional short string explaining why MCP was skipped or failed. Used in the disclaimer when `mcp_available: false`.
 
 If `rows[]` is empty, render a short report explaining the inventory is empty, resolve all three shared checks with `pending` details (no data to evaluate), and exit.
+
+#### Degraded mode (`mcp_available: false`)
+
+When MCP wasn't reachable in step 4, every row has `volume_30d: null` and `status: "pending"`. Render the report with these adjustments:
+
+- Substitute `{{mcp_disclaimer}}` with a one-paragraph callout (see substitution conventions in (f)). Otherwise leave it empty.
+- Volume KPIs in Overview render as `—` instead of numbers: total volume, phantom count, top-10 share. Distinct-events count still renders (it's code-derived).
+- Volume Map section: instead of the events table, the body becomes a single line `_PostHog volume data was not fetched during this run — see the disclaimer above. Capture sites are still listed in the Area topology section below._`. Skip the capture-sites collapsibles too.
+- Area Topology section: still renders, but sort areas alphabetically (no volume to sort by) and omit the `<total_volume>` figure from each area heading. Each event bullet shows just the event name plus `· conditional` if applicable; no volume number, no `· phantom` tag.
+- Overview panels: skip "Volume concentration" and "Phantom events" entirely (both need volume). All other panels (no-properties, name drift, type drift, conditional fires, duplicate captures, unresolved dynamics) still render — they're code-derived.
+- The `data-quality` check resolves to whatever the code-derived panels found. Don't penalize for missing volume; that's not a code problem.
 
 ### b. Aggregate by event (Volume Map records)
 
@@ -163,10 +176,14 @@ These rules tell you how to format each placeholder. The placeholder names thems
 
 - **`{{repo_name}}`** — the project root directory name.
 - **`{{timestamp}}`** — short human-readable date (e.g. `2026-05-09`) or full ISO timestamp.
-- **`{{total_volume}}`** — formatted with thousands separator (`310,000`) or compact (`310k`); use compact for totals ≥10,000.
-- **`{{distinct_count}}`** — integer; from the by-event records in (b).
-- **`{{phantom_count}}`** — integer; render as `0` if no phantoms (the row is still useful at all-zeros).
-- **`{{top_10_share}}`** — percentage rounded to nearest whole, e.g. `90%`.
+- **`{{mcp_disclaimer}}`** — empty string when `mcp_available: true`. When `mcp_available: false`, a one-paragraph callout. Use this exact shape, substituting `<reason>` from `mcp_skipped_reason`:
+  ```markdown
+  > **Volume data not fetched.** PostHog could not be queried during this run (<reason>). The events your code captures, where they fire, and how they're identified are still in the report below — but per-event 30-day volume, phantom detection (events seen in code but not in PostHog), and the top-events table are missing. Re-run the audit with PostHog MCP configured to populate them.
+  ```
+- **`{{total_volume}}`** — formatted with thousands separator (`310,000`) or compact (`310k`); use compact for totals ≥10,000. **Render `—` when `mcp_available: false`.**
+- **`{{distinct_count}}`** — integer; from the by-event records in (b). Always renders (code-derived).
+- **`{{phantom_count}}`** — integer; render as `0` if no phantoms (the row is still useful at all-zeros). **Render `—` when `mcp_available: false`.**
+- **`{{top_10_share}}`** — percentage rounded to nearest whole, e.g. `90%`. **Render `—` when `mcp_available: false`.**
 - **`{{overview_panels}}`** — concatenation of the panels from (d), each rendered as:
   ```markdown
   ### <panel title>

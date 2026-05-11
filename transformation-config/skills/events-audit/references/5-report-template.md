@@ -4,6 +4,8 @@ _Generated {{timestamp}}_
 
 This audit lists every event your code captures, where it fires, and how often PostHog has seen it in the last 30 days. Use the suggested follow-ups at the end to ask Claude focused questions about the events listed here.
 
+{{mcp_disclaimer}}
+
 ## 1. Overview
 
 | Metric | Value |

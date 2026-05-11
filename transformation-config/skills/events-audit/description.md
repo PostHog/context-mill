@@ -62,7 +62,8 @@ Report aborts with `[ABORT]` prefixed messages. The wizard catches these and sto
 
 - `[ABORT] No PostHog SDK found`
 - `[ABORT] No capture call sites found in any detected SDK`
-- `[ABORT] MCP project mismatch – enrichment unsafe`
+
+MCP failures (project mismatch, query errors, no connection) are **not** abort conditions — step 4 soft-degrades and step 5 renders the report with a `{{mcp_disclaimer}}` callout in place of volume sections. See step 4 for the degradation contract.
 
 ## Framework guidelines
 
