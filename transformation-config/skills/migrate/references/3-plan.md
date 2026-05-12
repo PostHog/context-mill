@@ -15,7 +15,7 @@ This step does **not** plan any new event captures, new instrumentation surfaces
 
 Before proceeding, find any existing `posthog.capture()` / `posthog.identify()` / `posthog.init()` code in the project. Make note of event name formatting and any existing PostHog wiring — Step 4 must not duplicate it.
 
-Read `.selected-targets.txt` to confirm the migration target. Read the `migration-source-<competitor_name>` skill installed in Step 1 — its `SKILL.md` and every file in its `references/` directory. The guide (sourced from `<competitor_docs>`) is the canonical replacement reference; the plan must map every call site to a specific replacement pattern from the guide. Do not spawn subagents.
+Read `.selected-targets.txt` to confirm the migration target. Read the `migration-source-<competitor_id>` skill installed in Step 1 — its `SKILL.md` and every file in its `references/` directory. The guide (sourced from `<competitor_docs>`) is the canonical replacement reference; the plan must map every call site to a specific replacement pattern from the guide. Do not spawn subagents.
 
 Enumerate every call site of the `<competitor_name>` API in the project. Use `Grep` with the patterns from the migration guide. For each match, read the surrounding code so you understand the call's intent — feature flag evaluation, event capture, init, error report, etc. Categorize each call site into one of: `init`, `capture` (or equivalent event call), `feature-flag-eval`, `error-capture`, `session-replay`, `other`. The migration guide names which categories apply to `<competitor_name>` — use those.
 
@@ -32,13 +32,13 @@ Create a new file at the root of the project: `.posthog-migration-plan.json`. Sh
 
 ```json
 {
-  "target": "<competitor_name>",
+  "target": "<competitor_id>",
   "init": [
     {
-      "file": "lib/<competitor_name>.ts",
+      "file": "lib/<competitor_id>.ts",
       "line": 8,
       "currentSnippet": "<competitor_name> init call",
-      "plannedReplacement": "posthog.init(...) per migration-source-<competitor_name> guide"
+      "plannedReplacement": "posthog.init(...) per migration-source-<competitor_id> guide"
     }
   ],
   "callSites": [

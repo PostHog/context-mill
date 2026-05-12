@@ -13,7 +13,7 @@ Emit:
 
 ```
 [STATUS] Scanning project for <competitor_name> calls
-[STATUS] Installing migration-source-<competitor_name> guide skill
+[STATUS] Installing migration-source-<competitor_id> guide skill
 ```
 
 ## Procedure
@@ -26,18 +26,18 @@ The migration guide at `<competitor_docs>` documents the full set of API names a
 
 ### b. Record the target
 
-Write `["<competitor_name>"]` to `.selected-targets.txt` at the project root. Downstream steps read this file as a fixed convention; the array shape is preserved even though there's only one entry.
+Write `["<competitor_id>"]` to `.selected-targets.txt` at the project root. Downstream steps read this file as a fixed convention; the array shape is preserved even though there's only one entry.
 
 ### c. Install the matching migration-source skill
 
 Call the wizard MCP tool `mcp__wizard-tools__install_skill`:
 
 ```
-mcp__wizard-tools__install_skill({ skillId: "migration-source-<competitor_name>" })
+mcp__wizard-tools__install_skill({ skillId: "migration-source-<competitor_id>" })
 ```
 
-This lands the migration guide skill at `.claude/skills/migration-source-<competitor_name>/`. The reference markdown inside is the canonical replacement guide for `<competitor_name>` — Step 4 reads it. **Do not** read the migration guide content yet; that's Step 4's job.
+This lands the migration guide skill at `.claude/skills/migration-source-<competitor_id>/`. The reference markdown inside is the canonical replacement guide for `<competitor_name>` — Step 4 reads it. **Do not** read the migration guide content yet; that's Step 4's job.
 
-If `install_skill` returns an error, emit `[ABORT] Could not install migration guide skill: migration-source-<competitor_name>` and stop.
+If `install_skill` returns an error, emit `[ABORT] Could not install migration guide skill: migration-source-<competitor_id>` and stop.
 
 Emit `[STATUS] Wrote .selected-targets.txt` once the file is written and the guide skill is installed, then continue to the next step.

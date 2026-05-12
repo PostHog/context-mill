@@ -22,7 +22,7 @@ Emit:
 
 ### a. Remove the `<competitor_name>` packages
 
-Read `.selected-targets.txt` to confirm the migration target. Remove every `<competitor_name>` package from the project's manifest using the package manager detected in Step 2. The `migration-source-<competitor_name>` skill (sourced from `<competitor_docs>`) names the exact package(s) to uninstall for this target — consult it for the authoritative list.
+Read `.selected-targets.txt` to confirm the migration target. Remove every `<competitor_name>` package from the project's manifest using the package manager detected in Step 2. The `migration-source-<competitor_id>` skill (sourced from `<competitor_docs>`) names the exact package(s) to uninstall for this target — consult it for the authoritative list.
 
 Use `pnpm remove <pkg>` / `npm uninstall <pkg>` / `pip uninstall <pkg>` / `bundle remove <pkg>` / etc. Only remove packages that the project no longer imports — confirm with `Grep` first that no remaining call sites reference them.
 
