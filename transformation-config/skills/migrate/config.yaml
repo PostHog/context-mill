@@ -9,4 +9,7 @@ variants:
   - id: all
     display_name: PostHog migration
     tags: [migration]
-    docs_urls: []
+    docs_urls: 
+      - https://posthog.com/docs/feature-flags/adding-feature-flag-code
+      - https://posthog.com/docs/migrate/<competitor_id>
+      - https://posthog.com/docs/feature-flags/installation/react
