@@ -620,45 +620,40 @@ async function generateSkill({
 }
 
 /**
- * Generate all skills from configuration
- *
- * @param {Object} options
- * @param {string} options.repoRoot - Repository root path
- * @param {string} options.configDir - Config directory path (transformation-config)
- * @param {string} options.outputDir - Output directory for generated skills
- * @param {string} options.promptsDir - LLM prompts directory
- * @param {string} options.version - Build version
+ * Serialize an expanded skill into the metadata shape the manifest builder consumes.
  */
-async function generateAllSkills({
-    repoRoot,
-    configDir,
-    outputDir,
-    promptsDir,
-    version,
-}) {
-    console.log('Loading configuration...');
+function serializeSkill(s) {
+    return {
+        id: s.id,
+        shortId: s._shortId,
+        category: s._category,
+        displayName: s.display_name,
+        type: s.type || 'example',
+        group: s._group,
+        name: s.description,
+        description: s.description,
+        tags: s.tags || [],
+    };
+}
 
-    // Load all configs
+/**
+ * Load all configs and the expanded skill list once. Cheap (YAML reads only).
+ */
+function loadAndExpandSkills({ configDir }) {
     const skillsConfig = loadSkillsConfig(configDir);
     const commandmentsConfig = loadCommandments(configDir);
     const skipPatterns = loadSkipPatterns(path.join(configDir, 'skip-patterns.yaml'));
-
-    // Expand grouped skills into flat array
     const skills = expandSkillGroups(skillsConfig, configDir);
+    return { skills, commandmentsConfig, skipPatterns };
+}
 
-    // Discover workflows
-    console.log('Discovering workflows...');
-    const workflows = discoverWorkflows(promptsDir);
-    console.log(`  Found ${workflows.length} workflow files`);
-
-    // Create output directory
+/**
+ * Run generateSkill across a list of expanded skill objects, writing into outputDir.
+ */
+async function runGenerate({ skills, version, repoRoot, configDir, outputDir, skipPatterns, commandmentsConfig, workflows }) {
     fs.mkdirSync(outputDir, { recursive: true });
-
-    console.log(`\nGenerating ${skills.length} skills...`);
-
     for (const skill of skills) {
         console.log(`\nGenerating skill: ${skill.id}`);
-
         await generateSkill({
             skill,
             version,
@@ -671,24 +666,50 @@ async function generateAllSkills({
             sharedDocs: skill._sharedDocs || [],
             workflows,
         });
-
         console.log(`  ✓ ${skill.id}`);
     }
+}
 
+/**
+ * Generate all skills from configuration.
+ * Returns serialized metadata for every skill (used to build the manifest).
+ */
+async function generateAllSkills({ repoRoot, configDir, outputDir, promptsDir, version }) {
+    console.log('Loading configuration...');
+    const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
+
+    console.log('Discovering workflows...');
+    const workflows = discoverWorkflows(promptsDir);
+    console.log(`  Found ${workflows.length} workflow files`);
+
+    console.log(`\nGenerating ${skills.length} skills...`);
+    await runGenerate({ skills, version, repoRoot, configDir, outputDir, skipPatterns, commandmentsConfig, workflows });
     console.log(`\n✓ Generated ${skills.length} skills to ${outputDir}`);
 
-    // Return full skill metadata for manifest generation
-    return skills.map(s => ({
-        id: s.id,
-        shortId: s._shortId,
-        category: s._category,
-        displayName: s.display_name,
-        type: s.type || 'example',
-        group: s._group,
-        name: s.description,
-        description: s.description,
-        tags: s.tags || [],
-    }));
+    return skills.map(serializeSkill);
+}
+
+/**
+ * Generate just the skills whose IDs are listed in `ids`.
+ * Returns { allSkills, rebuiltSkills } so callers can update the manifest with the
+ * full set while knowing which subset was actually written.
+ */
+async function generateSkillsByIds({ ids, repoRoot, configDir, outputDir, promptsDir, version }) {
+    const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
+    const idSet = new Set(ids);
+    const filtered = skills.filter(s => idSet.has(s.id));
+
+    if (filtered.length === 0) {
+        return { allSkills: skills.map(serializeSkill), rebuiltSkills: [] };
+    }
+
+    const workflows = discoverWorkflows(promptsDir);
+    await runGenerate({ skills: filtered, version, repoRoot, configDir, outputDir, skipPatterns, commandmentsConfig, workflows });
+
+    return {
+        allSkills: skills.map(serializeSkill),
+        rebuiltSkills: filtered.map(serializeSkill),
+    };
 }
 
 module.exports = {
@@ -696,9 +717,12 @@ module.exports = {
     loadCommandments,
     loadSkillTemplate,
     expandSkillGroups,
+    loadAndExpandSkills,
     collectCommandments,
     discoverWorkflows,
     generateSkill,
     generateAllSkills,
+    generateSkillsByIds,
+    serializeSkill,
     fetchDoc,
 };

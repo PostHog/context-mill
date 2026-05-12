@@ -11,123 +11,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
-const archiver = require('archiver');
-const { generateAllSkills, loadSkillsConfig, fetchDoc } = require('./lib/skill-generator');
+const { generateAllSkills, fetchDoc } = require('./lib/skill-generator');
 const { generateMarketplace } = require('./lib/marketplace-generator');
-const { REPO_URL } = require('./lib/constants');
+const {
+    loadDocsConfig,
+    zipSkillToBuffer,
+    createBundledArchive,
+    writeManifestAndMenu,
+} = require('./lib/build-phases');
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
-
-/**
- * Load URI schema configuration
- */
-function loadUriSchema(configDir) {
-    const content = fs.readFileSync(path.join(configDir, 'uri-schema.yaml'), 'utf8');
-    return yaml.load(content);
-}
-
-/**
- * Create a ZIP archive for a skill directory
- * Returns the ZIP as a Buffer
- */
-async function zipSkillToBuffer(skillDir) {
-    return new Promise((resolve, reject) => {
-        const chunks = [];
-        const archive = archiver('zip', { zlib: { level: 9 } });
-
-        archive.on('data', chunk => chunks.push(chunk));
-        archive.on('end', () => resolve(Buffer.concat(chunks)));
-        archive.on('error', reject);
-
-        archive.directory(skillDir, false);
-        archive.finalize();
-    });
-}
-
-/**
- * Create the bundled skills-mcp-resources.zip
- */
-async function createBundledArchive(outputPath, manifest, skillZips) {
-    return new Promise((resolve, reject) => {
-        const output = fs.createWriteStream(outputPath);
-        const archive = archiver('zip', { zlib: { level: 9 } });
-
-        output.on('close', () => resolve(archive.pointer()));
-        archive.on('error', reject);
-
-        archive.pipe(output);
-
-        // Add manifest.json
-        archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
-
-        // Add each skill ZIP
-        for (const [filename, buffer] of Object.entries(skillZips)) {
-            archive.append(buffer, { name: filename });
-        }
-
-        archive.finalize();
-    });
-}
-
-
-/**
- * Generate manifest with skill URIs, download URLs, and MCP resource representations
- */
-function generateManifest(skills, uriSchema, version, guideContents = {}) {
-    const scheme = uriSchema.scheme;
-    const skillPattern = uriSchema.patterns.skill;
-    const docPattern = uriSchema.patterns.doc;
-    // Base URL for skill ZIP downloads
-    // Production: GitHub releases pinned to the build version
-    // Development: Local server (set via SKILLS_BASE_URL env var), or latest release
-    const baseDownloadUrl = process.env.SKILLS_BASE_URL
-        || (version && version !== 'dev'
-            ? `${REPO_URL}/releases/download/v${version}`
-            : `${REPO_URL}/releases/latest/download`);
-
-    return {
-        version: uriSchema.manifest_version,
-        buildVersion: version,
-        buildTimestamp: new Date().toISOString(),
-        resources: skills.map(skill => {
-            const isGuide = skill.type === 'doc' && guideContents[skill.id];
-            const uri = isGuide
-                ? `${scheme}${docPattern.replace('{id}', skill.id)}`
-                : `${scheme}${skillPattern.replace('{group}', skill.group).replace('{id}', skill.shortId)}`;
-            const base = {
-                id: skill.id,
-                name: skill.name,
-                description: skill.description,
-                tags: skill.tags,
-                uri,
-            };
-
-            if (isGuide) {
-                return {
-                    ...base,
-                    resource: {
-                        mimeType: 'text/markdown',
-                        description: skill.description,
-                        text: guideContents[skill.id],
-                    },
-                };
-            }
-
-            const downloadUrl = `${baseDownloadUrl}/${skill.id}.zip`;
-            return {
-                ...base,
-                file: `${skill.id}.zip`,
-                downloadUrl,
-                resource: {
-                    mimeType: 'text/plain',
-                    description: skill.description,
-                    text: downloadUrl,
-                },
-            };
-        }),
-    };
-}
 
 /**
  * Fetch and concatenate docs for a guide resource
@@ -158,7 +51,6 @@ async function main() {
     try {
         fs.mkdirSync(skillsDir, { recursive: true });
 
-        // Generate skill packages via generator
         const skills = await generateAllSkills({
             repoRoot,
             configDir,
@@ -167,15 +59,8 @@ async function main() {
             version: BUILD_VERSION,
         });
 
-        // Load docs config
-        const docsConfigPath = path.join(configDir, 'docs.yaml');
-        const docEntries = fs.existsSync(docsConfigPath)
-            ? yaml.load(fs.readFileSync(docsConfigPath, 'utf8')).docs || []
-            : [];
+        const docEntries = loadDocsConfig(configDir);
 
-        const uriSchema = loadUriSchema(configDir);
-
-        // Create ZIP for each skill
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
         for (const skill of skills) {
@@ -189,7 +74,6 @@ async function main() {
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
 
-        // Generate marketplace plugin directories (before tempDir cleanup)
         console.log('\nGenerating marketplace plugins...');
         const marketplaceResult = generateMarketplace({
             skills,
@@ -201,7 +85,6 @@ async function main() {
 
         fs.rmSync(tempDir, { recursive: true, force: true });
 
-        // Fetch doc content directly (no generator, no ZIP)
         const docContents = {};
         if (docEntries.length > 0) {
             console.log('\nFetching doc resources...');
@@ -212,45 +95,19 @@ async function main() {
             }
         }
 
-        // Build unified resource list for manifest
-        const docResources = docEntries.map(d => ({
-            id: d.id,
-            type: 'doc',
-            name: d.display_name,
-            description: d.description,
-            tags: d.tags || [],
-        }));
-        const allResources = [...skills, ...docResources];
-
-        // Generate manifest
-        const manifest = generateManifest(allResources, uriSchema, BUILD_VERSION, docContents);
-
-        const manifestPath = path.join(skillsDir, 'manifest.json');
-        fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+        const manifest = writeManifestAndMenu({
+            allSkills: skills,
+            docContents,
+            distDir,
+            configDir,
+            version: BUILD_VERSION,
+        });
         console.log(`\n  ✓ manifest.json`);
 
-        // Generate skill-menu.json: condensed list grouped by category
-        // The wizard agent filters by category to keep context small
-        const skillsByCategory = {};
-        for (const skill of skills) {
-            const cat = skill.group;
-            if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
-            skillsByCategory[cat].push({
-                id: skill.id,
-                name: skill.name,
-                downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
-            });
-        }
-        const skillMenu = {
-            version: manifest.version,
-            buildVersion: manifest.buildVersion,
-            categories: skillsByCategory,
-        };
         const skillMenuPath = path.join(skillsDir, 'skill-menu.json');
-        fs.writeFileSync(skillMenuPath, JSON.stringify(skillMenu, null, 2));
-        console.log(`  ✓ skill-menu.json (${Object.keys(skillsByCategory).length} categories, ${skills.length} skills)`);
+        const skillMenuParsed = JSON.parse(fs.readFileSync(skillMenuPath, 'utf8'));
+        console.log(`  ✓ skill-menu.json (${Object.keys(skillMenuParsed.categories).length} categories, ${skills.length} skills)`);
 
-        // Write fetched docs marked as release_asset to skills dir (uploaded as release assets)
         const releaseAssetDocs = docEntries.filter(d => d.release_asset);
         if (releaseAssetDocs.length > 0) {
             console.log('\nWriting release-asset docs...');
@@ -264,18 +121,16 @@ async function main() {
             }
         }
 
-        // Create bundled archive
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
         const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
         console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
 
-        // Summary
         console.log('\n' + '='.repeat(50));
         console.log('Build complete!\n');
         console.log('Output:', skillsDir);
         console.log('Bundle:', bundlePath);
-        console.log(`Resources: ${allResources.length} (${skills.length} skills, ${docEntries.length} docs)`);
+        console.log(`Resources: ${manifest.resources.length} (${skills.length} skills, ${docEntries.length} docs)`);
         console.log('\nSkill ZIPs:');
         for (const skill of skills) {
             const downloadUrl = manifest.resources.find(s => s.id === skill.id)?.downloadUrl;
