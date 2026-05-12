@@ -26,6 +26,12 @@ The example project shows the target implementation pattern. Consult the documen
 
 `ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:Grep`). Do **not** use it to browse for other tools — every tool the migration needs (`Glob`, `Grep`, `Read`, `Write`, `Edit`, `Bash`, `Task`, the named `mcp__wizard-tools__*` tools) is already named in this skill or its step files.
 
+## Task list
+
+As soon as you've read this description and have a rough sense of the work, **call `TodoWrite` immediately** — before reading any reference file. The user is watching the task pane and shouldn't see it sit empty.
+
+It's fine if your first list is incomplete or imprecise. Seed it with whatever high-level items you can infer from the workflow overview above, then **call `TodoWrite` again** every time your understanding sharpens: after you read a step file, after planning surfaces concrete sub-tasks, after a phase reveals work you didn't anticipate. Mark items `in_progress` when you start them and `completed` when you finish. The wizard surfaces this list in real time; keeping it current is more important than getting it right on the first call.
+
 ## User decision points
 
 Whenever a step needs the user to make a choice (pick a target, confirm a path, supply a value), call the wizard MCP tool `mcp__wizard-tools__prompt_user`. It surfaces a modal in the wizard TUI, blocks until the user answers, and returns the answer as JSON in the tool result.
