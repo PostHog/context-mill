@@ -1,6 +1,6 @@
 type: docs-only
 template: description.md
-description: Migrate an existing LaunchDarkly or Amplitude integration to PostHog
+description: Migrate an existing <competitor_name> integration to PostHog
 tags: [migration]
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."

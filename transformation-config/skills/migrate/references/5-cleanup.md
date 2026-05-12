@@ -20,16 +20,13 @@ Emit:
 
 ## Action
 
-### a. Remove the migrated source's packages
+### a. Remove the `<competitor_name>` packages
 
-Read `.selected-targets.txt`. For each migrated target, remove its packages from the project's manifest using the package manager detected in Step 2. Examples:
-
-- LaunchDarkly: remove `launchdarkly-react-client-sdk`, `launchdarkly-js-client-sdk`, `launchdarkly-node-server-sdk`, etc. (whichever the project actually had).
-- Amplitude: remove `@amplitude/unified`, `@amplitude/analytics-browser`, `amplitude-js`, etc.
+Read `.selected-targets.txt` to confirm the migration target. Remove every `<competitor_name>` package from the project's manifest using the package manager detected in Step 2. The `migration-source-<competitor_name>` skill (sourced from `<competitor_docs>`) names the exact package(s) to uninstall for this target — consult it for the authoritative list.
 
 Use `pnpm remove <pkg>` / `npm uninstall <pkg>` / `pip uninstall <pkg>` / `bundle remove <pkg>` / etc. Only remove packages that the project no longer imports — confirm with `Grep` first that no remaining call sites reference them.
 
-Also remove any leftover config files belonging to the migrated source (e.g. provider-specific config under the project root). Do not touch unrelated config files.
+Also remove any leftover config files belonging to `<competitor_name>` (e.g. provider-specific config under the project root). Do not touch unrelated config files.
 
 ### b. Lint, type check, build
 
@@ -44,15 +41,15 @@ Create `posthog-migration-report.md` at the project root. It should include a su
 <wizard-report>
 # PostHog migration report
 
-The wizard has migrated this project from one or more third-party tools to PostHog. [Detailed summary of changes]
+The wizard has migrated this project from `<competitor_name>` to PostHog. [Detailed summary of changes]
 
-## Migrated targets
+## Migrated target
 
-[bulleted list of targets migrated]
+`<competitor_name>` — migration guide: `<competitor_docs>`
 
 ## Replaced call sites
 
-[table: target | file | kind | before → after]
+[table: file | kind | before → after]
 
 ## Removed packages
 

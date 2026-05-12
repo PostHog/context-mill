@@ -7,21 +7,21 @@ next_step: 4-migrate.md
 
 We're making a migration plan for this project. The plan covers exactly three things:
 
-1. **Initialization** — where the source(s) are initialized today, where PostHog should be initialized in their place.
+1. **Initialization** — where `<competitor_name>` is initialized today, where PostHog should be initialized in its place.
 2. **Identification** — where the user is logged in / signed up, where `posthog.identify()` should fire.
-3. **Call site replacement** — every existing call to the migrated source's API, plus its planned PostHog equivalent.
+3. **Call site replacement** — every existing call to the `<competitor_name>` API, plus its planned PostHog equivalent.
 
 This step does **not** plan any new event captures, new instrumentation surfaces, or new business-value tracking. The migration is a faithful port — nothing more, nothing less.
 
 Before proceeding, find any existing `posthog.capture()` / `posthog.identify()` / `posthog.init()` code in the project. Make note of event name formatting and any existing PostHog wiring — Step 4 must not duplicate it.
 
-Read `.selected-targets.txt` to know which sources to plan for. For each selected target, read the migration guide skill installed in Step 1 — its `SKILL.md` and every file in its `references/` directory. The guide is the canonical replacement reference; the plan must map every call site to a specific replacement pattern from the guide. Do not spawn subagents.
+Read `.selected-targets.txt` to confirm the migration target. Read the `migration-source-<competitor_name>` skill installed in Step 1 — its `SKILL.md` and every file in its `references/` directory. The guide (sourced from `<competitor_docs>`) is the canonical replacement reference; the plan must map every call site to a specific replacement pattern from the guide. Do not spawn subagents.
 
-For each selected target, enumerate every call site of its API in the project. Use `Grep` with the patterns from the source's migration guide. For each match, read the surrounding code so you understand the call's intent — feature flag evaluation, event capture, init, error report, etc. Categorize each call site into one of: `init`, `capture` (or equivalent event call), `feature-flag-eval`, `error-capture`, `session-replay`, `other`. The migration guide for each source defines which categories apply to that source — use those.
+Enumerate every call site of the `<competitor_name>` API in the project. Use `Grep` with the patterns from the migration guide. For each match, read the surrounding code so you understand the call's intent — feature flag evaluation, event capture, init, error report, etc. Categorize each call site into one of: `init`, `capture` (or equivalent event call), `feature-flag-eval`, `error-capture`, `session-replay`, `other`. The migration guide names which categories apply to `<competitor_name>` — use those.
 
 Do not plan additional captures beyond what the migration guide and existing call sites cover. If the project has a login flow but no current identification call, that's an identification *opportunity* and is recorded separately (below). If the project does not currently capture an event, do not add a PostHog capture for it.
 
-Find the project's login and signup flows (whether or not the source you're migrating already identifies users). On both client and server, identify() calls should fire when:
+Find the project's login and signup flows (whether or not `<competitor_name>` already identifies users). On both client and server, identify() calls should fire when:
 
 - A user logs in (after credentials are validated).
 - A user signs up (after the account is created).
@@ -32,23 +32,21 @@ Create a new file at the root of the project: `.posthog-migration-plan.json`. Sh
 
 ```json
 {
-  "targets": ["launchdarkly", "amplitude"],
+  "target": "<competitor_name>",
   "init": [
     {
-      "target": "launchdarkly",
-      "file": "lib/launchdarkly.ts",
+      "file": "lib/<competitor_name>.ts",
       "line": 8,
-      "currentSnippet": "LDClient.initialize(...)",
-      "plannedReplacement": "posthog.init(...) per migration-source-launchdarkly/references/launchdarkly.md"
+      "currentSnippet": "<competitor_name> init call",
+      "plannedReplacement": "posthog.init(...) per migration-source-<competitor_name> guide"
     }
   ],
   "callSites": [
     {
-      "target": "launchdarkly",
       "file": "components/banner.tsx",
       "line": 14,
       "kind": "feature-flag-eval",
-      "currentSnippet": "useFlags()['show-banner']",
+      "currentSnippet": "<competitor_name> flag evaluation",
       "plannedReplacement": "useFeatureFlagEnabled('show-banner') per migration guide"
     }
   ],
@@ -70,7 +68,7 @@ If a category has no entries, write an empty array. Every entry must have a real
 
 Status to report in this phase:
 
-- Reading installed skills
-- Locating call sites for each migrated source
+- Reading installed skill
+- Locating `<competitor_name>` call sites
 - Locating identification opportunities
 - Writing migration plan
