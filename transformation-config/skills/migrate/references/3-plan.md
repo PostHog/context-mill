@@ -7,15 +7,12 @@ next_step: 4-migrate.md
 
 We're making a migration plan for this project. The plan covers exactly three things:
 
-1. **Initialization** — where `<competitor_name>` is initialized today, where PostHog should be initialized in its place.
-2. **Identification** — where the user is logged in / signed up, where `posthog.identify()` should fire.
-3. **Call site replacement** — every existing call to the `<competitor_name>` API, plus its planned PostHog equivalent.
+1. **Identification** — where the user is logged in / signed up, where `posthog.identify()` should fire.
+2. **Call site replacement** — every existing call to the `<competitor_name>` API, plus its planned PostHog equivalent.
 
 This step does **not** plan any new event captures, new instrumentation surfaces, or new business-value tracking. The migration is a faithful port — nothing more, nothing less.
 
 Before proceeding, find any existing `posthog.capture()` / `posthog.identify()` / `posthog.init()` code in the project. Make note of event name formatting and any existing PostHog wiring — Step 4 must not duplicate it.
-
-Read `.selected-targets.txt` to confirm the migration target. Read every file in this skill's `references/` directory besides the step files (`1-discover-targets.md` … `5-cleanup.md`) — those additional files are the canonical replacement guide for `<competitor_name>`. The plan must map every call site to a specific replacement pattern from the guide. Do not spawn subagents.
 
 Enumerate every call site of the `<competitor_name>` API in the project. Use `Grep` with the patterns from the migration guide. For each match, read the surrounding code so you understand the call's intent — feature flag evaluation, event capture, init, error report, etc. Categorize each call site into one of: `init`, `capture` (or equivalent event call), `feature-flag-eval`, `error-capture`, `session-replay`, `other`. The migration guide names which categories apply to `<competitor_name>` — use those.
 
@@ -28,47 +25,12 @@ Find the project's login and signup flows (whether or not `<competitor_name>` al
 
 Use the contents of login and signup forms to find the user id / email. If both client and server code exist, plan to pass the client-side session and distinct ID through to the server using `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers, so user behavior across both domains correlates.
 
-Create a new file at the root of the project: `.posthog-migration-plan.json`. Shape:
-
-```json
-{
-  "target": "<competitor_id>",
-  "init": [
-    {
-      "file": "lib/<competitor_id>.ts",
-      "line": 8,
-      "currentSnippet": "<competitor_name> init call",
-      "plannedReplacement": "posthog.init(...) per the migration guide"
-    }
-  ],
-  "callSites": [
-    {
-      "file": "components/banner.tsx",
-      "line": 14,
-      "kind": "feature-flag-eval",
-      "currentSnippet": "<competitor_name> flag evaluation",
-      "plannedReplacement": "useFeatureFlagEnabled('show-banner') per migration guide"
-    }
-  ],
-  "identification": [
-    {
-      "file": "app/login/page.tsx",
-      "line": 30,
-      "trigger": "login submit",
-      "userIdSource": "form.email",
-      "plannedCall": "posthog.identify(form.email, { email: form.email })"
-    }
-  ]
-}
-```
-
-If a category has no entries, write an empty array. Every entry must have a real `file:line` from the project — no placeholders.
+Create a new file at the root of the project called `.posthog-migration-plan-<competitor_id>.md`.
 
 ## Status
 
 Status to report in this phase:
 
-- Reading installed skill
 - Locating `<competitor_name>` call sites
 - Locating identification opportunities
 - Writing migration plan

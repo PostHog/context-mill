@@ -22,7 +22,7 @@ Emit:
 
 ### a. Remove the `<competitor_name>` packages
 
-Read `.selected-targets.txt` to confirm the migration target. Remove every `<competitor_name>` package from the project's manifest using the package manager detected in Step 2. The migration docs in this skill's `references/` directory name the exact package(s) to uninstall for this target — consult them for the authoritative list.
+Remove every import and usage of `<competitor_name>` from the project, which should have been replaced with PostHog.
 
 Use `pnpm remove <pkg>` / `npm uninstall <pkg>` / `pip uninstall <pkg>` / `bundle remove <pkg>` / etc. Only remove packages that the project no longer imports — confirm with `Grep` first that no remaining call sites reference them.
 
@@ -65,4 +65,4 @@ We've left an agent skill folder in your project. You can use this context for f
 
 </wizard-report>
 
-Upon completion, remove `.posthog-migration-plan.json` and `.selected-targets.txt`.
+Upon completion, remove `.posthog-migration-plan-<competitor_id>.md`.
