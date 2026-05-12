@@ -5,13 +5,13 @@ next_step: 5-cleanup.md
 
 # Step 4 — Perform the migration
 
-For each entry in `.posthog-migration-plan.json`, make edits to replace the `<competitor_name>` call site with the PostHog equivalent from the migration guide. Carefully examine the `migration-source-<competitor_id>` skill's reference files (sourced from `<competitor_docs>`): your replacements should match them as closely as possible. Do not spawn subagents.
+For each entry in `.posthog-migration-plan.json`, make edits to replace the `<competitor_name>` call site with the PostHog equivalent from the migration guide. Carefully examine the migration docs in this skill's `references/` directory (the non-step files): your replacements should match them as closely as possible. Do not spawn subagents.
 
 Use environment variables for PostHog keys. Do not hardcode PostHog keys.
 
 If a file already has existing integration code for other tools or services that you are **not** migrating, don't overwrite or remove that code. Replace only the calls that belong to `<competitor_name>`.
 
-For each call site, use the `migration-source-<competitor_id>` skill's reference files as the canonical replacement. You also have access to the framework integration skill installed in Step 2 — consult its example code and documentation for framework-specific init shape (where to put the `posthog.init` call, which runtime it belongs in, the env-var name to use). Carefully consider how the user project's framework version may impact the correct PostHog integration approach.
+For each call site, use the migration docs in this skill's `references/` directory as the canonical replacement reference. You also have access to the framework integration skill installed in Step 2 — consult its example code and documentation for framework-specific init shape (where to put the `posthog.init` call, which runtime it belongs in, the env-var name to use). Carefully consider how the user project's framework version may impact the correct PostHog integration approach.
 
 Remember that you can find the source code for any dependency in the `node_modules` directory. This may be necessary to confirm property names or call signatures. There are also example project code files available via the framework integration skill; use these for reference.
 
@@ -23,7 +23,7 @@ Do not add new captures, new feature flag evaluations, or new identification bey
 
 Remember: do not alter the fundamental architecture of existing files. Make your edits minimal and targeted.
 
-Remember the `migration-source-<competitor_id>` guide and framework integration skill resources you were provided. Read them now if you have not already.
+Remember the migration docs in this skill's `references/` directory and the framework integration skill resources you were provided. Read them now if you have not already.
 
 ## Status
 
