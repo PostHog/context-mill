@@ -1,5 +1,5 @@
 ---
-next_step: 7-customer-enrichment.md
+next_step: 6b-session-replay.md
 ---
 
 # Step 6 — Stale feature flags
@@ -77,4 +77,4 @@ Call **`mcp__wizard-tools__audit_resolve_checks`** once with a single update for
 - **`warning`** — one or more flags landed in `needs_review` (code references, active experiment, or partial rollout require human follow-up before any cleanup).
 - **`suggestion`** — PostHog MCP unavailable, auth failed, or the call errored. The rest of the audit continues unaffected.
 
-Continue to **`7-customer-enrichment.md`**.
+Continue to **`6b-session-replay.md`**.
