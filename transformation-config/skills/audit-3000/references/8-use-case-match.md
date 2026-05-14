@@ -34,13 +34,15 @@ Read the JSON the previous step already saved:
 - Company: `/tmp/co.json` (Harmonic response)
 - Person: `/tmp/pe.json` (PDL response)
 
-If `/tmp/co.json` doesn't exist or its HTTP status from Step 7 wasn't `200`/`201`, **skip silently** — emit `[STATUS] No enrichment data — skipping use case match`, then **`Write`** `/tmp/posthog-use-case-match.json` as exactly:
+Step 7 always writes `/tmp/posthog-enrichment-staged.md` once it gets past its early-exit gates (no git email / generic mailbox / both keys missing). This step only skips if Step 7 itself skipped — detect that by checking whether `/tmp/posthog-enrichment-staged.md` exists. If it does **not** exist, **skip silently** — emit `[STATUS] No enrichment data — skipping use case match`, then **`Write`** `/tmp/posthog-use-case-match.json` as exactly:
 
 ```json
 {"skipped":true,"reason":"no_enrichment"}
 ```
 
-Then emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` line, then continue to Step 9. The company response is required; the person response is optional (matching falls back to company-only when PDL returned 404).
+Then emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` line, then continue to Step 9. 
+
+**Both response files are optional from here on.** §b's company signals only contribute when `/tmp/co.json` exists with HTTP `200`/`201` from Step 7 — otherwise those rules all score 0 and the match runs on person signals alone. §b's person signals run against `/tmp/pe.json` when PDL returned `200`; otherwise they run against the Step 7 fallback title (`Cofounder/CEO` / `executive` / `cxo`). This means the score-floor (≥ 3) is the real gate: if person + company signals together can't clear it, §c's low-confidence path handles the skip.
 
 **Before constructing your section**, also `Read` the bundled `use-case-match-example.md` reference once (typically `.claude/skills/audit-3000/references/use-case-match-example.md`; otherwise discover with `Glob` `**/skills/audit-3000/references/use-case-match-example.md`). Use it to model section ordering, badge format, "Why this match" bullet density, and the persona/products copy. The example uses fictional company + person data on purpose — copy the *shape* of the output, never any specific value from the example.
 
