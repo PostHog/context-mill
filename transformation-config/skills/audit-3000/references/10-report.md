@@ -6,10 +6,11 @@ next_step: null
 
 This step produces **exactly one file** at the project root: `posthog-audit-report.md`. It is the only artifact of the entire audit chain. Read this rule literally — see "File-creation contract" below.
 
-The report is rendered from two sources:
+The report is rendered from three inputs:
 
 1. **`.posthog-audit-checks.json`** — the audit ledger; one entry per resolved check. This is the source of truth for severity, area, and per-check details.
 2. **`/tmp/posthog-enrichment-staged.md`** — the staged enrichment + use-case-match content from Steps 7 + 8 (only exists when those steps actually ran). Step 10 reads it once and inlines its content into the report as two dedicated sections, then **deletes the staged file**.
+3. **`/tmp/posthog-use-case-match.json`** — machine-readable primary/secondary use-case slugs from Step 8 (only exists when Step 8 ran). Step 10 reads it once for the **Playbook alignment** subsection inside **Use case expansion & cross-sell**, then **deletes it** with the other `/tmp/` cleanup.
 
 ## File-creation contract
 
@@ -17,8 +18,8 @@ The ONLY file this step creates is `posthog-audit-report.md` at the project root
 
 - Do **NOT** create `posthog-enrichment.md` at the project root (Step 7's content lives staged in `/tmp/` and is inlined here).
 - Do **NOT** create `posthog-audit-3000-report.md`, `posthog-audit-summary.md`, or any other "summary" / "meta" / "overview" file. The single `posthog-audit-report.md` IS the deliverable.
-- Do **NOT** create any sidecar JSON, CSV, or notes file.
-- Do **NOT** leave the staging file at `/tmp/posthog-enrichment-staged.md` behind — delete it as part of this step.
+- Do **NOT** create any sidecar JSON, CSV, or notes file **at the project root**.
+- Do **NOT** leave the staging file at `/tmp/posthog-enrichment-staged.md` or the playbook snapshot at `/tmp/posthog-use-case-match.json` behind — delete both as part of this step (when they exist), along with the ledger file.
 
 If you have written more than one new file at the end of this step, you have done it wrong. Re-read this section and consolidate.
 
@@ -34,8 +35,9 @@ Emit:
 
 1. `Read` `.posthog-audit-checks.json` once. This is the ledger source for severity counts, problematic items, recommended actions, and full audit.
 2. Check whether `/tmp/posthog-enrichment-staged.md` exists. If it does, `Read` it once — it holds the Customer context block (Step 7) and the Use case match section (Step 8) ready to inline.
-3. Render `posthog-audit-report.md` at the project root using the template below. Inline staged enrichment / use-case-match content **only when the staged file exists**; otherwise omit those sections entirely.
-4. **Cleanup:** after the report is written, delete `/tmp/posthog-enrichment-staged.md` (if it existed) and delete `.posthog-audit-checks.json`. Use `Bash` `rm -f /tmp/posthog-enrichment-staged.md .posthog-audit-checks.json` — both deletes in one call.
+3. Check whether `/tmp/posthog-use-case-match.json` exists. If it does, `Read` it once — it holds `skipped`, `primary`, `secondaries`, and `scores` for the **Playbook alignment** subsection (see **Use case expansion & cross-sell** in the template below). If the file is missing, treat playbook alignment as unavailable for this run.
+4. Render `posthog-audit-report.md` at the project root using the template below. Inline staged enrichment / use-case-match content **only when the staged markdown exists**; otherwise omit those sections entirely.
+5. **Cleanup:** after the report is written, delete `/tmp/posthog-enrichment-staged.md` (if it existed), `/tmp/posthog-use-case-match.json` (if it existed), and `.posthog-audit-checks.json`. Use `Bash` `rm -f /tmp/posthog-enrichment-staged.md /tmp/posthog-use-case-match.json .posthog-audit-checks.json` — all deletes in one call.
 
 ## Report structure (top to bottom)
 
@@ -234,6 +236,22 @@ PostHog is already adopted for this concern, but some surfaces in the codebase a
 |---|---|---|---|
 | `<PostHog product>` | `<surface>` | `<file:line>` | `<details.pitch>` |
 
+### Playbook alignment
+
+_Render this subsection only when **all** of the following are true: (1) the parent **Use case expansion & cross-sell** section is included (at least one `expansion-*` check has `status != pass`), (2) `/tmp/posthog-use-case-match.json` was read successfully, and (3) `"skipped" === false` in that JSON._
+
+Parse each `expansion-*` ledger row’s `details` as JSON (it may be stored as a string — parse if needed). Step 9 adds optional fields `"playbook"` (`"primary"` \| `"secondary"` \| `null`) and `"playbook_slugs"` (string array).
+
+1. **Summary paragraph:** State the enrichment-backed **primary** use case slug and score (`primary.slug`, `primary.score`) from the JSON snapshot, and list **secondary** slug(s) with scores if `secondaries` is non-empty; if there are no secondaries, say so explicitly.
+
+2. **Alignment table:** Include every `expansion-*` row where parsed `details.playbook` is `"primary"` or `"secondary"`. Omit this table entirely if there are zero such rows.
+
+| Check (ledger id) | Playbook role | Mode | Pitch |
+|---|---|---|---|
+| `expansion-error-tracking` | primary | `cross-sell` | `<details.pitch>` |
+
+3. If there are **no** rows with `playbook` ∈ {`primary`, `secondary`} but the snapshot was valid, write one line: _No `expansion-*` checks tied to the matched playbook rows produced a cross-sell, adoption, or gap finding — playbook-aligned products are fully `pass` or unmapped by the eight automated products._
+
 ## Full audit
 
 ### [Area from ledger]
@@ -268,7 +286,7 @@ After the intro paragraph, render the table:
 
 The PostHog wizard runs a multi-step audit chain (the exact step list lives in the skill's reference files) ending in this report. Each step resolves one or more checks against the project's source tree; the **Event Quality**, **Feature Flags**, and **Use Case: Expansion** areas may additionally read from the PostHog project (event usage, stale flags) and from third-party signals (competitor SDK detection) in read-only mode. Every result — pass or otherwise — is recorded in the ledger this report was generated from.
 
-The **Customer context** and **Use case recommendation** sections (when present) come from Steps 7 + 8 (Harmonic / PDL enrichment + use-case scoring). These are intentionally outside the ledger — they never produce pass/warning/error counts, only context for sales/CS interpretation. The **Use case expansion & cross-sell** section comes from Step 9, which audits the codebase for opportunities to expand PostHog footprint or replace competing tools.
+The **Customer context** and **Use case recommendation** sections (when present) come from Steps 7 + 8 (Harmonic / PDL enrichment + use-case scoring). These are intentionally outside the ledger — they never produce pass/warning/error counts, only context for sales/CS interpretation. The **Use case expansion & cross-sell** section comes from Step 9, which audits the codebase for opportunities to expand PostHog footprint or replace competing tools; when Step 8’s playbook snapshot exists (`skipped: false`), **Playbook alignment** inside that section connects those technical findings to the scored primary/secondary use cases.
 
 - `error` items break correctness now (events lost, identity broken). Fix first.
 - `warning` items work today but cause subtle data-quality bugs. Fix when convenient.
@@ -278,7 +296,7 @@ Re-run `posthog-wizard audit` after applying fixes to refresh the ledger.
 
 </wizard-report>
 
-After the report is written AND the cleanup step has run (deleting `/tmp/posthog-enrichment-staged.md` and `.posthog-audit-checks.json`), emit a single final line so the wizard can surface the path to the user:
+After the report is written AND the cleanup step has run (deleting `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, and `.posthog-audit-checks.json`), emit a single final line so the wizard can surface the path to the user:
 
 ```
 Created audit report: <absolute path to posthog-audit-report.md>

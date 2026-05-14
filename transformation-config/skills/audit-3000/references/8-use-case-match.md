@@ -16,6 +16,13 @@ Emit:
 [STATUS] Loading enrichment data
 [STATUS] Scoring use cases
 [STATUS] Writing use case match
+[STATUS] Writing playbook snapshot
+```
+
+After every path through this step (match, skip, or low confidence), emit once:
+
+```
+Wrote playbook snapshot: /tmp/posthog-use-case-match.json
 ```
 
 ## Action
@@ -27,7 +34,13 @@ Read the JSON the previous step already saved:
 - Company: `/tmp/co.json` (Harmonic response)
 - Person: `/tmp/pe.json` (PDL response)
 
-If `/tmp/co.json` doesn't exist or its HTTP status from Step 7 wasn't `200`/`201`, **skip silently** — emit `[STATUS] No enrichment data — skipping use case match` and continue to Step 9. The company response is required; the person response is optional (matching falls back to company-only when PDL returned 404).
+If `/tmp/co.json` doesn't exist or its HTTP status from Step 7 wasn't `200`/`201`, **skip silently** — emit `[STATUS] No enrichment data — skipping use case match`, then **`Write`** `/tmp/posthog-use-case-match.json` as exactly:
+
+```json
+{"skipped":true,"reason":"no_enrichment"}
+```
+
+Then emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` line, then continue to Step 9. The company response is required; the person response is optional (matching falls back to company-only when PDL returned 404).
 
 **Before constructing your section**, also `Read` the bundled `use-case-match-example.md` reference once (typically `.claude/skills/audit-3000/references/use-case-match-example.md`; otherwise discover with `Glob` `**/skills/audit-3000/references/use-case-match-example.md`). Use it to model section ordering, badge format, "Why this match" bullet density, and the persona/products copy. The example uses fictional company + person data on purpose — copy the *shape* of the output, never any specific value from the example.
 
@@ -117,7 +130,14 @@ These weight heavily — a confirmed person title is the strongest single signal
 
 After scoring, sort use cases by score descending. Apply the rules:
 
-- **Primary** = the highest-scoring use case (require score ≥ 3 to qualify; if no use case clears that floor, skip the step — emit `[STATUS] No use case match confidence — skipping` and continue to Step 9).
+- **Primary** = the highest-scoring use case (require score ≥ 3 to qualify).
+- If **no** use case reaches score ≥ 3, do **not** edit `/tmp/posthog-enrichment-staged.md` for a use-case section — emit `[STATUS] No use case match confidence — skipping`, then **`Write`** `/tmp/posthog-use-case-match.json` as exactly:
+
+```json
+{"skipped":true,"reason":"low_confidence"}
+```
+
+Then emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` line, then continue to Step 9 (skip §d and §e below).
 - **Secondary** = up to 2 additional use cases whose score is within 4 points of the primary AND ≥ 3 absolute.
 - If the primary's score is much higher than all others (gap of 6+), render only the primary — no secondaries.
 - Tie-break: when two use cases tie for primary, the one with higher person-signal weight wins. If person signals are equal, prefer the use case with broader product coverage (Growth & Marketing > Product Intelligence > Release Engineering > Data Infrastructure > AI/LLM Obs > Observability).
@@ -191,7 +211,29 @@ After the section is inserted, emit:
 Use case match: <Primary> (secondary: <list or "none">)
 ```
 
-Then proceed to Step 9.
+### e. Playbook snapshot for Step 9 (machine-readable)
+
+Immediately after a **successful** match (you inserted the Use case match section into `/tmp/posthog-enrichment-staged.md`), **`Write`** `/tmp/posthog-use-case-match.json` with this shape (all six slugs must appear under `scores`; `secondaries` is an array, possibly empty):
+
+```json
+{
+  "skipped": false,
+  "primary": { "slug": "<canonical-slug>", "score": <int> },
+  "secondaries": [{ "slug": "<canonical-slug>", "score": <int> }],
+  "scores": {
+    "product-intelligence": <int>,
+    "release-engineering": <int>,
+    "observability": <int>,
+    "growth-and-marketing": <int>,
+    "ai-llm-observability": <int>,
+    "data-infrastructure": <int>
+  }
+}
+```
+
+Use the **same canonical slugs** as in §b (`product-intelligence`, `release-engineering`, etc.), not display names. Mirror the primary/secondary you rendered in markdown (including the “gap of 6+ → no secondaries” rule).
+
+Emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` line, then proceed to Step 9.
 
 ## Key principles
 
@@ -200,7 +242,7 @@ Then proceed to Step 9.
 - **Person signal beats company signal**: a confirmed PDL title weighs more than aggregated company tag matches, because individual buyer fit is what drives a single deal.
 - **Reproducible**: same inputs must produce the same output. No "lean toward X" tiebreakers that depend on Claude's judgment — encode all preferences in the scoring rules.
 - **No new API calls**: this step reads only `/tmp/co.json` and `/tmp/pe.json` from Step 7. Don't re-fetch.
-- **No new files**: edit the staged file at `/tmp/posthog-enrichment-staged.md` — do NOT write a separate use-case file at the project root or anywhere else. Step 10 inlines everything into the single `posthog-audit-report.md`.
+- **No new files under the project root**: edit the staged file at `/tmp/posthog-enrichment-staged.md` for human-readable output. Additionally **`Write`** `/tmp/posthog-use-case-match.json` (see §e and the early-skip paths above) so Step 9 can read playbook slugs without parsing markdown — same `/tmp/` contract as `/tmp/co.json`. Step 10 deletes this JSON during cleanup. Never write enrichment or playbook files at the repo root.
 
 ## Coverage expectations
 

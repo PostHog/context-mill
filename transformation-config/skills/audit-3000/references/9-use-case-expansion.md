@@ -13,22 +13,70 @@ For each PostHog product, this step runs **two detectors in parallel** (is the P
 | **gap** | PostHog product in use, but missing coverage on recent / important surfaces | Already adopted; finish the job |
 | **pass** | PostHog product in use, no obvious coverage gaps | Healthy — no action |
 
-This step always runs (it does **not** ledger-gate). It writes one ledger entry per PostHog product audited, with `details` describing the mode + competitor (if any) + recommendation. Step 10 reads these and renders three sub-tables in the "Use case expansion & cross-sell" section of the final report.
+This step always runs (it does **not** ledger-gate). It writes one ledger entry per PostHog product audited, with `details` describing the mode + competitor (if any) + recommendation, plus optional **playbook alignment** from Step 8’s `/tmp/posthog-use-case-match.json` when present. Step 10 reads these and renders three sub-tables plus an optional **Playbook alignment** subsection in the "Use case expansion & cross-sell" area of the final report.
 
 **Read-only:** do not edit application source files.
+
+**Data infrastructure note:** the handbook’s `data-infrastructure` playbook includes Data Warehouse and batch exports — those are **not** among the eight automated `expansion-*` Tasks. Never invent warehouse/pipeline evidence; if the snapshot’s primary is only `data-infrastructure`, subagents still run normally — playbook fields will mostly be `null` for every Task.
 
 Docs pointers (not exhaustive): [Product analytics](https://posthog.com/docs/product-analytics/capture-events), [Feature flags](https://posthog.com/docs/feature-flags/installation), [Error tracking](https://posthog.com/docs/error-tracking/installation), [LLM analytics](https://posthog.com/docs/ai-engineering/observability), [Session replay](https://posthog.com/docs/session-replay/installation), [Surveys](https://posthog.com/docs/surveys/installation), [Logs](https://posthog.com/docs/logs/installation), [Web analytics](https://posthog.com/docs/web-analytics).
 
 ## Status
 
-Emit before dispatching subagents:
+Emit before dispatching subagents (after playbook snapshot prep in the Action section):
 
 ```
+[STATUS] Loading playbook snapshot
 [STATUS] Detecting third-party tools and PostHog coverage
 [STATUS] Auditing use case expansion & cross-sell
 ```
 
 ## Action
+
+### Playbook snapshot (orchestrator — run once before Batch 1)
+
+1. `Read` `/tmp/posthog-use-case-match.json` if it exists. If the file is missing, unreadable, or `"skipped": true`, treat the run as **no playbook** for templating purposes.
+2. **Handbook row → ledger id map** (only the eight products this step audits; derived from the [product coverage matrix](https://posthog.com/handbook/growth/use-case-selling/use-case-selling#product-coverage-matrix)):
+
+| Use case slug | `expansion-*` ledger ids |
+|---|---|
+| `product-intelligence` | `expansion-product-analytics`, `expansion-session-replay`, `expansion-surveys` |
+| `release-engineering` | `expansion-feature-flags`, `expansion-error-tracking`, `expansion-session-replay` |
+| `observability` | `expansion-error-tracking`, `expansion-logs`, `expansion-session-replay` |
+| `growth-and-marketing` | `expansion-web-analytics`, `expansion-product-analytics`, `expansion-surveys` |
+| `ai-llm-observability` | `expansion-llm-observability`, `expansion-session-replay`, `expansion-error-tracking` |
+| `data-infrastructure` | _(none — not covered by these eight Tasks)_ |
+
+3. For **each** of the eight Task ids below, compute (when playbook is available — `skipped === false`):
+
+   - **`playbook_slugs`**: every slug among `primary.slug` and `secondaries[].slug` whose row in the table **includes** this Task id.
+   - **`playbook`**: `"primary"` if `primary.slug`’s row includes this Task id; else `"secondary"` if **any** secondary slug’s row includes this Task id; else `null`. (If both primary and a secondary row include the same Task id, use `"primary"`.)
+
+4. Build **`[PLAYBOOK_BLOCK]`** for that Task — a short markdown snippet the subagent must follow. When there is **no playbook** (file missing or `skipped: true`), use this exact block for **every** Task:
+
+```
+## Customer playbook (Step 8)
+
+No enrichment-backed playbook snapshot — Step 8 skipped or did not match. Set \`"playbook": null\` and \`"playbook_slugs": []\` on the resolve payload. Do not claim TAM playbook fit. Run the technical audit only.
+```
+
+   When playbook is available, use this shape (fill in the bracketed values for **that** `[TASK_ID]` only):
+
+```
+## Customer playbook (Step 8)
+
+- Primary slug: \`<primary.slug>\` (score \`<primary.score>\`).
+- Secondary slug(s): \`<slug list or "none">\`.
+
+**Your ledger id:** \`[TASK_ID]\`.
+
+- Set \`"playbook"\` to: \`<"primary" | "secondary" | null — use the orchestrator’s computed value for this Task>\`.
+- Set \`"playbook_slugs"\` to: \`<JSON array of slugs computed for this Task, e.g. ["release-engineering"] or []>\`.
+
+**Pitch:** When \`mode\` is \`cross-sell\`, \`greenfield\`, or \`gap\`, and \`playbook\` is not null, append **one** sentence to the technical pitch tying the finding to the lead playbook (reference slug(s) only — no PII, no company names). When \`mode\` is \`pass\` or \`playbook\` is null, do **not** append a playbook sentence.
+```
+
+Then emit the `[STATUS]` lines from the **Status** section above (playbook prep completes before Batch 1).
 
 ### Dispatch plan
 
@@ -48,7 +96,7 @@ Dispatch **8 Task subagents** total — one per PostHog product. Run them in **t
 
 Wait for all Tasks in a batch to complete before dispatching the next batch. Do not interleave other tools between dispatch and waiting.
 
-Each Task uses the same prompt structure (below). Substitute the product-specific values into the prompt template.
+Each Task uses the same prompt structure (below). Substitute the product-specific values from the **Per-product detection map** below **and** paste the orchestrator-built **`[PLAYBOOK_BLOCK]`** for this Task id (see § Playbook snapshot above).
 
 ### Shared subagent prompt template
 
@@ -58,6 +106,8 @@ Use this template for each Task, filling in the bracketed values from the **Per-
 You are an audit subagent. Resolve exactly one ledger id: [TASK_ID].
 
 You are auditing the project's coverage of PostHog's [PRODUCT_NAME] product. Run two detectors in parallel, then classify into ONE of four modes and resolve the ledger entry once.
+
+[PLAYBOOK_BLOCK]
 
 ## Detector A — PostHog [PRODUCT_NAME] in use?
 
@@ -118,15 +168,19 @@ Call `mcp__wizard-tools__audit_resolve_checks` once with a single update for `[T
   "competitor": "<competitor name>" | null,
   "competitor_evidence": ["<file:line or package name>", ...],
   "gap_surfaces": ["<file:line>", ...],
-  "pitch": "<one-line recommendation for the operator>"
+  "pitch": "<one-line recommendation for the operator>",
+  "playbook": "primary | secondary | null",
+  "playbook_slugs": ["<use-case-slug>", ...]
 }
 ```
 
+- **`playbook` / `playbook_slugs`:** set from `[PLAYBOOK_BLOCK]` instructions. When Step 8 did not produce a match, use `"playbook": null` and `"playbook_slugs": []` on every Task.
+
 Examples:
-- cross-sell: `{"mode":"cross-sell","posthog_present":false,"competitor":"Sentry","competitor_evidence":["package.json: @sentry/react","src/main.tsx:13: Sentry.init"],"gap_surfaces":[],"pitch":"Replace Sentry with PostHog Error Tracking — unified with replays, flags, analytics."}`
-- greenfield: `{"mode":"greenfield","posthog_present":false,"competitor":null,"competitor_evidence":[],"gap_surfaces":[],"pitch":"No error tracking detected. Adopt PostHog Error Tracking to ship before the next prod incident."}`
-- gap: `{"mode":"gap","posthog_present":true,"competitor":null,"competitor_evidence":[],"gap_surfaces":["src/pages/Checkout.tsx:42"],"pitch":"PostHog Product Analytics is set up but the Checkout flow has no captures."}`
-- pass: `{"mode":"pass","posthog_present":true,"competitor":null,"competitor_evidence":[],"gap_surfaces":[],"pitch":"Coverage looks comprehensive."}`
+- cross-sell: `{"mode":"cross-sell","posthog_present":false,"competitor":"Sentry","competitor_evidence":["package.json: @sentry/react","src/main.tsx:13: Sentry.init"],"gap_surfaces":[],"pitch":"Replace Sentry with PostHog Error Tracking — unified with replays, flags, analytics. Aligns with primary playbook: release-engineering.","playbook":"primary","playbook_slugs":["release-engineering"]}`
+- greenfield: `{"mode":"greenfield","posthog_present":false,"competitor":null,"competitor_evidence":[],"gap_surfaces":[],"pitch":"No error tracking detected. Adopt PostHog Error Tracking to ship before the next prod incident.","playbook":null,"playbook_slugs":[]}`
+- gap: `{"mode":"gap","posthog_present":true,"competitor":null,"competitor_evidence":[],"gap_surfaces":["src/pages/Checkout.tsx:42"],"pitch":"PostHog Product Analytics is set up but the Checkout flow has no captures. Secondary playbook: growth-and-marketing emphasizes web + product analytics.","playbook":"secondary","playbook_slugs":["growth-and-marketing"]}`
+- pass: `{"mode":"pass","posthog_present":true,"competitor":null,"competitor_evidence":[],"gap_surfaces":[],"pitch":"Coverage looks comprehensive.","playbook":"primary","playbook_slugs":["product-intelligence"]}`
 
 Return when the resolve_checks call completes. Do not write the audit report.
 ```
