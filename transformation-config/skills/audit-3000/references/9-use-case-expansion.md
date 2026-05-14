@@ -241,7 +241,7 @@ Below are the eight product-specific values to plug into the template above. For
 - **PostHog packages:** included in `posthog-js` / `posthog-node`
 - **Competitor patterns:** `LDClient\.|@launchdarkly/|launchdarkly-js-client-sdk|launchdarkly-node-server|splitio\.|@splitsoftware/|statsig\.(?:check|init)|statsig-js|@statsig/|optimizely\.|@optimizely/|flagsmith\.|@flagsmith/|growthbook|@growthbook/`
 - **Competitor packages:** `launchdarkly-js-client-sdk`, `launchdarkly-node-server-sdk`, `@launchdarkly/node-server-sdk`, `@splitsoftware/splitio`, `statsig-js`, `statsig-node`, `@statsig/js-client`, `@optimizely/react-sdk`, `@optimizely/optimizely-sdk`, `flagsmith`, `flagsmith-nodejs`, `growthbook`, `@growthbook/growthbook`
-- **Competitor env vars:** `LAUNCHDARKLY_SDK_KEY`, `LD_SDK_KEY`, `NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID`, `SPLIT_API_KEY`, `STATSIG_SERVER_KEY`, `STATSIG_CLIENT_KEY`, `OPTIMIZELY_SDK_KEY`, `FLAGSMITH_ENVIRONMENT_ID`, `GROWTHBUOOK_CLIENT_KEY`
+- **Competitor env vars:** `LAUNCHDARKLY_SDK_KEY`, `LD_SDK_KEY`, `NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID`, `SPLIT_API_KEY`, `STATSIG_SERVER_KEY`, `STATSIG_CLIENT_KEY`, `OPTIMIZELY_SDK_KEY`, `FLAGSMITH_ENVIRONMENT_ID`, `GROWTHBOOK_CLIENT_KEY`
 - **Gap rule:** if PostHog Flags are in use, check for hardcoded `if (process.env.NODE_ENV === 'production')` or hardcoded environment toggles that could be flag-driven instead. Cap to 2.
 
 ---

@@ -242,7 +242,7 @@ Emit `[STATUS] Writing playbook snapshot` and the `Wrote playbook snapshot:` lin
 - **Person signal beats company signal**: a confirmed PDL title weighs more than aggregated company tag matches, because individual buyer fit is what drives a single deal.
 - **Reproducible**: same inputs must produce the same output. No "lean toward X" tiebreakers that depend on Claude's judgment — encode all preferences in the scoring rules.
 - **No new API calls**: this step reads only `/tmp/co.json` and `/tmp/pe.json` from Step 7. Don't re-fetch.
-- **No new files under the project root**: edit the staged file at `/tmp/posthog-enrichment-staged.md` for human-readable output. Additionally **`Write`** `/tmp/posthog-use-case-match.json` (see §e and the early-skip paths above) so Step 9 can read playbook slugs without parsing markdown — same `/tmp/` contract as `/tmp/co.json`. Step 10 deletes this JSON during cleanup. Never write enrichment or playbook files at the repo root.
+- **No new files under the project root**: edit the staged file at `/tmp/posthog-enrichment-staged.md` for human-readable output. Additionally **`Write`** `/tmp/posthog-use-case-match.json` (see §e and the early-skip paths above) so Step 9 can read playbook slugs without parsing markdown — same `/tmp/` contract as `/tmp/co.json`. Step 10 deletes that JSON, `/tmp/co.json`, and `/tmp/pe.json` during cleanup. Never write enrichment or playbook files at the repo root.
 
 ## Coverage expectations
 

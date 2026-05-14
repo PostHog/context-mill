@@ -4,7 +4,7 @@ next_step: 8-use-case-match.md
 
 # Step 7 — Customer enrichment
 
-Optional, external. Before the audit report is written, enrich the audit context with company + person data so the auditor has business context (funding stage, headcount, role, location, title) alongside the technical findings. The output is **staged** at `/tmp/posthog-enrichment-staged.md` — Step 10 reads this staged file, inlines its content as a section in the final audit report, and deletes the staged file. **Nothing about enrichment ever lands at the project root as a separate file.** This step does **not** write to the audit ledger and does **not** affect the audit report's pass/warning/error counts.
+Optional, external. Before the audit report is written, enrich the audit context with company + person data so the auditor has business context (funding stage, headcount, role, location, title) alongside the technical findings. The output is **staged** at `/tmp/posthog-enrichment-staged.md` — Step 10 reads this staged file, inlines its content as a section in the final audit report, and deletes it along with **`/tmp/co.json`** and **`/tmp/pe.json`** (raw API bodies written here for Step 8). **Nothing about enrichment ever lands at the project root as a separate file.** This step does **not** write to the audit ledger and does **not** affect the audit report's pass/warning/error counts.
 
 Two providers, called independently:
 

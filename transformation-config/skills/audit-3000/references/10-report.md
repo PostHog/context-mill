@@ -12,6 +12,8 @@ The report is rendered from three inputs:
 2. **`/tmp/posthog-enrichment-staged.md`** — the staged enrichment + use-case-match content from Steps 7 + 8 (only exists when those steps actually ran). Step 10 reads it once and inlines its content into the report as two dedicated sections, then **deletes the staged file**.
 3. **`/tmp/posthog-use-case-match.json`** — machine-readable primary/secondary use-case slugs from Step 8 (only exists when Step 8 ran). Step 10 reads it once for the **Playbook alignment** subsection inside **Use case expansion & cross-sell**, then **deletes it** with the other `/tmp/` cleanup.
 
+Step 7 writes **`/tmp/co.json`** and **`/tmp/pe.json`** (raw Harmonic/PDL bodies for Step 8 only). Step 10 does **not** read them when rendering the report; still **delete them in the same cleanup `rm`** so enrichment payloads never linger orphaned in `/tmp/`.
+
 ## File-creation contract
 
 The ONLY file this step creates is `posthog-audit-report.md` at the project root. Specifically:
@@ -19,7 +21,7 @@ The ONLY file this step creates is `posthog-audit-report.md` at the project root
 - Do **NOT** create `posthog-enrichment.md` at the project root (Step 7's content lives staged in `/tmp/` and is inlined here).
 - Do **NOT** create `posthog-audit-3000-report.md`, `posthog-audit-summary.md`, or any other "summary" / "meta" / "overview" file. The single `posthog-audit-report.md` IS the deliverable.
 - Do **NOT** create any sidecar JSON, CSV, or notes file **at the project root**.
-- Do **NOT** leave the staging file at `/tmp/posthog-enrichment-staged.md` or the playbook snapshot at `/tmp/posthog-use-case-match.json` behind — delete both as part of this step (when they exist), along with the ledger file.
+- Do **NOT** leave `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, `/tmp/co.json`, `/tmp/pe.json`, or `.posthog-audit-checks.json` behind — delete them all in one `rm -f` (missing paths are ignored).
 
 If you have written more than one new file at the end of this step, you have done it wrong. Re-read this section and consolidate.
 
@@ -35,9 +37,9 @@ Emit:
 
 1. `Read` `.posthog-audit-checks.json` once. This is the ledger source for severity counts, problematic items, recommended actions, and full audit.
 2. Check whether `/tmp/posthog-enrichment-staged.md` exists. If it does, `Read` it once — it holds the Customer context block (Step 7) and the Use case match section (Step 8) ready to inline.
-3. Check whether `/tmp/posthog-use-case-match.json` exists. If it does, `Read` it once — it holds `skipped`, `primary`, `secondaries`, and `scores` for the **Playbook alignment** subsection (see **Use case expansion & cross-sell** in the template below). If the file is missing, treat playbook alignment as unavailable for this run.
+3. Check whether `/tmp/posthog-use-case-match.json` exists. If it does, `Read` it once — it holds `skipped`, `primary`, `secondaries`, and `scores` for the **Playbook alignment** subsection (see **Use case expansion & cross-sell** in the template below). If the file is missing, treat playbook alignment as unavailable for this run. **Also use this file when building the Customer context blockquote** if the staged file has no `**Use case:**` line (see **Customer context blockquote** below).
 4. Render `posthog-audit-report.md` at the project root using the template below. Inline staged enrichment / use-case-match content **only when the staged markdown exists**; otherwise omit those sections entirely.
-5. **Cleanup:** after the report is written, delete `/tmp/posthog-enrichment-staged.md` (if it existed), `/tmp/posthog-use-case-match.json` (if it existed), and `.posthog-audit-checks.json`. Use `Bash` `rm -f /tmp/posthog-enrichment-staged.md /tmp/posthog-use-case-match.json .posthog-audit-checks.json` — all deletes in one call.
+5. **Cleanup:** after the report is written, delete all audit temp artifacts and the ledger in **one** `Bash` call ( `-f` ignores missing files): `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, `/tmp/co.json`, `/tmp/pe.json`, and `.posthog-audit-checks.json`. Example: `rm -f /tmp/posthog-enrichment-staged.md /tmp/posthog-use-case-match.json /tmp/co.json /tmp/pe.json .posthog-audit-checks.json`
 
 ## Report structure (top to bottom)
 
@@ -61,11 +63,25 @@ Emit:
 <wizard-report>
 # PostHog Audit Report
 
-_If `/tmp/posthog-enrichment-staged.md` exists, parse out the badge line and inputs and prepend this block; otherwise omit it entirely._
+### Customer context blockquote (prepend when staged enrichment exists)
+
+Build the two-line blockquote **before** the `## Summary` heading. Do **not** assume the staged file always contains `**Use case:**` — Step 8 only adds that line after a successful match (score floor). When Step 8 skips (low confidence, no enrichment, etc.), Step 7 may still have left **`/tmp/posthog-enrichment-staged.md`** with only `**Classification:** <Archetype> · <Scale tier>`.
+
+1. **Archetype & scale tier:** From the staged file, read the line starting with `**Classification:**`. Take the text after the colon, trim it, split on ` · ` (space-middle-dot-space). The first segment is `<Archetype>`, the second is `<Scale tier>`. If the line is missing, use `_Unknown_` for each.
+
+2. **Third slot (use case label):** Use the **first** source that applies:
+   - If the staged file contains a line starting with `**Use case:**`, strip the bold markers and trailing italic hint; use the remainder as the human-readable primary label (may still say “see Use case match below”).
+   - Else if `/tmp/posthog-use-case-match.json` was read and `"skipped" === false`, set the third slot to the primary slug formatted for humans (e.g. `product-intelligence` → “Product intelligence”) or use `primary.slug` in monospace if you prefer — **do not invent** a display name not grounded in JSON.
+   - Else if that JSON exists and `"skipped" === true`, set the third slot to `_Not matched_` and append the reason in parentheses if helpful (e.g. `_Not matched (low confidence)_`, `_Not matched (no enrichment)_`).
+   - Else set the third slot to `_Not matched_`.
+
+3. **Domain & operator:** From the staged file, read the **`Inputs`** block (bullets under `**Inputs**`): use the `Company domain` bullet value inside backticks for **Domain**; use the `Email` bullet value for **Operator**. If a bullet is missing, use `_Unknown_` for that slot.
+
+4. **Emit** the full two-line blockquote in one fenced shape (line 1 always has three ` · ` segments):
 
 ```
-> **Customer context:** <Archetype> · <Scale tier> · <Use case primary>
-> **Domain:** `<DOMAIN>` · **Operator:** `<EMAIL>`
+> **Customer context:** <Archetype> · <Scale tier> · <third slot from step 2>
+> **Domain:** `<domain from Inputs>` · **Operator:** `<email from Inputs>`
 ```
 
 ## Summary
@@ -296,7 +312,7 @@ Re-run `posthog-wizard audit` after applying fixes to refresh the ledger.
 
 </wizard-report>
 
-After the report is written AND the cleanup step has run (deleting `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, and `.posthog-audit-checks.json`), emit a single final line so the wizard can surface the path to the user:
+After the report is written AND the cleanup step has run (deleting `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, `/tmp/co.json`, `/tmp/pe.json`, and `.posthog-audit-checks.json`), emit a single final line so the wizard can surface the path to the user:
 
 ```
 Created audit report: <absolute path to posthog-audit-report.md>
