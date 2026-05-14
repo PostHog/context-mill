@@ -134,7 +134,16 @@ The HTTP code for each call is in `HARMONIC_CODE` / `PDL_CODE`; the body lives i
 - **429** — `_Rate limited._`
 - **5xx** — `_PDL returned <code>._`
 
-If **both** providers fail to return any payload (auth, 5xx, network error, etc.), skip writing the file entirely — emit `[STATUS] Enrichment unavailable — skipping enrichment report` and continue to Step 8.
+**Title fallback (when PDL is non-200):** customer-self-audits are most often run by the person who set PostHog up — for early-stage companies that's almost always the founder or CEO. So when PDL doesn't return a usable record (404, 402, 5xx, etc.), default the Person section to:
+
+- **Title:** `Cofounder/CEO`
+- **Function:** `executive`
+- **Seniority:** `cxo`
+
+These three fields exist purely to give Step 8 a person signal to score on for cross-sell recommendations. Render a one-line note under the Person table making the assumption explicit (see template). Do **not** invent a name, location, LinkedIn URL, or any other PDL field — only the three fields above are defaulted.
+
+**Always write the staged file.** Even when both providers fail to return any payload (auth, 5xx, network error, etc.), still `Write` `/tmp/posthog-enrichment-staged.md` with whatever sections succeeded — at minimum the Person section's fallback rendering. The fallback title is the floor Step 8 falls back to for cross-sell scoring, so the staged file must always exist after this step (the only exceptions remain the early-exit cases in sections a and b: no git email, generic mailbox domain, or both API keys missing).
+
 
 ### e. Extract fields
 
