@@ -4,7 +4,7 @@ next_step: 8-use-case-match.md
 
 # Step 7 — Customer enrichment
 
-Optional, external. Before the audit report is written, enrich the audit context with company + person data so the auditor has business context (funding stage, headcount, role, location, title) alongside the technical findings. The output is a separate file (`posthog-enrichment.md`); this step does **not** write to the audit ledger and does **not** affect the audit report's pass/warning/error counts.
+Optional, external. Before the audit report is written, enrich the audit context with company + person data so the auditor has business context (funding stage, headcount, role, location, title) alongside the technical findings. The output is **staged** at `/tmp/posthog-enrichment-staged.md` — Step 10 reads this staged file, inlines its content as a section in the final audit report, and deletes the staged file. **Nothing about enrichment ever lands at the project root as a separate file.** This step does **not** write to the audit ledger and does **not** affect the audit report's pass/warning/error counts.
 
 Two providers, called independently:
 
@@ -312,9 +312,9 @@ Bucket `HC` into the tier:
 
 The inferred `HC` is for classification only — do not display the imputed number anywhere in the report. The Company table's `Headcount` row continues to show only what Harmonic actually returned in `.headcount`.
 
-### f. Write the enrichment report
+### f. Write the staged enrichment file
 
-`Write` `posthog-enrichment.md` at the project root using the template below. **Omit any row, section, or cell whose source field is null/empty** — do not print `null` or empty cells. After writing the file, emit the `Created enrichment report:` line and continue to Step 8. Do **not** include the API key, the raw JSON payload, or any other secret in the file.
+`Write` to **`/tmp/posthog-enrichment-staged.md`** (NOT the project root) using the template below. **Omit any row, section, or cell whose source field is null/empty** — do not print `null` or empty cells. After writing the file, emit the `Created staged enrichment:` line and continue to Step 8. Do **not** include the API key, the raw JSON payload, or any other secret in the file.
 
 ## Report template
 
@@ -424,7 +424,7 @@ _Source: People Data Labs_
 After writing, emit:
 
 ```
-Created enrichment report: <absolute path to posthog-enrichment.md>
+Created staged enrichment: /tmp/posthog-enrichment-staged.md
 ```
 
 Then proceed to Step 8.

@@ -122,11 +122,11 @@ After scoring, sort use cases by score descending. Apply the rules:
 - If the primary's score is much higher than all others (gap of 6+), render only the primary — no secondaries.
 - Tie-break: when two use cases tie for primary, the one with higher person-signal weight wins. If person signals are equal, prefer the use case with broader product coverage (Growth & Marketing > Product Intelligence > Release Engineering > Data Infrastructure > AI/LLM Obs > Observability).
 
-### d. Insert the Use case match section
+### d. Insert the Use case match section into the staged enrichment file
 
-`Read` the existing `posthog-enrichment.md`. Insert the new section **between the `## Company` section and the `## Person` section** (i.e., immediately before the line `^## Person$`).
+`Read` the **staged file at `/tmp/posthog-enrichment-staged.md`** (NOT a project-root `posthog-enrichment.md` — that file no longer exists; everything is staged in `/tmp/` and Step 10 will inline it into the final audit report). Insert the new section **between the `## Company` section and the `## Person` section** (i.e., immediately before the line `^## Person$`).
 
-Also **update the top-line summary** to include the use case alongside the existing Classification badge. Use `Edit` to change:
+Also **update the top-line summary** to include the use case alongside the existing Classification badge. Use `Edit` on `/tmp/posthog-enrichment-staged.md` to change:
 
 ```
 **Classification:** <Archetype> · <Scale tier>
@@ -200,7 +200,7 @@ Then proceed to Step 9.
 - **Person signal beats company signal**: a confirmed PDL title weighs more than aggregated company tag matches, because individual buyer fit is what drives a single deal.
 - **Reproducible**: same inputs must produce the same output. No "lean toward X" tiebreakers that depend on Claude's judgment — encode all preferences in the scoring rules.
 - **No new API calls**: this step reads only `/tmp/co.json` and `/tmp/pe.json` from Step 7. Don't re-fetch.
-- **No new files**: append into `posthog-enrichment.md` rather than creating `posthog-use-case-match.md`. One human-readable artifact, one report. (If a future automation needs structured data, write a sidecar `posthog-enrichment.json` from Step 7 — not here.)
+- **No new files**: edit the staged file at `/tmp/posthog-enrichment-staged.md` — do NOT write a separate use-case file at the project root or anywhere else. Step 10 inlines everything into the single `posthog-audit-report.md`.
 
 ## Coverage expectations
 

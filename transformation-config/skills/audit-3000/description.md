@@ -1,6 +1,6 @@
 # PostHog Audit 3000
 
-This skill audits an existing PostHog integration for **data integrity** across SDK install, init, identification, event capture, event quality, feature-flag hygiene, and (optionally) customer enrichment, use-case matching, and product-expansion opportunities. **Read-only** — the only files you create are the final audit report and (when enrichment is enabled) a separate enrichment report that may include a use-case-match section. The audit never mutates PostHog state and never edits project source; for actionable cleanup, the final report includes copy-paste prompts the operator can run.
+This skill audits an existing PostHog integration for **data integrity** across SDK install, init, identification, event capture, event quality, feature-flag hygiene, customer enrichment, use-case matching, and product-expansion / cross-sell opportunities. **Read-only** — the only file you create is **one** final audit report at the project root (`posthog-audit-report.md`). Intermediate artifacts (enrichment, use-case match) live in `/tmp/` while the chain runs and are inlined into the final report by Step 10, then deleted. The audit never mutates PostHog state and never edits project source; for actionable cleanup, the final report includes copy-paste prompts the operator can run.
 
 Perform the checks described in the referenced skills and only the events referenced in the skills.
 
