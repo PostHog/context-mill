@@ -38,8 +38,12 @@ Emit:
 1. `Read` `.posthog-audit-checks.json` once. This is the ledger source for severity counts, problematic items, recommended actions, and full audit.
 2. Check whether `/tmp/posthog-enrichment-staged.md` exists. If it does, `Read` it once — it holds the Customer context block (Step 7) and the Use case match section (Step 8) ready to inline.
 3. Check whether `/tmp/posthog-use-case-match.json` exists. If it does, `Read` it once — it holds `skipped`, `primary`, `secondaries`, and `scores` for the **Playbook alignment** subsection (see **Use case expansion & cross-sell** in the template below). If the file is missing, treat playbook alignment as unavailable for this run. **Also use this file when building the Customer context blockquote** if the staged file has no `**Use case:**` line (see **Customer context blockquote** below).
-4. Render `posthog-audit-report.md` at the project root using the template below. Inline staged enrichment / use-case-match content **only when the staged markdown exists**; otherwise omit those sections entirely.
-5. **Cleanup:** after the report is written, delete all audit temp artifacts and the ledger in **one** `Bash` call ( `-f` ignores missing files): `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, `/tmp/co.json`, `/tmp/pe.json`, and `.posthog-audit-checks.json`. Example: `rm -f /tmp/posthog-enrichment-staged.md /tmp/posthog-use-case-match.json /tmp/co.json /tmp/pe.json .posthog-audit-checks.json`
+4. **Resolve the phase-marker checks** in the `Additional Sections` area so the wizard UI reflects what actually ran. Emit one `mcp__wizard-tools__audit_resolve_checks` call with three updates:
+   - `customer-enrichment` → `pass` if `/tmp/posthog-enrichment-staged.md` exists, else `suggestion` with `details` set to `"Skipped — set HARMONIC_API_KEY (and optionally PDL_API_KEY) in the environment to enable customer enrichment."`
+   - `use-case-match` → `pass` if `/tmp/posthog-use-case-match.json` exists AND its `"skipped"` field is `false`, else `suggestion` with `details` set to `"Skipped — depends on customer enrichment."` (or `"Skipped — low confidence."` when the JSON has `"skipped": true`).
+   - `final-report` → `pass` (this step always resolves it as part of writing the report).
+5. Render `posthog-audit-report.md` at the project root using the template below. Inline staged enrichment / use-case-match content **only when the staged markdown exists**; otherwise omit those sections entirely.
+6. **Cleanup:** after the report is written, delete all audit temp artifacts and the ledger in **one** `Bash` call ( `-f` ignores missing files): `/tmp/posthog-enrichment-staged.md`, `/tmp/posthog-use-case-match.json`, `/tmp/co.json`, `/tmp/pe.json`, and `.posthog-audit-checks.json`. Example: `rm -f /tmp/posthog-enrichment-staged.md /tmp/posthog-use-case-match.json /tmp/co.json /tmp/pe.json .posthog-audit-checks.json`
 
 ## Report structure (top to bottom)
 
