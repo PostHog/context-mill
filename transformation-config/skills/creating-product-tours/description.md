@@ -6,11 +6,11 @@ Product tours use PostHog feature flags for targeting (who sees the tour and whe
 
 Ask the user these questions before writing any code:
 
-1. **Goal** — what should the user be able to do after completing this tour? (e.g., "create their first dashboard", "connect a data source")
-2. **Steps** — list each step: what element should it point to, what does it say, how does the user advance (click a button in the tooltip, or click the highlighted element itself)?
-3. **Audience** — who sees it? All users, new users only, users on a specific plan, users who haven't done something yet?
-4. **Trigger** — auto-show on page load, trigger from a button, or chain from another tour?
-5. **Show frequency** — once ever, once per session, or every time the user visits?
+1. **Goal** — What should the user be able to do after completing this tour? (e.g., "create their first dashboard", "connect a data source")
+2. **Steps** — List all steps: what element should it point to, what does it say, how does the user advance? (e.g, "Step 1: Highlight the Create project button and ask the user to click it. Step 2: Highlight the SDK install command and explain how to copy it. Step 3: Highlight the dashboard page and prompt the user to create their first insight.")
+3. **Audience** — Who sees it? All users, new users only, users on a specific plan, users who haven't done something yet?
+4. **Trigger** — Auto-show on page load, trigger from a button, or chain from another tour?
+5. **Show frequency** — Once ever, once per session, or every time the user visits?
 6. **Tech stack** — React, Vue, vanilla JS? This determines component shape.
 
 Do not proceed until you have goal, at least one step, and the tech stack.
