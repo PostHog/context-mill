@@ -20,7 +20,9 @@ variants:
       - https://posthog.com/docs/libraries/django.md
       - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/feature-flags/installation/php.md
+      - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/feature-flags/installation/ruby.md
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/feature-flags/installation/go.md
       - https://posthog.com/docs/feature-flags/installation/java.md
       - https://posthog.com/docs/feature-flags/installation/rust.md

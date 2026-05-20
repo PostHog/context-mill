@@ -64,11 +64,25 @@ variants:
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/php.md
 
+  - id: laravel
+    display_name: Laravel
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/php.md
+      - https://posthog.com/docs/libraries/laravel.md
+
   - id: ruby
     display_name: Ruby
     tags: [ruby]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/ruby.md
+
+  - id: ruby-on-rails
+    display_name: Ruby on Rails
+    tags: [ruby-on-rails, ruby]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/ruby.md
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
 
   - id: go
     display_name: Go

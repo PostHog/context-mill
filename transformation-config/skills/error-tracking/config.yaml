@@ -60,6 +60,13 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/php.md
 
+  - id: laravel
+    display_name: Laravel
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/php.md
+      - https://posthog.com/docs/libraries/laravel.md
+
   - id: ruby
     display_name: Ruby
     tags: [ruby]
@@ -71,6 +78,7 @@ variants:
     tags: [ruby-on-rails, ruby]
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
 
   - id: go
     display_name: Go
