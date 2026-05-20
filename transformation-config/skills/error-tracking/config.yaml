@@ -40,6 +40,20 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/python.md
 
+  - id: django
+    display_name: Django
+    tags: [django, python]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/python.md
+      - https://posthog.com/docs/libraries/django.md
+
+  - id: flask
+    display_name: Flask
+    tags: [flask, python]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/python.md
+      - https://posthog.com/docs/libraries/flask.md
+
   - id: ruby
     display_name: Ruby
     tags: [ruby]

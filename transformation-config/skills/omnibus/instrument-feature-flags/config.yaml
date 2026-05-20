@@ -17,6 +17,8 @@ variants:
       - https://posthog.com/docs/feature-flags/installation/web.md
       - https://posthog.com/docs/feature-flags/installation/nodejs.md
       - https://posthog.com/docs/feature-flags/installation/python.md
+      - https://posthog.com/docs/libraries/django.md
+      - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/feature-flags/installation/php.md
       - https://posthog.com/docs/feature-flags/installation/ruby.md
       - https://posthog.com/docs/feature-flags/installation/go.md

@@ -19,6 +19,8 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/nextjs.md
       - https://posthog.com/docs/error-tracking/installation/node.md
       - https://posthog.com/docs/error-tracking/installation/python.md
+      - https://posthog.com/docs/libraries/django.md
+      - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/error-tracking/installation/ruby.md
       - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
       - https://posthog.com/docs/error-tracking/installation/go.md
