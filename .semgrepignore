@@ -13,3 +13,7 @@
 basics/react-native/android/app/src/main/AndroidManifest.xml
 basics/expo/android/app/src/main/AndroidManifest.xml
 basics/android/app/src/main/AndroidManifest.xml
+
+# Markdown audit reference contains HogQL examples with PostHog $host event property.
+# Semgrep's nginx host-header rule misidentifies this docs-only SQL as nginx config.
+transformation-config/skills/audit-events/references/3-events-optimize.md
