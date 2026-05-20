@@ -159,19 +159,19 @@ Procedure:
 ```sql
 SELECT
   properties.$lib AS lib,
-  properties.$host AS host,
+  properties.$current_url AS current_url,
   properties.$app_version AS app_version,
   count() AS n
 FROM events
 WHERE event = '<chosen_event>'
   AND timestamp > now() - INTERVAL 7 DAY
-GROUP BY lib, host, app_version
+GROUP BY lib, current_url, app_version
 ORDER BY n DESC
 LIMIT 50
 ```
 
 3. Inspect the breakdown for environment leakage signals:
-   - `host` values that look like `localhost`, `127.0.0.1`, `*.local`, `*.ngrok.io`, `*.vercel.app` preview URLs, `staging.*`, `dev.*`, `qa.*`, `test.*` showing up alongside production hosts.
+   - `current_url` values whose hostnames look like `localhost`, `127.0.0.1`, `*.local`, `*.ngrok.io`, `*.vercel.app` preview URLs, `staging.*`, `dev.*`, `qa.*`, `test.*` showing up alongside production hosts.
    - `app_version` values like `0.0.0-dev`, `dev`, `local`, `unreleased`, or version strings that obviously precede the current production release.
    - `$lib` values that mismatch the project's known runtime mix (e.g. a Python lib appearing in a JS-only project — possibly a misrouted server-side capture).
 4. Compute `polluting_share_pct` — the percentage of events on the chosen event that come from non-production environments (sum of polluting rows / total).
