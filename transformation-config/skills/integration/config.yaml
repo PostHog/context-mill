@@ -132,6 +132,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: php
+    example_paths: basics/php
+    display_name: PHP
+    description: PostHog integration for any PHP application using the PHP SDK
+    tags: [php]
+    docs_urls:
+      - https://posthog.com/docs/libraries/php.md
+
   - id: ruby-on-rails
     example_paths: basics/ruby-on-rails
     display_name: Ruby on Rails

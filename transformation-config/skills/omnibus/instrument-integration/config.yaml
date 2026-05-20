@@ -40,6 +40,7 @@ variants:
       - basics/python
       # PHP
       - basics/laravel
+      - basics/php
       # Ruby
       - basics/ruby-on-rails
       - basics/ruby
@@ -75,6 +76,7 @@ variants:
       - https://posthog.com/docs/references/posthog-python.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
+      - https://posthog.com/docs/libraries/php.md
       # Ruby
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
