@@ -1,0 +1,13 @@
+{
+  "name": "posthog/context-mill-php-example",
+  "description": "Plain PHP CLI todo app demonstrating PostHog integration",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.0",
+    "posthog/posthog-php": "^4.0"
+  },
+  "scripts": {
+    "start": "php todo.php"
+  }
+}

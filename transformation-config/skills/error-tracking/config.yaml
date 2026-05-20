@@ -54,6 +54,12 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/python.md
       - https://posthog.com/docs/libraries/flask.md
 
+  - id: php
+    display_name: PHP
+    tags: [php]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/php.md
+
   - id: ruby
     display_name: Ruby
     tags: [ruby]

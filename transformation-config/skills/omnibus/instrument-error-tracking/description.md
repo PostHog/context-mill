@@ -2,7 +2,7 @@
 
 Use this skill to add PostHog error tracking that captures and monitors exceptions in your application. Use it after implementing features or reviewing PRs to ensure errors are tracked with full stack traces and source maps. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any platform or language.
 
-Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, Ruby, Ruby on Rails, Go, Angular, Svelte, Nuxt, React Native, Flutter, Android, and Hono.
+Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, PHP, Ruby, Ruby on Rails, Go, Angular, Svelte, Nuxt, React Native, Flutter, Android, and Hono.
 
 ## Instructions
 
