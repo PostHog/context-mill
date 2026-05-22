@@ -3,171 +3,282 @@
 /**
  * Development server for MCP resources
  *
- * Serves the generated ZIP file over HTTP and watches markdown files
- * for changes, automatically rebuilding when needed.
+ * Runs one full build at startup, then watches transformation-config/skills/
+ * and basics/ for changes. A file edit triggers an incremental rebuild of
+ * only the skills that own the path; manifest.json and skill-menu.json are
+ * regenerated from the in-memory skill list. The bundled
+ * skills-mcp-resources.zip and marketplace tree stay at initial-build state
+ * until the next manual `npm run build`.
  *
- * Usage: npm run dev
+ * Doc URLs (`docs_urls`, `shared_docs`, `docs.yaml`) are fetched once during
+ * the initial build. Subsequent partial rebuilds reuse the inlined doc text
+ * recovered from the prior manifest, so no network calls happen mid-session.
  *
- * To use a different port:
+ * Set FORCE_FULL_REBUILD=1 to fall back to a full `npm run build` on every
+ * change.
+ *
+ * Usage:
+ *   npm run dev
  *   PORT=3000 npm run dev
- *
- * Then update the MCP server command to match:
- *   pnpm run dev:local-resources (and update wrangler --var flag)
+ *   FORCE_FULL_REBUILD=1 npm run dev
  */
 
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import chokidar from 'chokidar';
+
+import { loadAndExpandSkills } from './lib/skill-generator.js';
+import {
+    partialRebuild,
+    loadDocContentsFromManifest,
+    reconcileOrphans,
+} from './lib/build-phases.js';
+import {
+    buildIndexes,
+    routeChange,
+    diffSkillIds,
+} from './lib/change-router.js';
 
 const PORT = process.env.PORT || 8765;
-const DIST_DIR = path.join(import.meta.dirname, '..', 'dist');
-const SKILLS_ZIP_PATH = path.join(DIST_DIR, 'skills-mcp-resources.zip');
-const SKILLS_DIR = path.join(DIST_DIR, 'skills');
+const FORCE_FULL_REBUILD = process.env.FORCE_FULL_REBUILD === '1';
+const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
-// Directories to watch for changes
-const WATCH_DIRS = [
-    path.join(import.meta.dirname, '..', 'llm-prompts'),
-    path.join(import.meta.dirname, '..', 'transformation-config'),
-    path.join(import.meta.dirname, '..', 'mcp-commands'),
-    path.join(import.meta.dirname, '..', 'basics'),
-];
+const repoRoot = path.join(import.meta.dirname, '..');
+const configDir = path.join(repoRoot, 'transformation-config');
+const distDir = path.join(repoRoot, 'dist');
+const skillsDir = path.join(distDir, 'skills');
+const promptsDir = path.join(repoRoot, 'llm-prompts');
+const skillsSourceDir = path.join(configDir, 'skills');
+const basicsDir = path.join(repoRoot, 'basics');
 
-let isRebuilding = false;
-let rebuildQueued = false;
+const localSkillsUrl = `http://localhost:${PORT}/skills`;
 
-/**
- * Run the build script with local URLs
- */
-function rebuild() {
-    if (isRebuilding) {
-        rebuildQueued = true;
-        return;
-    }
+// `generateManifest` reads SKILLS_BASE_URL from process.env. Partial rebuilds
+// run in this process, so set it here too — the subprocess inherits it.
+process.env.SKILLS_BASE_URL = localSkillsUrl;
 
-    console.log('\n🔨 Rebuilding skills with local URLs...');
-    isRebuilding = true;
+// --- state ---
 
-    // Use local URL for skill downloads during development
-    const localSkillsUrl = `http://localhost:${PORT}/skills`;
+let indexes = { groupRoots: [], examplePathIndex: new Map() };
+let knownSkills = [];
+let docContents = {};
 
-    const buildProcess = spawn('npm', ['run', 'build'], {
-        stdio: 'inherit',
-        cwd: path.join(import.meta.dirname, '..'),
-        env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl },
-        shell: true
-    });
+const pendingIds = new Set();
+let needsIndexRebuild = false;
+let isBuilding = false;
 
-    buildProcess.on('close', (code) => {
-        isRebuilding = false;
+// --- build orchestration ---
 
-        if (code === 0) {
-            console.log('✅ Rebuild complete!\n');
-        } else {
-            console.error(`❌ Build failed with code ${code}\n`);
-        }
-
-        // If another rebuild was queued, run it now
-        if (rebuildQueued) {
-            rebuildQueued = false;
-            rebuild();
-        }
-    });
-}
-
-/**
- * Watch directories for file changes
- */
-function setupWatchers() {
-    console.log('\n👀 Watching for changes in:');
-
-    WATCH_DIRS.forEach(dir => {
-        if (!fs.existsSync(dir)) {
-            console.log(`   ⚠️  ${path.relative(path.join(import.meta.dirname, '..'), dir)} (not found, skipping)`);
-            return;
-        }
-
-        console.log(`   📁 ${path.relative(path.join(import.meta.dirname, '..'), dir)}`);
-
-        // Watch recursively
-        fs.watch(dir, { recursive: true }, (eventType, filename) => {
-            if (!filename) return;
-
-            // Trigger on markdown, JSON, or YAML files
-            if (filename.endsWith('.md') || filename.endsWith('.json') || filename.endsWith('.yaml') || filename.endsWith('.yml')) {
-                console.log(`\n📝 Changed: ${filename}`);
-                rebuild();
-            }
+function runFullBuildSubprocess() {
+    return new Promise((resolve, reject) => {
+        const buildEnv = {
+            ...process.env,
+            SKILLS_BASE_URL: localSkillsUrl,
+            BUILD_VERSION,
+        };
+        const buildProcess = spawn('npm', ['run', 'build'], {
+            stdio: 'inherit',
+            cwd: repoRoot,
+            env: buildEnv,
+            shell: true,
         });
+        buildProcess.on('close', code => {
+            if (code === 0) resolve();
+            else reject(new Error(`npm run build exited with code ${code}`));
+        });
+        buildProcess.on('error', reject);
     });
 }
 
-/**
- * Helper to serve a ZIP file
- */
-function serveZip(res, zipPath, filename) {
-    if (!fs.existsSync(zipPath)) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end(`ZIP file not found: ${filename}. Run build first.`);
+function refreshIndexesAndState() {
+    const { skills } = loadAndExpandSkills({ configDir });
+    indexes = buildIndexes({ skills, configDir });
+    return skills;
+}
+
+async function runPartialRebuild(ids) {
+    const start = Date.now();
+    const { allSkills } = await partialRebuild({
+        ids,
+        repoRoot,
+        configDir,
+        distDir,
+        promptsDir,
+        version: BUILD_VERSION,
+        docContents,
+        log: console.log,
+    });
+    knownSkills = allSkills.map(s => ({ id: s.id }));
+    const ms = Date.now() - start;
+    console.log(`✅ Rebuilt ${ids.length} skill(s): ${ids.join(', ')} (${ms}ms)\n`);
+}
+
+async function drainQueue() {
+    if (isBuilding) return;
+    if (pendingIds.size === 0 && !needsIndexRebuild) return;
+
+    isBuilding = true;
+    try {
+        while (pendingIds.size > 0 || needsIndexRebuild) {
+            const indexRebuildRequested = needsIndexRebuild;
+            const idsThisRun = new Set(pendingIds);
+            pendingIds.clear();
+            needsIndexRebuild = false;
+
+            if (FORCE_FULL_REBUILD) {
+                try {
+                    await runFullBuildSubprocess();
+                } catch (err) {
+                    console.error(`❌ Full rebuild failed: ${err.message}\n`);
+                    continue;
+                }
+                const skills = refreshIndexesAndState();
+                knownSkills = skills.map(s => ({
+                    id: s.id,
+                    _group: s._group,
+                    _examplePaths: s._examplePaths,
+                }));
+                docContents = loadDocContentsFromManifest(path.join(skillsDir, 'manifest.json'));
+                continue;
+            }
+
+            if (indexRebuildRequested) {
+                const newSkills = refreshIndexesAndState();
+                const { added, removed } = diffSkillIds(knownSkills, newSkills);
+                if (removed.length > 0) {
+                    console.log(`↪ removed variants: ${removed.join(', ')}`);
+                }
+                for (const id of added) idsThisRun.add(id);
+                knownSkills = newSkills.map(s => ({
+                    id: s.id,
+                    _group: s._group,
+                    _examplePaths: s._examplePaths,
+                }));
+
+                // Pure removal — still rewrite manifest + reconcile orphans.
+                if (idsThisRun.size === 0 && removed.length > 0) {
+                    try {
+                        await runPartialRebuild([]);
+                    } catch (err) {
+                        console.error(`❌ Rebuild failed: ${err.message}\n`);
+                    }
+                    continue;
+                }
+            }
+
+            if (idsThisRun.size === 0) continue;
+
+            const ids = [...idsThisRun];
+            console.log(`🔨 Rebuilding ${ids.length} skill(s): ${ids.join(', ')}...`);
+            try {
+                await runPartialRebuild(ids);
+            } catch (err) {
+                console.error(`❌ Rebuild failed: ${err.message}\n`);
+            }
+        }
+    } finally {
+        isBuilding = false;
+    }
+}
+
+// --- watcher ---
+
+function handleEvent(event, absPath) {
+    const decision = routeChange({
+        event,
+        absPath,
+        indexes,
+        paths: { repoRoot, skillsDir: skillsSourceDir, basicsDir },
+    });
+
+    const relPath = path.relative(repoRoot, absPath);
+
+    if (!decision) {
+        console.log(`↪ no skill group owns ${relPath}, skipping`);
         return;
     }
 
-    const stat = fs.statSync(zipPath);
-    const fileSize = stat.size;
-    const fileStream = fs.createReadStream(zipPath);
+    for (const id of decision.ids) pendingIds.add(id);
+    if (decision.needsIndexRebuild) needsIndexRebuild = true;
 
-    res.writeHead(200, {
-        'Content-Type': 'application/zip',
-        'Content-Length': fileSize,
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    });
+    const suffix = decision.needsIndexRebuild ? ' (index rebuild)' : '';
+    console.log(`📝 ${event}: ${relPath} → queued ${decision.ids.length} skill(s)${suffix}`);
 
-    fileStream.pipe(res);
-    console.log(`📦 Served ${filename} (${(fileSize / 1024).toFixed(1)} KB)`);
+    drainQueue().catch(err => console.error(`❌ Drain failed: ${err.message}`));
 }
 
-/**
- * Create HTTP server to serve the ZIP files
- */
+function setupWatcher() {
+    const sep = path.sep;
+    const watcher = chokidar.watch([skillsSourceDir, basicsDir], {
+        ignoreInitial: true,
+        persistent: true,
+        followSymlinks: false,
+        awaitWriteFinish: { stabilityThreshold: 75, pollInterval: 25 },
+        ignored: (p) => p.includes(`${sep}node_modules${sep}`) || p.includes(`${sep}.git${sep}`),
+    });
+    watcher.on('all', handleEvent);
+    watcher.on('error', err => console.error(`Watcher error: ${err.message}`));
+
+    console.log('\n👀 Watching:');
+    console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
+    console.log(`   📁 ${path.relative(repoRoot, basicsDir)}`);
+}
+
+// --- HTTP server ---
+
+const NO_CACHE_HEADERS = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+};
+
+function serveFile(res, filePath, contentType, attachmentName = null) {
+    if (!fs.existsSync(filePath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
+        res.end(`Not found: ${path.basename(filePath)}. Run build first.`);
+        return;
+    }
+
+    const stat = fs.statSync(filePath);
+    const headers = {
+        'Content-Type': contentType,
+        'Content-Length': stat.size,
+        ...NO_CACHE_HEADERS,
+    };
+    if (attachmentName) {
+        headers['Content-Disposition'] = `attachment; filename="${attachmentName}"`;
+    }
+    res.writeHead(200, headers);
+    fs.createReadStream(filePath).pipe(res);
+}
+
 function createServer() {
     const server = http.createServer((req, res) => {
-        // Serve individual skill ZIPs at /skills/{id}.zip
         const skillMatch = req.url?.match(/^\/skills\/(.+\.zip)$/);
         if (skillMatch) {
             const skillFile = skillMatch[1];
-            const skillPath = path.join(SKILLS_DIR, skillFile);
-            serveZip(res, skillPath, skillFile);
+            serveFile(res, path.join(skillsDir, skillFile), 'application/zip', skillFile);
             return;
         }
 
-        // Serve skill menu
         if (req.url === '/skill-menu.json') {
-            const menuPath = path.join(SKILLS_DIR, 'skill-menu.json');
-            if (!fs.existsSync(menuPath)) {
-                res.writeHead(404, { 'Content-Type': 'text/plain' });
-                res.end('skill-menu.json not found. Run build first.');
-                return;
-            }
-            const content = fs.readFileSync(menuPath, 'utf8');
-            res.writeHead(200, {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-            });
-            res.end(content);
-            console.log(`📋 Served skill-menu.json`);
+            serveFile(res, path.join(skillsDir, 'skill-menu.json'), 'application/json');
             return;
         }
 
-        // Serve skills bundle
         if (req.url === '/skills-mcp-resources.zip' || req.url === '/') {
-            serveZip(res, SKILLS_ZIP_PATH, 'skills-mcp-resources.zip');
+            serveFile(
+                res,
+                path.join(distDir, 'skills-mcp-resources.zip'),
+                'application/zip',
+                'skills-mcp-resources.zip',
+            );
             return;
         }
 
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
         res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
     });
 
@@ -175,55 +286,52 @@ function createServer() {
         console.log('\n🚀 Development server started!');
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
-        console.log('\n💡 To use with MCP server, set environment variable:');
-        console.log(`   POSTHOG_MCP_LOCAL_SKILLS_URL=http://localhost:${PORT}/skills-mcp-resources.zip`);
-        console.log(`\n📋 Skills menu:   http://localhost:${PORT}/skill-menu.json`);
+        console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
     });
 }
 
-/**
- * Main entry point
- */
+// --- entry ---
+
 async function main() {
     console.log('🎯 PostHog MCP Skills Development Server');
     console.log('=========================================');
 
-    // Initial build with local URLs
-    const localSkillsUrl = `http://localhost:${PORT}/skills`;
-
-    if (!fs.existsSync(SKILLS_ZIP_PATH)) {
-        console.log('\n⚠️  ZIP file not found. Running initial build...');
-    } else {
-        console.log('\n🔄 Rebuilding with local URLs...');
+    if (FORCE_FULL_REBUILD) {
+        console.log('\n⚠️  FORCE_FULL_REBUILD=1 — every change triggers `npm run build`');
     }
 
-    await new Promise((resolve) => {
-        const buildProcess = spawn('npm', ['run', 'build'], {
-            stdio: 'inherit',
-            cwd: path.join(import.meta.dirname, '..'),
-            env: { ...process.env, SKILLS_BASE_URL: localSkillsUrl },
-            shell: true
-        });
-        buildProcess.on('close', resolve);
+    console.log('\n🔨 Running initial full build...');
+    await runFullBuildSubprocess();
+
+    const skills = refreshIndexesAndState();
+    knownSkills = skills.map(s => ({
+        id: s.id,
+        _group: s._group,
+        _examplePaths: s._examplePaths,
+    }));
+    docContents = loadDocContentsFromManifest(path.join(skillsDir, 'manifest.json'));
+
+    const removed = reconcileOrphans({
+        allSkills: knownSkills,
+        distDir,
+        log: console.log,
     });
+    if (removed.length > 0) {
+        console.log(`🗑  Reconciled ${removed.length} orphan ZIP(s) from prior runs`);
+    }
 
-    // Start server
     createServer();
-
-    // Setup file watchers
-    setupWatchers();
+    setupWatcher();
 
     console.log('\n✨ Ready for development!');
     console.log('   Press Ctrl+C to stop\n');
 }
 
-// Handle graceful shutdown
 process.on('SIGINT', () => {
     console.log('\n\n👋 Shutting down dev server...');
     process.exit(0);
 });
 
-// Run
 main().catch(err => {
     console.error('Fatal error:', err);
     process.exit(1);
