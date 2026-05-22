@@ -59,6 +59,12 @@ variants:
     docs_urls:
       - https://posthog.com/docs/logs/installation/react-native.md
 
+  - id: android
+    display_name: Android
+    tags: [android, kotlin, java]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/android.md
+
   - id: other
     display_name: Other Languages
     tags: []
