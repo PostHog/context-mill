@@ -224,6 +224,8 @@ function setupWatcher() {
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, basicsDir)}`);
+
+    return watcher;
 }
 
 // --- HTTP server ---
@@ -288,6 +290,8 @@ function createServer() {
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
     });
+
+    return server;
 }
 
 // --- entry ---
@@ -320,17 +324,25 @@ async function main() {
         console.log(`🗑  Reconciled ${removed.length} orphan ZIP(s) from prior runs`);
     }
 
-    createServer();
-    setupWatcher();
+    const server = createServer();
+    const watcher = setupWatcher();
 
     console.log('\n✨ Ready for development!');
     console.log('   Press Ctrl+C to stop\n');
-}
 
-process.on('SIGINT', () => {
-    console.log('\n\n👋 Shutting down dev server...');
-    process.exit(0);
-});
+    process.on('SIGINT', async () => {
+        console.log('\n\n👋 Shutting down dev server...');
+        server.close();
+        // chokidar.close() can stall while awaitWriteFinish timers drain on a
+        // large tree. Give it a short window, then exit — the OS reclaims any
+        // remaining watch handles when the process dies.
+        await Promise.race([
+            watcher.close(),
+            new Promise(resolve => setTimeout(resolve, 500)),
+        ]);
+        process.exit(0);
+    });
+}
 
 main().catch(err => {
     console.error('Fatal error:', err);
