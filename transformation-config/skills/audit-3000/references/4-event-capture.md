@@ -22,7 +22,7 @@ Emit before dispatching:
 
 ## Action — dispatch three subagents in one message
 
-Make **three `Task` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to **`5-event-quality.md`** (the `next_step` in this file's frontmatter). Do not run any other tools between dispatch and the next step.
+Make **three `Agent` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to **`5-event-quality.md`** (the `next_step` in this file's frontmatter). Do not run any other tools between dispatch and the next step.
 
 The bundled `best-practices.md` reference holds PostHog's authoritative guidance on event-name shape, reverse-proxy setup, and growth-event coverage. It's typically at `.claude/skills/audit/references/best-practices.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/best-practices.md`. Each subagent reads it once before judging.
 

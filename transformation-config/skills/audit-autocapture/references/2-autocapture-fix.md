@@ -24,7 +24,7 @@ Emit before dispatching:
 
 ## Action — dispatch three subagents in one message
 
-Make **three `Task` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `3-autocapture-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **three `Agent` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `3-autocapture-optimize.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `autocapture.md` reference holds PostHog's authoritative guidance on autocapture config, allowlists, ignorelists, and PII handling. It's typically at `.claude/skills/audit-autocapture/references/autocapture.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-autocapture/references/autocapture.md`. Each subagent reads it once before judging.
 

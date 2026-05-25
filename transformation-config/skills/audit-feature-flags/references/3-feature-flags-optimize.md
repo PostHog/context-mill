@@ -27,7 +27,7 @@ Emit before dispatching:
 
 ## Action — dispatch subagents in one message
 
-Make **one `Task` tool call per check that actually runs** in a single message so they run concurrently. For each local-eval-gated check that is skipping, emit its `audit_resolve_checks` update directly (as a `pass` with skip details) instead of dispatching a subagent. Wait for all dispatched subagents to return, then continue to `4-report.md`. Do not run any other tools between dispatch and the next step.
+Make **one `Agent` tool call per check that actually runs** in a single message so they run concurrently. For each local-eval-gated check that is skipping, emit its `audit_resolve_checks` update directly (as a `pass` with skip details) instead of dispatching a subagent. Wait for all dispatched subagents to return, then continue to `4-report.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `cutting-costs.md` reference holds PostHog's authoritative cost-reduction guidance. It's typically at `.claude/skills/audit-feature-flags/references/cutting-costs.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-feature-flags/references/cutting-costs.md`. Each subagent reads it once before judging.
 

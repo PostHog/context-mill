@@ -49,8 +49,8 @@ Emit before dispatching subagents (after playbook snapshot prep in the Action se
 
 3. For **each** of the eight Task ids below, compute (when playbook is available — `skipped === false`):
 
-   - **`playbook_slugs`**: every slug among `primary.slug` and `secondaries[].slug` whose row in the table **includes** this Task id.
-   - **`playbook`**: `"primary"` if `primary.slug`’s row includes this Task id; else `"secondary"` if **any** secondary slug’s row includes this Task id; else `null`. (If both primary and a secondary row include the same Task id, use `"primary"`.)
+   - **`playbook_slugs`**: every slug among `primary.slug` and `secondaries[].slug` whose row in the table **includes** this Agent id.
+   - **`playbook`**: `"primary"` if `primary.slug`’s row includes this Agent id; else `"secondary"` if **any** secondary slug’s row includes this Agent id; else `null`. (If both primary and a secondary row include the same Agent id, use `"primary"`.)
 
 4. Build **`[PLAYBOOK_BLOCK]`** for that Task — a short markdown snippet the subagent must follow. When there is **no playbook** (file missing or `skipped: true`), use this exact block for **every** Task:
 
@@ -80,23 +80,23 @@ Then emit the `[STATUS]` lines from the **Status** section above (playbook prep 
 
 ### Dispatch plan
 
-Dispatch **8 Task subagents** total — one per PostHog product. Run them in **two batches** (4 + 4) to keep concurrency manageable. The Task IDs:
+Dispatch **8 Agent subagents** total — one per PostHog product. Run them in **two batches** (4 + 4) to keep concurrency manageable. The Agent IDs:
 
-**Batch 1** (one message, 4 Task calls):
+**Batch 1** (one message, 4 Agent calls):
 - `expansion-product-analytics`
 - `expansion-error-tracking`
 - `expansion-llm-observability`
 - `expansion-session-replay`
 
-**Batch 2** (one message, 4 Task calls):
+**Batch 2** (one message, 4 Agent calls):
 - `expansion-feature-flags`
 - `expansion-surveys`
 - `expansion-logs`
 - `expansion-web-analytics`
 
-Wait for all Tasks in a batch to complete before dispatching the next batch. Do not interleave other tools between dispatch and waiting.
+Wait for all Agent calls in a batch to complete before dispatching the next batch. Do not interleave other tools between dispatch and waiting.
 
-Each Task uses the same prompt structure (below). Substitute the product-specific values from the **Per-product detection map** below **and** paste the orchestrator-built **`[PLAYBOOK_BLOCK]`** for this Task id (see § Playbook snapshot above).
+Each Agent call uses the same prompt structure (below). Substitute the product-specific values from the **Per-product detection map** below **and** paste the orchestrator-built **`[PLAYBOOK_BLOCK]`** for this Agent id (see § Playbook snapshot above).
 
 ### Shared subagent prompt template
 
