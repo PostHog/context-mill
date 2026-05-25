@@ -7,13 +7,11 @@ next_step: 2-install-posthog.md
 
 Discovery only. Do not modify project files. Do not write the plan file, Step 3 owns that.
 
-## Status
-
-Emit `[STATUS] Scanning project for source-SDK calls`.
-
 ## Procedure
 
 Read the variant directory at `references/<variant-id>/` to learn the source SDK's package names, import shapes, and call patterns. That directory is the only source of truth for what the source SDK looks like.
+
+Once you know the SDK's name, emit `[STATUS] Scanning project for <SDK name> calls` (for example, `[STATUS] Scanning project for Statsig calls`). Use the SDK's real name, not "source SDK".
 
 Then decide whether the source SDK is in this project. A robust signal combines its package in the project's manifest with at least one call site in source code. Compose your own searches using the patterns from the variant reference.
 

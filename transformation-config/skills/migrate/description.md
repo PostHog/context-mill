@@ -16,19 +16,21 @@ The migration runs as a 7 step chain.
 
 Each step file points to the next via `next_step` frontmatter. Read them in order, one at a time. Do not preload future steps. Do not re-read a step file once you have moved past it.
 
-Start by reading `references/1-presence.md`.
+## Task list
+
+**Before you do anything else**, make a single call to `TaskCreate` to seed the task pane with the seven items above (one per step, in order). Use broad, job-oriented titles like "Confirm Statsig is in use", "Install PostHog", "Plan call site replacements", etc. The user is watching the pane and shouldn't see it sit empty.
+
+Then, and only then, read `references/1-presence.md` and start the chain.
+
+It's fine if your first list is imprecise. Call `TaskCreate` again (or `TaskUpdate` to refine existing items) every time your understanding sharpens. Use `TaskUpdate` to mark items `in_progress` when you start them and `completed` when you finish. Keeping the list current matters more than getting it right on the first call.
 
 ## Variant references
 
 The variant directory holds two kinds of file. An SDK reference describes the source SDK's packages, init shapes, and API surface. A mapping doc translates each source SDK call into its PostHog equivalent. Read them when a step tells you to. Do not WebFetch migration docs, everything you need is on disk.
 
-## Task list
-
-Call `TodoWrite` right away, before reading any reference file. Each task names a user visible outcome in plain words. The list is for the operator watching the pane, not a log of your own moves. Refine the list as your understanding sharpens, and update each item's status as you work.
-
 ## User decision points
 
-Call `mcp__wizard-tools__prompt_user` when a step needs the operator to choose, confirm, or supply a value. The tool surfaces a modal in the wizard UI, blocks until they answer, and returns the answer. Do not ask via plain chat.
+Call `mcp__wizard-tools__wizard_ask` when a step needs the operator to choose, confirm, or supply a value. The tool surfaces a modal in the wizard UI, blocks until they answer, and returns the answers keyed by question id. Batch related questions into one call. Do not ask via plain chat.
 
 ## Live activity
 
@@ -52,6 +54,8 @@ Mark each phase and each site row as one of these.
 
 Replace, do not add. Only rewrite source SDK call sites that already exist. Do not introduce new captures, new flag evaluations, or new identification beyond what the mapping doc requires.
 
+Do not opt out of PostHog's default SDK behavior. When initializing PostHog, pass only what the variant mapping requires (token, host, and any explicitly listed options). Never set `autocapture: false`, `disable_session_recording: true`, `capture_pageview: false`, or similar disable-by-default flags to match the source SDK's narrower surface — those defaults are SDK behavior, not net-new instrumentation, and disabling them defeats the migration.
+
 The mapping doc is canonical. If a call shape is not covered, mark the site as a warning and leave the source unchanged.
 
 Keep PostHog keys in environment variables. Never hardcode them.
@@ -65,7 +69,6 @@ Do not commit. The operator reviews the diff and commits when ready.
 Emit `[ABORT] <reason>` and stop when an abort case fires. The wizard catches these and terminates the run.
 
 - `[ABORT] No source-SDK calls found`, when Step 1 finds no trace of the source SDK.
-- `[ABORT] No project framework detected`, when Step 2 cannot identify the framework.
 
 ## Framework guidelines
 
