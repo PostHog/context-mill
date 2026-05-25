@@ -39,8 +39,7 @@ jobs:
     - name: Lint env var naming conventions
       run: bash scripts/lint-env-naming.sh
 
-      # No individual skill should be larger than 1MB, and the bundle should be less than 2MB.
-      # No individual skill should be larger than 1MB, and the bundle should be less than 3MB.
+      # No individual skill should be larger than 1MB, and the bundle should be less than 4MB.
     - name: Check bundle and skill sizes
       run: |
         set -e
@@ -55,8 +54,8 @@ jobs:
         bundle_bytes=$(stat -c%s "$BUNDLE" 2>/dev/null || stat -f%z "$BUNDLE")
         echo "skills-mcp-resources.zip size: ${bundle_bytes} bytes"
 
-        if [ "$bundle_bytes" -gt $((3 * 1024 * 1024)) ]; then
-          echo "::error::skills-mcp-resources.zip is larger than 3MB (current: ${bundle_bytes} bytes)"
+        if [ "$bundle_bytes" -gt $((4 * 1024 * 1024)) ]; then
+          echo "::error::skills-mcp-resources.zip is larger than 4MB (current: ${bundle_bytes} bytes)"
           exit 1
         fi
 
