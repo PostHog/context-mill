@@ -14,7 +14,7 @@ The audit ledger is seeded by the wizard with one pending check per audit area. 
 
 `ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:Grep`). Do **not** use it to browse for other tools — every tool the audit needs (`Glob`, `Grep`, `Read`, `Write`, `Bash`, and the named `mcp__wizard-tools__audit_*` tools) is already named in this skill.
 
-**Do not call `TodoWrite`.** The audit doesn't track its own task list — progress comes from the audit ledger plus `[STATUS]` lines.
+**Do not call `TaskCreate` / `TaskUpdate` / `TaskGet` / `TaskList`.** The audit doesn't track its own task list — progress comes from the audit ledger plus `[STATUS]` lines.
 
 ## Live activity — `[STATUS]`
 
@@ -32,7 +32,7 @@ The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Au
 
 - `mcp__wizard-tools__audit_resolve_checks({ updates })` — patch one or more checks by `id`. Each `update` is `{ id, status, file?, details? }`. Batch updates from the same step into a single call.
 
-All audit ledger calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Task` subagents when a step says so.
+All audit ledger calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Agent` subagents when a step says so.
 
 ### Check entry shape
 

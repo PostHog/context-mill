@@ -23,7 +23,7 @@ Emit before dispatching:
 
 ## Action — dispatch four subagents in one message
 
-Make **four `Task` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
+Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `identify-users.md` reference holds PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit/references/identify-users.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/identify-users.md`. Each subagent reads it once before judging.
 

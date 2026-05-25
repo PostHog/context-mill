@@ -22,7 +22,7 @@ Emit before dispatching:
 
 ## Action — dispatch three subagents in one message
 
-Make **three `Task` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `4-report.md`. Do not run any other tools between dispatch and the next step.
+Make **three `Agent` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `4-report.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `cutting-costs.md` reference holds PostHog's authoritative cost-reduction guidance. It's typically at `.claude/skills/audit-autocapture/references/cutting-costs.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-autocapture/references/cutting-costs.md`. Each subagent reads it once before judging.
 
