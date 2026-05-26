@@ -10,6 +10,7 @@ Feel free to try these out directly, or summon them from the PostHog MCP server.
   - `1.0-begin.md`: Initial project analysis and event planning
   - `1.1-edit.md`: Implementation guidance for adding PostHog tracking
   - `1.2-revise.md`: Error checking and correction
+  - `1.3-conclude.md`: creating a report with insights and a dashboards
 
 ## Manifest-driven architecture
 

@@ -21,7 +21,7 @@ Emit before dispatching:
 
 ## Action — dispatch four subagents in one message
 
-Make **four `Task` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-session-replay-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-session-replay-optimize.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `how-to-control-which-sessions-you-record.md` reference holds PostHog's authoritative guidance on minimum duration, strict mode, sampling, and triggers. It's typically at `.claude/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`. Each subagent reads it once before judging.
 

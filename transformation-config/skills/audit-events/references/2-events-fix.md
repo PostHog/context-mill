@@ -25,7 +25,7 @@ Emit before dispatching:
 
 ## Action — dispatch four subagents in one message
 
-Make **four `Task` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-events-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-events-optimize.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `best-practices.md` reference holds PostHog's authoritative guidance on event-name shape, naming consistency, duplication, and event-quality patterns. It's typically at `.claude/skills/audit-events/references/best-practices.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-events/references/best-practices.md`. Each subagent reads it once before judging.
 

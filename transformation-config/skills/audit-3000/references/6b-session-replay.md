@@ -53,7 +53,7 @@ Do not read any files in this sub-step. Do not call `audit_resolve_checks` here 
 
 ### b. Dispatch fix-side subagents (4 in parallel)
 
-Make **four `Task` tool calls in a single message** so they run concurrently. Wait for all four to return, then dispatch the optimize-side subagents (§c). Do not run any other tools between dispatch and the next wave.
+Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then dispatch the optimize-side subagents (§c). Do not run any other tools between dispatch and the next wave.
 
 The bundled `how-to-control-which-sessions-you-record.md` reference holds PostHog's authoritative guidance on minimum duration, strict mode, sampling, and triggers. It's typically at `.claude/skills/audit-3000/references/how-to-control-which-sessions-you-record.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-3000/references/how-to-control-which-sessions-you-record.md`. Each subagent reads it once before judging.
 
@@ -154,7 +154,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 
 ### c. Dispatch optimize-side subagents (4 in parallel)
 
-After all four fix-side tasks return, make **four `Task` tool calls in a single message** for the optimize-side checks. Wait for all four to return, then continue to `7-customer-enrichment.md`. Do not run any other tools between dispatch and the next step.
+After all four fix-side tasks return, make **four `Agent` tool calls in a single message** for the optimize-side checks. Wait for all four to return, then continue to `7-customer-enrichment.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `network-recording.md` reference holds PostHog's guidance on network/performance recording cost trade-offs, and `how-to-control-which-sessions-you-record.md` covers sampling and triggers. Both are typically under `.claude/skills/audit-3000/references/`; if those paths don't exist, discover with `Glob` `**/skills/audit-3000/references/<name>.md`. Each subagent reads the reference(s) relevant to its check once before judging.
 
