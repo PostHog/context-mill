@@ -101,6 +101,24 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
 
+  - id: dotnet
+    example_paths: basics/dotnet
+    display_name: .NET
+    description: PostHog integration for .NET console, worker, MAUI, Blazor, and other non-ASP.NET Core applications
+    tags: [dotnet, csharp]
+    docs_urls:
+      - https://posthog.com/docs/libraries/dotnet.md
+
+  - id: aspnetcore
+    example_paths: basics/aspnetcore
+    display_name: ASP.NET Core
+    description: PostHog integration for ASP.NET Core applications using PostHog.AspNetCore
+    tags: [aspnetcore, dotnet, csharp]
+    docs_urls:
+      - https://posthog.com/docs/libraries/dotnet.md
+      - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/error-tracking/installation/dotnet.md
+
   - id: react-tanstack-router-file-based
     example_paths: basics/react-tanstack-router-file-based
     display_name: React with TanStack Router (file-based)

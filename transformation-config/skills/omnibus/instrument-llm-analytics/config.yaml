@@ -16,6 +16,8 @@ variants:
       # Model providers
       - https://posthog.com/docs/llm-analytics/installation/openai.md
       - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+      # PostHog.AI / .NET OpenAI instrumentation
+      - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
       - https://posthog.com/docs/llm-analytics/installation/anthropic.md
       - https://posthog.com/docs/llm-analytics/installation/google.md
       - https://posthog.com/docs/llm-analytics/installation/cohere.md

@@ -86,6 +86,13 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/go.md
 
+  - id: dotnet
+    display_name: .NET / ASP.NET Core
+    tags: [dotnet, aspnetcore, csharp]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
+
   - id: angular
     display_name: Angular
     tags: [angular, javascript]

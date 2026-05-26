@@ -104,9 +104,18 @@ variants:
 
   - id: dotnet
     display_name: .NET
-    tags: [dotnet]
+    tags: [dotnet, csharp]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
+
+  - id: aspnetcore-feature-management
+    display_name: ASP.NET Core Feature Management
+    description: PostHog feature flags for ASP.NET Core applications using Microsoft.FeatureManagement
+    tags: [aspnetcore, dotnet, csharp, feature-management]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
 
   - id: elixir
     display_name: Elixir

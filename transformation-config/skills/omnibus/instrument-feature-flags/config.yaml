@@ -27,6 +27,7 @@ variants:
       - https://posthog.com/docs/feature-flags/installation/java.md
       - https://posthog.com/docs/feature-flags/installation/rust.md
       - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
       - https://posthog.com/docs/feature-flags/installation/elixir.md
       - https://posthog.com/docs/feature-flags/installation/android.md
       - https://posthog.com/docs/feature-flags/installation/ios.md
