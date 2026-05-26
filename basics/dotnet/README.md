@@ -1,6 +1,6 @@
 # PostHog .NET example
 
-A minimal console application showing PostHog integration for non-ASP.NET Core .NET applications such as CLIs, workers, MAUI, Blazor, and background services.
+A minimal console application showing PostHog integration for non-ASP.NET Core .NET applications such as CLIs, workers, and background services.
 
 ## What this demonstrates
 

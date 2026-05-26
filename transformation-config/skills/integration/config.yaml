@@ -104,7 +104,7 @@ variants:
   - id: dotnet
     example_paths: basics/dotnet
     display_name: .NET
-    description: PostHog integration for .NET console, worker, MAUI, Blazor, and other non-ASP.NET Core applications
+    description: PostHog integration for .NET console, worker, and other non-ASP.NET Core applications
     tags: [dotnet, csharp]
     docs_urls:
       - https://posthog.com/docs/libraries/dotnet.md
