@@ -127,6 +127,10 @@ global:
     - .swiftpm
     - .pbxproj
 
+    # .NET
+    - bin/
+    - obj/
+
     # PHP General
     - vendor
     - .phpunit.result.cache

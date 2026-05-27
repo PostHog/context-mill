@@ -35,6 +35,10 @@ __pycache__/
 *.pyo
 db.sqlite3
 
+# .NET
+bin/
+obj/
+
 # PHP / Laravel
 vendor/
 composer.phar

@@ -27,6 +27,8 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/error-tracking/installation/go.md
+      - https://posthog.com/docs/error-tracking/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
       - https://posthog.com/docs/error-tracking/installation/angular.md
       - https://posthog.com/docs/error-tracking/installation/svelte.md
       - https://posthog.com/docs/error-tracking/installation/nuxt.md
