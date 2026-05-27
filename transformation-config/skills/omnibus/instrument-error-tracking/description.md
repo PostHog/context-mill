@@ -2,15 +2,15 @@
 
 Use this skill to add PostHog error tracking that captures and monitors exceptions in your application. Use it after implementing features or reviewing PRs to ensure errors are tracked with full stack traces and source maps. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any platform or language.
 
-Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, PHP, Ruby, Ruby on Rails, Go, Angular, Svelte, Nuxt, React Native, Flutter, Android, and Hono.
+Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, PHP, Ruby, Ruby on Rails, Go, Angular, Svelte, Nuxt, React Native, Flutter, iOS, Android, and Hono.
 
 ## Instructions
 
 Follow these steps IN ORDER:
 
 STEP 1: Analyze the codebase and detect the platform.
-  - Look for dependency files (package.json, requirements.txt, go.mod, Gemfile, composer.json, etc.) to determine the language and framework.
-  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, go.sum) to determine the package manager.
+  - Look for dependency files (package.json, pubspec.yaml, Podfile, Package.swift, requirements.txt, go.mod, Gemfile, composer.json, etc.) to determine the language and framework.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, go.sum, pubspec.lock, Podfile.lock, Package.resolved) to determine the package manager.
   - Check for existing PostHog setup (SDK initialization, env vars, etc.). If PostHog is already installed and initialized, skip to STEP 4.
 
 STEP 2: Research instrumentation. (Skip if PostHog is already set up.)

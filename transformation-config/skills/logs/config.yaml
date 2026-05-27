@@ -65,6 +65,12 @@ variants:
     docs_urls:
       - https://posthog.com/docs/logs/installation/android.md
 
+  - id: ios
+    display_name: iOS
+    tags: [ios, swift]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/ios.md
+
   - id: other
     display_name: Other Languages
     tags: []

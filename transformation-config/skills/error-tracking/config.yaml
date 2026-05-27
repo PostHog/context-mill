@@ -123,6 +123,12 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/flutter.md
 
+  - id: ios
+    display_name: iOS
+    tags: [ios, swift]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/ios.md
+
   - id: android
     display_name: Android
     tags: [android, java, kotlin]
