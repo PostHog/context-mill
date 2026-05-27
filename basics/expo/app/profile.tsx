@@ -32,7 +32,7 @@ export default function ProfileScreen() {
   /**
    * Triggers a test error and captures it in PostHog
    *
-   * This demonstrates manual exception capture using the $exception event.
+   * This demonstrates manual exception capture via captureException.
    * In production, you would typically set up automatic exception capture
    * or use the before_send callback for customization.
    *
@@ -44,21 +44,9 @@ export default function ProfileScreen() {
     } catch (err) {
       const error = err as Error
 
-      // Capture exception in PostHog
       // @see https://posthog.com/docs/error-tracking
-      posthog.capture('$exception', {
-        $exception_list: [
-          {
-            type: error.name,
-            value: error.message,
-            stacktrace: {
-              type: 'raw',
-              frames: error.stack ?? '',
-            },
-          },
-        ],
+      posthog.captureException(error, {
         $exception_source: 'react-native',
-        // Additional context
         username: user.username,
         screen: 'Profile',
       })

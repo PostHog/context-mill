@@ -45,7 +45,7 @@ export default function ProfileScreen() {
   /**
    * Triggers a test error and captures it in PostHog
    *
-   * This demonstrates manual exception capture using the $exception event.
+   * This demonstrates manual exception capture via captureException.
    * In production, you would typically set up automatic exception capture
    * or use the before_send callback for customization.
    *
@@ -57,14 +57,8 @@ export default function ProfileScreen() {
     } catch (err) {
       const error = err as Error
 
-      // Capture exception in PostHog using the $exception event
-      // This follows PostHog's error tracking format
-      posthog.capture('$exception', {
-        $exception_type: error.name,
-        $exception_message: error.message,
+      posthog.captureException(error, {
         $exception_source: 'ProfileScreen.triggerTestError',
-        $exception_stack_trace_raw: error.stack,
-        // Additional context
         username: user.username,
         screen: 'Profile',
       })
