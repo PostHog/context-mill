@@ -85,4 +85,5 @@ variants:
       # Mobile
       - https://posthog.com/docs/libraries/android.md
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/flutter.md
       - https://posthog.com/docs/libraries/react-native.md

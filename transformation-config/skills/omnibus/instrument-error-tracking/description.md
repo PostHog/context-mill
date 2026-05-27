@@ -9,8 +9,8 @@ Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, PHP, Rub
 Follow these steps IN ORDER:
 
 STEP 1: Analyze the codebase and detect the platform.
-  - Look for dependency files (package.json, requirements.txt, go.mod, Gemfile, composer.json, etc.) to determine the language and framework.
-  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to determine the package manager.
+  - Look for dependency files (package.json, pubspec.yaml, requirements.txt, go.mod, Gemfile, composer.json, etc.) to determine the language and framework.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, pubspec.lock) to determine the package manager.
   - Check for existing PostHog setup (SDK initialization, env vars, etc.). If PostHog is already installed and initialized, skip to STEP 4.
 
 STEP 2: Research instrumentation. (Skip if PostHog is already set up.)
