@@ -326,7 +326,7 @@ posthog.capture('burrito_considered', {
 
 ### Error tracking (screens/ProfileScreen.tsx)
 
-Capture exceptions using the `$exception` event:
+Capture exceptions using `captureException`:
 
 ```typescript
 import { usePostHog } from 'posthog-react-native'
@@ -336,12 +336,7 @@ const posthog = usePostHog()
 try {
   throw new Error('Test error for PostHog error tracking')
 } catch (err) {
-  posthog.capture('$exception', {
-    $exception_type: err.name,
-    $exception_message: err.message,
-    $exception_source: 'ProfileScreen',
-    $exception_stack_trace_raw: err.stack,
-  })
+  posthog.captureException(err)
 }
 ```
 

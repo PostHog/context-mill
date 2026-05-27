@@ -146,11 +146,7 @@ posthogService.posthog.capture('burrito_considered', {
 ### Error tracking (pages/profile/profile.component.ts)
 
 ```typescript
-posthogService.posthog.capture('$exception', {
-  $exception_message: error.message,
-  $exception_type: error.name,
-  $exception_stack_trace_raw: error.stack,
-});
+posthogService.posthog.captureException(error);
 ```
 
 ## Angular-specific details
