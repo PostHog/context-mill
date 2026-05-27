@@ -9,8 +9,8 @@ Supported frameworks: Next.js, React Router, Nuxt, Vue, TanStack Start, SvelteKi
 Follow these steps IN ORDER:
 
 STEP 1: Analyze the codebase and detect the platform.
-  - Look for dependency files (package.json, pubspec.yaml, requirements.txt, Gemfile, composer.json, go.mod, etc.) to determine the framework and language.
-  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, pubspec.lock) to determine the package manager.
+  - Look for dependency files (package.json, pubspec.yaml, Podfile, Package.swift, requirements.txt, Gemfile, composer.json, go.mod, etc.) to determine the framework and language.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, pubspec.lock, Podfile.lock, Package.resolved) to determine the package manager.
   - Check for existing PostHog setup. If PostHog is already installed and initialized, skip to STEP 5.
 
 STEP 2: Research integration. (Skip if PostHog is already set up.)

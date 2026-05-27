@@ -208,6 +208,8 @@ variants:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
 
   - id: flutter
     type: docs-only
