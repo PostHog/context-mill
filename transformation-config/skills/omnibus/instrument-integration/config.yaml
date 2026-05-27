@@ -38,9 +38,6 @@ variants:
       - basics/flask
       - basics/fastapi
       - basics/python
-      # .NET
-      - basics/dotnet
-      - basics/aspnetcore
       # PHP
       - basics/laravel
       - basics/php
