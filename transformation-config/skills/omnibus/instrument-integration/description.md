@@ -2,7 +2,7 @@
 
 Use this skill to add the PostHog SDK to an application. Use it when setting up PostHog for the first time, or reviewing PRs that need PostHog initialization. Covers SDK installation, provider setup, and basic configuration. Supports any framework or language.
 
-Supported frameworks: Next.js, React, React Router, Vue, Nuxt, TanStack Start, SvelteKit, Astro, Angular, Django, Flask, FastAPI, Laravel, PHP, Ruby on Rails, Android, Swift, React Native, Expo, Node.js, and vanilla JavaScript.
+Supported frameworks and languages: Next.js, React, React Router, Vue, Nuxt, TanStack Start, SvelteKit, Astro, Angular, Django, Flask, FastAPI, Laravel, PHP, Ruby on Rails, Go, Android, Swift, React Native, Expo, Node.js, and vanilla JavaScript.
 
 ## Instructions
 
@@ -10,7 +10,7 @@ Follow these steps IN ORDER:
 
 STEP 1: Analyze the codebase and detect the platform.
   - Look for dependency files (package.json, requirements.txt, Gemfile, composer.json, go.mod, etc.) to determine the framework and language.
-  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to determine the package manager.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, go.sum) to determine the package manager.
   - Check for existing PostHog setup. If PostHog is already installed and initialized, do not modify its code. Inform the user and skip to verification.
 
 STEP 2: Research integration.

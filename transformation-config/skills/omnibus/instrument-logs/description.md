@@ -11,7 +11,7 @@ Follow these steps IN ORDER:
 STEP 1: Analyze the codebase and detect the platform.
   - Detect the language, framework, and existing logging setup.
   - Look for log libraries (winston, pino, logging module, logrus, log4j, serilog, etc.).
-  - Look for lockfiles to determine the package manager.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb, go.sum, etc.) to determine the package manager.
   - Check for existing PostHog log export setup. If the OTLP exporter is already configured, skip to STEP 5 to add log capture for new code.
 
 STEP 2: Research log capture. (Skip if PostHog log export is already configured.)

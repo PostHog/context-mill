@@ -201,6 +201,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
 
+  - id: go
+    type: docs-only
+    template: description-go-docs-only.md
+    display_name: Go
+    description: PostHog integration for Go applications using the posthog-go SDK
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/libraries/go.md
+
   - id: swift
     example_paths: basics/swift
     display_name: Swift (iOS/macOS)
