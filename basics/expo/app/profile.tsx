@@ -46,7 +46,6 @@ export default function ProfileScreen() {
 
       // @see https://posthog.com/docs/error-tracking
       posthog.captureException(error, {
-        $exception_source: 'react-native',
         username: user.username,
         screen: 'Profile',
       })

@@ -58,7 +58,6 @@ export default function ProfileScreen() {
       const error = err as Error
 
       posthog.captureException(error, {
-        $exception_source: 'ProfileScreen.triggerTestError',
         username: user.username,
         screen: 'Profile',
       })

@@ -336,9 +336,7 @@ const posthog = usePostHog()
 try {
   throw new Error('Test error for PostHog error tracking')
 } catch (err) {
-  posthog.captureException(err, {
-    $exception_source: 'ProfileScreen',
-  })
+  posthog.captureException(err)
 }
 ```
 
