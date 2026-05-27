@@ -202,6 +202,17 @@ commandments:
     - Access config via `Constants.expoConfig?.extra?.posthogProjectToken` in your posthog.ts config file
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
+  flutter:
+    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`
+    - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
+    - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
+    - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
+    - For Session Replay or Surveys, disable auto-init with `com.posthog.posthog.AUTO_INIT=false` and initialize manually so the required options can be enabled
+    - For Flutter Web, add the posthog-js web snippet to `web/index.html`; Flutter Web session replay also requires Canvas capture in project settings
+    - Capture screen views with `PosthogObserver()` and named routes; unnamed routes will not produce useful `$screen` names
+    - Call `Posthog().identify(...)` after login and `Posthog().reset()` on logout; keep PII in user properties, not event properties
+    - Use `beforeSend` to redact or drop Dart-captured events, but remember it does not intercept native session replay, lifecycle, or system properties
+
   astro:
     - Always use the is:inline directive on PostHog script tags to prevent Astro from processing them and causing TypeScript errors
     - Use PUBLIC_ prefix for client-side environment variables in Astro (e.g., PUBLIC_POSTHOG_PROJECT_TOKEN)

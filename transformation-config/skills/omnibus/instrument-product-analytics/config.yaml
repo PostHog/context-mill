@@ -78,4 +78,5 @@ variants:
       - https://posthog.com/docs/libraries/ios.md
       - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/libraries/ios/configuration.md
+      - https://posthog.com/docs/libraries/flutter.md
       - https://posthog.com/docs/libraries/react-native.md

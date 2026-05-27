@@ -210,6 +210,15 @@ variants:
       - https://posthog.com/docs/libraries/ios.md
       - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/libraries/ios/configuration.md
+
+  - id: flutter
+    type: docs-only
+    template: description-docs-only.md
+    display_name: Flutter
+    description: PostHog integration for Flutter applications using the posthog_flutter SDK
+    tags: [flutter, dart, mobile]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flutter.md
   
   - id: react-native
     example_paths: basics/react-native
