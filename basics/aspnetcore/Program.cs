@@ -21,8 +21,7 @@ builder.AddPostHog(posthog =>
         }
     });
 
-    // Enables Microsoft.FeatureManagement (`IFeatureManager`, feature tag helpers,
-    // and FeatureGateAttribute) backed by PostHog feature flags.
+    // Enables Microsoft.FeatureManagement (`IFeatureManager`) backed by PostHog feature flags.
     posthog.UseFeatureManagement<RequestFeatureFlagContextProvider>();
 });
 
