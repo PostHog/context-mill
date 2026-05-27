@@ -78,6 +78,8 @@ variants:
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir
       - https://posthog.com/docs/libraries/elixir.md
+      # Go
+      - https://posthog.com/docs/libraries/go.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/libraries/php.md
@@ -87,4 +89,7 @@ variants:
       # Mobile
       - https://posthog.com/docs/libraries/android.md
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+      - https://posthog.com/docs/libraries/flutter.md
       - https://posthog.com/docs/libraries/react-native.md

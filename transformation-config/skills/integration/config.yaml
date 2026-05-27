@@ -210,6 +210,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/elixir.md
 
+  - id: go
+    type: docs-only
+    template: description-go-docs-only.md
+    display_name: Go
+    description: PostHog integration for Go applications using the posthog-go SDK
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/libraries/go.md
+
   - id: swift
     example_paths: basics/swift
     display_name: Swift (iOS/macOS)
@@ -217,6 +226,17 @@ variants:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+
+  - id: flutter
+    type: docs-only
+    template: description-docs-only.md
+    display_name: Flutter
+    description: PostHog integration for Flutter applications using the posthog_flutter SDK
+    tags: [flutter, dart, mobile]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flutter.md
   
   - id: react-native
     example_paths: basics/react-native

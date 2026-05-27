@@ -115,7 +115,8 @@ variants:
     display_name: Nuxt
     tags: [nuxt, javascript]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
 
   - id: react-native
     display_name: React Native
@@ -128,6 +129,12 @@ variants:
     tags: [flutter, dart]
     docs_urls:
       - https://posthog.com/docs/error-tracking/installation/flutter.md
+
+  - id: ios
+    display_name: iOS
+    tags: [ios, swift]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/ios.md
 
   - id: android
     display_name: Android
