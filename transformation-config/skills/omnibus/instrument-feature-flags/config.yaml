@@ -31,6 +31,7 @@ variants:
       - https://posthog.com/docs/feature-flags/installation/elixir.md
       - https://posthog.com/docs/feature-flags/installation/android.md
       - https://posthog.com/docs/feature-flags/installation/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/feature-flags/installation/flutter.md
       - https://posthog.com/docs/feature-flags/installation/api.md
       - https://posthog.com/docs/libraries/next-js.md

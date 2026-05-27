@@ -134,6 +134,7 @@ variants:
     tags: [ios, swift]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
 
   - id: flutter
     display_name: Flutter
