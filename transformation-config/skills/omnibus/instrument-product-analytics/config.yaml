@@ -67,6 +67,8 @@ variants:
       - https://posthog.com/docs/references/posthog-python.md
       # .NET
       - https://posthog.com/docs/libraries/dotnet.md
+      # Elixir
+      - https://posthog.com/docs/libraries/elixir.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/libraries/php.md

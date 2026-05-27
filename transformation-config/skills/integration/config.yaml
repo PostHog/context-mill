@@ -201,6 +201,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
 
+  - id: elixir
+    type: docs-only
+    template: description-elixir-docs-only.md
+    display_name: Elixir
+    description: PostHog integration for Elixir and Phoenix applications using the posthog SDK
+    tags: [elixir, phoenix, plug]
+    docs_urls:
+      - https://posthog.com/docs/libraries/elixir.md
+
   - id: swift
     example_paths: basics/swift
     display_name: Swift (iOS/macOS)

@@ -93,6 +93,12 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/dotnet.md
       - https://posthog.com/docs/libraries/dotnet.md
 
+  - id: elixir
+    display_name: Elixir
+    tags: [elixir]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/installation/elixir.md
+
   - id: angular
     display_name: Angular
     tags: [angular, javascript]
