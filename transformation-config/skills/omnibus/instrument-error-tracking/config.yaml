@@ -31,7 +31,8 @@ variants:
       - https://posthog.com/docs/libraries/dotnet.md
       - https://posthog.com/docs/error-tracking/installation/angular.md
       - https://posthog.com/docs/error-tracking/installation/svelte.md
-      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
       - https://posthog.com/docs/error-tracking/installation/react-native.md
       - https://posthog.com/docs/error-tracking/installation/flutter.md
       - https://posthog.com/docs/error-tracking/installation/ios.md
