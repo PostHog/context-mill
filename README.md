@@ -4,11 +4,11 @@ This repo assembles PostHog context for AI agents and LLMs into [Agent Skills](h
 
 **Need output in a different format?** No problem. Let us know in [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ), or fire up a PR to augment the `/transformation-config` and `/scripts` directories with your preferred transformation.
 
-**Have a skill you want to make sure is maintained and distributed via the PostHog MCP?** 
+**Have a skill you want to make sure is maintained and distributed via the wizard?** 
 
 We'd love your pull request!
 
-The context mill gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into a versioned manifest, which can be shipped anywhere as a zip file. 
+The context mill gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into a versioned manifest which can be shipped anywhere as a zip file. 
 
 The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/products/mcp) currently fetches the examples repo manifest and exposes it to any MCP-compatible client as resources and slash commands. This is what currently powers the PostHog [wizard](https://github.com/PostHog/wizard). 
 
