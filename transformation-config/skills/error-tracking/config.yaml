@@ -102,7 +102,7 @@ variants:
     display_name: Nuxt
     tags: [nuxt, javascript]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
 
   - id: react-native
     display_name: React Native
