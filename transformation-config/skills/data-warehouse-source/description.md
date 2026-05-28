@@ -17,19 +17,19 @@ Consult the PostHog data warehouse source docs above for source-specific field r
 
 You have the PostHog MCP server and the wizard's local tools available:
 
-- **`external-data-sources-wizard`** (PostHog MCP) — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names.
-- **`external-data-sources-db-schema`** (PostHog MCP) — validates credentials and lists the tables available for sync. Use this for database sources before creating.
-- **`external-data-sources-create`** (PostHog MCP) — creates the source. Run the MCP `info external-data-sources-create` step first to confirm the exact payload and `schemas` shape; it is the source of truth.
-- **`check_env_keys`** (wizard tool) — tells you which `.env` keys EXIST. It never returns values.
-- **`wizard_ask`** (wizard tool) — the ONLY way to obtain credential values from the user.
+- **`mcp__posthog-wizard__external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names.
+- **`mcp__posthog-wizard__external-data-sources-db-schema`** — validates credentials and lists the tables available for sync. Use this for database sources before creating.
+- **`mcp__posthog-wizard__external-data-sources-create`** — creates the source. Follow its input schema exactly for the `payload` and `schemas` shape; the tool definition is the source of truth.
+- **`mcp__wizard-tools__check_env_keys`** — tells you which `.env` keys EXIST. It never returns values.
+- **`mcp__wizard-tools__wizard_ask`** — the ONLY way to obtain credential values from the user.
 
 ## Guiding tenets
 
-1. **Never read or guess secret values.** You cannot read `.env` values — `check_env_keys` only reveals which keys exist. Obtain every credential value from the user via `wizard_ask`. Never fabricate a host, password, or API key.
+1. **Never read or guess secret values.** You cannot read `.env` values — `mcp__wizard-tools__check_env_keys` only reveals which keys exist. Obtain every credential value from the user via `mcp__wizard-tools__wizard_ask`. Never fabricate a host, password, or API key.
 
-2. **Batch credential questions into a single `wizard_ask` call.** Ask for all of a source's fields (host, port, database, user, password, schema, …) in one call. Repeated calls are rate-limited and will fail — one source, one prompt.
+2. **Batch credential questions into a single `mcp__wizard-tools__wizard_ask` call.** Ask for all of a source's fields (host, port, database, user, password, schema, …) in one call. Repeated calls are rate-limited and will fail — one source, one prompt.
 
-3. **The MCP defines the fields, not you.** Call `external-data-sources-wizard` for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
+3. **The MCP defines the fields, not you.** Call `mcp__posthog-wizard__external-data-sources-wizard` for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
 
 4. **Respect the mode.** Only collect credentials and create `in-cli` sources. For `deep-link` sources, provide the URL and stop — do not try to collect OAuth tokens.
 
@@ -44,12 +44,12 @@ Process each detected source in turn.
 ### For an `in-cli` source
 
 1. `[STATUS] Configuring <label>`
-2. Call `external-data-sources-wizard` and read the field list for this `kind`.
-3. Optionally call `check_env_keys` to see which matching keys already exist — use this only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set; please paste the connection details"). You still cannot read the value.
-4. Call `wizard_ask` ONCE, requesting all required fields for the source. If the user declines or cannot provide them, fall back to the deep-link path below for this source.
-5. For database sources, call `external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it (one more `wizard_ask`), or fall back to deep-link.
-6. Build the create payload: `source_type` = the kind, the credential `payload`, `access_method` = `warehouse` (use `direct` only if the user explicitly wants live querying without import), and a `schemas` array selecting tables to sync (default: sync the tables the user wants; pick `incremental` sync with the detected incremental field when available, otherwise `full_refresh`). Confirm the exact shape via `info external-data-sources-create`.
-7. Call `external-data-sources-create`. On success: `[STATUS] Connected <label>`. On failure: emit `[ABORT] Source creation failed`.
+2. Call `mcp__posthog-wizard__external-data-sources-wizard` and read the field list for this `kind`.
+3. Optionally call `mcp__wizard-tools__check_env_keys` to see which matching keys already exist — use this only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set; please paste the connection details"). You still cannot read the value.
+4. Call `mcp__wizard-tools__wizard_ask` ONCE, requesting all required fields for the source. If the user declines or cannot provide them, fall back to the deep-link path below for this source.
+5. For database sources, call `mcp__posthog-wizard__external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it (one more `mcp__wizard-tools__wizard_ask`), or fall back to deep-link.
+6. Build the create payload: `source_type` = the kind, the credential `payload`, `access_method` = `warehouse` (use `direct` only if the user explicitly wants live querying without import), and a `schemas` array selecting tables to sync (default: sync the tables the user wants; pick `incremental` sync with the detected incremental field when available, otherwise `full_refresh`). Follow the `mcp__posthog-wizard__external-data-sources-create` input schema for the exact shape.
+7. Call `mcp__posthog-wizard__external-data-sources-create`. On success: `[STATUS] Connected <label>`. On failure: emit `[ABORT] Source creation failed`.
 
 ### For a `deep-link` source
 
@@ -60,7 +60,7 @@ Process each detected source in turn.
 
 ### Non-interactive / CI
 
-If `wizard_ask` is unavailable or blocked (CI / headless), do NOT block. Treat every source as deep-link: emit the new-source URL for each and note that credentials must be entered in the app.
+If `mcp__wizard-tools__wizard_ask` is unavailable or blocked (CI / headless), do NOT block. Treat every source as deep-link: emit the new-source URL for each and note that credentials must be entered in the app.
 
 ## Report
 
