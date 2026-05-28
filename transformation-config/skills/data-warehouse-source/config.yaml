@@ -1,0 +1,17 @@
+# Data warehouse source setup - docs-only skill (no example projects)
+type: docs-only
+template: description.md
+description: Connect a detected data source to the PostHog data warehouse
+tags: [data-warehouse, sources, postgres, stripe]
+shared_docs:
+  - https://posthog.com/docs/cdp/sources.md
+variants:
+  - id: setup
+    display_name: Data Warehouse Source Setup
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/cdp/sources/postgres.md
+      - https://posthog.com/docs/cdp/sources/mysql.md
+      - https://posthog.com/docs/cdp/sources/snowflake.md
+      - https://posthog.com/docs/cdp/sources/bigquery.md
+      - https://posthog.com/docs/cdp/sources/stripe.md
