@@ -1,0 +1,14 @@
+# Changelog watch — standalone docs-only skill for recurring competitive-intel digests.
+# Interactive on first run: asks the user for their company, positioning, categories,
+# and competitor URLs, persists the config to ~/.posthog/changelog-watch/config.json,
+# then reuses it on subsequent runs.
+type: docs-only
+template: description.md
+description: Run a competitor changelog watch and produce an internal digest. On first run, interactively asks for the user's company, positioning, categories, and competitor URLs, then saves the config. Subsequent runs fetch each source, filter to recent items within a chosen time window, and write a tightly-edited digest. Use when the user wants to monitor competitors, generate a competitive-intel digest, or set up recurring competitor tracking.
+tags: [changelog-watch, competitor-intel, research]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Changelog watch
+    tags: []
+    docs_urls: []
