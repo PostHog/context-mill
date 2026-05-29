@@ -46,6 +46,11 @@ The credentials the upload step needs (`POSTHOG_CLI_API_KEY` etc.) must be reada
 
 **Watch the separate-process gotcha.** If source map upload runs as its own step in `package.json` (e.g. `posthog-cli sourcemap upload` after the bundler), that CLI is a **separate child process** — it will *not* see env vars that a loader set inside the bundler's config file. Point the CLI at the env file directly with `--env-file <relative-path>` (e.g. `posthog-cli --env-file .env sourcemap upload ...`) so it reads `POSTHOG_CLI_API_KEY` / `POSTHOG_CLI_PROJECT_ID` / `POSTHOG_CLI_HOST` from the file itself. Variants with their own conventions (react-native, android, ios, flutter) follow the framework reference.
 
+### Picking the correct env file
+
+Reuse the env file the project already uses — don't create a new one. List the env files in the project directory (`.env`, `.env.local`, `.env.development`, …). If one already contains PostHog vars (`POSTHOG_*` / `NEXT_PUBLIC_POSTHOG_*`), write to that same file. Otherwise, if exactly one env file exists, use it; if several exist, prefer `.env`. Only create a new file when none exists. Use `check_env_keys` to inspect which keys are present — never read the file contents directly.
+
+
 ## Framework guidelines
 
 {commandments}
