@@ -37,6 +37,15 @@ How you enable these depends on the technology. For example, raw Node compiled w
 
 Other stacks (esbuild, bundler configs, platform compilers) have their own equivalents — check the framework reference above or the build tool's docs to emit source maps with embedded sources.
 
+## Making credentials available at build time
+
+The credentials the upload step needs (`POSTHOG_CLI_API_KEY` etc.) must be readable **by the build pipeline at build time** — not just present in a `.env` file. Whether a `.env` file is picked up automatically depends on the technology:
+
+- **Auto-loads `.env`**: Vite, Next.js, Nuxt and similar frameworks read `.env` for you.
+- **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. You have to load it explicitly — e.g. add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler config. `posthog-cli` itself also accepts `--env-file <relative-path>` to read variables from a specific file.
+
+**Watch the separate-process gotcha.** If source map upload runs as its own step in `package.json` (e.g. `posthog-cli sourcemap upload` after the bundler), that CLI is a **separate child process** — it will *not* see env vars that a loader set inside the bundler's config file. Either make the variables available to that process directly (or pass `--env-file`), or skip env entirely for the CLI and authenticate it once with `posthog-cli login` (it then uses its own stored credentials). Variants with their own conventions (react-native, android, ios, flutter) follow the framework reference.
+
 ## Framework guidelines
 
 {commandments}
