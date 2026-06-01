@@ -10,11 +10,12 @@
  * Exits 0 if clean, 1 if threats found.
  */
 
-const fs = require("node:fs");
-const path = require("node:path");
-const { execFileSync } = require("node:child_process");
-const os = require("node:os");
-const Anthropic = require("@anthropic-ai/sdk");
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import os from "node:os";
+import Anthropic from "@anthropic-ai/sdk";
+import { scan, triageMatches } from "@posthog/warlock";
 
 const TEXT_EXTENSIONS = new Set([
   ".md",
@@ -168,7 +169,6 @@ function reportMatch(filePath, match, isFalsePositive = false) {
 // -- Main --
 
 async function main() {
-  const { scan, triageMatches } = require("@posthog/warlock");
   const llmProvider = createLLMProvider();
 
   if (llmProvider) {
