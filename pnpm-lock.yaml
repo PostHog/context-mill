@@ -13,7 +13,7 @@ importers:
         version: 0.95.0
       '@posthog/warlock':
         specifier: git+https://github.com/PostHog/warlock.git
-        version: git+https://github.com/PostHog/warlock.git#c47d997438a8aafc1bb42f2fc18c15a4ed0b4fd6
+        version: git+https://github.com/PostHog/warlock.git#243aa0f231f4ed872efacf0ec04a32d8b964d9fd
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -195,8 +195,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@posthog/warlock@git+https://github.com/PostHog/warlock.git#c47d997438a8aafc1bb42f2fc18c15a4ed0b4fd6':
-    resolution: {commit: c47d997438a8aafc1bb42f2fc18c15a4ed0b4fd6, repo: https://github.com/PostHog/warlock.git, type: git}
+  '@posthog/warlock@git+https://github.com/PostHog/warlock.git#243aa0f231f4ed872efacf0ec04a32d8b964d9fd':
+    resolution: {commit: 243aa0f231f4ed872efacf0ec04a32d8b964d9fd, repo: https://github.com/PostHog/warlock.git, type: git}
     version: 0.0.0
     engines: {node: ^20.20.0 || >=22.22.0}
 
@@ -984,7 +984,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@posthog/warlock@git+https://github.com/PostHog/warlock.git#c47d997438a8aafc1bb42f2fc18c15a4ed0b4fd6':
+  '@posthog/warlock@git+https://github.com/PostHog/warlock.git#243aa0f231f4ed872efacf0ec04a32d8b964d9fd':
     dependencies:
       '@virustotal/yara-x': 1.15.0
 
