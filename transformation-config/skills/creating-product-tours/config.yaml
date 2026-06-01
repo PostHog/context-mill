@@ -1,0 +1,11 @@
+# Creating product tours - docs-only skill (no example projects)
+type: docs-only
+template: description.md
+description: "Build an in-app product tour that guides users through a feature inside the user's own application. Targeting via PostHog feature flags, tracking via PostHog events, custom reusable UI components. Use when a user asks to create a product tour, onboarding walkthrough, feature spotlight, or step-by-step guide in their app."
+tags: [product-tours, feature-flags, product-analytics]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Creating product tours
+    tags: [product-tours]
+    docs_urls: []
