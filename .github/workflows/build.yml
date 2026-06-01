@@ -51,7 +51,7 @@ jobs:
 
     - name: Scan skills with Warlock
       env:
-        PERSONAL_ACCESS_KEY: ${{ secrets.PERSONAL_ACCESS_KEY }}
+        POSTHOG_API_TOKEN: ${{ secrets.POSTHOG_API_TOKEN }}
       run: node scripts/scan-warlock.js dist/skills
 
     - name: Lint env var naming conventions
