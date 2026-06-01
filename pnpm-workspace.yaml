@@ -1,2 +1,4 @@
 onlyBuiltDependencies:
   - "@posthog/warlock"
+allowBuilds:
+  - "@posthog/warlock"
