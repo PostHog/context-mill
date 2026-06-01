@@ -1,4 +1,6 @@
-allowBuilds:
-  esbuild: true
 onlyBuiltDependencies:
+  - "@posthog/warlock"
   - esbuild
+allowBuilds:
+  "@posthog/warlock": true
+  esbuild: true

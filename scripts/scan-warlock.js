@@ -1,0 +1,446 @@
+#!/usr/bin/env node
+
+/**
+ * Scan skills for security threats using Warlock.
+ *
+ * Two modes:
+ *   node scripts/scan-warlock.js dist/skills        # Scan built skill ZIPs (build/CI)
+ *   node scripts/scan-warlock.js path/to/file.md    # Scan specific file(s) (local)
+ *
+ * Exits 0 if clean, 1 if threats found.
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import os from "node:os";
+import Anthropic from "@anthropic-ai/sdk";
+import { scan, triageMatches } from "@posthog/warlock";
+
+// Text-based formats we feed to Warlock. Binary/unknown types are skipped on
+// purpose, since Warlock scans text content and non-text files add nothing.
+const TEXT_EXTENSIONS = new Set([
+  ".md",
+  ".txt",
+  ".yaml",
+  ".yml",
+  ".json",
+  ".toml",
+  ".xml",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".py",
+  ".rb",
+  ".sh",
+  ".go",
+  ".rs",
+  ".java",
+  ".kt",
+  ".kts",
+  ".swift",
+  ".php",
+  ".c",
+  ".h",
+  ".cpp",
+  ".cc",
+  ".cs",
+  ".html",
+  ".htm",
+  ".css",
+  ".scss",
+  ".sql",
+  ".graphql",
+  ".vue",
+  ".svelte",
+]);
+
+// LLM used to triage Warlock matches as real threats vs false positives.
+const TRIAGE_MODEL = "claude-haiku-4-5-20251001";
+
+const isCI = Boolean(process.env.CI);
+
+// -- LLM triage setup --
+// Uses the PostHog LLM gateway to triage warlock
+// matches. The LLM decides whether each match is a real threat or a
+// false positive
+//
+// Gateway URL pattern matches the wizard:
+//   US:    https://gateway.us.posthog.com/wizard
+//   EU:    https://gateway.eu.posthog.com/wizard
+//   Local: http://localhost:3308/wizard
+
+function getGatewayUrl() {
+  const host = process.env.POSTHOG_HOST || "https://us.posthog.com";
+  let hostname = "";
+
+  try {
+    hostname = new URL(host).hostname.toLowerCase();
+  } catch {
+    try {
+      hostname = new URL(`https://${host}`).hostname.toLowerCase();
+    } catch {
+      hostname = "";
+    }
+  }
+
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return "http://localhost:3308/wizard";
+  }
+  if (hostname === "eu.posthog.com" || hostname === "eu.i.posthog.com") {
+    return "https://gateway.eu.posthog.com/wizard";
+  }
+  return "https://gateway.us.posthog.com/wizard";
+}
+
+function createLLMProvider() {
+  // Prefer the wizard's local proxy if available (ANTHROPIC_BASE_URL),
+  // otherwise fall back to the PostHog gateway.
+  const baseURL = process.env.ANTHROPIC_BASE_URL || getGatewayUrl();
+  const apiKey = process.env.ANTHROPIC_AUTH_TOKEN || process.env.CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY;
+  if (!apiKey) return null;
+
+  const client = new Anthropic({
+    baseURL,
+    apiKey,
+  });
+
+  return async (prompt) => {
+    const res = await client.messages.create({
+      model: TRIAGE_MODEL,
+      max_tokens: 16384,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const block = res.content?.[0];
+    if (!block || block.type !== "text" || typeof block.text !== "string") {
+      throw new Error(`Unexpected LLM response shape: ${JSON.stringify(res.content?.slice(0, 2))}`);
+    }
+    return block.text;
+  };
+}
+
+// -- Colors (disabled in CI where annotations do the work) --
+
+const color = isCI
+  ? {
+      red: (s) => s,
+      yellow: (s) => s,
+      green: (s) => s,
+      bold: (s) => s,
+      dim: (s) => s,
+    }
+  : {
+      red: (s) => `\x1b[31m${s}\x1b[0m`,
+      yellow: (s) => `\x1b[33m${s}\x1b[0m`,
+      green: (s) => `\x1b[32m${s}\x1b[0m`,
+      bold: (s) => `\x1b[1m${s}\x1b[0m`,
+      dim: (s) => `\x1b[2m${s}\x1b[0m`,
+    };
+
+// -- Helpers --
+
+/** Recursively collect text files from a directory. */
+function collectTextFiles(dir) {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectTextFiles(full));
+    } else if (TEXT_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
+/** Extract a ZIP and return the temp directory it was extracted to. */
+function extractZip(zipPath, tmpDir) {
+  const name = path.basename(zipPath, ".zip");
+  const dest = path.join(tmpDir, name);
+  fs.mkdirSync(dest, { recursive: true });
+  try {
+    execFileSync("unzip", ["-q", "-o", zipPath, "-d", dest], { stdio: "pipe" });
+    return dest;
+  } catch {
+    console.warn(
+      isCI
+        ? `::warning::Failed to extract ${path.basename(zipPath)}`
+        : `  Warning: failed to extract ${path.basename(zipPath)}, skipping`,
+    );
+    return null;
+  }
+}
+
+function reportMatch(filePath, match, isFalsePositive = false) {
+  const { rule, metadata } = match;
+  const sev = metadata.severity || "unknown";
+  const cat = metadata.category || "unknown";
+  const triageReason = match.triage?.reason;
+
+  if (isCI) {
+    const level = isFalsePositive ? "warning" : "error";
+    const tag = isFalsePositive ? "FALSE POSITIVE" : "THREAT DETECTED";
+    console.log(
+      `::${level} file=${filePath}::${tag} [${sev}] ${rule}: ${metadata.description || ""}`,
+    );
+  }
+
+  const label = isFalsePositive
+    ? `  ${color.yellow(color.bold("FALSE POSITIVE"))}  [${color.yellow(sev)}] ${cat}`
+    : `  ${color.red(color.bold("THREAT DETECTED"))}  [${color.red(sev)}] ${cat}`;
+  console.log(label);
+  console.log(`  ${color.dim("Rule:")}     ${rule}`);
+  console.log(`  ${color.dim("File:")}     ${filePath}`);
+  if (metadata.description)
+    console.log(`  ${color.dim("Why:")}      ${metadata.description}`);
+  if (triageReason) console.log(`  ${color.dim("Triage:")}   ${triageReason}`);
+  if (metadata.remediation)
+    console.log(`  ${color.dim("Fix:")}      ${metadata.remediation}`);
+  if (metadata.action)
+    console.log(`  ${color.dim("Action:")}   ${metadata.action}`);
+  console.log("");
+}
+
+// -- PostHog tracking --
+// Sends scan results to PostHog via the public webhook (same one used by e2e tests).
+// Fire-and-forget: tracking failures never block the scan result.
+
+const POSTHOG_WEBHOOK_URL =
+  "https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b";
+
+async function trackScanResult({ filesScanned, yaraMatches, threats, falsePositives, result, llmTriageEnabled, durationMs, triaged }) {
+  // Build per-rule breakdown: { ruleName: { true_positive: N, false_positive: N } }
+  const rulesByVerdict = {};
+  if (triaged) {
+    for (const match of triaged) {
+      const rule = match.rule;
+      const verdict = match.triage?.verdict || "unknown";
+      if (!rulesByVerdict[rule]) rulesByVerdict[rule] = { true_positive: 0, false_positive: 0 };
+      if (verdict === "true_positive" || verdict === "false_positive") {
+        rulesByVerdict[rule][verdict]++;
+      }
+    }
+  }
+
+  const rulesTriggered = Object.keys(rulesByVerdict);
+
+  const payload = {
+    event: "warlock_scan_completed",
+    files_scanned: filesScanned,
+    yara_matches: yaraMatches,
+    threats,
+    false_positives: falsePositives,
+    result,
+    llm_triage_enabled: llmTriageEnabled,
+    duration_ms: durationMs,
+    rules_triggered: rulesTriggered,
+    rules_by_verdict: rulesByVerdict,
+    // CI context (empty strings when running locally)
+    commit_sha: process.env.GITHUB_SHA || "",
+    branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "",
+    pr_number: process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)/)?.[1] || "",
+    workflow_name: process.env.GITHUB_WORKFLOW || "",
+    run_url: process.env.GITHUB_RUN_ID
+      ? `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+      : "",
+  };
+
+  try {
+    await fetch(POSTHOG_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    // Tracking is best-effort — never block the scan
+  }
+}
+
+// -- Main --
+
+async function main() {
+  const startTime = Date.now();
+  const llmProvider = createLLMProvider();
+
+  if (llmProvider) {
+    console.log("LLM triage enabled (using PostHog gateway).\n");
+  } else {
+    console.log(
+      "LLM triage disabled (no API key configured). All matches will be treated as threats.\n",
+    );
+  }
+
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    console.log("Usage:");
+    console.log(
+      "  node scripts/scan-warlock.js dist/skills       # Scan built skill ZIPs",
+    );
+    console.log(
+      "  node scripts/scan-warlock.js path/to/file.md   # Scan specific file(s)",
+    );
+    process.exit(1);
+  }
+
+  // Determine what to scan
+  let filesToScan = []; // { label: string, filePath: string }
+  let tmpDir = null;
+
+  const firstArg = args[0];
+  const isSingleDir =
+    args.length === 1 &&
+    fs.existsSync(firstArg) &&
+    fs.statSync(firstArg).isDirectory();
+
+  if (isSingleDir) {
+    const dir = firstArg;
+    const zips = fs.readdirSync(dir).filter((f) => f.endsWith(".zip"));
+
+    if (zips.length > 0) {
+      // ZIP mode: extract and scan each archive
+      console.log(`Scanning ${zips.length} skill archive(s) with Warlock...\n`);
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "warlock-scan-"));
+      for (const zip of zips) {
+        const extracted = extractZip(path.join(dir, zip), tmpDir);
+        if (!extracted) continue;
+        for (const f of collectTextFiles(extracted)) {
+          const relPath = path.relative(extracted, f);
+          filesToScan.push({ label: `${zip} > ${relPath}`, filePath: f });
+        }
+      }
+    } else {
+      // Directory without ZIPs: scan text files directly
+      const files = collectTextFiles(dir);
+      console.log(
+        `Scanning ${files.length} file(s) in ${dir} with Warlock...\n`,
+      );
+      for (const f of files) {
+        filesToScan.push({
+          label: path.relative(process.cwd(), f),
+          filePath: f,
+        });
+      }
+    }
+  } else {
+    // Individual files mode
+    for (const arg of args) {
+      if (fs.existsSync(arg) && fs.statSync(arg).isFile()) {
+        filesToScan.push({
+          label: path.relative(process.cwd(), arg),
+          filePath: arg,
+        });
+      } else {
+        console.error(`File not found: ${arg}`);
+      }
+    }
+    console.log(`Scanning ${filesToScan.length} file(s) with Warlock...\n`);
+  }
+
+  // Step 1: Run all YARA scans and collect matches
+  const allMatches = []; // { label, match, content }
+
+  for (const { label, filePath } of filesToScan) {
+    const content = fs.readFileSync(filePath, "utf8");
+    const scanResult = await scan(content);
+
+    if (scanResult.matched) {
+      for (const match of scanResult.matches) {
+        allMatches.push({ label, match, content });
+      }
+    }
+  }
+
+  console.log(
+    `YARA scan complete: ${allMatches.length} match(es) across ${filesToScan.length} file(s).\n`,
+  );
+
+  // Step 2: Triage ALL matches in one LLM call
+  let threats = 0;
+  let warnings = 0;
+  let triagedMatches = [];
+
+  if (allMatches.length > 0) {
+    const rawMatches = allMatches.map((m) => m.match);
+
+    // Build combined content for the LLM (one section per unique file, full text).
+    // Warlock's triageMatches handles content truncation and match batching internally.
+    const uniqueFiles = new Map();
+    for (const { label, content } of allMatches) {
+      if (!uniqueFiles.has(label)) {
+        uniqueFiles.set(label, content);
+      }
+    }
+    const combinedContent = [...uniqueFiles.entries()]
+      .map(([label, content]) => `--- ${label} ---\n${content}`)
+      .join("\n\n");
+
+    triagedMatches = llmProvider
+      ? await triageMatches(combinedContent, rawMatches, llmProvider)
+      : rawMatches.map((m) => ({
+          ...m,
+          triage: {
+            verdict: "true_positive",
+            reason: "No LLM triage available.",
+          },
+        }));
+
+    for (let i = 0; i < triagedMatches.length; i++) {
+      const { label } = allMatches[i];
+      const match = triagedMatches[i];
+      const isFP = match.triage.verdict === "false_positive";
+      reportMatch(label, match, isFP);
+      if (isFP) {
+        warnings++;
+      } else {
+        threats++;
+      }
+    }
+  }
+
+  // Cleanup
+  if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+
+  const durationMs = Date.now() - startTime;
+  const result = threats > 0 ? "fail" : "pass";
+
+  // Track results in PostHog
+  await trackScanResult({
+    filesScanned: filesToScan.length,
+    yaraMatches: allMatches.length,
+    threats,
+    falsePositives: warnings,
+    result,
+    llmTriageEnabled: Boolean(llmProvider),
+    durationMs,
+    triaged: triagedMatches,
+  });
+
+  // Summary
+  console.log("---");
+  if (warnings > 0) {
+    console.log(
+      color.yellow(
+        `${warnings} false positive(s) identified by LLM triage (not blocking).`,
+      ),
+    );
+  }
+  if (threats > 0) {
+    console.log(color.red(`FAILED: ${threats} threat(s) detected.`));
+    console.log("Fix the flagged content before releasing.");
+    process.exit(1);
+  } else {
+    console.log(
+      color.green(`PASSED: No threats found in ${filesToScan.length} file(s).`),
+    );
+    process.exit(0);
+  }
+}
+
+main().catch((err) => {
+  console.error("Scan failed:", err);
+  process.exit(2);
+});
