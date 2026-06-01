@@ -50,6 +50,8 @@ jobs:
       run: pnpm build
 
     - name: Scan skills with Warlock
+      env:
+        PERSONAL_ACCESS_KEY: ${{ secrets.PERSONAL_ACCESS_KEY }}
       run: node scripts/scan-warlock.js dist/skills
 
     - name: Lint env var naming conventions

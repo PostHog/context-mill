@@ -66,11 +66,14 @@ function getGatewayUrl() {
 }
 
 function createLLMProvider() {
-  const apiKey = process.env.POSTHOG_API_KEY;
+  // Prefer the wizard's local proxy if available (ANTHROPIC_BASE_URL),
+  // otherwise fall back to the PostHog gateway.
+  const baseURL = process.env.ANTHROPIC_BASE_URL || getGatewayUrl();
+  const apiKey = process.env.ANTHROPIC_AUTH_TOKEN || process.env.PERSONAL_ACCESS_KEY;
   if (!apiKey) return null;
 
   const client = new Anthropic({
-    baseURL: getGatewayUrl(),
+    baseURL,
     apiKey,
   });
 
@@ -175,7 +178,7 @@ async function main() {
     console.log("LLM triage enabled (using PostHog gateway).\n");
   } else {
     console.log(
-      "LLM triage disabled (no POSTHOG_API_KEY set). Matches will be treated as threats.\n",
+      "LLM triage disabled (no PERSONAL_ACCESS_KEY set). Matches will be treated as threats.\n",
     );
   }
 
