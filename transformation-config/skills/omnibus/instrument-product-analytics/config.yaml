@@ -37,6 +37,7 @@ variants:
       - basics/python
       # PHP
       - basics/laravel
+      - basics/php
       # Ruby
       - basics/ruby-on-rails
       - basics/ruby
@@ -64,12 +65,22 @@ variants:
       - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+      # .NET
+      - https://posthog.com/docs/libraries/dotnet.md
+      # Elixir
+      - https://posthog.com/docs/libraries/elixir.md
+      # Go
+      - https://posthog.com/docs/libraries/go.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
+      - https://posthog.com/docs/libraries/php.md
       # Ruby
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
       # Mobile
       - https://posthog.com/docs/libraries/android.md
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+      - https://posthog.com/docs/libraries/flutter.md
       - https://posthog.com/docs/libraries/react-native.md

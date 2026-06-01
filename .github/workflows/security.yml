@@ -11,11 +11,11 @@ jobs:
     name: Semgrep General
     runs-on: ubuntu-24.04
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
     env:
       SEMGREP_ENABLE_VERSION_CHECK: 'false'
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: |
           semgrep \
             --config "p/owasp-top-ten" \

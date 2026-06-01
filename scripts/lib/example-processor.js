@@ -5,11 +5,11 @@
  * Reads configuration from transformation-config/skip-patterns.yaml
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } = require('../plugins/index');
-const { REPO_URL } = require('./constants');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import { composePlugins, ignoreLinePlugin, ignoreFilePlugin, ignoreBlockPlugin } from '../plugins/index.js';
+import { REPO_URL } from './constants.js';
 
 /**
  * Load skip patterns from YAML config
@@ -182,7 +182,7 @@ function processExample({ examplePath, displayName, id, repoRoot, skipPatterns, 
  */
 const defaultPlugins = [ignoreFilePlugin, ignoreBlockPlugin, ignoreLinePlugin];
 
-module.exports = {
+export {
     loadSkipPatterns,
     mergeSkipPatterns,
     processExample,

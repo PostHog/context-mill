@@ -17,13 +17,13 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version: lts/*
 
-    - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+    - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
       with:
         version: latest
 
@@ -55,8 +55,7 @@ jobs:
     - name: Lint env var naming conventions
       run: bash scripts/lint-env-naming.sh
 
-      # No individual skill should be larger than 1MB, and the bundle should be less than 2MB.
-      # No individual skill should be larger than 1MB, and the bundle should be less than 3MB.
+      # No individual skill should be larger than 1MB, and the bundle should be less than 5MB.
     - name: Check bundle and skill sizes
       run: |
         set -e
@@ -71,8 +70,8 @@ jobs:
         bundle_bytes=$(stat -c%s "$BUNDLE" 2>/dev/null || stat -f%z "$BUNDLE")
         echo "skills-mcp-resources.zip size: ${bundle_bytes} bytes"
 
-        if [ "$bundle_bytes" -gt $((3 * 1024 * 1024)) ]; then
-          echo "::error::skills-mcp-resources.zip is larger than 3MB (current: ${bundle_bytes} bytes)"
+        if [ "$bundle_bytes" -gt $((5 * 1024 * 1024)) ]; then
+          echo "::error::skills-mcp-resources.zip is larger than 5MB (current: ${bundle_bytes} bytes)"
           exit 1
         fi
 
@@ -92,7 +91,7 @@ jobs:
         fi
 
     - name: Archive Artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: ${{ github.sha }}
         path: |

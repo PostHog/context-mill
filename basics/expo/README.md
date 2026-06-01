@@ -6,7 +6,7 @@ A React Native Expo app demonstrating PostHog product analytics integration with
 
 - **Product Analytics**: Full PostHog integration with event tracking
 - **Autocapture**: Touch events and screen tracking
-- **Error Tracking**: Manual exception capture with `$exception` events
+- **Error Tracking**: Manual exception capture with `captureException`
 - **User Authentication**: Demo login with PostHog user identification
 - **Session Persistence**: AsyncStorage for session management
 - **Modern React**: React 19 with React Compiler for automatic memoization
@@ -147,11 +147,7 @@ useEffect(() => {
 Manual exception capture:
 
 ```typescript
-posthog.capture('$exception', {
-  $exception_type: error.name,
-  $exception_message: error.message,
-  $exception_stack_trace_raw: error.stack,
-})
+posthog.captureException(error)
 ```
 
 ## Modern React Features

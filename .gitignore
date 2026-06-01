@@ -35,6 +35,10 @@ __pycache__/
 *.pyo
 db.sqlite3
 
+# .NET
+bin/
+obj/
+
 # PHP / Laravel
 vendor/
 composer.phar
@@ -72,6 +76,10 @@ routeTree.gen.ts
 
 # Build artifacts
 dist/
+
+# Audit skill runtime ledger
+.posthog-audit-checks.json
+posthog-audit-report.md
 
 # Misc
 *.pem

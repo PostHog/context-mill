@@ -2,7 +2,7 @@
 type: docs-only
 template: description.md
 description: PostHog LLM analytics for {display_name}
-tags: [llm-analytics, python, javascript]
+tags: [llm-analytics]
 shared_docs:
   - https://posthog.com/docs/llm-analytics/basics.md
   - https://posthog.com/docs/llm-analytics/traces.md
@@ -10,11 +10,13 @@ shared_docs:
 variants:
   - id: setup
     display_name: all supported providers
-    tags: []
+    tags: [python, javascript]
     docs_urls:
       # --- Model providers ---
       - https://posthog.com/docs/llm-analytics/installation/openai.md
       - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+      # --- PostHog.AI / .NET OpenAI instrumentation ---
+      - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
       - https://posthog.com/docs/llm-analytics/installation/anthropic.md
       - https://posthog.com/docs/llm-analytics/installation/google.md
       - https://posthog.com/docs/llm-analytics/installation/cohere.md
@@ -50,3 +52,12 @@ variants:
       - https://posthog.com/docs/llm-analytics/installation/helicone.md
       # --- Manual / generic ---
       - https://posthog.com/docs/llm-analytics/installation/manual-capture.md
+
+  - id: dotnet-openai
+    display_name: .NET OpenAI / Azure OpenAI (PostHog.AI)
+    description: PostHog LLM analytics for .NET applications using PostHog.AI with OpenAI or Azure OpenAI
+    tags: [dotnet, aspnetcore, csharp, openai, azure-openai]
+    docs_urls:
+      - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
+      - https://posthog.com/docs/llm-analytics/installation/openai.md
+      - https://posthog.com/docs/llm-analytics/installation/azure-openai.md

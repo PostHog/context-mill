@@ -34,4 +34,4 @@ const ignoreLinePlugin = {
     },
 };
 
-module.exports = ignoreLinePlugin;
+export default ignoreLinePlugin;

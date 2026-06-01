@@ -6,7 +6,7 @@
         "php": "^8.2",
         "laravel/framework": "^11.0",
         "livewire/livewire": "^4.0",
-        "posthog/posthog-php": "^4.0"
+        "posthog/posthog-php": "^4.2"
     },
     "autoload": {
         "psr-4": {

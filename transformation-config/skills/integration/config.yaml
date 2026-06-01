@@ -132,6 +132,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
 
+  - id: php
+    example_paths: basics/php
+    display_name: PHP
+    description: PostHog integration for any PHP application using the PHP SDK
+    tags: [php]
+    docs_urls:
+      - https://posthog.com/docs/libraries/php.md
+
   - id: ruby-on-rails
     example_paths: basics/ruby-on-rails
     display_name: Ruby on Rails
@@ -193,6 +201,24 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
 
+  - id: elixir
+    type: docs-only
+    template: description-elixir-docs-only.md
+    display_name: Elixir
+    description: PostHog integration for Elixir and Phoenix applications using the posthog SDK
+    tags: [elixir, phoenix, plug]
+    docs_urls:
+      - https://posthog.com/docs/libraries/elixir.md
+
+  - id: go
+    type: docs-only
+    template: description-go-docs-only.md
+    display_name: Go
+    description: PostHog integration for Go applications using the posthog-go SDK
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/libraries/go.md
+
   - id: swift
     example_paths: basics/swift
     display_name: Swift (iOS/macOS)
@@ -200,6 +226,17 @@ variants:
     tags: [swift, ios, macos, swiftui]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+
+  - id: flutter
+    type: docs-only
+    template: description-docs-only.md
+    display_name: Flutter
+    description: PostHog integration for Flutter applications using the posthog_flutter SDK
+    tags: [flutter, dart, mobile]
+    docs_urls:
+      - https://posthog.com/docs/libraries/flutter.md
   
   - id: react-native
     example_paths: basics/react-native

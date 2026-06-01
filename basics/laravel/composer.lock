@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a71ae5efeb83bf3a1bb1d291cdf626f1",
+    "content-hash": "476aa681b3925049b59c4cb71b568fcd",
     "packages": [
         {
             "name": "brick/math",
@@ -2548,16 +2548,16 @@
         },
         {
             "name": "posthog/posthog-php",
-            "version": "4.0.0",
+            "version": "4.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PostHog/posthog-php.git",
-                "reference": "9f5e54eaacff9315a021571bec5432cb451be012"
+                "reference": "e1ca536ff60071d844cf65290bf63806b81bc386"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/9f5e54eaacff9315a021571bec5432cb451be012",
-                "reference": "9f5e54eaacff9315a021571bec5432cb451be012",
+                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/e1ca536ff60071d844cf65290bf63806b81bc386",
+                "reference": "e1ca536ff60071d844cf65290bf63806b81bc386",
                 "shasum": ""
             },
             "require": {
@@ -2595,9 +2595,9 @@
             ],
             "support": {
                 "issues": "https://github.com/PostHog/posthog-php/issues",
-                "source": "https://github.com/PostHog/posthog-php/tree/4.0.0"
+                "source": "https://github.com/PostHog/posthog-php/tree/4.2.0"
             },
-            "time": "2026-01-09T10:46:48+00:00"
+            "time": "2026-04-06T22:54:03+00:00"
         },
         {
             "name": "psr/clock",

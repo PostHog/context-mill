@@ -19,13 +19,23 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/nextjs.md
       - https://posthog.com/docs/error-tracking/installation/node.md
       - https://posthog.com/docs/error-tracking/installation/python.md
+      - https://posthog.com/docs/libraries/django.md
+      - https://posthog.com/docs/libraries/flask.md
+      - https://posthog.com/docs/error-tracking/installation/php.md
+      - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/error-tracking/installation/ruby.md
       - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/error-tracking/installation/go.md
+      - https://posthog.com/docs/error-tracking/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
+      - https://posthog.com/docs/error-tracking/installation/elixir.md
       - https://posthog.com/docs/error-tracking/installation/angular.md
       - https://posthog.com/docs/error-tracking/installation/svelte.md
-      - https://posthog.com/docs/error-tracking/installation/nuxt.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+      - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
       - https://posthog.com/docs/error-tracking/installation/react-native.md
       - https://posthog.com/docs/error-tracking/installation/flutter.md
+      - https://posthog.com/docs/error-tracking/installation/ios.md
       - https://posthog.com/docs/error-tracking/installation/android.md
       - https://posthog.com/docs/error-tracking/installation/hono.md

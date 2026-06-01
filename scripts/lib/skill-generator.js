@@ -8,11 +8,11 @@
  * - Commandments (based on tags)
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const matter = require('gray-matter');
-const { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } = require('./example-processor');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import matter from 'gray-matter';
+import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
 
 /**
  * Load YAML config file
@@ -146,6 +146,7 @@ function expandSkillGroups(config, configDir) {
                 _template: template,
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
+                _references: group.references || null,
                 _group: key,
             });
         }
@@ -236,10 +237,11 @@ function inferDescription(url) {
 }
 
 /**
- * Fetch markdown content from a URL
- * Returns both content and inferred metadata
+ * Fetch markdown content from a URL.
+ * Returns both content and inferred metadata.
  */
 async function fetchDoc(url) {
+    console.log(`  Fetching doc: ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
@@ -485,15 +487,28 @@ async function generateSkill({
     }
 
     // Copy local markdown references from a source references/ directory, if present.
+    // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
         const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
             .filter(entry => entry.isFile() && entry.name.endsWith('.md'));
 
+        const refsConfig = skill._references || {};
+
         for (const reference of localReferences) {
             const sourcePath = path.join(sourceReferencesDir, reference.name);
-            const content = fs.readFileSync(sourcePath, 'utf8');
+            const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
+            const nextFile = parsed.data.next_step;
+            let content = parsed.content.replace(/^\n+/, '');
             const headingMatch = content.match(/^#\s+(.+)$/m);
+
+            if (nextFile) {
+                if (refsConfig.preamble && headingMatch) {
+                    const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
+                    content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+                }
+                content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
+            }
 
             fs.writeFileSync(
                 path.join(referencesDir, reference.name),
@@ -508,12 +523,12 @@ async function generateSkill({
         }
     }
 
-    // Helper to process a doc entry (string URL or {url, title} object)
-    async function processDoc(docEntry, logPrefix = '') {
+    // Helper to process a doc entry (string URL or {url, title} object).
+    // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
+    // are silent.
+    async function processDoc(docEntry) {
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
-
-        console.log(`  ${logPrefix}Fetching doc: ${url}`);
 
         const result = await fetchDoc(url);
         if (result) {
@@ -531,16 +546,14 @@ async function generateSkill({
         }
     }
 
-    // Fetch and write skill-specific docs
     if (skill.docs_urls && skill.docs_urls.length > 0) {
         for (const docEntry of skill.docs_urls) {
             await processDoc(docEntry);
         }
     }
 
-    // Fetch and write shared docs
     for (const docEntry of sharedDocs) {
-        await processDoc(docEntry, 'shared ');
+        await processDoc(docEntry);
     }
 
     // Include relevant workflows (flattened with category prefix, linked to next step)
@@ -599,41 +612,47 @@ async function generateSkill({
 }
 
 /**
- * Generate all skills from configuration
- *
- * @param {Object} options
- * @param {string} options.repoRoot - Repository root path
- * @param {string} options.configDir - Config directory path (transformation-config)
- * @param {string} options.outputDir - Output directory for generated skills
- * @param {string} options.promptsDir - LLM prompts directory
- * @param {string} options.version - Build version
+ * Convert an expanded skill into the manifest-builder shape.
  */
-async function generateAllSkills({
-    repoRoot,
-    configDir,
-    outputDir,
-    promptsDir,
-    version,
-}) {
-    console.log('Loading configuration...');
+function serializeSkill(s) {
+    return {
+        id: s.id,
+        shortId: s._shortId,
+        category: s._category,
+        displayName: s.display_name,
+        type: s.type || 'example',
+        group: s._group,
+        name: s.description,
+        description: s.description,
+        tags: s.tags || [],
+    };
+}
 
-    // Load all configs
+/**
+ * Load and expand skills config. Cheap; no I/O beyond reading YAML.
+ */
+function loadAndExpandSkills({ configDir }) {
     const skillsConfig = loadSkillsConfig(configDir);
     const commandmentsConfig = loadCommandments(configDir);
     const skipPatterns = loadSkipPatterns(path.join(configDir, 'skip-patterns.yaml'));
-
-    // Expand grouped skills into flat array
     const skills = expandSkillGroups(skillsConfig, configDir);
+    return { skills, commandmentsConfig, skipPatterns };
+}
 
-    // Discover workflows
-    console.log('Discovering workflows...');
-    const workflows = discoverWorkflows(promptsDir);
-    console.log(`  Found ${workflows.length} workflow files`);
-
-    // Create output directory
+/**
+ * Run the inner generation loop for an arbitrary set of expanded skills.
+ */
+async function runGenerate({
+    skills,
+    version,
+    repoRoot,
+    configDir,
+    outputDir,
+    skipPatterns,
+    commandmentsConfig,
+    workflows,
+}) {
     fs.mkdirSync(outputDir, { recursive: true });
-
-    console.log(`\nGenerating ${skills.length} skills...`);
 
     for (const skill of skills) {
         console.log(`\nGenerating skill: ${skill.id}`);
@@ -653,24 +672,92 @@ async function generateAllSkills({
 
         console.log(`  ✓ ${skill.id}`);
     }
+}
+
+/**
+ * Partial generation entry point: only regenerate skills whose IDs are in `ids`.
+ * Still returns the full expanded skill list (`allSkills`) so callers can rebuild
+ * a current manifest even if no skills are rebuilt this pass.
+ */
+async function generateSkillsByIds({
+    ids,
+    repoRoot,
+    configDir,
+    outputDir,
+    promptsDir,
+    version,
+}) {
+    const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
+    const idSet = new Set(ids);
+    const filtered = skills.filter(s => idSet.has(s.id));
+
+    if (filtered.length === 0) {
+        return { allSkills: skills.map(serializeSkill), rebuiltSkills: [] };
+    }
+
+    const workflows = discoverWorkflows(promptsDir);
+
+    await runGenerate({
+        skills: filtered,
+        version,
+        repoRoot,
+        configDir,
+        outputDir,
+        skipPatterns,
+        commandmentsConfig,
+        workflows,
+    });
+
+    return {
+        allSkills: skills.map(serializeSkill),
+        rebuiltSkills: filtered.map(serializeSkill),
+    };
+}
+
+/**
+ * Generate all skills from configuration
+ *
+ * @param {Object} options
+ * @param {string} options.repoRoot - Repository root path
+ * @param {string} options.configDir - Config directory path (transformation-config)
+ * @param {string} options.outputDir - Output directory for generated skills
+ * @param {string} options.promptsDir - LLM prompts directory
+ * @param {string} options.version - Build version
+ */
+async function generateAllSkills({
+    repoRoot,
+    configDir,
+    outputDir,
+    promptsDir,
+    version,
+}) {
+    console.log('Loading configuration...');
+
+    const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
+
+    console.log('Discovering workflows...');
+    const workflows = discoverWorkflows(promptsDir);
+    console.log(`  Found ${workflows.length} workflow files`);
+
+    console.log(`\nGenerating ${skills.length} skills...`);
+
+    await runGenerate({
+        skills,
+        version,
+        repoRoot,
+        configDir,
+        outputDir,
+        skipPatterns,
+        commandmentsConfig,
+        workflows,
+    });
 
     console.log(`\n✓ Generated ${skills.length} skills to ${outputDir}`);
 
-    // Return full skill metadata for manifest generation
-    return skills.map(s => ({
-        id: s.id,
-        shortId: s._shortId,
-        category: s._category,
-        displayName: s.display_name,
-        type: s.type || 'example',
-        group: s._group,
-        name: s.description,
-        description: s.description,
-        tags: s.tags || [],
-    }));
+    return skills.map(serializeSkill);
 }
 
-module.exports = {
+export {
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
@@ -679,5 +766,9 @@ module.exports = {
     discoverWorkflows,
     generateSkill,
     generateAllSkills,
+    loadAndExpandSkills,
+    runGenerate,
+    generateSkillsByIds,
+    serializeSkill,
     fetchDoc,
 };

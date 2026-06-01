@@ -2,6 +2,7 @@
   "name": "@posthog/context-mill",
   "version": "1.2.0",
   "private": true,
+  "type": "module",
   "description": "PostHog Context Mill: assembling and packaging context for AI agents and LLMs",
   "scripts": {
     "build": "node scripts/build.js",
@@ -16,12 +17,19 @@
   },
   "devDependencies": {
     "archiver": "^7.0.1",
+    "chokidar": "^4.0.3",
     "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20.11.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
     "@posthog/warlock": "git+https://github.com/PostHog/warlock.git",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   }
 }

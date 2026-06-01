@@ -44,17 +44,45 @@ variants:
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/python.md
 
+  - id: django
+    display_name: Django
+    tags: [django, python]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/python.md
+      - https://posthog.com/docs/libraries/django.md
+
+  - id: flask
+    display_name: Flask
+    tags: [flask, python]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/python.md
+      - https://posthog.com/docs/libraries/flask.md
+
   - id: php
     display_name: PHP
     tags: [php]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/php.md
 
+  - id: laravel
+    display_name: Laravel
+    tags: [laravel, php]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/php.md
+      - https://posthog.com/docs/libraries/laravel.md
+
   - id: ruby
     display_name: Ruby
     tags: [ruby]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/ruby.md
+
+  - id: ruby-on-rails
+    display_name: Ruby on Rails
+    tags: [ruby-on-rails, ruby]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/ruby.md
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
 
   - id: go
     display_name: Go
@@ -76,9 +104,18 @@ variants:
 
   - id: dotnet
     display_name: .NET
-    tags: [dotnet]
+    tags: [dotnet, csharp]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
+
+  - id: aspnetcore-feature-management
+    display_name: ASP.NET Core Feature Management
+    description: PostHog feature flags for ASP.NET Core applications using Microsoft.FeatureManagement
+    tags: [aspnetcore, dotnet, csharp, feature-management]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/dotnet.md
+      - https://posthog.com/docs/libraries/dotnet.md
 
   - id: elixir
     display_name: Elixir
@@ -97,6 +134,7 @@ variants:
     tags: [ios, swift]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
 
   - id: flutter
     display_name: Flutter

@@ -72,6 +72,45 @@ commandments:
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
 
+  go:
+    - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
+    - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
+    - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
+    - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
+    - Server-side captures must set `DistinctId` to a stable user ID that matches frontend identify calls; avoid anonymous or literal IDs for business events
+    - Use `posthog.NewProperties().Set(...)` for event properties and keep PII in person properties via `$set`, not in event properties
+    - For new feature flag code, prefer `client.EvaluateFlags(...)` once per user/request, then use the returned snapshot's `IsEnabled` or `GetFlag` methods
+    - When capturing events related to feature-gated code, attach the evaluated flag snapshot with `Flags`, optionally filtered with `OnlyAccessed()` or `Only(...)`
+    - Avoid deprecated feature flag helpers such as `IsFeatureEnabled`, `GetFeatureFlag`, `GetFeatureFlagPayload`, and `Capture.SendFeatureFlags` in new code
+    - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
+
+  dotnet:
+    - posthog-dotnet package names are `PostHog` for general .NET apps and `PostHog.AspNetCore` for ASP.NET Core apps
+    - Use environment variables, user secrets, or configuration providers for `ProjectToken`, `HostUrl`, and `PersonalApiKey`; never hardcode PostHog secrets
+    - For CLIs, scripts, workers, and other short-lived processes, create one `PostHogClient` for the process lifetime and call `FlushAsync()` before exit
+    - Call `IdentifyAsync` for known users and put PII such as email in person properties, not in event properties
+    - Use `CaptureException(exception, distinctId, properties, groups, flags)` for handled exceptions; automatic exception capture is not available in the .NET SDK yet
+
+  elixir:
+    - posthog-elixir is installed as the `posthog` Hex package; add `{:posthog, "~> 2.0"}` to `mix.exs` and run `mix deps.get`
+    - Configure PostHog in application config using `api_host`, `api_key`, and `in_app_otp_apps`; read secrets from environment or runtime config, never hardcode them
+    - In tests, set `test_mode` to true so events are dropped instead of sent to PostHog
+    - For Phoenix or Plug apps, add `PostHog.Integrations.Plug` before the router so request context is attached to captured events and errors
+    - Server-side captures must include a stable `distinct_id` matching frontend identify calls, or set it once per process/request with `PostHog.set_context/1`
+    - Remember `PostHog.set_context/1` uses Logger metadata and is process-scoped; set context in the request, job, or Task process that captures the event
+    - For new feature flag code, prefer `PostHog.FeatureFlags.evaluate_flags/1` once per user/request, then read values from `PostHog.FeatureFlags.Evaluations`
+    - To attribute captures to feature flags, call `PostHog.FeatureFlags.set_in_context/1` with the evaluated snapshot, optionally filtered with `only_accessed/1` or `only/2`
+    - Avoid deprecated feature flag helpers such as `check/2`, `check!/2`, `get_feature_flag_result/2`, and `get_feature_flag_result!/2` in new code
+    - Error tracking is enabled by default through Logger; set `in_app_otp_apps`, `capture_level`, and `metadata` to improve error grouping and context
+    - For source context in releases, enable source code context and run `mix posthog.package_source_code` before `mix release`
+
+  aspnetcore:
+    - In ASP.NET Core apps, prefer `builder.AddPostHog()` from `PostHog.AspNetCore` and inject `IPostHogClient` from dependency injection instead of manually constructing clients in controllers
+    - Configure ASP.NET Core apps with the `PostHog` configuration section or environment variable fallbacks such as `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST`
+    - Add product analytics captures at route, controller, or handler boundaries where meaningful user actions occur; do not track every low-level method call
+    - Capture request exceptions in middleware with `CaptureException` and then rethrow so existing ASP.NET Core error handling still runs
+    - For Microsoft.FeatureManagement, call `UseFeatureManagement<TContextProvider>()` and implement `IPostHogFeatureFlagContextProvider` to provide the current distinct ID, person properties, and groups
+
   django:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
     - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
@@ -165,6 +204,17 @@ commandments:
     - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
+  ios:
+    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager or CocoaPods, using `https://github.com/PostHog/posthog-ios.git` for SPM
+    - Initialize `PostHogSDK.shared.setup(config)` exactly once and as early as possible, either in `UIApplicationDelegate.application(_:didFinishLaunchingWithOptions:)` or in the SwiftUI `App` initializer
+    - For SwiftUI apps, prefer meaningful `.postHogScreenView(...)` modifiers for screen tracking because automatic SwiftUI screen names can be internal view identifiers
+    - Call `PostHogSDK.shared.identify(...)` after login and `PostHogSDK.shared.reset()` on logout; keep PII in user properties, not event properties
+    - Enable iOS error autocapture with `config.errorTrackingConfig.autoCapture = true` and upload dSYM files so crash reports are symbolicated
+    - Enable session replay with `config.sessionReplay = true` only after confirming project replay settings and privacy masking requirements; session replay is iOS-only, not macOS
+    - Use `config.setBeforeSend { event in ... }` to redact, drop, or sample custom events, while preserving PostHog internal events where possible
+    - For iOS logs, use posthog-ios 3.58.0 or later, set `config.logs` fields before `setup`, and capture logs manually with `PostHogSDK.shared.logger` or `captureLog`
+    - For widgets, app clips, share extensions, and other app extensions, configure `config.appGroupIdentifier` so the main app and extensions share analytics identity
+
   react-native:
     - posthog-react-native is the React Native SDK package name
     - Use react-native-config to load POSTHOG_PROJECT_TOKEN and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
@@ -176,6 +226,17 @@ commandments:
     - Use expo-constants with app.config.js extras for POSTHOG_PROJECT_TOKEN and POSTHOG_HOST (NOT react-native-config)
     - Access config via `Constants.expoConfig?.extra?.posthogProjectToken` in your posthog.ts config file
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
+
+  flutter:
+    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`
+    - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
+    - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
+    - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
+    - For Session Replay or Surveys, disable auto-init with `com.posthog.posthog.AUTO_INIT=false` and initialize manually so the required options can be enabled
+    - For Flutter Web, add the posthog-js web snippet to `web/index.html`; Flutter Web session replay also requires Canvas capture in project settings
+    - Capture screen views with `PosthogObserver()` and named routes; unnamed routes will not produce useful `$screen` names
+    - Call `Posthog().identify(...)` after login and `Posthog().reset()` on logout; keep PII in user properties, not event properties
+    - Use `beforeSend` to redact or drop Dart-captured events, but remember it does not intercept native session replay, lifecycle, or system properties
 
   astro:
     - Always use the is:inline directive on PostHog script tags to prevent Astro from processing them and causing TypeScript errors
