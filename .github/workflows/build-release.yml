@@ -131,6 +131,8 @@ jobs:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Scan skills with Warlock
+        env:
+          CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY: ${{ secrets.CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY }}
         run: node scripts/scan-warlock.js dist/skills
 
       - name: List build artifacts
