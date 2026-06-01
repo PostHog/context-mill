@@ -91,3 +91,16 @@ The build script automatically discovers, orders, and generates URIs for all res
 - **Version controlled**: Resources evolve with the examples
 
 See `llm-prompts/README.md` for detailed workflow conventions.
+
+## Security scanning
+
+Before we ship any skills, we run them through [the warlock](https://github.com/PostHog/warlock), PostHog's security scanner for agentic flows. It reads the built skill bundles and looks for prompt-injection attempts and other risky content that could trick an agent downstream. An LLM triage pass then sorts the real threats from the false positives, so we're not chasing noise.
+
+CI runs this automatically on every build and release, so most of the time you don't have to think about it. But if you want to check something locally:
+
+```
+pnpm security-scan:skills            # scan all built skill ZIPs (this is what CI runs)
+pnpm security-scan path/to/file.md   # scan a specific file
+```
+
+Heads up, the skills scan reads from `dist/`, so run `pnpm build` first. If a scan flags something, fix the flagged content before releasing :)

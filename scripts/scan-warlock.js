@@ -17,18 +17,49 @@ import os from "node:os";
 import Anthropic from "@anthropic-ai/sdk";
 import { scan, triageMatches } from "@posthog/warlock";
 
+// Text-based formats we feed to Warlock. Binary/unknown types are skipped on
+// purpose, since Warlock scans text content and non-text files add nothing.
 const TEXT_EXTENSIONS = new Set([
   ".md",
   ".txt",
   ".yaml",
   ".yml",
   ".json",
+  ".toml",
+  ".xml",
   ".js",
+  ".mjs",
+  ".cjs",
+  ".jsx",
   ".ts",
+  ".tsx",
   ".py",
   ".rb",
   ".sh",
+  ".go",
+  ".rs",
+  ".java",
+  ".kt",
+  ".kts",
+  ".swift",
+  ".php",
+  ".c",
+  ".h",
+  ".cpp",
+  ".cc",
+  ".cs",
+  ".html",
+  ".htm",
+  ".css",
+  ".scss",
+  ".sql",
+  ".graphql",
+  ".vue",
+  ".svelte",
 ]);
+
+// LLM used to triage Warlock matches as real threats vs false positives.
+const TRIAGE_MODEL = "claude-haiku-4-5-20251001";
 
 const isCI = Boolean(process.env.CI);
 
@@ -79,7 +110,7 @@ function createLLMProvider() {
 
   return async (prompt) => {
     const res = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: TRIAGE_MODEL,
       max_tokens: 16384,
       messages: [{ role: "user", content: prompt }],
     });
