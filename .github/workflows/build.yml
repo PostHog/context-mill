@@ -51,7 +51,7 @@ jobs:
 
     - name: Scan skills with Warlock
       env:
-        POSTHOG_API_TOKEN: ${{ secrets.POSTHOG_API_TOKEN }}
+        CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY: ${{ secrets.CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY }}
       run: node scripts/scan-warlock.js dist/skills
 
     - name: Lint env var naming conventions
