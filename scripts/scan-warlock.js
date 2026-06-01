@@ -83,7 +83,11 @@ function createLLMProvider() {
       max_tokens: 16384,
       messages: [{ role: "user", content: prompt }],
     });
-    return res.content[0].text;
+    const block = res.content?.[0];
+    if (!block || block.type !== "text" || typeof block.text !== "string") {
+      throw new Error(`Unexpected LLM response shape: ${JSON.stringify(res.content?.slice(0, 2))}`);
+    }
+    return block.text;
   };
 }
 
@@ -169,16 +173,73 @@ function reportMatch(filePath, match, isFalsePositive = false) {
   console.log("");
 }
 
+// -- PostHog tracking --
+// Sends scan results to PostHog via the public webhook (same one used by e2e tests).
+// Fire-and-forget: tracking failures never block the scan result.
+
+const POSTHOG_WEBHOOK_URL =
+  "https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b";
+
+async function trackScanResult({ filesScanned, yaraMatches, threats, falsePositives, result, llmTriageEnabled, durationMs, triaged }) {
+  // Build per-rule breakdown: { ruleName: { true_positive: N, false_positive: N } }
+  const rulesByVerdict = {};
+  if (triaged) {
+    for (const match of triaged) {
+      const rule = match.rule;
+      const verdict = match.triage?.verdict || "unknown";
+      if (!rulesByVerdict[rule]) rulesByVerdict[rule] = { true_positive: 0, false_positive: 0 };
+      if (verdict === "true_positive" || verdict === "false_positive") {
+        rulesByVerdict[rule][verdict]++;
+      }
+    }
+  }
+
+  const rulesTriggered = Object.keys(rulesByVerdict);
+
+  const payload = {
+    event: "warlock_scan_completed",
+    files_scanned: filesScanned,
+    yara_matches: yaraMatches,
+    threats,
+    false_positives: falsePositives,
+    result,
+    llm_triage_enabled: llmTriageEnabled,
+    duration_ms: durationMs,
+    rules_triggered: rulesTriggered,
+    rules_by_verdict: rulesByVerdict,
+    // CI context (empty strings when running locally)
+    commit_sha: process.env.GITHUB_SHA || "",
+    branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "",
+    pr_number: process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)/)?.[1] || "",
+    workflow_name: process.env.GITHUB_WORKFLOW || "",
+    run_url: process.env.GITHUB_RUN_ID
+      ? `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+      : "",
+  };
+
+  try {
+    await fetch(POSTHOG_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    // Tracking is best-effort — never block the scan
+  }
+}
+
 // -- Main --
 
 async function main() {
+  const startTime = Date.now();
   const llmProvider = createLLMProvider();
 
   if (llmProvider) {
     console.log("LLM triage enabled (using PostHog gateway).\n");
   } else {
     console.log(
-      "LLM triage disabled (no CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY set). Matches will be treated as threats.\n",
+      "LLM triage disabled (no API key configured). All matches will be treated as threats.\n",
     );
   }
 
@@ -253,10 +314,10 @@ async function main() {
 
   for (const { label, filePath } of filesToScan) {
     const content = fs.readFileSync(filePath, "utf8");
-    const result = await scan(content);
+    const scanResult = await scan(content);
 
-    if (result.matched) {
-      for (const match of result.matches) {
+    if (scanResult.matched) {
+      for (const match of scanResult.matches) {
         allMatches.push({ label, match, content });
       }
     }
@@ -269,11 +330,13 @@ async function main() {
   // Step 2: Triage ALL matches in one LLM call
   let threats = 0;
   let warnings = 0;
+  let triagedMatches = [];
 
   if (allMatches.length > 0) {
     const rawMatches = allMatches.map((m) => m.match);
 
-    // Build a combined content summary for the LLM (one snippet per unique file)
+    // Build combined content for the LLM (one section per unique file, full text).
+    // Warlock's triageMatches handles content truncation and match batching internally.
     const uniqueFiles = new Map();
     for (const { label, content } of allMatches) {
       if (!uniqueFiles.has(label)) {
@@ -281,10 +344,10 @@ async function main() {
       }
     }
     const combinedContent = [...uniqueFiles.entries()]
-      .map(([label, content]) => `--- ${label} ---\n${content.slice(0, 2000)}`)
+      .map(([label, content]) => `--- ${label} ---\n${content}`)
       .join("\n\n");
 
-    const triaged = llmProvider
+    triagedMatches = llmProvider
       ? await triageMatches(combinedContent, rawMatches, llmProvider)
       : rawMatches.map((m) => ({
           ...m,
@@ -294,9 +357,9 @@ async function main() {
           },
         }));
 
-    for (let i = 0; i < triaged.length; i++) {
+    for (let i = 0; i < triagedMatches.length; i++) {
       const { label } = allMatches[i];
-      const match = triaged[i];
+      const match = triagedMatches[i];
       const isFP = match.triage.verdict === "false_positive";
       reportMatch(label, match, isFP);
       if (isFP) {
@@ -309,6 +372,21 @@ async function main() {
 
   // Cleanup
   if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+
+  const durationMs = Date.now() - startTime;
+  const result = threats > 0 ? "fail" : "pass";
+
+  // Track results in PostHog
+  await trackScanResult({
+    filesScanned: filesToScan.length,
+    yaraMatches: allMatches.length,
+    threats,
+    falsePositives: warnings,
+    result,
+    llmTriageEnabled: Boolean(llmProvider),
+    durationMs,
+    triaged: triagedMatches,
+  });
 
   // Summary
   console.log("---");
