@@ -112,6 +112,8 @@ function createLLMProvider() {
     const res = await client.messages.create({
       model: TRIAGE_MODEL,
       max_tokens: 16384,
+      // Keep triage verdicts stable across runs.
+      temperature: 0,
       messages: [{ role: "user", content: prompt }],
     });
     const block = res.content?.[0];
