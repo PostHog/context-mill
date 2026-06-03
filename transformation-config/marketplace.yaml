@@ -42,6 +42,12 @@ plugins:
     destination: skills/posthog/error-tracking
     keywords: [posthog, error-tracking, exceptions, monitoring]
 
+  error-tracking-upload-source-maps:
+    name: posthog-error-tracking-upload-source-maps
+    description: Skills for uploading source maps to PostHog Error Tracking
+    destination: skills/posthog/error-tracking-upload-source-maps
+    keywords: [posthog, error-tracking, source-maps, debugging]
+
   tools-and-features:
     name: posthog-tools
     description: Utility skills for working with PostHog (HogQL, etc.)
