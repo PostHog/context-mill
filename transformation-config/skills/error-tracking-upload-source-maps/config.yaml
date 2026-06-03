@@ -6,7 +6,6 @@ tags: [error-tracking, source-maps]
 shared_docs:
   - https://posthog.com/docs/error-tracking/upload-source-maps.md
   - https://posthog.com/docs/error-tracking/upload-source-maps/cli.md
-  - https://posthog.com/docs/error-tracking/upload-source-maps/github-actions.md
 variants:
   - id: web
     display_name: Web (JavaScript)
