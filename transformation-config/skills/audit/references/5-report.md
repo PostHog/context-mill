@@ -156,12 +156,12 @@ Table example (mirrors the report's "Problematic items" table):
 
 ```json
 {
-  "title": "PostHog audit – <repo_name> (<timestamp>)",
+  "title": "PostHog audit (wizard) – <repo_name> – <timestamp>",
   "text_content": "<plain-text version of posthog-audit-report.md — used for PostHog search>",
   "content": {
     "type": "doc",
     "content": [
-      {"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"PostHog Audit Report"}]},
+      {"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"PostHog audit (wizard) – <repo_name>"}]},
       {"type":"paragraph","content":[
         {"type":"text","text":"Mirror of "},
         {"type":"text","marks":[{"type":"code"}],"text":"posthog-audit-report.md"},
@@ -195,7 +195,7 @@ Table example (mirrors the report's "Problematic items" table):
 }
 ```
 
-- `title` is short, scannable, and includes the repo name plus the audit date.
+- `title` is short, scannable, and includes the repo name, the audit date, and the literal `(wizard)` tag so future notebook searches can find every wizard-created artifact at once. Keep the casing exact.
 - `text_content` is the plain-text body (strip markdown formatting). Used for PostHog search; never seen as-is by the reader.
 - `content` is the ProseMirror tree above, built by walking the report's sections in order. Include every section the report has — Summary, Recommended actions, Full audit (per-area), About this audit.
 
