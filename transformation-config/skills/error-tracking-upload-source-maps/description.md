@@ -47,7 +47,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Auto-loads `.env`**: Next.js, Nuxt and similar frameworks read `.env` into the build for you — nothing extra to do.
 - **Vite is a partial exception**: it auto-loads `.env` into `import.meta.env` for client code (only `VITE_`-prefixed vars), but does **not** put vars in `process.env` for your config to read. The upload credentials (`POSTHOG_*`, not `VITE_`-prefixed) are read when the plugin is constructed, so load them yourself — see the Vite example below.
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
-- **Separate-process gotcha**: if upload runs as its own `package.json` step (e.g. `posthog-cli sourcemap upload` after the bundler), that CLI is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --env-file <relative-path> sourcemap upload …`.
+- **Separate-process gotcha**: if upload runs as its own `package.json` step (e.g. `posthog-cli sourcemap upload` after the bundler), that CLI is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap upload …`.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -64,7 +64,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
   };
   ```
 - **Rollup / webpack / plain Node** Add `import 'dotenv/config'` (or `require('dotenv').config()`) at the top of the config/entry file so the loader runs before the build reads the vars.
-- **Standalone posthog-cli step** Pass `--env-file .env` to the CLI so it reads the credentials itself instead of relying on the parent process's environment.
+- **Standalone posthog-cli step** Pass `--dotenv-file .env` to the CLI so it reads the credentials itself instead of relying on the parent process's environment.
 
 ### Write credentials to the env file
 
