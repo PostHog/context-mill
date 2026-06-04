@@ -44,7 +44,7 @@ Emit, in order:
 - `mcp_available` – top-level boolean from step 4. `false` means PostHog volume data is missing; render the report in degraded mode (see below).
 - `mcp_skipped_reason` – optional short string explaining why MCP was skipped or failed. Used in the disclaimer when `mcp_available: false`.
 
-If `rows[]` is empty, render a short report explaining the inventory is empty, resolve all three shared checks with `pending` details (no data to evaluate), and exit.
+If `rows[]` is empty, render a short report explaining the inventory is empty, then resolve `write-report` to `pass` and exit.
 
 #### Degraded mode (`mcp_available: false`)
 
@@ -55,7 +55,7 @@ When MCP wasn't reachable in step 4, every row has `volume_30d: null` and `statu
 - Volume Map section: instead of the events table, the body becomes a single line `_PostHog volume data was not fetched during this run — see the disclaimer above. Capture sites are still listed in the Area topology section below._`. Skip the capture-sites collapsibles too.
 - Area Topology section: still renders, but sort areas alphabetically (no volume to sort by) and omit the `<total_volume>` figure from each area heading. Each event bullet shows just the event name plus `· conditional` if applicable; no volume number, no `· phantom` tag.
 - Overview panels: skip "Volume concentration" and "Phantom events" entirely (both need volume). All other panels (no-properties, name drift, type drift, conditional fires, duplicate captures, unresolved dynamics) still render — they're code-derived.
-- The `data-quality` check resolves to whatever the code-derived panels found. Don't penalize for missing volume; that's not a code problem.
+- The data-quality findings (rendered as Overview panels) still describe what the code-derived panels found. Don't penalize for missing volume; that's not a code problem.
 
 ### b. Aggregate by event (Volume Map records)
 
@@ -118,9 +118,9 @@ Each panel is a short bulleted list. Panels are derived deterministically from t
 
 Skip any panel whose source list is empty. Don't render an empty "No phantom events" header — silence is the signal.
 
-These panels carry the findings that previously lived in the standalone Coverage Map and Data Quality sections; rendering them as Overview panels keeps action items in one place at the top of the report. 
+These panels carry the findings that previously lived in the standalone Coverage Map and Data Quality sections; rendering them as Overview panels keeps action items in one place at the top of the report.
 
-The `coverage-map` and `data-quality` checks are still resolved separately via `audit_resolve_checks` (their `details` mirror the relevant Overview panels).
+The coverage-map and data-quality findings live in the report only — they don't get their own ledger rows. The ledger tracks pipeline progress; the report carries the analysis.
 
 ### e. Analyze identity & segmentation (shared check)
 
@@ -156,13 +156,7 @@ Render as **bold lead** + one bold-leading bullet per capability + sub-bullets f
 
 If a capability doesn't apply, still emit the bullet with `n/a — <reason>`. Don't omit it.
 
-#### Resolve all three shared checks
-
-After computing the Overview panels in (d) and the identity capabilities in (e), call `mcp__wizard-tools__audit_resolve_checks` once for each shared check. Stream them as separate calls so the audit-plan tab updates progressively.
-
-- `identity-segmentation` — status `pass` if all applicable capabilities pass, `warning` if cross-session is partial or one breakdown is blocked, `error` if cross-session fails. `details` mirrors the Identity & Segmentation rendering shape above.
-- `coverage-map` — status `pass` (broad area distribution, no dark surfaces), `warning` (one or more dark surfaces, heavy reliance on `shared`, or wrapper-undetected), `suggestion` (coarse grouping). `details` is a short bullet list summarizing what the Area Topology section will show: distribution, dark surfaces, reliance on shared, wrapper-undetected, coarse-grouping. Cite `file:line` per non-pass bullet.
-- `data-quality` — status `pass` (no Overview panels render), `warning` (one or two issue panels render), `error` (type drift, name drift on flagship events, or many phantoms). `details` mirrors the Overview panels that rendered: lead with the worst issue stated as product cost (e.g. "`revenue` type drift will silently zero out checkout aggregates"), then one bullet per issue.
+The qualitative analysis from (d) and (e) is rendered into the report only — it doesn't go through the ledger. The ledger is the pipeline progress tracker; the report is the deliverable.
 
 ### f. Render the report
 
@@ -232,17 +226,21 @@ These rules tell you how to format each placeholder. The placeholder names thems
 - **`file:line` citations** on every non-pass observation.
 - **Fan-out is not used in this step.** The data fits in one turn.
 
-### g. Surface the deliverable and clean up the checklist
+### g. Surface the deliverable and resolve the phase
 
 **Only one file is produced by this skill:** `posthog-events-audit-report.md`. **Do not write any additional summary, recap, or "what was done" file** (e.g. `posthog-audit-report.md`, `audit-summary.md`, `SUMMARY.md`). The single report from step (f) is the entire deliverable. Don't write an end-of-turn summary as a file — keep that in the chat reply only.
 
-After the report is written and all three shared checks are resolved, delete the checklist file — it's a transient progress ledger:
+After the report is written, flip the `write-report` row to `pass`:
 
-```
-Bash: rm -f .posthog-audit-checks.json
+```json
+{
+  "updates": [
+    { "id": "write-report", "status": "pass" }
+  ]
+}
 ```
 
-**Do not delete `.posthog-events-inventory.json` yet** — step 6 needs it for the IN-list. Step 6 cleans it up after the dashboard step, regardless of whether the user opts into dashboard creation.
+**Do not delete `.posthog-audit-checks.json` or `.posthog-events-inventory.json` yet** — step 6 needs the inventory for the IN-list and resolves the final `create-dashboard` row in the same ledger. Step 6 cleans both files up at the end.
 
 Emit one trailing line so the wizard can surface the report to the user:
 
@@ -252,4 +250,4 @@ Created events audit report: <absolute path to posthog-events-audit-report.md>
 
 ## Resolve
 
-`next_step: 6-dashboard.md`. By the end of this step, all three shared checks (`identity-segmentation`, `coverage-map`, `data-quality`) must be resolved via `audit_resolve_checks`. There are no per-flow checks to resolve. Step 6 handles the optional dashboard creation and the final inventory cleanup.
+`next_step: 6-dashboard.md`. Step 6 handles the optional dashboard creation, resolves the final phase row, and cleans up the transient files.

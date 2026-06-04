@@ -26,7 +26,7 @@ Emit, in order:
 | `mcp__posthog-wizard__dashboard-create` | (b) below | Create the parent dashboard. Returns a dashboard with `id` and a PostHog URL. |
 | `mcp__posthog-wizard__insight-create` | (c) below | Create each insight, attached to the dashboard via `dashboards: [<id>]`. |
 
-Load both via `ToolSearch select:mcp__posthog-wizard__dashboard-create,mcp__posthog-wizard__insight-create` once at the start of (a). They're write tools — every call mutates the user's PostHog project.
+Load both via `ToolSearch select:mcp__posthog-wizard__dashboard-create,mcp__posthog-wizard__insight-create` once at the start of (a). They're write tools — every call mutates the user's PostHog project. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1 — you'll use it again in (d).
 
 ## Action
 
@@ -152,14 +152,32 @@ The report ends up with no dashboard line at all — that's the right UX for "no
 
 If every `insight-create` call failed but the dashboard itself was created, also try to delete the empty dashboard via `mcp__posthog-wizard__dashboard-delete` if that tool is available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" in the run output and move on.
 
-### d. Clean up the inventory
+### d. Resolve the phase
 
-Whether creation succeeded, partially succeeded, or failed — delete the inventory now. It's transient scratch state.
+Flip the `create-dashboard` row based on outcome:
+
+- Dashboard + at least one insight created → status `pass`.
+- Dashboard created, every `insight-create` failed → status `warning`, `details: "Dashboard created but every insight failed to attach"`.
+- Dashboard creation skipped (because `mcp_available: false` from step 4) or errored → status `suggestion`, `details: "Skipped — PostHog MCP unavailable"` (or the short failure reason).
+
+```json
+{
+  "updates": [
+    { "id": "create-dashboard", "status": "pass" }
+  ]
+}
+```
+
+### e. Clean up transient files
+
+Whether creation succeeded, partially succeeded, or failed — delete the inventory and the audit-checks ledger now. They're transient scratch state.
 
 ```
-Bash: rm -f .posthog-events-inventory.json
+Bash: rm -f .posthog-events-inventory.json .posthog-audit-checks.json
 ```
+
+The wizard reads the on-disk ledger via a file watcher; the final phase resolutions you streamed in (a)–(d) are already in the wizard's in-memory mirror, so removing the file after the run is the correct cleanup.
 
 ## Resolve
 
-`next_step: null` – the chain ends here. No checks to resolve in step 6 (dashboard creation isn't part of the audit checklist).
+`next_step: null` – the chain ends here. By the end of this step all six phase rows must be resolved via `audit_resolve_checks`.

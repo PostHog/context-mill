@@ -8,7 +8,7 @@ Seed the audit checklist, then find every PostHog SDK in the project and remembe
 
 ## Tools
 
-Load via `ToolSearch select:Read,Glob,mcp__wizard-tools__audit_seed_checks,mcp__wizard-tools__audit_resolve_checks` once at the start of this step.
+Load via `ToolSearch select:Read,Glob,mcp__wizard-tools__audit_seed_checks,mcp__wizard-tools__audit_resolve_checks` once at the start of this step. Subsequent steps reuse `audit_resolve_checks` to advance the phase, so it stays loaded.
 
 ## Status
 
@@ -23,36 +23,54 @@ Emit, in order:
 
 ### a. Seed the audit checklist
 
-The checklist lives at `.posthog-audit-checks.json` and renders live in the "Audit plan" tab. **Don't rely on the runtime pre-seeding it** — call `mcp__wizard-tools__audit_seed_checks` directly here. The tool replaces the file atomically, so calling it once at the start of every run is safe.
+The checklist lives at `.posthog-audit-checks.json` and renders live in the wizard sidebar / "Audit plan" tab. **Don't rely on the runtime pre-seeding it** — call `mcp__wizard-tools__audit_seed_checks` directly here. The tool replaces the file atomically, so calling it once at the start of every run is safe.
 
-Pass exactly these three shared checks (`identity-segmentation`, `coverage-map`, `data-quality`):
+Seed all six pipeline phases. The wizard already pre-seeds the same shape so the sidebar boots populated; seeding again is idempotent and guarantees you own the exact labels later steps resolve against.
 
 ```json
 {
   "checks": [
-    { 
-      "id": "identity-segmentation", 
-      "area": "Identity",     
-      "label": "Identity & segmentation", 
-      "status": "pending" 
+    {
+      "id": "detect-sdk",
+      "area": "Detect SDK",
+      "label": "Identify PostHog SDK(s) in dependencies",
+      "status": "pending"
     },
-    { 
-      "id": "coverage-map",          
-      "area": "Coverage",     
-      "label": "Coverage map",            
-      "status": "pending" 
+    {
+      "id": "scan-sites",
+      "area": "Scan capture sites",
+      "label": "Grep capture/identify/group call sites",
+      "status": "pending"
     },
-    { 
-      "id": "data-quality",          
-      "area": "Data quality", 
-      "label": "Data quality",            
-      "status": "pending" 
+    {
+      "id": "enrich-sites",
+      "area": "Enrich",
+      "label": "Subagent fan-out to read capture files",
+      "status": "pending"
+    },
+    {
+      "id": "query-volume",
+      "area": "Query PostHog",
+      "label": "30-day volume + last_seen via MCP",
+      "status": "pending"
+    },
+    {
+      "id": "write-report",
+      "area": "Write report",
+      "label": "Render posthog-events-audit-report.md",
+      "status": "pending"
+    },
+    {
+      "id": "create-dashboard",
+      "area": "Create dashboard",
+      "label": "Optional: dashboard for resolved events",
+      "status": "pending"
     }
   ]
 }
 ```
 
-Don't invent new ids — later steps resolve checks by these exact ids. Don't `Write` the file directly; the MCP tool owns it.
+Don't invent new ids — later steps resolve their own phase by these exact ids. Don't `Write` the file directly; the MCP tool owns it.
 
 ### b. Find PostHog SDKs
 
@@ -78,3 +96,17 @@ If no PostHog SDK is anywhere in the project, emit `[ABORT] No PostHog SDK found
 For each dependency manifest, extract every dependency whose name starts with `posthog` (e.g. `posthog`, `posthog-node`, `posthog-js`, `posthog-python`, `posthog-ruby`). Hold `{ sdk, version, manifest, framework }` per SDK in memory. The next step uses this list.
 
 If no PostHog SDK is anywhere, emit `[ABORT] No PostHog SDK found`.
+
+### c. Resolve the phase
+
+Once the SDK list is in memory, call `mcp__wizard-tools__audit_resolve_checks` to flip the `detect-sdk` row to `pass`:
+
+```json
+{
+  "updates": [
+    { "id": "detect-sdk", "status": "pass" }
+  ]
+}
+```
+
+This advances the wizard sidebar to the next phase ("Scan capture sites"). Continue to step 2.

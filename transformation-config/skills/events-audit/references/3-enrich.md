@@ -16,7 +16,7 @@ The step has three phases:
 
 ## Tools
 
-Load `Read`, `Write`, and `Bash` via `ToolSearch select:Read,Write,Bash` once at the start of this step. Load `Agent` only inside Phase 2 if fan-out is needed (see partition rules below).
+Load `Read`, `Write`, and `Bash` via `ToolSearch select:Read,Write,Bash` once at the start of this step. Load `Agent` only inside Phase 2 if fan-out is needed (see partition rules below). `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1.
 
 ## Supporting files
 
@@ -97,3 +97,17 @@ json.dump({'rows': rows, 'wrapper_undetected': False}, open('.posthog-events-inv
 ```
 
 Don't try to merge in a model turn. That's the rule that crashed the previous run.
+
+## Resolve the phase
+
+Once the merged `.posthog-events-inventory.json` is in place, flip the `enrich-sites` row to `pass`:
+
+```json
+{
+  "updates": [
+    { "id": "enrich-sites", "status": "pass" }
+  ]
+}
+```
+
+Continue to step 4.
