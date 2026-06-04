@@ -12,6 +12,7 @@ Emit, in order:
 
 ```
 [STATUS] Writing audit report
+[STATUS] Building notebook payload
 [STATUS] Uploading report to notebook
 ```
 
@@ -106,6 +107,18 @@ After the report is written, emit a line so the wizard can surface the path to t
 
 ```
 Created audit report: <absolute path to posthog-audit-report.md>
+```
+
+### Resolve `write-report`
+
+Flip the `write-report` row to `pass` now that the markdown file exists on disk. The notebook-upload sub-step that follows can take a while (large ProseMirror payload), and resolving this row first lets the wizard sidebar advance to "Upload notebook" so the user can see what's happening.
+
+```json
+{
+  "updates": [
+    { "id": "write-report", "status": "pass" }
+  ]
+}
 ```
 
 ## Upload to a PostHog notebook
@@ -229,7 +242,7 @@ Flip the `upload-notebook` row based on outcome:
 }
 ```
 
-Then delete the ledger — it's transient scratch state and all 11 rows are now resolved:
+Then delete the ledger — it's transient scratch state and all 12 rows are now resolved:
 
 ```
 Bash: rm -f .posthog-audit-checks.json
