@@ -6,9 +6,9 @@ Perform the checks described in the referenced skills and only the events refere
 
 ## Workflow
 
-The audit runs as a 5-step chain: Installation (SDK + version) → init correctness → identification → event capture → report. Each step file ends with a pointer to the next. Follow them in the order they are written. You must resolve them in order before any source-tree exploration.
+The audit runs as a 5-step chain: Installation (SDK + version) → init correctness → identification → event capture → report (which also uploads the report to a PostHog notebook). Each step file ends with a pointer to the next. Follow them in the order they are written. You must resolve them in order before any source-tree exploration.
 
-The audit ledger is already seeded with the 10 pending checks. Use `mcp__wizard-tools__audit_resolve_checks` to patch each one as you finish it.
+The audit ledger is already seeded with the 11 pending checks (10 correctness checks plus `upload-notebook`, which the report step resolves after mirroring the markdown into a PostHog notebook). Use `mcp__wizard-tools__audit_resolve_checks` to patch each one as you finish it.
 
 **Start by reading the path relative to this file at `references/1-version.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
 

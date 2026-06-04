@@ -10,7 +10,7 @@ This step is one Grep, one Write. No file Reads, no subagents, no MCP. Severity,
 
 ## Tools
 
-Load via `ToolSearch select:Grep,Write` once at the start of this step.
+Load via `ToolSearch select:Grep,Write` once at the start of this step. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1.
 
 ## Status
 
@@ -119,6 +119,20 @@ Skip `$pageview` and `$pageleave` matches entirely — they're SDK-internal in m
 ```
 
 This file is small (~80 bytes per row × 100 rows ≈ 8KB) so the Write fits in one turn easily.
+
+### e. Resolve the phase
+
+Flip the `scan-sites` row to `pass`:
+
+```json
+{
+  "updates": [
+    { "id": "scan-sites", "status": "pass" }
+  ]
+}
+```
+
+If the grep returned zero rows and you set `wrapper_undetected: true`, still resolve `scan-sites` to `pass` — the wrapper-undetected condition is a finding the data-quality panel surfaces, not a phase failure.
 
 ## Notes on wrapper resolution
 

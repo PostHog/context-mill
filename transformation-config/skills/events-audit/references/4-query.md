@@ -101,7 +101,28 @@ When `mcp_available: false`, leave every row's `volume_30d: null`, `last_seen: n
 
 `Write` the inventory back. Continue to step 5 in every case — never abort here.
 
-### h. Notes for the orchestrator
+### h. Resolve the phase
+
+Flip the `query-volume` row based on what happened:
+
+- `mcp_available: true` → status `pass`.
+- `mcp_available: false` → status `warning`, with `details` set to a one-line summary of `mcp_skipped_reason` so the audit-plan tab surfaces the degradation:
+
+  ```json
+  {
+    "updates": [
+      {
+        "id": "query-volume",
+        "status": "warning",
+        "details": "PostHog MCP unavailable — report will render without 30-day volume data"
+      }
+    ]
+  }
+  ```
+
+Don't abort. Step 5 reads the inventory's `mcp_available` flag and renders accordingly.
+
+### i. Notes for the orchestrator
 
 - **Don't retry on failure.** One attempt; if it fails, soft-degrade. The wizard logs the failure reason and the user can re-run with a corrected project.
 - **Don't try to recover by guessing a different project.** The active project is the wizard's session — switching it is out of scope.

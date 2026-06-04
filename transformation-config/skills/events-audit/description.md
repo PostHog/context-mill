@@ -4,14 +4,14 @@ This skill produces a product-browseable report of every PostHog event your code
 
 ## Workflow
 
-The audit runs as a 6-step chain:
+The audit runs as a 6-step chain (the dashboard step also uploads the report to a PostHog notebook):
 
 1. Detect SDK
 2. Scan capture sites (grep only)
 3. Enrich (subagent fan-out — the only step that reads source files)
 4. Query PostHog for volume
 5. Write report
-6. Create dashboard
+6. Create dashboard, then upload the report to a PostHog notebook
 
 Each step file points to the next. Run them in order. Don't explore the source tree on your own.
 
@@ -21,9 +21,21 @@ Step 1 seeds the audit checklist as its first action. Don't assume the runtime p
 
 ## The audit checklist
 
-The audit checklist has three shared checks in addition to the event map audit: `identity-segmentation`, `coverage-map`, `data-quality`. Finish each one. Don't invent new ids.
+The audit checklist is the **pipeline progress ledger** — one row per workflow phase. The seven ids cover the six steps above plus the notebook upload that closes step 6:
 
-The checklist lives at `.posthog-audit-checks.json`. It's owned by MCP tools – **never `Write` it directly**,
+- `detect-sdk`
+- `scan-sites`
+- `enrich-sites`
+- `query-volume`
+- `write-report`
+- `create-dashboard`
+- `upload-notebook`
+
+Each step file resolves its own row via `mcp__wizard-tools__audit_resolve_checks` once the step's work is done — that's what advances the spinner in the wizard's sidebar. Don't invent new ids.
+
+The qualitative findings (`identity-segmentation`, `coverage-map`, `data-quality`) live in the **report**, not the ledger. Step 5 computes them straight from the inventory and renders them as report sections; they don't need MCP rows.
+
+The checklist lives at `.posthog-audit-checks.json`. It's owned by MCP tools – **never `Write` it directly**.
 
 ## The events inventory
 
@@ -33,12 +45,12 @@ It's **not** MCP-owned – no `audit_*` tool guards it. The inventory is **trans
 
 Check entry shape:
 
-- `id` - stable kebab-case slug. The three shared ids are `identity-segmentation`, `coverage-map`, `data-quality`.
-- `area` - short group name. Shared entries use `Identity`, `Coverage`, `Data quality`.
+- `id` - stable kebab-case slug. The six phase ids are listed above.
+- `area` - short group name (one per phase: `Detect SDK`, `Scan capture sites`, `Enrich`, `Query PostHog`, `Write report`, `Create dashboard`).
 - `label` - short human name.
 - `status` - `pending` | `pass` | `error` | `warning` | `suggestion`.
-- `file` - optional `path:line` for findings tied to a location.
-- `details` - Markdown bulleted summary in plain language. Describe state and the product questions blocked. Don't render `status` as a grade in the report; the enum is for filter logic only.
+- `file` - unused for phase rows.
+- `details` - optional short string the wizard surfaces in the "Audit plan" tab if you want to add context to a non-pass phase (e.g. `query-volume` resolving to `warning` with `details: "PostHog MCP unavailable — report rendered without volume data"`).
 
 ## Key principles
 
