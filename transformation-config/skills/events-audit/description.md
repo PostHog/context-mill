@@ -4,14 +4,14 @@ This skill produces a product-browseable report of every PostHog event your code
 
 ## Workflow
 
-The audit runs as a 6-step chain:
+The audit runs as a 6-step chain (the dashboard step also uploads the report to a PostHog notebook):
 
 1. Detect SDK
 2. Scan capture sites (grep only)
 3. Enrich (subagent fan-out — the only step that reads source files)
 4. Query PostHog for volume
 5. Write report
-6. Create dashboard
+6. Create dashboard, then upload the report to a PostHog notebook
 
 Each step file points to the next. Run them in order. Don't explore the source tree on your own.
 
@@ -21,7 +21,7 @@ Step 1 seeds the audit checklist as its first action. Don't assume the runtime p
 
 ## The audit checklist
 
-The audit checklist is the **pipeline progress ledger** — one row per workflow phase. The six ids match the six steps above:
+The audit checklist is the **pipeline progress ledger** — one row per workflow phase. The seven ids cover the six steps above plus the notebook upload that closes step 6:
 
 - `detect-sdk`
 - `scan-sites`
@@ -29,6 +29,7 @@ The audit checklist is the **pipeline progress ledger** — one row per workflow
 - `query-volume`
 - `write-report`
 - `create-dashboard`
+- `upload-notebook`
 
 Each step file resolves its own row via `mcp__wizard-tools__audit_resolve_checks` once the step's work is done — that's what advances the spinner in the wizard's sidebar. Don't invent new ids.
 

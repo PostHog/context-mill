@@ -25,7 +25,7 @@ Emit, in order:
 
 The checklist lives at `.posthog-audit-checks.json` and renders live in the wizard sidebar / "Audit plan" tab. **Don't rely on the runtime pre-seeding it** — call `mcp__wizard-tools__audit_seed_checks` directly here. The tool replaces the file atomically, so calling it once at the start of every run is safe.
 
-Seed all six pipeline phases. The wizard already pre-seeds the same shape so the sidebar boots populated; seeding again is idempotent and guarantees you own the exact labels later steps resolve against.
+Seed all seven pipeline phases. The wizard already pre-seeds the same shape so the sidebar boots populated; seeding again is idempotent and guarantees you own the exact labels later steps resolve against.
 
 ```json
 {
@@ -63,7 +63,13 @@ Seed all six pipeline phases. The wizard already pre-seeds the same shape so the
     {
       "id": "create-dashboard",
       "area": "Create dashboard",
-      "label": "Optional: dashboard for resolved events",
+      "label": "Build insights of findings",
+      "status": "pending"
+    },
+    {
+      "id": "upload-notebook",
+      "area": "Upload notebook",
+      "label": "Write the markdown report into a PostHog notebook",
       "status": "pending"
     }
   ]
