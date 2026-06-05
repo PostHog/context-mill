@@ -17,23 +17,13 @@ The Xcode project already includes the PostHog iOS SDK via Swift Package Manager
 
 To add it manually to a new project: File > Add Package Dependencies > enter `https://github.com/PostHog/posthog-ios`.
 
-### 2. Configure environment variables
+### 2. Set your PostHog project token
 
-Set your PostHog project token and host as environment variables in the Xcode scheme:
+Open `BurritoConsiderationClientApp.swift` and replace the `<your-project-token>` placeholder in `posthogProjectToken` with your project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
-1. In Xcode, go to **Product > Scheme > Edit Scheme…**
-2. Select **Run** in the sidebar
-3. Go to the **Arguments** tab
-4. Under **Environment Variables**, add:
+The PostHog project token is a **public client-side key** — it is designed to ship in the app binary — so hardcoding it is safe and is the recommended approach for iOS distribution.
 
-| Variable | Value |
-|----------|-------|
-| `POSTHOG_PROJECT_TOKEN` | Your PostHog project token |
-| `POSTHOG_HOST` | `https://us.i.posthog.com` |
-
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
-
-The app reads these via `ProcessInfo.processInfo.environment` and will crash with a clear message if they're missing.
+> **Don't rely on Xcode scheme environment variables as the only source.** Scheme environment variables are injected only when launching from Xcode (debug/simulator); they are **absent** in Archive / Release builds (TestFlight, App Store). Reading them is fine, but treat them as an optional override over a value that ships in the binary — never force-unwrap or `fatalError` on their absence, or production builds will crash on launch.
 
 ### 3. Build and run
 
@@ -60,12 +50,9 @@ BurritoConsiderationClient/
 ```swift
 import PostHog
 
-guard let POSTHOG_PROJECT_TOKEN = ProcessInfo.processInfo.environment["POSTHOG_PROJECT_TOKEN"],
-      let POSTHOG_HOST = ProcessInfo.processInfo.environment["POSTHOG_HOST"] else {
-    fatalError("Set POSTHOG_PROJECT_TOKEN and POSTHOG_HOST in the Xcode scheme environment variables.")
-}
-
-let config = PostHogConfig(apiKey: POSTHOG_PROJECT_TOKEN, host: POSTHOG_HOST)
+// The project token is a public client-side key, so it's safe to ship in the
+// binary. Replace the placeholder with your token from the PostHog project settings.
+let config = PostHogConfig(apiKey: "<your-project-token>", host: "https://us.i.posthog.com")
 config.captureApplicationLifecycleEvents = true
 PostHogSDK.shared.setup(config)
 ```
