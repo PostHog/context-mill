@@ -19,13 +19,11 @@ To add it manually to a new project: File > Add Package Dependencies > enter `ht
 
 ### 2. Set your PostHog project token
 
-Open `BurritoConsiderationClientApp.swift` and replace the `<your-project-token>` placeholder in `PostHogEnv.fallback` with your project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Open `BurritoConsiderationClientApp.swift` and replace the `<your-project-token>` placeholder in `posthogProjectToken` with your project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
 The PostHog project token is a **public client-side key** — it is designed to ship in the app binary — so hardcoding it is safe and is the recommended approach for iOS distribution.
 
-**Optional dev override:** `PostHogEnv` reads `POSTHOG_PROJECT_TOKEN` / `POSTHOG_HOST` from the environment first and only falls back to the hardcoded values when they're absent. To point the app at a different project during local development, set them in the Xcode scheme (**Product > Scheme > Edit Scheme… > Run > Arguments > Environment Variables**).
-
-> **Why a hardcoded fallback, not env-only:** Xcode scheme environment variables are injected only when launching from Xcode (debug/simulator). They are **not** present in Archive / Release builds (TestFlight, App Store). Relying on the env var alone — and crashing when it's missing — would crash production builds on launch.
+> **Avoid reading the token from Xcode scheme environment variables.** Scheme environment variables are injected only when launching from Xcode (debug/simulator); they are **absent** in Archive / Release builds (TestFlight, App Store). Code that depends on them — for example crashing when the variable is missing — will crash production builds on launch.
 
 ### 3. Build and run
 
@@ -53,25 +51,8 @@ BurritoConsiderationClient/
 import PostHog
 
 // The project token is a public client-side key, so it's safe to ship in the
-// binary. An env var override is read first for local-dev convenience, but the
-// hardcoded fallback is what ships (scheme env vars are absent in Archive builds).
-enum PostHogEnv: String {
-    case apiKey = "POSTHOG_PROJECT_TOKEN"
-    case host = "POSTHOG_HOST"
-
-    var fallback: String {
-        switch self {
-        case .apiKey: return "<your-project-token>"
-        case .host: return "https://us.i.posthog.com"
-        }
-    }
-
-    var value: String {
-        ProcessInfo.processInfo.environment[rawValue] ?? fallback
-    }
-}
-
-let config = PostHogConfig(apiKey: PostHogEnv.apiKey.value, host: PostHogEnv.host.value)
+// binary. Replace the placeholder with your token from the PostHog project settings.
+let config = PostHogConfig(apiKey: "<your-project-token>", host: "https://us.i.posthog.com")
 config.captureApplicationLifecycleEvents = true
 PostHogSDK.shared.setup(config)
 ```
