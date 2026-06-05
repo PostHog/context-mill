@@ -10,10 +10,10 @@ Pull 30-day volume and `last_seen` for every event the inventory references. The
 
 ## Output discipline
 
-This step is one MCP call, one in-place merge, one `Write`. Do not re-emit the entire inventory in assistant text before writing — prior runs spent ~150 seconds streaming the JSON into the conversation before invoking `Write`, which is pure output-token waste. The flow is:
+This step is one MCP call, one in-place merge, one `Write`. Do not re-emit the entire inventory in assistant text before writing — streaming the JSON into the conversation before invoking `Write` wastes output tokens. The flow is:
 
 1. Read the inventory.
-2. Build the IN-list and call `query-run`.
+2. Build the IN-list and call `execute-sql`.
 3. Merge volume/`last_seen` into rows in your working memory.
 4. Sort and tag.
 5. `Write` directly. No "here's the updated inventory:" preamble. No `details` recap.
@@ -30,7 +30,7 @@ Emit:
 
 | MCP tool | When | Use |
 |----------|------|-----|
-| `mcp__posthog-wizard__query-run` | (c) below | Execute HogQL/SQL. Filtered query returns volume + last_seen for inventory events. |
+| `mcp__posthog-wizard__execute-sql` | (c) below | Execute HogQL/SQL. Filtered query returns volume + last_seen for inventory events. |
 | `mcp__posthog-wizard__entity-search` | **Avoid.** | Requires project-key permissions; personal API keys get "permission denied". The SQL approach below works regardless. |
 
 The active project comes from the wizard session – don't pick or switch projects yourself.
@@ -49,7 +49,7 @@ If the list is empty (every capture row is dynamic), skip the SQL call and proce
 
 ### c. Query volume for inventory events
 
-`mcp__posthog-wizard__query-run` with:
+`mcp__posthog-wizard__execute-sql` with:
 
 ```sql
 SELECT event,
@@ -94,10 +94,20 @@ Set top-level keys on the inventory based on what happened:
 | Query ran but the result was empty (zero matching events in last 30d) | `true` | `"empty result — likely wrong project, but proceeding"` |
 | IN-list was empty (every capture is dynamic) | `true` | `"no resolved event names to query"` |
 | Project couldn't be confirmed in (a) | `false` | `"project mismatch"` |
-| `query-run` errored out (misconfigured project, schema drift, network) | `false` | `"query-run failed: <short reason>"` |
+| `execute-sql` errored out (misconfigured project, schema drift, network) | `false` | `"execute-sql failed: <short reason>"` |
 | No MCP connection at all | `false` | `"MCP unavailable"` |
 
 When `mcp_available: false`, leave every row's `volume_30d: null`, `last_seen: null`, `status: "pending"`. Step 5 reads these flags and renders a disclaimer in place of volume-dependent sections. Step 6 reads `mcp_available` and skips dashboard creation entirely if false.
+
+### g.1. Compute `wrapper_likely`
+
+Set top-level `wrapper_likely: true` when all three hold:
+
+- `infrastructure_event_ratio >= 0.8` — where the ratio is (`rows[]` with `call_kind == "capture"`, `is_dynamic == false`, and `event_name` starting with `$`) ÷ (total resolved capture rows)
+- `wrapper_aliases[]` is empty
+- A PostHog SDK was detected in step 1's manifest scan
+
+Otherwise `wrapper_likely: false`.
 
 `Write` the inventory back. Continue to step 5 in every case — never abort here.
 

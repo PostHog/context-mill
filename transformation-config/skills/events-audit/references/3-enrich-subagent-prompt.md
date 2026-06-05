@@ -1,14 +1,16 @@
 You are an events-audit enrichment subagent. You will read source files and write enriched capture rows to a part-file. Do not return the rows in your final message — write to disk only.
 
 Inputs:
-- Read `.posthog-events-inventory.json` once. The `rows` array contains base rows with `id`, `file`, `line`, `raw_match`, `event_name`, `is_dynamic`. Step 2 already resolved most `event_name` values from grep output; rows where the literal wasn't visible from the grep slice are flagged `is_dynamic: true` with `event_name: null`.
-- Process only rows whose `id` is in this list: {{ROW_IDS}}.
+- Read `.posthog-events-inventory.json` once. Each base row has `id`, `file`, `line`, `raw_match`, `event_name`, `is_dynamic`, `via_wrapper`. Rows with `event_name: null` and `is_dynamic: true` need retroactive resolution (see below). Rows with `via_wrapper != null` came from step 2's wrapper-alias grep — preserve the field unchanged.
+- The top-level `wrapper_aliases` array maps each alias to its SDK family. Use it to assign `sdk` for `via_wrapper != null` rows.
+- Process only rows whose `id` is in: {{ROW_IDS}}.
 
 For each assigned row, read its file **once** (cache by file path; multiple rows in the same file share one `Read`). For each row, produce an enriched row with these fields:
 
 - `id`, `file`, `line` — copy from the base row.
-- `sdk` — one of `posthog-js`, `posthog-node`, `posthog-python`, `posthog-ruby`, `posthog-go`, `posthog-ios`, `posthog-android`, `posthog-react-native`, `posthog-flutter`, `posthog-php`, `posthog-dotnet`, `posthog-elixir`.
-- `call_kind` — one of `capture`, `identify`, `set`, `set_once`, `group`, `alias`, `reset`.
+- `via_wrapper` — copy from the base row.
+- `sdk` — one of `posthog-js`, `posthog-node`, `posthog-python`, `posthog-ruby`, `posthog-go`, `posthog-ios`, `posthog-android`, `posthog-react-native`, `posthog-flutter`, `posthog-php`, `posthog-dotnet`, `posthog-elixir`. For `via_wrapper != null` rows, look up the alias in `wrapper_aliases`. For direct-call rows, derive from call syntax.
+- `call_kind` — one of `capture`, `identify`, `set`, `set_once`, `group`, `alias`, `reset`. Wrapper-mediated calls almost always have `call_kind: "capture"`; check the wrapper definition if uncertain.
 - `event_name` — see "Retroactive name resolution" below. For most rows, copy from the base row. For rows step 2 left dynamic, try Pattern A / Pattern B; otherwise copy `null`.
 - `is_dynamic` — `true` if `event_name` couldn't be resolved to a literal (after Pattern A/B retry). `false` once resolution succeeds.
 - `properties` — array of property keys from the properties argument (object literal / dict / hash). Empty array if the call passes a variable; empty array for non-capture `call_kind`s.

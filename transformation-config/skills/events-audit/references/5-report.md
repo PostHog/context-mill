@@ -39,8 +39,11 @@ Emit, in order:
 
 `Read` `.posthog-events-inventory.json` once. From it you'll work with:
 
-- `rows[]` – capture rows (sorted by `volume_30d` desc by step 4) with `event_name`, `properties[]`, `package`, `area`, `route`, `enclosing`, `volume_30d`, `last_seen`, `status`, etc.
+- `rows[]` – capture rows (sorted by `volume_30d` desc by step 4) with `event_name`, `properties[]`, `package`, `area`, `route`, `enclosing`, `via_wrapper`, `volume_30d`, `last_seen`, `status`, etc.
+- `exception_sites[]` – `posthog.captureException(...)` locations collected by step 2. Rendered in the exception-sites appendix.
+- `wrapper_aliases[]` – wrapper function names step 2 chased (e.g. `["captureEvent", "track"]`). Empty if none.
 - `wrapper_undetected` – top-level boolean.
+- `wrapper_likely` – top-level boolean from step 4. `true` triggers the "Wrapper likely undiscovered" Overview panel.
 - `mcp_available` – top-level boolean from step 4. `false` means PostHog volume data is missing; render the report in degraded mode (see below).
 - `mcp_skipped_reason` – optional short string explaining why MCP was skipped or failed. Used in the disclaimer when `mcp_available: false`.
 
@@ -115,8 +118,15 @@ Each panel is a short bulleted list. Panels are derived deterministically from t
 6. **Conditional fires — undercount risk.** Events where `has_conditional == true`. Each bullet: `event_name — fires inside <condition snippet> at file:line`. Sort by volume desc; cap at 8.
 7. **Duplicate captures — same event from multiple SDK families.** Events present in both client- and server-side SDK rows, where neither row is in a test file and neither explicitly threads `distinctId` from request context. Each bullet: `event_name — fires from <SDK A> at file:line and <SDK B> at file:line — risks 2× counting`.
 8. **Unresolved dynamic captures.** Inventory rows still flagged `is_dynamic: true` after step 3. Each bullet: `file:line — event name is <reason: function arg / template literal / network value>`.
+9. **Wrapper likely undiscovered.** Render only when `wrapper_likely: true`. Shape:
+   ```markdown
+   ### Wrapper likely undiscovered
+   Most resolved events are PostHog-reserved infrastructure (`$log`, `$exception`, etc.) and no typed wrapper was found. Product analytics likely route through a helper this audit didn't reach.
 
-Skip any panel whose source list is empty. Don't render an empty "No phantom events" header — silence is the signal.
+   - Grep for `(captureEvent|track|trackEvent|logEvent|analytics\.track)\s*\(` to find candidate wrappers, then re-run the audit.
+   ```
+
+Skip any panel whose source list is empty (or whose conditional doesn't hold). Don't render an empty "No phantom events" header — silence is the signal.
 
 These panels carry the findings that previously lived in the standalone Coverage Map and Data Quality sections; rendering them as Overview panels keeps action items in one place at the top of the report.
 
@@ -187,13 +197,14 @@ These rules tell you how to format each placeholder. The placeholder names thems
   Skip panels with no content. If every panel is empty, render the line `_No issues detected. Naming, types, and capture sites all look consistent._` instead.
 - **`{{volume_map_rows}}`** — top 10–15 events from (b), one markdown table row each: `| # | \`event_name\` | volume | share | bar |`. Bar column uses a 12-char Unicode block: `▓` × `round(share × 12)`, padded with `░`. Phantom events sink to the bottom of the table; tag them inline with `· phantom` after the event name in the Event column.
 - **`{{volume_map_footnote}}`** — one line stating how many events are in the table vs. total, plus a pointer to where the long tail can be found. Example: `Showing top 12 of 51 distinct events; the remaining events appear in the Area topology section below.`
-- **`{{capture_sites_collapsibles}}`** — for each event in the volume map, one `<details>` block. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty (skip otherwise to keep single-package output uncluttered):
+- **`{{capture_sites_collapsibles}}`** — for each event in the volume map, one `<details>` block. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty. When `via_wrapper` is non-null on a site, append `· via \`<wrapper>\`` to that bullet:
   ```markdown
   <details>
   <summary><code>purchase_completed</code> — 1,400 events / 3 sites</summary>
 
-  - `apps/web/components/Checkout/Checkout.tsx:88` — package `web`, area `checkout`, route `/checkout`, enclosing `handleSubmit`
-  - `apps/mobile/Checkout.tsx:44` — package `mobile`, area `checkout`, enclosing `onPaymentSuccess`
+  - `apps/web/components/Checkout/Checkout.tsx:88` — package `web`, area `checkout`, route `/checkout`, enclosing `handleSubmit` · via `captureEvent`
+  - `apps/mobile/Checkout.tsx:44` — package `mobile`, area `checkout`, enclosing `onPaymentSuccess` · via `track`
+  - `apps/web/api/orders.ts:55` — package `web`, area `api`, enclosing `completeOrder`
 
   Properties seen: `revenue`, `currency`, `plan`
   </details>
@@ -218,6 +229,7 @@ These rules tell you how to format each placeholder. The placeholder names thems
 - **`{{dynamic_appendix}}`** — bulleted list of unresolved-dynamic rows: `file:line — <reason: function arg / template literal / network value>`.
 - **`{{person_properties_appendix}}`** — bulleted list of person property keys from `identify` / `set` / `set_once` rows; deduplicate.
 - **`{{groups_appendix}}`** — bulleted list of `group` rows: `<group_type>: <group_key>`.
+- **`{{exception_sites_appendix}}`** — bulleted list of `exception_sites[]` entries: `file:line — captureException(<short snippet>)`. If empty, render `_No \`posthog.captureException()\` sites found._`.
 
 #### Rendering rules
 

@@ -4,20 +4,34 @@ next_step: 3-enrich.md
 
 # Step 2 – Scan capture sites
 
-Find every PostHog capture/identify/group SDK call in the codebase via a single `Grep` and write a base inventory. **Read-only via Grep.** Don't `Read` any source files in this step — file-level enrichment happens in step 3.
+Find every PostHog event-capture call site in the codebase — both **direct SDK calls** (`posthog.capture(...)`) and calls through **typed wrappers** (`captureEvent(...)`, `track(...)`, etc.) — then write a unified base inventory.
 
-This step is one Grep, one Write. No file Reads, no subagents, no MCP. Severity, flows, and identity analysis come later.
+The flow:
+
+1. **(a) Direct-SDK grep** for the standard PostHog call shapes.
+2. **(b) SDK init grep** to anchor wrapper detection.
+3. **(c) Read each init file** to extract in-file wrappers and the SDK instance name.
+4. **(d) One cross-file import hop** to find wrappers anywhere in the codebase that import the SDK instance — no directory restriction.
+5. **(e) Wrapper-alias grep** for every call site of every wrapper found.
+6. **(f)–(i)** parse, build rows, write the inventory, resolve the phase.
+
+Hard rule: **stop after one cross-file import hop from each init file.** No further chasing — don't read files outside the init set and their one-hop importers.
+
+Severity, flows, and identity analysis come later.
 
 ## Tools
 
-Load via `ToolSearch select:Grep,Write` once at the start of this step. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1.
+Load via `ToolSearch select:Grep,Glob,Read,Write` once at the start of this step. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1.
 
 ## Status
 
 Emit, in order:
 
 ```
-[STATUS] Scanning SDK capture sites
+[STATUS] Scanning direct SDK capture sites
+[STATUS] Locating SDK initialization
+[STATUS] Reading wrapper definitions
+[STATUS] Scanning wrapper call sites
 [STATUS] Writing base event inventory
 ```
 
@@ -67,22 +81,81 @@ Canonical reference for what a PostHog capture call looks like in each SDK. The 
 | posthog-dotnet | `client.Capture(distinctId, "event", new() { ["k"] = "v" })` | positional 2 | positional 3 |
 | posthog-elixir | `Posthog.capture("event", distinct_id, %{ k: v })` | positional 1 | positional 3 |
 
-If the result is empty:
+If this grep returns zero rows it doesn't mean there are no events — wrapper-mediated codebases routinely have zero direct SDK calls. Continue to sub-steps (b)–(e); only fall back to the empty-inventory path if every scan below also comes up empty:
 
-- And the project's manifest had a PostHog SDK in step 1 → the codebase likely wraps the SDK behind a custom helper. Write `{ "rows": [], "wrapper_undetected": true }` to `.posthog-events-inventory.json` and skip the rest of this step (move on to step 3, which will short-circuit on empty rows). The data-quality check in the report step will flag this.
-- And no SDK was in the manifest either → emit `[ABORT] No capture call sites found in any detected SDK`.
+- Direct-SDK grep empty **and** wrapper scan (b–e) empty **and** a PostHog SDK was in the manifest → write `{ "rows": [], "exception_sites": [], "wrapper_undetected": true }` and skip to step 3. The data-quality check surfaces it.
+- Direct-SDK grep empty **and** no SDK in manifest either → emit `[ABORT] No capture call sites found in any detected SDK`.
 
-### b. Parse grep output into row groups
+### b. Grep for SDK initialization
+
+Run a single `Grep -rn -l` for SDK init patterns, scoped to the languages step 1 detected. Use only the patterns for SDKs step 1 found:
+
+| SDK | Init pattern |
+|---|---|
+| posthog-js | `posthog\.init\(`, `<PostHogProvider`, `usePostHog\s*\(\s*\)` |
+| posthog-node | `new PostHog\(`, `PostHog\.client\(`, `posthog\.PostHog\(` |
+| posthog-python | `Posthog\s*\(`, `posthog\.api_key\s*=`, `posthog\.project_api_key\s*=` |
+| posthog-ruby | `PostHog::Client\.new\(` |
+| posthog-go | `posthog\.New\(`, `posthog\.NewWithConfig\(` |
+| posthog-php | `PostHog::init\(` |
+| posthog-dotnet | `new PostHogClient\(`, `services\.AddPostHog\(` |
+| posthog-ios / android | `PostHog\.setup\(`, `PostHog\.with\(` |
+| posthog-flutter | `Posthog\(\)\.setup\(` |
+| posthog-elixir | `Posthog\.start\(` |
+
+Combine the relevant patterns into one alternation. Use the same `--include` set as sub-step (a). Capture the resulting file paths as `INIT_FILES` — typically 1–3 entries.
+
+If `INIT_FILES` is empty, skip sub-steps (c)–(e) and fall back to the direct-SDK rows only. Empty init is not an error condition.
+
+### c. Read each init file
+
+`Read` every file in `INIT_FILES` fully. For each, collect:
+
+1. **SDK instance** — the variable/hook/class holding the initialized SDK (`posthog`, `posthogClient`, `client`, `PostHog.shared`). Record as `<sdk_instance>`.
+2. **In-file wrappers** — exported functions in this file that call `<sdk_instance>.capture(...)` or `<sdk_instance>.identify(...)`. Add each name to `WRAPPER_ALIASES`, tagged with the SDK family from step 1.
+3. **Re-exports of the SDK instance** — `export { posthog }`, `export default client`, etc. Record as `<reexport_name>` for sub-step (d)'s grep.
+
+Read each file in full — wrappers sometimes chain (`captureSystem` → `capture` → SDK).
+
+### d. One cross-file import hop
+
+Wrappers may live anywhere in the codebase — same dir as init, different package, different subtree. The importer grep finds them by import string, not directory.
+
+For each file in `INIT_FILES`, grep the whole codebase for any file that imports it. Match three import shapes in a single combined regex per init file:
+
+- **Relative** — `['"](\.\.?/)+([\w\-]+/)*<init_basename>['"]` (covers `./posthog`, `../../../lib/posthog`, etc.)
+- **Aliased** — `['"]([@~][\w\-]*/)([\w\-]+/)*<init_basename>['"]` (covers `@/lib/posthog`, `~/lib/posthog`, `@app/lib/posthog`, etc.)
+- **Absolute / package** — `['"]<full-package-path>['"]` when a `package.json`/`pyproject.toml` name re-exports the init module
+
+Run with no directory restriction. Typical hit count 1–5; a typed-wrapper layer can legitimately be imported by 20+ files — read them all.
+
+`Read` each importing file. For each, look for exported functions that call `<sdk_instance>.capture(...)` (match aliased imports like `import { posthog as <local_name> }` too) or that call any wrapper already in `WRAPPER_ALIASES`. Add both shapes to `WRAPPER_ALIASES`.
+
+**Stop after one hop.** Do not chase importers-of-importers. Higher-level wrappers built on lower-level wrappers (`trackPurchase` calling `track`) are inventoried via sub-step (e)'s grep finding the lower-level call inside `trackPurchase`'s body.
+
+### e. Grep for wrapper call sites
+
+If `WRAPPER_ALIASES` is empty, skip this sub-step.
+
+Otherwise run one `Grep -rn -B 0 -A 3` per coherent alias batch:
+
+```
+Grep -rn -B 0 -A 3 -E '\b(<alias_1>|<alias_2>|...)\s*\('
+```
+
+Use the same `--include` set as sub-step (a). Exclude every file in `INIT_FILES` and every file `Read` during sub-step (d) so the wrapper's own `posthog.capture(...)` doesn't double-count. If client-side and server-side wrappers live in different packages and need different excludes, do one grep per package. Don't truncate matches.
+
+### f. Parse grep output into row groups
 
 `Grep -A 3` emits one trigger line plus up to three following lines per match, separated by `--` divider lines (when running across files) or contiguous when matches are adjacent. For each match:
 
-- The trigger line is `path:line:content` — the `.capture(` / `.identify(` / etc. site.
+- The trigger line is `path:line:content` — the `.capture(` / `.identify(` / `<wrapper_alias>(` site.
 - The following 0–3 lines are continuations from the same file.
 - Group them as a "slice" — the trigger line plus its trailing context lines.
 
-The slice is what you reason about in step (c). You don't need to re-grep or open the file.
+Combine slices from sub-step (a) and sub-step (e) into one set. Tag each slice with its origin so sub-step (g) can set the row's `via_wrapper` field correctly.
 
-### c. Build base rows
+### g. Build base rows
 
 For each grouped slice, build one row:
 
@@ -93,9 +166,12 @@ For each grouped slice, build one row:
   "line": 88,
   "raw_match": "<the trigger line + up to 3 continuation lines, joined by \\n>",
   "event_name": "purchase_completed",
-  "is_dynamic": false
+  "is_dynamic": false,
+  "via_wrapper": null
 }
 ```
+
+Set `via_wrapper` to the wrapper alias name (e.g. `"captureEvent"`, `"track"`) for rows from sub-step (e); leave `null` for rows from sub-step (a).
 
 `event_name` resolution rule: extract the **first quoted string literal** (single, double, or backtick-quoted) found anywhere in the slice. If the first non-whitespace argument inside the parentheses is a quoted literal, take it. Otherwise:
 
@@ -107,20 +183,30 @@ For each grouped slice, build one row:
 
 Skip `$pageview` and `$pageleave` matches entirely — they're SDK-internal in most setups. Drop those rows; they don't go into the inventory.
 
-### d. Write the base inventory
+**Skip `captureException` matches.** The capture regex matches `posthog.captureException(...)`, but that's a distinct SDK method (always emits `$exception`, takes an Error). Drop any slice whose trigger line contains `.captureException(` before building rows. Collect those locations into a separate list:
 
-`Write` `.posthog-events-inventory.json` with the rows:
+```jsonc
+{
+  "exception_sites": [
+    { "file": "src/api/users.ts", "line": 42, "raw_match": "..." }
+  ]
+}
+```
+
+### h. Write the base inventory
+
+`Write` `.posthog-events-inventory.json`:
 
 ```jsonc
 {
   "rows": [ <base rows> ],
+  "exception_sites": [ <captureException locations, if any> ],
+  "wrapper_aliases": [ <names from sub-step (c)/(d), or [] if none> ],
   "wrapper_undetected": false
 }
 ```
 
-This file is small (~80 bytes per row × 100 rows ≈ 8KB) so the Write fits in one turn easily.
-
-### e. Resolve the phase
+### i. Resolve the phase
 
 Flip the `scan-sites` row to `pass`:
 
@@ -132,10 +218,5 @@ Flip the `scan-sites` row to `pass`:
 }
 ```
 
-If the grep returned zero rows and you set `wrapper_undetected: true`, still resolve `scan-sites` to `pass` — the wrapper-undetected condition is a finding the data-quality panel surfaces, not a phase failure.
+If every scan (direct + wrapper) returned zero rows and you set `wrapper_undetected: true`, still resolve `scan-sites` to `pass` — the wrapper-undetected condition is a finding the data-quality panel surfaces, not a phase failure.
 
-## Notes on wrapper resolution
-
-This step intentionally does **not** chase wrapper functions (`trackEvent`, `analytics.track`, etc.). Cross-file wrapper resolution doesn't fit cleanly in row-range subagent fan-out, and the reframing principle is "let the reader ask follow-ups."
-
-If `wrapper_undetected: true` (SDK in deps but no direct calls found), the report step's data-quality check surfaces it, and the suggested-follow-ups list points the reader at: *"find calls to `trackEvent`/`logEvent`/`analytics.track` and resolve their callers as additional capture sites."*

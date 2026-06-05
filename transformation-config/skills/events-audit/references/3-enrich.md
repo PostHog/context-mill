@@ -4,9 +4,15 @@ next_step: 4-query.md
 
 # Step 3 – Enrich capture sites (subagent fan-out)
 
-For each row in the base inventory, read the source file once and produce the full enrichment fields: `sdk`, `call_kind`, `properties`, `conditional_fire`, `distinct_id_kind`, `package`, `area`, `route`, `enclosing`. Also retroactively resolve `event_name` for any row step 2 left dynamic (Pattern A: same-file constant inlining; Pattern B: same-file enum dispatch).
+For each row in the base inventory, read its file once and produce the full enrichment fields: `sdk`, `call_kind`, `properties`, `conditional_fire`, `distinct_id_kind`, `package`, `area`, `route`, `enclosing`. Also retroactively resolve `event_name` for rows step 2 left dynamic (Pattern A: same-file constant inlining; Pattern B: same-file enum dispatch).
 
-**This is the only step that `Read`s source files.** Step 2 worked from grep output alone; step 3 owns all file I/O. Subagent enrichment fans out across files in parallel, so the orchestrator never materializes the full enriched JSON in a single model turn — that crashed prior runs at `max_tokens`.
+Preserve `via_wrapper` from the base row unchanged. For `via_wrapper != null` rows, look up the alias in the inventory's top-level `wrapper_aliases` to assign `sdk` — wrapper call sites look like ordinary function calls, so the syntax-based heuristic doesn't apply.
+
+Subagent enrichment fans out across files in parallel; the orchestrator never materializes the full enriched JSON in a single model turn.
+
+## Output discipline
+
+**Don't re-emit the enriched JSON in assistant text before `Write`.** Build rows in memory, `Write` the part-file, reply with the single-line confirmation. The merge runs in shell via `jq`/`python3`.
 
 The step has three phases:
 
@@ -42,6 +48,8 @@ Emit, in order:
 Count distinct files in the base inventory.
 
 - **≤ 8 distinct files**: skip fan-out. The orchestrator handles enrichment inline (one subagent's worth of work; the merge is small). Read each file directly, apply the subagent enrichment rules from `3-enrich-reference.md`, and write a single part-file `.posthog-events-inventory.part-1.json`. Then proceed to phase 3.
+
+  Emit `[STATUS] Enriching file N of M` after each file Read so the spinner stays live.
 - **> 8 distinct files**: fan out. `N = ceil(files / 10)`, capped at 8. Round-robin assign files alphabetically to N groups; each group's row-id list is what the subagent receives. Don't bother estimating file sizes — the orchestrator's job is dispatch, not load-balancing.
 
 ## Phase 2 — Spawn N sub-agents in parallel
@@ -74,14 +82,17 @@ If any part-file is missing, the subagent failed. Re-dispatch only the failed su
 One `Bash` call:
 
 ```
-jq -s '{rows: (add | sort_by(.file, .line)), wrapper_undetected: false}' .posthog-events-inventory.part-*.json > .posthog-events-inventory.json && rm .posthog-events-inventory.part-*.json
+EXCEPTION_SITES=$(jq -c '.exception_sites // []' .posthog-events-inventory.json)
+WRAPPER_ALIASES=$(jq -c '.wrapper_aliases // []' .posthog-events-inventory.json)
+jq -s --argjson es "$EXCEPTION_SITES" --argjson wa "$WRAPPER_ALIASES" '{rows: (add | sort_by(.file, .line)), exception_sites: $es, wrapper_aliases: $wa, wrapper_undetected: false}' .posthog-events-inventory.part-*.json > .posthog-events-inventory.json.tmp && mv .posthog-events-inventory.json.tmp .posthog-events-inventory.json && rm .posthog-events-inventory.part-*.json
 ```
 
 This:
+- Preserves `exception_sites` and `wrapper_aliases` from the base inventory (step 2 wrote them; the part-files only carry enriched rows)
 - Slurps every part-file as an array of arrays
 - `add` flattens to a single rows array
 - `sort_by(.file, .line)` produces a stable, readable order
-- Wraps in `{rows, wrapper_undetected}`
+- Wraps in `{rows, exception_sites, wrapper_aliases, wrapper_undetected}`
 - Overwrites the base inventory with the enriched one
 - Cleans up part-files
 
@@ -90,13 +101,15 @@ The orchestrator never has to materialize the merged JSON in a model turn — `j
 If `jq` isn't available on the user's system, fall back to a Bash one-liner using Python:
 
 ```
-python3 -c "import json,glob; rows=[]
+python3 -c "import json,glob
+base = json.load(open('.posthog-events-inventory.json'))
+rows = []
 [rows.extend(json.load(open(f))) for f in sorted(glob.glob('.posthog-events-inventory.part-*.json'))]
 rows.sort(key=lambda r: (r['file'], r['line']))
-json.dump({'rows': rows, 'wrapper_undetected': False}, open('.posthog-events-inventory.json','w'), indent=2)" && rm .posthog-events-inventory.part-*.json
+json.dump({'rows': rows, 'exception_sites': base.get('exception_sites', []), 'wrapper_aliases': base.get('wrapper_aliases', []), 'wrapper_undetected': False}, open('.posthog-events-inventory.json','w'), indent=2)" && rm .posthog-events-inventory.part-*.json
 ```
 
-Don't try to merge in a model turn. That's the rule that crashed the previous run.
+Don't merge in a model turn — the merge happens in shell.
 
 ## Resolve the phase
 
