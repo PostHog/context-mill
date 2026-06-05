@@ -51,7 +51,7 @@ commandments:
 
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name – do NOT use posthog-js on the server
-    - Include enableExceptionAutocapture: true in the PostHog constructor options
+    - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
     - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
     - In long-running servers, the SDK batches events automatically – do NOT set flushAt or flushInterval unless you have a specific reason to
@@ -64,7 +64,7 @@ commandments:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
     - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
-    - In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost
+    - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
@@ -199,8 +199,8 @@ commandments:
     - Use the Svelte MCP server tools to check Svelte documentation (list-sections, get-documentation) and validate components (svelte-autofixer) — always run svelte-autofixer on new or modified .svelte files before finishing
 
   swift:
-    - Set the PostHog project token and host directly in code when creating the `PostHogConfig` (e.g. `PostHogConfig(apiKey: "<project-token>", host: "https://us.i.posthog.com")`). The project token is a public client-side key designed to ship in the app binary, so hardcoding it is safe and is the recommended approach for iOS
-    - Do NOT depend on Xcode scheme environment variables (`ProcessInfo.processInfo.environment`) as the only source of the token: they are injected only when launching from Xcode (debug/simulator), NOT in Archive/Release builds (TestFlight, App Store). Reading them is fine as an optional override, but never force-unwrap or `fatalError` on their absence — that crashes production builds on launch. Ensure a value always ships in the binary
+    - 'Set the PostHog project token and host directly in code when creating the `PostHogConfig` (e.g. `PostHogConfig(apiKey: "<project-token>", host: "https://us.i.posthog.com")`). The project token is a public client-side key designed to ship in the app binary, so hardcoding it is safe and is the recommended approach for iOS'
+    - 'Do NOT depend on Xcode scheme environment variables (`ProcessInfo.processInfo.environment`) as the only source of the token: they are injected only when launching from Xcode (debug/simulator), NOT in Archive/Release builds (TestFlight, App Store). Reading them is fine as an optional override, but never force-unwrap or `fatalError` on their absence — that crashes production builds on launch. Ensure a value always ships in the binary'
     - When adding SPM dependencies to project.pbxproj, create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
     - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
