@@ -17,23 +17,15 @@ The Xcode project already includes the PostHog iOS SDK via Swift Package Manager
 
 To add it manually to a new project: File > Add Package Dependencies > enter `https://github.com/PostHog/posthog-ios`.
 
-### 2. Configure environment variables
+### 2. Set your PostHog project token
 
-Set your PostHog project token and host as environment variables in the Xcode scheme:
+Open `BurritoConsiderationClientApp.swift` and replace the `<your-project-token>` placeholder in `PostHogEnv.fallback` with your project token from your [PostHog project settings](https://app.posthog.com/project/settings).
 
-1. In Xcode, go to **Product > Scheme > Edit Scheme…**
-2. Select **Run** in the sidebar
-3. Go to the **Arguments** tab
-4. Under **Environment Variables**, add:
+The PostHog project token is a **public client-side key** — it is designed to ship in the app binary — so hardcoding it is safe and is the recommended approach for iOS distribution.
 
-| Variable | Value |
-|----------|-------|
-| `POSTHOG_PROJECT_TOKEN` | Your PostHog project token |
-| `POSTHOG_HOST` | `https://us.i.posthog.com` |
+**Optional dev override:** `PostHogEnv` reads `POSTHOG_PROJECT_TOKEN` / `POSTHOG_HOST` from the environment first and only falls back to the hardcoded values when they're absent. To point the app at a different project during local development, set them in the Xcode scheme (**Product > Scheme > Edit Scheme… > Run > Arguments > Environment Variables**).
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
-
-The app reads these via `ProcessInfo.processInfo.environment` and will crash with a clear message if they're missing.
+> **Why a hardcoded fallback, not env-only:** Xcode scheme environment variables are injected only when launching from Xcode (debug/simulator). They are **not** present in Archive / Release builds (TestFlight, App Store). Relying on the env var alone — and crashing when it's missing — would crash production builds on launch.
 
 ### 3. Build and run
 
@@ -60,12 +52,26 @@ BurritoConsiderationClient/
 ```swift
 import PostHog
 
-guard let POSTHOG_PROJECT_TOKEN = ProcessInfo.processInfo.environment["POSTHOG_PROJECT_TOKEN"],
-      let POSTHOG_HOST = ProcessInfo.processInfo.environment["POSTHOG_HOST"] else {
-    fatalError("Set POSTHOG_PROJECT_TOKEN and POSTHOG_HOST in the Xcode scheme environment variables.")
+// The project token is a public client-side key, so it's safe to ship in the
+// binary. An env var override is read first for local-dev convenience, but the
+// hardcoded fallback is what ships (scheme env vars are absent in Archive builds).
+enum PostHogEnv: String {
+    case apiKey = "POSTHOG_PROJECT_TOKEN"
+    case host = "POSTHOG_HOST"
+
+    var fallback: String {
+        switch self {
+        case .apiKey: return "<your-project-token>"
+        case .host: return "https://us.i.posthog.com"
+        }
+    }
+
+    var value: String {
+        ProcessInfo.processInfo.environment[rawValue] ?? fallback
+    }
 }
 
-let config = PostHogConfig(apiKey: POSTHOG_PROJECT_TOKEN, host: POSTHOG_HOST)
+let config = PostHogConfig(apiKey: PostHogEnv.apiKey.value, host: PostHogEnv.host.value)
 config.captureApplicationLifecycleEvents = true
 PostHogSDK.shared.setup(config)
 ```

@@ -8,15 +8,31 @@
 import SwiftUI
 import PostHog
 
+// PostHog configuration.
+//
+// The project token is a PUBLIC client-side key — it is designed to ship in the
+// app binary, so hardcoding it here is safe and is the recommended approach for
+// iOS. Replace the placeholder below with your project token from
+// https://app.posthog.com/project/settings.
+//
+// We read an optional override from the environment first so you can point the
+// app at a different project during local development via the Xcode scheme's Run
+// environment variables. Note that scheme environment variables are ONLY present
+// when launching from Xcode (debug/simulator) — they are absent in Archive /
+// Release builds — so a hardcoded fallback is required for distribution builds.
 enum PostHogEnv: String {
     case apiKey = "POSTHOG_PROJECT_TOKEN"
     case host = "POSTHOG_HOST"
 
-    var value: String {
-        guard let value = ProcessInfo.processInfo.environment[rawValue] else {
-            fatalError("Set \(rawValue) in the Xcode scheme environment variables.")
+    var fallback: String {
+        switch self {
+        case .apiKey: return "<your-project-token>"
+        case .host: return "https://us.i.posthog.com"
         }
-        return value
+    }
+
+    var value: String {
+        ProcessInfo.processInfo.environment[rawValue] ?? fallback
     }
 }
 
