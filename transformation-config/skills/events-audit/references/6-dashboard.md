@@ -197,7 +197,6 @@ Node mapping:
 | `[label](url)` | text node with a `link` mark: `{"type":"text","marks":[{"type":"link","attrs":{"href":"<url>"}}],"text":"<label>"}` |
 | `> blockquote` | `{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"<...>"}]}]}` (use this for the dashboard callout) |
 | pipe table | `{"type":"table","content":[ <tableRow>, ... ]}` — every cell wraps text in a paragraph. First row uses `tableHeader`; remaining rows use `tableCell`. **Do not paste the pipe-table markdown directly — it renders as raw text.** |
-| `<details><summary>` HTML | flatten to a heading-style paragraph with the summary text in bold, followed by the inner bullet list. Notebooks don't render HTML `<details>`. |
 
 Table example (mirrors the report's Volume Map):
 

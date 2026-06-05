@@ -31,7 +31,7 @@ Top events by 30-day volume. The bar shows each event's share of total captured 
 
 ### Capture sites
 
-{{capture_sites_collapsibles}}
+{{capture_sites_sections}}
 
 ## 3. Area topology
 

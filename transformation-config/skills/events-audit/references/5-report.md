@@ -55,7 +55,7 @@ When MCP wasn't reachable in step 4, every row has `volume_30d: null` and `statu
 
 - Substitute `{{mcp_disclaimer}}` with a one-paragraph callout (see substitution conventions in (f)). Otherwise leave it empty.
 - Volume KPIs in Overview render as `—` instead of numbers: total volume, phantom count, top-10 share. Distinct-events count still renders (it's code-derived).
-- Volume Map section: instead of the events table, the body becomes a single line `_PostHog volume data was not fetched during this run — see the disclaimer above. Capture sites are still listed in the Area topology section below._`. Skip the capture-sites collapsibles too.
+- Volume Map section: instead of the events table, the body becomes a single line `_PostHog volume data was not fetched during this run — see the disclaimer above. Capture sites are still listed in the Area topology section below._`. Skip the capture-sites subsections too.
 - Area Topology section: still renders, but sort areas alphabetically (no volume to sort by) and omit the `<total_volume>` figure from each area heading. Each event bullet shows just the event name plus `· conditional` if applicable; no volume number, no `· phantom` tag.
 - Overview panels: skip "Volume concentration" and "Phantom events" entirely (both need volume). All other panels (no-properties, name drift, type drift, conditional fires, duplicate captures, unresolved dynamics) still render — they're code-derived.
 - The data-quality findings (rendered as Overview panels) still describe what the code-derived panels found. Don't penalize for missing volume; that's not a code problem.
@@ -197,19 +197,16 @@ These rules tell you how to format each placeholder. The placeholder names thems
   Skip panels with no content. If every panel is empty, render the line `_No issues detected. Naming, types, and capture sites all look consistent._` instead.
 - **`{{volume_map_rows}}`** — top 10–15 events from (b), one markdown table row each: `| # | \`event_name\` | volume | share | bar |`. Bar column uses a 12-char Unicode block: `▓` × `round(share × 12)`, padded with `░`. Phantom events sink to the bottom of the table; tag them inline with `· phantom` after the event name in the Event column.
 - **`{{volume_map_footnote}}`** — one line stating how many events are in the table vs. total, plus a pointer to where the long tail can be found. Example: `Showing top 12 of 51 distinct events; the remaining events appear in the Area topology section below.`
-- **`{{capture_sites_collapsibles}}`** — for each event in the volume map, one `<details>` block. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty. When `via_wrapper` is non-null on a site, append `· via \`<wrapper>\`` to that bullet:
+- **`{{capture_sites_sections}}`** — for each event in the volume map, one `####` subsection. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty. When `via_wrapper` is non-null on a site, append `· via \`<wrapper>\`` to that bullet. No HTML — plain markdown only:
   ```markdown
-  <details>
-  <summary><code>purchase_completed</code> — 1,400 events / 3 sites</summary>
+  #### `purchase_completed` — 1,400 events / 3 sites
 
   - `apps/web/components/Checkout/Checkout.tsx:88` — package `web`, area `checkout`, route `/checkout`, enclosing `handleSubmit` · via `captureEvent`
   - `apps/mobile/Checkout.tsx:44` — package `mobile`, area `checkout`, enclosing `onPaymentSuccess` · via `track`
   - `apps/web/api/orders.ts:55` — package `web`, area `api`, enclosing `completeOrder`
 
   Properties seen: `revenue`, `currency`, `plan`
-  </details>
   ```
-  Use HTML `<details>` so the report stays scannable but every site is one click away.
 - **`{{area_topology_sections}}`** — for each area from (c). In single-package mode, render flat:
   ```markdown
   ### <area> (<total_volume> · <event_count> events)
