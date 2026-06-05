@@ -23,7 +23,7 @@ Open `BurritoConsiderationClientApp.swift` and replace the `<your-project-token>
 
 The PostHog project token is a **public client-side key** — it is designed to ship in the app binary — so hardcoding it is safe and is the recommended approach for iOS distribution.
 
-> **Avoid reading the token from Xcode scheme environment variables.** Scheme environment variables are injected only when launching from Xcode (debug/simulator); they are **absent** in Archive / Release builds (TestFlight, App Store). Code that depends on them — for example crashing when the variable is missing — will crash production builds on launch.
+> **Don't rely on Xcode scheme environment variables as the only source.** Scheme environment variables are injected only when launching from Xcode (debug/simulator); they are **absent** in Archive / Release builds (TestFlight, App Store). Reading them is fine, but treat them as an optional override over a value that ships in the binary — never force-unwrap or `fatalError` on their absence, or production builds will crash on launch.
 
 ### 3. Build and run
 
