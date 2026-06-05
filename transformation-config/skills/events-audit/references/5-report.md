@@ -168,9 +168,26 @@ If a capability doesn't apply, still emit the bullet with `n/a — <reason>`. Do
 
 The qualitative analysis from (d) and (e) is rendered into the report only — it doesn't go through the ledger. The ledger is the pipeline progress tracker; the report is the deliverable.
 
-### f. Render the report
+### f. Render the report incrementally
 
-The markdown report template lives in `references/5-report-template.md`. The orchestrator reads it once, substitutes every `{{placeholder}}` with values computed in steps (b) through (e), and writes the result to `posthog-events-audit-report.md` at the project root.
+The markdown report template lives in `references/5-report-template.md`. Compose the report **incrementally** — `Write` the template verbatim, then `Edit` each `{{placeholder}}` with its computed value in a separate turn. **Do not compose the substituted report in one turn.** A single sustained generation of the full document (overview panels, volume map, area topology, identity & segmentation, appendices) routinely drops the LLM streaming connection around the 10-minute mark; chunking via Write + Edit keeps every turn short and resets the SSE timer at each tool call. The on-disk file is the source of truth, so a dropped turn loses at most one placeholder's substitution, not the whole report.
+
+#### Step f.1 — Write the template verbatim
+
+`Read` `references/5-report-template.md`. Then `Write` `posthog-events-audit-report.md` with the template contents unchanged — every `{{placeholder}}` is preserved as a literal string. This is a small Write (the template itself is bounded in size; no per-event content).
+
+#### Step f.2 — Substitute each placeholder with one `Edit`
+
+For each placeholder listed under "Substitution conventions" below, run one `Edit` against `posthog-events-audit-report.md`:
+
+- `old_string`: the literal placeholder (e.g. `{{volume_map_rows}}`)
+- `new_string`: the computed substitution value
+
+The order doesn't matter, but a natural sequence is top-of-report → bottom-of-report so the spinner reads cleanly: `{{repo_name}}`, `{{timestamp}}`, `{{mcp_disclaimer}}`, the four KPIs, `{{overview_panels}}`, `{{volume_map_rows}}`, `{{volume_map_footnote}}`, `{{capture_sites_list}}`, `{{area_topology_list}}`, `{{area_topology_commentary}}`, `{{identity_segmentation_details}}`, `{{appendices_list}}`.
+
+#### Step f.3 — Verify before continuing
+
+After all Edits, do a quick `Grep` for `{{` in the file. If any unsubstituted placeholders remain (other than `{{dashboard_callout}}` — see below), the report isn't ready; identify which one and run a follow-up Edit. The wizard surfaces the report to the user via the path emitted in step (g) — shipping a placeholder is visible.
 
 **Exception: `{{dashboard_callout}}` is intentionally not substituted in this step.** Step 6 fills that placeholder after dashboard creation runs. Leave it as-is in the rendered output — step 6 always resolves it (to a link on success, or empty string on failure), so it never ships to the reader.
 
@@ -188,52 +205,73 @@ These rules tell you how to format each placeholder. The placeholder names thems
 - **`{{distinct_count}}`** — integer; from the by-event records in (b). Always renders (code-derived).
 - **`{{phantom_count}}`** — integer; render as `0` if no phantoms (the row is still useful at all-zeros). **Render `—` when `mcp_available: false`.**
 - **`{{top_10_share}}`** — percentage rounded to nearest whole, e.g. `90%`. **Render `—` when `mcp_available: false`.**
-- **`{{overview_panels}}`** — concatenation of the panels from (d), each rendered as:
+- **`{{overview_panels}}`** — one nested `bulletList`. Each top-level item is one panel: a bold lead with the panel name + the panel's intro framing inline (separated by ` — `), then its rows as sub-bullets:
   ```markdown
-  ### <panel title>
-  - <bullet 1>
-  - <bullet 2>
+  - **<panel title>** — <one-sentence framing>
+    - <bullet 1>
+    - <bullet 2>
+  - **<next panel title>** — <one-sentence framing>
+    - …
   ```
-  Skip panels with no content. If every panel is empty, render the line `_No issues detected. Naming, types, and capture sites all look consistent._` instead.
+  Skip panels with no content. If every panel is empty, render the line `_No issues detected. Naming, types, and capture sites all look consistent._` instead. **No `###` headings — they're flattened into bold leads so the notebook representation can be a single `bulletList` node.**
 - **`{{volume_map_rows}}`** — top 10–15 events from (b), one markdown table row each: `| # | \`event_name\` | volume | share | bar |`. Bar column uses a 12-char Unicode block: `▓` × `round(share × 12)`, padded with `░`. Phantom events sink to the bottom of the table; tag them inline with `· phantom` after the event name in the Event column.
 - **`{{volume_map_footnote}}`** — one line stating how many events are in the table vs. total, plus a pointer to where the long tail can be found. Example: `Showing top 12 of 51 distinct events; the remaining events appear in the Area topology section below.`
-- **`{{capture_sites_sections}}`** — for each event in the volume map, one `####` subsection. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty. When `via_wrapper` is non-null on a site, append `· via \`<wrapper>\`` to that bullet. No HTML — plain markdown only:
+- **`{{capture_sites_list}}`** — **one nested `bulletList`**. Each top-level item is one event from the Volume Map: a bold lead with `` `event_name` — N events / M sites ``, then sub-bullets for each capture site, and a final sub-bullet for properties. Include `package <name>` in each site bullet only when the event's `packages[]` is non-empty. When `via_wrapper` is non-null on a site, append `· via \`<wrapper>\`` to that bullet. No HTML — plain markdown only:
   ```markdown
-  #### `purchase_completed` — 1,400 events / 3 sites
-
-  - `apps/web/components/Checkout/Checkout.tsx:88` — package `web`, area `checkout`, route `/checkout`, enclosing `handleSubmit` · via `captureEvent`
-  - `apps/mobile/Checkout.tsx:44` — package `mobile`, area `checkout`, enclosing `onPaymentSuccess` · via `track`
-  - `apps/web/api/orders.ts:55` — package `web`, area `api`, enclosing `completeOrder`
-
-  Properties seen: `revenue`, `currency`, `plan`
+  - **`purchase_completed` — 1,400 events / 3 sites**
+    - `apps/web/components/Checkout/Checkout.tsx:88` — package `web`, area `checkout`, route `/checkout`, enclosing `handleSubmit` · via `captureEvent`
+    - `apps/mobile/Checkout.tsx:44` — package `mobile`, area `checkout`, enclosing `onPaymentSuccess` · via `track`
+    - `apps/web/api/orders.ts:55` — package `web`, area `api`, enclosing `completeOrder`
+    - _Properties: `revenue`, `currency`, `plan`_
+  - **`switched site mode` — 20,373 events / 6 sites**
+    - …
+    - _Properties: none_
   ```
-- **`{{area_topology_sections}}`** — for each area from (c). In single-package mode, render flat:
+  Properties line is `_Properties: <comma-separated>_` for non-empty `properties_seen[]`, or `_Properties: none_` when empty. **No `####` headings, no horizontal rules between events** — they're flattened into bold leads so the notebook representation can be a single `bulletList` node.
+- **`{{area_topology_list}}`** — **one nested `bulletList`** of areas (or packages in multi-package mode). In single-package mode, each top-level item is one area:
   ```markdown
-  ### <area> (<total_volume> · <event_count> events)
-  - `event_a` — Xk · conditional
-  - `event_b` — Yk
-  - `event_c` — Zk · phantom
+  - **<area> — <total_volume> · <event_count> events**
+    - `event_a` — Xk · conditional
+    - `event_b` — Yk
+    - `event_c` — Zk · phantom
   ```
-  In multi-package mode, render nested under each package — the package header is `###`, area is `####`:
+  In multi-package mode, nest two levels deep — each top-level item is a package, sub-list items are areas, leaf items are events:
   ```markdown
-  ### <package> — <package_total_volume> · <area_count> areas
-  #### <area> (<total_volume> · <event_count> events)
-  - `event_a` — Xk
+  - **<package> — <package_total_volume> · <area_count> areas**
+    - **<area> — <total_volume> · <event_count> events**
+      - `event_a` — Xk
+    - **<area> — <total_volume> · <event_count> events**
+      - `event_b` — Yk
+  - **<next package> — …**
+    - …
   ```
-  Use `(unscoped)` as the package header for rows with `package: null`. Annotations after the volume: `· conditional` if the event has `has_conditional`, `· phantom` if `is_phantom`. Both can stack.
+  Use `(unscoped)` for rows with `package: null`. Annotations after the volume: `· conditional` if the event has `has_conditional`, `· phantom` if `is_phantom`. Both can stack. **No `###` or `####` per-area headings** — they're flattened into bold leads.
 - **`{{area_topology_commentary}}`** — one or two short bullets if the topology has notable shapes (e.g. "Auth events all live in `shared` — without a `source` property, you can't tell which page surface triggered each login"). Skip when nothing notable applies.
 - **`{{identity_segmentation_details}}`** — the bold-lead-plus-bullets shape from step (e).
-- **`{{dynamic_appendix}}`** — bulleted list of unresolved-dynamic rows: `file:line — <reason: function arg / template literal / network value>`.
-- **`{{person_properties_appendix}}`** — bulleted list of person property keys from `identify` / `set` / `set_once` rows; deduplicate.
-- **`{{groups_appendix}}`** — bulleted list of `group` rows: `<group_type>: <group_key>`.
-- **`{{exception_sites_appendix}}`** — bulleted list of `exception_sites[]` entries: `file:line — captureException(<short snippet>)`. If empty, render `_No \`posthog.captureException()\` sites found._`.
+- **`{{appendices_list}}`** — **one nested `bulletList`** of appendices. Each top-level item is one appendix: a bold lead with the appendix name + one-sentence framing, then sub-bullets for each entry. Skip appendices whose content list would be empty (don't render a `**Name** — _None._` placeholder; just leave the appendix out). If every appendix is empty, render the line `_No appendix content for this audit._` instead.
+  ```markdown
+  - **Dynamic event names** — Events whose name couldn't be resolved at scan time (template literal, network value, or imported enum). Listed for completeness; not in §2's table.
+    - `file:line — <reason>`
+    - …
+  - **Person properties (`identify` / `set` / `set_once`)** — Distinct person-property keys the code sets, deduplicated.
+    - `key_a`
+    - `key_b`
+    - …
+  - **Groups (`group`)** — Group types and keys passed to `posthog.group()`.
+    - `<group_type>: <group_key>`
+    - …
+  - **Exception capture sites** — Locations calling `posthog.captureException()`.
+    - `file:line — captureException(<short snippet>)`
+    - …
+  ```
+  **Replaces the four separate `## Appendix – …` sections** the template used to have. Everything lives under one `## Appendices` heading with this single nested list.
 
 #### Rendering rules
 
-- **One `Write` call.** Compose the full substituted markdown in your turn before invoking `Write`. Don't pre-stream the content into assistant text.
+- **Don't pre-stream content into assistant text.** Compute substitution values in memory, then emit them as `Edit` `new_string` arguments. Recapping each section in assistant text before the Edit doubles the output-token cost.
 - **Plain language, no grades.** Don't render the check `status` enum (`pass`/`warning`/`error`) as a badge or label in the report. Use prominence and word choice — a missing flagship capability leads its section; a nice-to-have is a footnote bullet.
 - **`file:line` citations** on every non-pass observation.
-- **Fan-out is not used in this step.** The data fits in one turn.
+- **Fan-out is not used in this step.** One Edit per placeholder, sequentially.
 
 ### g. Surface the deliverable and resolve the phase
 
