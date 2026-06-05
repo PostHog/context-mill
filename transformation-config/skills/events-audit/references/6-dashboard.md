@@ -233,7 +233,7 @@ Table example (mirrors the report's Volume Map header rows):
 | `__OVERVIEW_PANELS_LIST__` | One `bulletList`. Every Overview panel is a top-level `listItem` with a bold lead (the panel title) + intro framing + nested sub-bullets for each row. |
 | `__VOLUME_MAP_TABLE__` | One `table` — header row + one row per Volume-Map event (#, name, volume, share, bar). |
 | `__VOLUME_MAP_FOOTNOTE__` | One `paragraph` — "Showing top X of Y distinct events; the long tail appears under Area topology." |
-| `__CAPTURE_SITES_LIST__` | One `bulletList`. Every Volume-Map event is a top-level `listItem` with a bold lead (`` `event` — N events / M sites ``) + nested sub-bullets for each capture site + a final `_Properties: …_` sub-bullet. |
+| `__CAPTURE_SITES_LIST__` | One `bulletList`. **Every event that appears as a top-level bullet in the local markdown's `### Capture sites` section** is a top-level `listItem` with a bold lead (`` `event` — N events / M sites ``) + nested sub-bullets for each capture site + a final `_Properties: …_` sub-bullet. **Mirror 1:1 — do not subset.** |
 | `__AREA_TOPOLOGY_LIST__` | One `bulletList`. Every area is a top-level `listItem` with a bold lead (`**Area — Xk · N events**`) + nested sub-bullets for events. Multi-package mode adds one more level of nesting (package → area → events). |
 | `__AREA_TOPOLOGY_COMMENTARY__` | One short `paragraph` or empty paragraph if there's nothing notable. |
 | `__IDENTITY_LEAD__` | One `paragraph` — the bold one-sentence dominant finding from step 5 (e). |
@@ -340,7 +340,7 @@ Detailed shapes for each placeholder:
 
 - **`__VOLUME_MAP_FOOTNOTE__`** → one `paragraph` like `Showing top 12 of 51 distinct events; the remaining events appear in the Area topology section below.`
 
-- **`__CAPTURE_SITES_LIST__`** → one `bulletList`. One top-level `listItem` per Volume-Map event. Each item:
+- **`__CAPTURE_SITES_LIST__`** → one `bulletList`. **One top-level `listItem` per event that appears as a top-level bullet in the local markdown report's `### Capture sites` section**, in the same order. Open `posthog-events-audit-report.md` first (it's the source of truth from step 5); the count of top-level `listItem`s in this bulletList MUST equal the count of `` - **`event`… `` top-level bullets in that markdown section. Do not subset. Do not omit "less interesting" events. Do not editorialize. Each item:
   - One `paragraph` mixing a bold-marked + code-marked event name with plain-text suffix — e.g. `` **`squeak error` — 92,165 events / 13 sites** ``.
   - One nested `bulletList`. Each sub-item is one capture site: a `paragraph` with a code-marked file:line, then plain text describing area / route / enclosing / `via_wrapper` (if non-null).
   - A final sub-item for properties: a `paragraph` with italic-marked text — `_Properties: \`a\`, \`b\`, …_` or `_Properties: none_` if empty.
@@ -368,11 +368,13 @@ Pace your edits one per turn. Don't bundle multiple `notebook-edit` calls in a s
 
 #### e.3. Verify the notebook is clean
 
-**Required step. Do not skip.** After the last `notebook-edit`, call `notebooks-retrieve` with the `short_id`. In the returned `content`, search the text nodes for any remaining `__` markers (e.g. via the agent's own pattern matching of the `JSON.stringify`'d content).
+**Required step. Do not skip.** After the last `notebook-edit`, call `notebooks-retrieve` with the `short_id`. Run two checks against the returned `content`:
 
-Expected: **zero `__` markers**. If any remain, the agent skipped at least one `notebook-edit` — identify which placeholder(s) survive, run the missing edit(s), then re-retrieve and re-verify until clean.
+1. **No leftover placeholders.** Search the text nodes for any remaining `__` markers. Expected: **zero `__` markers**. If any remain, the agent skipped at least one `notebook-edit` — identify which placeholder(s) survive, run the missing edit(s), then re-retrieve and re-verify until clean.
 
-A leftover placeholder renders as the literal string `__CAPTURE_SITES_LIST__` (or whichever one was skipped) in the notebook UI. The check is cheap; skipping it is the failure mode we've observed twice. Expected placeholder set after the nine edits: zero `__` markers anywhere in any text node.
+2. **Capture sites mirrors the markdown 1:1.** Locate the `__CAPTURE_SITES_LIST__` bulletList in the retrieved notebook content and count its top-level `listItem`s. Open `posthog-events-audit-report.md` and count its top-level `` - **`event`… `` bullets under `### Capture sites`. The two counts MUST match. If the notebook count is short, re-issue `notebook-edit` on the Capture sites bulletList with the full set of events (append the missing top-level items in volume-sorted order). Then re-retrieve and re-verify until they match. The bulletList is the dense one; the agent's instinct will be to subset it on first emission, so a single re-edit pass is normal.
+
+A leftover placeholder renders as the literal string `__CAPTURE_SITES_LIST__` (or whichever one was skipped) in the notebook UI. A short Capture sites list silently misleads the user into thinking the audit found fewer events than it actually did. Both checks are cheap; skipping either is the failure mode we've observed.
 
 #### e.4. Surface the notebook URL
 
