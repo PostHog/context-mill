@@ -17,9 +17,9 @@ Set `call_kind` according to the call:
 - `posthog.alias(alias, distinctId)` → `alias`
 - `posthog.reset()` → `reset` (no event name; the identity check uses presence to score cross-device hygiene)
 
-## `package` rules (monorepo dimension)
+## `package` rules
 
-Compute `package` **before** `area` from the file path. Match the first prefix below; everything after the prefix's package segment is what `area` rules then operate on.
+Compute `package` **before** `area`. Match the first prefix below; everything after the package segment is what `area` rules operate on.
 
 | Path prefix | `package` |
 |---|---|
@@ -27,14 +27,15 @@ Compute `package` **before** `area` from the file path. Match the first prefix b
 | `packages/<name>/...` | `<name>` |
 | `services/<name>/...` | `<name>` |
 | `projects/<name>/...` | `<name>` |
+| `client/...`, `server/...`, `frontend/...`, `backend/...`, `web/...`, `mobile/...`, `api/...`, `shared/...` | the prefix itself |
 | Anything else | `null` |
 
 Examples:
-- `apps/web/components/Checkout/Checkout.tsx` → `package: "web"`, then `area` rules see `components/Checkout/Checkout.tsx`.
-- `packages/sdk/src/track.ts` → `package: "sdk"`, then `area` rules see `src/track.ts`.
+- `apps/web/components/Checkout.tsx` → `package: "web"`, `area` rules see `components/Checkout.tsx`.
+- `client/src/components/auth/AuthProvider.tsx` → `package: "client"`, `area` rules see `src/components/auth/AuthProvider.tsx`.
 - `src/checkout/Checkout.tsx` → `package: null`, `area` rules see the original path.
 
-Don't fabricate a package from `src/` or `app/` — those are within-package directories, not package roots.
+Don't fabricate a package from `src/` or `app/` — those are within-package directories.
 
 ## `area` rules
 

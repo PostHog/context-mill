@@ -31,13 +31,13 @@ Top events by 30-day volume. The bar shows each event's share of total captured 
 
 ### Capture sites
 
-{{capture_sites_collapsibles}}
+{{capture_sites_list}}
 
 ## 3. Area topology
 
 Events grouped by codebase area, sorted by area volume.
 
-{{area_topology_sections}}
+{{area_topology_list}}
 
 {{area_topology_commentary}}
 
@@ -55,19 +55,9 @@ You can ask Claude any of these about the events in this report:
 - Which areas have the highest event volume but the thinnest property coverage?
 - Which phantom events look like dead instrumentation we can remove?
 
-## Appendix – dynamic event names
+## Appendices
 
-Events whose name couldn't be resolved at scan time (template literal, network value, or imported enum). Listed for completeness; not in §2's table.
-
-{{dynamic_appendix}}
-
-## Appendix – person properties (`identify` / `set` / `set_once`)
-
-{{person_properties_appendix}}
-
-## Appendix – groups (`group`)
-
-{{groups_appendix}}
+{{appendices_list}}
 
 ## About this audit
 
