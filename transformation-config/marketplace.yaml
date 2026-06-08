@@ -53,3 +53,9 @@ plugins:
     description: Utility skills for working with PostHog (HogQL, etc.)
     destination: skills/posthog/tools-and-features
     keywords: [posthog, hogql, analytics, tools]
+
+  changelog-watch:
+    name: posthog-changelog-watch
+    description: Skill for running a recurring competitor changelog watch and producing an internal digest
+    destination: skills/posthog/changelog-watch
+    keywords: [posthog, competitor-intel, research, pmm, changelog]
