@@ -113,6 +113,10 @@ wizard catches them and renders the outro — do not halt yourself otherwise.
 - `[ABORT] no-frontend-templates` — no `.jsx` / `.tsx` / `.vue` / `.svelte` /
   `.astro` / `.html` files found.
 
+These strings are a contract with the wizard, which routes each one to a
+specific outro. Keep them in sync with the consuming side — see (in the
+PostHog/wizard repo) `src/lib/programs/pii-bouncer/abort-cases.ts`.
+
 ## Report
 
 Write `./posthog-pii-bouncer-report.md` covering:
