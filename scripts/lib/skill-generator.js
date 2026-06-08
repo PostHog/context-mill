@@ -8,6 +8,47 @@
  * - Commandments (based on tags)
  */
 
+/**
+ * CLI surface declaration block — optional in a skill's `config.yaml`.
+ *
+ * Tells the wizard whether and how this skill appears in the wizard CLI.
+ * Phase 0 of the wizard CLI overhaul: schema only — the build does not
+ * parse or emit this yet. Phase 1 wires it into a generated
+ * `cli-manifest.json` alongside `skill-menu.json`, which the wizard
+ * snapshots at build time.
+ *
+ * Three values for `surface`:
+ *   - `public`   — registered as `wizard <group> <leaf>` (or `wizard
+ *                  <leaf>` if no group). The user-facing surface.
+ *   - `catalog`  — reachable only via `wizard skill <id>`.
+ *   - `internal` — hidden everywhere, only reachable via the
+ *                  `--skill=<id>` dev escape hatch.
+ *
+ * The convention: if the wizard can pick the variant for a user
+ * (auto-detection), the command is flat. If the user must choose, it's
+ * a family. Promotion to `surface: public` is curatorial — see the
+ * wizard CLI overhaul plan and (future) CONTRIBUTING.md.
+ *
+ * Example placement inside a skill `config.yaml`:
+ *
+ *   type: docs-only
+ *   description: Audit captured events
+ *   cli:
+ *     surface: public        # public | catalog | internal
+ *     group: audit           # parent family; omit for flat or standalone
+ *     leaf: events           # the user-typed word; required when surface is public
+ *
+ * @typedef {Object} CliSurfaceBlock
+ * @property {'public' | 'catalog' | 'internal'} surface
+ *   Where the skill appears in the wizard CLI surface.
+ * @property {string} [group]
+ *   Parent family name (e.g. `'audit'`). Omit for flat or standalone
+ *   commands.
+ * @property {string} [leaf]
+ *   The user-typed word for the command (e.g. `'events'` in
+ *   `wizard audit events`). Required when `surface` is `'public'`.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
