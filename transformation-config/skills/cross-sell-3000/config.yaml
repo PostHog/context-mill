@@ -1,0 +1,17 @@
+type: docs-only
+template: description.md
+description: Detect which PostHog products fit a codebase, propose them, plan the work, and scaffold the viable ones (v3000)
+tags: [best-practices]
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+# Only docs with distinct URL basenames can be bundled — the build derives the
+# filename from the last path segment, so several `.../installation.md` URLs
+# would collide. Per-product installation docs are referenced by full URL in
+# references/4-plan.md instead.
+shared_docs:
+  - https://posthog.com/docs/product-analytics/best-practices.md
+variants:
+  - id: all
+    display_name: PostHog cross-sell 3000
+    tags: [best-practices]
+    docs_urls: []
