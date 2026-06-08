@@ -2,6 +2,8 @@
 
 Product tours use PostHog feature flags for targeting (who sees the tour and when) and PostHog events for tracking (completion, drop-off, step funnel). UI components should be custom-built but reusable across multiple tours.
 
+**Local-dev behavior**: the tour renders locally even when PostHog isn't initialized (no API key, provider not mounted, ad blocker active). The feature flag infrastructure is still scaffolded for production rollout — it just isn't a hard gate in dev. This lets engineers iterate on the tour without needing a PostHog project wired up. See "Local development" below for how the fail-open works and how to opt out.
+
 ## Step 1: gather requirements
 
 Ask the user these questions before writing any code:
@@ -67,32 +69,51 @@ export interface TourStep {
 
 interface UseTourOptions {
   flagKey: string;
-  steps?: TourStep[]; // pass steps directly, or let them come from the flag payload
+  steps: TourStep[]; // inline step definitions — required so the tour renders without a PostHog payload
   storageKey?: string; // localStorage key to remember completion; defaults to `tour-${flagKey}`
+  // When true, the flag check is enforced even if PostHog isn't initialized
+  // (the tour won't render locally without PostHog wired up). Default false:
+  // fail-open in dev so engineers can iterate without an API key.
+  requireFlag?: boolean;
+}
+
+// posthog-js sets __loaded = true once init() succeeds. We use it to detect
+// whether PostHog is actually wired up before treating its flag answer as truth.
+function isPosthogReady(): boolean {
+  return Boolean((posthog as unknown as { __loaded?: boolean }).__loaded);
 }
 
 export function useTour({
   flagKey,
   steps: staticSteps,
   storageKey,
+  requireFlag = false,
 }: UseTourOptions) {
   const key = storageKey ?? `tour-${flagKey}`;
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [steps, setSteps] = useState<TourStep[]>(staticSteps ?? []);
+  const [steps, setSteps] = useState<TourStep[]>(staticSteps);
 
   useEffect(() => {
     if (localStorage.getItem(key) === "done") return;
-    if (!posthog.isFeatureEnabled(flagKey)) return;
 
-    const payload = posthog.getFeatureFlagPayload(flagKey) as {
-      steps?: TourStep[];
-    } | null;
-    if (payload?.steps) setSteps(payload.steps);
+    const ready = isPosthogReady();
+    if (ready) {
+      // Production path: PostHog is wired, the flag decides.
+      if (!posthog.isFeatureEnabled(flagKey)) return;
+      const payload = posthog.getFeatureFlagPayload(flagKey) as {
+        steps?: TourStep[];
+      } | null;
+      if (payload?.steps) setSteps(payload.steps);
+    } else if (requireFlag) {
+      // Strict mode: no PostHog, no tour.
+      return;
+    }
+    // else: fail-open — render with the inline staticSteps so local dev works.
 
     setActive(true);
     posthog.capture("tour started", { tour_id: flagKey });
-  }, [flagKey, key]);
+  }, [flagKey, key, requireFlag]);
 
   const advance = useCallback(() => {
     const next = stepIndex + 1;
@@ -279,11 +300,21 @@ export function TourTooltip({
 
 ```tsx
 // In the page or app root where the tour should run:
-import { useTour } from "../hooks/useTour";
+import { useTour, TourStep } from "../hooks/useTour";
 import { TourTooltip } from "../components/TourTooltip";
 
+// Inline steps are the source of truth in code so the tour renders even when
+// PostHog isn't wired (local dev). In production, a flag payload can override these.
+const DASHBOARDS_FIRST_CHART_STEPS: TourStep[] = [
+  { target: "#new-dashboard-btn", title: "Create a dashboard", body: "Click here to start.", placement: "bottom" },
+  { target: ".dashboard-name-input", title: "Name your dashboard", body: "Give it a memorable name.", placement: "right" },
+];
+
 export function DashboardPage() {
-  const tour = useTour({ flagKey: "tour-dashboards-first-chart" });
+  const tour = useTour({
+    flagKey: "tour-dashboards-first-chart",
+    steps: DASHBOARDS_FIRST_CHART_STEPS,
+  });
 
   return (
     <>
@@ -302,12 +333,35 @@ export function DashboardPage() {
 }
 ```
 
+## Local development
+
+The `useTour` hook is designed to **fail-open when PostHog isn't initialized**. The decision tree on mount:
+
+| PostHog state                          | Flag result   | Behavior                              |
+| -------------------------------------- | ------------- | ------------------------------------- |
+| Initialized (`posthog.__loaded`)       | `true`        | Show tour. Apply payload steps if present. |
+| Initialized                            | `false`       | Hide tour.                            |
+| Not initialized (no key, blocked, etc) | n/a           | **Show tour** using inline `staticSteps`. |
+| Not initialized + `requireFlag: true`  | n/a           | Hide tour (strict mode).              |
+
+Why: engineers should be able to build and demo a tour without wiring PostHog. The flag, payload, events, and targeting code are all in place — they just don't *gate* rendering during local dev. In production, where PostHog is initialized, the flag is fully respected.
+
+To preview the disabled state locally:
+
+- Set `requireFlag: true` on the hook call, **or**
+- Wire PostHog locally and toggle the flag off in the PostHog UI
+
+Note: `posthog.capture(...)` calls inside the hook are no-ops when PostHog isn't initialized, so they're safe to leave in.
+
 ## Adding a second tour
 
 Reuse the same hook and component — only the flag key and steps change:
 
 ```tsx
-const tour = useTour({ flagKey: "tour-settings-integrations" });
+const tour = useTour({
+  flagKey: "tour-settings-integrations",
+  steps: SETTINGS_INTEGRATIONS_STEPS,
+});
 ```
 
 No new components needed. If steps differ enough to need a different layout (e.g., a modal instead of a tooltip), create a second display component (`TourModal`) that accepts the same props shape as `TourTooltip`.
@@ -332,9 +386,11 @@ All events emitted by `useTour` above. Query in PostHog:
 ## Checklist before shipping
 
 - [ ] Feature flag created with correct rollout, but not enabled
+- [ ] Inline `steps` array passed to `useTour` (so it renders without a PostHog payload)
+- [ ] Tour renders locally without PostHog wired up (fail-open verified)
+- [ ] Tour renders in production when flag is enabled; hidden when flag is disabled
 - [ ] `target` selectors verified in the browser against real DOM nodes
 - [ ] `localStorage` key chosen so it doesn't collide with other tours
-- [ ] Tour tested with flag enabled and with flag disabled (should be invisible)
-- [ ] All four events captured: `started`, `step viewed`, `completed`, `dismissed`
+- [ ] All four events captured in PostHog once wired: `started`, `step viewed`, `completed`, `dismissed`
 - [ ] `TourTooltip` / `useTour` live in a shared location, not duplicated per feature
-- [ ] User alerted that they should check rollout conditions and enable the flag when they want to see the tour
+- [ ] User alerted that they should check rollout conditions and enable the flag when they want to see the tour in production
