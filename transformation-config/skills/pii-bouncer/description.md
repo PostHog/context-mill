@@ -40,11 +40,14 @@ not restating defaults.
      is a separate, autocapture-only opt-out. For replay masking, use the
      **class**.
 
-2. **Init mask config** (`posthog.init(token, { session_recording: { … } })`)
-   — project-wide masking. The high-value option here is `maskTextSelector`
-   (e.g. `"*"` to mask all text, or a scoped selector for sensitive regions).
-   Confirm `maskAllInputs` is not set to `false`. Use the exact option names
-   and defaults from `references/config.md` — do not guess them.
+2. **Init mask config** — project-wide masking, set wherever PostHog is
+   initialised: the `session_recording` options on `posthog.init(token,
+   { session_recording: { … } })`, **or** — in React projects that may have no
+   literal `init` call — the `options={{ session_recording: { … } }}` prop on
+   `<PostHogProvider>`. The high-value option is `maskTextSelector` (e.g. `"*"`
+   to mask all text, or a scoped selector for sensitive regions). Confirm
+   `maskAllInputs` is not set to `false`. Use the exact option names and
+   defaults from `references/config.md` — do not guess them.
 
 ## Workflow
 
@@ -53,10 +56,12 @@ read `references/privacy.md` and `references/config.md` — they are the source
 of truth for the masking option names and defaults.
 
 1. **Confirm prerequisites.** If `posthog-js` is not a dependency anywhere,
-   emit `[ABORT] no-posthog-js`. Find the `posthog.init(...)` call; if there
-   is none, emit `[ABORT] no-init-call`. Enumerate frontend templates
-   (`.jsx` / `.tsx` / `.vue` / `.svelte` / `.astro` / `.html`); if none exist,
-   emit `[ABORT] no-frontend-templates`.
+   emit `[ABORT] no-posthog-js`. Find where PostHog is initialised — a
+   `posthog.init(...)` call **or** a React `<PostHogProvider>` (which is
+   configured via an `options={{…}}` prop and often has no literal `init`
+   call). Only if **neither** exists, emit `[ABORT] no-init-call`. Enumerate
+   frontend templates (`.jsx` / `.tsx` / `.vue` / `.svelte` / `.astro` /
+   `.html`); if none exist, emit `[ABORT] no-frontend-templates`.
 2. **Scan templates** for sensitive elements using the heuristic below.
 3. **Mask elements.** Add the `ph-no-capture` class (framework-correct
    attribute) to each sensitive element. Minimal diffs — touch only the
@@ -77,7 +82,7 @@ any of these hold:
 |---|---|
 | `type` | `password`, `email`, `tel` |
 | `autocomplete` | `current-password`, `new-password`, `cc-number`, `cc-csc`, `cc-exp`, `email`, `tel`, `one-time-code`, `ssn` |
-| `name` / `id` | matches `/pass(word)?\|pwd\|card\|cc[-_]?(num\|number)\|cvv\|cvc\|csc\|ssn\|sin\|nin\|pin\|dob\|birth\|tax\|passport\|iban\|account[-_]?(num\|number)/i` |
+| `name` / `id` | matches `/\b(pass(word)?\|pwd\|card\|cc[-_]?(num\|number)\|cvv\|cvc\|csc\|ssn\|sin\|nin\|pin\|dob\|birth\|tax\|passport\|iban\|account[-_]?(num\|number))\b/i` — word-bounded so `pass` doesn't match `passenger`, `pin` doesn't match `spinner`, etc. |
 | label / `aria-label` | text contains "password", "credit card", "card number", "CVV/CVC", "SSN", "social security", "date of birth", "bank account", "routing" |
 | placeholder | matches the same terms as label |
 | rendered text | an element whose static text obviously prints PII (SSN, full card number, bank account) — mask via `ph-no-capture` or a scoped `maskTextSelector` |
