@@ -27,7 +27,7 @@ jobs:
     - name: Discover examples with Playwright configs
       id: set-examples
       run: |
-        examples=$(find basics -maxdepth 2 -name "playwright.config.ts" -exec dirname {} \; | sed 's|^basics/||' | jq -R -s -c 'split("\n")[:-1]')
+        examples=$(find example-apps -maxdepth 2 -name "playwright.config.ts" -exec dirname {} \; | sed 's|^example-apps/||' | jq -R -s -c 'split("\n")[:-1]')
         echo "examples=$examples" >> $GITHUB_OUTPUT
         echo "Found examples: $examples"
 
@@ -53,17 +53,17 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd basics/${{ matrix.example }}
+        cd example-apps/${{ matrix.example }}
         pnpm install
 
     - name: Install Playwright Browsers
       run: |
-        cd basics/${{ matrix.example }}
+        cd example-apps/${{ matrix.example }}
         pnpm exec playwright install chromium --with-deps
 
     - name: Run E2E Playwright tests
       run: |
-        cd basics/${{ matrix.example }}
+        cd example-apps/${{ matrix.example }}
         pnpm run test:e2e
       env:
         NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
@@ -105,6 +105,6 @@ jobs:
       if: always()
       with:
         name: playwright-report-${{ matrix.example }}
-        path: basics/${{ matrix.example }}/playwright-report/
+        path: example-apps/${{ matrix.example }}/playwright-report/
         retention-days: 30
 

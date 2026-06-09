@@ -4,7 +4,7 @@
  * Development server for MCP resources
  *
  * Runs one full build at startup, then watches context/skills/
- * and basics/ for changes. A file edit triggers an incremental rebuild of
+ * and example-apps/ for changes. A file edit triggers an incremental rebuild of
  * only the skills that own the path; manifest.json and skill-menu.json are
  * regenerated from the in-memory skill list. The bundled
  * skills-mcp-resources.zip and marketplace tree stay at initial-build state
@@ -50,7 +50,7 @@ const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
 const skillsSourceDir = path.join(configDir, 'skills');
-const basicsDir = path.join(repoRoot, 'basics');
+const exampleAppsDir = path.join(repoRoot, 'example-apps');
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
 
@@ -188,7 +188,7 @@ function handleEvent(event, absPath) {
         event,
         absPath,
         indexes,
-        paths: { repoRoot, skillsDir: skillsSourceDir, basicsDir },
+        paths: { repoRoot, skillsDir: skillsSourceDir, exampleAppsDir },
     });
 
     const relPath = path.relative(repoRoot, absPath);
@@ -209,7 +209,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, basicsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, exampleAppsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -221,7 +221,7 @@ function setupWatcher() {
 
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
-    console.log(`   📁 ${path.relative(repoRoot, basicsDir)}`);
+    console.log(`   📁 ${path.relative(repoRoot, exampleAppsDir)}`);
 
     return watcher;
 }

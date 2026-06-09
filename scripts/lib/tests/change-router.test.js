@@ -12,8 +12,8 @@ import {
 const REPO_ROOT = path.join(path.sep, 'repo');
 const CONFIG_DIR = path.join(REPO_ROOT, 'context');
 const SKILLS_DIR = path.join(CONFIG_DIR, 'skills');
-const BASICS_DIR = path.join(REPO_ROOT, 'basics');
-const PATHS = { repoRoot: REPO_ROOT, skillsDir: SKILLS_DIR, basicsDir: BASICS_DIR };
+const EXAMPLE_APPS_DIR = path.join(REPO_ROOT, 'example-apps');
+const PATHS = { repoRoot: REPO_ROOT, skillsDir: SKILLS_DIR, exampleAppsDir: EXAMPLE_APPS_DIR };
 
 function skill({ id, group, examplePaths = [] }) {
     return { id, _group: group, _examplePaths: examplePaths };
@@ -47,14 +47,14 @@ describe('buildIndexes', () => {
         expect(et.variantIds.sort()).toEqual(['error-tracking-django', 'error-tracking-web']);
     });
 
-    it('reverse-indexes shared basics dirs to multiple skills', () => {
+    it('reverse-indexes shared example-apps dirs to multiple skills', () => {
         const skills = [
-            skill({ id: 'instrument-product-analytics-next-app', group: 'omnibus/instrument-product-analytics', examplePaths: ['basics/next-app-router'] }),
-            skill({ id: 'feature-flags-next-app', group: 'feature-flags', examplePaths: ['basics/next-app-router'] }),
+            skill({ id: 'instrument-product-analytics-next-app', group: 'omnibus/instrument-product-analytics', examplePaths: ['example-apps/next-app-router'] }),
+            skill({ id: 'feature-flags-next-app', group: 'feature-flags', examplePaths: ['example-apps/next-app-router'] }),
         ];
         const { examplePathIndex } = buildIndexes({ skills, configDir: CONFIG_DIR });
 
-        expect(examplePathIndex.get('basics/next-app-router').sort()).toEqual([
+        expect(examplePathIndex.get('example-apps/next-app-router').sort()).toEqual([
             'feature-flags-next-app',
             'instrument-product-analytics-next-app',
         ]);
@@ -65,7 +65,7 @@ describe('routeChange — skills dir', () => {
     const skills = [
         skill({ id: 'audit', group: 'audit' }),
         skill({ id: 'audit-subagents-dispatch', group: 'audit/subagents/dispatch' }),
-        skill({ id: 'error-tracking-web', group: 'error-tracking', examplePaths: ['basics/web'] }),
+        skill({ id: 'error-tracking-web', group: 'error-tracking', examplePaths: ['example-apps/web'] }),
     ];
     const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
 
@@ -106,16 +106,16 @@ describe('routeChange — skills dir', () => {
     });
 });
 
-describe('routeChange — basics dir', () => {
+describe('routeChange — example-apps dir', () => {
     const skills = [
-        skill({ id: 'instrument-product-analytics-next-app', group: 'omnibus/instrument-product-analytics', examplePaths: ['basics/next-app-router'] }),
-        skill({ id: 'feature-flags-next-app', group: 'feature-flags', examplePaths: ['basics/next-app-router'] }),
-        skill({ id: 'error-tracking-django', group: 'error-tracking', examplePaths: ['basics/django'] }),
+        skill({ id: 'instrument-product-analytics-next-app', group: 'omnibus/instrument-product-analytics', examplePaths: ['example-apps/next-app-router'] }),
+        skill({ id: 'feature-flags-next-app', group: 'feature-flags', examplePaths: ['example-apps/next-app-router'] }),
+        skill({ id: 'error-tracking-django', group: 'error-tracking', examplePaths: ['example-apps/django'] }),
     ];
     const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
 
-    it('fans out to every skill sharing a basics dir', () => {
-        const abs = path.join(BASICS_DIR, 'next-app-router', 'app', 'page.tsx');
+    it('fans out to every skill sharing an example-apps dir', () => {
+        const abs = path.join(EXAMPLE_APPS_DIR, 'next-app-router', 'app', 'page.tsx');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
         expect(decision.ids.sort()).toEqual([
             'feature-flags-next-app',
@@ -123,14 +123,14 @@ describe('routeChange — basics dir', () => {
         ]);
     });
 
-    it('matches nested paths under basics/<x>/...', () => {
-        const abs = path.join(BASICS_DIR, 'django', 'project', 'views.py');
+    it('matches nested paths under example-apps/<x>/...', () => {
+        const abs = path.join(EXAMPLE_APPS_DIR, 'django', 'project', 'views.py');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
         expect(decision).toEqual({ ids: ['error-tracking-django'] });
     });
 
-    it('returns null for orphan basics dirs (no consumers)', () => {
-        const abs = path.join(BASICS_DIR, 'unused-fixture', 'main.go');
+    it('returns null for orphan example-apps dirs (no consumers)', () => {
+        const abs = path.join(EXAMPLE_APPS_DIR, 'unused-fixture', 'main.go');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
         expect(decision).toBeNull();
     });
@@ -159,13 +159,13 @@ describe('findNearestGroup', () => {
 describe('findExamplesMatching', () => {
     it('matches exact path and directory prefix', () => {
         const index = new Map([
-            ['basics/django', ['a', 'b']],
-            ['basics/django-rest', ['c']],
+            ['example-apps/django', ['a', 'b']],
+            ['example-apps/django-rest', ['c']],
         ]);
-        expect(findExamplesMatching('basics/django', index).sort()).toEqual(['a', 'b']);
-        expect(findExamplesMatching('basics/django/views.py', index).sort()).toEqual(['a', 'b']);
-        expect(findExamplesMatching('basics/django-rest/api.py', index)).toEqual(['c']);
-        expect(findExamplesMatching('basics/django-other', index)).toEqual([]);
+        expect(findExamplesMatching('example-apps/django', index).sort()).toEqual(['a', 'b']);
+        expect(findExamplesMatching('example-apps/django/views.py', index).sort()).toEqual(['a', 'b']);
+        expect(findExamplesMatching('example-apps/django-rest/api.py', index)).toEqual(['c']);
+        expect(findExamplesMatching('example-apps/django-other', index)).toEqual([]);
     });
 });
 
