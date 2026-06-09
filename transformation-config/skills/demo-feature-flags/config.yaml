@@ -1,0 +1,22 @@
+type: docs-only
+template: description.md
+description: Review a project's feature flags against the PostHog guide on {display_name} and generate a task list
+tags: [feature-flags, best-practices]
+variants:
+  - id: best-practices
+    display_name: feature flag best practices
+    tags: [feature-flags]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/best-practices.md
+
+  - id: cleaning-up-stale-flags
+    display_name: cleaning up stale feature flags
+    tags: [feature-flags]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/cleaning-up-stale-flags.md
+
+  - id: cutting-costs
+    display_name: cutting feature flag costs
+    tags: [feature-flags]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/cutting-costs.md
