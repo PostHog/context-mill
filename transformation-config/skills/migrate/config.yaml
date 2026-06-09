@@ -5,7 +5,7 @@ description: Migrate an existing analytics or feature-flag vendor to PostHog. Re
 tags: [migration]
 cli:
   surface: public
-  parentCommand: migrate
+  command: migrate
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs: []
