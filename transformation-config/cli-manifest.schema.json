@@ -29,24 +29,24 @@
     "CliManifestEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["skillId", "surface", "displayName", "description"],
+      "required": ["skillId", "role", "displayName", "description"],
       "properties": {
         "skillId": {
           "type": "string",
           "minLength": 1,
           "description": "Context-mill skill id (e.g. 'audit-events', 'migrate-statsig')."
         },
-        "surface": {
+        "role": {
           "type": "string",
-          "enum": ["public", "catalog", "internal"],
-          "description": "Where this skill appears in the wizard CLI surface."
+          "enum": ["command", "skill", "internal"],
+          "description": "How this skill appears in the wizard CLI: a typed 'command', a 'skill' reachable via `wizard skill <id>`, or 'internal' (hidden)."
         },
         "command": {
           "type": "string",
           "pattern": "^[a-z][a-z0-9-]*$",
           "minLength": 2,
           "maxLength": 20,
-          "description": "User-typed word that registers this skill as a command. Required when surface is 'public'."
+          "description": "User-typed word that registers this skill as a command. Required when role is 'command'."
         },
         "parentCommand": {
           "type": "string",
@@ -55,9 +55,9 @@
           "maxLength": 20,
           "description": "Optional parent command this skill nests under."
         },
-        "default": {
+        "recommended": {
           "type": "boolean",
-          "description": "When true, this leaf is pre-highlighted in the family's interactive picker — so when the user invokes the family parent with no subcommand (e.g. `wizard audit`), pressing Enter without changing the selection runs this leaf. The picker still opens (discovery + consent); the default just makes the obvious choice one keystroke. At most one leaf per family should be marked default."
+          "description": "When true, this leaf is pre-highlighted in the family's interactive picker — so when the user invokes the family parent with no subcommand (e.g. `wizard audit`), pressing Enter without changing the selection runs this leaf. The picker still opens (discovery + consent); the recommended leaf just makes the obvious choice one keystroke. At most one leaf per family should be marked recommended."
         },
         "displayName": {
           "type": "string",

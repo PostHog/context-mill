@@ -215,44 +215,44 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
 /**
  * Build the CLI manifest object from the expanded skill list. Used by
  * `writeManifestAndMenu` and exercised directly by tests. Throws on an
- * invalid `default:` arrangement (see `validateDefaults`) so the build
- * fails before bad data reaches the wizard.
+ * invalid `recommended:` arrangement (see `validateRecommended`) so the
+ * build fails before bad data reaches the wizard.
  *
- * Only skills with a `cli` block participate. Untagged skills are
- * implicitly catalog (already reachable via `skill-menu.json` and
+ * Only skills with a `cli` block participate. Untagged skills implicitly
+ * have the `skill` role (already reachable via `skill-menu.json` and
  * `manifest.json`) and are not emitted here.
  *
  * Entry shape:
- *   { skillId, surface, command?, parentCommand?, default?, displayName, description }
+ *   { skillId, role, command?, parentCommand?, recommended?, displayName, description }
  *
- * Entries are sorted by surface (public first, then catalog, then
- * internal), then by `parentCommand`/`command` so diffs in
- * `cli-manifest.json` stay reviewable.
+ * Entries are sorted by role (command first, then skill, then internal),
+ * then by `parentCommand`/`command` so diffs in `cli-manifest.json` stay
+ * reviewable.
  */
 function generateCliManifest({ allSkills, manifest }) {
-    const surfaceOrder = { public: 0, catalog: 1, internal: 2 };
+    const roleOrder = { command: 0, skill: 1, internal: 2 };
     const entries = allSkills
         .filter(s => s.cli)
         .map(s => {
             const entry = {
                 skillId: s.id,
-                surface: s.cli.surface,
+                role: s.cli.role,
             };
             if (s.cli.parentCommand) entry.parentCommand = s.cli.parentCommand;
             if (s.cli.command) entry.command = s.cli.command;
-            if (s.cli.default) entry.default = true;
+            if (s.cli.recommended) entry.recommended = true;
             entry.displayName = s.displayName;
             entry.description = s.description;
             return entry;
         })
         .sort((a, b) => {
-            const surfaceDiff = surfaceOrder[a.surface] - surfaceOrder[b.surface];
-            if (surfaceDiff !== 0) return surfaceDiff;
+            const roleDiff = roleOrder[a.role] - roleOrder[b.role];
+            if (roleDiff !== 0) return roleDiff;
             const parentDiff = (a.parentCommand || '').localeCompare(b.parentCommand || '');
             if (parentDiff !== 0) return parentDiff;
             return (a.command || '').localeCompare(b.command || '');
         });
-    validateDefaults(entries);
+    validateRecommended(entries);
     return {
         version: manifest.version,
         buildVersion: manifest.buildVersion,
@@ -262,28 +262,28 @@ function generateCliManifest({ allSkills, manifest }) {
 }
 
 /**
- * Enforce the `default:` rules: at most one default leaf per family (grouped
- * by `parentCommand`), and no `default` without a `parentCommand` (nothing to
- * highlight). Checked here because a family spans multiple skill directories.
- * Throws naming the offending `skillId`s.
+ * Enforce the `recommended:` rules: at most one recommended leaf per family
+ * (grouped by `parentCommand`), and no `recommended` without a `parentCommand`
+ * (nothing to highlight). Checked here because a family spans multiple skill
+ * directories. Throws naming the offending `skillId`s.
  */
-function validateDefaults(entries) {
-    const defaultsByParent = new Map();
+function validateRecommended(entries) {
+    const recommendedByParent = new Map();
     for (const entry of entries) {
-        if (!entry.default) continue;
+        if (!entry.recommended) continue;
         if (!entry.parentCommand) {
             throw new Error(
-                `cli.default is only valid on a leaf inside a family (a command with a parentCommand); "${entry.skillId}" sets default but has no parentCommand`,
+                `cli.recommended is only valid on a leaf inside a family (a command with a parentCommand); "${entry.skillId}" sets recommended but has no parentCommand`,
             );
         }
-        const siblings = defaultsByParent.get(entry.parentCommand) || [];
+        const siblings = recommendedByParent.get(entry.parentCommand) || [];
         siblings.push(entry.skillId);
-        defaultsByParent.set(entry.parentCommand, siblings);
+        recommendedByParent.set(entry.parentCommand, siblings);
     }
-    for (const [parentCommand, skillIds] of defaultsByParent) {
+    for (const [parentCommand, skillIds] of recommendedByParent) {
         if (skillIds.length > 1) {
             throw new Error(
-                `Family "${parentCommand}" has more than one cli.default leaf (${skillIds.join(', ')}); at most one is allowed`,
+                `Family "${parentCommand}" has more than one cli.recommended leaf (${skillIds.join(', ')}); at most one is allowed`,
             );
         }
     }

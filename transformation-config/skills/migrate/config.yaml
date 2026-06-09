@@ -4,7 +4,7 @@ category: migrate
 description: Migrate an existing analytics or feature-flag vendor to PostHog. Replaces SDK call sites in-place, removes the source package, and writes a migration report. Replacement-only, doesn't adds new instrumentation.
 tags: [migration]
 cli:
-  surface: public
+  role: command
   command: migrate
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."

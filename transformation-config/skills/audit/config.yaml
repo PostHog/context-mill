@@ -3,10 +3,10 @@ template: description.md
 description: Audit an existing PostHog integration for correctness and best practices
 tags: [best-practices]
 cli:
-  surface: public
+  role: command
   parentCommand: audit
   command: all
-  default: true
+  recommended: true
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

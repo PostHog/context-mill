@@ -3,7 +3,7 @@ template: description.md
 description: Audit a PostHog integration's feature flag usage for correctness and cost-optimization opportunities
 tags: [best-practices]
 cli:
-  surface: public
+  role: command
   parentCommand: audit
   command: feature-flags
 references:

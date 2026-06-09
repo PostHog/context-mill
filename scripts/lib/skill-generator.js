@@ -17,27 +17,28 @@
  * The wizard snapshots that manifest at build time to derive its
  * skill-backed command surface.
  *
- * The block names match the wizard's existing `ProgramConfig.command` /
- * `parentCommand` convention so contributors only learn one vocabulary.
+ * The `command` / `parentCommand` names match the wizard's existing
+ * `ProgramConfig.command` / `parentCommand` convention so contributors
+ * only learn one vocabulary.
  *
- * Three values for `surface`:
- *   - `public`   — appears as a normal wizard command.
- *   - `catalog`  — reachable only via `wizard skill <id>`.
+ * Three values for `role`:
+ *   - `command`  — appears as a normal wizard command.
+ *   - `skill`    — reachable only via `wizard skill <id>`.
  *   - `internal` — hidden everywhere, only reachable via the
  *                  `--skill=<id>` dev escape hatch.
  *
- * Skills with no `cli:` block default to catalog and are not emitted
- * into `cli-manifest.json`.
+ * Skills with no `cli:` block default to the `skill` role and are not
+ * emitted into `cli-manifest.json`.
  *
  * The block may sit at the group level (defaults for every variant) or
  * inside a single variant (overrides the group-level defaults). When
- * `surface: 'public'` and `command` is not set explicitly, the variant
+ * `role: 'command'` and `command` is not set explicitly, the variant
  * id is used as the command name — except for the magic `id: all`
  * variant, where an explicit `command` is required.
  *
  * ## Flat vs. family
  *
- * The wizard's convention: a public command is **flat** when there's
+ * The wizard's convention: a command is **flat** when there's
  * only one option today, **a family** when the user must pick among
  * multiple. Don't pre-create a family form for a single-option command
  * (no `wizard revenue-analytics stripe` while Stripe is the only
@@ -56,49 +57,50 @@
  *
  *   # 1. Flat command (`wizard revenue-analytics`)
  *   cli:                                          →  wizard revenue-analytics
- *     surface: public
+ *     role: command
  *     command: revenue-analytics
  *
  *   # 2. Nested command (`wizard audit feature-flags`)
  *   cli:                                          →  wizard audit feature-flags
- *     surface: public
+ *     role: command
  *     parentCommand: audit
  *     command: feature-flags
  *
- *   # 3. Default leaf inside a family (`wizard audit` runs this on Enter)
+ *   # 3. Recommended leaf inside a family (`wizard audit` runs this on Enter)
  *   cli:                                          →  wizard audit all
- *     surface: public                                Pre-highlighted in the
+ *     role: command                                  Pre-highlighted in the
  *     parentCommand: audit                           family picker so
  *     command: all                                   `wizard audit` → Enter
- *     default: true                                  runs this leaf.
+ *     recommended: true                              runs this leaf.
  *
- *   # 4. Hidden in the catalog (`wizard skill <id>` only)
+ *   # 4. Reachable as a skill only (`wizard skill <id>`)
  *   cli:                                          →  wizard skill <skill-id>
- *     surface: catalog
+ *     role: skill
  *
  * `cli:` only configures the **command shape** — what the user types as
  * verbs in the tree. Flags and positional arguments (e.g.
  * `--since=30d`) are configured on the wizard side via
  * `ProgramConfig.cliOptions`, not here.
  *
- * @typedef {Object} CliSurfaceBlock
- * @property {'public' | 'catalog' | 'internal'} surface
- *   Where the skill appears in the wizard CLI surface.
+ * @typedef {Object} CliRoleBlock
+ * @property {'command' | 'skill' | 'internal'} role
+ *   How the skill appears in the wizard CLI: a typed `command`, a
+ *   `skill` reachable via `wizard skill <id>`, or `internal` (hidden).
  * @property {string} [command]
  *   The user-typed word that registers this skill (e.g.
  *   `'feature-flags'` in `wizard audit feature-flags`, or
  *   `'revenue-analytics'` in `wizard revenue-analytics`).
- *   Required when `surface` is `'public'`; defaults to the variant id
+ *   Required when `role` is `'command'`; defaults to the variant id
  *   when omitted, except for the magic `id: all` variant where an
  *   explicit `command` is required at the group level. Use the full
  *   PostHog product name, not a shorthand.
  * @property {string} [parentCommand]
  *   The command this skill nests under (e.g. `'audit'` for
  *   `wizard audit events`). Omit for flat / standalone commands.
- * @property {boolean} [default]
+ * @property {boolean} [recommended]
  *   When true, this leaf is pre-highlighted in the family's interactive
  *   picker. `wizard <family>` → Enter runs this leaf. The picker still
- *   opens (discovery + consent); the default just makes the obvious
+ *   opens (discovery + consent); `recommended` just makes the obvious
  *   choice one keystroke. At most one leaf per family should be marked.
  */
 
@@ -116,7 +118,7 @@ function loadYaml(configPath) {
     return yaml.load(content);
 }
 
-const CLI_SURFACES = ['public', 'catalog', 'internal'];
+const CLI_ROLES = ['command', 'skill', 'internal'];
 
 // Naming convention enforcement — see context-mill/CONTRIBUTING.md and the
 // wizard's CONTRIBUTING.md. Failures throw at build time, before drift can
@@ -177,25 +179,25 @@ function validateCommandName(name, field, context) {
  *
  * @param {unknown} raw
  * @param {string} context
- * @returns {{ surface: 'public' | 'catalog' | 'internal', command?: string, parentCommand?: string, default?: boolean } | null}
+ * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, recommended?: boolean } | null}
  */
 function parseCliBlock(raw, context) {
     if (raw == null) return null;
     if (typeof raw !== 'object' || Array.isArray(raw)) {
         throw new Error(`${context}: cli block must be an object`);
     }
-    const { surface, command, parentCommand, default: isDefault, ...rest } = raw;
+    const { role, command, parentCommand, recommended: isRecommended, ...rest } = raw;
     const unknownKeys = Object.keys(rest);
     if (unknownKeys.length > 0) {
         throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
     }
-    if (!surface) {
-        throw new Error(`${context}: cli.surface is required`);
+    if (!role) {
+        throw new Error(`${context}: cli.role is required`);
     }
-    if (!CLI_SURFACES.includes(surface)) {
-        throw new Error(`${context}: cli.surface must be one of ${CLI_SURFACES.join(', ')} (got "${surface}")`);
+    if (!CLI_ROLES.includes(role)) {
+        throw new Error(`${context}: cli.role must be one of ${CLI_ROLES.join(', ')} (got "${role}")`);
     }
-    const result = { surface };
+    const result = { role };
     if (command != null) {
         if (typeof command !== 'string' || command.length === 0) {
             throw new Error(`${context}: cli.command must be a non-empty string when set`);
@@ -210,21 +212,21 @@ function parseCliBlock(raw, context) {
         validateCommandName(parentCommand, 'parentCommand', context);
         result.parentCommand = parentCommand;
     }
-    if (isDefault != null) {
-        if (typeof isDefault !== 'boolean') {
-            throw new Error(`${context}: cli.default must be a boolean when set`);
+    if (isRecommended != null) {
+        if (typeof isRecommended !== 'boolean') {
+            throw new Error(`${context}: cli.recommended must be a boolean when set`);
         }
-        if (isDefault) result.default = true;
+        if (isRecommended) result.recommended = true;
     }
     return result;
 }
 
 /**
  * Merge a group-level cli block with a variant-level override and fill in
- * the implicit command name for public surfaces. Returns `null` when
+ * the implicit command name for the `command` role. Returns `null` when
  * neither level declared a block.
  *
- * For `surface: 'public'`, the command name falls back to the variant's
+ * For `role: 'command'`, the command name falls back to the variant's
  * short id (e.g. parentCommand `migrate` + variant `statsig` →
  * `wizard migrate statsig`). The `id: 'all'` variant is special — its
  * skill id collapses to the group key, so the command name has to be
@@ -238,10 +240,10 @@ function parseCliBlock(raw, context) {
 function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
     if (!groupCli && !variantCli) return null;
     const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
-    if (merged.surface === 'public' && !merged.command) {
+    if (merged.role === 'command' && !merged.command) {
         if (variant.id === 'all') {
             throw new Error(
-                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when surface is public and the variant id is "all"`,
+                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when role is command and the variant id is "all"`,
             );
         }
         merged.command = variant.id;
