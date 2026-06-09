@@ -159,7 +159,7 @@ function parseCliBlock(raw, context) {
     if (typeof raw !== 'object' || Array.isArray(raw)) {
         throw new Error(`${context}: cli block must be an object`);
     }
-    const { surface, command, parentCommand, ...rest } = raw;
+    const { surface, command, parentCommand, default: isDefault, ...rest } = raw;
     const unknownKeys = Object.keys(rest);
     if (unknownKeys.length > 0) {
         throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
@@ -184,6 +184,12 @@ function parseCliBlock(raw, context) {
         }
         validateCommandName(parentCommand, 'parentCommand', context);
         result.parentCommand = parentCommand;
+    }
+    if (isDefault != null) {
+        if (typeof isDefault !== 'boolean') {
+            throw new Error(`${context}: cli.default must be a boolean when set`);
+        }
+        if (isDefault) result.default = true;
     }
     return result;
 }

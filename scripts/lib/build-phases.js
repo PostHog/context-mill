@@ -238,6 +238,7 @@ function generateCliManifest({ allSkills, manifest }) {
             };
             if (s.cli.parentCommand) entry.parentCommand = s.cli.parentCommand;
             if (s.cli.command) entry.command = s.cli.command;
+            if (s.cli.default) entry.default = true;
             entry.displayName = s.displayName;
             entry.description = s.description;
             return entry;

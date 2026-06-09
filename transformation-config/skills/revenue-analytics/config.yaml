@@ -5,7 +5,9 @@ description: Set up Stripe revenue analytics with PostHog
 tags: [revenue-analytics, stripe]
 cli:
   surface: public
-  command: revenue
+  parentCommand: revenue
+  command: stripe
+  default: true
 shared_docs:
   - https://posthog.com/docs/revenue-analytics/connect-to-customers.md
   - https://posthog.com/docs/getting-started/identify-users.md
