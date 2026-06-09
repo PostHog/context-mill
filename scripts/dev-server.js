@@ -30,6 +30,7 @@ import { spawn } from 'child_process';
 import chokidar from 'chokidar';
 
 import { loadAndExpandSkills } from './lib/skill-generator.js';
+import { buildAgents } from './lib/agent-generator.js';
 import {
     partialRebuild,
     loadDocContentsFromManifest,
@@ -51,13 +52,18 @@ const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
 const promptsDir = path.join(repoRoot, 'llm-prompts');
 const skillsSourceDir = path.join(configDir, 'skills');
+const agentsSourceDir = path.join(configDir, 'agents');
+const agentsDir = path.join(distDir, 'agents');
 const basicsDir = path.join(repoRoot, 'basics');
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
+const localAgentsUrl = `http://localhost:${PORT}/agents`;
 
-// `generateManifest` reads SKILLS_BASE_URL from process.env. Partial rebuilds
-// run in this process, so set it here too — the subprocess inherits it.
+// `generateManifest` reads SKILLS_BASE_URL from process.env, and the agent build
+// reads AGENTS_BASE_URL. Partial rebuilds run in this process, so set both here —
+// the build subprocess inherits them.
 process.env.SKILLS_BASE_URL = localSkillsUrl;
+process.env.AGENTS_BASE_URL = localAgentsUrl;
 
 // --- state ---
 
@@ -186,6 +192,25 @@ async function drainQueue() {
 // --- watcher ---
 
 function handleEvent(event, absPath) {
+    // Agent prompts are decoupled from the skill incremental machinery. A change
+    // under transformation-config/agents/ just re-copies them wholesale — cheap.
+    if (absPath.startsWith(agentsSourceDir)) {
+        try {
+            const { count } = buildAgents({
+                configDir,
+                distDir,
+                baseUrl: localAgentsUrl,
+                version: BUILD_VERSION,
+            });
+            console.log(
+                `📝 ${event}: ${path.relative(repoRoot, absPath)} → rebuilt ${count} agent prompt(s)`,
+            );
+        } catch (err) {
+            console.error(`❌ Agent rebuild failed: ${err.message}`);
+        }
+        return;
+    }
+
     const decision = routeChange({
         event,
         absPath,
@@ -211,7 +236,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, basicsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, basicsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -223,6 +248,7 @@ function setupWatcher() {
 
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
+    console.log(`   📁 ${path.relative(repoRoot, agentsSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, basicsDir)}`);
 
     return watcher;
@@ -270,6 +296,17 @@ function createServer() {
             return;
         }
 
+        const agentMatch = req.url?.match(/^\/agents\/([\w-]+\.md)$/);
+        if (agentMatch) {
+            serveFile(res, path.join(agentsDir, agentMatch[1]), 'text/markdown; charset=utf-8');
+            return;
+        }
+
+        if (req.url === '/agent-menu.json') {
+            serveFile(res, path.join(agentsDir, 'agent-menu.json'), 'application/json');
+            return;
+        }
+
         if (req.url === '/skills-mcp-resources.zip' || req.url === '/') {
             serveFile(
                 res,
@@ -281,7 +318,7 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
-        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /agent-menu.json\n  /agents/{type}.md');
     });
 
     server.listen(PORT, () => {
@@ -289,6 +326,8 @@ function createServer() {
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
+        console.log(`🤖 Agent prompt:     http://localhost:${PORT}/agents/{type}.md`);
+        console.log(`📋 Agents menu:      http://localhost:${PORT}/agent-menu.json`);
     });
 
     return server;
