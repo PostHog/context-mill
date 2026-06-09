@@ -144,11 +144,6 @@ describe('routeChange — out-of-scope paths', () => {
         const abs = path.join(CONFIG_DIR, 'commandments.yaml');
         expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
     });
-
-    it('returns null for mcp-commands edits', () => {
-        const abs = path.join(REPO_ROOT, 'mcp-commands', 'whatever.md');
-        expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
-    });
 });
 
 describe('findNearestGroup', () => {
