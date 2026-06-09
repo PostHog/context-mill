@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Install the PostHog SDK with the project's package manager
+tags: [orchestrator, install]
+variants:
+  - id: all
+    display_name: PostHog install step
+    tags: [orchestrator, install]
+    docs_urls:
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/libraries/node.md

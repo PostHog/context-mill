@@ -1,0 +1,9 @@
+type: docs-only
+template: description.md
+description: Write the PostHog setup report from the run's handoffs
+tags: [orchestrator, report]
+variants:
+  - id: all
+    display_name: PostHog report step
+    tags: [orchestrator, report]
+    docs_urls: []

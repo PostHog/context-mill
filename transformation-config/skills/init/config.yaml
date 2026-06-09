@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Initialize PostHog and set its environment variables
+tags: [orchestrator, init]
+variants:
+  - id: all
+    display_name: PostHog init step
+    tags: [orchestrator, init]
+    docs_urls:
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/libraries/node.md

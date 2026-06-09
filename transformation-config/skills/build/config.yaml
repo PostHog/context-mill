@@ -1,0 +1,9 @@
+type: docs-only
+template: description.md
+description: Install dependencies and verify the project builds
+tags: [orchestrator, build]
+variants:
+  - id: all
+    display_name: PostHog build step
+    tags: [orchestrator, build]
+    docs_urls: []

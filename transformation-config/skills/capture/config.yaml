@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Instrument the planned events with posthog.capture
+tags: [orchestrator, capture]
+variants:
+  - id: all
+    display_name: PostHog capture step
+    tags: [orchestrator, capture]
+    docs_urls:
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/product-analytics/best-practices.md
