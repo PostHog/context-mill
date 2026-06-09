@@ -9,25 +9,29 @@
  */
 
 /**
- * CLI surface declaration block — optional in a skill's `config.yaml`.
+ * Optional `cli:` block in a skill's `config.yaml`.
  *
- * Tells the wizard whether and how this skill appears in the wizard CLI.
- * Phase 0 of the wizard CLI overhaul: schema only — the build does not
- * parse or emit this yet. Phase 1 wires it into a generated
- * `cli-manifest.json` alongside `skill-menu.json`, which the wizard
- * snapshots at build time.
+ * Declares whether and how the skill appears in the wizard CLI.
+ * Parsed by `parseCliBlock`, propagated by `expandSkillGroups`, and
+ * emitted into `dist/skills/cli-manifest.json` by `writeManifestAndMenu`.
+ * The wizard snapshots that manifest at build time to derive its
+ * skill-backed command surface.
  *
  * Three values for `surface`:
- *   - `public`   — registered as `wizard <group> <leaf>` (or `wizard
- *                  <leaf>` if no group). The user-facing surface.
+ *   - `public`   — registered as `wizard <group> <leaf>` (or
+ *                  `wizard <leaf>` if no group). The user-facing surface.
  *   - `catalog`  — reachable only via `wizard skill <id>`.
  *   - `internal` — hidden everywhere, only reachable via the
  *                  `--skill=<id>` dev escape hatch.
  *
- * The convention: if the wizard can pick the variant for a user
- * (auto-detection), the command is flat. If the user must choose, it's
- * a family. Promotion to `surface: public` is curatorial — see the
- * wizard CLI overhaul plan and (future) CONTRIBUTING.md.
+ * Skills with no `cli:` block default to catalog and are not emitted
+ * into `cli-manifest.json`.
+ *
+ * The block may sit at the group level (defaults for every variant) or
+ * inside a single variant (overrides the group-level defaults). When
+ * `surface: 'public'` and `leaf` is not set explicitly, the variant id
+ * is used as the leaf — except for the magic `id: all` variant, where
+ * an explicit `leaf` is required.
  *
  * Example placement inside a skill `config.yaml`:
  *
@@ -36,7 +40,7 @@
  *   cli:
  *     surface: public        # public | catalog | internal
  *     group: audit           # parent family; omit for flat or standalone
- *     leaf: events           # the user-typed word; required when surface is public
+ *     leaf: events           # the user-typed word; required when public
  *
  * @typedef {Object} CliSurfaceBlock
  * @property {'public' | 'catalog' | 'internal'} surface
@@ -61,6 +65,81 @@ import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } f
 function loadYaml(configPath) {
     const content = fs.readFileSync(configPath, 'utf8');
     return yaml.load(content);
+}
+
+const CLI_SURFACES = ['public', 'catalog', 'internal'];
+
+/**
+ * Validate and normalize a raw `cli:` block from a skill `config.yaml`.
+ * Returns `null` when the block is absent, throws on malformed input.
+ *
+ * `context` is a human-readable label used in error messages (e.g.
+ * `'Skill group "audit-events"'` or
+ * `'Skill group "migrate", variant "statsig"'`).
+ *
+ * @param {unknown} raw
+ * @param {string} context
+ * @returns {{ surface: 'public' | 'catalog' | 'internal', group?: string, leaf?: string } | null}
+ */
+function parseCliBlock(raw, context) {
+    if (raw == null) return null;
+    if (typeof raw !== 'object' || Array.isArray(raw)) {
+        throw new Error(`${context}: cli block must be an object`);
+    }
+    const { surface, group, leaf, ...rest } = raw;
+    const unknownKeys = Object.keys(rest);
+    if (unknownKeys.length > 0) {
+        throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
+    }
+    if (!surface) {
+        throw new Error(`${context}: cli.surface is required`);
+    }
+    if (!CLI_SURFACES.includes(surface)) {
+        throw new Error(`${context}: cli.surface must be one of ${CLI_SURFACES.join(', ')} (got "${surface}")`);
+    }
+    const result = { surface };
+    if (group != null) {
+        if (typeof group !== 'string' || group.length === 0) {
+            throw new Error(`${context}: cli.group must be a non-empty string when set`);
+        }
+        result.group = group;
+    }
+    if (leaf != null) {
+        if (typeof leaf !== 'string' || leaf.length === 0) {
+            throw new Error(`${context}: cli.leaf must be a non-empty string when set`);
+        }
+        result.leaf = leaf;
+    }
+    return result;
+}
+
+/**
+ * Merge a group-level cli block with a variant-level override and fill in
+ * the implicit leaf for public surfaces. Returns `null` when neither
+ * level declared a block.
+ *
+ * For `surface: 'public'`, the leaf falls back to the variant's short id
+ * (e.g. `migrate` group + variant `statsig` → `wizard migrate statsig`).
+ * The `id: 'all'` variant is special — its skill id collapses to the
+ * group key, so the leaf has to be set explicitly at the group level.
+ *
+ * @param {ReturnType<typeof parseCliBlock>} groupCli
+ * @param {ReturnType<typeof parseCliBlock>} variantCli
+ * @param {{ id: string }} variant
+ * @param {string} groupKey
+ */
+function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
+    if (!groupCli && !variantCli) return null;
+    const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
+    if (merged.surface === 'public' && !merged.leaf) {
+        if (variant.id === 'all') {
+            throw new Error(
+                `Skill group "${groupKey}", variant "all": cli.leaf is required at the group level when surface is public and the variant id is "all"`,
+            );
+        }
+        merged.leaf = variant.id;
+    }
+    return merged;
 }
 
 /**
@@ -144,6 +223,7 @@ function expandSkillGroups(config, configDir) {
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
+        const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -175,6 +255,12 @@ function expandSkillGroups(config, configDir) {
                 ? compositeKeyDashed
                 : `${compositeKeyDashed}-${variation.id}`;
 
+            const variantCli = parseCliBlock(
+                variation.cli,
+                `Skill group "${key}", variant "${variation.id}"`,
+            );
+            const cli = resolveVariantCli(baseCli, variantCli, variation, key);
+
             skills.push({
                 ...variation,
                 id: skillId,
@@ -189,6 +275,7 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _group: key,
+                _cli: cli,
             });
         }
     }
@@ -656,7 +743,7 @@ async function generateSkill({
  * Convert an expanded skill into the manifest-builder shape.
  */
 function serializeSkill(s) {
-    return {
+    const result = {
         id: s.id,
         shortId: s._shortId,
         category: s._category,
@@ -667,6 +754,10 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
+    if (s._cli) {
+        result.cli = s._cli;
+    }
+    return result;
 }
 
 /**
@@ -812,4 +903,6 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    parseCliBlock,
+    resolveVariantCli,
 };

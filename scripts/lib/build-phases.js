@@ -198,7 +198,55 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     };
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
 
+    const cliManifest = generateCliManifest({ allSkills, manifest });
+    fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
+
     return manifest;
+}
+
+/**
+ * Build the CLI manifest object from the expanded skill list. Pure — used
+ * by `writeManifestAndMenu` and exercised directly by tests.
+ *
+ * Only skills with a `cli` block participate. Untagged skills are
+ * implicitly catalog (already reachable via `skill-menu.json` and
+ * `manifest.json`) and are not emitted here.
+ *
+ * Entry shape:
+ *   { skillId, surface, group?, leaf?, displayName, description }
+ *
+ * Entries are sorted by surface (public first, then catalog, then
+ * internal), then by `group`/`leaf` so diffs in `cli-manifest.json`
+ * stay reviewable.
+ */
+function generateCliManifest({ allSkills, manifest }) {
+    const surfaceOrder = { public: 0, catalog: 1, internal: 2 };
+    const entries = allSkills
+        .filter(s => s.cli)
+        .map(s => {
+            const entry = {
+                skillId: s.id,
+                surface: s.cli.surface,
+            };
+            if (s.cli.group) entry.group = s.cli.group;
+            if (s.cli.leaf) entry.leaf = s.cli.leaf;
+            entry.displayName = s.displayName;
+            entry.description = s.description;
+            return entry;
+        })
+        .sort((a, b) => {
+            const surfaceDiff = surfaceOrder[a.surface] - surfaceOrder[b.surface];
+            if (surfaceDiff !== 0) return surfaceDiff;
+            const groupDiff = (a.group || '').localeCompare(b.group || '');
+            if (groupDiff !== 0) return groupDiff;
+            return (a.leaf || '').localeCompare(b.leaf || '');
+        });
+    return {
+        version: manifest.version,
+        buildVersion: manifest.buildVersion,
+        buildTimestamp: manifest.buildTimestamp,
+        entries,
+    };
 }
 
 /**
@@ -287,6 +335,7 @@ export {
     zipSkillToBuffer,
     createBundledArchive,
     generateManifest,
+    generateCliManifest,
     writeManifestAndMenu,
     reconcileOrphans,
     partialRebuild,
