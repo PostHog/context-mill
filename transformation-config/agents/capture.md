@@ -1,19 +1,21 @@
 ---
 type: capture
-label: Instrument the planned events
+label: Capture events
 model: claude-sonnet-4-6
 skills: [capture]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
-dependsOn: [plan-capture]
+dependsOn: [install, init]
 ---
 
 ## Goal
 
-Instrument the events from the plan you were handed. Add a PostHog capture call at
-each one, on the real user action.
+Decide which events are worth capturing in this app, then instrument them in the
+same pass — read each file once, choose the events, and add the capture calls
+while the file is already open.
 
 ## How you know you succeeded
 
-Each planned event has a capture call that fires on the user action, not on page
-load or render. If a planned event no longer fits the code, skip it and note why.
+The meaningful user actions across the app have capture calls that fire on the
+real action, not on page load, and `.posthog-events.json` lists the events you
+instrumented.

@@ -5,13 +5,13 @@ model: claude-sonnet-4-6
 skills: [report]
 allowedTools: [Read, Write, Glob, Grep]
 disallowedTools: [enqueue_task]
-dependsOn: [build, dashboard]
+dependsOn: [dashboard]
 ---
 
 ## Goal
 
-Write the setup report summarizing what this integration did, drawing on the
-handoffs from the previous steps.
+Write the setup report summarizing what this integration did, drawing only on the
+run's queue log (`.posthog-wizard/`) and the local `.posthog-events.json`.
 
 ## How you know you succeeded
 

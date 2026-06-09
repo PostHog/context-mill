@@ -1,15 +1,12 @@
 # Add error tracking
 
-Capture exceptions with PostHog at the points where failures matter.
+Set up the framework's GLOBAL error boundary so uncaught errors and exceptions
+reach PostHog — one handler, not hand-wrapped across files.
 
-- Wrap the critical paths: server route handlers, server actions, payment,
-  webhook and auth endpoints, and client error boundaries.
-- Use `posthog.captureException(error, { ...context })` in the catch blocks,
-  with enough context to debug.
-- Do not swallow errors — capture, then handle or re-throw as the code already
-  does.
-- Read the file before editing, and add PostHog alongside any existing error
-  reporting rather than replacing it.
+Follow the framework's own mechanism for a global error handler, using the
+reference example and the docs for the exact pattern. Find the init or app entry,
+add the handler there, and you are done. One handler is enough — do not read
+through the whole app or wrap individual components or routes by hand.
 
 ## Reference
 

@@ -5,7 +5,7 @@ model: claude-sonnet-4-6
 skills: [dashboard]
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, enqueue_task]
-dependsOn: [capture]
+dependsOn: [build]
 ---
 
 ## Goal

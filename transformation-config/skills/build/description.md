@@ -1,24 +1,27 @@
 # Install and build
 
-Bring the integration together: install the declared dependencies, then verify the
-project builds.
+Install the declared dependencies, then verify the project builds. Be quick and
+decisive — this step must not spiral.
 
 ## Install
 
-Detect the package manager from the lockfile — `pnpm-lock.yaml` → pnpm,
-`yarn.lock` → yarn, `bun.lockb` → bun, otherwise npm — and run its install. The
-manifest already declares PostHog from the install step; you are realizing it now.
+Detect the package manager from the project's lockfile and run its install once,
+in this project directory. The manifest already declares PostHog.
 
 ## Build and verify
 
-Run the project's build or typecheck script if one exists (check the manifest's
-scripts for `build`, `typecheck`, `tsc`). Fix straightforward issues from the new
-PostHog code — a missing import, a wrong call shape.
+Run the project's build (or typecheck), lint, and test scripts if they exist
+(check the manifest's scripts). Fix only obvious issues from the new PostHog code —
+a missing import, a wrong call shape.
 
-## Conflicts
+## Flag out-of-scope conflicts and move on
 
-If install or build surfaces a conflict you cannot cleanly resolve — a peer
-dependency clash, a version conflict, a build error you should not paper over —
-stop forcing it. Summarize it in one line in your handoff `conflict` field, and
-put the full detail and what you tried in `did`. The user sees the one-liner in
-the outro and the detail in the report.
+Work only within this project's own directory; other repos and directories are not
+part of this task.
+
+If you hit a conflict that is excessively difficult and outside the scope of this
+integration — a dependency clash, a pre-existing build break, an environment issue
+that is not about the PostHog code — flag it and move on rather than spend time
+fighting it. Put a one-line summary in your handoff `conflict` field and the full
+detail in `did`, then complete the task. The user sees it in the outro and the
+report; flagging it is the right outcome.
