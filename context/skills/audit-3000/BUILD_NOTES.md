@@ -27,7 +27,7 @@ The skill chain is **adaptive** — `description.md` no longer hardcodes step co
 ## Where the files live
 
 ```
-context-mill/transformation-config/skills/audit-3000/
+context-mill/context/skills/audit-3000/
 ├── config.yaml                    ← skill metadata, shared_docs, variants
 ├── description.md                 ← becomes SKILL.md in the built zip
 ├── BUILD_NOTES.md                 ← this file (not bundled into the zip)
@@ -84,7 +84,7 @@ The workbench `.env` points at all three (and the sparse-cloned MCP):
 
 ```env
 CONTEXT_MILL_PATH=/Users/leonhardprinz/Downloads/wizard-stack/context-mill
-COMMANDMENTS_PATH=/Users/leonhardprinz/Downloads/wizard-stack/context-mill/transformation-config/commandments.yaml
+COMMANDMENTS_PATH=/Users/leonhardprinz/Downloads/wizard-stack/context-mill/context/commandments.yaml
 MCP_PATH=/Users/leonhardprinz/Downloads/wizard-stack/posthog-monorepo/services/mcp
 WIZARD_PATH=/Users/leonhardprinz/Downloads/wizard-stack/wizard
 POSTHOG_PERSONAL_API_KEY=phx_<...>

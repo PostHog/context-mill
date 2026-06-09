@@ -39,7 +39,7 @@ If you find yourself wanting to add "context" or "background" to help the agent 
 ## Directory layout
 
 ```
-transformation-config/skills/<group>/
+context/skills/<group>/
 ├── config.yaml
 ├── description.md          # SKILL.md template (entry point)
 └── references/
@@ -150,7 +150,7 @@ A minimal chain has two files: an opener and a terminal step. The shape generali
 ### Layout
 
 ```
-transformation-config/skills/example-stepwise/
+context/skills/example-stepwise/
 ├── config.yaml
 ├── description.md
 └── references/

@@ -1,8 +1,8 @@
 # Welcome to the PostHog context mill
 
-This repo assembles PostHog context for AI agents and LLMs into [Agent Skills](https://agentskills.io/specification)-compliant packages. Check out `/transformation-config` for details. 
+This repo assembles PostHog context for AI agents and LLMs into [Agent Skills](https://agentskills.io/specification)-compliant packages. Check out `/context` for details. 
 
-**Need output in a different format?** No problem. Let us know in [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ), or fire up a PR to augment the `/transformation-config` and `/scripts` directories with your preferred transformation.
+**Need output in a different format?** No problem. Let us know in [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ), or fire up a PR to augment the `/context` and `/scripts` directories with your preferred transformation.
 
 **Have a skill you want to make sure is maintained and distributed via the wizard?** 
 
@@ -74,7 +74,7 @@ The manifest defines:
 
 ### Adding new resources
 
-**Skill step files**: Add numbered markdown files to `transformation-config/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
+**Skill step files**: Add numbered markdown files to `context/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
 
 **Examples**: Add new example projects to `basics/` and configure in `scripts/build-examples-mcp-resources.js`
 

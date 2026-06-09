@@ -41,7 +41,7 @@ async function main() {
     console.log(`Version: ${BUILD_VERSION}\n`);
 
     const repoRoot = path.join(import.meta.dirname, '..');
-    const configDir = path.join(repoRoot, 'transformation-config');
+    const configDir = path.join(repoRoot, 'context');
     const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');
     const tempDir = path.join(distDir, 'skills-temp');

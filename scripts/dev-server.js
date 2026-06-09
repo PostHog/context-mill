@@ -3,7 +3,7 @@
 /**
  * Development server for MCP resources
  *
- * Runs one full build at startup, then watches transformation-config/skills/
+ * Runs one full build at startup, then watches context/skills/
  * and basics/ for changes. A file edit triggers an incremental rebuild of
  * only the skills that own the path; manifest.json and skill-menu.json are
  * regenerated from the in-memory skill list. The bundled
@@ -46,7 +46,7 @@ const FORCE_FULL_REBUILD = process.env.FORCE_FULL_REBUILD === '1';
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
 const repoRoot = path.join(import.meta.dirname, '..');
-const configDir = path.join(repoRoot, 'transformation-config');
+const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
 const skillsSourceDir = path.join(configDir, 'skills');

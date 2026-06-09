@@ -10,7 +10,7 @@ import {
 } from '../change-router.js';
 
 const REPO_ROOT = path.join(path.sep, 'repo');
-const CONFIG_DIR = path.join(REPO_ROOT, 'transformation-config');
+const CONFIG_DIR = path.join(REPO_ROOT, 'context');
 const SKILLS_DIR = path.join(CONFIG_DIR, 'skills');
 const BASICS_DIR = path.join(REPO_ROOT, 'basics');
 const PATHS = { repoRoot: REPO_ROOT, skillsDir: SKILLS_DIR, basicsDir: BASICS_DIR };
@@ -140,7 +140,7 @@ describe('routeChange — out-of-scope paths', () => {
     const skills = [skill({ id: 'audit', group: 'audit' })];
     const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
 
-    it('returns null for top-level transformation-config yaml edits', () => {
+    it('returns null for top-level context yaml edits', () => {
         const abs = path.join(CONFIG_DIR, 'commandments.yaml');
         expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
     });
