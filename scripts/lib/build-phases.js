@@ -201,6 +201,14 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     const cliManifest = generateCliManifest({ allSkills, manifest });
     fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
 
+    // Co-publish the JSON Schema for the cli manifest. Downstream
+    // consumers (e.g. the wizard's prebuild) validate against this to
+    // catch schema drift before snapshotting.
+    const schemaSrc = path.join(configDir, 'cli-manifest.schema.json');
+    if (fs.existsSync(schemaSrc)) {
+        fs.copyFileSync(schemaSrc, path.join(skillsDir, 'cli-manifest.schema.json'));
+    }
+
     return manifest;
 }
 

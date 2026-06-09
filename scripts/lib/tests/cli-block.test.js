@@ -73,6 +73,58 @@ describe('parseCliBlock', () => {
     it('rejects unknown keys in the block', () => {
         expect(() => parseCliBlock({ surface: 'public', command: 'events', extra: true }, 'ctx')).toThrow(/unknown keys: extra/);
     });
+
+    describe('naming convention enforcement', () => {
+        it('rejects non-kebab-case command names', () => {
+            expect(() => parseCliBlock({ surface: 'public', command: 'CamelCase' }, 'ctx'))
+                .toThrow(/must be kebab-case/);
+            expect(() => parseCliBlock({ surface: 'public', command: 'snake_case' }, 'ctx'))
+                .toThrow(/must be kebab-case/);
+            expect(() => parseCliBlock({ surface: 'public', command: '1leading-digit' }, 'ctx'))
+                .toThrow(/must be kebab-case/);
+        });
+
+        it('rejects too-short command names', () => {
+            expect(() => parseCliBlock({ surface: 'public', command: 'a' }, 'ctx'))
+                .toThrow(/must be 2–20 characters/);
+        });
+
+        it('rejects too-long command names', () => {
+            const longName = 'a-very-very-very-long-name';
+            expect(() => parseCliBlock({ surface: 'public', command: longName }, 'ctx'))
+                .toThrow(/must be 2–20 characters/);
+        });
+
+        it('rejects yargs reserved words', () => {
+            for (const word of ['help', 'version', 'completion']) {
+                expect(() => parseCliBlock({ surface: 'public', command: word }, 'ctx'))
+                    .toThrow(/yargs reserved word/);
+            }
+        });
+
+        it('rejects names that collide with internal wizard flags', () => {
+            for (const flag of ['playground', 'benchmark', 'yara-report', 'local-mcp', 'ci', 'skill']) {
+                expect(() => parseCliBlock({ surface: 'public', command: flag }, 'ctx'))
+                    .toThrow(/wizard internal flag/);
+            }
+        });
+
+        it('applies the same checks to parentCommand', () => {
+            expect(() => parseCliBlock({ surface: 'public', parentCommand: 'help', command: 'events' }, 'ctx'))
+                .toThrow(/yargs reserved word/);
+            expect(() => parseCliBlock({ surface: 'public', parentCommand: 'NotKebab', command: 'events' }, 'ctx'))
+                .toThrow(/must be kebab-case/);
+        });
+
+        it('accepts hyphenated names within the 2-20 char range', () => {
+            const result = parseCliBlock({
+                surface: 'public',
+                parentCommand: 'audit',
+                command: 'session-replay',
+            }, 'ctx');
+            expect(result.command).toBe('session-replay');
+        });
+    });
 });
 
 describe('resolveVariantCli', () => {

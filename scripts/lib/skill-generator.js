@@ -93,9 +93,58 @@ function loadYaml(configPath) {
 
 const CLI_SURFACES = ['public', 'catalog', 'internal'];
 
+// Naming convention enforcement — see context-mill/CONTRIBUTING.md and the
+// wizard's CONTRIBUTING.md. Failures throw at build time, before drift can
+// ship.
+const KEBAB_CASE = /^[a-z][a-z0-9-]*$/;
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 20;
+const RESERVED_WORDS = new Set([
+    // yargs reserves these for built-in behavior
+    'help',
+    'version',
+    'completion',
+]);
+const INTERNAL_FLAG_NAMES = new Set([
+    // collisions with the wizard's internal mode flags (see CONTRIBUTING.md)
+    'playground',
+    'benchmark',
+    'yara-report',
+    'local-mcp',
+    'ci',
+    'skill',
+]);
+
+function validateCommandName(name, field, context) {
+    if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" must be ${NAME_MIN_LENGTH}–${NAME_MAX_LENGTH} characters`,
+        );
+    }
+    if (!KEBAB_CASE.test(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" must be kebab-case (lowercase letters, digits, hyphens; start with a letter)`,
+        );
+    }
+    if (RESERVED_WORDS.has(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" collides with a yargs reserved word (${[...RESERVED_WORDS].join(', ')})`,
+        );
+    }
+    if (INTERNAL_FLAG_NAMES.has(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" collides with a wizard internal flag (${[...INTERNAL_FLAG_NAMES].join(', ')})`,
+        );
+    }
+}
+
 /**
  * Validate and normalize a raw `cli:` block from a skill `config.yaml`.
  * Returns `null` when the block is absent, throws on malformed input.
+ *
+ * Naming-convention checks (kebab-case, length 2–20, no reserved words,
+ * no internal-flag collisions) run on every `command` and `parentCommand`
+ * value before the resolved block is returned.
  *
  * `context` is a human-readable label used in error messages (e.g.
  * `'Skill group "audit-events"'` or
@@ -126,12 +175,14 @@ function parseCliBlock(raw, context) {
         if (typeof command !== 'string' || command.length === 0) {
             throw new Error(`${context}: cli.command must be a non-empty string when set`);
         }
+        validateCommandName(command, 'command', context);
         result.command = command;
     }
     if (parentCommand != null) {
         if (typeof parentCommand !== 'string' || parentCommand.length === 0) {
             throw new Error(`${context}: cli.parentCommand must be a non-empty string when set`);
         }
+        validateCommandName(parentCommand, 'parentCommand', context);
         result.parentCommand = parentCommand;
     }
     return result;
