@@ -23,7 +23,7 @@ Read the plan. Take every item with `status: "planned"`. Group them so that **it
 
 ### b. Dispatch one subagent per group in a single message
 
-Make one `Agent` call per group, **all in a single message**. Wait for all to return; run no other tool between dispatch and collection.
+Make one `Agent` call per group, **all in a single message**, each on `model: "sonnet"` — scaffolding edits real code, so don't drop below sonnet, and never go above it. Wait for all to return; run no other tool between dispatch and collection.
 
 Each subagent's `description`: `Scaffold <first item id>`. Each subagent's `prompt`, filling `<>` with the group's items copied out of the plan (id, product, and the full `plan` block — files, approach, snippet):
 
@@ -37,6 +37,7 @@ Integrations (copied from the plan — do not read the plan file yourself):
 Rules:
 - Read each target file before editing it. Anchor on the actual current code and adapt the snippet to the file's style (quotes, semicolons, imports). Line numbers in the plan may have drifted — match on code.
 - Keep each scaffold minimal and reversible: feature-gate or clearly comment the addition (a brief `// PostHog <product> — scaffolded by cross-sell` marker is good). Default to the project's existing behavior when a flag/exception path is undefined.
+- Each item's plan is a single illustrative example (one file). Apply exactly that one change — do not extend it to the other call sites; the report tells the operator to replicate.
 - Edit only the files in your items' plans. Create a new file only when the plan's `files` lists it as new.
 - If a plan requires an official PostHog package that isn't installed, add it to the dependency manifest with a caret range. Do NOT install it yourself and never add a non-PostHog dependency. Report which package you added so the orchestrator can install once.
 - Do not create example/demo routes, placeholder flags wired to nothing, or speculative code beyond the plan.

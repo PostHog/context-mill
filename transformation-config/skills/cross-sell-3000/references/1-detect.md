@@ -21,17 +21,19 @@ Emit:
 
 `Glob` the dependency manifests (`package.json`, `requirements.txt`, `pyproject.toml`, `Gemfile`, `composer.json`, `go.mod`, `*.csproj`, `pubspec.yaml`, …) and confirm at least one PostHog SDK is declared. Record the SDKs and the project's primary language/framework. If no PostHog SDK exists anywhere, emit `[ABORT] No PostHog SDK found` and stop.
 
-### b. Run eight product detectors in parallel
+### b. Run all eight product detectors at once
 
-Dispatch **eight `Agent` subagents** — one per PostHog product — in **two batches of four** (one message per batch, four `Agent` calls each). Wait for a batch to finish before dispatching the next. Do not run other tools between dispatch and collection.
+Dispatch **all eight `Agent` subagents in a single message** — one per PostHog product, no batching. They are shallow read-only classifiers, so run each with `subagent_type: "Explore"` and `model: "haiku"` to keep them fast and cheap. The harness queues them under its own concurrency cap — you do not manage batches or wait between them. Run no other tool between dispatch and collection.
 
-**Batch 1:** `product-analytics`, `error-tracking`, `llm-observability`, `session-replay`
-**Batch 2:** `feature-flags`, `surveys`, `logs`, `web-analytics`
+One subagent per product: `product-analytics`, `error-tracking`, `llm-observability`, `session-replay`, `feature-flags`, `surveys`, `logs`, `web-analytics`.
 
 Each subagent's `description`: `Detect <id> fit`. Each subagent's `prompt`, with `<>` filled from the **Detection map** below:
 
 ```
 You are a cross-sell detection subagent. Assess the project's fit for PostHog <PRODUCT_NAME> and return one JSON object. Read-only — do not edit any file.
+
+## Budget — stay fast (hard cap)
+This is a shallow classification, not an investigation. Run **at most one Grep per detector below (four Grep calls total)**, never `Read` a whole file — classify from the Grep hit lines alone — and return your JSON within **six tool calls**. The moment you can pick a mode, stop searching and return. Going wider does not improve the answer.
 
 ## Detector A — is PostHog <PRODUCT_NAME> already in use?
 Run one Grep for: <POSTHOG_PRESENCE_PATTERN>

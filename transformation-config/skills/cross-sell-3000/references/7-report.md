@@ -20,31 +20,51 @@ The **only** file this step creates is `posthog-cross-sell-report.md` at the pro
 
 One exception: the wizard's outer prompt asks for a brief summary file after the skill workflow completes (e.g. `./posthog-cross-sell-3000-report.md`). That file is owned by the wizard, not this skill — when asked, write a short summary there that links to `posthog-cross-sell-report.md` for the full detail. Do not duplicate the full report into it.
 
+## How to produce it
+
+The per-item sub-sections are read-only and independent, so fan them out and collapse the results.
+
+### a. Draft per-item sub-sections in parallel
+
+Dispatch **one `Agent` subagent per `verified`, `propose-only`, and `failed` item, all in a single message**. These render already-decided plan data — and, for scaffolded items, the actual on-disk code — into markdown, which is formatting, not judgment, so run them on `subagent_type: "Explore"` / `model: "haiku"`. Each subagent reads **only its own item's files and `plan`/`notes`** (do not explore the wider tree) and returns the markdown for exactly its one sub-section, matching the spec under **Report structure** for its status:
+
+- `verified` → a `## Scaffolded` sub-section
+- `propose-only` → a `## Proposed (not scaffolded)` sub-section
+- `failed` → a `## Needs attention` sub-section
+
+Run no other tool between dispatch and collection, and wait for all to return before assembling.
+
+### b. Assemble and write
+
+You (the orchestrator) write the aggregate sections yourself from the plan in memory — `## Summary`, `## Opportunity overview`, `## Next steps` — since each needs the whole result set at once. Then collapse the returned sub-sections under their headings in plan order (`## Scaffolded`, then `## Proposed (not scaffolded)`, then `## Needs attention` — omit any heading with no items), and write the whole report to `posthog-cross-sell-report.md` in one pass.
+
 ## Report structure
+
+**Keep the whole report short** — it rides alongside the diff, it doesn't replace reading it. Aim for under a page: terse sub-sections, no long code blocks, one line per item wherever possible. Each scaffolded product is a single illustrative example, so the report points at it and tells the operator to replicate — it does not re-explain the code.
 
 ### `## Summary`
 
-One paragraph: how many PostHog products were found to fit, how many were scaffolded vs proposed, and the headline opportunity. Then a counts line: verified / failed / proposal-only, and a note that **no git commit was made** — the operator reviews the diff and commits.
+Two sentences: how many products fit, and that one illustrative example was scaffolded per viable product (the rest are proposals). Then a one-line count — scaffolded / proposed / failed — and **no git commit was made; review the diff and commit**.
 
 ### `## Opportunity overview`
 
-A table of every item, ordered by `fit` then `effort`: Product · Mode (cross-sell / greenfield / gap) · Fit · Effort · Status · one-line value. This is the at-a-glance proposal.
+One table, ordered by `fit` then `effort`: Product · Mode · Fit · Effort · Status · one-line value.
 
 ### `## Scaffolded` (verified items)
 
-One sub-section per `verified` item: product, the `value` pitch, files touched as `path:line`, any PostHog package added, and a short before/after fenced snippet read from the **actual** scaffolded code. End each with a **Finish in PostHog** line naming the one manual step to activate it (create the flag, build the survey, set the event live), and a **Verify** line on how the operator can see it working.
+**One line per `verified` item**: **product** — what the example changes, at `path:line` (+ any PostHog package added) — then a short **Finish in PostHog** clause naming the one manual step to activate it. No code blocks; the diff shows the code.
 
 ### `## Proposed (not scaffolded)`
 
-One sub-section per `propose-only` item: product, the `value` pitch, why it wasn't scaffolded (`skip_reason`), and a concrete **implementation plan** the operator can follow by hand or hand to a coding agent — derived from the item's `plan` block if present, else from the evidence and recommendation. For `cross-sell` items, frame the consolidation win against the named competitor.
+**One line per `propose-only` item**: **product** — the value in a phrase, and why it wasn't scaffolded (`skip_reason`). For `cross-sell` items, name the competitor it would consolidate.
 
 ### `## Needs attention` (failed items)
 
-Only if any item is `failed`: what was attempted, why it failed (`notes`), whether anything was reverted, and what to do by hand.
+Only if any item is `failed`: one line each — what was attempted, why it failed (`notes`), whether anything was reverted.
 
 ### `## Next steps`
 
-Tell the operator to: review the working-tree diff and commit; complete each scaffolded product's **Finish in PostHog** step; pick up the proposal-only plans when ready; and re-run this skill after adopting products to surface the next layer of opportunities.
+A short list: review the diff and commit; for each scaffolded product, do its **Finish in PostHog** step and replicate the example at the other sites; pick up the proposals when ready; re-run the skill to surface the next layer.
 
 ## Cleanup
 
