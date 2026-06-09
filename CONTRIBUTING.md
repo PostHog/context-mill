@@ -22,6 +22,7 @@ cli:
   surface: public        # public | catalog | internal
   parentCommand: audit   # the command this skill nests under (optional)
   command: events        # the user-typed word; required when public
+  default: true          # optional — pre-highlight this leaf in the family picker
 ```
 
 Three values for `surface`:
@@ -35,24 +36,39 @@ Three values for `surface`:
 Skills with **no** `cli:` block default to `catalog` — they're discoverable
 via `wizard skill list` but don't get a top-level command.
 
+### Flat vs. family — the convention
+
+> A public command is **flat** when there's only one option today,
+> **a family** when the user must pick among multiple distinct things.
+
+Don't pre-create a family form for a single-option command. If only one
+migration vendor exists, the command is `wizard migrate` — not
+`wizard migrate statsig`. When a second vendor arrives, restructure to
+a family at that moment and document the UX change in the wizard's
+release notes. Forced abstraction (`wizard migrate <vendor>` with one
+vendor) is worse than the breaking change you'd cause later — that
+change is real and worth notifying users about explicitly.
+
 ### Mapping table — YAML on the left, registered command on the right
 
 ```yaml
-# 1. Flat command
+# 1. Flat command (single option today)
 cli:                                          →  wizard revenue
   surface: public
   command: revenue
 
-# 2. Nested command
+# 2. Nested command inside an existing family
 cli:                                          →  wizard audit events
   surface: public
   parentCommand: audit
   command: events
 
-# 3. Family where command name comes from variant id
-cli:                                          →  wizard migrate <variant.id>
-  surface: public                                (e.g. `wizard migrate statsig`
-  parentCommand: migrate                          when variant `statsig` is set)
+# 3. Default leaf — pre-highlighted in the family picker
+cli:                                          →  wizard audit all
+  surface: public                                Pre-highlighted in the family
+  parentCommand: audit                           picker, so `wizard audit` →
+  command: all                                   Enter runs this leaf without
+  default: true                                  needing the arrow keys.
 
 # 4. Catalog-only (reachable via `wizard skill <id>`)
 cli:                                          →  wizard skill <skill-id>
@@ -68,6 +84,17 @@ the group key and so requires an explicit `command` at the group level.
 `cli:` only configures the **command shape** — the verbs the user types.
 Flags and positional arguments live on the wizard side
 (`ProgramConfig.cliOptions`), not here.
+
+### What `default: true` does (and doesn't do)
+
+`default: true` controls **picker pre-highlighting**, not auto-run. When
+the user invokes a family parent with no subcommand, the wizard always
+opens an interactive picker over the family's children — the
+default-marked child is sorted to the top so a single Enter keystroke
+runs it. The picker still appears (so the user sees every option before
+committing). Set `default` on the leaf you'd want a user typing
+`wizard <family>` to invoke if they don't change the selection. At most
+one leaf per family should be marked.
 
 ## Promotion criterion for `surface: public`
 

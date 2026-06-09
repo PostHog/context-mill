@@ -57,7 +57,7 @@
         },
         "default": {
           "type": "boolean",
-          "description": "When true, this leaf runs when the user invokes the family parent with no subcommand (e.g. `wizard audit` runs the leaf marked default). At most one leaf per family may be marked default. Without a default, a multi-child family opens the interactive picker; a single-child family auto-runs its only child."
+          "description": "When true, this leaf is pre-highlighted in the family's interactive picker — so when the user invokes the family parent with no subcommand (e.g. `wizard audit`), pressing Enter without changing the selection runs this leaf. The picker still opens (discovery + consent); the default just makes the obvious choice one keystroke. At most one leaf per family should be marked default."
         },
         "displayName": {
           "type": "string",

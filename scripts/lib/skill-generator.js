@@ -35,6 +35,16 @@
  * id is used as the command name — except for the magic `id: all`
  * variant, where an explicit `command` is required.
  *
+ * ## Flat vs. family
+ *
+ * The wizard's convention: a public command is **flat** when there's
+ * only one option today, **a family** when the user must pick among
+ * multiple. Don't pre-create a family form for a single-option command
+ * (no `wizard revenue stripe` while Stripe is the only provider) —
+ * that's forced abstraction. When a second option arrives, restructure
+ * to a family at that moment; the wizard release notes call out the
+ * UX change for existing users.
+ *
  * ## Mapping table — YAML on the left, registered command on the right
  *
  *   # 1. Flat command (`wizard revenue`)
@@ -48,11 +58,12 @@
  *     parentCommand: audit
  *     command: events
  *
- *   # 3. Nested family, command name comes from variant id
- *   cli:                                          →  wizard migrate <variant.id>
- *     surface: public                                (so the variant `statsig`
- *     parentCommand: migrate                         registers as
- *                                                    `wizard migrate statsig`)
+ *   # 3. Default leaf inside a family (`wizard audit` runs this on Enter)
+ *   cli:                                          →  wizard audit all
+ *     surface: public                                Pre-highlighted in the
+ *     parentCommand: audit                           family picker so
+ *     command: all                                   `wizard audit` → Enter
+ *     default: true                                  runs this leaf.
  *
  *   # 4. Hidden in the catalog (`wizard skill <id>` only)
  *   cli:                                          →  wizard skill <skill-id>
@@ -75,6 +86,11 @@
  * @property {string} [parentCommand]
  *   The command this skill nests under (e.g. `'audit'` for
  *   `wizard audit events`). Omit for flat / standalone commands.
+ * @property {boolean} [default]
+ *   When true, this leaf is pre-highlighted in the family's interactive
+ *   picker. `wizard <family>` → Enter runs this leaf. The picker still
+ *   opens (discovery + consent); the default just makes the obvious
+ *   choice one keystroke. At most one leaf per family should be marked.
  */
 
 import fs from 'fs';

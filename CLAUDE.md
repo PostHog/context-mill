@@ -45,8 +45,18 @@ enforces:
 - Neither field is a yargs reserved word (`help`, `version`, `completion`)
   or a wizard internal flag (`playground`, `benchmark`, `yara-report`,
   `local-mcp`, `ci`, `skill`)
+- `default` (optional, boolean) marks a leaf as pre-highlighted in the
+  family picker — `wizard <family>` → Enter runs the marked leaf. Picker
+  still opens (discovery + consent); the default just sorts that option
+  first so a single Enter runs it.
 
 Failures throw at build time, before drift can ship to the wizard.
+
+**Flat vs. family rule:** a public command is flat when there's only one
+option today, a family when the user must pick. Don't pre-create
+`wizard migrate <vendor>` while there's only one vendor — that's forced
+abstraction. Restructure to a family when a second vendor lands. See
+[CONTRIBUTING.md § Flat vs. family](CONTRIBUTING.md#flat-vs-family--the-convention).
 
 ## When you're about to change a `cli:` block
 
