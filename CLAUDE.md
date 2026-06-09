@@ -58,6 +58,11 @@ Failures throw at build time, before drift can ship to the wizard.
 4. The wizard's next release picks up the change automatically. No wizard
    PR needed unless the change requires wizard-side hooks (custom outro,
    content blocks, abort cases).
+5. **Flag the wizard maintainer:** the wizard ships a committed
+   `docs/cli.md` auto-generated from the manifest. When the wizard
+   upgrades to a release containing your change, someone needs to run
+   `pnpm docs:cli` over there to refresh it. Note this in your PR
+   description or open a tracking issue in the wizard repo.
 
 ## Commands
 

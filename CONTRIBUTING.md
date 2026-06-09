@@ -128,6 +128,19 @@ When you've decided your skill meets the `surface: public` criterion:
    that's a wizard PR — but the CLI registration is handled by the
    manifest.
 
+### Heads up: wizard's `docs/cli.md` needs regeneration
+
+The wizard ships a committed `docs/cli.md` auto-generated from the
+manifest. When the wizard upgrades to a release containing your new
+`cli:` block, **the wizard maintainer must run `pnpm docs:cli` in the
+wizard repo** to refresh that file. Open a tracking issue on the wizard
+side (or flag it in the wizard release PR) so it doesn't get skipped.
+
+If you're the wizard maintainer on the receiving end: any change to
+`cli-manifest.bootstrap.json` or to which manifest version the wizard
+consumes is a signal to regenerate. See
+[PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md#when-to-regenerate-docscli-md).
+
 ## What goes here vs. in the wizard repo
 
 | If you're changing… | …PR goes to |
