@@ -37,7 +37,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'example',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'django', display_name: 'Django' }],
             },
@@ -62,7 +62,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             'feature-flags/installation': {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'react', display_name: 'React' }],
             },
@@ -89,7 +89,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             'feature-flags/best-practices/react': {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'hooks', display_name: 'React Hooks' }],
             },
@@ -113,7 +113,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             'feature-flags/installation': {
-                type: 'docs-only',
+                type: 'skill',
                 category: 'feature-flag',
                 template: 'description.md',
                 variants: [{ id: 'react', display_name: 'React' }],
@@ -135,7 +135,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             'instrument-product-analytics': {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'all', display_name: 'all frameworks' }],
             },
@@ -155,7 +155,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 example_paths: ['basics/django', 'basics/flask'],
                 variants: [{ id: 'all', display_name: 'all frameworks' }],
@@ -175,7 +175,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 example_paths: ['basics/django'],
                 variants: [{ id: 'all', display_name: 'all', example_paths: ['basics/flask'] }],
@@ -195,7 +195,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 example_paths: 'basics/django',
                 variants: [{ id: 'django', display_name: 'Django' }],
@@ -215,7 +215,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'django', display_name: 'Django', example_paths: 'basics/django' }],
             },
@@ -234,7 +234,7 @@ describe('expandSkillGroups', () => {
         }, tmpDir);
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'django', display_name: 'Django' }],
             },

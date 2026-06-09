@@ -1,5 +1,5 @@
 # Logs skills - docs-only (no example projects)
-type: docs-only
+type: skill
 template: description.md
 description: PostHog logs for {display_name}
 tags: [logs]

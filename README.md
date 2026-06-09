@@ -46,8 +46,7 @@ examples/
 │   ├── react-tanstack-router-code-based/   # React with TanStack Router (code-based)
 │   ├── tanstack-start/          # TanStack Start
 │   └── django/                  # Django
-├── llm-prompts/                 # Workflow guides for AI agents
-├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)
+├── mcp-commands/                # MCP command prompts (`/command` in agents)
 └── scripts/                     # Build scripts
 ```
 
@@ -68,14 +67,14 @@ Run `npm run build:docs` to generate:
 ### Manifest structure
 
 The manifest defines:
-- **Workflows**: Step-by-step guides with automatic next-step linking
+- **Skills**: Bundled skill packages, each containing a `SKILL.md`, `references/` step files, and any docs/example content
 - **Docs**: PostHog documentation URLs (fetched at runtime)
 - **Prompts**: MCP command prompts with template variable substitution
 - **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
 
 ### Adding new resources
 
-**Workflows**: Add markdown files to `llm-prompts/[category]/` following the naming convention `[order].[step]-[name].md`
+**Skill step files**: Add numbered markdown files to `transformation-config/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
 
 **Examples**: Add new example projects to `basics/` and configure in `scripts/build-examples-mcp-resources.js`
 
@@ -89,8 +88,6 @@ The build script automatically discovers, orders, and generates URIs for all res
 - **Zero hardcoding**: MCP server purely reflects the manifest for `resources` and `prompts` (as defined in the MCP [spec](https://modelcontextprotocol.io/specification/2025-11-25#features))
 - **Easy to extend**: Add resources by creating properly named files
 - **Version controlled**: Resources evolve with the examples
-
-See `llm-prompts/README.md` for detailed workflow conventions.
 
 ## Security scanning
 

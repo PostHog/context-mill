@@ -1,4 +1,5 @@
 ---
+next_step: null
 title: PostHog Setup - Conclusion
 description: Review and fix any errors in the PostHog integration implementation
 ---

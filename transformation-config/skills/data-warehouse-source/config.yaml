@@ -1,5 +1,5 @@
 # Data warehouse source setup - docs-only skill (no example projects)
-type: docs-only
+type: skill
 template: description.md
 description: Connect a detected data source to the PostHog data warehouse
 tags: [data-warehouse, sources, postgres, stripe]

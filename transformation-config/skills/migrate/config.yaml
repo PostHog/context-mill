@@ -1,4 +1,4 @@
-type: docs-only
+type: skill
 template: description.md
 category: migrate
 description: Migrate an existing analytics or feature-flag vendor to PostHog. Replaces SDK call sites in-place, removes the source package, and writes a migration report. Replacement-only, doesn't adds new instrumentation.

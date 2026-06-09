@@ -329,7 +329,6 @@ async function partialRebuild({
     repoRoot,
     configDir,
     distDir,
-    promptsDir,
     version,
     docContents,
     log = console.log,
@@ -347,7 +346,6 @@ async function partialRebuild({
             repoRoot,
             configDir,
             outputDir: tempDir,
-            promptsDir,
             version,
         });
 

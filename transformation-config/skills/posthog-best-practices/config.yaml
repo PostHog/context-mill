@@ -1,4 +1,4 @@
-type: docs-only
+type: skill
 template: description.md
 description: Framework-agnostic, distilled best practices for using PostHog
 tags: [best-practices]

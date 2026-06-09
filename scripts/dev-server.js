@@ -49,7 +49,6 @@ const repoRoot = path.join(import.meta.dirname, '..');
 const configDir = path.join(repoRoot, 'transformation-config');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
-const promptsDir = path.join(repoRoot, 'llm-prompts');
 const skillsSourceDir = path.join(configDir, 'skills');
 const basicsDir = path.join(repoRoot, 'basics');
 
@@ -105,7 +104,6 @@ async function runPartialRebuild(ids) {
         repoRoot,
         configDir,
         distDir,
-        promptsDir,
         version: BUILD_VERSION,
         docContents,
         log: console.log,
