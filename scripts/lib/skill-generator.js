@@ -408,32 +408,42 @@ async function generateSkill({
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
-            let content = parsed.content.replace(/^\n+/, '');
-            const headingMatch = content.match(/^#\s+(.+)$/m);
+            let body = parsed.content.replace(/^\n+/, '').replace(/\s+$/, '');
+            const headingMatch = body.match(/^#\s+(.+)$/m);
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
-                    const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
-                    content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+                    const headingEnd = body.indexOf(headingMatch[0]) + headingMatch[0].length;
+                    body = body.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + body.slice(headingEnd);
                 }
-                content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
+                body += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
             }
+
+            // Re-emit frontmatter without our internal `next_step` key so the
+            // emitted file matches the original llm-prompts shape (title + description only).
+            const emittedFrontmatter = { ...parsed.data };
+            delete emittedFrontmatter.next_step;
+            const fileContent = Object.keys(emittedFrontmatter).length
+                ? `---\n${yaml.dump(emittedFrontmatter, { lineWidth: -1 })}---\n\n${body}`
+                : body;
 
             fs.writeFileSync(
                 path.join(referencesDir, reference.name),
-                content,
+                fileContent,
                 'utf8'
             );
 
             references.push({
                 filename: reference.name,
-                description: headingMatch?.[1] || reference.name,
+                description: displayDescription,
             });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
                     filename: reference.name,
-                    title: headingMatch?.[1] || reference.name,
+                    title: displayTitle,
                 });
             }
         }

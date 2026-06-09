@@ -1,8 +1,8 @@
 ---
 next_step: 4-conclude.md
+title: PostHog Setup - Revise
+description: Review and fix any errors in the PostHog integration implementation
 ---
-
-# Step 3 – Revise: review and fix errors
 
 Check the project for errors. Read the package.json file for any type checking or build scripts that may provide input about what to fix. Remember that you can find the source code for any dependency in the node_modules directory. Do not spawn subagents.
 
