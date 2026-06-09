@@ -1,4 +1,4 @@
-type: docs-only
+type: skill
 template: description.md
 description: Audit an existing PostHog integration for correctness, best practices, and stale-flag hygiene (v3000)
 tags: [best-practices]

@@ -1,5 +1,5 @@
 # Revenue analytics - docs-only skill (no example projects)
-type: docs-only
+type: skill
 template: description.md
 description: Set up Stripe revenue analytics with PostHog
 tags: [revenue-analytics, stripe]

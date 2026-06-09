@@ -1,4 +1,5 @@
 ---
+next_step: 4-conclude.md
 title: PostHog Setup - Revise
 description: Review and fix any errors in the PostHog integration implementation
 ---

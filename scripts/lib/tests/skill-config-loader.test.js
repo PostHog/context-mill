@@ -33,7 +33,7 @@ describe('loadSkillsConfig', () => {
             skills: {
                 integration: {
                     'config.yaml': yaml.dump({
-                        type: 'example',
+                        type: 'skill',
                         template: 'description.md',
                         variants: [{ id: 'django', display_name: 'Django' }],
                     }),
@@ -43,7 +43,7 @@ describe('loadSkillsConfig', () => {
         const config = loadSkillsConfig(tmpDir);
         expect(Object.keys(config)).toEqual(['integration']);
         expect(config['integration'].variants).toHaveLength(1);
-        expect(config['integration'].type).toBe('example');
+        expect(config['integration'].type).toBe('skill');
     });
 
     it('skips configs without variants', () => {
@@ -51,7 +51,7 @@ describe('loadSkillsConfig', () => {
             skills: {
                 'no-variants': {
                     'config.yaml': yaml.dump({
-                        type: 'docs-only',
+                        type: 'skill',
                         tags: ['test'],
                     }),
                 },
@@ -66,12 +66,12 @@ describe('loadSkillsConfig', () => {
             skills: {
                 'feature-flags': {
                     'config.yaml': yaml.dump({
-                        type: 'docs-only',
+                        type: 'skill',
                         tags: ['feature-flags'],
                     }),
                     installation: {
                         'config.yaml': yaml.dump({
-                            type: 'docs-only',
+                            type: 'skill',
                             tags: ['feature-flags', 'installation'],
                             variants: [{ id: 'react', display_name: 'React' }],
                         }),
@@ -82,7 +82,7 @@ describe('loadSkillsConfig', () => {
         const config = loadSkillsConfig(tmpDir);
         expect(Object.keys(config)).toEqual(['feature-flags/installation']);
         const leaf = config['feature-flags/installation'];
-        expect(leaf.type).toBe('docs-only');
+        expect(leaf.type).toBe('skill');
         expect(leaf.tags).toEqual(['feature-flags', 'installation']);
         expect(leaf.variants).toHaveLength(1);
     });
@@ -93,7 +93,7 @@ describe('loadSkillsConfig', () => {
                 a: {
                     b: { c: { d: {
                         'config.yaml': yaml.dump({
-                            type: 'docs-only',
+                            type: 'skill',
                             variants: [{ id: 'deep', display_name: 'Deep' }],
                         }),
                     }}},
@@ -102,7 +102,7 @@ describe('loadSkillsConfig', () => {
         }, tmpDir);
         const config = loadSkillsConfig(tmpDir);
         expect(Object.keys(config)).toEqual(['a/b/c/d']);
-        expect(config['a/b/c/d'].type).toBe('docs-only');
+        expect(config['a/b/c/d'].type).toBe('skill');
     });
 
     it('ignores directories without config.yaml', () => {
@@ -125,14 +125,14 @@ describe('loadSkillsConfig', () => {
             skills: {
                 integration: {
                     'config.yaml': yaml.dump({
-                        type: 'example',
+                        type: 'skill',
                         variants: [{ id: 'django', display_name: 'Django' }],
                     }),
                 },
                 'feature-flags': {
                     installation: {
                         'config.yaml': yaml.dump({
-                            type: 'docs-only',
+                            type: 'skill',
                             tags: ['feature-flags', 'installation'],
                             variants: [{ id: 'react', display_name: 'React' }],
                         }),

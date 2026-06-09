@@ -1,5 +1,5 @@
 # Integration skills - example-based (code + docs)
-type: example
+type: skill
 template: description.md
 description: PostHog integration for {display_name} applications
 shared_docs:
@@ -149,7 +149,6 @@ variants:
       - https://posthog.com/docs/libraries/ruby.md
 
   - id: android
-    type: example
     example_paths: basics/android
     display_name: Android
     description: PostHog integration for Android applications
@@ -202,7 +201,6 @@ variants:
       - https://posthog.com/docs/libraries/ruby.md
 
   - id: elixir
-    type: docs-only
     template: description-elixir-docs-only.md
     display_name: Elixir
     description: PostHog integration for Elixir and Phoenix applications using the posthog SDK
@@ -211,7 +209,6 @@ variants:
       - https://posthog.com/docs/libraries/elixir.md
 
   - id: go
-    type: docs-only
     template: description-go-docs-only.md
     display_name: Go
     description: PostHog integration for Go applications using the posthog-go SDK
@@ -230,7 +227,6 @@ variants:
       - https://posthog.com/docs/libraries/ios/configuration.md
 
   - id: flutter
-    type: docs-only
     template: description-docs-only.md
     display_name: Flutter
     description: PostHog integration for Flutter applications using the posthog_flutter SDK

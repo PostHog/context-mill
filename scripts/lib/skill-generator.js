@@ -4,7 +4,6 @@
  * Generates Agent Skills packages by combining:
  * - Example code (processed into markdown)
  * - Documentation (fetched from URLs)
- * - LLM prompts/workflows
  * - Commandments (based on tags)
  */
 
@@ -99,7 +98,6 @@ function expandSkillGroups(config, configDir) {
 
         const baseTemplate = group.template ? loadSkillTemplate(configDir, key, group.template) : null;
         const baseTags = group.tags || [];
-        const baseType = group.type || 'example';
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
@@ -140,7 +138,6 @@ function expandSkillGroups(config, configDir) {
                 _shortId: variation.id,
                 _category: category,
                 _topic: topic,
-                type: variation.type || baseType,
                 tags: mergedTags,
                 description,
                 _template: template,
@@ -291,116 +288,24 @@ function formatCommandments(rules) {
 }
 
 /**
- * Format workflow files as numbered steps for SKILL.md
+ * Format workflow steps as a numbered list for the {workflow} template placeholder.
+ * Workflow steps are local references with `next_step:` frontmatter present (set or null),
+ * ordered by filename. The first step gets a "← Start here" marker.
  */
-function formatWorkflowSteps(workflows) {
-    if (workflows.length === 0) {
+function formatWorkflowSteps(steps) {
+    if (steps.length === 0) {
         return '_No workflow defined._';
     }
-
-    // Group by category and sort
-    const byCategory = {};
-    for (const wf of workflows) {
-        if (!byCategory[wf.category]) {
-            byCategory[wf.category] = [];
+    return steps.map((step, i) => {
+        let line = `${i + 1}. \`references/${step.filename}\``;
+        if (step.title) {
+            line += ` - ${step.title}`;
         }
-        byCategory[wf.category].push(wf);
-    }
-
-    const lines = [];
-    for (const category of Object.keys(byCategory).sort()) {
-        const categoryWorkflows = byCategory[category].sort((a, b) => a.order - b.order);
-
-        for (let i = 0; i < categoryWorkflows.length; i++) {
-            const wf = categoryWorkflows[i];
-            const filename = `${wf.category}-${wf.filename}`;
-            const stepNum = i + 1;
-            const isFirst = i === 0;
-
-            let line = `${stepNum}. \`${filename}\``;
-            if (wf.title) {
-                line += ` - ${wf.title}`;
-            }
-            if (isFirst) {
-                line += ' ← **Start here**';
-            }
-            lines.push(line);
+        if (i === 0) {
+            line += ' ← **Start here**';
         }
-    }
-
-    return lines.join('\n');
-}
-
-/**
- * Parse workflow filename to extract order
- * Format: [major].[minor]-[name].md
- */
-function parseWorkflowOrder(filename) {
-    const match = filename.match(/^(\d+)\.(\d+)-(.+)\.md$/);
-    if (!match) return null;
-    return {
-        order: parseFloat(`${match[1]}.${match[2]}`),
-        name: match[3],
-    };
-}
-
-/**
- * Discover workflows from llm-prompts directory
- * Links workflows to their next step within each category
- */
-function discoverWorkflows(promptsDir) {
-    const workflows = [];
-
-    if (!fs.existsSync(promptsDir)) {
-        return workflows;
-    }
-
-    const categories = fs.readdirSync(promptsDir).filter(name => {
-        const fullPath = path.join(promptsDir, name);
-        return fs.statSync(fullPath).isDirectory() && name !== 'node_modules';
-    });
-
-    for (const category of categories) {
-        const categoryPath = path.join(promptsDir, category);
-        const files = fs.readdirSync(categoryPath)
-            .filter(f => f.endsWith('.md') && f !== 'README.md')
-            .sort();
-
-        for (const filename of files) {
-            const filePath = path.join(categoryPath, filename);
-            const content = fs.readFileSync(filePath, 'utf8');
-            const parsed = matter(content);
-            const orderInfo = parseWorkflowOrder(filename);
-
-            workflows.push({
-                category,
-                filename,
-                order: orderInfo?.order ?? 0,
-                title: parsed.data.title || filename,
-                description: parsed.data.description || '',
-                content: parsed.content,
-                fullPath: filePath,
-            });
-        }
-    }
-
-    // Sort by category then order
-    workflows.sort((a, b) => {
-        if (a.category !== b.category) return a.category.localeCompare(b.category);
-        return a.order - b.order;
-    });
-
-    // Link to next step within each category
-    for (let i = 0; i < workflows.length; i++) {
-        const current = workflows[i];
-        const next = workflows[i + 1];
-
-        if (next && next.category === current.category) {
-            current.nextFilename = `${next.category}-${next.filename}`;
-        }
-    }
-
-    return workflows;
+        return line;
+    }).join('\n');
 }
 
 /**
@@ -432,7 +337,6 @@ function generateFrontmatter(skill, version) {
  * @param {Object} options.commandmentsConfig - Commandments config
  * @param {string} options.skillTemplate - Skill description template
  * @param {Array} options.sharedDocs - Shared docs URLs
- * @param {Array} options.workflows - Discovered workflows
  */
 async function generateSkill({
     skill,
@@ -444,7 +348,6 @@ async function generateSkill({
     commandmentsConfig,
     skillTemplate,
     sharedDocs,
-    workflows,
 }) {
     const skillDir = path.join(outputDir, skill.id);
     const referencesDir = path.join(skillDir, 'references');
@@ -455,6 +358,10 @@ async function generateSkill({
 
     // Track reference files for the SKILL.md listing
     const references = [];
+
+    // Track workflow step files (local references with `next_step:` frontmatter)
+    // for the {workflow} template placeholder. Ordered by filename.
+    const workflowSteps = [];
 
     // Process example projects
     if (skill._examplePaths && skill._examplePaths.length > 0) {
@@ -491,7 +398,8 @@ async function generateSkill({
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
         const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
-            .filter(entry => entry.isFile() && entry.name.endsWith('.md'));
+            .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+            .sort((a, b) => a.name.localeCompare(b.name));
 
         const refsConfig = skill._references || {};
 
@@ -499,27 +407,45 @@ async function generateSkill({
             const sourcePath = path.join(sourceReferencesDir, reference.name);
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
-            let content = parsed.content.replace(/^\n+/, '');
-            const headingMatch = content.match(/^#\s+(.+)$/m);
+            const isWorkflowStep = 'next_step' in parsed.data;
+            let body = parsed.content.replace(/^\n+/, '').replace(/\s+$/, '');
+            const headingMatch = body.match(/^#\s+(.+)$/m);
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
-                    const headingEnd = content.indexOf(headingMatch[0]) + headingMatch[0].length;
-                    content = content.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + content.slice(headingEnd);
+                    const headingEnd = body.indexOf(headingMatch[0]) + headingMatch[0].length;
+                    body = body.slice(0, headingEnd) + '\n\n' + refsConfig.preamble + body.slice(headingEnd);
                 }
-                content += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
+                body += `\n\n---\n\n**Upon completion, continue with:** [${nextFile}](${nextFile})`;
             }
+
+            // Re-emit frontmatter without our internal `next_step` key so the
+            // emitted file matches the original llm-prompts shape (title + description only).
+            const emittedFrontmatter = { ...parsed.data };
+            delete emittedFrontmatter.next_step;
+            const fileContent = Object.keys(emittedFrontmatter).length
+                ? `---\n${yaml.dump(emittedFrontmatter, { lineWidth: -1 })}---\n\n${body}`
+                : body;
 
             fs.writeFileSync(
                 path.join(referencesDir, reference.name),
-                content,
+                fileContent,
                 'utf8'
             );
 
             references.push({
                 filename: reference.name,
-                description: headingMatch?.[1] || reference.name,
+                description: displayDescription,
             });
+
+            if (isWorkflowStep) {
+                workflowSteps.push({
+                    filename: reference.name,
+                    title: displayTitle,
+                });
+            }
         }
     }
 
@@ -556,31 +482,6 @@ async function generateSkill({
         await processDoc(docEntry);
     }
 
-    // Include relevant workflows (flattened with category prefix, linked to next step)
-    // Skip workflows for docs-only skills
-    if (skill.type !== 'docs-only') {
-        for (const workflow of workflows) {
-            let content = fs.readFileSync(workflow.fullPath, 'utf8');
-
-            // Append continuation message if there's a next step
-            if (workflow.nextFilename) {
-                content += `\n\n---\n\n**Upon completion, continue with:** [${workflow.nextFilename}](${workflow.nextFilename})`;
-            }
-
-            const filename = `${workflow.category}-${workflow.filename}`;
-            fs.writeFileSync(
-                path.join(referencesDir, filename),
-                content,
-                'utf8'
-            );
-
-            references.push({
-                filename,
-                description: toSentenceCase(workflow.title),
-            });
-        }
-    }
-
     // Build references list for SKILL.md
     const referencesText = references
         .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
@@ -590,8 +491,8 @@ async function generateSkill({
     const rules = collectCommandments(skill.tags || [], commandmentsConfig);
     const commandmentsText = formatCommandments(rules);
 
-    // Format workflow steps
-    const workflowText = formatWorkflowSteps(workflows);
+    // Format workflow steps for skills that use the {workflow} placeholder
+    const workflowText = formatWorkflowSteps(workflowSteps);
 
     // Build SKILL.md content
     let skillContent = generateFrontmatter(skill, version);
@@ -620,7 +521,7 @@ function serializeSkill(s) {
         shortId: s._shortId,
         category: s._category,
         displayName: s.display_name,
-        type: s.type || 'example',
+        type: s.type || 'skill',
         group: s._group,
         name: s.description,
         description: s.description,
@@ -650,7 +551,6 @@ async function runGenerate({
     outputDir,
     skipPatterns,
     commandmentsConfig,
-    workflows,
 }) {
     fs.mkdirSync(outputDir, { recursive: true });
 
@@ -667,7 +567,6 @@ async function runGenerate({
             commandmentsConfig,
             skillTemplate: skill._template,
             sharedDocs: skill._sharedDocs || [],
-            workflows,
         });
 
         console.log(`  ✓ ${skill.id}`);
@@ -684,7 +583,6 @@ async function generateSkillsByIds({
     repoRoot,
     configDir,
     outputDir,
-    promptsDir,
     version,
 }) {
     const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
@@ -695,8 +593,6 @@ async function generateSkillsByIds({
         return { allSkills: skills.map(serializeSkill), rebuiltSkills: [] };
     }
 
-    const workflows = discoverWorkflows(promptsDir);
-
     await runGenerate({
         skills: filtered,
         version,
@@ -705,7 +601,6 @@ async function generateSkillsByIds({
         outputDir,
         skipPatterns,
         commandmentsConfig,
-        workflows,
     });
 
     return {
@@ -721,23 +616,17 @@ async function generateSkillsByIds({
  * @param {string} options.repoRoot - Repository root path
  * @param {string} options.configDir - Config directory path (transformation-config)
  * @param {string} options.outputDir - Output directory for generated skills
- * @param {string} options.promptsDir - LLM prompts directory
  * @param {string} options.version - Build version
  */
 async function generateAllSkills({
     repoRoot,
     configDir,
     outputDir,
-    promptsDir,
     version,
 }) {
     console.log('Loading configuration...');
 
     const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
-
-    console.log('Discovering workflows...');
-    const workflows = discoverWorkflows(promptsDir);
-    console.log(`  Found ${workflows.length} workflow files`);
 
     console.log(`\nGenerating ${skills.length} skills...`);
 
@@ -749,7 +638,6 @@ async function generateAllSkills({
         outputDir,
         skipPatterns,
         commandmentsConfig,
-        workflows,
     });
 
     console.log(`\n✓ Generated ${skills.length} skills to ${outputDir}`);
@@ -763,7 +651,6 @@ export {
     loadSkillTemplate,
     expandSkillGroups,
     collectCommandments,
-    discoverWorkflows,
     generateSkill,
     generateAllSkills,
     loadAndExpandSkills,

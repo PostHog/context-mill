@@ -140,18 +140,8 @@ describe('routeChange — out-of-scope paths', () => {
     const skills = [skill({ id: 'audit', group: 'audit' })];
     const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
 
-    it('returns null for llm-prompts edits', () => {
-        const abs = path.join(REPO_ROOT, 'llm-prompts', 'audit', '3.0-foo.md');
-        expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
-    });
-
     it('returns null for top-level transformation-config yaml edits', () => {
         const abs = path.join(CONFIG_DIR, 'commandments.yaml');
-        expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
-    });
-
-    it('returns null for mcp-commands edits', () => {
-        const abs = path.join(REPO_ROOT, 'mcp-commands', 'whatever.md');
         expect(routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS })).toBeNull();
     });
 });
