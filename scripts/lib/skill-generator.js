@@ -177,7 +177,7 @@ function validateCommandName(name, field, context) {
  *
  * @param {unknown} raw
  * @param {string} context
- * @returns {{ surface: 'public' | 'catalog' | 'internal', command?: string, parentCommand?: string } | null}
+ * @returns {{ surface: 'public' | 'catalog' | 'internal', command?: string, parentCommand?: string, default?: boolean } | null}
  */
 function parseCliBlock(raw, context) {
     if (raw == null) return null;
@@ -245,6 +245,14 @@ function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
             );
         }
         merged.command = variant.id;
+        // The fallback value bypassed parseCliBlock's checks, so validate it
+        // here too — a variant id like "help" or "CamelCase" must not slip
+        // through into the manifest just because it wasn't typed as a command.
+        validateCommandName(
+            merged.command,
+            'command',
+            `Skill group "${groupKey}", variant "${variant.id}"`,
+        );
     }
     return merged;
 }

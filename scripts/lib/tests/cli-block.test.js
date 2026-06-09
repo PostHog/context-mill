@@ -148,6 +148,17 @@ describe('resolveVariantCli', () => {
         ).toThrow(/command is required at the group level/);
     });
 
+    it('validates the variant id when it is used as the fallback command', () => {
+        // A reserved word or non-kebab id must be rejected even though it was
+        // never typed as an explicit command.
+        expect(() =>
+            resolveVariantCli({ surface: 'public', parentCommand: 'audit' }, null, { id: 'help' }, 'audit'),
+        ).toThrow(/yargs reserved word/);
+        expect(() =>
+            resolveVariantCli({ surface: 'public', parentCommand: 'migrate' }, null, { id: 'CamelCase' }, 'migrate'),
+        ).toThrow(/must be kebab-case/);
+    });
+
     it('lets variant-level cli override group-level fields', () => {
         const merged = resolveVariantCli(
             { surface: 'public', parentCommand: 'audit', command: 'all' },
@@ -343,5 +354,47 @@ describe('generateCliManifest', () => {
         const order = manifest.entries.map(e => e.skillId);
         // public flat (no parent) sorts before grouped 'audit', then catalog, then internal
         expect(order).toEqual(['revenue', 'audit-all', 'audit-events', 'b-cat', 'a-int']);
+    });
+
+    it('carries default:true through into the entry', () => {
+        const manifest = generateCliManifest({
+            allSkills: [
+                { id: 'audit-all', displayName: 'Audit', description: 'd',
+                  cli: { surface: 'public', parentCommand: 'audit', command: 'all', default: true } },
+            ],
+            manifest: baseManifest,
+        });
+        expect(manifest.entries[0]).toMatchObject({
+            skillId: 'audit-all',
+            parentCommand: 'audit',
+            command: 'all',
+            default: true,
+        });
+    });
+
+    it('throws when a family has more than one default leaf', () => {
+        expect(() =>
+            generateCliManifest({
+                allSkills: [
+                    { id: 'audit-all', displayName: 'A', description: 'd',
+                      cli: { surface: 'public', parentCommand: 'audit', command: 'all', default: true } },
+                    { id: 'audit-events', displayName: 'AE', description: 'd',
+                      cli: { surface: 'public', parentCommand: 'audit', command: 'events', default: true } },
+                ],
+                manifest: baseManifest,
+            }),
+        ).toThrow(/Family "audit" has more than one cli\.default leaf/);
+    });
+
+    it('throws when default is set on a flat command with no parentCommand', () => {
+        expect(() =>
+            generateCliManifest({
+                allSkills: [
+                    { id: 'revenue', displayName: 'R', description: 'd',
+                      cli: { surface: 'public', command: 'revenue', default: true } },
+                ],
+                manifest: baseManifest,
+            }),
+        ).toThrow(/only valid on a leaf inside a family/);
     });
 });
