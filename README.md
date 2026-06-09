@@ -72,8 +72,6 @@ The manifest defines:
 - **Prompts**: MCP command prompts with template variable substitution
 - **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
 
-Step-by-step workflows live inside individual skills as numbered `references/` files (e.g. `references/1-begin.md`, `references/2-edit.md`) linked via `next_step:` frontmatter.
-
 ### Adding new resources
 
 **Skill step files**: Add numbered markdown files to `transformation-config/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
