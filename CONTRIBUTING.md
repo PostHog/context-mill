@@ -49,29 +49,46 @@ release notes. Forced abstraction (`wizard migrate <vendor>` with one
 vendor) is worse than the breaking change you'd cause later — that
 change is real and worth notifying users about explicitly.
 
+### Naming rule — no shorthand for product names
+
+Use the **full PostHog product name** with hyphens, not abbreviations.
+
+|     | Good | Bad |
+|---|---|---|
+| Feature flags audit | `wizard audit feature-flags` | `wizard audit flags` |
+| Session replay audit | `wizard audit session-replay` | `wizard audit replay` |
+| Revenue analytics | `wizard revenue-analytics` | `wizard revenue` |
+| Web analytics | `wizard web-analytics` | `wizard web` |
+| LLM analytics | `wizard llm-analytics` | `wizard llms` |
+
+The kebab-case / length / reserved-word checks in `parseCliBlock`
+enforce the mechanics; this rule is the naming taste layer on top of
+them. Users typing the full product name once is cheap; getting them
+to relearn an abbreviation we changed our mind on later is not.
+
 ### Mapping table — YAML on the left, registered command on the right
 
 ```yaml
 # 1. Flat command (single option today)
-cli:                                          →  wizard revenue
+cli:                                                   →  wizard revenue-analytics
   surface: public
-  command: revenue
+  command: revenue-analytics
 
 # 2. Nested command inside an existing family
-cli:                                          →  wizard audit events
+cli:                                                   →  wizard audit feature-flags
   surface: public
   parentCommand: audit
-  command: events
+  command: feature-flags
 
 # 3. Default leaf — pre-highlighted in the family picker
-cli:                                          →  wizard audit all
-  surface: public                                Pre-highlighted in the family
-  parentCommand: audit                           picker, so `wizard audit` →
-  command: all                                   Enter runs this leaf without
-  default: true                                  needing the arrow keys.
+cli:                                                   →  wizard audit all
+  surface: public                                         Pre-highlighted in the
+  parentCommand: audit                                    family picker, so
+  command: all                                            `wizard audit` → Enter
+  default: true                                           runs this leaf.
 
 # 4. Catalog-only (reachable via `wizard skill <id>`)
-cli:                                          →  wizard skill <skill-id>
+cli:                                                   →  wizard skill <skill-id>
   surface: catalog
 ```
 

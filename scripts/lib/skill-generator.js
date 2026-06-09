@@ -40,23 +40,30 @@
  * The wizard's convention: a public command is **flat** when there's
  * only one option today, **a family** when the user must pick among
  * multiple. Don't pre-create a family form for a single-option command
- * (no `wizard revenue stripe` while Stripe is the only provider) —
- * that's forced abstraction. When a second option arrives, restructure
- * to a family at that moment; the wizard release notes call out the
- * UX change for existing users.
+ * (no `wizard revenue-analytics stripe` while Stripe is the only
+ * provider) — that's forced abstraction. When a second option arrives,
+ * restructure to a family at that moment; the wizard release notes
+ * call out the UX change for existing users.
+ *
+ * ## Naming rule — no shorthand for product names
+ *
+ * Use the full PostHog product name with hyphens, not abbreviations:
+ *   `wizard audit feature-flags`        not `wizard audit flags`
+ *   `wizard audit session-replay`       not `wizard audit replay`
+ *   `wizard revenue-analytics`          not `wizard revenue`
  *
  * ## Mapping table — YAML on the left, registered command on the right
  *
- *   # 1. Flat command (`wizard revenue`)
- *   cli:                                          →  wizard revenue
+ *   # 1. Flat command (`wizard revenue-analytics`)
+ *   cli:                                          →  wizard revenue-analytics
  *     surface: public
- *     command: revenue
+ *     command: revenue-analytics
  *
- *   # 2. Nested command (`wizard audit events`)
- *   cli:                                          →  wizard audit events
+ *   # 2. Nested command (`wizard audit feature-flags`)
+ *   cli:                                          →  wizard audit feature-flags
  *     surface: public
  *     parentCommand: audit
- *     command: events
+ *     command: feature-flags
  *
  *   # 3. Default leaf inside a family (`wizard audit` runs this on Enter)
  *   cli:                                          →  wizard audit all
@@ -78,11 +85,13 @@
  * @property {'public' | 'catalog' | 'internal'} surface
  *   Where the skill appears in the wizard CLI surface.
  * @property {string} [command]
- *   The user-typed word that registers this skill (e.g. `'events'` in
- *   `wizard audit events`, or `'revenue'` in `wizard revenue`).
+ *   The user-typed word that registers this skill (e.g.
+ *   `'feature-flags'` in `wizard audit feature-flags`, or
+ *   `'revenue-analytics'` in `wizard revenue-analytics`).
  *   Required when `surface` is `'public'`; defaults to the variant id
  *   when omitted, except for the magic `id: all` variant where an
- *   explicit `command` is required at the group level.
+ *   explicit `command` is required at the group level. Use the full
+ *   PostHog product name, not a shorthand.
  * @property {string} [parentCommand]
  *   The command this skill nests under (e.g. `'audit'` for
  *   `wizard audit events`). Omit for flat / standalone commands.

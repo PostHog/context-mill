@@ -5,7 +5,7 @@ tags: [best-practices]
 cli:
   surface: public
   parentCommand: audit
-  command: flags
+  command: feature-flags
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
