@@ -17,11 +17,19 @@ Emit:
 
 ## Action
 
-### a. Confirm PostHog is installed
+### a. Clear any stale intermediates
+
+This skill's `/tmp` files are owned by the *current* run. An interrupted earlier run can leave them behind (Step 7 cleanup only runs on success), and reusing them makes Steps 3–4 short-circuit on stale data instead of replanning. Before anything else, wipe them in one `Bash` call:
+
+```
+rm -f /tmp/posthog-cross-sell-opportunities.json /tmp/posthog-cross-sell-plan.json /tmp/posthog-cross-sell-env.json
+```
+
+### b. Confirm PostHog is installed
 
 `Glob` the dependency manifests (`package.json`, `requirements.txt`, `pyproject.toml`, `Gemfile`, `composer.json`, `go.mod`, `*.csproj`, `pubspec.yaml`, …) and confirm at least one PostHog SDK is declared. Record the SDKs and the project's primary language/framework. If no PostHog SDK exists anywhere, emit `[ABORT] No PostHog SDK found` and stop.
 
-### b. Run all eight product detectors at once
+### c. Run all eight product detectors at once
 
 Dispatch **all eight `Agent` subagents in a single message** — one per PostHog product, no batching. They are shallow read-only classifiers, so run each with `subagent_type: "Explore"` and `model: "haiku"` to keep them fast and cheap. The harness queues them under its own concurrency cap — you do not manage batches or wait between them. Run no other tool between dispatch and collection.
 
@@ -70,7 +78,7 @@ Return exactly this JSON (no prose):
 }
 ```
 
-### c. Aggregate
+### d. Aggregate
 
 Collect the eight JSON objects. `Write` `/tmp/posthog-cross-sell-opportunities.json`:
 
