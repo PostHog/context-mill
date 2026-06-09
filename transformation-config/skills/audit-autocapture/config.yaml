@@ -4,8 +4,8 @@ description: Audit a PostHog autocapture setup for correctness and cost-optimiza
 tags: [best-practices]
 cli:
   surface: public
-  group: audit
-  leaf: autocapture
+  parentCommand: audit
+  command: autocapture
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

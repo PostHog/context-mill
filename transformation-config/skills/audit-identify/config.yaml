@@ -4,8 +4,8 @@ description: Audit a PostHog integration's $identify implementation for correctn
 tags: [best-practices]
 cli:
   surface: public
-  group: audit
-  leaf: identify
+  parentCommand: audit
+  command: identify
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

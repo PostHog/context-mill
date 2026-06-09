@@ -17,9 +17,11 @@
  * The wizard snapshots that manifest at build time to derive its
  * skill-backed command surface.
  *
+ * The block names match the wizard's existing `ProgramConfig.command` /
+ * `parentCommand` convention so contributors only learn one vocabulary.
+ *
  * Three values for `surface`:
- *   - `public`   — registered as `wizard <group> <leaf>` (or
- *                  `wizard <leaf>` if no group). The user-facing surface.
+ *   - `public`   — appears as a normal wizard command.
  *   - `catalog`  — reachable only via `wizard skill <id>`.
  *   - `internal` — hidden everywhere, only reachable via the
  *                  `--skill=<id>` dev escape hatch.
@@ -29,28 +31,50 @@
  *
  * The block may sit at the group level (defaults for every variant) or
  * inside a single variant (overrides the group-level defaults). When
- * `surface: 'public'` and `leaf` is not set explicitly, the variant id
- * is used as the leaf — except for the magic `id: all` variant, where
- * an explicit `leaf` is required.
+ * `surface: 'public'` and `command` is not set explicitly, the variant
+ * id is used as the command name — except for the magic `id: all`
+ * variant, where an explicit `command` is required.
  *
- * Example placement inside a skill `config.yaml`:
+ * ## Mapping table — YAML on the left, registered command on the right
  *
- *   type: docs-only
- *   description: Audit captured events
- *   cli:
- *     surface: public        # public | catalog | internal
- *     group: audit           # parent family; omit for flat or standalone
- *     leaf: events           # the user-typed word; required when public
+ *   # 1. Flat command (`wizard revenue`)
+ *   cli:                                          →  wizard revenue
+ *     surface: public
+ *     command: revenue
+ *
+ *   # 2. Nested command (`wizard audit events`)
+ *   cli:                                          →  wizard audit events
+ *     surface: public
+ *     parentCommand: audit
+ *     command: events
+ *
+ *   # 3. Nested family, command name comes from variant id
+ *   cli:                                          →  wizard migrate <variant.id>
+ *     surface: public                                (so the variant `statsig`
+ *     parentCommand: migrate                         registers as
+ *                                                    `wizard migrate statsig`)
+ *
+ *   # 4. Hidden in the catalog (`wizard skill <id>` only)
+ *   cli:                                          →  wizard skill <skill-id>
+ *     surface: catalog
+ *
+ * `cli:` only configures the **command shape** — what the user types as
+ * verbs in the tree. Flags and positional arguments (e.g.
+ * `--since=30d`) are configured on the wizard side via
+ * `ProgramConfig.cliOptions`, not here.
  *
  * @typedef {Object} CliSurfaceBlock
  * @property {'public' | 'catalog' | 'internal'} surface
  *   Where the skill appears in the wizard CLI surface.
- * @property {string} [group]
- *   Parent family name (e.g. `'audit'`). Omit for flat or standalone
- *   commands.
- * @property {string} [leaf]
- *   The user-typed word for the command (e.g. `'events'` in
- *   `wizard audit events`). Required when `surface` is `'public'`.
+ * @property {string} [command]
+ *   The user-typed word that registers this skill (e.g. `'events'` in
+ *   `wizard audit events`, or `'revenue'` in `wizard revenue`).
+ *   Required when `surface` is `'public'`; defaults to the variant id
+ *   when omitted, except for the magic `id: all` variant where an
+ *   explicit `command` is required at the group level.
+ * @property {string} [parentCommand]
+ *   The command this skill nests under (e.g. `'audit'` for
+ *   `wizard audit events`). Omit for flat / standalone commands.
  */
 
 import fs from 'fs';
@@ -79,14 +103,14 @@ const CLI_SURFACES = ['public', 'catalog', 'internal'];
  *
  * @param {unknown} raw
  * @param {string} context
- * @returns {{ surface: 'public' | 'catalog' | 'internal', group?: string, leaf?: string } | null}
+ * @returns {{ surface: 'public' | 'catalog' | 'internal', command?: string, parentCommand?: string } | null}
  */
 function parseCliBlock(raw, context) {
     if (raw == null) return null;
     if (typeof raw !== 'object' || Array.isArray(raw)) {
         throw new Error(`${context}: cli block must be an object`);
     }
-    const { surface, group, leaf, ...rest } = raw;
+    const { surface, command, parentCommand, ...rest } = raw;
     const unknownKeys = Object.keys(rest);
     if (unknownKeys.length > 0) {
         throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
@@ -98,30 +122,31 @@ function parseCliBlock(raw, context) {
         throw new Error(`${context}: cli.surface must be one of ${CLI_SURFACES.join(', ')} (got "${surface}")`);
     }
     const result = { surface };
-    if (group != null) {
-        if (typeof group !== 'string' || group.length === 0) {
-            throw new Error(`${context}: cli.group must be a non-empty string when set`);
+    if (command != null) {
+        if (typeof command !== 'string' || command.length === 0) {
+            throw new Error(`${context}: cli.command must be a non-empty string when set`);
         }
-        result.group = group;
+        result.command = command;
     }
-    if (leaf != null) {
-        if (typeof leaf !== 'string' || leaf.length === 0) {
-            throw new Error(`${context}: cli.leaf must be a non-empty string when set`);
+    if (parentCommand != null) {
+        if (typeof parentCommand !== 'string' || parentCommand.length === 0) {
+            throw new Error(`${context}: cli.parentCommand must be a non-empty string when set`);
         }
-        result.leaf = leaf;
+        result.parentCommand = parentCommand;
     }
     return result;
 }
 
 /**
  * Merge a group-level cli block with a variant-level override and fill in
- * the implicit leaf for public surfaces. Returns `null` when neither
- * level declared a block.
+ * the implicit command name for public surfaces. Returns `null` when
+ * neither level declared a block.
  *
- * For `surface: 'public'`, the leaf falls back to the variant's short id
- * (e.g. `migrate` group + variant `statsig` → `wizard migrate statsig`).
- * The `id: 'all'` variant is special — its skill id collapses to the
- * group key, so the leaf has to be set explicitly at the group level.
+ * For `surface: 'public'`, the command name falls back to the variant's
+ * short id (e.g. parentCommand `migrate` + variant `statsig` →
+ * `wizard migrate statsig`). The `id: 'all'` variant is special — its
+ * skill id collapses to the group key, so the command name has to be
+ * set explicitly at the group level.
  *
  * @param {ReturnType<typeof parseCliBlock>} groupCli
  * @param {ReturnType<typeof parseCliBlock>} variantCli
@@ -131,13 +156,13 @@ function parseCliBlock(raw, context) {
 function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
     if (!groupCli && !variantCli) return null;
     const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
-    if (merged.surface === 'public' && !merged.leaf) {
+    if (merged.surface === 'public' && !merged.command) {
         if (variant.id === 'all') {
             throw new Error(
-                `Skill group "${groupKey}", variant "all": cli.leaf is required at the group level when surface is public and the variant id is "all"`,
+                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when surface is public and the variant id is "all"`,
             );
         }
-        merged.leaf = variant.id;
+        merged.command = variant.id;
     }
     return merged;
 }

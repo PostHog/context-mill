@@ -213,11 +213,11 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
  * `manifest.json`) and are not emitted here.
  *
  * Entry shape:
- *   { skillId, surface, group?, leaf?, displayName, description }
+ *   { skillId, surface, command?, parentCommand?, displayName, description }
  *
  * Entries are sorted by surface (public first, then catalog, then
- * internal), then by `group`/`leaf` so diffs in `cli-manifest.json`
- * stay reviewable.
+ * internal), then by `parentCommand`/`command` so diffs in
+ * `cli-manifest.json` stay reviewable.
  */
 function generateCliManifest({ allSkills, manifest }) {
     const surfaceOrder = { public: 0, catalog: 1, internal: 2 };
@@ -228,8 +228,8 @@ function generateCliManifest({ allSkills, manifest }) {
                 skillId: s.id,
                 surface: s.cli.surface,
             };
-            if (s.cli.group) entry.group = s.cli.group;
-            if (s.cli.leaf) entry.leaf = s.cli.leaf;
+            if (s.cli.parentCommand) entry.parentCommand = s.cli.parentCommand;
+            if (s.cli.command) entry.command = s.cli.command;
             entry.displayName = s.displayName;
             entry.description = s.description;
             return entry;
@@ -237,9 +237,9 @@ function generateCliManifest({ allSkills, manifest }) {
         .sort((a, b) => {
             const surfaceDiff = surfaceOrder[a.surface] - surfaceOrder[b.surface];
             if (surfaceDiff !== 0) return surfaceDiff;
-            const groupDiff = (a.group || '').localeCompare(b.group || '');
-            if (groupDiff !== 0) return groupDiff;
-            return (a.leaf || '').localeCompare(b.leaf || '');
+            const parentDiff = (a.parentCommand || '').localeCompare(b.parentCommand || '');
+            if (parentDiff !== 0) return parentDiff;
+            return (a.command || '').localeCompare(b.command || '');
         });
     return {
         version: manifest.version,

@@ -29,12 +29,22 @@ describe('parseCliBlock', () => {
         expect(parseCliBlock(null, 'ctx')).toBeNull();
     });
 
-    it('accepts a minimal public block with group and leaf', () => {
-        const result = parseCliBlock({ surface: 'public', group: 'audit', leaf: 'events' }, 'ctx');
-        expect(result).toEqual({ surface: 'public', group: 'audit', leaf: 'events' });
+    it('accepts a minimal public block with parentCommand and command', () => {
+        const result = parseCliBlock(
+            { surface: 'public', parentCommand: 'audit', command: 'events' },
+            'ctx',
+        );
+        expect(result).toEqual({ surface: 'public', parentCommand: 'audit', command: 'events' });
     });
 
-    it('accepts a catalog block with no group/leaf', () => {
+    it('accepts a flat public block with only command', () => {
+        expect(parseCliBlock({ surface: 'public', command: 'revenue' }, 'ctx')).toEqual({
+            surface: 'public',
+            command: 'revenue',
+        });
+    });
+
+    it('accepts a catalog block with no command/parentCommand', () => {
         expect(parseCliBlock({ surface: 'catalog' }, 'ctx')).toEqual({ surface: 'catalog' });
     });
 
@@ -43,7 +53,7 @@ describe('parseCliBlock', () => {
     });
 
     it('throws when surface is missing', () => {
-        expect(() => parseCliBlock({ group: 'audit' }, 'ctx')).toThrow(/cli\.surface is required/);
+        expect(() => parseCliBlock({ command: 'events' }, 'ctx')).toThrow(/cli\.surface is required/);
     });
 
     it('throws on an unknown surface value', () => {
@@ -55,13 +65,13 @@ describe('parseCliBlock', () => {
         expect(() => parseCliBlock(['public'], 'ctx')).toThrow(/must be an object/);
     });
 
-    it('rejects empty-string group or leaf', () => {
-        expect(() => parseCliBlock({ surface: 'public', group: '' }, 'ctx')).toThrow(/cli\.group must be a non-empty string/);
-        expect(() => parseCliBlock({ surface: 'public', leaf: '' }, 'ctx')).toThrow(/cli\.leaf must be a non-empty string/);
+    it('rejects empty-string command or parentCommand', () => {
+        expect(() => parseCliBlock({ surface: 'public', command: '' }, 'ctx')).toThrow(/cli\.command must be a non-empty string/);
+        expect(() => parseCliBlock({ surface: 'public', parentCommand: '' }, 'ctx')).toThrow(/cli\.parentCommand must be a non-empty string/);
     });
 
     it('rejects unknown keys in the block', () => {
-        expect(() => parseCliBlock({ surface: 'public', leaf: 'events', extra: true }, 'ctx')).toThrow(/unknown keys: extra/);
+        expect(() => parseCliBlock({ surface: 'public', command: 'events', extra: true }, 'ctx')).toThrow(/unknown keys: extra/);
     });
 });
 
@@ -70,38 +80,40 @@ describe('resolveVariantCli', () => {
         expect(resolveVariantCli(null, null, { id: 'all' }, 'group-key')).toBeNull();
     });
 
-    it('defaults leaf to the variant id for public surfaces', () => {
+    it('defaults command to the variant id for public surfaces', () => {
         const result = resolveVariantCli(
-            { surface: 'public', group: 'migrate' },
+            { surface: 'public', parentCommand: 'migrate' },
             null,
             { id: 'statsig' },
             'migrate',
         );
-        expect(result).toEqual({ surface: 'public', group: 'migrate', leaf: 'statsig' });
+        expect(result).toEqual({ surface: 'public', parentCommand: 'migrate', command: 'statsig' });
     });
 
-    it('requires explicit leaf when variant id is "all"', () => {
-        expect(() => resolveVariantCli({ surface: 'public', group: 'audit' }, null, { id: 'all' }, 'audit')).toThrow(/leaf is required at the group level/);
+    it('requires explicit command when variant id is "all"', () => {
+        expect(() =>
+            resolveVariantCli({ surface: 'public', parentCommand: 'audit' }, null, { id: 'all' }, 'audit'),
+        ).toThrow(/command is required at the group level/);
     });
 
     it('lets variant-level cli override group-level fields', () => {
         const merged = resolveVariantCli(
-            { surface: 'public', group: 'audit', leaf: 'all' },
-            { leaf: 'comprehensive' },
+            { surface: 'public', parentCommand: 'audit', command: 'all' },
+            { command: 'comprehensive' },
             { id: 'all' },
             'audit',
         );
-        expect(merged).toEqual({ surface: 'public', group: 'audit', leaf: 'comprehensive' });
+        expect(merged).toEqual({ surface: 'public', parentCommand: 'audit', command: 'comprehensive' });
     });
 
     it('lets variant-level cli flip the surface from group default', () => {
         const merged = resolveVariantCli(
-            { surface: 'public', group: 'audit', leaf: 'events' },
+            { surface: 'public', parentCommand: 'audit', command: 'events' },
             { surface: 'catalog' },
             { id: 'all' },
             'audit-events',
         );
-        expect(merged).toEqual({ surface: 'catalog', group: 'audit', leaf: 'events' });
+        expect(merged).toEqual({ surface: 'catalog', parentCommand: 'audit', command: 'events' });
     });
 });
 
@@ -125,17 +137,21 @@ describe('expandSkillGroups with cli blocks', () => {
             'audit-events': {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { surface: 'public', group: 'audit', leaf: 'events' },
+                cli: { surface: 'public', parentCommand: 'audit', command: 'events' },
                 variants: [{ id: 'all', display_name: 'PostHog audit — events' }],
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
         expect(skills).toHaveLength(1);
         expect(skills[0].id).toBe('audit-events');
-        expect(skills[0]._cli).toEqual({ surface: 'public', group: 'audit', leaf: 'events' });
+        expect(skills[0]._cli).toEqual({
+            surface: 'public',
+            parentCommand: 'audit',
+            command: 'events',
+        });
     });
 
-    it('defaults leaf to variant id for migrate-style user-pick families', () => {
+    it('defaults command to variant id for migrate-style user-pick families', () => {
         createFixture({
             skills: {
                 migrate: { 'description.md': '# Migrate' },
@@ -145,7 +161,7 @@ describe('expandSkillGroups with cli blocks', () => {
             migrate: {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { surface: 'public', group: 'migrate' },
+                cli: { surface: 'public', parentCommand: 'migrate' },
                 variants: [
                     { id: 'statsig', display_name: 'Statsig → PostHog' },
                     { id: 'amplitude', display_name: 'Amplitude → PostHog' },
@@ -153,8 +169,16 @@ describe('expandSkillGroups with cli blocks', () => {
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
-        expect(skills[0]._cli).toEqual({ surface: 'public', group: 'migrate', leaf: 'statsig' });
-        expect(skills[1]._cli).toEqual({ surface: 'public', group: 'migrate', leaf: 'amplitude' });
+        expect(skills[0]._cli).toEqual({
+            surface: 'public',
+            parentCommand: 'migrate',
+            command: 'statsig',
+        });
+        expect(skills[1]._cli).toEqual({
+            surface: 'public',
+            parentCommand: 'migrate',
+            command: 'amplitude',
+        });
     });
 
     it('leaves _cli null when no cli block is declared', () => {
@@ -185,7 +209,7 @@ describe('expandSkillGroups with cli blocks', () => {
             'audit-events': {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { surface: 'public', group: 'audit', leaf: 'events' },
+                cli: { surface: 'public', parentCommand: 'audit', command: 'events' },
                 variants: [{ id: 'all', display_name: 'PostHog audit — events' }],
             },
             integration: {
@@ -197,7 +221,11 @@ describe('expandSkillGroups with cli blocks', () => {
         const expanded = expandSkillGroups(config, tmpDir);
         const tagged = expanded.find(s => s.id === 'audit-events');
         const untagged = expanded.find(s => s.id === 'integration-django');
-        expect(serializeSkill(tagged).cli).toEqual({ surface: 'public', group: 'audit', leaf: 'events' });
+        expect(serializeSkill(tagged).cli).toEqual({
+            surface: 'public',
+            parentCommand: 'audit',
+            command: 'events',
+        });
         expect(serializeSkill(untagged)).not.toHaveProperty('cli');
     });
 });
@@ -213,7 +241,7 @@ describe('generateCliManifest', () => {
         const skills = [
             { id: 'integration-django', displayName: 'Django', description: 'd' },
             { id: 'audit-events', displayName: 'Audit events', description: 'a',
-              cli: { surface: 'public', group: 'audit', leaf: 'events' } },
+              cli: { surface: 'public', parentCommand: 'audit', command: 'events' } },
         ];
         const manifest = generateCliManifest({ allSkills: skills, manifest: baseManifest });
         expect(manifest.entries).toHaveLength(1);
@@ -230,7 +258,7 @@ describe('generateCliManifest', () => {
         });
     });
 
-    it('omits group and leaf when not set on the cli block', () => {
+    it('omits command and parentCommand when not set on the cli block', () => {
         const manifest = generateCliManifest({
             allSkills: [
                 { id: 'doctor', displayName: 'Doctor', description: 'd',
@@ -246,22 +274,22 @@ describe('generateCliManifest', () => {
         });
     });
 
-    it('sorts entries by surface, then group, then leaf', () => {
+    it('sorts entries by surface, then parentCommand, then command', () => {
         const manifest = generateCliManifest({
             allSkills: [
                 { id: 'b-cat', displayName: 'B', description: 'd', cli: { surface: 'catalog' } },
                 { id: 'a-int', displayName: 'A', description: 'd', cli: { surface: 'internal' } },
                 { id: 'audit-events', displayName: 'AE', description: 'd',
-                  cli: { surface: 'public', group: 'audit', leaf: 'events' } },
+                  cli: { surface: 'public', parentCommand: 'audit', command: 'events' } },
                 { id: 'audit-all', displayName: 'A', description: 'd',
-                  cli: { surface: 'public', group: 'audit', leaf: 'all' } },
+                  cli: { surface: 'public', parentCommand: 'audit', command: 'all' } },
                 { id: 'revenue', displayName: 'R', description: 'd',
-                  cli: { surface: 'public', leaf: 'revenue' } },
+                  cli: { surface: 'public', command: 'revenue' } },
             ],
             manifest: baseManifest,
         });
         const order = manifest.entries.map(e => e.skillId);
-        // public (no group sorts before grouped 'audit'), then catalog, then internal
+        // public flat (no parent) sorts before grouped 'audit', then catalog, then internal
         expect(order).toEqual(['revenue', 'audit-all', 'audit-events', 'b-cat', 'a-int']);
     });
 });

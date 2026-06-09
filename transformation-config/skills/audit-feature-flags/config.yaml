@@ -4,8 +4,8 @@ description: Audit a PostHog integration's feature flag usage for correctness an
 tags: [best-practices]
 cli:
   surface: public
-  group: audit
-  leaf: flags
+  parentCommand: audit
+  command: flags
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

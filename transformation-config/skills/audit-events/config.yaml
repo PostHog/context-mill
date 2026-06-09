@@ -4,8 +4,8 @@ description: Audit a PostHog integration's event capture quality and cost-optimi
 tags: [best-practices]
 cli:
   surface: public
-  group: audit
-  leaf: events
+  parentCommand: audit
+  command: events
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

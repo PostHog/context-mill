@@ -4,8 +4,8 @@ description: Audit a PostHog session replay setup for correctness and cost-optim
 tags: [best-practices]
 cli:
   surface: public
-  group: audit
-  leaf: session-replay
+  parentCommand: audit
+  command: session-replay
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
