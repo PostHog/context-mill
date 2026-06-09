@@ -1,5 +1,5 @@
 # LLM analytics - single consolidated skill with all provider references
-type: docs-only
+type: skill
 template: description.md
 description: PostHog LLM analytics for {display_name}
 tags: [llm-analytics]

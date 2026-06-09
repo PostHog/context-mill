@@ -1,5 +1,5 @@
 # Aggregated integration skill - all frameworks in one skill
-type: docs-only
+type: skill
 template: description.md
 category: integration
 description: Add PostHog product analytics events to track user behavior. Use after implementing new features or reviewing PRs to ensure meaningful user actions are captured. Also handles initial PostHog SDK setup if not yet installed.

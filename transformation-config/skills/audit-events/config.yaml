@@ -1,4 +1,4 @@
-type: docs-only
+type: skill
 template: description.md
 description: Audit a PostHog integration's event capture quality and cost-optimization opportunities
 tags: [best-practices]

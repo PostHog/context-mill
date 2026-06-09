@@ -1,7 +1,8 @@
 ---
-title: PostHog Setup - Edit
-description: Implement PostHog event tracking in the identified files, following best practices and the example project
+next_step: 3-revise.md
 ---
+
+# Step 2 – Edit: implement PostHog event tracking
 
 For each of the files and events noted in .posthog-events.json, make edits to capture events using PostHog. Make sure to set up any helper files needed. Carefully examine the included example project code: your implementation should match it as closely as possible. Do not spawn subagents.
 

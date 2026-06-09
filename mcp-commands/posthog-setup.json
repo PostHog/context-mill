@@ -7,14 +7,14 @@
       "role": "user",
       "content": {
         "type": "text",
-        "text": "Setup automatic PostHog event tracking in this project.\n\nUse these MCP resources:\n- {{workflows.basic-integration.begin}} - The event setup workflow guide (start here)\n- {{docs.frameworks}} - Integration documentation per framework\n- {{examples}} - Example projects with known-good PostHog integrations\n\nFollow the workflow guide to implement a deep PostHog integration."
+        "text": "Setup automatic PostHog event tracking in this project.\n\nUse the `integration` skill from the PostHog skills bundle and follow its reference files in order, starting with `references/1-begin.md`. The skill ships the full four-step workflow (begin → edit → revise → conclude) plus framework-specific example code and documentation.\n\nUse these MCP resources alongside the skill:\n- {{docs.frameworks}} - Integration documentation per framework\n- {{examples}} - Example projects with known-good PostHog integrations\n\nImplement a deep PostHog integration following the skill's workflow."
       }
     },
     {
       "role": "assistant",
       "content": {
         "type": "text",
-        "text": "I'll set up PostHog event tracking in your project using the provided workflow guide and documentation."
+        "text": "I'll set up PostHog event tracking in your project using the integration skill's step-by-step workflow."
       }
     }
   ]

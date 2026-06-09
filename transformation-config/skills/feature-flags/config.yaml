@@ -1,5 +1,5 @@
 # Feature flag skills - docs-only (no example projects)
-type: docs-only
+type: skill
 template: description.md
 description: PostHog feature flags for {display_name} applications
 tags: [feature-flags]

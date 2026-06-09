@@ -1,5 +1,5 @@
 # Upload source maps skill — docs-only, one variant per framework / build tool
-type: docs-only
+type: skill
 template: description.md
 description: Upload source maps to PostHog Error Tracking for {display_name}
 tags: [error-tracking, source-maps]

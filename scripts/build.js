@@ -45,7 +45,6 @@ async function main() {
     const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');
     const tempDir = path.join(distDir, 'skills-temp');
-    const promptsDir = path.join(repoRoot, 'llm-prompts');
 
     try {
         fs.mkdirSync(skillsDir, { recursive: true });
@@ -54,7 +53,6 @@ async function main() {
             repoRoot,
             configDir,
             outputDir: tempDir,
-            promptsDir,
             version: BUILD_VERSION,
         });
 
