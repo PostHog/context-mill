@@ -157,12 +157,12 @@ describe('expandSkillGroups', () => {
             integration: {
                 type: 'skill',
                 template: 'description.md',
-                example_paths: ['basics/django', 'basics/flask'],
+                example_paths: ['example-apps/django', 'example-apps/flask'],
                 variants: [{ id: 'all', display_name: 'all frameworks' }],
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
-        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+        expect(skills[0]._examplePaths).toEqual(['example-apps/django', 'example-apps/flask']);
     });
 
     it('merges variant-level example_paths on top of group-level', () => {
@@ -177,12 +177,12 @@ describe('expandSkillGroups', () => {
             integration: {
                 type: 'skill',
                 template: 'description.md',
-                example_paths: ['basics/django'],
-                variants: [{ id: 'all', display_name: 'all', example_paths: ['basics/flask'] }],
+                example_paths: ['example-apps/django'],
+                variants: [{ id: 'all', display_name: 'all', example_paths: ['example-apps/flask'] }],
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
-        expect(skills[0]._examplePaths).toEqual(['basics/django', 'basics/flask']);
+        expect(skills[0]._examplePaths).toEqual(['example-apps/django', 'example-apps/flask']);
     });
 
     it('normalizes string example_paths to array', () => {
@@ -197,12 +197,12 @@ describe('expandSkillGroups', () => {
             integration: {
                 type: 'skill',
                 template: 'description.md',
-                example_paths: 'basics/django',
+                example_paths: 'example-apps/django',
                 variants: [{ id: 'django', display_name: 'Django' }],
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
-        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+        expect(skills[0]._examplePaths).toEqual(['example-apps/django']);
     });
 
     it('normalizes variant-level string example_paths to array', () => {
@@ -217,11 +217,11 @@ describe('expandSkillGroups', () => {
             integration: {
                 type: 'skill',
                 template: 'description.md',
-                variants: [{ id: 'django', display_name: 'Django', example_paths: 'basics/django' }],
+                variants: [{ id: 'django', display_name: 'Django', example_paths: 'example-apps/django' }],
             },
         };
         const skills = expandSkillGroups(config, tmpDir);
-        expect(skills[0]._examplePaths).toEqual(['basics/django']);
+        expect(skills[0]._examplePaths).toEqual(['example-apps/django']);
     });
 
     it('defaults _examplePaths to empty array when not specified', () => {

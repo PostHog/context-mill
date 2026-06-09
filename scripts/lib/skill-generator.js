@@ -614,7 +614,7 @@ async function generateSkillsByIds({
  *
  * @param {Object} options
  * @param {string} options.repoRoot - Repository root path
- * @param {string} options.configDir - Config directory path (transformation-config)
+ * @param {string} options.configDir - Config directory path (context)
  * @param {string} options.outputDir - Output directory for generated skills
  * @param {string} options.version - Build version
  */
