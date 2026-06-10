@@ -6,7 +6,6 @@ cli:
   role: command
   parentCommand: audit
   command: all
-  recommended: true
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
