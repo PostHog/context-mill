@@ -1,0 +1,32 @@
+---
+next_step: null
+---
+
+# Step 8 — Write the report and hand off
+
+Everything is configured; leave the user a record of exactly what changed and what (if anything) still needs a human.
+
+## Status
+
+Emit:
+
+```
+[STATUS] Writing the report
+```
+
+## Do
+
+1. Write `./posthog-product-autonomy-report.md` (read any existing file first, then overwrite). Sections, in order:
+
+   - **Summary** — two or three sentences: what was turned on, and that findings will start appearing in the Signals inbox within ~30 minutes (include the inbox URL from the run prompt).
+   - **AI data processing** — approved / pending admin approval. If pending, state plainly that **no findings will appear until an org admin approves it**, with the settings URL.
+   - **GitHub** — connected (and whether it was already connected or connected during this run).
+   - **Signal sources** — a table of every source you touched or deliberately skipped: `source_product` / `source_type`, action taken (enabled / already enabled / skipped + why / failed).
+   - **Connected tools** — what the user picked, what got connected and enabled, what was skipped.
+   - **Scout fleet** — kept-on scouts, disabled scouts with the one-line reason each, or the not-yet-materialized note from step 7.
+   - **Follow-ups** — every follow-up recorded along the way, as a checklist. Omit the section if there are none.
+   - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start autonomy coding tasks.
+
+2. Keep it factual and scannable — tables over prose, no marketing language. Cite ids only where useful (source config ids help support).
+
+3. Finish with a short plain-text summary to the user (the wizard renders its own outro with the inbox link — don't duplicate the whole report in chat).
