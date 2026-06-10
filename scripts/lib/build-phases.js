@@ -264,6 +264,11 @@ function generateCliManifest({ allSkills, manifest }) {
         });
     validateRecommended(entries);
     return {
+        // `version` is shared with the main manifest (it's uri-schema.yaml's
+        // `manifest_version`). There's no CLI-manifest-only version knob —
+        // bumping it bumps both manifests' version. If the CLI manifest shape
+        // ever needs to change independently of the main manifest, give it its
+        // own version field rather than reusing this one.
         version: manifest.version,
         buildVersion: manifest.buildVersion,
         buildTimestamp: manifest.buildTimestamp,
