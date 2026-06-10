@@ -1,5 +1,6 @@
 ---
 type: capture
+flow: posthog-integration
 label: Capture events
 model: claude-sonnet-4-6
 skills: [capture]

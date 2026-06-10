@@ -1,5 +1,6 @@
 ---
 type: identify
+flow: posthog-integration
 label: Wire user identification
 model: claude-sonnet-4-6
 skills: [identify]

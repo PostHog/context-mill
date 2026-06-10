@@ -1,5 +1,7 @@
 ---
 type: integrate-posthog
+flow: posthog-integration
+seed: true
 model: claude-sonnet-4-6
 skills: []
 allowedTools: [Read, Glob, Grep]

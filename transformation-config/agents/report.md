@@ -1,5 +1,6 @@
 ---
 type: report
+flow: posthog-integration
 label: Write the setup report
 model: claude-sonnet-4-6
 skills: [report]

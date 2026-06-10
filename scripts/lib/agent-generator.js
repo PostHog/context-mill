@@ -23,7 +23,8 @@ export function loadAgentIds(agentsSourceDir) {
     if (!fs.existsSync(agentsSourceDir)) return [];
     return fs
         .readdirSync(agentsSourceDir)
-        .filter(f => f.endsWith('.md'))
+        // README.md is documentation for authors, not a served prompt.
+        .filter(f => f.endsWith('.md') && f !== 'README.md')
         .map(f => f.slice(0, -'.md'.length))
         .sort();
 }

@@ -1,5 +1,6 @@
 ---
 type: error-tracking
+flow: posthog-integration
 label: Add error tracking
 model: claude-sonnet-4-6
 skills: [error-tracking-step]
