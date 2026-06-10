@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
-    "@posthog/warlock": "git+https://github.com/PostHog/warlock.git",
+    "@posthog/warlock": "^0.2.2",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1"
   },
