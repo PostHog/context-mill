@@ -30,6 +30,6 @@
     "js-yaml": "^4.1.1"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": ["esbuild", "@posthog/warlock"]
   }
 }
