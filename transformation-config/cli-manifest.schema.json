@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/PostHog/context-mill/releases/latest/download/cli-manifest.schema.json",
   "title": "Wizard CLI manifest",
-  "description": "Shape of dist/skills/cli-manifest.json. Published alongside the manifest itself so downstream consumers (notably the wizard's prebuild) can validate the manifest's structure before snapshotting it. The wizard's CONTRIBUTING.md and context-mill's CONTRIBUTING.md cover the field semantics.",
+  "description": "Shape of dist/skills/cli-manifest.json. Published alongside the manifest itself so downstream consumers (notably the wizard's prebuild) can validate the manifest's structure before snapshotting it. The wizard's CONTRIBUTING.md and context-mill's CONTRIBUTING.md cover the field semantics. NOTE: this is structural validation only. Semantic naming rules — reserved-word and internal-flag collisions on `command`/`parentCommand` — are enforced by context-mill's build (parseCliBlock), not here, so a name like `help` or `skill` is rejected at build time even though this schema would accept it. Don't rely on schema validation alone to reject reserved words.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "buildVersion", "buildTimestamp", "entries"],
@@ -67,7 +67,17 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "description": "A 'command' role must carry a `command` (the user-typed word that registers it). The build fills this in from the variant id when omitted, so a command-role entry without `command` should never reach the manifest.",
+          "if": {
+            "properties": { "role": { "const": "command" } },
+            "required": ["role"]
+          },
+          "then": { "required": ["command"] }
+        }
+      ]
     }
   }
 }
