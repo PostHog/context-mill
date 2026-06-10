@@ -114,6 +114,110 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 - **iOS (Swift)** Add a `UIButton` on the root view controller whose action captures an `NSError` via the PostHog SDK, per the reference.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
+### Set up CI for automatic uploads
+
+Source maps are only uploaded when the **production build** runs, so the environment that builds and deploys your app needs the same upload credentials you put in the env file. The whole job is: **find where the production build command actually runs, then make the upload credentials reachable at that exact spot.** The build is where maps inject + upload, and env does **not** automatically cross three boundaries — into a Docker build, into a nested/composite action, or into an SSH session. So trace the deploy path before editing anything:
+
+1. Is there a `Dockerfile`? If the build command runs inside it (`RUN <build>`), the build happens in that image's **build stage**.
+2. Is there a workflow under `.github/workflows/`? Open it and find the step that triggers the build, then follow it to where the build truly executes — it may be:
+   - an inline build step (`run: npm run build`) on the runner,
+   - a `docker build` / `docker/build-push-action` step (build runs in the image),
+   - a `uses: ./.github/actions/...` **local composite action** — open that `action.yml`; the real build step is one layer down,
+   - an `ssh`/deploy step (e.g. `appleboy/ssh-action`) whose `script:` runs the build **on a remote server**.
+3. Anything else — another CI provider, or no build step you can trace? Don't guess — tell the user where the creds need to be (see "Unrecognised setup" under Examples).
+
+#### Tips
+- Reuse the **exact variable names** from "Write credentials to the env file" — the build reads the same names locally and in CI. (`POSTHOG_CLI_*` for direct `posthog-cli`; `POSTHOG_*` for bundler-plugin uploaders.)
+- A build script that passes `--dotenv-file .env` to `posthog-cli` works unchanged in CI even though `.env` doesn't exist there: real environment variables take precedence over the file, and a missing file is skipped with a warning. Never copy `.env` into a Docker image (or un-ignore it) to "fix" CI — that ships the secret.
+- **Never commit secret values.** Reference credentials by name only: Docker `ARG`/`ENV`, or `${{ secrets.* }}` in GitHub Actions. The personal API key stays out of version control.
+- Layers stack — a workflow can call a composite action that runs `docker build` against a Dockerfile. Wire **every** layer the credentials must pass through, from the outer `${{ secrets.* }}` reference down to the `ARG`/`ENV` in the build stage.
+- **Multi-stage Dockerfiles:** put the `ARG`/`ENV` in the **build stage** (where the build command runs), never the runtime stage. That's both correct (the build needs them) and safer (the creds don't get baked into the shipped image).
+- **Composite / reusable actions can't read `secrets`.** Inside a `.github/actions/*/action.yml` only `${{ inputs.* }}` is available. Add an `inputs:` entry per credential, reference `${{ inputs.* }}` there, and pass `${{ secrets.* }}` from the calling workflow's `with:` block.
+- **Build over SSH:** the runner's env doesn't reach the remote box. Set the vars inline immediately before the build command inside the `script:`. `${{ secrets.* }}` is substituted by Actions *before* the script is sent, so the value travels with the script.
+- You can't create CI secrets. Whenever you reference `${{ secrets.X }}`, tell the user to add each one under **Settings → Secrets and variables → Actions** before their next deploy — the workflow can't read a secret that doesn't exist yet.
+
+#### Examples
+- **Dockerfile build stage (e.g. `Dockerfile`, no CI)** Declare the credentials as build args and promote them to env vars *before* the build `RUN`, in the build stage:
+  ```dockerfile
+  FROM node:22-slim AS build
+  WORKDIR /app
+  # ...
+  ARG POSTHOG_CLI_API_KEY
+  ARG POSTHOG_CLI_PROJECT_ID
+  ARG POSTHOG_CLI_HOST
+  ENV POSTHOG_CLI_API_KEY=$POSTHOG_CLI_API_KEY \
+      POSTHOG_CLI_PROJECT_ID=$POSTHOG_CLI_PROJECT_ID \
+      POSTHOG_CLI_HOST=$POSTHOG_CLI_HOST
+  RUN npm run build   # now sees the upload credentials
+  ```
+  With no CI wiring the image, tell the user to pass them when they build: `docker build --build-arg POSTHOG_CLI_API_KEY=… --build-arg POSTHOG_CLI_PROJECT_ID=… --build-arg POSTHOG_CLI_HOST=… .`
+- **GitHub Actions — inline build step** Build runs on the runner; expose the creds with `env:` on that step:
+  ```yaml
+  - name: Build
+    run: npm run build
+    env:
+      POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+      POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+      POSTHOG_CLI_HOST: ${{ secrets.POSTHOG_CLI_HOST }}
+  ```
+- **GitHub Actions — `docker build` / `docker/build-push-action`** Add the `ARG`/`ENV` to the Dockerfile build stage (above), then forward the creds as build args. Raw `docker build` takes `--build-arg`; `docker/build-push-action` takes a multi-line `build-args:` input — **merge into the existing `with:` block, don't add a second step**:
+  ```yaml
+  - name: Build and push image
+    uses: docker/build-push-action@v6
+    with:
+      context: .
+      file: Dockerfile
+      push: true
+      tags: ${{ steps.meta.outputs.tags }}
+      build-args: |
+        POSTHOG_CLI_API_KEY=${{ secrets.POSTHOG_CLI_API_KEY }}
+        POSTHOG_CLI_PROJECT_ID=${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+        POSTHOG_CLI_HOST=${{ secrets.POSTHOG_CLI_HOST }}
+  ```
+- **GitHub Actions — nested/composite action** When the workflow delegates the build with `uses: ./.github/actions/build-and-push`, the `build-push-action` lives in that action's `action.yml`, which can't see `secrets`. Thread them through as inputs. In `.github/actions/build-and-push/action.yml`:
+  ```yaml
+  inputs:
+    posthog-cli-api-key:
+      required: true
+    posthog-cli-project-id:
+      required: true
+    posthog-cli-host:
+      required: true
+  runs:
+    using: composite
+    steps:
+      - uses: docker/build-push-action@v6
+        with:
+          # ...existing context/file/push/tags...
+          build-args: |
+            POSTHOG_CLI_API_KEY=${{ inputs.posthog-cli-api-key }}
+            POSTHOG_CLI_PROJECT_ID=${{ inputs.posthog-cli-project-id }}
+            POSTHOG_CLI_HOST=${{ inputs.posthog-cli-host }}
+  ```
+  Then pass the secrets from the calling workflow's `with:` block:
+  ```yaml
+  - uses: ./.github/actions/build-and-push
+    with:
+      # ...existing inputs...
+      posthog-cli-api-key: ${{ secrets.POSTHOG_CLI_API_KEY }}
+      posthog-cli-project-id: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+      posthog-cli-host: ${{ secrets.POSTHOG_CLI_HOST }}
+  ```
+- **GitHub Actions — build over SSH** When a step SSHes into a server and runs the build there (e.g. `appleboy/ssh-action` with `git pull && npm run build`), set the vars inline right before the build command inside the `script:` — mirror however the script already passes runtime vars:
+  ```yaml
+  - uses: appleboy/ssh-action@v1
+    with:
+      host: ${{ secrets.DEPLOY_HOST }}
+      # ...
+      script: |
+        cd /srv/app && git pull --ff-only origin main && npm ci
+        POSTHOG_CLI_API_KEY="${{ secrets.POSTHOG_CLI_API_KEY }}" \
+        POSTHOG_CLI_PROJECT_ID="${{ secrets.POSTHOG_CLI_PROJECT_ID }}" \
+        POSTHOG_CLI_HOST="${{ secrets.POSTHOG_CLI_HOST }}" \
+          npm run build
+  ```
+- **Unrecognised setup** Another CI provider (GitLab CI, CircleCI, Jenkins, …), or no `Dockerfile`, workflow, or build step you can trace: make no CI changes there. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+
 ### Verify and hand off
 
 Confirm the upload landed and report what changed.
@@ -122,6 +226,7 @@ Confirm the upload landed and report what changed.
 - Source maps upload during the **production build** — the build must actually run for a symbol set to appear.
 - Verify in PostHog Error Tracking settings on the **Symbol sets** page: a new symbol set should appear after the build completes.
 - When handing off, list the files you edited (paths only), the env-var **key** names you set (never values), whether a test affordance was added and reverted, and the exact build command to run.
+- If you wired CI, list the pipeline files you changed (`Dockerfile`, workflow) and spell out every manual follow-up — e.g. the GitHub secrets the user must add before their next deploy, or the note that their CI provider wasn't recognised.
 
 ## General tips
 - The reference files for {display_name} are authoritative — if this page and a reference disagree on an API, follow the reference.
