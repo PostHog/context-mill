@@ -1,6 +1,7 @@
 ---
 type: dashboard
 flow: posthog-integration
+ci: false
 label: Create a starter dashboard
 model: claude-sonnet-4-6
 skills: [dashboard]

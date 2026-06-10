@@ -27,6 +27,10 @@ then seed this graph:
   linting, and testing cleanly.
 - `report`, after `dashboard` — it writes the setup report last.
 
+Some task types are not available in every run — `enqueue_task` only accepts
+the ones that are. Plan without the missing ones and rewire their dependents
+to the nearest upstream step (no `dashboard` means `report` follows `build`).
+
 ## How you know you succeeded
 
 The tasks are queued with that dependency shape, and the first is runnable.
