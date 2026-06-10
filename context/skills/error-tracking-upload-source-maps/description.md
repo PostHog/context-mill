@@ -34,7 +34,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - **Don't ship source maps publicly**: omit `.map` files from the deployed artifact, or use hidden source maps. Uploaded maps live in PostHog, not on your origin.
 
 #### Examples
-- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap inject` followed by `posthog-cli sourcemap upload` against the build output dir as post-build steps.
+- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap inject` followed by `posthog-cli sourcemap upload` against the build output dir as post-build steps — both invocations need the upload credentials (see "Make credentials available at build time").
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
@@ -47,7 +47,8 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Auto-loads `.env`**: Next.js, Nuxt and similar frameworks read `.env` into the build for you — nothing extra to do.
 - **Vite is a partial exception**: it auto-loads `.env` into `import.meta.env` for client code (only `VITE_`-prefixed vars), but does **not** put vars in `process.env` for your config to read. The upload credentials (`POSTHOG_*`, not `VITE_`-prefixed) are read when the plugin is constructed, so load them yourself — see the Vite example below.
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
-- **Separate-process gotcha**: if upload runs as its own `package.json` step (e.g. `posthog-cli sourcemap upload` after the bundler), that CLI is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap upload …`.
+- **Separate-process gotcha**: if injection/upload run as their own `package.json` steps (e.g. `posthog-cli sourcemap inject` / `posthog-cli sourcemap upload` after the bundler), each CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap …` (the flag goes before the subcommand).
+- **`inject` authenticates too.** Even though `posthog-cli sourcemap inject` only edits local files, it resolves credentials exactly like `upload` and fails without them. The reference docs show a bare `inject` command and put `--dotenv-file` only on `upload` — don't copy that asymmetry; pass `--dotenv-file` to **every** `posthog-cli` invocation. (A bare `inject` can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -64,7 +65,10 @@ The upload credentials must be readable **by the build pipeline at build time**,
   };
   ```
 - **Rollup / webpack / plain Node** Add `import 'dotenv/config'` (or `require('dotenv').config()`) at the top of the config/entry file so the loader runs before the build reads the vars.
-- **Standalone posthog-cli step** Pass `--dotenv-file .env` to the CLI so it reads the credentials itself instead of relying on the parent process's environment.
+- **Standalone posthog-cli steps** Pass `--dotenv-file .env` to **both** invocations — `inject` and `upload` each need the credentials:
+  ```json
+  "build": "tsc && posthog-cli --dotenv-file .env sourcemap inject --directory ./dist && posthog-cli --dotenv-file .env sourcemap upload --directory ./dist --release-name my-app"
+  ```
 
 ### Write credentials to the env file
 
