@@ -13,7 +13,7 @@ import { generateCliManifest, validateCliManifest } from '../build-phases.js';
 
 const SCHEMA_PATH = join(
     import.meta.dirname,
-    '../../../transformation-config/cli-manifest.schema.json',
+    '../../../context/cli-manifest.schema.json',
 );
 
 function createFixture(tree, baseDir) {

@@ -3,7 +3,7 @@
  *
  * Generates a Claude Code plugin marketplace directory from built skills.
  * Groups skills into themed plugins and produces a mega-plugin containing all skills.
- * Configuration is driven by transformation-config/marketplace.yaml.
+ * Configuration is driven by context/marketplace.yaml.
  */
 
 import fs from 'fs';
@@ -136,7 +136,7 @@ EOF
  * @param {string} options.tempDir - Path to temp directory containing built skill folders
  * @param {string} options.version - Build version string
  * @param {string} options.outputDir - Root output directory (dist/)
- * @param {string} options.configDir - Path to transformation-config/
+ * @param {string} options.configDir - Path to context/
  */
 function generateMarketplace({ skills, tempDir, version, outputDir, configDir }) {
     const config = loadMarketplaceConfig(configDir);

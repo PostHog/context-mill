@@ -2,7 +2,7 @@
  * Example Processor
  *
  * Converts an example project directory into a markdown file.
- * Reads configuration from transformation-config/skip-patterns.yaml
+ * Reads configuration from context/skip-patterns.yaml
  */
 
 import fs from 'fs';

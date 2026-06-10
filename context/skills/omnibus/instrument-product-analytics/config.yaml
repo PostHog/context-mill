@@ -12,40 +12,40 @@ variants:
     tags: []
     example_paths:
       # JavaScript / Frontend
-      - basics/next-app-router
-      - basics/next-pages-router
-      - basics/react-react-router-6
-      - basics/react-react-router-7-framework
-      - basics/react-react-router-7-data
-      - basics/react-react-router-7-declarative
-      - basics/nuxt-3-6
-      - basics/nuxt-4
-      - basics/vue-3
-      - basics/react-tanstack-router-file-based
-      - basics/react-tanstack-router-code-based
-      - basics/tanstack-start
-      - basics/sveltekit
-      - basics/astro-static
-      - basics/astro-view-transitions
-      - basics/astro-ssr
-      - basics/astro-hybrid
-      - basics/angular
+      - example-apps/next-app-router
+      - example-apps/next-pages-router
+      - example-apps/react-react-router-6
+      - example-apps/react-react-router-7-framework
+      - example-apps/react-react-router-7-data
+      - example-apps/react-react-router-7-declarative
+      - example-apps/nuxt-3-6
+      - example-apps/nuxt-4
+      - example-apps/vue-3
+      - example-apps/react-tanstack-router-file-based
+      - example-apps/react-tanstack-router-code-based
+      - example-apps/tanstack-start
+      - example-apps/sveltekit
+      - example-apps/astro-static
+      - example-apps/astro-view-transitions
+      - example-apps/astro-ssr
+      - example-apps/astro-hybrid
+      - example-apps/angular
       # Python
-      - basics/django
-      - basics/flask
-      - basics/fastapi
-      - basics/python
+      - example-apps/django
+      - example-apps/flask
+      - example-apps/fastapi
+      - example-apps/python
       # PHP
-      - basics/laravel
-      - basics/php
+      - example-apps/laravel
+      - example-apps/php
       # Ruby
-      - basics/ruby-on-rails
-      - basics/ruby
+      - example-apps/ruby-on-rails
+      - example-apps/ruby
       # Mobile
-      - basics/android
-      - basics/swift
-      - basics/react-native
-      - basics/expo
+      - example-apps/android
+      - example-apps/swift
+      - example-apps/react-native
+      - example-apps/expo
     docs_urls:
       # JavaScript / Frontend
       - https://posthog.com/docs/libraries/next-js.md

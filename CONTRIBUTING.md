@@ -1,6 +1,6 @@
 # Contributing to context-mill
 
-This is the contributor doc for `transformation-config/skills/` and the
+This is the contributor doc for `context/skills/` and the
 `scripts/` build pipeline. For docs aimed at consumers of the published
 manifest, see the [README](README.md).
 
@@ -148,7 +148,7 @@ cheap; demoting from command to skill breaks user scripts.
 
 The base path is the same regardless of the skill's CLI role:
 
-1. Create `transformation-config/skills/<your-skill>/`.
+1. Create `context/skills/<your-skill>/`.
 2. Add a `config.yaml` declaring `type`, `description`, `variants`, etc.
    See an existing skill (e.g. `audit-events`, `migrate`) for the shape.
 3. Add a `description.md` template and any `references/*.md` files.

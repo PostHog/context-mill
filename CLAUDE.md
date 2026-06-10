@@ -13,14 +13,14 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 
 | Concern | Where |
 |---|---|
-| Skill source content | `transformation-config/skills/<name>/` |
-| Skill descriptor / CLI role declarations | `transformation-config/skills/<name>/config.yaml` |
+| Skill source content | `context/skills/<name>/` |
+| Skill descriptor / CLI role declarations | `context/skills/<name>/config.yaml` |
 | Build pipeline | `scripts/lib/` (skill generator, build phases, change router) |
 | Build entrypoints | `scripts/build.js` (full) and `scripts/dev-server.js` (partial / watch) |
 | Tests | `scripts/lib/tests/` and `scripts/plugins/tests/` (vitest) |
 | Manifest output | `dist/skills/manifest.json`, `dist/skills/cli-manifest.json`, `dist/skills/skill-menu.json` |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |
-| JSON Schema for the CLI manifest | `transformation-config/cli-manifest.schema.json` → copied to `dist/skills/` on every build |
+| JSON Schema for the CLI manifest | `context/cli-manifest.schema.json` → copied to `dist/skills/` on every build |
 
 ## The `cli:` block (read [CONTRIBUTING.md](CONTRIBUTING.md) before editing)
 
