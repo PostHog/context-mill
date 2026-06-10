@@ -9,12 +9,7 @@ import {
     expandSkillGroups,
     serializeSkill,
 } from '../skill-generator.js';
-import { generateCliManifest, validateCliManifest } from '../build-phases.js';
-
-const SCHEMA_PATH = join(
-    import.meta.dirname,
-    '../../../context/cli-manifest.schema.json',
-);
+import { generateCliManifest } from '../build-phases.js';
 
 function createFixture(tree, baseDir) {
     for (const [name, content] of Object.entries(tree)) {
@@ -401,85 +396,5 @@ describe('generateCliManifest', () => {
                 manifest: baseManifest,
             }),
         ).toThrow(/only valid on a leaf inside a family/);
-    });
-});
-
-describe('validateCliManifest (manifest matches published schema)', () => {
-    const baseManifest = {
-        version: '1.0',
-        buildVersion: 'test',
-        buildTimestamp: '2026-06-08T00:00:00.000Z',
-    };
-
-    it('accepts a manifest the emitter actually produces', () => {
-        const manifest = generateCliManifest({
-            allSkills: [
-                { id: 'revenue-analytics-setup', displayName: 'Revenue', description: 'd',
-                  cli: { role: 'command', command: 'revenue-analytics' } },
-                { id: 'audit', displayName: 'Audit', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'all', recommended: true } },
-                { id: 'audit-events', displayName: 'Audit events', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'events' } },
-            ],
-            manifest: baseManifest,
-        });
-        expect(() => validateCliManifest(manifest, SCHEMA_PATH)).not.toThrow();
-    });
-
-    it('accepts an empty manifest', () => {
-        const manifest = generateCliManifest({ allSkills: [], manifest: baseManifest });
-        expect(() => validateCliManifest(manifest, SCHEMA_PATH)).not.toThrow();
-    });
-
-    it('rejects an entry missing a required field', () => {
-        const bad = {
-            ...baseManifest,
-            entries: [{ skillId: 'x', role: 'command', command: 'events' }], // no displayName/description
-        };
-        expect(() => validateCliManifest(bad, SCHEMA_PATH)).toThrow(/failed validation/);
-    });
-
-    it('rejects an entry with an unknown field (additionalProperties: false)', () => {
-        const bad = {
-            ...baseManifest,
-            entries: [{
-                skillId: 'x', role: 'command', command: 'events',
-                displayName: 'X', description: 'd', surprise: true,
-            }],
-        };
-        expect(() => validateCliManifest(bad, SCHEMA_PATH)).toThrow(/failed validation/);
-    });
-
-    it('rejects a role outside the enum', () => {
-        const bad = {
-            ...baseManifest,
-            entries: [{
-                skillId: 'x', role: 'banana',
-                displayName: 'X', description: 'd',
-            }],
-        };
-        expect(() => validateCliManifest(bad, SCHEMA_PATH)).toThrow(/failed validation/);
-    });
-
-    it('rejects a command-role entry with no command (if/then rule)', () => {
-        const bad = {
-            ...baseManifest,
-            entries: [{
-                skillId: 'x', role: 'command',
-                displayName: 'X', description: 'd',
-            }],
-        };
-        expect(() => validateCliManifest(bad, SCHEMA_PATH)).toThrow(/failed validation/);
-    });
-
-    it('allows a skill-role entry with no command', () => {
-        const ok = {
-            ...baseManifest,
-            entries: [{
-                skillId: 'x', role: 'skill',
-                displayName: 'X', description: 'd',
-            }],
-        };
-        expect(() => validateCliManifest(ok, SCHEMA_PATH)).not.toThrow();
     });
 });

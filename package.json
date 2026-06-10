@@ -16,7 +16,6 @@
     "security-scan:skills": "node scripts/scan-warlock.js dist/skills"
   },
   "devDependencies": {
-    "ajv": "^8.20.0",
     "archiver": "^7.0.1",
     "chokidar": "^4.0.3",
     "vitest": "^2.0.0"

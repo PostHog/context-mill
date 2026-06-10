@@ -9,7 +9,6 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import archiver from 'archiver';
-import Ajv from 'ajv';
 import { generateSkillsByIds } from './skill-generator.js';
 import { REPO_URL } from './constants.js';
 
@@ -200,21 +199,13 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
 
     const cliManifest = generateCliManifest({ allSkills, manifest });
-
-    // Validate our own output against the schema we publish — so a manifest
-    // that violates the schema fails the build here, in this repo, instead of
-    // later in the wizard's prebuild. Closes the gap where the schema and the
-    // emitter could silently drift apart.
-    const schemaSrc = path.join(configDir, 'cli-manifest.schema.json');
-    if (fs.existsSync(schemaSrc)) {
-        validateCliManifest(cliManifest, schemaSrc);
-    }
-
     fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
 
-    // Co-publish the JSON Schema for the cli manifest. Downstream
-    // consumers (e.g. the wizard's prebuild) validate against this to
-    // catch schema drift before snapshotting.
+    // Co-publish the JSON Schema for the cli manifest. The wizard fetches this
+    // at runtime to validate the manifest it pulls — validation lives on the
+    // consumer side, so context-mill publishes the contract but doesn't
+    // self-validate against it.
+    const schemaSrc = path.join(configDir, 'cli-manifest.schema.json');
     if (fs.existsSync(schemaSrc)) {
         fs.copyFileSync(schemaSrc, path.join(skillsDir, 'cli-manifest.schema.json'));
     }
@@ -305,36 +296,6 @@ function validateRecommended(entries) {
 }
 
 /**
- * Validate a generated cli manifest against the JSON Schema we publish
- * (`cli-manifest.schema.json`). Throws a readable error listing every schema
- * violation when the manifest doesn't match. Uses the same validator (ajv) and
- * the same schema file the wizard's prebuild uses, so "valid here" means
- * "valid there".
- *
- * This is structural validation only — the semantic naming rules (reserved
- * words, the command-required-when-role-command fallback) live in the build
- * (`parseCliBlock` / `resolveVariantCli`), not in the schema.
- *
- * @param {object} cliManifest - the manifest object from `generateCliManifest`
- * @param {string} schemaPath - path to `cli-manifest.schema.json`
- */
-function validateCliManifest(cliManifest, schemaPath) {
-    const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
-    const ajv = new Ajv({ allErrors: true, strict: false });
-    const validate = ajv.compile(schema);
-    if (!validate(cliManifest)) {
-        const details = (validate.errors || [])
-            .map(e => `  - ${e.instancePath || '(root)'} ${e.message}`)
-            .join('\n');
-        throw new Error(
-            `cli-manifest.json failed validation against cli-manifest.schema.json:\n${details}\n\n` +
-            'The build produced a manifest that violates the schema it ships. ' +
-            'Reconcile the emitter (generateCliManifest) and the schema so they agree.',
-        );
-    }
-}
-
-/**
  * Delete `dist/skills/<id>.zip` files whose IDs are no longer in `allSkills`.
  * Returns the array of removed filenames.
  */
@@ -419,7 +380,6 @@ export {
     createBundledArchive,
     generateManifest,
     generateCliManifest,
-    validateCliManifest,
     writeManifestAndMenu,
     reconcileOrphans,
     partialRebuild,
