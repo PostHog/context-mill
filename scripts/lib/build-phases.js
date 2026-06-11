@@ -191,14 +191,23 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
             downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
         });
     }
+
+    // The CLI entries are the lookup table the wizard's runtime resolver uses
+    // (parentCommand + command -> skillId). They live inside skill-menu.json
+    // so the wizard can reach them through the existing fetchSkillMenu path.
+    // cli-manifest.json still ships with the same array under `entries` for
+    // back-compat with the still-baked older wizard; it's slated for removal
+    // once that wizard release ages out.
+    const cliManifest = generateCliManifest({ allSkills, manifest });
+
     const skillMenu = {
         version: manifest.version,
         buildVersion: manifest.buildVersion,
         categories: skillsByCategory,
+        cliEntries: cliManifest.entries,
     };
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
 
-    const cliManifest = generateCliManifest({ allSkills, manifest });
     fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
 
     return manifest;
