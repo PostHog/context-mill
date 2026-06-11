@@ -18,7 +18,7 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 | Build pipeline | `scripts/lib/` (skill generator, build phases, change router) |
 | Build entrypoints | `scripts/build.js` (full) and `scripts/dev-server.js` (partial / watch) |
 | Tests | `scripts/lib/tests/` and `scripts/plugins/tests/` (vitest) |
-| Manifest output | `dist/skills/manifest.json`, `dist/skills/cli-manifest.json`, `dist/skills/skill-menu.json` |
+| Manifest output | `dist/skills/manifest.json`, `dist/skills/skill-menu.json` (CLI entries live under `cliEntries`) |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |
 
 ## The `cli:` block (read [CONTRIBUTING.md](CONTRIBUTING.md) before editing)
@@ -62,10 +62,11 @@ abstraction. Restructure to a family when a second vendor lands. See
 1. Read [CONTRIBUTING.md § Promotion criterion for `role: command`](CONTRIBUTING.md#promotion-criterion-for-role-command).
 2. Run `npm test` — the parser's test suite (`scripts/lib/tests/cli-block.test.js`)
    covers every naming-convention case.
-3. Run `npm run build` — confirm the entry appears (or disappears) in
-   `dist/skills/cli-manifest.json` with the values you expect.
-4. The wizard's next release picks up the change automatically. No wizard
-   PR needed unless the change requires wizard-side hooks (custom outro,
+3. Run `npm run build` — confirm the entry appears (or disappears) under
+   `cliEntries` inside `dist/skills/skill-menu.json` with the values you
+   expect.
+4. The wizard resolves new entries at runtime, so no wizard release is
+   required unless the change needs wizard-side hooks (custom outro,
    content blocks, abort cases).
 5. **Flag the wizard maintainer:** the wizard ships a committed
    `docs/cli.md` auto-generated from the manifest. When the wizard

@@ -195,27 +195,23 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     // The CLI entries are the lookup table the wizard's runtime resolver uses
     // (parentCommand + command -> skillId). They live inside skill-menu.json
     // so the wizard can reach them through the existing fetchSkillMenu path.
-    // cli-manifest.json still ships with the same array under `entries` for
-    // back-compat with the still-baked older wizard; it's slated for removal
-    // once that wizard release ages out.
-    const cliManifest = generateCliManifest({ allSkills, manifest });
+    const cliEntries = generateCliEntries({ allSkills });
 
     const skillMenu = {
         version: manifest.version,
         buildVersion: manifest.buildVersion,
         categories: skillsByCategory,
-        cliEntries: cliManifest.entries,
+        cliEntries,
     };
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
-
-    fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
 
     return manifest;
 }
 
 /**
- * Build the CLI manifest object from the expanded skill list. Used by
- * `writeManifestAndMenu` and exercised directly by tests. Throws on an
+ * Build the CLI entries array from the expanded skill list. Used by
+ * `writeManifestAndMenu` (which embeds the result in `skill-menu.json`
+ * under `cliEntries`) and exercised directly by tests. Throws on an
  * invalid `recommended:` arrangement (see `validateRecommended`) so the
  * build fails before bad data reaches the wizard.
  *
@@ -227,10 +223,10 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
  *   { skillId, role, command?, parentCommand?, recommended?, displayName, description }
  *
  * Entries are sorted by role (command first, then skill, then internal),
- * then by `parentCommand`/`command` so diffs in `cli-manifest.json` stay
+ * then by `parentCommand`/`command` so diffs in `skill-menu.json` stay
  * reviewable.
  */
-function generateCliManifest({ allSkills, manifest }) {
+function generateCliEntries({ allSkills }) {
     const roleOrder = { command: 0, skill: 1, internal: 2 };
     const entries = allSkills
         .filter(s => s.cli)
@@ -254,17 +250,7 @@ function generateCliManifest({ allSkills, manifest }) {
             return (a.command || '').localeCompare(b.command || '');
         });
     validateRecommended(entries);
-    return {
-        // `version` is shared with the main manifest (it's uri-schema.yaml's
-        // `manifest_version`). There's no CLI-manifest-only version knob —
-        // bumping it bumps both manifests' version. If the CLI manifest shape
-        // ever needs to change independently of the main manifest, give it its
-        // own version field rather than reusing this one.
-        version: manifest.version,
-        buildVersion: manifest.buildVersion,
-        buildTimestamp: manifest.buildTimestamp,
-        entries,
-    };
+    return entries;
 }
 
 /**
@@ -379,7 +365,7 @@ export {
     zipSkillToBuffer,
     createBundledArchive,
     generateManifest,
-    generateCliManifest,
+    generateCliEntries,
     writeManifestAndMenu,
     reconcileOrphans,
     partialRebuild,

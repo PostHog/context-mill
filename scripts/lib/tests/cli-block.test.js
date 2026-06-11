@@ -9,7 +9,7 @@ import {
     expandSkillGroups,
     serializeSkill,
 } from '../skill-generator.js';
-import { generateCliManifest } from '../build-phases.js';
+import { generateCliEntries } from '../build-phases.js';
 
 function createFixture(tree, baseDir) {
     for (const [name, content] of Object.entries(tree)) {
@@ -293,43 +293,31 @@ describe('expandSkillGroups with cli blocks', () => {
     });
 });
 
-describe('generateCliManifest', () => {
-    const baseManifest = {
-        version: '1.0',
-        buildVersion: 'test',
-        buildTimestamp: '2026-06-08T00:00:00.000Z',
-    };
-
+describe('generateCliEntries', () => {
     it('emits only skills with a cli block', () => {
         const skills = [
             { id: 'integration-django', displayName: 'Django', description: 'd' },
             { id: 'audit-events', displayName: 'Audit events', description: 'a',
               cli: { role: 'command', parentCommand: 'audit', command: 'events' } },
         ];
-        const manifest = generateCliManifest({ allSkills: skills, manifest: baseManifest });
-        expect(manifest.entries).toHaveLength(1);
-        expect(manifest.entries[0].skillId).toBe('audit-events');
+        const entries = generateCliEntries({ allSkills: skills });
+        expect(entries).toHaveLength(1);
+        expect(entries[0].skillId).toBe('audit-events');
     });
 
-    it('carries version + buildVersion + buildTimestamp through', () => {
-        const manifest = generateCliManifest({ allSkills: [], manifest: baseManifest });
-        expect(manifest).toMatchObject({
-            version: '1.0',
-            buildVersion: 'test',
-            buildTimestamp: '2026-06-08T00:00:00.000Z',
-            entries: [],
-        });
+    it('returns an empty array when no skills declare a cli block', () => {
+        const entries = generateCliEntries({ allSkills: [] });
+        expect(entries).toEqual([]);
     });
 
     it('omits command and parentCommand when not set on the cli block', () => {
-        const manifest = generateCliManifest({
+        const entries = generateCliEntries({
             allSkills: [
                 { id: 'doctor', displayName: 'Doctor', description: 'd',
                   cli: { role: 'skill' } },
             ],
-            manifest: baseManifest,
         });
-        expect(manifest.entries[0]).toEqual({
+        expect(entries[0]).toEqual({
             skillId: 'doctor',
             role: 'skill',
             displayName: 'Doctor',
@@ -338,7 +326,7 @@ describe('generateCliManifest', () => {
     });
 
     it('sorts entries by role, then parentCommand, then command', () => {
-        const manifest = generateCliManifest({
+        const entries = generateCliEntries({
             allSkills: [
                 { id: 'b-skill', displayName: 'B', description: 'd', cli: { role: 'skill' } },
                 { id: 'a-int', displayName: 'A', description: 'd', cli: { role: 'internal' } },
@@ -349,22 +337,20 @@ describe('generateCliManifest', () => {
                 { id: 'revenue', displayName: 'R', description: 'd',
                   cli: { role: 'command', command: 'revenue' } },
             ],
-            manifest: baseManifest,
         });
-        const order = manifest.entries.map(e => e.skillId);
+        const order = entries.map(e => e.skillId);
         // command flat (no parent) sorts before grouped 'audit', then skill, then internal
         expect(order).toEqual(['revenue', 'audit-all', 'audit-events', 'b-skill', 'a-int']);
     });
 
     it('carries recommended:true through into the entry', () => {
-        const manifest = generateCliManifest({
+        const entries = generateCliEntries({
             allSkills: [
                 { id: 'audit-all', displayName: 'Audit', description: 'd',
                   cli: { role: 'command', parentCommand: 'audit', command: 'all', recommended: true } },
             ],
-            manifest: baseManifest,
         });
-        expect(manifest.entries[0]).toMatchObject({
+        expect(entries[0]).toMatchObject({
             skillId: 'audit-all',
             parentCommand: 'audit',
             command: 'all',
@@ -374,26 +360,24 @@ describe('generateCliManifest', () => {
 
     it('throws when a family has more than one recommended leaf', () => {
         expect(() =>
-            generateCliManifest({
+            generateCliEntries({
                 allSkills: [
                     { id: 'audit-all', displayName: 'A', description: 'd',
                       cli: { role: 'command', parentCommand: 'audit', command: 'all', recommended: true } },
                     { id: 'audit-events', displayName: 'AE', description: 'd',
                       cli: { role: 'command', parentCommand: 'audit', command: 'events', recommended: true } },
                 ],
-                manifest: baseManifest,
             }),
         ).toThrow(/Family "audit" has more than one cli\.recommended leaf/);
     });
 
     it('throws when recommended is set on a flat command with no parentCommand', () => {
         expect(() =>
-            generateCliManifest({
+            generateCliEntries({
                 allSkills: [
                     { id: 'revenue', displayName: 'R', description: 'd',
                       cli: { role: 'command', command: 'revenue', recommended: true } },
                 ],
-                manifest: baseManifest,
             }),
         ).toThrow(/only valid on a leaf inside a family/);
     });

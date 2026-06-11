@@ -9,9 +9,10 @@ manifest, see the [README](README.md).
 Every skill ships with a `config.yaml`. An optional `cli:` block on that
 config tells the PostHog wizard whether and how this skill appears as a
 command. The block is parsed in `scripts/lib/skill-generator.js` and
-emitted into `dist/skills/cli-manifest.json` alongside the regular
-manifest. The wizard snapshots that file at build time and turns each
-entry into a registered command.
+emitted as `cliEntries` inside `dist/skills/skill-menu.json`. The wizard
+fetches `skill-menu.json` at runtime and registers each entry as a
+command, so adding a new skill-backed command is a context-mill release
+— no wizard release needed.
 
 ### The `cli:` block schema
 
@@ -199,9 +200,10 @@ When you've decided your skill meets the `role: command` criterion:
 1. Add the `cli:` block to the skill's `config.yaml` with `role:
    command`, the right `parentCommand` (if it nests under an existing
    family), and `command`.
-2. Confirm `npm run build` emits the entry in
-   `dist/skills/cli-manifest.json` with the right `parentCommand` /
-   `command` values. The wizard's next release picks it up automatically.
+2. Confirm `npm run build` emits the entry under `cliEntries` inside
+   `dist/skills/skill-menu.json` with the right `parentCommand` /
+   `command` values. The wizard picks it up on its next invocation
+   (no wizard release needed).
 3. No wizard PR is needed for skill-backed public commands. If you also
    need wizard-side hooks (custom outro, content blocks, abort cases),
    that's a wizard PR — but the CLI registration is handled by the
@@ -239,7 +241,7 @@ manifest is published before the wizard tries to consume it.
 
 - Skill schema details: `scripts/lib/skill-generator.js`
   (`parseCliBlock`, `expandSkillGroups`, JSDoc typedef for the `cli:` block)
-- CLI manifest emit: `scripts/lib/build-phases.js` (`generateCliManifest`)
+- CLI entries emit: `scripts/lib/build-phases.js` (`generateCliEntries`)
 - Tests for the cli block parser: `scripts/lib/tests/cli-block.test.js`
 - The wizard's side of the contract: [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md)
 
