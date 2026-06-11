@@ -201,15 +201,6 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     const cliManifest = generateCliManifest({ allSkills, manifest });
     fs.writeFileSync(path.join(skillsDir, 'cli-manifest.json'), JSON.stringify(cliManifest, null, 2));
 
-    // Co-publish the JSON Schema for the cli manifest. The wizard fetches this
-    // at runtime to validate the manifest it pulls — validation lives on the
-    // consumer side, so context-mill publishes the contract but doesn't
-    // self-validate against it.
-    const schemaSrc = path.join(configDir, 'cli-manifest.schema.json');
-    if (fs.existsSync(schemaSrc)) {
-        fs.copyFileSync(schemaSrc, path.join(skillsDir, 'cli-manifest.schema.json'));
-    }
-
     return manifest;
 }
 

@@ -49,6 +49,41 @@ release notes. Forced abstraction (`wizard migrate <vendor>` with one
 vendor) is worse than the breaking change you'd cause later — that
 change is real and worth notifying users about explicitly.
 
+### Migrating a flat command into a family
+
+When a flat command needs to grow into a family (a second option arrived,
+the original is being renamed, etc.), the `cli:` block restructures like
+this:
+
+```yaml
+# Before — flat command. Registers `wizard investigate`.
+cli:
+  role: command
+  command: investigate
+
+# After — family with a subcommand. Registers `wizard investigate events`.
+cli:
+  role: command
+  parentCommand: investigate
+  command: events
+```
+
+**This is a breaking change for users.** Anyone scripting the old flat
+form (e.g. `wizard investigate` in CI) will break the moment the new
+manifest ships — the parent name now expects a subcommand and opens the
+family picker. Treat this exactly like any other breaking CLI change:
+
+1. Land the YAML change in context-mill.
+2. Call out the migration explicitly in the wizard release notes for the
+   release that picks up the new manifest — what the old command was,
+   what the new shape is, and what users need to change.
+3. If the old flat name is still meaningful as a default leaf of the new
+   family, mark that leaf `recommended: true` so `wizard investigate` →
+   Enter still runs the intended action with one keystroke.
+
+Going the other way — collapsing a family back to a flat command — works
+the same way and is also a breaking change. Don't do it casually.
+
 ### Naming rule — no shorthand for product names
 
 Use the **full PostHog product name** with hyphens, not abbreviations.

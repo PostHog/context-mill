@@ -20,7 +20,6 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 | Tests | `scripts/lib/tests/` and `scripts/plugins/tests/` (vitest) |
 | Manifest output | `dist/skills/manifest.json`, `dist/skills/cli-manifest.json`, `dist/skills/skill-menu.json` |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |
-| JSON Schema for the CLI manifest | `context/cli-manifest.schema.json` → copied to `dist/skills/` on every build |
 
 ## The `cli:` block (read [CONTRIBUTING.md](CONTRIBUTING.md) before editing)
 
