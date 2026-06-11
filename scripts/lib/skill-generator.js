@@ -7,6 +7,102 @@
  * - Commandments (based on tags)
  */
 
+/**
+ * Optional `cli:` block in a skill's `config.yaml`.
+ *
+ * Declares whether and how the skill appears in the wizard CLI.
+ * Parsed by `parseCliBlock`, propagated by `expandSkillGroups`, and
+ * emitted into `dist/skills/cli-manifest.json` by `writeManifestAndMenu`.
+ * The wizard snapshots that manifest at build time to derive its
+ * skill-backed command surface.
+ *
+ * The `command` / `parentCommand` names match the wizard's existing
+ * `ProgramConfig.command` / `parentCommand` convention so contributors
+ * only learn one vocabulary.
+ *
+ * Three values for `role`:
+ *   - `command`  — appears as a normal wizard command.
+ *   - `skill`    — reachable only via `wizard skill <id>`.
+ *   - `internal` — hidden everywhere, only reachable via the
+ *                  `--skill=<id>` dev escape hatch.
+ *
+ * Skills with no `cli:` block default to the `skill` role and are not
+ * emitted into `cli-manifest.json`.
+ *
+ * The block may sit at the group level (defaults for every variant) or
+ * inside a single variant (overrides the group-level defaults). When
+ * `role: 'command'` and `command` is not set explicitly, the variant
+ * id is used as the command name — except for the magic `id: all`
+ * variant, where an explicit `command` is required.
+ *
+ * ## Flat vs. family
+ *
+ * The wizard's convention: a command is **flat** when there's
+ * only one option today, **a family** when the user must pick among
+ * multiple. Don't pre-create a family form for a single-option command
+ * (no `wizard revenue-analytics stripe` while Stripe is the only
+ * provider) — that's forced abstraction. When a second option arrives,
+ * restructure to a family at that moment; the wizard release notes
+ * call out the UX change for existing users.
+ *
+ * ## Naming rule — no shorthand for product names
+ *
+ * Use the full PostHog product name with hyphens, not abbreviations:
+ *   `wizard audit feature-flags`        not `wizard audit flags`
+ *   `wizard audit session-replay`       not `wizard audit replay`
+ *   `wizard revenue-analytics`          not `wizard revenue`
+ *
+ * ## Mapping table — YAML on the left, registered command on the right
+ *
+ *   # 1. Flat command (`wizard revenue-analytics`)
+ *   cli:                                          →  wizard revenue-analytics
+ *     role: command
+ *     command: revenue-analytics
+ *
+ *   # 2. Nested command (`wizard audit feature-flags`)
+ *   cli:                                          →  wizard audit feature-flags
+ *     role: command
+ *     parentCommand: audit
+ *     command: feature-flags
+ *
+ *   # 3. Recommended leaf inside a family (`wizard audit` runs this on Enter)
+ *   cli:                                          →  wizard audit all
+ *     role: command                                  Pre-highlighted in the
+ *     parentCommand: audit                           family picker so
+ *     command: all                                   `wizard audit` → Enter
+ *     recommended: true                              runs this leaf.
+ *
+ *   # 4. Reachable as a skill only (`wizard skill <id>`)
+ *   cli:                                          →  wizard skill <skill-id>
+ *     role: skill
+ *
+ * `cli:` only configures the **command shape** — what the user types as
+ * verbs in the tree. Flags and positional arguments (e.g.
+ * `--since=30d`) are configured on the wizard side via
+ * `ProgramConfig.cliOptions`, not here.
+ *
+ * @typedef {Object} CliRoleBlock
+ * @property {'command' | 'skill' | 'internal'} role
+ *   How the skill appears in the wizard CLI: a typed `command`, a
+ *   `skill` reachable via `wizard skill <id>`, or `internal` (hidden).
+ * @property {string} [command]
+ *   The user-typed word that registers this skill (e.g.
+ *   `'feature-flags'` in `wizard audit feature-flags`, or
+ *   `'revenue-analytics'` in `wizard revenue-analytics`).
+ *   Required when `role` is `'command'`; defaults to the variant id
+ *   when omitted, except for the magic `id: all` variant where an
+ *   explicit `command` is required at the group level. Use the full
+ *   PostHog product name, not a shorthand.
+ * @property {string} [parentCommand]
+ *   The command this skill nests under (e.g. `'audit'` for
+ *   `wizard audit events`). Omit for flat / standalone commands.
+ * @property {boolean} [recommended]
+ *   When true, this leaf is pre-highlighted in the family's interactive
+ *   picker. `wizard <family>` → Enter runs this leaf. The picker still
+ *   opens (discovery + consent); `recommended` just makes the obvious
+ *   choice one keystroke. At most one leaf per family should be marked.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
@@ -19,6 +115,147 @@ import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } f
 function loadYaml(configPath) {
     const content = fs.readFileSync(configPath, 'utf8');
     return yaml.load(content);
+}
+
+const CLI_ROLES = ['command', 'skill', 'internal'];
+
+// Naming convention enforcement — see context-mill/CONTRIBUTING.md and the
+// wizard's CONTRIBUTING.md. Failures throw at build time, before drift can
+// ship.
+const KEBAB_CASE = /^[a-z][a-z0-9-]*$/;
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 20;
+const RESERVED_WORDS = new Set([
+    // yargs reserves these for built-in behavior
+    'help',
+    'version',
+    'completion',
+]);
+const INTERNAL_FLAG_NAMES = new Set([
+    // collisions with the wizard's internal mode flags (see CONTRIBUTING.md)
+    'playground',
+    'benchmark',
+    'yara-report',
+    'local-mcp',
+    'ci',
+    'skill',
+]);
+
+function validateCommandName(name, field, context) {
+    if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" must be ${NAME_MIN_LENGTH}–${NAME_MAX_LENGTH} characters`,
+        );
+    }
+    if (!KEBAB_CASE.test(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" must be kebab-case (lowercase letters, digits, hyphens; start with a letter)`,
+        );
+    }
+    if (RESERVED_WORDS.has(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" collides with a yargs reserved word (${[...RESERVED_WORDS].join(', ')})`,
+        );
+    }
+    if (INTERNAL_FLAG_NAMES.has(name)) {
+        throw new Error(
+            `${context}: cli.${field} "${name}" collides with a wizard internal flag (${[...INTERNAL_FLAG_NAMES].join(', ')})`,
+        );
+    }
+}
+
+/**
+ * Validate and normalize a raw `cli:` block from a skill `config.yaml`.
+ * Returns `null` when the block is absent, throws on malformed input.
+ *
+ * Naming-convention checks (kebab-case, length 2–20, no reserved words,
+ * no internal-flag collisions) run on every `command` and `parentCommand`
+ * value before the resolved block is returned.
+ *
+ * `context` is a human-readable label used in error messages (e.g.
+ * `'Skill group "audit-events"'` or
+ * `'Skill group "migrate", variant "statsig"'`).
+ *
+ * @param {unknown} raw
+ * @param {string} context
+ * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, recommended?: boolean } | null}
+ */
+function parseCliBlock(raw, context) {
+    if (raw == null) return null;
+    if (typeof raw !== 'object' || Array.isArray(raw)) {
+        throw new Error(`${context}: cli block must be an object`);
+    }
+    const { role, command, parentCommand, recommended: isRecommended, ...rest } = raw;
+    const unknownKeys = Object.keys(rest);
+    if (unknownKeys.length > 0) {
+        throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
+    }
+    if (!role) {
+        throw new Error(`${context}: cli.role is required`);
+    }
+    if (!CLI_ROLES.includes(role)) {
+        throw new Error(`${context}: cli.role must be one of ${CLI_ROLES.join(', ')} (got "${role}")`);
+    }
+    const result = { role };
+    if (command != null) {
+        if (typeof command !== 'string' || command.length === 0) {
+            throw new Error(`${context}: cli.command must be a non-empty string when set`);
+        }
+        validateCommandName(command, 'command', context);
+        result.command = command;
+    }
+    if (parentCommand != null) {
+        if (typeof parentCommand !== 'string' || parentCommand.length === 0) {
+            throw new Error(`${context}: cli.parentCommand must be a non-empty string when set`);
+        }
+        validateCommandName(parentCommand, 'parentCommand', context);
+        result.parentCommand = parentCommand;
+    }
+    if (isRecommended != null) {
+        if (typeof isRecommended !== 'boolean') {
+            throw new Error(`${context}: cli.recommended must be a boolean when set`);
+        }
+        if (isRecommended) result.recommended = true;
+    }
+    return result;
+}
+
+/**
+ * Merge a group-level cli block with a variant-level override and fill in
+ * the implicit command name for the `command` role. Returns `null` when
+ * neither level declared a block.
+ *
+ * For `role: 'command'`, the command name falls back to the variant's
+ * short id (e.g. parentCommand `migrate` + variant `statsig` →
+ * `wizard migrate statsig`). The `id: 'all'` variant is special — its
+ * skill id collapses to the group key, so the command name has to be
+ * set explicitly at the group level.
+ *
+ * @param {ReturnType<typeof parseCliBlock>} groupCli
+ * @param {ReturnType<typeof parseCliBlock>} variantCli
+ * @param {{ id: string }} variant
+ * @param {string} groupKey
+ */
+function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
+    if (!groupCli && !variantCli) return null;
+    const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
+    if (merged.role === 'command' && !merged.command) {
+        if (variant.id === 'all') {
+            throw new Error(
+                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when role is command and the variant id is "all"`,
+            );
+        }
+        merged.command = variant.id;
+        // The fallback value bypassed parseCliBlock's checks, so validate it
+        // here too — a variant id like "help" or "CamelCase" must not slip
+        // through into the manifest just because it wasn't typed as a command.
+        validateCommandName(
+            merged.command,
+            'command',
+            `Skill group "${groupKey}", variant "${variant.id}"`,
+        );
+    }
+    return merged;
 }
 
 /**
@@ -101,6 +338,7 @@ function expandSkillGroups(config, configDir) {
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
+        const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -132,6 +370,12 @@ function expandSkillGroups(config, configDir) {
                 ? compositeKeyDashed
                 : `${compositeKeyDashed}-${variation.id}`;
 
+            const variantCli = parseCliBlock(
+                variation.cli,
+                `Skill group "${key}", variant "${variation.id}"`,
+            );
+            const cli = resolveVariantCli(baseCli, variantCli, variation, key);
+
             skills.push({
                 ...variation,
                 id: skillId,
@@ -145,6 +389,7 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _group: key,
+                _cli: cli,
             });
         }
     }
@@ -516,7 +761,7 @@ async function generateSkill({
  * Convert an expanded skill into the manifest-builder shape.
  */
 function serializeSkill(s) {
-    return {
+    const result = {
         id: s.id,
         shortId: s._shortId,
         category: s._category,
@@ -527,6 +772,10 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
+    if (s._cli) {
+        result.cli = s._cli;
+    }
+    return result;
 }
 
 /**
@@ -658,4 +907,6 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    parseCliBlock,
+    resolveVariantCli,
 };

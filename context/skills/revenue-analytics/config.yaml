@@ -3,6 +3,9 @@ type: skill
 template: description.md
 description: Set up Stripe revenue analytics with PostHog
 tags: [revenue-analytics, stripe]
+cli:
+  role: command
+  command: revenue-analytics
 shared_docs:
   - https://posthog.com/docs/revenue-analytics/connect-to-customers.md
   - https://posthog.com/docs/getting-started/identify-users.md
