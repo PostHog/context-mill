@@ -37,12 +37,18 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask` (the source-config to
 }
 ```
 
-2. For each picked tool, check whether its warehouse source is already connected (step 2's project profile lists warehouse sources). For the ones missing, send the user to connect them — **one batched ask**, listing the picked tools and the new-warehouse-source URL from the run prompt, with options "Done — connected them" / "Skip for now". Verify nothing here beyond the user's word; warehouse syncs take time and the source row tolerates arriving first by a moment.
+2. For each picked tool, check whether its warehouse source is already connected — one `external-data-sources-list` call (load via `ToolSearch select:mcp__posthog-wizard__external-data-sources-list`; step 2's project profile also lists warehouse sources when it exists). For the ones missing, send the user to connect them — **one batched ask**, listing the picked tools and the new-warehouse-source URL from the run prompt, with options "Done — connected them" / "Skip for now".
 
-3. Enable the source row (step 5's write recipe) **only** for tools the user confirmed connected:
+3. After "Done — connected them", **verify with one more `external-data-sources-list` call** — users sometimes answer "done" optimistically. Classify each picked tool:
+   - source found → **verified connected**
+   - source absent → **claimed but not detected**
+
+4. Enable the source row (step 5's write recipe) for every tool the user picked (both classes — the row is dormant until its warehouse source syncs, so enabling early is harmless and saves a later trip):
    - Linear → `linear` / `issue`
    - Zendesk → `zendesk` / `ticket`
    - GitHub Issues → `github` / `issue`
    - pganalyze → `pganalyze` / `issue`
 
-4. Tools the user picked but skipped connecting → **don't enable**; record a follow-up: "Connect <tool> as a data warehouse source, then enable its responder in the Inbox's Edit sources." Tools not picked → record "skipped (not used)".
+   Record the class honestly. "Claimed but not detected" must NOT be reported as connected — report it as "responder enabled, but no <tool> warehouse source was detected; it stays dormant until the source is connected and syncing", plus a follow-up with the new-warehouse-source URL.
+
+5. Tools the user picked but skipped connecting → **don't enable**; record a follow-up: "Connect <tool> as a data warehouse source, then enable its responder in the Inbox's Edit sources." Tools not picked → record "skipped (not used)".
