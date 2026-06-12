@@ -22,7 +22,7 @@ Emit:
    - **AI data processing** — approved / pending admin approval. If pending, state plainly that **no findings will appear until an org admin approves it**, with the settings URL.
    - **GitHub** — connected (and whether it was already connected or connected during this run).
    - **Signal sources** — a table of every source you touched or deliberately skipped: `source_product` / `source_type`, action taken (enabled / already enabled / skipped + why / failed).
-   - **Connected tools** — what the user picked, and per tool the verified state from step 6: "connected + responder enabled", "responder enabled but warehouse source not detected (dormant)", or "skipped". Never report a tool as connected unless its warehouse source was actually seen.
+   - **Connected tools** — what the user picked, and per tool the step-6 class: "connected by this setup (source id …, first sync started)", "already connected" / "verified connected", "responder enabled but warehouse source not detected (dormant)", or "skipped". Never report a tool as connected unless this run created its source or saw it in `external-data-sources-list`. For sources this run created, note that only the Signals-consumed table (issues / tickets) is syncing and more can be enabled in the UI.
    - **Scout fleet** — kept-on scouts, disabled scouts with the one-line reason each, or the not-yet-materialized note from step 7.
    - **Follow-ups** — every follow-up recorded along the way, as a checklist. Omit the section if there are none.
    - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start autonomy coding tasks.
