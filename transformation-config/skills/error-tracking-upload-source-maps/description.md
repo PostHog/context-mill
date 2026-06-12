@@ -115,9 +115,10 @@ Source maps are only uploaded when the **production build** runs, so the environ
 #### Tips
 - Reuse the **exact variable names** from "Write credentials to the env file" — the build reads the same names locally and in CI. (`POSTHOG_CLI_*` for direct `posthog-cli`; `POSTHOG_*` for bundler-plugin uploaders.)
 - **In CI, credentials travel as environment variables — never as a file.** Do not materialize a `.env` on the runner (e.g. `printf … > .env` before the build), and never copy or un-ignore one into a Docker image: it's redundant, and a secrets file on disk can leak into artifacts, caches, or image layers. A build script that passes `--dotenv-file .env` to `posthog-cli` works unchanged in CI even though `.env` doesn't exist there: real environment variables take precedence over the file, and a missing file is skipped with a warning.
-- **Never commit secret values.** Reference credentials by name only: Docker `ARG`/`ENV`, or `${{ secrets.* }}` in GitHub Actions. The personal API key stays out of version control.
+- **Never commit secret values.** Reference credentials by name only: Docker `ARG`/`ENV` or BuildKit secret ids, `${{ secrets.* }}` in GitHub Actions. The personal API key stays out of version control.
 - Layers stack — a workflow can call a composite action that runs `docker build` against a Dockerfile. Wire **every** layer the credentials must pass through, from the outer `${{ secrets.* }}` reference down to the `ARG`/`ENV` in the build stage.
 - **Multi-stage Dockerfiles:** put the `ARG`/`ENV` in the **build stage** (where the build command runs), never the runtime stage. That's both correct (the build needs them) and safer (the creds don't get baked into the shipped image).
+- **Single-stage Dockerfiles:** with no separate build stage, `ARG`/`ENV` would bake the API key into the shipped image (`docker inspect` reveals `ENV`; `docker history` can reveal build args). Mount the key as a **BuildKit secret** on the build `RUN` instead — it exists for that command only and is never written to a layer (see the single-stage example). Plain `ARG`/`ENV` stays fine for the non-secret project ID and host.
 - **Composite / reusable actions can't read `secrets`.** Inside a `.github/actions/*/action.yml` only `${{ inputs.* }}` is available. Add an `inputs:` entry per credential, reference `${{ inputs.* }}` there, and pass `${{ secrets.* }}` from the calling workflow's `with:` block.
 - **Build over SSH:** the runner's env doesn't reach the remote box. Set the vars inline immediately before the build command inside the `script:`. `${{ secrets.* }}` is substituted by Actions *before* the script is sent, so the value travels with the script.
 - **The worked examples are exemplars, not an allowlist.** For any provider not shown (GitLab CI, CircleCI, Jenkins, Bitbucket, Azure Pipelines, …), apply the same principle with your knowledge of that provider: find the job that runs the production build, expose the credentials there via the provider's native secret mechanism (GitLab project CI/CD variables, CircleCI project env vars / contexts, Jenkins credentials + `withCredentials`, …), and cross the same boundaries the same way — Docker builds still need `--build-arg`, SSH sessions still need inline vars.
@@ -139,6 +140,20 @@ Source maps are only uploaded when the **production build** runs, so the environ
   RUN npm run build   # now sees the upload credentials
   ```
   With no CI wiring the image, tell the user to pass them when they build: `docker build --build-arg POSTHOG_CLI_API_KEY=… --build-arg POSTHOG_CLI_PROJECT_ID=… --build-arg POSTHOG_CLI_HOST=… .`
+- **Single-stage Dockerfile (BuildKit secret)** When build and runtime share one stage, pass the API key as a BuildKit secret so it never lands in the image; keep `ARG`/`ENV` for the non-secret project ID and host:
+  ```dockerfile
+  # syntax=docker/dockerfile:1
+  FROM node:22-slim
+  WORKDIR /app
+  # ...
+  ARG POSTHOG_CLI_PROJECT_ID
+  ARG POSTHOG_CLI_HOST
+  ENV POSTHOG_CLI_PROJECT_ID=$POSTHOG_CLI_PROJECT_ID \
+      POSTHOG_CLI_HOST=$POSTHOG_CLI_HOST
+  RUN --mount=type=secret,id=POSTHOG_CLI_API_KEY,env=POSTHOG_CLI_API_KEY \
+      npm run build
+  ```
+  Build with `docker build --secret id=POSTHOG_CLI_API_KEY,env=POSTHOG_CLI_API_KEY --build-arg POSTHOG_CLI_PROJECT_ID=… --build-arg POSTHOG_CLI_HOST=… .`. In `docker/build-push-action`, pass the key through the `secrets:` input (`POSTHOG_CLI_API_KEY=${{ secrets.POSTHOG_CLI_API_KEY }}`) instead of `build-args:`. The `env=` attribute on `--mount` needs a current BuildKit — keep the `# syntax=docker/dockerfile:1` line; on engines too old for it, read the file form instead: `RUN --mount=type=secret,id=POSTHOG_CLI_API_KEY POSTHOG_CLI_API_KEY=$(cat /run/secrets/POSTHOG_CLI_API_KEY) npm run build`.
 - **GitHub Actions — inline build step** Build runs on the runner; expose the creds with `env:` on that step:
   ```yaml
   - name: Build
