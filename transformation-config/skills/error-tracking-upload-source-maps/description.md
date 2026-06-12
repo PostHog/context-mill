@@ -114,14 +114,14 @@ Source maps are only uploaded when the **production build** runs, so the environ
 
 #### Tips
 - Reuse the **exact variable names** from "Write credentials to the env file" — the build reads the same names locally and in CI. (`POSTHOG_CLI_*` for direct `posthog-cli`; `POSTHOG_*` for bundler-plugin uploaders.)
-- A build script that passes `--dotenv-file .env` to `posthog-cli` works unchanged in CI even though `.env` doesn't exist there: real environment variables take precedence over the file, and a missing file is skipped with a warning. Never copy `.env` into a Docker image (or un-ignore it) to "fix" CI — that ships the secret.
+- **In CI, credentials travel as environment variables — never as a file.** Do not materialize a `.env` on the runner (e.g. `printf … > .env` before the build), and never copy or un-ignore one into a Docker image: it's redundant, and a secrets file on disk can leak into artifacts, caches, or image layers. A build script that passes `--dotenv-file .env` to `posthog-cli` works unchanged in CI even though `.env` doesn't exist there: real environment variables take precedence over the file, and a missing file is skipped with a warning.
 - **Never commit secret values.** Reference credentials by name only: Docker `ARG`/`ENV`, or `${{ secrets.* }}` in GitHub Actions. The personal API key stays out of version control.
 - Layers stack — a workflow can call a composite action that runs `docker build` against a Dockerfile. Wire **every** layer the credentials must pass through, from the outer `${{ secrets.* }}` reference down to the `ARG`/`ENV` in the build stage.
 - **Multi-stage Dockerfiles:** put the `ARG`/`ENV` in the **build stage** (where the build command runs), never the runtime stage. That's both correct (the build needs them) and safer (the creds don't get baked into the shipped image).
 - **Composite / reusable actions can't read `secrets`.** Inside a `.github/actions/*/action.yml` only `${{ inputs.* }}` is available. Add an `inputs:` entry per credential, reference `${{ inputs.* }}` there, and pass `${{ secrets.* }}` from the calling workflow's `with:` block.
 - **Build over SSH:** the runner's env doesn't reach the remote box. Set the vars inline immediately before the build command inside the `script:`. `${{ secrets.* }}` is substituted by Actions *before* the script is sent, so the value travels with the script.
 - **The worked examples are exemplars, not an allowlist.** For any provider not shown (GitLab CI, CircleCI, Jenkins, Bitbucket, Azure Pipelines, …), apply the same principle with your knowledge of that provider: find the job that runs the production build, expose the credentials there via the provider's native secret mechanism (GitLab project CI/CD variables, CircleCI project env vars / contexts, Jenkins credentials + `withCredentials`, …), and cross the same boundaries the same way — Docker builds still need `--build-arg`, SSH sessions still need inline vars.
-- **Make only the edits the provider actually needs.** Some providers inject project-level variables straight into every job's environment — GitLab CI/CD variables work this way — so an inline build step may need **no pipeline-file change at all**; the job is done once you've told the user exactly which variables to create and where.
+- **Make only the edits the provider actually needs.** Some providers inject project-level variables straight into every job's environment — GitLab CI/CD variables work this way — so an inline build step may need **no functional pipeline change at all**. When that's the conclusion, still add a short comment on the build job naming the required variables and where to create them (see the GitLab example) — the requirement must be visible in the repo, not only in your hand-off — and tell the user exactly which variables to create and where.
 - You can't create CI secrets. Whenever the pipeline reads a credential, tell the user where to add it before their next deploy — GitHub: **Settings → Secrets and variables → Actions**; GitLab: **Settings → CI/CD → Variables**; other providers: their equivalent secret store. The pipeline can't read a secret that doesn't exist yet.
 
 #### Examples
@@ -204,7 +204,21 @@ Source maps are only uploaded when the **production build** runs, so the environ
         POSTHOG_CLI_HOST="${{ secrets.POSTHOG_CLI_HOST }}" \
           npm run build
   ```
-- **GitLab CI (`.gitlab-ci.yml`)** Project CI/CD variables are injected into every job's environment automatically, so a job that runs the build inline (`script: - npm run build`) needs **no YAML change** — tell the user to add the credentials under **Settings → CI/CD → Variables** and the next pipeline picks them up. Edits are only needed when a boundary is crossed: a job that runs `docker build` must forward them (`--build-arg POSTHOG_CLI_API_KEY="$POSTHOG_CLI_API_KEY" …`) into the Dockerfile's build stage (see the Dockerfile example), and a job that builds over SSH must set them inline before the remote build command, exactly like the SSH example above.
+- **GitLab CI (`.gitlab-ci.yml`)** Project CI/CD variables are injected into every job's environment automatically, so a job that runs the build inline (`script: - npm run build`) needs **no functional YAML change** — no `variables:` block, and do NOT add a script line that writes the variables into a `.env` file (`printf … > .env`, `echo … >> .env`, etc.); the build already sees them as environment variables, which take precedence over any dotenv file. DO leave a comment on the build job so the requirement is visible in the repo, not only in your hand-off:
+  ```yaml
+  build:
+    stage: build
+    # PostHog source map upload: this job needs POSTHOG_CLI_API_KEY,
+    # POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_HOST available as CI/CD
+    # variables (Settings → CI/CD → Variables); GitLab injects them into
+    # the job automatically. Mark them Masked — but Protected only if this
+    # job runs exclusively on protected branches, otherwise feature-branch
+    # builds fail with missing credentials.
+    script:
+      - npm ci
+      - npm run build
+  ```
+  Then tell the user to add those variables in **Settings → CI/CD → Variables** and the next pipeline picks them up. Edits beyond the comment are only needed when a boundary is crossed: a job that runs `docker build` must forward them (`--build-arg POSTHOG_CLI_API_KEY="$POSTHOG_CLI_API_KEY" …`) into the Dockerfile's build stage (see the Dockerfile example), and a job that builds over SSH must set them inline before the remote build command, exactly like the SSH example above.
 - **Other CI providers (CircleCI, Jenkins, Bitbucket, Azure Pipelines, …)** Same recipe, provider-native mechanics: open the pipeline config, find the job that runs the production build, expose the credentials to that job via the provider's secret store, and thread them through any Docker/SSH boundary just like the examples above. Reference credentials by name only, then tell the user each secret to create and exactly where in the provider's UI it goes.
 - **Untraceable setup** No `Dockerfile`, no CI config, and no build step you can trace: make no CI changes. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
 
