@@ -99,25 +99,6 @@ Resolve two concrete commands for this project: the production **build** command
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
-### Test the local setup
-
-Optionally add a temporary, clearly-labeled affordance that captures one test exception, so you can confirm errors arrive in Error Tracking with a source-resolved stack trace after the next production build. Always remove it afterwards.
-
-#### Tips
-- The handler must call the SDK's exception-capture method **directly** — do **not** `throw`. Throwing depends on the global error handler and shows a dev overlay; a direct capture is deterministic across platforms.
-- Pass a single Error (or platform-equivalent throwable). No custom message beyond the Error, no extra properties, no second argument — the Error's stack trace is what gets resolved.
-- Use distinctive copy on the trigger (button label / route path) so the resulting event is easy to find in the UI.
-- Read any file before editing it and capture its exact contents; after testing, restore every touched file and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
-- The upload only happens on the *production build*: build, run, trigger the error, then confirm the stack trace in Error Tracking points at real source files, not minified bundle paths.
-
-#### Examples
-- **Browser / SPA / SSR (web, react, nextjs, nuxt, angular, vite, webpack, rollup)** Add a button such as "Test PostHog Error Tracking" on the home/root page whose onClick calls `posthog.captureException(new Error("PostHog source maps test"))`.
-- **Node.js** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that calls `posthog.captureException(new Error("PostHog source maps test"))` and returns 200. With no HTTP layer, add the capture to the existing entry script where the client is initialised rather than creating a new file. Tell the user the exact command/URL to hit.
-- **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`.
-- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick captures a `Throwable` via the PostHog SDK, per the reference.
-- **iOS (Swift)** Add a `UIButton` on the root view controller whose action captures an `NSError` via the PostHog SDK, per the reference.
-- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
-
 ### Set up CI for automatic uploads
 
 Source maps are only uploaded when the **production build** runs, so the environment that builds and deploys your app needs the same upload credentials you put in the env file. The whole job is: **find where the production build command actually runs, then make the upload credentials reachable at that exact spot.** The build is where maps inject + upload, and env does **not** automatically cross three boundaries — into a Docker build, into a nested/composite action, or into an SSH session. So trace the deploy path before editing anything:
@@ -128,7 +109,8 @@ Source maps are only uploaded when the **production build** runs, so the environ
    - a `docker build` / `docker/build-push-action` step (build runs in the image),
    - a `uses: ./.github/actions/...` **local composite action** — open that `action.yml`; the real build step is one layer down,
    - an `ssh`/deploy step (e.g. `appleboy/ssh-action`) whose `script:` runs the build **on a remote server**.
-3. Anything else — another CI provider, or no build step you can trace? Don't guess — tell the user where the creds need to be (see "Unrecognised setup" under Examples).
+3. Any other CI config in the repo (`.gitlab-ci.yml`, `.circleci/config.yml`, `Jenkinsfile`, `bitbucket-pipelines.yml`, `azure-pipelines.yml`, …)? Open it and find the job/stage that runs the production build. The principle is identical; apply it with your working knowledge of that provider — the examples below show the pattern to mirror.
+4. No `Dockerfile`, no CI config, no build step you can trace? Don't guess — tell the user where the creds need to be (see "Untraceable setup" under Examples).
 
 #### Tips
 - Reuse the **exact variable names** from "Write credentials to the env file" — the build reads the same names locally and in CI. (`POSTHOG_CLI_*` for direct `posthog-cli`; `POSTHOG_*` for bundler-plugin uploaders.)
@@ -138,7 +120,9 @@ Source maps are only uploaded when the **production build** runs, so the environ
 - **Multi-stage Dockerfiles:** put the `ARG`/`ENV` in the **build stage** (where the build command runs), never the runtime stage. That's both correct (the build needs them) and safer (the creds don't get baked into the shipped image).
 - **Composite / reusable actions can't read `secrets`.** Inside a `.github/actions/*/action.yml` only `${{ inputs.* }}` is available. Add an `inputs:` entry per credential, reference `${{ inputs.* }}` there, and pass `${{ secrets.* }}` from the calling workflow's `with:` block.
 - **Build over SSH:** the runner's env doesn't reach the remote box. Set the vars inline immediately before the build command inside the `script:`. `${{ secrets.* }}` is substituted by Actions *before* the script is sent, so the value travels with the script.
-- You can't create CI secrets. Whenever you reference `${{ secrets.X }}`, tell the user to add each one under **Settings → Secrets and variables → Actions** before their next deploy — the workflow can't read a secret that doesn't exist yet.
+- **The worked examples are exemplars, not an allowlist.** For any provider not shown (GitLab CI, CircleCI, Jenkins, Bitbucket, Azure Pipelines, …), apply the same principle with your knowledge of that provider: find the job that runs the production build, expose the credentials there via the provider's native secret mechanism (GitLab project CI/CD variables, CircleCI project env vars / contexts, Jenkins credentials + `withCredentials`, …), and cross the same boundaries the same way — Docker builds still need `--build-arg`, SSH sessions still need inline vars.
+- **Make only the edits the provider actually needs.** Some providers inject project-level variables straight into every job's environment — GitLab CI/CD variables work this way — so an inline build step may need **no pipeline-file change at all**; the job is done once you've told the user exactly which variables to create and where.
+- You can't create CI secrets. Whenever the pipeline reads a credential, tell the user where to add it before their next deploy — GitHub: **Settings → Secrets and variables → Actions**; GitLab: **Settings → CI/CD → Variables**; other providers: their equivalent secret store. The pipeline can't read a secret that doesn't exist yet.
 
 #### Examples
 - **Dockerfile build stage (e.g. `Dockerfile`, no CI)** Declare the credentials as build args and promote them to env vars *before* the build `RUN`, in the build stage:
@@ -220,7 +204,28 @@ Source maps are only uploaded when the **production build** runs, so the environ
         POSTHOG_CLI_HOST="${{ secrets.POSTHOG_CLI_HOST }}" \
           npm run build
   ```
-- **Unrecognised setup** Another CI provider (GitLab CI, CircleCI, Jenkins, …), or no `Dockerfile`, workflow, or build step you can trace: make no CI changes there. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+- **GitLab CI (`.gitlab-ci.yml`)** Project CI/CD variables are injected into every job's environment automatically, so a job that runs the build inline (`script: - npm run build`) needs **no YAML change** — tell the user to add the credentials under **Settings → CI/CD → Variables** and the next pipeline picks them up. Edits are only needed when a boundary is crossed: a job that runs `docker build` must forward them (`--build-arg POSTHOG_CLI_API_KEY="$POSTHOG_CLI_API_KEY" …`) into the Dockerfile's build stage (see the Dockerfile example), and a job that builds over SSH must set them inline before the remote build command, exactly like the SSH example above.
+- **Other CI providers (CircleCI, Jenkins, Bitbucket, Azure Pipelines, …)** Same recipe, provider-native mechanics: open the pipeline config, find the job that runs the production build, expose the credentials to that job via the provider's secret store, and thread them through any Docker/SSH boundary just like the examples above. Reference credentials by name only, then tell the user each secret to create and exactly where in the provider's UI it goes.
+- **Untraceable setup** No `Dockerfile`, no CI config, and no build step you can trace: make no CI changes. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+
+### Test the local setup
+
+Optionally add a temporary, clearly-labeled affordance that captures one test exception, so you can confirm errors arrive in Error Tracking with a source-resolved stack trace after the next production build. Always remove it afterwards.
+
+#### Tips
+- The handler must call the SDK's exception-capture method **directly** — do **not** `throw`. Throwing depends on the global error handler and shows a dev overlay; a direct capture is deterministic across platforms.
+- Pass a single Error (or platform-equivalent throwable). No custom message beyond the Error, no extra properties, no second argument — the Error's stack trace is what gets resolved.
+- Use distinctive copy on the trigger (button label / route path) so the resulting event is easy to find in the UI.
+- Read any file before editing it and capture its exact contents; after testing, restore every touched file and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
+- The upload only happens on the *production build*: build, run, trigger the error, then confirm the stack trace in Error Tracking points at real source files, not minified bundle paths.
+
+#### Examples
+- **Browser / SPA / SSR (web, react, nextjs, nuxt, angular, vite, webpack, rollup)** Add a button such as "Test PostHog Error Tracking" on the home/root page whose onClick calls `posthog.captureException(new Error("PostHog source maps test"))`.
+- **Node.js** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that calls `posthog.captureException(new Error("PostHog source maps test"))` and returns 200. With no HTTP layer, add the capture to the existing entry script where the client is initialised rather than creating a new file. Tell the user the exact command/URL to hit.
+- **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`.
+- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick captures a `Throwable` via the PostHog SDK, per the reference.
+- **iOS (Swift)** Add a `UIButton` on the root view controller whose action captures an `NSError` via the PostHog SDK, per the reference.
+- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
 ### Verify and hand off
 
@@ -230,7 +235,7 @@ Confirm the upload landed and report what changed.
 - Source maps upload during the **production build** — the build must actually run for a symbol set to appear.
 - Verify in PostHog Error Tracking settings on the **Symbol sets** page: a new symbol set should appear after the build completes.
 - When handing off, list the files you edited (paths only), the env-var **key** names you set (never values), whether a test affordance was added and reverted, and the exact build command to run.
-- If you wired CI, list the pipeline files you changed (`Dockerfile`, workflow) and spell out every manual follow-up — e.g. the GitHub secrets the user must add before their next deploy, or the note that their CI provider wasn't recognised.
+- If you wired CI, list the pipeline files you changed (`Dockerfile`, workflow, pipeline config) and spell out every manual follow-up — e.g. the secrets the user must add in their CI provider's settings before their next deploy, or the note that their build path couldn't be traced.
 
 ## General tips
 - The reference files for {display_name} are authoritative — if this page and a reference disagree on an API, follow the reference.
