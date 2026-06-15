@@ -25,4 +25,5 @@ variants:
       - https://posthog.com/docs/logs/installation/android.md
       - https://posthog.com/docs/logs/installation/react-native.md
       - https://posthog.com/docs/logs/installation/ios.md
+      - https://posthog.com/docs/logs/installation/flutter.md
       - https://posthog.com/docs/logs/installation/other.md

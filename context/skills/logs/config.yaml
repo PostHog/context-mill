@@ -71,6 +71,12 @@ variants:
     docs_urls:
       - https://posthog.com/docs/logs/installation/ios.md
 
+  - id: flutter
+    display_name: Flutter
+    tags: [flutter, dart]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/flutter.md
+
   - id: other
     display_name: Other Languages
     tags: []
