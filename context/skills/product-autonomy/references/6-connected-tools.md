@@ -45,7 +45,7 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__e
 
    - **GitHub Issues** → read `references/6a-github.md` and follow it.
    - **Linear** → read `references/6b-linear.md` and follow it.
-   - **Zendesk / pganalyze** → these need API credentials entered in the browser. Send the user in **one batched ask** listing the tools and the new-warehouse-source URL from the run prompt, with options "Done — connected them" / "Skip for now". After "Done", verify with one more `external-data-sources-list` call — users sometimes answer "done" optimistically.
+   - **Zendesk / pganalyze** → these need API credentials entered in the browser. Send the user in **one batched ask** listing the tools and the new-warehouse-source URL from the run prompt, with options "Done — connected them" / "Skip for now". After "Done", verify with one `external-data-sources-list` call — users sometimes answer "done" optimistically. If the source still isn't there, **nudge once**: tell them you don't see a `<tool>` source yet and re-ask ("I've added it now" / "Skip for now"), then verify one final time. **Stop after that single retry** — unlike Linear, this run can't create the source itself, so there's nothing to wait through more rounds for. If Linear's retry is also pending this round, **batch both into one ask** to save an ask-budget call. Detected on either check → "verified connected"; still nothing after the retry → "claimed but not detected".
 
 4. Enable the source row (step 5's write recipe) for every tool the user picked — created, verified, and claimed-but-not-detected alike (a dormant row is harmless and saves a later trip):
 
@@ -58,5 +58,5 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__e
 
    - **connected by this setup** — the connector flow created the source (you have its id; the first sync starts automatically)
    - **already connected** / **verified connected** — the source row was seen in `external-data-sources-list`
-   - **claimed but not detected** — user said done, list shows nothing; report as "responder enabled, but no <tool> warehouse source was detected; it stays dormant until the source is connected and syncing", plus a follow-up with the new-warehouse-source URL
+   - **claimed but not detected** — you asked, the user answered "done", but both checks (the initial verify + one nudge) still show nothing. Enable the dormant responder, but **record it honestly — never write that the user "confirmed connecting" or "connected" it**. Phrase it as "you selected <tool>, but no warehouse source was detected after a re-check — the responder is enabled and stays dormant until the source is added and starts syncing", plus a follow-up with the new-warehouse-source URL
    - **skipped** — picked but declined to connect → **don't enable the responder**; follow-up: "Connect <tool> as a data warehouse source, then enable its responder in the Inbox's Edit sources." Tools not picked → "skipped (not used)".
