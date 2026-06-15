@@ -34,6 +34,11 @@ jobs:
       run: pnpm build
 
     - name: Scan skills with Warlock
+      # Fork PRs don't get repo secrets, so Warlock can't reach the LLM gateway to
+      # triage matches and reports every hit (incl. false positives) as a threat.
+      # On forks we let the scan run and annotate, but don't fail the build — the
+      # full triaged scan still gates trusted runs (push-to-main, release).
+      continue-on-error: ${{ github.event.pull_request.head.repo.fork == true }}
       env:
         CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY: ${{ secrets.CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY }}
       run: node scripts/scan-warlock.js dist/skills
