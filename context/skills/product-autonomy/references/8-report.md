@@ -24,6 +24,7 @@ Emit:
    - **Signal sources** — a table of every source you touched or deliberately skipped: `source_product` / `source_type`, action taken (enabled / already enabled / skipped + why / failed).
    - **Connected tools** — what the user picked, and per tool the step-6 class: "connected by this setup (source id …, first sync started)", "already connected" / "verified connected", "responder enabled but warehouse source not detected (dormant)", or "skipped". Never report a tool as connected unless this run created its source or saw it in `external-data-sources-list`. For sources this run created, note that only the Signals-consumed table (issues / tickets) is syncing and more can be enabled in the UI.
    - **Scout fleet** — kept-on scouts, disabled scouts with the one-line reason each, or the not-yet-materialized note from step 7.
+   - **Custom scouts** — from step 7b: each created scout (name, what it watches, its discriminator, and why no canonical scout covers it) or one line on why none was warranted; surfaces considered and ruled out, with the filter that killed each; declined proposals; and the noise escape hatch (set `emit: false` on a scout's config in PostHog to switch it to dry-run). Omit only if step 7b was skipped entirely.
    - **Follow-ups** — every follow-up recorded along the way, as a checklist. Omit the section if there are none.
    - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start autonomy coding tasks.
 

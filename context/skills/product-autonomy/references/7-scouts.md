@@ -1,5 +1,5 @@
 ---
-next_step: 8-report.md
+next_step: 7b-tailor-scouts.md
 ---
 
 # Step 7 — Configure the scout fleet
