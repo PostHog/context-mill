@@ -9,6 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import yaml from 'js-yaml';
 import matter from 'gray-matter';
 import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
@@ -233,20 +234,92 @@ function inferDescription(url) {
     }
 }
 
-/**
- * Fetch markdown content from a URL.
- * Returns both content and inferred metadata.
- */
-async function fetchDoc(url) {
-    console.log(`  Fetching doc: ${url}`);
+// On-disk doc cache. posthog.com serves the .md docs slowly and drops
+// connections under the build's ~50-fetch burst, which used to kill the
+// whole build (and the dev server with it) on a single transient failure.
+// Entries live for DOCS_CACHE_TTL_MS (default 24h, 0 disables); an expired
+// entry is still kept as a stale fallback when every retry fails.
+const DOC_CACHE_DIR = path.join(import.meta.dirname, '..', '..', '.docs-cache');
+const DOC_CACHE_TTL_MS = process.env.DOCS_CACHE_TTL_MS !== undefined
+    ? Number(process.env.DOCS_CACHE_TTL_MS)
+    : 24 * 60 * 60 * 1000;
+const FETCH_RETRIES = 3;
+const FETCH_BACKOFF_MS = [1_000, 4_000];
+
+function docCachePath(url) {
+    const key = crypto.createHash('sha256').update(url).digest('hex');
+    return path.join(DOC_CACHE_DIR, `${key}.json`);
+}
+
+function readDocCache(url) {
+    if (DOC_CACHE_TTL_MS <= 0) return null;
+    try {
+        const entry = JSON.parse(fs.readFileSync(docCachePath(url), 'utf8'));
+        if (entry?.url !== url || typeof entry?.content !== 'string') return null;
+        return { ...entry, fresh: Date.now() - entry.fetchedAt < DOC_CACHE_TTL_MS };
+    } catch {
+        return null;
+    }
+}
+
+function writeDocCache(url, { content, title }) {
+    if (DOC_CACHE_TTL_MS <= 0) return;
+    try {
+        fs.mkdirSync(DOC_CACHE_DIR, { recursive: true });
+        fs.writeFileSync(docCachePath(url), JSON.stringify({ url, title, content, fetchedAt: Date.now() }));
+    } catch {
+        // Cache writes are best-effort; the fetch result is still returned.
+    }
+}
+
+async function fetchDocOnce(url) {
     const response = await fetch(url);
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
+        const error = new Error(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
+        // Deterministic client errors (404 etc.) won't change on retry.
+        error.retryable = response.status === 429 || response.status >= 500;
+        throw error;
     }
     const content = await response.text();
     const title = extractTitle(content) || inferDescription(url);
-
     return { content, title };
+}
+
+/**
+ * Fetch markdown content from a URL, with an on-disk cache and retries.
+ * Returns both content and inferred metadata. Logs `Fetching doc:` only
+ * on a real network fetch — cache hits are silent.
+ */
+async function fetchDoc(url) {
+    const cached = readDocCache(url);
+    if (cached?.fresh) {
+        return { content: cached.content, title: cached.title };
+    }
+
+    console.log(`  Fetching doc: ${url}`);
+    let lastError;
+    for (let attempt = 1; attempt <= FETCH_RETRIES; attempt++) {
+        try {
+            const result = await fetchDocOnce(url);
+            writeDocCache(url, result);
+            return result;
+        } catch (error) {
+            lastError = error;
+            // Network-level failures (undici "fetch failed") have no
+            // `retryable` flag — treat them as retryable.
+            if (error.retryable === false || attempt === FETCH_RETRIES) break;
+            const delay = FETCH_BACKOFF_MS[attempt - 1] ?? FETCH_BACKOFF_MS.at(-1);
+            console.log(`    retrying in ${delay / 1000}s (${error.message ?? error})`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+    }
+
+    if (cached) {
+        const ageMinutes = Math.round((Date.now() - cached.fetchedAt) / 60_000);
+        console.warn(`    WARN: using stale cached copy (${ageMinutes}m old) after fetch failure: ${url}`);
+        return { content: cached.content, title: cached.title };
+    }
+    throw lastError;
 }
 
 /**
