@@ -40,8 +40,8 @@ If `external-data-sources-create` isn't available (older server), skip this file
 }
 ```
 
-   - **done** → call `integrations-list` again. `kind: "linear"` present → step 3. Still absent → tell the user it hasn't appeared yet and re-ask, **at most 3 rounds** (same pattern as step 4's GitHub check); on the third miss, record "claimed but not detected" and return to step 6.
-   - **skip** → record "skipped" and return to step 6 (don't enable the responder).
+   - **done** → call `integrations-list` again. `kind: "linear"` present → step 3. Still absent → tell the user it hasn't appeared yet and re-ask, **at most 3 rounds** (same pattern as step 4's GitHub check); on the third miss, record "picked but not connected" and return to step 6.
+   - **skip** → record "picked but not connected" and return to step 6 (enable the dormant responder and add a follow-up — harmless, since it only emits once a warehouse source syncs).
 
 3. **Create the source** with `external-data-sources-create`, using the Linear integration's `id`:
 

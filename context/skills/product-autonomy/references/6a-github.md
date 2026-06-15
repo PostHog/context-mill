@@ -38,7 +38,7 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
 ```
 
    - **other** → ask once more with up to four close matches from `integrations-github-repos-retrieve` (search with fragments of the repo name, then the owner) plus "Skip". Still nothing that fits → fallback (step 5).
-   - **skip** → record "skipped" and return to step 6 (don't enable the responder).
+   - **skip** → record "picked but not connected" and return to step 6 (enable the dormant responder and add a follow-up — harmless, since it only emits once a warehouse source syncs).
 
 4. **Create the source** with `external-data-sources-create`:
 
