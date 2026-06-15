@@ -32,17 +32,17 @@ Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__
    - `signals-scout-observability-gaps`
    - `signals-scout-health-checks`
 
-   Disable the conditional five **only when step 2 found their surface absent** — absent means absent on BOTH sides: the repo scan AND the server-side state (the project-state opt-ins and usage probes). A product enabled at the project level stays relevant even when this repo shows nothing:
+   **Enable a conditional scout only when step 2 found positive evidence its surface is in use** — evidence on EITHER side counts: the repo scan OR the server-side state (the project-state opt-ins and usage probes). A product enabled at the project level is evidence even when this repo shows nothing. No evidence → disable it (see the cost note below):
 
-   | Scout | Disable when |
+   | Scout | Enable only with evidence of |
    |---|---|
-   | `signals-scout-revenue-analytics` | no payment SDK / revenue data |
-   | `signals-scout-surveys` | surveys opt-in OFF and no surveys found (step 2) |
-   | `signals-scout-ai-observability` | no `$ai_*` events / LLM usage |
-   | `signals-scout-logs` | PostHog logs product not in use |
-   | `signals-scout-csp-violations` | no CSP reporting configured |
+   | `signals-scout-revenue-analytics` | a payment SDK / revenue data |
+   | `signals-scout-surveys` | surveys opt-in ON or surveys found (step 2) |
+   | `signals-scout-ai-observability` | `$ai_*` events / LLM usage |
+   | `signals-scout-logs` | the PostHog logs product in use |
+   | `signals-scout-csp-violations` | CSP reporting configured |
 
-   When step 2 recorded "unknown" for a surface, **leave the scout enabled** — a scout that finds nothing closes cheaply; a disabled scout finds nothing forever.
+   **"Unknown" is not evidence → disable the scout.** Unlike a dormant warehouse responder (gated on a sync, so it never fires for free), a scout runs on its schedule and costs a full LLM run every tick even when it finds nothing — so never pay for a surface you can't confirm exists. For every conditional scout you disable, record a re-enable follow-up so the user can switch it on if they do use that surface (e.g. "enable `signals-scout-logs` in PostHog if you use the logs product").
 
 3. Disable via `signals-scout-config-update` with the config `id` and `{ enabled: false }` — **nothing else**. Don't touch `emit` (dry-run posture) or `run_interval_minutes`; defaults are correct for a fresh fleet. A failed update is a follow-up, not an abort.
 
