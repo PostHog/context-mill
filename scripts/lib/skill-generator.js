@@ -8,99 +8,32 @@
  */
 
 /**
- * Optional `cli:` block in a skill's `config.yaml`.
+ * Optional `cli:` block in a skill's `config.yaml` — declares whether and how
+ * the skill appears in the wizard CLI. Parsed by `parseCliBlock`, propagated by
+ * `expandSkillGroups`, emitted into `dist/skills/cli-manifest.json` (the wizard
+ * snapshots that manifest to derive its skill-backed command surface).
  *
- * Declares whether and how the skill appears in the wizard CLI.
- * Parsed by `parseCliBlock`, propagated by `expandSkillGroups`, and
- * emitted into `dist/skills/cli-manifest.json` by `writeManifestAndMenu`.
- * The wizard snapshots that manifest at build time to derive its
- * skill-backed command surface.
- *
- * The `command` / `parentCommand` names match the wizard's existing
- * `ProgramConfig.command` / `parentCommand` convention so contributors
- * only learn one vocabulary.
- *
- * Three values for `role`:
- *   - `command`  — appears as a normal wizard command.
- *   - `skill`    — reachable only via `wizard skill <id>`.
- *   - `internal` — hidden everywhere, only reachable via the
- *                  `--skill=<id>` dev escape hatch.
- *
- * Skills with no `cli:` block default to the `skill` role and are not
- * emitted into `cli-manifest.json`.
- *
- * The block may sit at the group level (defaults for every variant) or
- * inside a single variant (overrides the group-level defaults). When
- * `role: 'command'` and `command` is not set explicitly, the variant
- * id is used as the command name — except for the magic `id: all`
- * variant, where an explicit `command` is required.
- *
- * ## Flat vs. family
- *
- * The wizard's convention: a command is **flat** when there's
- * only one option today, **a family** when the user must pick among
- * multiple. Don't pre-create a family form for a single-option command
- * (no `wizard revenue-analytics stripe` while Stripe is the only
- * provider) — that's forced abstraction. When a second option arrives,
- * restructure to a family at that moment; the wizard release notes
- * call out the UX change for existing users.
- *
- * ## Naming rule — no shorthand for product names
- *
- * Use the full PostHog product name with hyphens, not abbreviations:
- *   `wizard audit feature-flags`        not `wizard audit flags`
- *   `wizard audit session-replay`       not `wizard audit replay`
- *   `wizard revenue-analytics`          not `wizard revenue`
- *
- * ## Mapping table — YAML on the left, registered command on the right
- *
- *   # 1. Flat command (`wizard revenue-analytics`)
- *   cli:                                          →  wizard revenue-analytics
- *     role: command
- *     command: revenue-analytics
- *
- *   # 2. Nested command (`wizard audit feature-flags`)
- *   cli:                                          →  wizard audit feature-flags
- *     role: command
- *     parentCommand: audit
- *     command: feature-flags
- *
- *   # 3. Recommended leaf inside a family (`wizard audit` runs this on Enter)
- *   cli:                                          →  wizard audit all
- *     role: command                                  Pre-highlighted in the
- *     parentCommand: audit                           family picker so
- *     command: all                                   `wizard audit` → Enter
- *     recommended: true                              runs this leaf.
- *
- *   # 4. Reachable as a skill only (`wizard skill <id>`)
- *   cli:                                          →  wizard skill <skill-id>
- *     role: skill
- *
- * `cli:` only configures the **command shape** — what the user types as
- * verbs in the tree. Flags and positional arguments (e.g.
- * `--since=30d`) are configured on the wizard side via
- * `ProgramConfig.cliOptions`, not here.
+ * Full schema, the YAML→command mapping, the flat-vs-family convention, and the
+ * naming rules live in CONTRIBUTING.md § "How skills get into the wizard CLI".
  *
  * @typedef {Object} CliRoleBlock
  * @property {'command' | 'skill' | 'internal'} role
- *   How the skill appears in the wizard CLI: a typed `command`, a
- *   `skill` reachable via `wizard skill <id>`, or `internal` (hidden).
+ *   How the skill appears: a typed `command`, a `skill` reachable via
+ *   `wizard skill <id>`, or `internal` (hidden). Skills with no `cli:` block
+ *   default to `skill` and are not emitted into `cli-manifest.json`.
  * @property {string} [command]
- *   The user-typed word that registers this skill (e.g.
- *   `'feature-flags'` in `wizard audit feature-flags`, or
- *   `'revenue-analytics'` in `wizard revenue-analytics`).
- *   Required when `role` is `'command'`; defaults to the variant id
- *   when omitted, except for the magic `id: all` variant where an
- *   explicit `command` is required at the group level. Use the full
- *   PostHog product name, not a shorthand.
+ *   The user-typed word that registers this skill (e.g. `'feature-flags'` in
+ *   `wizard audit feature-flags`). Required when `role` is `'command'`;
+ *   defaults to the variant id when omitted, except the magic `id: all`
+ *   variant, which requires an explicit `command`. Use the full PostHog
+ *   product name, not a shorthand.
  * @property {string} [parentCommand]
- *   The command this skill nests under (e.g. `'audit'` for
- *   `wizard audit events`). Omit for flat / standalone commands.
- * @property {boolean} [recommended]
- *   When true, this leaf is pre-highlighted in the family's interactive
- *   picker. `wizard <family>` → Enter runs this leaf. The picker still
- *   opens (discovery + consent); `recommended` just makes the obvious
- *   choice one keystroke. At most one leaf per family should be marked.
+ *   The command this skill nests under (e.g. `'audit'`). Omit for flat commands.
+ * @property {boolean} [default]
+ *   When true, this leaf is pre-highlighted in the family's interactive picker
+ *   (`wizard <family>` → Enter runs it). The picker still opens (discovery +
+ *   consent); this just makes the obvious choice one keystroke. At most one
+ *   leaf per family should be marked.
  */
 
 import fs from 'fs';
@@ -108,6 +41,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import matter from 'gray-matter';
 import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
+import { CLI_ROLES, validateCommandName } from './cli-block-validation.js';
 
 /**
  * Load YAML config file
@@ -115,53 +49,6 @@ import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } f
 function loadYaml(configPath) {
     const content = fs.readFileSync(configPath, 'utf8');
     return yaml.load(content);
-}
-
-const CLI_ROLES = ['command', 'skill', 'internal'];
-
-// Naming convention enforcement — see context-mill/CONTRIBUTING.md and the
-// wizard's CONTRIBUTING.md. Failures throw at build time, before drift can
-// ship.
-const KEBAB_CASE = /^[a-z][a-z0-9-]*$/;
-const NAME_MIN_LENGTH = 2;
-const NAME_MAX_LENGTH = 20;
-const RESERVED_WORDS = new Set([
-    // yargs reserves these for built-in behavior
-    'help',
-    'version',
-    'completion',
-]);
-const INTERNAL_FLAG_NAMES = new Set([
-    // collisions with the wizard's internal mode flags (see CONTRIBUTING.md)
-    'playground',
-    'benchmark',
-    'yara-report',
-    'local-mcp',
-    'ci',
-    'skill',
-]);
-
-function validateCommandName(name, field, context) {
-    if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
-        throw new Error(
-            `${context}: cli.${field} "${name}" must be ${NAME_MIN_LENGTH}–${NAME_MAX_LENGTH} characters`,
-        );
-    }
-    if (!KEBAB_CASE.test(name)) {
-        throw new Error(
-            `${context}: cli.${field} "${name}" must be kebab-case (lowercase letters, digits, hyphens; start with a letter)`,
-        );
-    }
-    if (RESERVED_WORDS.has(name)) {
-        throw new Error(
-            `${context}: cli.${field} "${name}" collides with a yargs reserved word (${[...RESERVED_WORDS].join(', ')})`,
-        );
-    }
-    if (INTERNAL_FLAG_NAMES.has(name)) {
-        throw new Error(
-            `${context}: cli.${field} "${name}" collides with a wizard internal flag (${[...INTERNAL_FLAG_NAMES].join(', ')})`,
-        );
-    }
 }
 
 /**
@@ -178,14 +65,14 @@ function validateCommandName(name, field, context) {
  *
  * @param {unknown} raw
  * @param {string} context
- * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, recommended?: boolean } | null}
+ * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, default?: boolean } | null}
  */
 function parseCliBlock(raw, context) {
     if (raw == null) return null;
     if (typeof raw !== 'object' || Array.isArray(raw)) {
         throw new Error(`${context}: cli block must be an object`);
     }
-    const { role, command, parentCommand, recommended: isRecommended, ...rest } = raw;
+    const { role, command, parentCommand, default: isDefault, ...rest } = raw;
     const unknownKeys = Object.keys(rest);
     if (unknownKeys.length > 0) {
         throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
@@ -211,11 +98,11 @@ function parseCliBlock(raw, context) {
         validateCommandName(parentCommand, 'parentCommand', context);
         result.parentCommand = parentCommand;
     }
-    if (isRecommended != null) {
-        if (typeof isRecommended !== 'boolean') {
-            throw new Error(`${context}: cli.recommended must be a boolean when set`);
+    if (isDefault != null) {
+        if (typeof isDefault !== 'boolean') {
+            throw new Error(`${context}: cli.default must be a boolean when set`);
         }
-        if (isRecommended) result.recommended = true;
+        if (isDefault) result.default = true;
     }
     return result;
 }

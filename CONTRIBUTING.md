@@ -23,7 +23,7 @@ cli:
   role: command          # command | skill | internal
   parentCommand: audit   # the command this skill nests under (optional)
   command: events        # the user-typed word; required when role is command
-  recommended: true      # optional — pre-highlight this leaf in the family picker
+  default: true          # optional — pre-highlight this leaf in the family picker
 ```
 
 Three values for `role`:
@@ -79,7 +79,7 @@ family picker. Treat this exactly like any other breaking CLI change:
    release that picks up the new manifest — what the old command was,
    what the new shape is, and what users need to change.
 3. If the old flat name is still meaningful as a default leaf of the new
-   family, mark that leaf `recommended: true` so `wizard investigate` →
+   family, mark that leaf `default: true` so `wizard investigate` →
    Enter still runs the intended action with one keystroke.
 
 Going the other way — collapsing a family back to a flat command — works
@@ -116,12 +116,12 @@ cli:                                                   →  wizard audit feature
   parentCommand: audit
   command: feature-flags
 
-# 3. Recommended leaf — pre-highlighted in the family picker
+# 3. Default leaf — pre-highlighted in the family picker
 cli:                                                   →  wizard audit all
   role: command                                           Pre-highlighted in the
   parentCommand: audit                                    family picker, so
   command: all                                            `wizard audit` → Enter
-  recommended: true                                       runs this leaf.
+  default: true                                           runs this leaf.
 
 # 4. Skill-only (reachable via `wizard skill <id>`)
 cli:                                                   →  wizard skill <skill-id>
@@ -138,14 +138,14 @@ the group key and so requires an explicit `command` at the group level.
 Flags and positional arguments live on the wizard side
 (`ProgramConfig.cliOptions`), not here.
 
-### What `recommended: true` does (and doesn't do)
+### What `default: true` does (and doesn't do)
 
-`recommended: true` controls **picker pre-highlighting**, not auto-run. When
+`default: true` controls **picker pre-highlighting**, not auto-run. When
 the user invokes a family parent with no subcommand, the wizard always
 opens an interactive picker over the family's children — the
-recommended child is sorted to the top so a single Enter keystroke
+default child is sorted to the top so a single Enter keystroke
 runs it. The picker still appears (so the user sees every option before
-committing). Set `recommended` on the leaf you'd want a user typing
+committing). Set `default` on the leaf you'd want a user typing
 `wizard <family>` to invoke if they don't change the selection. At most
 one leaf per family should be marked.
 

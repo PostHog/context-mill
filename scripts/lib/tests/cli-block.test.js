@@ -343,40 +343,40 @@ describe('generateCliEntries', () => {
         expect(order).toEqual(['revenue', 'audit-all', 'audit-events', 'b-skill', 'a-int']);
     });
 
-    it('carries recommended:true through into the entry', () => {
+    it('carries default:true through into the entry', () => {
         const entries = generateCliEntries({
             allSkills: [
                 { id: 'audit-all', displayName: 'Audit', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'all', recommended: true } },
+                  cli: { role: 'command', parentCommand: 'audit', command: 'all', default: true } },
             ],
         });
         expect(entries[0]).toMatchObject({
             skillId: 'audit-all',
             parentCommand: 'audit',
             command: 'all',
-            recommended: true,
+            default: true,
         });
     });
 
-    it('throws when a family has more than one recommended leaf', () => {
+    it('throws when a family has more than one default leaf', () => {
         expect(() =>
             generateCliEntries({
                 allSkills: [
                     { id: 'audit-all', displayName: 'A', description: 'd',
-                      cli: { role: 'command', parentCommand: 'audit', command: 'all', recommended: true } },
+                      cli: { role: 'command', parentCommand: 'audit', command: 'all', default: true } },
                     { id: 'audit-events', displayName: 'AE', description: 'd',
-                      cli: { role: 'command', parentCommand: 'audit', command: 'events', recommended: true } },
+                      cli: { role: 'command', parentCommand: 'audit', command: 'events', default: true } },
                 ],
             }),
-        ).toThrow(/Family "audit" has more than one cli\.recommended leaf/);
+        ).toThrow(/Family "audit" has more than one cli\.default leaf/);
     });
 
-    it('throws when recommended is set on a flat command with no parentCommand', () => {
+    it('throws when default is set on a flat command with no parentCommand', () => {
         expect(() =>
             generateCliEntries({
                 allSkills: [
                     { id: 'revenue', displayName: 'R', description: 'd',
-                      cli: { role: 'command', command: 'revenue', recommended: true } },
+                      cli: { role: 'command', command: 'revenue', default: true } },
                 ],
             }),
         ).toThrow(/only valid on a leaf inside a family/);

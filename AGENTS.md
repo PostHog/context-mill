@@ -46,7 +46,7 @@ The parser is `parseCliBlock` in `scripts/lib/skill-generator.js`. It enforces:
 - `role` is one of `command`, `skill`, `internal` (default: `skill` if no `cli:` block is set at all)
 - `command` and `parentCommand` are kebab-case, 2–20 characters
 - Neither field is a yargs reserved word (`help`, `version`, `completion`) or a wizard internal flag (`playground`, `benchmark`, `yara-report`, `local-mcp`, `ci`, `skill`)
-- `recommended` (optional, boolean) marks a leaf as pre-highlighted in the family picker — `wizard <family>` → Enter runs the marked leaf
+- `default` (optional, boolean) marks a leaf as pre-highlighted in the family picker — `wizard <family>` → Enter runs the marked leaf
 
 Failures throw at build time, before drift can ship to the wizard.
 
