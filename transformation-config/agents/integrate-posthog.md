@@ -11,15 +11,13 @@ dependsOn: []
 
 ## Goal
 
-Plan a PostHog integration for this project and seed the task queue. Take a brief
-glance at the repo to confirm its shape — a quick look, not a deep analysis —
-then seed this graph:
+Plan a PostHog integration and seed the task queue with this graph:
 
 - `install` and `init`, independent of each other.
-- `identify` and `capture`, each after `install` and `init`, independent of each
-  other. `capture` both decides the events and instruments them.
-- `error-tracking`, after `capture` — event tracking goes in first, then the
-  global error boundary.
+- `identify`, `capture`, and `error-tracking`, each after `install` and `init`
+  and independent of one another, so they run in parallel. `capture` decides the
+  events and instruments them; `error-tracking` wires the single global error
+  boundary — it needs the SDK installed and initialized, not the events.
 - `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
   it installs the dependencies and verifies the project builds, lints, and passes
   its tests.
@@ -27,11 +25,7 @@ then seed this graph:
   linting, and testing cleanly.
 - `report`, after `dashboard` — it writes the setup report last.
 
-Some task types are not available in every run — `enqueue_task` only accepts
-the ones that are. Plan without the missing ones and rewire their dependents
-to the nearest upstream step (no `dashboard` means `report` follows `build`).
-
 ## How you know you succeeded
 
-The tasks are queued with that dependency shape, and the first is runnable.
-Keep them small and discrete so each finishes fast and shows visible progress.
+Every task in the graph is queued with that dependency shape, the report last,
+and the first task runnable. Keep labels short — the action in a few words.
