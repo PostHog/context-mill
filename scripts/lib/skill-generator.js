@@ -395,23 +395,64 @@ async function generateSkill({
 
     // Copy local markdown references from a source references/ directory, if present.
     // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
+    //
+    // Subdirectories under references/ are treated as variant scopes. When a skill is
+    // expanded from a group with multiple variants, only the subdirectory whose name
+    // matches this skill's `_shortId` is copied — sibling variants' subdirs are skipped
+    // so their docs don't leak into one another's zip. The matched subdir's files are
+    // flattened into the top-level references/ directory of the built skill so the
+    // output conforms to the Agent Skill spec (flat references/). Top-level files in
+    // the source references/ are shared by every variant and always ship.
+    //
+    // If a variant subdir file shares a name with a shared top-level file, the build
+    // throws — variants can't shadow shared step files.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
-        const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
-            .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
-            .sort((a, b) => a.name.localeCompare(b.name));
-
         const refsConfig = skill._references || {};
+        const variantId = skill._shortId;
+
+        // Collect markdown files from the source references/ dir. Returns entries
+        // { absolutePath, outputName } where outputName is the flat filename written
+        // under references/ in the built skill (e.g., "sdk-reference.md").
+        function collectMarkdown(dir, isVariantScope) {
+            const out = [];
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const absolutePath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    if (isVariantScope) continue; // nested subdirs inside a variant are not supported
+                    if (entry.name !== variantId) continue;
+                    out.push(...collectMarkdown(absolutePath, true));
+                } else if (entry.isFile() && entry.name.endsWith('.md')) {
+                    out.push({ absolutePath, outputName: entry.name });
+                }
+            }
+            return out;
+        }
+
+        const localReferences = collectMarkdown(sourceReferencesDir, false)
+            .sort((a, b) => a.outputName.localeCompare(b.outputName));
+
+        // Guard against a variant file shadowing a shared step file (same flat name).
+        const seen = new Map();
+        for (const ref of localReferences) {
+            if (seen.has(ref.outputName)) {
+                throw new Error(
+                    `Reference name collision for skill "${skill.id}": "${ref.outputName}" is defined in both ` +
+                    `${seen.get(ref.outputName)} and ${ref.absolutePath}. Variant files cannot shadow shared step files.`
+                );
+            }
+            seen.set(ref.outputName, ref.absolutePath);
+        }
 
         for (const reference of localReferences) {
-            const sourcePath = path.join(sourceReferencesDir, reference.name);
-            const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
+            const parsed = matter(fs.readFileSync(reference.absolutePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
             let body = parsed.content.replace(/^\n+/, '').replace(/\s+$/, '');
             const headingMatch = body.match(/^#\s+(.+)$/m);
-            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
-            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.outputName;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.outputName;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
@@ -430,19 +471,19 @@ async function generateSkill({
                 : body;
 
             fs.writeFileSync(
-                path.join(referencesDir, reference.name),
+                path.join(referencesDir, reference.outputName),
                 fileContent,
                 'utf8'
             );
 
             references.push({
-                filename: reference.name,
+                filename: reference.outputName,
                 description: displayDescription,
             });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
-                    filename: reference.name,
+                    filename: reference.outputName,
                     title: displayTitle,
                 });
             }

@@ -7,7 +7,7 @@ next_step: 5-cleanup.md
 
 Work through the sites table in `.posthog-migration-plan.md`, one row at a time. Replace each source SDK call with the PostHog equivalent the plan records. Do not spawn subagents.
 
-The mapping doc under `references/<variant-id>/` is canonical. Match its replacements as closely as the surrounding code allows. Use environment variables for PostHog keys, never hardcode them.
+`references/mapping.md` is canonical. Match its replacements as closely as the surrounding code allows. Use environment variables for PostHog keys, never hardcode them.
 
 If a file has integration code for other tools you are not migrating, leave that code alone. Replace only the calls that belong to the source SDK. Make your edits minimal and targeted, do not reformat surrounding lines and do not rearrange the file. The dependency source in `node_modules` is available when you need to confirm a property name or call signature.
 

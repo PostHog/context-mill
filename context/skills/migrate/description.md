@@ -1,6 +1,6 @@
 # PostHog Migration — {display_name}
 
-This skill migrates an existing `{display_name}` integration over to PostHog. The variant directory under `references/<variant-id>/` is the source of truth for what the source SDK looks like and how each of its calls maps to PostHog.
+This skill migrates an existing `{display_name}` integration over to PostHog. Two reference files describe what the source SDK looks like (`references/sdk-reference.md`) and how each of its calls maps to PostHog (`references/mapping.md`). Together they are the source of truth for the migration.
 
 ## Workflow
 
@@ -26,7 +26,7 @@ It's fine if your first list is imprecise. Call `TaskCreate` again (or `TaskUpda
 
 ## Variant references
 
-The variant directory holds two kinds of file. An SDK reference describes the source SDK's packages, init shapes, and API surface. A mapping doc translates each source SDK call into its PostHog equivalent. Read them when a step tells you to. Do not WebFetch migration docs, everything you need is on disk.
+`references/sdk-reference.md` describes the source SDK's packages, init shapes, and API surface. `references/mapping.md` translates each source SDK call into its PostHog equivalent. Read them when a step tells you to. Do not WebFetch migration docs, everything you need is on disk.
 
 ## User decision points
 

@@ -11,3 +11,11 @@ variants:
     display_name: Statsig → PostHog
     tags: [migration, statsig]
     docs_urls: []
+  - id: mixpanel
+    display_name: Mixpanel → PostHog
+    tags: [migration, mixpanel]
+    # Everything the agent needs to perform the migration is on disk:
+    #   - references/sdk-reference.md (Mixpanel API surface)
+    #   - references/mapping.md       (Mixpanel → PostHog mapping + PostHog SDK quick reference)
+    # No WebFetch at runtime; no external doc dependencies.
+    docs_urls: []

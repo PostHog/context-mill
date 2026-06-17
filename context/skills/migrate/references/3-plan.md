@@ -24,7 +24,7 @@ Emit each of these as you start the matching sub task.
 
 ## Read the mapping reference
 
-Open the mapping doc under `references/<variant-id>/` and learn its API surface, the call shapes it covers, and the PostHog equivalent it records next to each.
+Open `references/mapping.md` and learn its API surface, the call shapes it covers, and the PostHog equivalent it records next to each.
 
 ## Enumerate call sites
 
