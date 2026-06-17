@@ -37,6 +37,11 @@ Three values for `role`:
 Skills with **no** `cli:` block default to the `skill` role — they're
 discoverable via `wizard skill list` but don't get a top-level command.
 
+The same skill can be either surface: `audit-events` sets `role: command` so it's
+`wizard audit events`; a `role: skill` skill is only `wizard skill <id>`. One
+mechanism, two surfaces — so `wizard audit <subcommand>` chooses an audit area,
+it does **not** take a skill name.
+
 ### Flat vs. family — the convention
 
 > A command is **flat** when there's only one option today,

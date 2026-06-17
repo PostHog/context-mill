@@ -103,10 +103,30 @@ surface. If you (or your agent) knew an older command, here's where it went:
 |---|---|---|
 | `wizard integrate` | `wizard` (default flow) | Command removed; the default flow runs the integration |
 | `wizard events-audit` | `wizard audit events` | Now an `audit`-family subcommand |
-| `wizard audit` (single audit) | `wizard audit [skill]` | Now a family; `wizard audit all` runs the comprehensive audit |
+| `wizard audit` (single audit) | `wizard audit <subcommand>` | Now a family — see the audit subcommands below |
 | `wizard audit-3000` | *removed* | Retired |
 | `wizard revenue` | `wizard revenue-analytics` | Renamed (old `revenue` removed) |
 | `wizard upload-sourcemaps` | `wizard upload-source-maps` | Renamed; `upload-sourcemaps` still works as an alias |
+
+### Audit subcommands (and the skills behind them)
+
+`audit` is the one family today whose subcommands are skills from this repo:
+
+| Subcommand | Backing skill |
+|---|---|
+| `wizard audit events` | `audit-events` (the default leaf) |
+| `wizard audit all` | `audit` |
+| `wizard audit autocapture` | `audit-autocapture` |
+| `wizard audit feature-flags` | `audit-feature-flags` |
+| `wizard audit identify` | `audit-identify` |
+| `wizard audit session-replay` | `audit-session-replay` |
+| `wizard audit web-analytics` | *(wizard-native, not a skill in this repo)* |
+
+> **Commands vs. skills:** those audit subcommands **are** skills, promoted to
+> commands via `cli: role: command`. A skill with `role: skill` is reachable only
+> through `wizard skill <id>`. Same machinery, two surfaces — so
+> `wizard audit <subcommand>` picks an audit area, it does **not** take a skill
+> name.
 
 > **Commands vs. programs:** `integrate` was the *command*; the program behind it
 > is `posthog-integration`, which still exists and powers the default flow. The

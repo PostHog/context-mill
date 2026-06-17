@@ -72,10 +72,27 @@ longer exist — only some keep an alias.
 |---|---|---|
 | `wizard integrate` | `wizard` (default flow) | command removed |
 | `wizard events-audit` | `wizard audit events` | moved into `audit` family |
-| `wizard audit` (single) | `wizard audit [skill]` | now a family; `audit all` = comprehensive |
+| `wizard audit` (single) | `wizard audit <subcommand>` | now a family — see audit subcommands below |
 | `wizard audit-3000` | *removed* | retired |
 | `wizard revenue` | `wizard revenue-analytics` | renamed (old `revenue` removed) |
 | `wizard upload-sourcemaps` | `wizard upload-source-maps` | renamed; `upload-sourcemaps` kept as alias |
+
+**Audit subcommands** — the one family today backed by skills from this repo:
+
+| Subcommand | Backing skill |
+|---|---|
+| `wizard audit events` | `audit-events` (default leaf) |
+| `wizard audit all` | `audit` |
+| `wizard audit autocapture` | `audit-autocapture` |
+| `wizard audit feature-flags` | `audit-feature-flags` |
+| `wizard audit identify` | `audit-identify` |
+| `wizard audit session-replay` | `audit-session-replay` |
+| `wizard audit web-analytics` | *(wizard-native, not a skill here)* |
+
+**Commands vs. skills:** those audit subcommands **are** skills, promoted to
+commands via `cli: role: command`. A `role: skill` skill is reachable only via
+`wizard skill <id>`. Same machinery, two surfaces — so `wizard audit <subcommand>`
+picks an audit area, it does **not** take a skill name.
 
 **Commands vs. programs:** a command is the word a user types; a program is the
 internal logic behind it. `posthog-integration` is a *program id, not a command*
