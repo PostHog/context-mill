@@ -1,12 +1,19 @@
 # Add error tracking
 
-Set up the framework's GLOBAL error boundary so uncaught errors and exceptions
-reach PostHog — one handler, not hand-wrapped across files.
+Wire the framework's single global path for uncaught errors and exceptions to
+PostHog — one handler, not hand-wrapped across files.
 
-Follow the framework's own mechanism for a global error handler, using the
-reference example and the docs for the exact pattern. Find the init or app entry,
-add the handler there, and you are done. One handler is enough — do not read
-through the whole app or wrap individual components or routes by hand.
+Use the SDK's own integration; do not hand-roll one. Where the framework ships a
+PostHog middleware or handler, add that — it captures exceptions and request
+context for you (e.g. Django:
+`posthog.integrations.django.PosthogContextMiddleware` in `MIDDLEWARE`). Where
+you must capture manually, call `posthog.capture_exception(e)` from the
+framework's central error handler — never hand-construct an exception event with
+`posthog.capture(...)`. Follow the framework rules (COMMANDMENTS) and the
+reference for the exact pattern.
+
+Find the init or app entry, wire it once, and you are done — don't read through
+the whole app or wrap individual components or routes by hand.
 
 ## Reference
 

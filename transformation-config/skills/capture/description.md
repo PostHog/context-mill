@@ -24,6 +24,11 @@ action — the click or submit handler, the server action — not on render or p
 load. Use clear `lower_snake_case` names and useful properties. Edit each file
 while it is already open.
 
+Server-side, use the authenticated user's id as the distinct id. For a genuinely
+unauthenticated action, emit a personless event — never fabricate a placeholder
+id like `'anonymous'`, which collapses every anonymous user into one person and
+corrupts the data.
+
 Leave `.posthog-events.json` in place for the report.
 
 ## Reference
