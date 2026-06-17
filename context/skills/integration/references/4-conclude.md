@@ -4,7 +4,9 @@ title: PostHog Setup - Conclusion
 description: Review and fix any errors in the PostHog integration implementation
 ---
 
-Use the PostHog MCP to create a new dashboard named "Analytics basics (wizard)" based on the events created here. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go. Make sure to use the exact same event names as implemented in the code. Populate it with up to five insights, with special emphasis on things like conversion funnels, churn events, and other business critical insights.  
+Use the PostHog MCP to create a new dashboard named "Analytics basics (wizard)" based on the events created here. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go. Make sure to use the exact same event names as implemented in the code. Populate it with up to five insights, with special emphasis on things like conversion funnels, churn events, and other business critical insights.
+
+Once the dashboard exists, emit its URL on its own line in your assistant message using this exact marker: `[DASHBOARD_URL] <full https url>`. The wizard parses this marker from your visible message and surfaces the link in the success summary. Mentioning the URL only in thinking or in prose without the marker means the link is dropped.
 
 Search for a file called `.posthog-events.json` and read it for available events.
 

@@ -30,7 +30,7 @@ Look for opportunities to track client-side events.
 
 Do not skip server-side events - they capture actions that cannot be tracked client-side.
 
-Create a new file with a JSON array at the root of the project: .posthog-events.json. It should include one object for each event we want to add: event name, event description, and the file path we want to place the event in. If events already exist, don't duplicate them; supplement them.
+Create a new file with a JSON array at the root of the project: .posthog-events.json. It should include one object for each event we want to add with these exact field names: `event_name` (the event name), `event_description` (one sentence), and `file` (the file path the event goes in). The wizard reads this file to surface the plan in the UI. If events already exist, don't duplicate them; supplement them.
 
 Track actions only, not pageviews. These can be captured automatically. Exceptions can be made for "viewed"-type events that correspond to the top of a conversion funnel.
 
