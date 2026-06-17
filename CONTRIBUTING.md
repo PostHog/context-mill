@@ -23,7 +23,7 @@ cli:
   role: command          # command | skill | internal
   parentCommand: audit   # the command this skill nests under (optional)
   command: events        # the user-typed word; required when role is command
-  default: true          # optional — pre-highlight this leaf in the family picker
+  default: true          # optional — the leaf `wizard <family>` runs by default
 ```
 
 Three values for `role`:
@@ -121,12 +121,12 @@ cli:                                                   →  wizard audit feature
   parentCommand: audit
   command: feature-flags
 
-# 3. Default leaf — pre-highlighted in the family picker
+# 3. Default leaf — what `wizard audit` runs with no subcommand
 cli:                                                   →  wizard audit all
-  role: command                                           Pre-highlighted in the
-  parentCommand: audit                                    family picker, so
-  command: all                                            `wizard audit` → Enter
-  default: true                                           runs this leaf.
+  role: command                                           `wizard audit` runs
+  parentCommand: audit                                    this leaf by default
+  command: all                                            (and pre-highlights it
+  default: true                                           in the picker later).
 
 # 4. Skill-only (reachable via `wizard skill <id>`)
 cli:                                                   →  wizard skill <skill-id>
@@ -143,16 +143,15 @@ the group key and so requires an explicit `command` at the group level.
 Flags and positional arguments live on the wizard side
 (`ProgramConfig.cliOptions`), not here.
 
-### What `default: true` does (and doesn't do)
+### What `default: true` does
 
-`default: true` controls **picker pre-highlighting**, not auto-run. When
-the user invokes a family parent with no subcommand, the wizard always
-opens an interactive picker over the family's children — the
-default child is sorted to the top so a single Enter keystroke
-runs it. The picker still appears (so the user sees every option before
-committing). Set `default` on the leaf you'd want a user typing
-`wizard <family>` to invoke if they don't change the selection. At most
-one leaf per family should be marked.
+`default: true` marks the leaf that `wizard <family>` runs when no subcommand
+is given. Today, when a family surfaces a single leaf, `wizard <family>` runs it
+directly — the user lands on its intro screen. Once a family surfaces several,
+the wizard opens an interactive picker with the `default` leaf pre-highlighted,
+so a single Enter runs it while the others stay visible. Set `default` on the
+leaf a user typing `wizard <family>` should get by default. At most one leaf per
+family should be marked.
 
 ## Promotion criterion for `role: command`
 
