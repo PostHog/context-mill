@@ -89,6 +89,49 @@ The build script automatically discovers, orders, and generates URIs for all res
 - **Easy to extend**: Add resources by creating properly named files
 - **Version controlled**: Resources evolve with the examples
 
+## Wizard CLI commands
+
+Skills in this repo declare how they surface as wizard commands via a `cli:`
+block in their `config.yaml`. That mechanism — `role`, `parentCommand`,
+`command`, flat vs. family — is documented in
+[`CONTRIBUTING.md`](CONTRIBUTING.md#how-skills-get-into-the-wizard-cli).
+
+The CLI was overhauled to consolidate commands into a smaller, extensible
+surface. If you (or your agent) knew an older command, here's where it went:
+
+| Old command | New command | What changed |
+|---|---|---|
+| `wizard integrate` | `wizard` (default flow) | Command removed; the default flow runs the integration |
+| `wizard events-audit` | `wizard audit events` | Now an `audit`-family subcommand |
+| `wizard audit` (single audit) | `wizard audit <subcommand>` | Now a family — see the audit subcommands below |
+| `wizard audit-3000` | *removed* | Retired |
+| `wizard revenue` | `wizard revenue-analytics` | Renamed (old `revenue` removed) |
+| `wizard upload-sourcemaps` | `wizard upload-source-maps` | Renamed; `upload-sourcemaps` still works as an alias |
+
+### Audit subcommands (and the skills behind them)
+
+`audit` is the one family today whose subcommands are skills from this repo:
+
+| Subcommand | Backing skill |
+|---|---|
+| `wizard audit events` | `audit-events` (the default leaf) |
+| `wizard audit all` | `audit` |
+| `wizard audit autocapture` | `audit-autocapture` |
+| `wizard audit feature-flags` | `audit-feature-flags` |
+| `wizard audit identify` | `audit-identify` |
+| `wizard audit session-replay` | `audit-session-replay` |
+| `wizard audit web-analytics` | *(wizard-native, not a skill in this repo)* |
+
+> **Commands vs. skills:** those audit subcommands **are** skills, promoted to
+> commands via `cli: role: command`. A skill with `role: skill` is reachable only
+> through `wizard skill <id>`. Same machinery, two surfaces — so
+> `wizard audit <subcommand>` picks an audit area, it does **not** take a skill
+> name.
+
+> **Commands vs. programs:** `integrate` was the *command*; the program behind it
+> is `posthog-integration`, which still exists and powers the default flow. The
+> program id is internal — it was never a command you typed.
+
 ## Security scanning
 
 Before we ship any skills, we run them through [the warlock](https://github.com/PostHog/warlock), PostHog's security scanner for agentic flows. It reads the built skill bundles and looks for prompt-injection attempts and other risky content that could trick an agent downstream. An LLM triage pass then sorts the real threats from the false positives, so we're not chasing noise.
