@@ -14,8 +14,11 @@ conflict to report (below), not a problem to fight.
 ## Build and verify
 
 Run the project's build (or typecheck), lint, and test scripts if they exist
-(check the manifest's scripts). Fix only obvious issues from the new PostHog code —
-a missing import, a wrong call shape.
+(check the manifest's scripts). Only errors in the files this integration changed
+are yours to fix — a missing import, a wrong call shape.
+An error in a file the integration never touched is pre-existing: note it and
+move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
+failure clears — it will not, and each re-run is slow.
 
 ## Flag out-of-scope conflicts and move on
 
