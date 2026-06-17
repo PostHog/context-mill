@@ -61,7 +61,6 @@ lands. See [CONTRIBUTING.md § Flat vs. family](CONTRIBUTING.md#flat-vs-family--
 2. Run `npm test` — the parser's suite (`scripts/lib/tests/cli-block.test.js`) covers every naming-convention case.
 3. Run `npm run build` — confirm the entry appears (or disappears) under `cliEntries` in `dist/skills/skill-menu.json` with the values you expect.
 4. The wizard resolves new entries at runtime, so no wizard release is required unless the change needs wizard-side hooks (custom outro, content blocks, abort cases).
-5. **Flag the wizard maintainer:** the wizard ships a committed `docs/cli.md` auto-generated from the manifest. When the wizard upgrades to a release containing your change, someone needs to run `pnpm docs:cli` over there to refresh it. Note this in your PR description or open a tracking issue in the wizard repo.
 
 ## Wizard CLI command mapping (old → new)
 
