@@ -6,6 +6,7 @@ references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/identity-resolution.md
   - https://posthog.com/docs/product-analytics/best-practices.md
 variants:
   - id: all

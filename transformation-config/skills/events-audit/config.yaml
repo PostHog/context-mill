@@ -7,6 +7,7 @@ references:
 shared_docs:
   - https://posthog.com/docs/product-analytics/best-practices.md
   - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/identity-resolution.md
 variants:
   - id: all
     display_name: PostHog events audit

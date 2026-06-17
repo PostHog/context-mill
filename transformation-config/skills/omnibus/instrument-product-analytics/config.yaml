@@ -6,6 +6,7 @@ description: Add PostHog product analytics events to track user behavior. Use af
 tags: []
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/identity-resolution.md
 variants:
   - id: all
     display_name: all supported frameworks
