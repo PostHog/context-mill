@@ -6,7 +6,10 @@ decisive — this step must not spiral.
 ## Install
 
 Detect the package manager from the project's lockfile and run its install once,
-in this project directory. The manifest already declares PostHog.
+in this project directory. The manifest already declares PostHog. If install is
+slow, errors, or can't resolve a package, do not retry with offline flags and do
+not poke the package manager's global store or cache — a failed install is a
+conflict to report (below), not a problem to fight.
 
 ## Build and verify
 
@@ -16,12 +19,14 @@ a missing import, a wrong call shape.
 
 ## Flag out-of-scope conflicts and move on
 
-Work only within this project's own directory; other repos and directories are not
-part of this task.
+Work only inside this project's own directory. Never read, search, or write
+anywhere outside it — not other repos, not the OS, not the package manager's
+global store or cache.
 
-If you hit a conflict that is excessively difficult and outside the scope of this
-integration — a dependency clash, a pre-existing build break, an environment issue
-that is not about the PostHog code — flag it and move on rather than spend time
-fighting it. Put a one-line summary in your handoff `conflict` field and the full
-detail in `did`, then complete the task. The user sees it in the outro and the
-report; flagging it is the right outcome.
+A build or install you can't cleanly finish is a perfectly acceptable outcome —
+**as long as you report it.** If you hit a conflict that is excessively difficult
+or outside the scope of this integration — a dependency clash, a pre-existing
+build break, an install that won't resolve, an environment issue unrelated to the
+PostHog code — stop fighting it: put a one-line summary in your handoff `conflict`
+field and the full detail in `did`, then complete the task. The user sees it in
+the outro and the report; reporting it and moving on is the right outcome.
