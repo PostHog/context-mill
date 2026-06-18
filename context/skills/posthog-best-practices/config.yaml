@@ -4,7 +4,6 @@ description: Framework-agnostic, distilled best practices for using PostHog
 tags: [best-practices]
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-  - https://posthog.com/docs/product-analytics/identity-resolution.md
   - https://posthog.com/docs/new-to-posthog/understand-posthog.md
   - https://posthog.com/docs/privacy/data-collection.md
   - https://posthog.com/docs/advanced/proxy.md

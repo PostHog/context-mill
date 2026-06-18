@@ -4,7 +4,6 @@ template: description.md
 description: PostHog integration for {display_name} applications
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-  - https://posthog.com/docs/product-analytics/identity-resolution.md
 variants:
   - id: nextjs-app-router
     example_paths: example-apps/next-app-router

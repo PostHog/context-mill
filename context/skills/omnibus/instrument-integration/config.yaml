@@ -5,7 +5,6 @@ description: Add PostHog SDK integration to your application. Use when setting u
 tags: []
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
-  - https://posthog.com/docs/product-analytics/identity-resolution.md
 variants:
   - id: all
     display_name: all supported frameworks

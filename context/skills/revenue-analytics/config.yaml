@@ -9,7 +9,6 @@ cli:
 shared_docs:
   - https://posthog.com/docs/revenue-analytics/connect-to-customers.md
   - https://posthog.com/docs/getting-started/identify-users.md
-  - https://posthog.com/docs/product-analytics/identity-resolution.md
 variants:
   - id: setup
     display_name: Stripe Revenue Analytics
