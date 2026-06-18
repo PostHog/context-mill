@@ -3,7 +3,7 @@ type: install
 flow: posthog-integration
 label: Add the PostHog SDK to the manifest
 model: claude-haiku-4-5-20251001
-skills: [install]
+skills: [basic-integration-install]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: []

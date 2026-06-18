@@ -3,7 +3,7 @@ type: error-tracking
 flow: posthog-integration
 label: Add error tracking
 model: claude-sonnet-4-6
-skills: [error-tracking-step]
+skills: [basic-integration-error-tracking-step]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]
