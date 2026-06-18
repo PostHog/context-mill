@@ -6,6 +6,3 @@ variants:
   - id: all
     display_name: PostHog error-tracking step
     tags: [orchestrator, error-tracking]
-    docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/web.md
-      - https://posthog.com/docs/error-tracking/installation/node.md

@@ -12,7 +12,8 @@ dependsOn: [dashboard]
 ## Goal
 
 Write the setup report summarizing what this integration did, drawing only on the
-run's queue log (`.posthog-wizard-cache/`) and the local `.posthog-events.json`.
+run's queue log and event plan in `.posthog-wizard-cache/` (`queue.json` and
+`.posthog-events.json`).
 
 ## How you know you succeeded
 

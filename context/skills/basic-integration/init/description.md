@@ -16,7 +16,3 @@ Create the framework's single initialization point that runs once on the client,
 following the reference example and the docs for the right pattern. Read the
 existing provider or entry file before editing, and add PostHog alongside what is
 already there rather than replacing it.
-
-## Reference
-
-{references}

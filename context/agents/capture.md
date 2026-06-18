@@ -18,5 +18,5 @@ while the file is already open.
 ## How you know you succeeded
 
 The meaningful user actions across the app have capture calls that fire on the
-real action, not on page load, and `.posthog-events.json` lists the events you
-instrumented.
+real action, not on page load, and `.posthog-wizard-cache/.posthog-events.json`
+lists the events you instrumented.
