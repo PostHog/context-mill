@@ -1,6 +1,6 @@
 # PostHog Product Autonomy setup
 
-This skill configures PostHog Signals for a project that already has PostHog installed: it switches on the signal sources (the inbox's "Responders") that match what the product actually uses, makes sure the GitHub integration is connected so Signals can research and fix issues in code, tunes the scout fleet, designs custom scouts for the watchable surfaces the canonical fleet doesn't cover (always proposed to the user first), and confirms the organization-level AI data processing approval that everything downstream depends on.
+This skill configures PostHog Signals for a project that already has PostHog installed: it switches on the signal sources (the inbox's "Responders") that match what the product actually uses, makes sure the GitHub integration is connected so Signals can research and fix issues in code, tunes the scout fleet, designs custom scouts for the watchable surfaces the canonical fleet doesn't cover (always proposed to the user first). Organization-level AI data processing approval — which everything downstream depends on — is enforced by the wizard itself before this skill runs.
 
 The wizard's run prompt supplies the project URLs (integrations settings, organization AI settings, new warehouse source, Signals inbox). Use those exact URLs whenever a step sends the user to the browser.
 
@@ -31,10 +31,9 @@ Report aborts with `[ABORT]`-prefixed messages. The wizard catches these, render
 
 - `[ABORT] product autonomy is not available for this project`
 - `[ABORT] github connection declined`
-- `[ABORT] ai data processing approval declined`
 - `[ABORT] requires-interactive-mode`
 
-Tool failures on individual sources or scouts are **not** abort conditions — record them as follow-ups and keep going. Only the four cases above end the run.
+Tool failures on individual sources or scouts are **not** abort conditions — record them as follow-ups and keep going. Only the three cases above end the run.
 
 ## Framework guidelines
 
