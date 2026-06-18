@@ -1,0 +1,20 @@
+type: skill
+template: description.md
+description: Audit a PostHog integration's feature flag usage for correctness and cost-optimization opportunities
+tags: [best-practices]
+cli:
+  role: command
+  parentCommand: audit
+  command: feature-flags
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/feature-flags/best-practices.md
+  - https://posthog.com/docs/feature-flags/cutting-costs.md
+  - https://posthog.com/docs/feature-flags/local-evaluation.md
+  - https://posthog.com/docs/feature-flags/bootstrapping.md
+variants:
+  - id: all
+    display_name: PostHog audit — feature flags
+    tags: [best-practices]
+    docs_urls: []

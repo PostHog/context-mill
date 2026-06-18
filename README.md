@@ -1,8 +1,8 @@
 # Welcome to the PostHog context mill
 
-This repo assembles PostHog context for AI agents and LLMs into [Agent Skills](https://agentskills.io/specification)-compliant packages. Check out `/transformation-config` for details. 
+This repo assembles PostHog context for AI agents and LLMs into [Agent Skills](https://agentskills.io/specification)-compliant packages. Check out `/context` for details. 
 
-**Need output in a different format?** No problem. Let us know in [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ), or fire up a PR to augment the `/transformation-config` and `/scripts` directories with your preferred transformation.
+**Need output in a different format?** No problem. Let us know in [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ), or fire up a PR to augment the `/context` and `/scripts` directories with your preferred transformation.
 
 **Have a skill you want to make sure is maintained and distributed via the wizard?** 
 
@@ -46,8 +46,7 @@ examples/
 │   ├── react-tanstack-router-code-based/   # React with TanStack Router (code-based)
 │   ├── tanstack-start/          # TanStack Start
 │   └── django/                  # Django
-├── llm-prompts/                 # Workflow guides for AI agents
-├── mcp-commands/                # MCP command prompts (`/command` in agents, can wrap `llm-prompts`)
+├── mcp-commands/                # MCP command prompts (`/command` in agents)
 └── scripts/                     # Build scripts
 ```
 
@@ -68,14 +67,14 @@ Run `npm run build:docs` to generate:
 ### Manifest structure
 
 The manifest defines:
-- **Workflows**: Step-by-step guides with automatic next-step linking
+- **Skills**: Bundled skill packages, each containing a `SKILL.md`, `references/` step files, and any docs/example content
 - **Docs**: PostHog documentation URLs (fetched at runtime)
 - **Prompts**: MCP command prompts with template variable substitution
 - **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
 
 ### Adding new resources
 
-**Workflows**: Add markdown files to `llm-prompts/[category]/` following the naming convention `[order].[step]-[name].md`
+**Skill step files**: Add numbered markdown files to `context/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
 
 **Examples**: Add new example projects to `basics/` and configure in `scripts/build-examples-mcp-resources.js`
 
@@ -90,7 +89,48 @@ The build script automatically discovers, orders, and generates URIs for all res
 - **Easy to extend**: Add resources by creating properly named files
 - **Version controlled**: Resources evolve with the examples
 
-See `llm-prompts/README.md` for detailed workflow conventions.
+## Wizard CLI commands
+
+Skills in this repo declare how they surface as wizard commands via a `cli:`
+block in their `config.yaml`. That mechanism — `role`, `parentCommand`,
+`command`, flat vs. family — is documented in
+[`CONTRIBUTING.md`](CONTRIBUTING.md#how-skills-get-into-the-wizard-cli).
+
+The CLI was overhauled to consolidate commands into a smaller, extensible
+surface. If you (or your agent) knew an older command, here's where it went:
+
+| Old command | New command | What changed |
+|---|---|---|
+| `wizard integrate` | `wizard` (default flow) | Command removed; the default flow runs the integration |
+| `wizard events-audit` | `wizard audit events` | Now an `audit`-family subcommand |
+| `wizard audit` (single audit) | `wizard audit <subcommand>` | Now a family — see the audit subcommands below |
+| `wizard audit-3000` | *removed* | Retired |
+| `wizard revenue` | `wizard revenue-analytics` | Renamed (old `revenue` removed) |
+| `wizard upload-sourcemaps` | `wizard upload-source-maps` | Renamed; `upload-sourcemaps` still works as an alias |
+
+### Audit subcommands (and the skills behind them)
+
+`audit` is the one family today whose subcommands are skills from this repo:
+
+| Subcommand | Backing skill |
+|---|---|
+| `wizard audit events` | `audit-events` (the default leaf) |
+| `wizard audit all` | `audit` |
+| `wizard audit autocapture` | `audit-autocapture` |
+| `wizard audit feature-flags` | `audit-feature-flags` |
+| `wizard audit identify` | `audit-identify` |
+| `wizard audit session-replay` | `audit-session-replay` |
+| `wizard audit web-analytics` | *(wizard-native, not a skill in this repo)* |
+
+> **Commands vs. skills:** those audit subcommands **are** skills, promoted to
+> commands via `cli: role: command`. A skill with `role: skill` is reachable only
+> through `wizard skill <id>`. Same machinery, two surfaces — so
+> `wizard audit <subcommand>` picks an audit area, it does **not** take a skill
+> name.
+
+> **Commands vs. programs:** `integrate` was the *command*; the program behind it
+> is `posthog-integration`, which still exists and powers the default flow. The
+> program id is internal — it was never a command you typed.
 
 ## Security scanning
 

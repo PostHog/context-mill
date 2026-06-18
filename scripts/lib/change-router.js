@@ -22,7 +22,7 @@ function isUnder(absPath, parent) {
  *     to the group's source directory and the variant IDs that live under it.
  *     Sorted by `absPath.length` DESC so the deepest matching group wins.
  *   - examplePathIndex: reverse index { examplePath → skillId[] } keyed by the
- *     POSIX paths that appear in `skill._examplePaths` (e.g. "basics/django").
+ *     POSIX paths that appear in `skill._examplePaths` (e.g. "example-apps/django").
  */
 function buildIndexes({ skills, configDir }) {
     const groupsByKey = new Map();
@@ -93,7 +93,7 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
  */
 function routeChange({ event, absPath, indexes, paths }) {
     const { groupRoots, examplePathIndex } = indexes;
-    const { repoRoot, skillsDir, basicsDir } = paths;
+    const { repoRoot, skillsDir, exampleAppsDir } = paths;
 
     if (isUnder(absPath, skillsDir)) {
         const isDirEvent = event === 'addDir' || event === 'unlinkDir';
@@ -112,7 +112,7 @@ function routeChange({ event, absPath, indexes, paths }) {
         return null;
     }
 
-    if (isUnder(absPath, basicsDir)) {
+    if (isUnder(absPath, exampleAppsDir)) {
         const relPosix = path.relative(repoRoot, absPath).split(path.sep).join('/');
         const ids = findExamplesMatching(relPosix, examplePathIndex);
         if (ids.length === 0) return null;

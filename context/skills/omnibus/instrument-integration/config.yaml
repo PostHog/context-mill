@@ -1,0 +1,96 @@
+type: skill
+template: description.md
+category: integration
+description: Add PostHog SDK integration to your application. Use when setting up PostHog for the first time or reviewing PRs that need PostHog initialization. Covers SDK installation, provider setup, and basic configuration for any framework.
+tags: []
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/identity-resolution.md
+variants:
+  - id: all
+    display_name: all supported frameworks
+    tags: []
+    example_paths:
+      # JavaScript / Frontend
+      - example-apps/next-app-router
+      - example-apps/next-pages-router
+      - example-apps/react-react-router-6
+      - example-apps/react-react-router-7-framework
+      - example-apps/react-react-router-7-data
+      - example-apps/react-react-router-7-declarative
+      - example-apps/react-vite
+      - example-apps/nuxt-3-6
+      - example-apps/nuxt-4
+      - example-apps/vue-3
+      - example-apps/react-tanstack-router-file-based
+      - example-apps/react-tanstack-router-code-based
+      - example-apps/tanstack-start
+      - example-apps/sveltekit
+      - example-apps/astro-static
+      - example-apps/astro-view-transitions
+      - example-apps/astro-ssr
+      - example-apps/astro-hybrid
+      - example-apps/angular
+      # JavaScript / Server + Client
+      - example-apps/javascript-node
+      - example-apps/javascript-web
+      # Python
+      - example-apps/django
+      - example-apps/flask
+      - example-apps/fastapi
+      - example-apps/python
+      # PHP
+      - example-apps/laravel
+      - example-apps/php
+      # Ruby
+      - example-apps/ruby-on-rails
+      - example-apps/ruby
+      # Mobile
+      - example-apps/android
+      - example-apps/swift
+      - example-apps/react-native
+      - example-apps/expo
+    docs_urls:
+      # JavaScript / Frontend
+      - https://posthog.com/docs/libraries/next-js.md
+      - https://posthog.com/docs/libraries/react.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+      - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+      - https://posthog.com/docs/libraries/nuxt-js.md
+      - https://posthog.com/docs/libraries/vue-js.md
+      - https://posthog.com/docs/libraries/tanstack-start.md
+      - https://posthog.com/docs/libraries/svelte.md
+      - https://posthog.com/docs/libraries/astro.md
+      - https://posthog.com/docs/libraries/angular.md
+      # JavaScript / Server + Client
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/references/posthog-js.md
+      - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/references/posthog-node.md
+      # Python
+      - https://posthog.com/docs/libraries/django.md
+      - https://posthog.com/docs/libraries/flask.md
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
+      # .NET
+      - https://posthog.com/docs/libraries/dotnet.md
+      # Elixir
+      - https://posthog.com/docs/libraries/elixir.md
+      # Go
+      - https://posthog.com/docs/libraries/go.md
+      # PHP
+      - https://posthog.com/docs/libraries/laravel.md
+      - https://posthog.com/docs/libraries/php.md
+      # Ruby
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby.md
+      # Mobile
+      - https://posthog.com/docs/libraries/android.md
+      - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+      - https://posthog.com/docs/libraries/flutter.md
+      - https://posthog.com/docs/libraries/react-native.md

@@ -41,7 +41,7 @@ describe('generateSkill local references', () => {
 
         const config = {
             integration: {
-                type: 'docs-only',
+                type: 'skill',
                 template: 'description.md',
                 variants: [{ id: 'all', display_name: 'Integration' }],
             },
@@ -60,7 +60,6 @@ describe('generateSkill local references', () => {
             commandmentsConfig: { commandments: {} },
             skillTemplate: skill._template,
             sharedDocs: skill._sharedDocs || [],
-            workflows: [],
         });
 
         const generatedRef = join(outputDir, 'integration', 'references', 'product-analytics.md');

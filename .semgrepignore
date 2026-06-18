@@ -10,12 +10,12 @@
 
 # Android launcher activity exported=true is required for MAIN/LAUNCHER intent filter
 # This is standard React Native / Android boilerplate, not a security issue
-basics/react-native/android/app/src/main/AndroidManifest.xml
-basics/expo/android/app/src/main/AndroidManifest.xml
-basics/android/app/src/main/AndroidManifest.xml
+example-apps/react-native/android/app/src/main/AndroidManifest.xml
+example-apps/expo/android/app/src/main/AndroidManifest.xml
+example-apps/android/app/src/main/AndroidManifest.xml
 
 # Markdown audit reference contains HogQL examples with PostHog $host event property.
 # Semgrep's nginx host-header rule misidentifies this docs-only SQL as nginx config.
-transformation-config/skills/audit-events/references/3-events-optimize.md
-transformation-config/skills/web-analytics/references/checks.md
-transformation-config/skills/web-analytics/references/remediation.md
+context/skills/audit-events/references/3-events-optimize.md
+context/skills/web-analytics/references/checks.md
+context/skills/web-analytics/references/remediation.md

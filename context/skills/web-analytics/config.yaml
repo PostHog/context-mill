@@ -1,0 +1,7 @@
+type: skill
+template: description.md
+description: Audit and fix common PostHog web analytics misconfigurations
+tags: [web-analytics, audit]
+variants:
+  - id: doctor
+    display_name: Web Analytics Doctor

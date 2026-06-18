@@ -8,7 +8,7 @@
  * served as raw markdown rather than zipped. The wizard parses the frontmatter
  * when it loads a task by type.
  *
- *   Source:  transformation-config/agents/<type>.md
+ *   Source:  context/agents/<type>.md
  *   Output:  dist/agents/<type>.md  +  dist/agents/agent-menu.json
  */
 

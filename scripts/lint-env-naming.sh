@@ -3,15 +3,15 @@
 # Lints example apps for deprecated environment variable naming patterns.
 # Emits GitHub Actions warnings but never fails the build (always exits 0).
 #
-# Usage: bash scripts/lint-env-naming.sh [basics-directory]
+# Usage: bash scripts/lint-env-naming.sh [example-apps-directory]
 
 set -euo pipefail
 
-BASICS_DIR="${1:-basics}"
+EXAMPLE_APPS_DIR="${1:-example-apps}"
 WARNINGS=0
 
-if [ ! -d "$BASICS_DIR" ]; then
-  echo "::warning::Basics directory not found: $BASICS_DIR"
+if [ ! -d "$EXAMPLE_APPS_DIR" ]; then
+  echo "::warning::Example apps directory not found: $EXAMPLE_APPS_DIR"
   exit 0
 fi
 
@@ -62,7 +62,7 @@ for entry in "${DEPRECATED_PATTERNS[@]}"; do
 
   while IFS= read -r -d '' file; do
     check_file "$file" "$pattern" "$replacement"
-  done < <(find "$BASICS_DIR" -type f \( \
+  done < <(find "$EXAMPLE_APPS_DIR" -type f \( \
     -name '*.env*' -o -name '*.md' -o -name '*.js' -o -name '*.ts' \
     -o -name '*.tsx' -o -name '*.jsx' -o -name '*.py' -o -name '*.rb' \
     -o -name '*.php' -o -name '*.yaml' -o -name '*.yml' -o -name '*.erb' \

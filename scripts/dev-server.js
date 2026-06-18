@@ -3,8 +3,8 @@
 /**
  * Development server for MCP resources
  *
- * Runs one full build at startup, then watches transformation-config/skills/
- * and basics/ for changes. A file edit triggers an incremental rebuild of
+ * Runs one full build at startup, then watches context/skills/
+ * and example-apps/ for changes. A file edit triggers an incremental rebuild of
  * only the skills that own the path; manifest.json and skill-menu.json are
  * regenerated from the in-memory skill list. The bundled
  * skills-mcp-resources.zip and marketplace tree stay at initial-build state
@@ -47,14 +47,13 @@ const FORCE_FULL_REBUILD = process.env.FORCE_FULL_REBUILD === '1';
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
 const repoRoot = path.join(import.meta.dirname, '..');
-const configDir = path.join(repoRoot, 'transformation-config');
+const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
-const promptsDir = path.join(repoRoot, 'llm-prompts');
 const skillsSourceDir = path.join(configDir, 'skills');
 const agentsSourceDir = path.join(configDir, 'agents');
 const agentsDir = path.join(distDir, 'agents');
-const basicsDir = path.join(repoRoot, 'basics');
+const exampleAppsDir = path.join(repoRoot, 'example-apps');
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
 const localAgentsUrl = `http://localhost:${PORT}/agents`;
@@ -111,7 +110,6 @@ async function runPartialRebuild(ids) {
         repoRoot,
         configDir,
         distDir,
-        promptsDir,
         version: BUILD_VERSION,
         docContents,
         log: console.log,
@@ -193,7 +191,7 @@ async function drainQueue() {
 
 function handleEvent(event, absPath) {
     // Agent prompts are decoupled from the skill incremental machinery. A change
-    // under transformation-config/agents/ just re-copies them wholesale — cheap.
+    // under context/agents/ just re-copies them wholesale — cheap.
     if (absPath.startsWith(agentsSourceDir)) {
         try {
             const { count } = buildAgents({
@@ -215,7 +213,7 @@ function handleEvent(event, absPath) {
         event,
         absPath,
         indexes,
-        paths: { repoRoot, skillsDir: skillsSourceDir, basicsDir },
+        paths: { repoRoot, skillsDir: skillsSourceDir, exampleAppsDir },
     });
 
     const relPath = path.relative(repoRoot, absPath);
@@ -236,7 +234,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, basicsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, exampleAppsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -249,7 +247,7 @@ function setupWatcher() {
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, agentsSourceDir)}`);
-    console.log(`   📁 ${path.relative(repoRoot, basicsDir)}`);
+    console.log(`   📁 ${path.relative(repoRoot, exampleAppsDir)}`);
 
     return watcher;
 }
