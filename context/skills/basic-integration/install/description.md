@@ -12,3 +12,7 @@ range, and match the style of the dependencies already in the manifest.
 
 Read the manifest first. If the dependency is already declared, leave it as is and
 say so. Edit only the manifest — no lockfile, no install command.
+
+## Reference
+
+{references}
