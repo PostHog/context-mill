@@ -7,11 +7,41 @@
  * - Commandments (based on tags)
  */
 
+/**
+ * Optional `cli:` block in a skill's `config.yaml` — declares whether and how
+ * the skill appears in the wizard CLI. Parsed by `parseCliBlock`, propagated by
+ * `expandSkillGroups`, emitted into `dist/skills/cli-manifest.json` (the wizard
+ * snapshots that manifest to derive its skill-backed command surface).
+ *
+ * Full schema, the YAML→command mapping, the flat-vs-family convention, and the
+ * naming rules live in CONTRIBUTING.md § "How skills get into the wizard CLI".
+ *
+ * @typedef {Object} CliRoleBlock
+ * @property {'command' | 'skill' | 'internal'} role
+ *   How the skill appears: a typed `command`, a `skill` reachable via
+ *   `wizard skill <id>`, or `internal` (hidden). Skills with no `cli:` block
+ *   default to `skill` and are not emitted into `cli-manifest.json`.
+ * @property {string} [command]
+ *   The user-typed word that registers this skill (e.g. `'feature-flags'` in
+ *   `wizard audit feature-flags`). Required when `role` is `'command'`;
+ *   defaults to the variant id when omitted, except the magic `id: all`
+ *   variant, which requires an explicit `command`. Use the full PostHog
+ *   product name, not a shorthand.
+ * @property {string} [parentCommand]
+ *   The command this skill nests under (e.g. `'audit'`). Omit for flat commands.
+ * @property {boolean} [default]
+ *   When true, this leaf is pre-highlighted in the family's interactive picker
+ *   (`wizard <family>` → Enter runs it). The picker still opens (discovery +
+ *   consent); this just makes the obvious choice one keystroke. At most one
+ *   leaf per family should be marked.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import matter from 'gray-matter';
 import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
+import { CLI_ROLES, validateCommandName } from './cli-block-validation.js';
 
 /**
  * Load YAML config file
@@ -19,6 +49,100 @@ import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } f
 function loadYaml(configPath) {
     const content = fs.readFileSync(configPath, 'utf8');
     return yaml.load(content);
+}
+
+/**
+ * Validate and normalize a raw `cli:` block from a skill `config.yaml`.
+ * Returns `null` when the block is absent, throws on malformed input.
+ *
+ * Naming-convention checks (kebab-case, length 2–20, no reserved words,
+ * no internal-flag collisions) run on every `command` and `parentCommand`
+ * value before the resolved block is returned.
+ *
+ * `context` is a human-readable label used in error messages (e.g.
+ * `'Skill group "audit-events"'` or
+ * `'Skill group "migrate", variant "statsig"'`).
+ *
+ * @param {unknown} raw
+ * @param {string} context
+ * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, default?: boolean } | null}
+ */
+function parseCliBlock(raw, context) {
+    if (raw == null) return null;
+    if (typeof raw !== 'object' || Array.isArray(raw)) {
+        throw new Error(`${context}: cli block must be an object`);
+    }
+    const { role, command, parentCommand, default: isDefault, ...rest } = raw;
+    const unknownKeys = Object.keys(rest);
+    if (unknownKeys.length > 0) {
+        throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
+    }
+    if (!role) {
+        throw new Error(`${context}: cli.role is required`);
+    }
+    if (!CLI_ROLES.includes(role)) {
+        throw new Error(`${context}: cli.role must be one of ${CLI_ROLES.join(', ')} (got "${role}")`);
+    }
+    const result = { role };
+    if (command != null) {
+        if (typeof command !== 'string' || command.length === 0) {
+            throw new Error(`${context}: cli.command must be a non-empty string when set`);
+        }
+        validateCommandName(command, 'command', context);
+        result.command = command;
+    }
+    if (parentCommand != null) {
+        if (typeof parentCommand !== 'string' || parentCommand.length === 0) {
+            throw new Error(`${context}: cli.parentCommand must be a non-empty string when set`);
+        }
+        validateCommandName(parentCommand, 'parentCommand', context);
+        result.parentCommand = parentCommand;
+    }
+    if (isDefault != null) {
+        if (typeof isDefault !== 'boolean') {
+            throw new Error(`${context}: cli.default must be a boolean when set`);
+        }
+        if (isDefault) result.default = true;
+    }
+    return result;
+}
+
+/**
+ * Merge a group-level cli block with a variant-level override and fill in
+ * the implicit command name for the `command` role. Returns `null` when
+ * neither level declared a block.
+ *
+ * For `role: 'command'`, the command name falls back to the variant's
+ * short id (e.g. parentCommand `migrate` + variant `statsig` →
+ * `wizard migrate statsig`). The `id: 'all'` variant is special — its
+ * skill id collapses to the group key, so the command name has to be
+ * set explicitly at the group level.
+ *
+ * @param {ReturnType<typeof parseCliBlock>} groupCli
+ * @param {ReturnType<typeof parseCliBlock>} variantCli
+ * @param {{ id: string }} variant
+ * @param {string} groupKey
+ */
+function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
+    if (!groupCli && !variantCli) return null;
+    const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
+    if (merged.role === 'command' && !merged.command) {
+        if (variant.id === 'all') {
+            throw new Error(
+                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when role is command and the variant id is "all"`,
+            );
+        }
+        merged.command = variant.id;
+        // The fallback value bypassed parseCliBlock's checks, so validate it
+        // here too — a variant id like "help" or "CamelCase" must not slip
+        // through into the manifest just because it wasn't typed as a command.
+        validateCommandName(
+            merged.command,
+            'command',
+            `Skill group "${groupKey}", variant "${variant.id}"`,
+        );
+    }
+    return merged;
 }
 
 /**
@@ -101,6 +225,7 @@ function expandSkillGroups(config, configDir) {
         const baseDescription = group.description || null;
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
+        const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -132,6 +257,12 @@ function expandSkillGroups(config, configDir) {
                 ? compositeKeyDashed
                 : `${compositeKeyDashed}-${variation.id}`;
 
+            const variantCli = parseCliBlock(
+                variation.cli,
+                `Skill group "${key}", variant "${variation.id}"`,
+            );
+            const cli = resolveVariantCli(baseCli, variantCli, variation, key);
+
             skills.push({
                 ...variation,
                 id: skillId,
@@ -145,6 +276,7 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _group: key,
+                _cli: cli,
             });
         }
     }
@@ -557,7 +689,7 @@ async function generateSkill({
  * Convert an expanded skill into the manifest-builder shape.
  */
 function serializeSkill(s) {
-    return {
+    const result = {
         id: s.id,
         shortId: s._shortId,
         category: s._category,
@@ -568,6 +700,10 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
+    if (s._cli) {
+        result.cli = s._cli;
+    }
+    return result;
 }
 
 /**
@@ -699,4 +835,6 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    parseCliBlock,
+    resolveVariantCli,
 };

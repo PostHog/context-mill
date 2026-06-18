@@ -191,14 +191,94 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
             downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
         });
     }
+
+    // The CLI entries are the lookup table the wizard's runtime resolver uses
+    // (parentCommand + command -> skillId). They live inside skill-menu.json
+    // so the wizard can reach them through the existing fetchSkillMenu path.
+    const cliEntries = generateCliEntries({ allSkills });
+
     const skillMenu = {
         version: manifest.version,
         buildVersion: manifest.buildVersion,
         categories: skillsByCategory,
+        cliEntries,
     };
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
 
     return manifest;
+}
+
+/**
+ * Build the CLI entries array from the expanded skill list. Used by
+ * `writeManifestAndMenu` (which embeds the result in `skill-menu.json`
+ * under `cliEntries`) and exercised directly by tests. Throws on an
+ * invalid `default:` arrangement (see `validateDefault`) so the
+ * build fails before bad data reaches the wizard.
+ *
+ * Only skills with a `cli` block participate. Untagged skills implicitly
+ * have the `skill` role (already reachable via `skill-menu.json` and
+ * `manifest.json`) and are not emitted here.
+ *
+ * Entry shape:
+ *   { skillId, role, command?, parentCommand?, default?, displayName, description }
+ *
+ * Entries are sorted by role (command first, then skill, then internal),
+ * then by `parentCommand`/`command` so diffs in `skill-menu.json` stay
+ * reviewable.
+ */
+function generateCliEntries({ allSkills }) {
+    const roleOrder = { command: 0, skill: 1, internal: 2 };
+    const entries = allSkills
+        .filter(s => s.cli)
+        .map(s => {
+            const entry = {
+                skillId: s.id,
+                role: s.cli.role,
+            };
+            if (s.cli.parentCommand) entry.parentCommand = s.cli.parentCommand;
+            if (s.cli.command) entry.command = s.cli.command;
+            if (s.cli.default) entry.default = true;
+            entry.displayName = s.displayName;
+            entry.description = s.description;
+            return entry;
+        })
+        .sort((a, b) => {
+            const roleDiff = roleOrder[a.role] - roleOrder[b.role];
+            if (roleDiff !== 0) return roleDiff;
+            const parentDiff = (a.parentCommand || '').localeCompare(b.parentCommand || '');
+            if (parentDiff !== 0) return parentDiff;
+            return (a.command || '').localeCompare(b.command || '');
+        });
+    validateDefault(entries);
+    return entries;
+}
+
+/**
+ * Enforce the `default:` rules: at most one default leaf per family
+ * (grouped by `parentCommand`), and no `default` without a `parentCommand`
+ * (nothing to highlight). Checked here because a family spans multiple skill
+ * directories. Throws naming the offending `skillId`s.
+ */
+function validateDefault(entries) {
+    const defaultByParent = new Map();
+    for (const entry of entries) {
+        if (!entry.default) continue;
+        if (!entry.parentCommand) {
+            throw new Error(
+                `cli.default is only valid on a leaf inside a family (a command with a parentCommand); "${entry.skillId}" sets default but has no parentCommand`,
+            );
+        }
+        const siblings = defaultByParent.get(entry.parentCommand) || [];
+        siblings.push(entry.skillId);
+        defaultByParent.set(entry.parentCommand, siblings);
+    }
+    for (const [parentCommand, skillIds] of defaultByParent) {
+        if (skillIds.length > 1) {
+            throw new Error(
+                `Family "${parentCommand}" has more than one cli.default leaf (${skillIds.join(', ')}); at most one is allowed`,
+            );
+        }
+    }
 }
 
 /**
@@ -285,6 +365,7 @@ export {
     zipSkillToBuffer,
     createBundledArchive,
     generateManifest,
+    generateCliEntries,
     writeManifestAndMenu,
     reconcileOrphans,
     partialRebuild,
