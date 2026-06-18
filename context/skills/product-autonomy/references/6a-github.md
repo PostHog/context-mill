@@ -2,6 +2,8 @@
 
 Creates the GitHub Issues warehouse source directly — zero browser trips on the happy path. Reuses the GitHub App integration verified in step 4; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
 
+**Dependency on step 4:** this can only auto-connect a repo the step-4 App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — fall back to the UI path and record a follow-up telling the user to grant this repo to the PostHog GitHub App.
+
 ## Status
 
 Emit:

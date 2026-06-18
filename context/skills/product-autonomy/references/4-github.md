@@ -22,12 +22,18 @@ Load via `ToolSearch select:mcp__posthog-wizard__integrations-list,mcp__wizard-t
 
 1. Call `integrations-list`. If any integration has `kind: "github"`, the team is already connected — record it and continue to step 5. (If step 2's project profile already showed a GitHub integration, this call just confirms it.)
 
-2. If absent, ask:
+2. If absent, build the **one-click install link** from the run prompt's project URLs — same host, project id as a path segment (the same pattern Linear uses in step 6b):
+
+```
+<posthog host>/api/environments/<project id>/integrations/authorize?kind=github
+```
+
+   Opening it in the user's logged-in browser runs the GitHub App install flow directly — no settings-page hunting. Then ask:
 
 ```
 {
   id: "github-connect",
-  prompt: "Signals needs GitHub access to investigate findings in your code and open fixes — setup can't finish without it.\n\nInstall the PostHog GitHub App from your integrations settings:\n<integrations settings URL>\n\nClick through to GitHub, install the app on the repos you want Signals to work with, then come back here.",
+  prompt: "Signals needs GitHub access to investigate findings in your code and open fixes — setup can't finish without it.\n\nOpen this link to install the PostHog GitHub App in one click, then approve access. Grant it the repos you want Signals to work with — include this project's repo so step 6 can also watch its issues:\n\n<github authorize URL>\n\nThen come back here.\n\n(Need to re-link an existing installation instead? Use your integrations settings: <integrations settings URL>.)",
   kind: "single",
   options: [
     { label: "Done — I've installed it", value: "done" },

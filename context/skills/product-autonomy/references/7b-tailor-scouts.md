@@ -33,7 +33,12 @@ Load via `ToolSearch select:mcp__posthog-wizard__llma-skill-get,mcp__posthog-wiz
 
    Typical shapes that survive all three filters: the product's core funnel (creation → completion → conversion), a domain job pipeline with success/failure events, a critical third-party dependency the events expose (e.g. an external API search that can silently degrade). Expect **one or two** survivors on most projects; zero is a legitimate outcome, and more than three almost always means the filters were too loose — every scout is a recurring hourly LLM spend, so each must earn its schedule.
 
-3. **Propose all of them in ONE `wizard_ask`** (multi-select, one option per proposed scout): name (`signals-scout-<scope>`, prefix mandatory — anything else never runs), what it watches (the events/funnel), and its discriminator in one line each. The user approves any subset; anything not approved is recorded as "proposed, declined" and never created.
+3. **Propose all of them in ONE `wizard_ask`** (multi-select, one option per proposed scout). Write each option for a **human who has never heard the word "scout"** — the first time you use the term in the ask, define it in one plain sentence (e.g. "Scouts are scheduled checks that watch your data and flag issues for your inbox."). For each option:
+   - **Lead with a plain-language label** of what it would watch for, in product terms — e.g. "Watch your signup funnel for conversion drops", not "signals-scout-signup-funnel".
+   - **Say what it watches and what would make it speak up** in one short line, in words a product person reads naturally. Do **not** surface raw event names (`run_failed`/`run_started`), internal metric tokens (`p95 duration_s`, `not_matched/candidates_total`), or jargon labels like "Discriminator:" / "Not covered by:" — translate those into plain English.
+   - Keep the machine name `signals-scout-<scope>` (prefix mandatory — anything else never runs) **internal**: you still need it for `llma-skill-create`, but it does not belong in the option the user reads.
+
+   The user approves any subset; anything not approved is recorded as "proposed, declined" and never created.
 
 4. **Create the approved scouts.** For each: `llma-skill-create` with the name, a trigger-rich description, and a body that meets the guide's quality bar — named discriminator near the top, quick close-out so quiet runs are cheap, 2–4 explore patterns with the actual queries, disqualifiers for this project's foreseeable noise, a Decide section calibrated to the emit contract, save-memory guidance, lean body.
 
