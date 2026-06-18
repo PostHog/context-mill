@@ -100,8 +100,9 @@ export function useTour({
     const ready = isPosthogReady();
     if (ready) {
       // Production path: PostHog is wired, the flag decides.
-      if (!posthog.isFeatureEnabled(flagKey)) return;
-      const payload = posthog.getFeatureFlagPayload(flagKey) as {
+      const result = posthog.getFeatureFlagResult(flagKey);
+      if (!result?.enabled) return;
+      const payload = result.payload as {
         steps?: TourStep[];
       } | null;
       if (payload?.steps) setSteps(payload.steps);

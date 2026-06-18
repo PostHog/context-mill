@@ -43,13 +43,13 @@ The Statsig server-side gate calls take a user object; PostHog takes a `distinct
 
 ## Dynamic configs and experiments
 
-PostHog represents both Statsig `DynamicConfig` and Statsig `Experiment` as **multivariate feature flags**. The flag's payload is read with `getFeatureFlagPayload`.
+PostHog represents both Statsig `DynamicConfig` and Statsig `Experiment` as **multivariate feature flags**. The flag's payload is read with `getFeatureFlagResult`.
 
 | Statsig | PostHog |
 |---|---|
-| `statsig.getConfig('my-config').get('key', fallback)` | `(posthog.getFeatureFlagPayload('my-config') ?? {})['key'] ?? fallback` |
+| `statsig.getConfig('my-config').get('key', fallback)` | `(posthog.getFeatureFlagResult('my-config')?.payload ?? {})['key'] ?? fallback` |
 | `statsig.getConfig('my-config').getValue('key', fallback)` | Same as above. |
-| `statsig.getExperiment('my-exp').get('variant', fallback)` | `posthog.getFeatureFlag('my-exp') ?? fallback` (variant key) **or** `posthog.getFeatureFlagPayload('my-exp')?.['variant'] ?? fallback` if the call is reading a config-style payload key. The bundled reference defers to the call shape: a single-variant-string read is the former; a structured key read is the latter. |
+| `statsig.getExperiment('my-exp').get('variant', fallback)` | `posthog.getFeatureFlag('my-exp') ?? fallback` (variant key) **or** `posthog.getFeatureFlagResult('my-exp')?.payload?.['variant'] ?? fallback` if the call is reading a config-style payload key. The bundled reference defers to the call shape: a single-variant-string read is the former; a structured key read is the latter. |
 | `useConfig('my-config').get('key', fallback)` | `(useFeatureFlagPayload('my-config') ?? {})['key'] ?? fallback` |
 | `useExperiment('my-exp').get('variant', fallback)` | `useFeatureFlagVariantKey('my-exp') ?? fallback` |
 
