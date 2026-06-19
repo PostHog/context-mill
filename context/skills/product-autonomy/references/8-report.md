@@ -16,7 +16,7 @@ Emit:
 
 ## Do
 
-1. Write `./posthog-product-autonomy-report.md` (read any existing file first, then overwrite). Sections, in order:
+1. Write `./posthog-self-driving-report.md` (read any existing file first, then overwrite). Sections, in order:
 
    - **Summary** — two or three sentences: what was turned on, and that findings will start appearing in the Signals inbox within ~30 minutes (include the inbox URL from the run prompt).
    - **AI data processing** — approved. (The wizard's AI opt-in gate enforces organization approval before the run starts, so by the time you reach the report it is always granted — just record it as approved.)

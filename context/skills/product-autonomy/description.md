@@ -1,4 +1,4 @@
-# PostHog Product Autonomy setup
+# PostHog Self-driving setup
 
 This skill configures PostHog Signals for a project that already has PostHog installed: it switches on the signal sources (the inbox's "Responders") that match what the product actually uses, makes sure the GitHub integration is connected so Signals can research and fix issues in code, tunes the scout fleet, designs custom scouts for the watchable surfaces the canonical fleet doesn't cover (always proposed to the user first). Organization-level AI data processing approval — which everything downstream depends on — is enforced by the wizard itself before this skill runs.
 

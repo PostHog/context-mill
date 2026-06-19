@@ -1,10 +1,10 @@
 type: skill
 template: description.md
-description: Set up PostHog Product Autonomy (Signals) — enable the right signal sources, connect GitHub, tune the scout fleet, design custom scouts, and verify AI data processing approval
+description: Set up PostHog Self-driving — enable the right signal sources, connect GitHub, tune the scout fleet, design custom scouts, and verify AI data processing approval
 tags: [signals, product-autonomy]
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 variants:
   - id: setup
-    display_name: PostHog Product Autonomy
+    display_name: PostHog Self-driving
     docs_urls: []
