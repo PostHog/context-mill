@@ -35,7 +35,7 @@ The bundled `anonymous-vs-identified-events.md` reference holds PostHog's author
 `description`: `Audit server-process-person-profile`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: server-process-person-profile.
 
 Read this skill's bundled `anonymous-vs-identified-events.md` reference once (typically `.claude/skills/audit-identify/references/anonymous-vs-identified-events.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/anonymous-vs-identified-events.md`).
@@ -70,14 +70,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `server-sdk-flush-on-exit`
 
 `description`: `Audit server-sdk-flush-on-exit`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: server-sdk-flush-on-exit.
 
 Background: posthog-node, posthog-python, and posthog-ruby buffer events in memory and flush asynchronously. In long-running servers this is fine — the buffer drains during operation. In serverless functions (AWS Lambda, Vercel Functions, Cloudflare Workers), edge handlers, and background workers (Celery, Sidekiq, BullMQ, RQ), the process can terminate before the buffer drains. Events captured in the last few milliseconds before exit are silently lost. The fix is to call `posthog.shutdown()` (Node, Python) or `await posthog.flush()` before the handler returns or the worker exits.
@@ -108,14 +108,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `server-set-without-identify`
 
 `description`: `Audit server-set-without-identify`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: server-set-without-identify.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`).
@@ -152,7 +152,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all three return
 

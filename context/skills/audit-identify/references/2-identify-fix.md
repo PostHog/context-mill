@@ -123,7 +123,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 `description`: `Audit identify-sequential-calls`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-sequential-calls.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`).
@@ -154,7 +154,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all five return
 

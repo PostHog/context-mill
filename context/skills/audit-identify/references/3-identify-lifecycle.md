@@ -33,7 +33,7 @@ The bundled `identify-users.md` reference holds PostHog's authoritative guidance
 `description`: `Audit identify-set-discipline`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-set-discipline.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the `$set` vs `$set_once` guidance: `$set` overwrites every time and should be reserved for properties that genuinely change (plan tier, last_seen_app_version). `$set_once` is for first-touch attributes that should never be overwritten (initial_referrer, signup_date, first_seen_country). Calling `$set` on every `capture()` inflates person-property version count and is the most common form of "person property bloat".
@@ -70,14 +70,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `identify-alias-usage`
 
 `description`: `Audit identify-alias-usage`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-alias-usage.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the `alias()` guidance: modern PostHog SDKs handle the anonymous → identified merge automatically when `identify()` is called for the first time. `alias()` is mostly legacy. **Backend `alias()` is particularly hazardous**: when a server aliases a browser's anonymous UUID to a user id, that UUID becomes "identified" in PostHog. When the web SDK later tries to `identify()` with the same UUID as `$anon_distinct_id`, the merge is blocked. This pattern has caused 80–100k blocked merges/day at multi-SDK SaaS customers and is almost never what the operator intended.
@@ -113,14 +113,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `identify-groupidentify-correctness`
 
 `description`: `Audit identify-groupidentify-correctness`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-groupidentify-correctness.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the group analytics section: `posthog.group(type, key, properties?)` sets the active group context (so subsequent events are attributed to that group) and may call `groupIdentify` internally to set group properties. `posthog.groupIdentify(type, key, properties)` is the lower-level API that emits a `$groupidentify` event to set group properties without changing the active context.
@@ -154,7 +154,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all three return
 

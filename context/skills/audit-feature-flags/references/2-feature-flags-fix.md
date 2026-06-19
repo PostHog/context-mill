@@ -31,7 +31,7 @@ The bundled `best-practices.md` reference holds PostHog's authoritative guidance
 `description`: `Audit ff-bootstrap-when-known-set`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: ff-bootstrap-when-known-set.
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-feature-flags/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/best-practices.md`). Focus on the bootstrapping guidance — when an initial flag set is already known at app start (e.g. computed server-side, persisted in a cookie, or passed through SSR props), client-side `posthog.init` should set `bootstrap.featureFlags` so the first render has the right values without a `/flags` round trip.
@@ -67,14 +67,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `ff-await-readiness`
 
 `description`: `Audit ff-await-readiness`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: ff-await-readiness.
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-feature-flags/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/best-practices.md`). Focus on the readiness / "have the value before you need it" section — client-side flag evaluation is async, so any flag-eval before `onFeatureFlags` fires (or before the `loaded` callback runs, or before `bootstrap.featureFlags` is set) returns `undefined`, which is **not** `false`. Misreading the loading gap is one of the most common flag bugs.
@@ -106,14 +106,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `ff-default-values`
 
 `description`: `Audit ff-default-values`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: ff-default-values.
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-feature-flags/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/best-practices.md`). Focus on the "undefined is not false" and per-flag default guidance — `getFeatureFlag('key')` returns `undefined` during the loading window and may also return `undefined` when PostHog is unreachable or quota-limited. A per-flag default (via `?? 'control'`, a wrapper helper, or the SDK's `default_value`/`defaultValue` option when supported) controls what users see during these windows.
@@ -144,14 +144,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task D — `ff-bootstrap-distinct-id-mismatch`
 
 `description`: `Audit ff-bootstrap-distinct-id-mismatch`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: ff-bootstrap-distinct-id-mismatch.
 
 Read this skill's bundled `bootstrapping.md` reference once (typically `.claude/skills/audit-feature-flags/references/bootstrapping.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/bootstrapping.md`).
@@ -186,14 +186,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task E — `ff-identified-only-pre-auth-targeting`
 
 `description`: `Audit ff-identified-only-pre-auth-targeting`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: ff-identified-only-pre-auth-targeting.
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-feature-flags/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/best-practices.md`).
@@ -231,7 +231,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all five return
 

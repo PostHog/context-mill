@@ -29,7 +29,7 @@ The bundled `config.md` (posthog-js config reference) and `data-collection.md` (
 `description`: `Audit attribution-cross-subdomain-cookie`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-cross-subdomain-cookie.
 
 Read this skill's bundled `config.md` reference once (typically `.claude/skills/audit-attribution/references/config.md`).
@@ -62,14 +62,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `attribution-cookieless-mode-impact`
 
 `description`: `Audit attribution-cookieless-mode-impact`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-cookieless-mode-impact.
 
 Read this skill's bundled `data-collection.md` reference once (typically `.claude/skills/audit-attribution/references/data-collection.md`).
@@ -102,14 +102,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `attribution-consent-integration`
 
 `description`: `Audit attribution-consent-integration`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-consent-integration.
 
 Read this skill's bundled `data-collection.md` reference once (typically `.claude/skills/audit-attribution/references/data-collection.md`).
@@ -145,7 +145,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all three return
 

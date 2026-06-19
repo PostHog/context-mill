@@ -31,7 +31,7 @@ The bundled `utm-segmentation.md` reference holds PostHog's authoritative guidan
 `description`: `Audit attribution-utm-survives-landing`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-utm-survives-landing.
 
 Read this skill's bundled `utm-segmentation.md` reference once (typically `.claude/skills/audit-attribution/references/utm-segmentation.md`).
@@ -65,14 +65,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `attribution-survives-auth-redirect`
 
 `description`: `Audit attribution-survives-auth-redirect`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-survives-auth-redirect.
 
 Read this skill's bundled `utm-segmentation.md` reference once (typically `.claude/skills/audit-attribution/references/utm-segmentation.md`).
@@ -110,14 +110,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `attribution-first-touch-set-once`
 
 `description`: `Audit attribution-first-touch-set-once`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-first-touch-set-once.
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-attribution/references/identify-users.md`).
@@ -150,14 +150,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task D — `attribution-custom-click-ids`
 
 `description`: `Audit attribution-custom-click-ids`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-custom-click-ids.
 
 Read this skill's bundled `utm-segmentation.md` reference once (typically `.claude/skills/audit-attribution/references/utm-segmentation.md`).
@@ -191,14 +191,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task E — `attribution-on-conversion-events`
 
 `description`: `Audit attribution-on-conversion-events`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: attribution-on-conversion-events.
 
 Read this skill's bundled `utm-segmentation.md` reference once (typically `.claude/skills/audit-attribution/references/utm-segmentation.md`).
@@ -236,7 +236,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all five return
 
