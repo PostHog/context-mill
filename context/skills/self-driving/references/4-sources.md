@@ -33,7 +33,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-create,mcp
 | Scout gate | **Always** — it lets the step-6 fleet's findings reach the inbox | `signals_scout` / `cross_source_issue` |
 | Error tracking | Error tracking is in use anywhere: instrumented in this repo (report), exception autocapture ON (project-state block), or error issues exist (step-2 probe) | **All three rows**: `error_tracking` / `issue_created`, `error_tracking` / `issue_reopened`, `error_tracking` / `issue_spiking` — the product UI treats them as one switch |
 | Session replay | Replay is enabled for the **project**: recording opt-in ON (project-state block) OR recordings exist (step-2 probe) OR the report says this repo instruments it. Opt-in ON with zero recordings still counts (recordings just haven't arrived yet). Skip only when all three say no/unknown, with reason "replay not enabled for this project" | `session_replay` / `session_analysis_cluster` — don't pass a `config`; the server injects the default sample rate. A 400 mentioning AI approval is unexpected (approval is enforced upstream) → skip this source and record a follow-up |
-| Support | The team uses PostHog support/conversations (per the profile) | `conversations` / `ticket` |
+| Support | The team uses PostHog support/conversations (per the profile). If the profile was unavailable (step 2), don't record a confident skip — record "unknown — profile unavailable" + a follow-up to enable Support manually if they use it | `conversations` / `ticket` |
 
 ## Skip — do not create
 
