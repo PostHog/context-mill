@@ -1,6 +1,6 @@
 # Connector — Linear warehouse source
 
-Creates the Linear warehouse source with at most **one click** from the user: Linear needs an OAuth'd Integration row, and the only part this run can't do is the user consenting in their browser. Hand them the authorize link, wait for the integration to land, then create the source yourself — no UI form-filling.
+Creates the Linear warehouse source with at most **one click** from the user: Linear needs an OAuth'd Integration row, and the only part this run can't do is the user consenting in their browser. Hand them the authorize link, then check **once** for the integration — if it's there, create the source yourself (no UI form-filling); if it isn't, leave a dormant responder and move on. Never nudge or wait through retry rounds.
 
 ## Status
 
@@ -14,7 +14,7 @@ Emit:
 
 Load via `ToolSearch select:mcp__posthog-wizard__external-data-sources-create` (`integrations-list` from step 4 stays loaded).
 
-If `external-data-sources-create` isn't available (older server), skip this file and handle Linear through the step-6 UI-redirect path instead. **Not an abort.**
+If `external-data-sources-create` isn't available (older server), skip this file and treat Linear as picked-but-not-connected — arm the dormant responder and add a follow-up (step 6's picked-but-not-connected path) — instead. **Not an abort.**
 
 ## Do
 
@@ -40,7 +40,7 @@ If `external-data-sources-create` isn't available (older server), skip this file
 }
 ```
 
-   - **done** → call `integrations-list` again. `kind: "linear"` present → step 3. Still absent → tell the user it hasn't appeared yet and re-ask, **at most 3 rounds** (same pattern as step 4's GitHub check); on the third miss, record "picked but not connected" and return to step 6.
+   - **done** → call `integrations-list` **once**. `kind: "linear"` present → step 3 (create the source). Still absent → **don't re-ask or wait** — record "picked but not connected" and return to step 6 (the dormant responder + follow-up cover it; the user can finish the one-click OAuth later). This run never nudges for Linear.
    - **skip** → record "picked but not connected" and return to step 6 (enable the dormant responder and add a follow-up — harmless, since it only emits once a warehouse source syncs).
 
 3. **Create the source** with `external-data-sources-create`, using the Linear integration's `id`:
@@ -66,7 +66,7 @@ If `external-data-sources-create` isn't available (older server), skip this file
    Sync **only** `issues` — the one table Signals consumes; more tables can be enabled in the UI later (note this in the report).
 
    - 400 "Prefix is required" (a Linear source already exists) → retry once with `prefix: "signals"`.
-   - Any other failure → fall back to one UI-redirect ask (new-warehouse-source URL from the run prompt, "Done — connected it" / "Skip for now"), then verify per step 6's recipe.
+   - Any other failure → don't send the user to the UI; record "picked but not connected" and return to step 6 (dormant responder + follow-up). A failed create never dead-ends the run.
    - Success returns the source `id` — record "connected by this setup (source id …, first sync started)".
 
 Return to step 6 (responder enabling and class recording happen there).

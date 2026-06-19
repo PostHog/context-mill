@@ -16,7 +16,7 @@ Emit:
 
 Load via `ToolSearch select:mcp__posthog-wizard__integrations-github-repos-retrieve,mcp__posthog-wizard__external-data-sources-create`.
 
-If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't available (older server), skip this file and handle GitHub Issues through the step-6 UI-redirect path instead. **Not an abort.**
+If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't available (older server), skip the auto-create and use the UI fallback (step 5 below) instead. **Not an abort.**
 
 ## Do
 
@@ -69,6 +69,6 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
    - 400 mentioning credentials or repository access → fallback (step 5).
    - Success returns the source `id` — record "connected by this setup (source id …, first sync started)".
 
-5. **Fallback** (no remote / repo not visible / create failed): one ask — connect GitHub Issues in the UI at the new-warehouse-source URL from the run prompt, options "Done — connected it" / "Skip for now" — then verify per step 6's recipe. A failed connector never dead-ends the run.
+5. **Fallback** (no remote / repo not visible / create failed): one ask — connect GitHub Issues in the UI at the new-warehouse-source URL from the run prompt, options "Done — connected it" / "Skip for now". After "Done", confirm with a single `external-data-sources-list` call — found → "verified connected"; still missing (or "Skip for now") → arm the dormant responder and add a follow-up (don't nag). A failed connector never dead-ends the run.
 
 Return to step 6 (responder enabling and class recording happen there).
