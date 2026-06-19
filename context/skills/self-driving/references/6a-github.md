@@ -29,17 +29,17 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
 ```
 {
   id: "github-issues-repo",
-  prompt: "Connect GitHub Issues for <owner/repo>? Signals will sync this repo's issues into the warehouse and watch them in the inbox.",
+  prompt: "Connect GitHub Issues for <owner/repo>? Self-driving will sync this repo's issues into the warehouse and watch them in the inbox.",
   kind: "single",
   options: [
+    { label: "Skip GitHub Issues", value: "skip" },
     { label: "Yes, connect <owner/repo>", value: "yes" },
-    { label: "A different repository", value: "other" },
-    { label: "Skip GitHub Issues", value: "skip" }
+    { label: "A different repository", value: "other" }
   ]
 }
 ```
 
-   - **other** → ask once more with up to four close matches from `integrations-github-repos-retrieve` (search with fragments of the repo name, then the owner) plus "Skip". Still nothing that fits → fallback (step 5).
+   - **other** → ask once more with **"Skip" first**, then up to four close matches from `integrations-github-repos-retrieve` (search with fragments of the repo name, then the owner). Still nothing that fits → fallback (step 5).
    - **skip** → record "picked but not connected" and return to step 6 (enable the dormant responder and add a follow-up — harmless, since it only emits once a warehouse source syncs).
 
 4. **Create the source** with `external-data-sources-create`:
@@ -69,6 +69,6 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
    - 400 mentioning credentials or repository access → fallback (step 5).
    - Success returns the source `id` — record "connected by this setup (source id …, first sync started)".
 
-5. **Fallback** (no remote / repo not visible / create failed): one ask — connect GitHub Issues in the UI at the new-warehouse-source URL from the run prompt, options "Done — connected it" / "Skip for now". After "Done", confirm with a single `external-data-sources-list` call — found → "verified connected"; still missing (or "Skip for now") → arm the dormant responder and add a follow-up (don't nag). A failed connector never dead-ends the run.
+5. **Fallback** (no remote / repo not visible / create failed): one ask — connect GitHub Issues in the UI at the new-warehouse-source URL from the run prompt, options "Skip for now" (first) / "Done — connected it". After "Done", confirm with a single `external-data-sources-list` call — found → "verified connected"; still missing (or "Skip for now") → arm the dormant responder and add a follow-up (don't nag). A failed connector never dead-ends the run.
 
 Return to step 6 (responder enabling and class recording happen there).

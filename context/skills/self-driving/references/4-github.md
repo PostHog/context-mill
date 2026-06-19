@@ -33,7 +33,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__integrations-list,mcp__wizard-t
 ```
 {
   id: "github-connect",
-  prompt: "Signals needs GitHub access to investigate findings in your code and open fixes — setup can't finish without it.\n\nOpen this link to install the PostHog GitHub App in one click, then approve access. Grant it the repos you want Signals to work with — include this project's repo so step 6 can also watch its issues:\n\n<github authorize URL>\n\nThen come back here.\n\n(Need to re-link an existing installation instead? Use your integrations settings: <integrations settings URL>.)",
+  prompt: "Self-driving needs GitHub access to investigate findings in your code and open fixes — setup can't finish without it.\n\nOpen this link to install the PostHog GitHub App in one click, then approve access. Grant it the repos you want Self-driving to work with — include this project's repo so step 6 can also watch its issues:\n\n<github authorize URL>\n\nThen come back here.\n\n(Need to re-link an existing installation instead? Use your integrations settings: <integrations settings URL>.)",
   kind: "single",
   options: [
     { label: "Done — I've installed it", value: "done" },

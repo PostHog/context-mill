@@ -22,19 +22,19 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__e
 
 ## Do
 
-1. Ask **once**, multi-select (seed the option order with any step-2 hints — a tool you saw evidence of goes first):
+1. Ask **once**, multi-select. **"None of these" is the first option** (the safe default — an accidental `enter` declines); order the *tools* after it, seeding with any step-2 hints so a tool you saw evidence of comes first among them:
 
 ```
 {
   id: "connected-tools",
-  prompt: "Signals can also watch your other tools and pull their issues into the inbox. Which of these do you use?",
+  prompt: "Self-driving can also watch your other tools and pull their issues into the inbox. Which of these do you use?",
   kind: "multi",
   options: [
+    { label: "None of these", value: "none" },
     { label: "GitHub Issues", value: "github-issues" },
     { label: "Linear", value: "linear" },
     { label: "Zendesk", value: "zendesk" },
-    { label: "pganalyze", value: "pganalyze" },
-    { label: "None of these", value: "none" }
+    { label: "pganalyze", value: "pganalyze" }
   ]
 }
 ```

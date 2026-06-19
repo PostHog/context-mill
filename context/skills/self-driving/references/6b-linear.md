@@ -34,8 +34,8 @@ If `external-data-sources-create` isn't available (older server), skip this file
   prompt: "One click connects Linear: open this link in your browser and approve access —\n\n<authorize URL>\n\nThen come back here.",
   kind: "single",
   options: [
-    { label: "Done — I've approved it", value: "done" },
-    { label: "Skip Linear", value: "skip" }
+    { label: "Skip Linear", value: "skip" },
+    { label: "Done — I've approved it", value: "done" }
   ]
 }
 ```

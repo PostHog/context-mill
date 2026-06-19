@@ -31,14 +31,33 @@ Load via `ToolSearch select:mcp__posthog-wizard__llma-skill-get,mcp__posthog-wiz
    - **Is it uncovered?** A canonical scout that step 7 kept enabled may already own it — error bursts belong to `signals-scout-error-tracking`, generic anomalies to `signals-scout-anomaly-detection`. A custom scout that duplicates an enabled canonical adds noise, not coverage.
    - **Would its scout pass the quality bar?** You must be able to name its signal-vs-noise discriminator and 2–4 concrete explore patterns *before* proposing it. If you can't, the surface isn't ready for a scout — record it as a report note instead.
 
-   Typical shapes that survive all three filters: the product's core funnel (creation → completion → conversion), a domain job pipeline with success/failure events, a critical third-party dependency the events expose (e.g. an external API search that can silently degrade). Expect **one or two** survivors on most projects; zero is a legitimate outcome, and more than three almost always means the filters were too loose — every scout is a recurring hourly LLM spend, so each must earn its schedule.
+   Typical shapes that survive all three filters: the product's core funnel (creation → completion → conversion), a domain job pipeline with success/failure events, a critical third-party dependency the events expose (e.g. an external API search that can silently degrade). **Propose at most two custom scouts — never more, even if more surfaces look watchable.** Zero is a perfectly good outcome and one or two is the norm; if three or more look worthwhile, the filters were too loose — keep only the two highest-value ones and record the rest as report notes. Every scout is a recurring hourly LLM spend, so each must earn its schedule, and the hard cap also keeps the proposal readable in the terminal, where each scout needs room for its explanation.
 
-3. **Propose all of them in ONE `wizard_ask`** (multi-select, one option per proposed scout). Write each option for a **human who has never heard the word "scout"** — the first time you use the term in the ask, define it in one plain sentence (e.g. "Scouts are scheduled checks that watch your data and flag issues for your inbox."). For each option:
-   - **Lead with a plain-language label** of what it would watch for, in product terms — e.g. "Watch your signup funnel for conversion drops", not "signals-scout-signup-funnel".
-   - **Say what it watches and what would make it speak up** in one short line, in words a product person reads naturally. Do **not** surface raw event names (`run_failed`/`run_started`), internal metric tokens (`p95 duration_s`, `not_matched/candidates_total`), or jargon labels like "Discriminator:" / "Not covered by:" — translate those into plain English.
-   - Keep the machine name `signals-scout-<scope>` (prefix mandatory — anything else never runs) **internal**: you still need it for `llma-skill-create`, but it does not belong in the option the user reads.
+3. **Propose them in ONE `wizard_ask`.** If the gap analysis surfaced **no** candidate, skip this ask entirely and go straight to the status line ("Custom scouts: none"). Otherwise emit one multi-select question — one option per proposed scout (**at most two**), plus a leading "none" option. Write everything for a **human who has never heard the word "scout"**: define the term once in the question `prompt`, in one plain sentence (e.g. "Scouts are scheduled checks that watch your data and flag issues for your inbox."). Each scout option carries a short `label` **and** a `description`:
+   - **`label`** — a plain-language title of what it would watch for, in product terms — e.g. "Watch your signup funnel for conversion drops", not "signals-scout-signup-funnel". One short line.
+   - **`description`** — one or two sentences saying **what it watches and what would make it speak up**, in words a product person reads naturally. This renders dimmed and wrapped beneath the label, so it is where the real explanation lives — **never leave it empty, and never collapse it back into the label.** Do **not** surface raw event names (`run_failed`/`run_started`), internal metric tokens (`p95 duration_s`, `not_matched/candidates_total`), or jargon labels like "Discriminator:" / "Not covered by:" — translate those into plain English.
+   - **Make the first option an explicit decline** so declining is always one keystroke away and is the safe default: `{ "label": "None — keep the canonical fleet", "value": "none", "description": "Skip custom scouts; the built-in fleet already covers this project." }`. It must be **first** — it is the default highlight, so a user who just presses enter declines rather than accidentally accepting a scout.
+   - Keep the machine name `signals-scout-<scope>` (prefix mandatory — anything else never runs) **internal**: you still need it for `llma-skill-create`, but it never appears in any text the user reads.
 
-   The user approves any subset; anything not approved is recorded as "proposed, declined" and never created.
+   Shape (one scout shown; add a second only if a second survived the filters):
+
+   ```json
+   {
+     "questions": [
+       {
+         "id": "custom_scouts",
+         "kind": "multi",
+         "prompt": "Scouts are scheduled checks that watch your data and flag issues for your inbox. Based on your project I found a gap the built-in fleet doesn't cover — add it, or none.",
+         "options": [
+           { "label": "None — keep the canonical fleet", "value": "none", "description": "Skip custom scouts; the built-in fleet already covers this project." },
+           { "label": "Watch your signup funnel for conversion drops", "value": "signals-scout-signup-funnel", "description": "Speaks up when sign-up completion falls below its recent norm, so a broken or regressed onboarding step gets caught fast." }
+         ]
+       }
+     ]
+   }
+   ```
+
+   The user approves any subset. If `none` is among the selections (or it is the highlighted choice on an empty submit), create nothing. Anything not approved is recorded as "proposed, declined" and never created.
 
 4. **Create the approved scouts.** For each: `llma-skill-create` with the name, a trigger-rich description, and a body that meets the guide's quality bar — named discriminator near the top, quick close-out so quiet runs are cheap, 2–4 explore patterns with the actual queries, disqualifiers for this project's foreseeable noise, a Decide section calibrated to the emit contract, save-memory guidance, lean body.
 
