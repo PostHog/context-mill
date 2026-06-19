@@ -1,8 +1,8 @@
 ---
-next_step: 7-scouts.md
+next_step: 6-scouts.md
 ---
 
-# Step 6 — Connected-tool sources (ask, then connect)
+# Step 5 — Connected-tool sources (ask, then connect)
 
 External tools can feed the inbox too: GitHub Issues, Linear, Zendesk, and pganalyze. Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
 
@@ -18,7 +18,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__external-data-sources-list` (the source-config tools from step 5 stay loaded).
+Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__external-data-sources-list` (the source-config tools from step 4 stay loaded).
 
 ## Do
 
@@ -43,11 +43,11 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__e
 
 3. Dispatch each picked tool that's still missing:
 
-   - **GitHub Issues** → read `references/6a-github.md` and follow it.
-   - **Linear** → read `references/6b-linear.md` and follow it.
-   - **Zendesk / pganalyze** → this run can't create their sources (it never collects the API credentials they need), so **don't ask the user to connect them and don't verify**. Just enable the dormant responder (step 4) and record "picked but not connected" with a follow-up. A downstream reminder prompts the user to add the warehouse source later; the responder stays dormant (harmless) and starts emitting once that source syncs.
+   - **GitHub Issues** → read `references/5a-github.md` and follow it.
+   - **Linear** → read `references/5b-linear.md` and follow it.
+   - **Zendesk / pganalyze** → this run can't create their sources (it never collects the API credentials they need), so **don't ask the user to connect them and don't verify**. Just enable the dormant responder (step 4 below) and record "picked but not connected" with a follow-up. A downstream reminder prompts the user to add the warehouse source later; the responder stays dormant (harmless) and starts emitting once that source syncs.
 
-4. Enable the source row (step 5's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
+4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
    - GitHub Issues → `github` / `issue`
    - Linear → `linear` / `issue`

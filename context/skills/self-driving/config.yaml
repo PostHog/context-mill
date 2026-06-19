@@ -1,6 +1,6 @@
 type: skill
 template: description.md
-description: Set up PostHog Self-driving — enable the right signal sources, connect GitHub, tune the scout fleet, design custom scouts, and verify AI data processing approval
+description: Set up PostHog Self-driving — enable the right signal sources, connect GitHub, tune the scout fleet, and design custom scouts
 tags: [signals, self-driving]
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."

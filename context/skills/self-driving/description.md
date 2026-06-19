@@ -6,7 +6,7 @@ The wizard's run prompt supplies the project URLs (integrations settings, organi
 
 ## Workflow
 
-The setup runs as a 9-step chain:
+The setup runs as an 8-step chain:
 
 {workflow}
 
@@ -18,9 +18,9 @@ Each step file points to the next. Run them in order. **Start by reading `refere
 - **Every write must be idempotent.** List before you create. A duplicate `inbox-source-configs-create` returns 400 — recover by finding the existing row's `id` and calling `inbox-source-configs-partial-update` with `enabled: true`.
 - **Never disable a source the user already enabled.** You only switch things on (and tune scouts off); existing enabled rows are someone's deliberate choice.
 - **Never enable a connected-tool source the user hasn't confirmed they use.** GitHub Issues, Linear, Zendesk, and pganalyze are ask-then-connect, never blind.
-- **Stay off the internal surfaces.** Don't call `signals-scout-emit-signal` or any scratchpad-write tool, and don't change a scout's `emit` flag or `run_interval_minutes` — on configs, this skill only flips `enabled`. **Canonical scout bodies are never edited.** New scout skills are created in exactly one place: step 7b, and only ones the user approved there.
+- **Stay off the internal surfaces.** Don't call `signals-scout-emit-signal` or any scratchpad-write tool, and don't change a scout's `emit` flag or `run_interval_minutes` — on configs, this skill only flips `enabled`. **Canonical scout bodies are never edited.** New scout skills are created in exactly one place: step 6b, and only ones the user approved there.
 - **Batch your questions.** `wizard_ask` has a small per-run budget; one multi-select beats four yes/nos.
-- **Decline goes first.** Every `wizard_ask` that offers choices must include a plain-language decline option (skip / none / "keep what's there"), and it must be the **first** option so it is the default highlight — an accidental `enter` then declines instead of committing the user to something. The **one exception is step 4's GitHub gate**: the run cannot proceed without GitHub, so there the affirmative ("Done — I've installed it") stays first and the decline ("I can't connect right now", which aborts) stays last.
+- **Decline goes first.** Every `wizard_ask` that offers choices must include a plain-language decline option (skip / none / "keep what's there"), and it must be the **first** option so it is the default highlight — an accidental `enter` then declines instead of committing the user to something. The **one exception is step 3's GitHub gate**: the run cannot proceed without GitHub, so there the affirmative ("Done — I've installed it") stays first and the decline ("I can't connect right now", which aborts) stays last.
 
 ## Live activity — `[STATUS]`
 

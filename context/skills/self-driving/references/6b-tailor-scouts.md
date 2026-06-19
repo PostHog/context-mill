@@ -1,12 +1,12 @@
 ---
-next_step: 8-report.md
+next_step: 7-report.md
 ---
 
-# Step 7b — Custom scouts for this product
+# Step 6b — Custom scouts for this product
 
 The canonical fleet covers generic surfaces (errors, anomalies, observability gaps, health). You are the only actor in this pipeline that has read the repo — you know what the events *mean*, which ones form a funnel, and which domain surfaces matter. This step turns that into coverage: custom scouts for the watchable surfaces no canonical scout owns.
 
-**Canonical scout bodies are never edited** — not here, not anywhere in this setup. Tuning happens in step 7 (`enabled` flags only); new coverage happens here as new, separately-named scouts. This step is **propose-first and fully skippable**: nothing is created until the user approves, and a decline (or any tool failure) means you record the decision and continue to step 8. **Not an abort.**
+**Canonical scout bodies are never edited** — not here, not anywhere in this setup. Tuning happens in step 6 (`enabled` flags only); new coverage happens here as new, separately-named scouts. This step is **propose-first and fully skippable**: nothing is created until the user approves, and a decline (or any tool failure) means you record the decision and continue to step 7. **Not an abort.**
 
 ## Status
 
@@ -18,17 +18,17 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__llma-skill-get,mcp__posthog-wizard__llma-skill-file-get,mcp__posthog-wizard__llma-skill-create,mcp__posthog-wizard__signals-scout-config-list`. (`signals-scout-config-sync` is already loaded from step 7 if you need it again.)
+Load via `ToolSearch select:mcp__posthog-wizard__llma-skill-get,mcp__posthog-wizard__llma-skill-file-get,mcp__posthog-wizard__llma-skill-create,mcp__posthog-wizard__signals-scout-config-list`. (`signals-scout-config-sync` is already loaded from step 6 if you need it again.)
 
 ## Do
 
-1. **Read the authoring guide.** `llma-skill-get {"skill_name": "authoring-signals-scouts"}` — step 7's sync seeded it into this team's skills store alongside the fleet. It defines the scout anatomy (quick close-out → orient → discriminator → explore patterns → save-memory → decide → disqualifiers → close-out), the emit contract, and the quality bar. Follow it for every scout you write; pull its bundled references via `llma-skill-file-get` only for the sections you need.
+1. **Read the authoring guide.** `llma-skill-get {"skill_name": "authoring-signals-scouts"}` — step 6's sync seeded it into this team's skills store alongside the fleet. It defines the scout anatomy (quick close-out → orient → discriminator → explore patterns → save-memory → decide → disqualifiers → close-out), the emit contract, and the quality bar. Follow it for every scout you write; pull its bundled references via `llma-skill-file-get` only for the sections you need.
 
-   **Soft-degrade if it 404s** (older PostHog deploy that doesn't seed companions): read a canonical scout body via `llma-skill-get` (e.g. `signals-scout-general`) and use it as your only template. If neither is readable, record a follow-up ("add custom scouts once the authoring guide is available") and continue to step 8.
+   **Soft-degrade if it 404s** (older PostHog deploy that doesn't seed companions): read a canonical scout body via `llma-skill-get` (e.g. `signals-scout-general`) and use it as your only template. If neither is readable, record a follow-up ("add custom scouts once the authoring guide is available") and continue to step 7.
 
 2. **Do the gap analysis — this is the thinking step, take it seriously.** Lay the project evidence (the setup report's event taxonomy above all, plus the step-2 checklist: funnel structure, payment/LLM/survey surfaces, warehouse sources, integrations) against what the canonical fleet already watches. For each candidate surface ask, in order:
    - **Is it watchable?** Concrete events with names you can list, a funnel with ordered steps, a domain loop with a success/failure pair. "It's a web app" is not a surface.
-   - **Is it uncovered?** A canonical scout that step 7 kept enabled may already own it — error bursts belong to `signals-scout-error-tracking`, generic anomalies to `signals-scout-anomaly-detection`. A custom scout that duplicates an enabled canonical adds noise, not coverage.
+   - **Is it uncovered?** A canonical scout that step 6 kept enabled may already own it — error bursts belong to `signals-scout-error-tracking`, generic anomalies to `signals-scout-anomaly-detection`. A custom scout that duplicates an enabled canonical adds noise, not coverage.
    - **Would its scout pass the quality bar?** You must be able to name its signal-vs-noise discriminator and 2–4 concrete explore patterns *before* proposing it. If you can't, the surface isn't ready for a scout — record it as a report note instead.
 
    Typical shapes that survive all three filters: the product's core funnel (creation → completion → conversion), a domain job pipeline with success/failure events, a critical third-party dependency the events expose (e.g. an external API search that can silently degrade). **Propose at most two custom scouts — never more, even if more surfaces look watchable.** Zero is a perfectly good outcome and one or two is the norm; if three or more look worthwhile, the filters were too loose — keep only the two highest-value ones and record the rest as report notes. Every scout is a recurring hourly LLM spend, so each must earn its schedule, and the hard cap also keeps the proposal readable in the terminal, where each scout needs room for its explanation.

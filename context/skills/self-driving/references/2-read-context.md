@@ -1,5 +1,5 @@
 ---
-next_step: 3-ai-approval.md
+next_step: 3-github.md
 ---
 
 # Step 2 — Read context
@@ -20,7 +20,7 @@ Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-pr
 
 ## Do
 
-1. **Read `./posthog-setup-report.md`.** It is ground truth for what the base integration instrumented **in this repo**: events, error tracking, feature flags. Do not re-derive what it already states. It is NOT authority over project-level facts — session replay in particular may be instrumented in another repo or via the snippet, so the report can rule replay in but never out (step 5 probes the server for that).
+1. **Read `./posthog-setup-report.md`.** It is ground truth for what the base integration instrumented **in this repo**: events, error tracking, feature flags. Do not re-derive what it already states. It is NOT authority over project-level facts — session replay in particular may be instrumented in another repo or via the snippet, so the report can rule replay in but never out (step 4 probes the server for that).
 
 2. **Call `signals-scout-project-profile-get`.** It returns products in use, connected integrations, warehouse sources, and the signal source configs split enabled/disabled — one call instead of four. **Tolerate failure**: it can 404 or error on a team without a profile yet. If it fails, fall back to the step-1 source list and the report; do not retry more than once and do not abort.
 
@@ -36,8 +36,8 @@ Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-pr
    - **Logs**: is the PostHog logs product in use (per the profile)?
    - **CSP**: is a Content-Security-Policy with PostHog CSP reporting configured?
    - **Support**: does the team use PostHog support/conversations (per the profile)?
-   - **Issue trackers**: any hints of Linear, Zendesk, or pganalyze (you will still ask in step 6 — hints only shape the question, they never authorize enabling).
+   - **Issue trackers**: any hints of Linear, Zendesk, or pganalyze (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
 
-   Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user (sources) or leaving scouts on (step 7).
+   Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user (sources) or leaving scouts on (step 6).
 
-5. **Write down your working checklist** (in your own notes, not a file): candidate native sources, candidate connected tools, candidate scout disables, GitHub status if the profile revealed it. Steps 5–7 consume this.
+5. **Write down your working checklist** (in your own notes, not a file): candidate native sources, candidate connected tools, candidate scout disables, GitHub status if the profile revealed it. Steps 4–6 consume this.

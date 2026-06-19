@@ -21,7 +21,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-list` (sub
 ## Do
 
 1. Call `inbox-source-configs-list`.
-2. **Success — including an empty list** — means the API is reachable: proceed. (The probe can't prove beta enrollment — the wizard's detect step and the beta flags own that — but it's the strongest signal available to you.) Keep the returned rows: step 2 and step 5 use them as the already-enabled baseline. Mark your access task completed and continue.
+2. **Success — including an empty list** — means the API is reachable: proceed. (The probe can't prove beta enrollment — the wizard's detect step and the beta flags own that — but it's the strongest signal available to you.) Keep the returned rows: step 2 and step 4 use them as the already-enabled baseline. Mark your access task completed and continue.
 3. A permission error (403), not-found (404), or "scope" error means Self-driving is not available to this caller. Emit exactly:
 
    ```

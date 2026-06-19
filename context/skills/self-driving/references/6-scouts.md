@@ -1,10 +1,10 @@
 ---
-next_step: 7b-tailor-scouts.md
+next_step: 6b-tailor-scouts.md
 ---
 
-# Step 7 — Configure the scout fleet
+# Step 6 — Configure the scout fleet
 
-Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which step 5's scout gate lets into the inbox). Materialize the fleet, then switch off the scouts whose product surface this project doesn't have.
+Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which step 4's scout gate lets into the inbox). Materialize the fleet, then switch off the scouts whose product surface this project doesn't have.
 
 ## Status
 
@@ -22,7 +22,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__
 
 1. **Materialize**: call `signals-scout-config-sync`. It is idempotent — it seeds the canonical scout skills for this team and creates any missing configs, then returns the fleet.
 
-   **Soft-degrade if the tool is missing or fails**: fall back to `signals-scout-config-list`. If that returns rows, tune those. If it returns nothing, the fleet hasn't been materialized yet — record a follow-up ("the scout fleet materializes automatically within ~30 minutes; tune it later in PostHog or re-run this setup") and continue to step 8. **Not an abort.**
+   **Soft-degrade if the tool is missing or fails**: fall back to `signals-scout-config-list`. If that returns rows, tune those. If it returns nothing, the fleet hasn't been materialized yet — record a follow-up ("the scout fleet materializes automatically within ~30 minutes; tune it later in PostHog or re-run this setup") and continue to step 7. **Not an abort.**
 
 2. **Tune — classify every scout the sync returned; don't assume a fixed list.** The fleet is seeded from posthog and grows over time (it's ~19 scouts today), so always work from the rows `signals-scout-config-sync` actually returned, not a hardcoded set. For each scout, read its name/description and ask **"does this project have the surface this scout watches?"** — that sorts it into one of two buckets:
 
@@ -38,7 +38,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__
 
    | Scout | Enable only with evidence of |
    |---|---|
-   | `signals-scout-error-tracking` | error tracking in use — exception autocapture ON, error issues exist, or the repo instruments it (the same evidence step 5 uses for the error-tracking source) |
+   | `signals-scout-error-tracking` | error tracking in use — exception autocapture ON, error issues exist, or the repo instruments it (the same evidence step 4 uses for the error-tracking source) |
    | `signals-scout-session-replay` | session recording enabled (opt-in ON or recordings exist) |
    | `signals-scout-product-analytics` | funnels / retention / lifecycle insights or product events in use |
    | `signals-scout-web-analytics` | web traffic / pageviews with referrer or UTM tracking |
