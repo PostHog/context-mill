@@ -98,7 +98,7 @@ One `Edit`:
 One `Edit`:
 
 - `old_string`: `<!-- SECTION_FULL_AUDIT -->`
-- `new_string`: the per-area headings + paragraphs + tables, in ledger order.
+- `new_string`: the per-area headings + paragraphs + tables + per-area `#### Assumptions and blind spots` subsection, in ledger order. The blind-spots subsection lives directly under each area's table, following the per-area body template below.
 
 If the Full audit section is large (many areas, many checks), you may split it across multiple Edits by including per-area placeholders in the original skeleton and filling each with one Edit. Most audits fit in one Edit.
 
@@ -155,6 +155,10 @@ For each `area` from the ledger, in first-seen order:
 | Check | Status | File | Details |
 |-------|--------|------|---------|
 | [label] | [status] | [file] | [details] |
+
+#### Assumptions and blind spots
+
+[Per the investigation standards in `posthog-best-practices/references/investigation-standards.md`, standard 3. ≤4 sentences answering: which code paths were not checked, which runtime assumptions are unproven by static code, what alternative explanations exist for the patterns found, and what to verify in the live PostHog project to confirm the most important findings. When the area produced only `pass` rows, write `_No findings to qualify; the standard checks for this area passed cleanly._` instead.]
 ```
 
 After the report is written, emit a line so the wizard can surface the path to the user:
@@ -235,7 +239,7 @@ For a typical doctor deliverable the placeholder set is:
 |---|---|---|
 | Summary | `__SUMMARY_OVERVIEW__` (one paragraph), `__SUMMARY_COUNTS__` (one bulletList), `__SUMMARY_PROBLEMATIC__` (one table or fallback paragraph) | 3 |
 | Recommended actions | `__RECOMMENDED_ACTIONS__` (one orderedList, or fallback paragraph if none) | 1 |
-| Full audit per area | `__FULL_AUDIT_<AREA>_HEADING__` (level-3 heading), `__FULL_AUDIT_<AREA>_PARAGRAPH__` (framing paragraph), `__FULL_AUDIT_<AREA>_TABLE__` (per-area table) | 3 × N (one set per distinct area in the ledger) |
+| Full audit per area | `__FULL_AUDIT_<AREA>_HEADING__` (level-3 heading), `__FULL_AUDIT_<AREA>_PARAGRAPH__` (framing paragraph), `__FULL_AUDIT_<AREA>_TABLE__` (per-area table), `__FULL_AUDIT_<AREA>_BLIND_SPOTS_HEADING__` (level-4 heading "Assumptions and blind spots"), `__FULL_AUDIT_<AREA>_BLIND_SPOTS__` (paragraph) | 5 × N (one set per distinct area in the ledger) |
 | About this audit | `__ABOUT_PARAGRAPH__`, `__ABOUT_BULLETS__`, `__ABOUT_CLOSING__` | 3 |
 
 Use uppercased, underscored area names (e.g. `INSTALLATION`, `IDENTIFICATION`, `EVENT_CAPTURE`). Build the skeleton with that count and call `notebooks-create`:
@@ -266,13 +270,19 @@ Use uppercased, underscored area names (e.g. `INSTALLATION`, `IDENTIFICATION`, `
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_HEADING__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_PARAGRAPH__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_TABLE__"}]},
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_BLIND_SPOTS_HEADING__"}]},
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_BLIND_SPOTS__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_HEADING__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_PARAGRAPH__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_TABLE__"}]},
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_BLIND_SPOTS_HEADING__"}]},
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_BLIND_SPOTS__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_HEADING__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_PARAGRAPH__"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_TABLE__"}]},
-      // … add three placeholders per additional area in the ledger …
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_BLIND_SPOTS_HEADING__"}]},
+      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_BLIND_SPOTS__"}]},
+      // … add five placeholders per additional area in the ledger …
 
       {"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"About this audit"}]},
       {"type":"paragraph","content":[{"type":"text","text":"__ABOUT_PARAGRAPH__"}]},

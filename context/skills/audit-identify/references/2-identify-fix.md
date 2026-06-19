@@ -4,16 +4,17 @@ next_step: 3-identify-lifecycle.md
 
 # Step 2 — Identify (fix)
 
-This step resolves four correctness checks **in parallel**, one subagent per check. These are the same ids the broader PostHog audit seeds — `audit-identify` reuses them so a fix once made here is observable from either entry point.
+This step resolves five correctness checks **in parallel**, one subagent per check. The first four ids are reused by the broader PostHog audit so a fix once made here is observable from either entry point. The fifth (`identify-sequential-calls`) is audit-identify-specific.
 
 - `identify-stable-distinct-id`
 - `identify-not-late`
 - `cross-runtime-distinct-id`
 - `identify-reset-on-logout`
+- `identify-sequential-calls`
 
 ## Skip case — no `posthog.identify` calls found
 
-If Step 1's identify grep returned **zero** hits, resolve all four checks in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.identify call sites detected"`. Then continue to **`3-identify-optimize.md`**. Do not dispatch subagents.
+If Step 1's identify grep returned **zero** hits, resolve all five checks in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.identify call sites detected"`. Then continue to **`3-identify-optimize.md`**. Do not dispatch subagents.
 
 ## Status
 
@@ -23,9 +24,9 @@ Emit before dispatching:
 [STATUS] Auditing identify correctness
 ```
 
-## Action — dispatch four subagents in one message
+## Action — dispatch five subagents in one message
 
-Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-identify-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **five `Agent` tool calls in a single message** so they run concurrently. Wait for all five to return, then continue to `3-identify-optimize.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `identify-users.md` reference holds PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit-identify/references/identify-users.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-identify/references/identify-users.md`. Each subagent reads it once before judging.
 
@@ -117,6 +118,44 @@ Rule:
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-reset-on-logout`, including `file` (path:line of the most relevant logout or reset site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
 
-## After all four return
+### Task E — `identify-sequential-calls`
+
+`description`: `Audit identify-sequential-calls`
+
+`prompt`:
+````
+You are an audit subagent. Resolve exactly one rule and return: identify-sequential-calls.
+
+Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`).
+
+Background: a common identity-merge failure is two `posthog.identify()` calls firing back-to-back in the same auth flow with different first arguments — for example, `posthog.identify(authProviderUid)` followed by `posthog.identify(internalUserId)`. The first call stamps the auth provider id as the device identity. By the time the second call runs, the SDK considers the device already-identified, so the merge from the *anonymous* distinct id to `internalUserId` is blocked. The user is now split across two profiles: the anon profile correctly merged to `authProviderUid`, and `internalUserId` as a brand-new profile with no anonymous activity. This pattern has caused 30k+ blocked merges/day at multi-SDK SaaS customers.
+
+Run **one** Grep: `posthog\.identify\(`. Read each file that contains a hit, once.
+
+For each file, find pairs of `posthog.identify()` calls that:
+1. Live in the same enclosing function, hook, effect, or auth-callback handler (close enough that they reliably execute in one flow), AND
+2. Pass **different** first arguments (different variable names, different property accesses, or one literal and one variable).
+
+Pay special attention to auth-callback handlers, login success handlers, and middleware/route guards. Treat one identify() call wrapped in an `if`/`else` branching on the same condition as a SINGLE logical call site (it can't fire twice in one flow); only flag pairs that are actually sequential on the same code path.
+
+Rule:
+- pass: every flow has at most one identify() call, OR all identify() calls in the same flow pass the same first argument.
+- error: one or more flows have two or more identify() calls with different first arguments executing in sequence. List the file:line of each offender and the names of the two distinct ids.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-sequential-calls`, including `file` (path:line of the most representative offending pair) and `details` as compact JSON:
+
+```
+{
+  "sequential_pair_count": <N>,
+  "examples": [
+    {"file": "<path:line>", "first_id": "<expression>", "second_id": "<expression>", "flow": "<short description>"}
+  ]
+}
+```
+
+Return when the call completes. Do not write the audit report.
+````
+
+## After all five return
 
 Continue to **`3-identify-lifecycle.md`**. Do not write the report yet — that's Step 4's job after Step 3 finishes.
