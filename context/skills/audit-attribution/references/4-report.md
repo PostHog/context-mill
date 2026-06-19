@@ -18,7 +18,7 @@ Emit:
 
 `Read` the ledger once, then transform every entry into the report below. Use `area`, `label`, `status`, `file`, and `details` from each entry verbatim where the report calls for them.
 
-`Write` `posthog-audit-attribution-report.md` at the project root with the structure shown below. After the report is written, delete `.posthog-audit-checks.json`.
+`Write` `posthog-audit-attribution-report.md` at the project root with the structure shown below. After the markdown lands on disk, resolve the `write-report` ledger row to `pass` so the wizard sidebar advances. Then delete `.posthog-audit-checks.json`.
 
 The report has four sections in this order:
 
