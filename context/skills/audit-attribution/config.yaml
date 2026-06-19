@@ -1,0 +1,20 @@
+type: skill
+template: description.md
+description: Audit a PostHog integration's marketing attribution capture for UTM survival, click-id coverage, cross-subdomain identity, and consent/cookieless interactions
+tags: [best-practices]
+cli:
+  role: command
+  parentCommand: audit
+  command: attribution
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/data/utm-segmentation.md
+  - https://posthog.com/docs/libraries/js/config.md
+  - https://posthog.com/docs/privacy/data-collection.md
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: PostHog audit — attribution
+    tags: [best-practices]
+    docs_urls: []

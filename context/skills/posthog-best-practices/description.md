@@ -10,6 +10,7 @@ If the project uses a specific PostHog product mentioned below, consult the rele
 - If the project uses Experiments, also consult `references/experiments.md`.
 - If the project uses Feature Flags, also consult `references/feature-flags.md`.
 - If the project uses Session Replay, also consult `references/session-replay.md`.
+- If you are running an audit skill (anything that produces a findings report), also consult `references/investigation-standards.md` for the provenance, evidence, and adversarial-review standards that apply to every audit finding.
 
 
 ## Reference files

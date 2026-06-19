@@ -12,6 +12,7 @@ shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
   - https://posthog.com/docs/product-analytics/cutting-costs.md
   - https://posthog.com/docs/libraries/js/config.md
+  - https://posthog.com/docs/data/anonymous-vs-identified-events.md
 variants:
   - id: all
     display_name: PostHog audit — identify

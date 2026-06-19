@@ -80,19 +80,24 @@ Return when the call completes. Do not write the audit report.
 ```
 You are an audit subagent. Resolve exactly one rule and return: identify-alias-usage.
 
-Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the `alias()` guidance: modern PostHog SDKs handle the anonymous → identified merge automatically when `identify()` is called for the first time. `alias()` is mostly legacy and is only needed in narrow cases (e.g. linking a server-side distinct_id to a known account_id when the client never called identify).
+Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the `alias()` guidance: modern PostHog SDKs handle the anonymous → identified merge automatically when `identify()` is called for the first time. `alias()` is mostly legacy. **Backend `alias()` is particularly hazardous**: when a server aliases a browser's anonymous UUID to a user id, that UUID becomes "identified" in PostHog. When the web SDK later tries to `identify()` with the same UUID as `$anon_distinct_id`, the merge is blocked. This pattern has caused 80–100k blocked merges/day at multi-SDK SaaS customers and is almost never what the operator intended.
 
 Run **one** Grep: `posthog\.alias\(|posthog\.createAlias\(`. If zero matches, resolve `pass` with `details: "no alias() usage detected"` and return — this is the healthy default.
 
-Otherwise read each file that contains a hit, once. For each alias() call, determine:
-- **Is there also a posthog.identify() call for the same user in the same flow?** If yes, the alias() call is likely redundant — identify() already handles merging.
+Otherwise read each file that contains a hit, once. Also run a second Grep `posthog\.identify\(` to know whether the project ever calls `identify()` anywhere (this gates one of the rules below).
+
+For each alias() call, determine:
+- **Where it runs** — client-side (browser bundle) or server-side (Node, Python, edge handler, background worker).
+- **Is there a `posthog.identify()` call for the same user nearby?** If yes, the alias() call is likely redundant — identify() already handles merging.
 - **Is alias() being called with the same id as the current distinct_id?** That's a no-op that still emits a `$create_alias` event.
-- **Is alias() being used in a server-side context to link an anonymous client distinct_id to a server-known user id?** That's a legitimate use case — pass.
+- **For server-side alias:** is the first argument a value sourced from a request-scoped browser identifier (cookie, request body, header passing the client distinct_id)? If so, this is the backend-aliases-browser-UUID anti-pattern — flag it. The narrow legitimate case is server-only projects that genuinely have no client SDK and need to link an internal id to a previously-used anonymous server id; this is rare.
 
 Rule:
-- pass: no alias() calls, OR alias() is used only for legitimate server-side identity linking.
+- pass: no alias() calls, OR alias() is server-side AND the project has zero `posthog.identify()` call sites anywhere AND the alias arguments don't come from a request-scoped browser identifier (the narrow legitimate "no client SDK" case).
 - suggestion: alias() is called alongside identify() for the same user — likely redundant. Recommend removal.
-- warning: alias() is called with the same id as the current distinct_id, OR alias() is the only identity API used (no identify() anywhere) — the project should switch to identify().
+- warning: alias() is called with the same id as the current distinct_id.
+- warning: alias() is the only identity API used (no identify() anywhere on the client) — the project should switch to identify().
+- **error: server-side `alias()` is called with a value sourced from a request-scoped browser identifier (cookie, request body, header) while the project ALSO has a client-side `posthog.identify()`.** This is the backend-aliases-browser-UUID anti-pattern; the first server alias() call identifies the UUID and every later client identify() with the same UUID as `$anon_distinct_id` is silently blocked.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-alias-usage`, with `file` set to the most representative alias() path:line if any, and `details` as compact JSON:
 
@@ -100,8 +105,9 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 {
   "alias_call_count": <N>,
   "redundant_with_identify_count": <N>,
+  "backend_alias_blocks_merges": <true|false>,
   "examples": [
-    {"file": "<path:line>", "issue": "redundant-with-identify | self-alias | only-identity-api"}
+    {"file": "<path:line>", "issue": "redundant-with-identify | self-alias | only-identity-api | backend-aliases-browser-uuid"}
   ]
 }
 ```
