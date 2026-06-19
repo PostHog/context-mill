@@ -1,8 +1,8 @@
 # Connector — GitHub Issues warehouse source
 
-Creates the GitHub Issues warehouse source directly — zero browser trips on the happy path. Reuses the GitHub App integration verified in step 3; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
+Creates the GitHub Issues warehouse source directly — no browser trips. Reuses the GitHub App integration verified in step 3; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
 
-**Dependency on step 3:** this can only auto-connect a repo the step-3 App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — fall back to the UI path and record a follow-up telling the user to grant this repo to the PostHog GitHub App.
+**Dependency on step 3:** this can only auto-connect a repo the step-3 App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — leave GitHub Issues as a dormant source and record a follow-up telling the user to grant this repo to the PostHog GitHub App. No browser trip — same dormant posture as Zendesk.
 
 ## Status
 
@@ -16,13 +16,13 @@ Emit:
 
 Load via `ToolSearch select:mcp__posthog-wizard__integrations-github-repos-retrieve,mcp__posthog-wizard__external-data-sources-create`.
 
-If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't available (older server), skip the auto-create and use the UI fallback (below) instead. **Not an abort.**
+If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't available (older server), skip the auto-create and record GitHub Issues as a dormant source (the dormant fallback below). **Not an abort.**
 
 ## Do
 
-1. **Infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the fallback (below).
+1. **Infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the dormant fallback (below).
 
-2. **Validate it against the integration.** Call `integrations-github-repos-retrieve` with the step-3 GitHub integration id and `search=<repo name>`. The inferred `full_name` appearing in the results means the GitHub App can see it. Not in the results → fallback (below) — the App likely wasn't installed on this repo.
+2. **Validate it against the integration.** Call `integrations-github-repos-retrieve` with the step-3 GitHub integration id and `search=<repo name>`. The inferred `full_name` appearing in the results means the GitHub App can see it. Not in the results → dormant fallback (below) — the App isn't installed on this repo, so don't redirect or re-prompt.
 
 3. **Confirm — never create unconfirmed:**
 
@@ -39,7 +39,7 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
 }
 ```
 
-   - **other** → ask once more with **"Skip" first**, then up to four close matches from `integrations-github-repos-retrieve` (search with fragments of the repo name, then the owner). Still nothing that fits → fallback (below).
+   - **other** → ask once more with **"Skip" first**, then up to four close matches from `integrations-github-repos-retrieve` (search with fragments of the repo name, then the owner). Still nothing that fits → dormant fallback (below).
    - **skip** → record "picked but not connected" and return to step 5 (enable the dormant responder and add a follow-up — harmless, since it only emits once a warehouse source syncs).
 
 4. **Create the source** with `external-data-sources-create`:
@@ -66,9 +66,9 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
    Sync **only** `issues` — it's the one table Signals consumes; the user can enable more tables in the UI later (note this in the report).
 
    - 400 "Prefix is required" (a Github source already exists) → retry once with `prefix` set to the repo name sanitized to letters/numbers/underscores.
-   - 400 mentioning credentials or repository access → fallback (below).
+   - 400 mentioning credentials or repository access → dormant fallback (below).
    - Success returns the source `id` — record "connected by this setup (source id …, first sync started)".
 
-5. **Fallback** (no remote / repo not visible / create failed): one ask — connect GitHub Issues in the UI at the new-warehouse-source URL from the run prompt, options "Skip for now" (first) / "Done — connected it". After "Done", confirm with a single `external-data-sources-list` call — found → "verified connected"; still missing (or "Skip for now") → arm the dormant responder and add a follow-up (don't nag). A failed connector never dead-ends the run.
+5. **Dormant fallback** (no remote / repo not visible / create failed / tools unavailable): don't redirect the user and don't re-prompt — record **"picked but not connected"** and return to step 5, where the dormant responder is enabled and the follow-up recorded (same harmless posture as Zendesk — it only emits once a warehouse source syncs). When the cause was the repo not being visible to the App, the follow-up also tells the user to grant this repo to the PostHog GitHub App. A failed connector never dead-ends the run.
 
 Return to step 5 (responder enabling and class recording happen there).
