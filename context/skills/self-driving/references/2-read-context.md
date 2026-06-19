@@ -38,6 +38,6 @@ Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-pr
    - **Support**: does the team use PostHog support/conversations (per the profile)?
    - **Issue trackers**: any hints of Linear, Zendesk, or pganalyze (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
 
-   Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user (sources) or leaving scouts on (step 6).
+   Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user about sources; for surface-specific scouts, an unconfirmed surface is not justification to keep them on (step 6 disables them without evidence).
 
 5. **Write down your working checklist** (in your own notes, not a file): candidate native sources, candidate connected tools, candidate scout disables, GitHub status if the profile revealed it. Steps 4–6 consume this.
