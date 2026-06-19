@@ -4,7 +4,7 @@ next_step: 5-sources.md
 
 # Step 4 — Connect GitHub (required)
 
-The GitHub integration gives Signals code access: it is how findings get researched against the actual repository and how autonomy opens fixes. **Setup cannot finish without it.** This is the GitHub App *integration* — distinct from the optional "GitHub Issues" warehouse source in step 6.
+The GitHub integration gives Signals code access: it is how findings get researched against the actual repository and how Self-driving opens fixes. **Setup cannot finish without it.** This is the GitHub App *integration* — distinct from the optional "GitHub Issues" warehouse source in step 6.
 
 ## Status
 

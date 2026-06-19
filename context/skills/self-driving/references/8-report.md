@@ -26,8 +26,8 @@ Emit:
    - **Scout fleet** — kept-on scouts, disabled scouts with the one-line reason each, or the not-yet-materialized note from step 7.
    - **Custom scouts** — from step 7b: each created scout (name, what it watches, its discriminator, and why no canonical scout covers it) or one line on why none was warranted; surfaces considered and ruled out, with the filter that killed each; declined proposals; and the noise escape hatch (set `emit: false` on a scout's config in PostHog to switch it to dry-run). Omit only if step 7b was skipped entirely.
    - **Follow-ups** — every follow-up recorded along the way, as a checklist. Omit the section if there are none.
-   - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start autonomy coding tasks.
+   - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start coding tasks.
 
-2. Keep it factual and scannable — tables over prose, no marketing language. Cite ids only where useful (source config ids help support). Name the product **PostHog Self-driving** (or just Self-driving) throughout — never "Signals" or "Product Autonomy" in prose. (The domain noun "signal source" and the `signals-scout-*` / `signals_scout` identifiers are technical names, not the product name — leave those exactly as they are.)
+2. Keep it factual and scannable — tables over prose, no marketing language. Cite ids only where useful (source config ids help support). Name the product **PostHog Self-driving** (or just Self-driving) throughout — never "Signals" or "Self-driving" in prose. (The domain noun "signal source" and the `signals-scout-*` / `signals_scout` identifiers are technical names, not the product name — leave those exactly as they are.)
 
 3. Finish with a short plain-text summary to the user (the wizard renders its own outro with the inbox link — don't duplicate the whole report in chat).

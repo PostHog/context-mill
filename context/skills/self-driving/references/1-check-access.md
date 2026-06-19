@@ -25,7 +25,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-list` (sub
 3. A permission error (403), not-found (404), or "scope" error means Self-driving is not available to this caller. Emit exactly:
 
    ```
-   [ABORT] product autonomy is not available for this project
+   [ABORT] self-driving is not available for this project
    ```
 
    and stop — the wizard renders the explanation.

@@ -10,7 +10,7 @@ The setup runs as a 9-step chain:
 
 {workflow}
 
-Each step file points to the next. Run them in order. **Start by reading `references/1-check-access.md`** (relative to this skill's directory — typically `.claude/skills/product-autonomy-setup/references/1-check-access.md`). Don't read ahead. Don't re-read a step once you've passed it. Don't re-read SKILL.md.
+Each step file points to the next. Run them in order. **Start by reading `references/1-check-access.md`** (relative to this skill's directory — typically `.claude/skills/self-driving-setup/references/1-check-access.md`). Don't read ahead. Don't re-read a step once you've passed it. Don't re-read SKILL.md.
 
 ## Ground rules
 
@@ -29,7 +29,7 @@ The "Working on …" banner reads from `[STATUS]` lines you emit in plain text. 
 
 Report aborts with `[ABORT]`-prefixed messages. The wizard catches these, renders a friendly explanation, and stops the run — don't halt yourself. The exact strings (the wizard matches them verbatim):
 
-- `[ABORT] product autonomy is not available for this project`
+- `[ABORT] self-driving is not available for this project`
 - `[ABORT] github connection declined`
 - `[ABORT] requires-interactive-mode`
 
