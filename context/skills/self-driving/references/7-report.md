@@ -28,6 +28,6 @@ Emit:
    - **Follow-ups** — every follow-up recorded along the way, as a checklist. Omit the section if there are none.
    - **What happens next** — the scout coordinator picks up fresh configs within ~30 minutes; findings cluster into reports in the inbox; immediately-actionable ones can start coding tasks.
 
-2. Keep it factual and scannable — tables over prose, no marketing language. Cite ids only where useful (source config ids help support). Name the product **PostHog Self-driving** (or just Self-driving) throughout — never "Signals" or "Self-driving" in prose. (The domain noun "signal source" and the `signals-scout-*` / `signals_scout` identifiers are technical names, not the product name — leave those exactly as they are.)
+2. Keep it factual and scannable — tables over prose, no marketing language. Cite ids only where useful (source config ids help support). Name the product **PostHog Self-driving** (or just Self-driving after first mention) throughout — never "Signals" in prose. (The domain noun "signal source" and the `signals-scout-*` / `signals_scout` identifiers are technical names, not the product name — leave those exactly as they are.)
 
 3. Finish with a short plain-text summary to the user (the wizard renders its own outro with the inbox link — don't duplicate the whole report in chat).
