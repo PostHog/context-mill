@@ -32,6 +32,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - **Inject before deploy**: the *injected* bundles must be the ones shipped to production. Bundles missing the `//# chunkId=…` comment can't be matched to uploaded maps.
 - Wire injection + upload into the build itself (plugin, post-build script, or CI step) — manual uploads drift from deployed code.
 - **Don't ship source maps publicly**: omit `.map` files from the deployed artifact, or use hidden source maps. Uploaded maps live in PostHog, not on your origin.
+- **Link each release to its commit.** The CLI auto-detects the commit from the CI's git env vars — see "Associate the release with a git commit" for making those reachable in Docker/CI builds.
 
 #### Examples
 - **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap inject` followed by `posthog-cli sourcemap upload` against the build output dir as post-build steps — both invocations need the upload credentials (see "Make credentials available at build time").
@@ -237,6 +238,26 @@ Source maps are only uploaded when the **production build** runs, so the environ
   Then tell the user to add those variables in **Settings → CI/CD → Variables** and the next pipeline picks them up. Edits beyond the comment are only needed when a boundary is crossed: a job that runs `docker build` must forward them (`--build-arg POSTHOG_CLI_API_KEY="$POSTHOG_CLI_API_KEY" …`) into the Dockerfile's build stage (see the Dockerfile example), and a job that builds over SSH must set them inline before the remote build command, exactly like the SSH example above.
 - **Other CI providers (CircleCI, Jenkins, Bitbucket, Azure Pipelines, …)** Same recipe, provider-native mechanics: open the pipeline config, find the job that runs the production build, expose the credentials to that job via the provider's secret store, and thread them through any Docker/SSH boundary just like the examples above. Reference credentials by name only, then tell the user each secret to create and exactly where in the provider's UI it goes.
 - **Untraceable setup** No `Dockerfile`, no CI config, and no build step you can trace: make no CI changes — do **not** author a new workflow, pipeline, or deploy file to fill the gap. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+
+### Associate the release with a git commit
+
+`posthog-cli` links the release to a **git commit, branch and repo** so Error Tracking can show which deploy an error came from. It auto-detects that from the CI's git env vars or a local `.git` directory — you never touch the CLI invocation itself (it's usually baked into `npm run build` or a bundler plugin), you just make the git context available in the build environment. A `docker build` is where this breaks: it sees **neither** the env vars nor `.git` (the same boundary credentials hit), so the release ends up linked to nothing unless you forward the vars in.
+
+#### Tips
+- **Forward GitHub's git env vars into the Docker build** the same way you forwarded credentials. Declare each as an `ARG` **and** promote it to `ENV` — `ARG` alone isn't visible to the CLI's env lookup. That's all auto-detection needs; no CLI flags, no `.git`.
+
+#### Examples
+- **GitHub Actions → docker build** Forward GitHub's git vars into the build stage and the CLI auto-detects branch + repo + commit:
+  ```yaml
+  build-args: |
+    GITHUB_ACTIONS=true
+    GITHUB_SHA=${{ github.sha }}
+    GITHUB_REF_NAME=${{ github.ref_name }}
+    GITHUB_REPOSITORY=${{ github.repository }}
+    GITHUB_SERVER_URL=${{ github.server_url }}
+  ```
+  Then in the build stage, declare each as `ARG` and re-export it as `ENV` before the build runs.
+- **Inline CI build (no Docker)** GitHub Actions already sets these vars on the runner, so auto-detection just works — nothing to pass.
 
 ### Test the local setup
 
