@@ -16,8 +16,6 @@ Emit:
 
 Load via `ToolSearch select:mcp__posthog-wizard__integrations-github-repos-retrieve,mcp__posthog-wizard__external-data-sources-create`.
 
-If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't available (older server), skip the auto-create and record GitHub Issues as a dormant source (the dormant fallback below). **Not an abort.**
-
 ## Do
 
 1. **Infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the dormant fallback (below).
@@ -69,6 +67,6 @@ If `integrations-github-repos-retrieve` or `external-data-sources-create` isn't 
    - 400 mentioning credentials or repository access → dormant fallback (below).
    - Success returns the source `id` — record "connected by this setup (source id …, first sync started)".
 
-5. **Dormant fallback** (no remote / repo not visible / create failed / tools unavailable): don't redirect the user and don't re-prompt — record **"picked but not connected"** and return to step 5, where the dormant responder is enabled and the follow-up recorded (same harmless posture as Zendesk — it only emits once a warehouse source syncs). When the cause was the repo not being visible to the App, the follow-up also tells the user to grant this repo to the PostHog GitHub App. A failed connector never dead-ends the run.
+5. **Dormant fallback** (no remote / repo not visible / create failed): don't redirect the user and don't re-prompt — record **"picked but not connected"** and return to step 5, where the dormant responder is enabled and the follow-up recorded (same harmless posture as Zendesk — it only emits once a warehouse source syncs). When the cause was the repo not being visible to the App, the follow-up also tells the user to grant this repo to the PostHog GitHub App. A failed connector never dead-ends the run.
 
 Return to step 5 (responder enabling and class recording happen there).

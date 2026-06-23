@@ -27,7 +27,7 @@ Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__e
 ```
 {
   id: "connected-tools",
-  prompt: "Self-driving can also watch your other tools and pull their issues into the inbox. Which of these do you use?",
+  prompt: "Self-driving can also watch your other tools and investigate and fix the problems they surface. Which of these do you use?",
   kind: "multi",
   options: [
     { label: "None of these", value: "none" },
