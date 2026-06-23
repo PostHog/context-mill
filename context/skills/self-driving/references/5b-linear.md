@@ -14,8 +14,6 @@ Emit:
 
 Load via `ToolSearch select:mcp__posthog-wizard__external-data-sources-create` (`integrations-list` from step 3 stays loaded).
 
-If `external-data-sources-create` isn't available (older server), skip this file and treat Linear as picked-but-not-connected — arm the dormant responder and add a follow-up (step 5's picked-but-not-connected path) — instead. **Not an abort.**
-
 ## Do
 
 1. **Check for an existing Linear integration**: call `integrations-list` and look for `kind: "linear"`. Present → skip ahead to create the source (below).
