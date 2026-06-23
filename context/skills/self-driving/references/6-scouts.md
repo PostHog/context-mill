@@ -4,7 +4,7 @@ next_step: 6b-tailor-scouts.md
 
 # Step 6 — Configure the scout fleet
 
-Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which step 4's scout gate lets into the inbox). Materialize the fleet, then switch off the scouts whose product surface this project doesn't have.
+Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which step 4's scout gate lets into the inbox). Every enabled scout is a recurring LLM spend — it costs a full run every tick even when it finds nothing — so the fleet is kept **deliberately small**: the `general` scout, plus the **one or two specialists** for the products this project uses most. Everything else is disabled.
 
 ## Status
 
@@ -24,47 +24,48 @@ Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__
 
    **Soft-degrade if the tool is missing or fails**: fall back to `signals-scout-config-list`. If that returns rows, tune those. If it returns nothing, the fleet hasn't been materialized yet — record a follow-up ("the scout fleet materializes automatically within ~30 minutes; tune it later in PostHog or re-run this setup") and continue to step 7. **Not an abort.**
 
-2. **Tune — classify every scout the sync returned; don't assume a fixed list.** The fleet is seeded from posthog and grows over time (it's ~19 scouts today), so always work from the rows `signals-scout-config-sync` actually returned, not a hardcoded set. For each scout, read its name/description and ask **"does this project have the surface this scout watches?"** — that sorts it into one of two buckets:
+2. **Decide the enabled set — the whole point of this step is to enable FEW scouts, not many.** Work from the rows `signals-scout-config-sync` actually returned (the fleet grows over time — ~19 scouts today — so never hardcode a list). The enabled set has exactly three parts:
 
-   **Always-on (cross-product).** Its surface is "any project with data," so it self-closes cheaply when there's nothing to say. Keep enabled. Examples (illustrative, not exhaustive):
+   **(a) `general` — always enabled.** `signals-scout-general` watches cross-product correlations and the surfaces no specialist covers; it self-closes cheaply when there's nothing to say. Keep it on for every project.
 
-   - `signals-scout-general` — cross-product correlations and uncovered surfaces
-   - `signals-scout-anomaly-detection` — anomalies in whatever time series exist
-   - `signals-scout-observability-gaps` — events with no insight coverage
-   - `signals-scout-health-checks` — PostHog setup health
-   - `signals-scout-inbox-validation` — whether shipped fixes actually held
+   **(b) Never enable the `error-tracking` or `session-replay` scouts.** Step 4 already enables error tracking and session replay as native **sources** — their findings reach the inbox through that pipeline, so a scout on the same surface only duplicates it. Disable `signals-scout-error-tracking` and `signals-scout-session-replay` unconditionally, regardless of evidence. This is an **intentional** exclusion, not an evidence gap, so do **not** record a re-enable follow-up for them — note them as "covered by the native source".
 
-   **Surface-specific (conditional).** Tied to a product or surface a project may not have. **Enable ONLY when step 2 found positive evidence the surface is in use** — evidence on EITHER side counts: the repo scan OR the server-side state (project-state opt-ins and usage probes). A product enabled at the project level is evidence even when this repo shows nothing. No evidence → disable. Examples of surface → evidence (illustrative, not exhaustive):
+   **(c) One or two specialists — for the products this project uses MOST.** This is a judgment call, not a checklist: weigh ALL the step-2 evidence together — the profile's `top_events` (volume + distinct users), recent activity, the active counts for feature flags / experiments / surveys / dashboards, plus any repo signals — and pick the **one or two** product surfaces that are most actually used, then enable each one's scout. The candidate pool is the entire fleet **except** `general` and the two excluded in (b); it includes both the surface-specific scouts and the remaining cross-product ones:
 
-   | Scout | Enable only with evidence of |
+   | Scout | Specialist for |
    |---|---|
-   | `signals-scout-error-tracking` | error tracking in use — exception autocapture ON, error issues exist, or the repo instruments it (the same evidence step 4 uses for the error-tracking source) |
-   | `signals-scout-session-replay` | session recording enabled (opt-in ON or recordings exist) |
-   | `signals-scout-product-analytics` | funnels / retention / lifecycle insights or product events in use |
+   | `signals-scout-product-analytics` | funnels / retention / lifecycle insights or heavy product-event usage |
    | `signals-scout-web-analytics` | web traffic / pageviews with referrer or UTM tracking |
-   | `signals-scout-feature-flags` | feature flags in use (frontend or backend) |
-   | `signals-scout-surveys` | surveys opt-in ON or surveys found (step 2) |
+   | `signals-scout-feature-flags` | feature flags in active use (frontend or backend) |
+   | `signals-scout-surveys` | surveys in use |
    | `signals-scout-revenue-analytics` | a payment SDK / revenue data |
    | `signals-scout-ai-observability` | `$ai_*` events / LLM usage |
    | `signals-scout-logs` | the PostHog logs product in use |
    | `signals-scout-csp-violations` | CSP reporting configured |
    | `signals-scout-experiments` | active A/B experiments |
-   | `signals-scout-customer-analytics` | group / accounts analytics (B2B), not a pure B2C app |
+   | `signals-scout-customer-analytics` | group / accounts analytics (B2B) |
    | `signals-scout-data-pipelines` | CDP destinations, batch exports, or hog flows |
    | `signals-scout-replay-vision` | Replay Vision scanners configured |
+   | `signals-scout-anomaly-detection` | (cross-product) anomalies in whatever time series exist |
+   | `signals-scout-observability-gaps` | (cross-product) events with no insight coverage |
+   | `signals-scout-health-checks` | (cross-product) PostHog setup health |
+   | `signals-scout-inbox-validation` | (cross-product) whether shipped fixes actually held |
 
-   **A scout neither list names** (posthog keeps adding them): classify it by the same question — read its description and decide whether its surface is product-agnostic (→ always-on) or tied to a surface you must confirm (→ conditional, evidence required). When unsure whether a surface-specific scout's surface exists, treat that as no evidence.
+   Rules for the pick:
+   - **At most two.** Even if three or more surfaces look used, keep only the two most-used. Enabling more re-creates the cost problem this step exists to prevent.
+   - **At least one.** Always end with a specialist enabled. If no product surface clearly stands out — e.g. the only products in use are error tracking / session replay (excluded in (b)), or the profile was unavailable and nothing is rankable — **fall back to one universal cross-product scout** (`signals-scout-anomaly-detection` or `signals-scout-health-checks`) as the stand-in. Avoid `signals-scout-inbox-validation` as the fallback on a fresh setup — there are no shipped fixes for it to validate yet.
+   - **A scout the table doesn't name** (posthog keeps adding them): treat it as a specialist candidate — read its description, judge whether its surface is among this project's most-used, and enable it only if it earns one of the ≤2 slots.
 
-   **"Unknown" is not evidence → disable the scout.** Unlike a dormant warehouse responder (gated on a sync, so it never fires for free), a scout runs on its schedule and costs a full LLM run every tick even when it finds nothing — so never pay for a surface you can't confirm exists. For every conditional scout you disable, record a re-enable follow-up so the user can switch it on if they do use that surface (e.g. "enable `signals-scout-logs` in PostHog if you use the logs product").
+3. **Disable every scout you did NOT enable** in (a)–(c) — this is now most of the fleet. Disable via `signals-scout-config-update` with the config `id` and `{ enabled: false }` — **nothing else**. Don't touch `emit` (dry-run posture) or `run_interval_minutes`; the defaults are correct. A failed update is a follow-up, not an abort.
 
-3. Disable via `signals-scout-config-update` with the config `id` and `{ enabled: false }` — **nothing else**. Don't touch `emit` (dry-run posture) or `run_interval_minutes`; defaults are correct for a fresh fleet. A failed update is a follow-up, not an abort.
+   For each **surface-specific** scout you disabled, record a re-enable follow-up so the user can switch it on if they do use that surface later (e.g. "enable `signals-scout-logs` in PostHog if you use the logs product"). The error-tracking / session-replay disables are intentional (see (b)) — note them as "covered by the native source", not as a re-enable follow-up.
 
-4. **Show the result.** This step asks the user nothing, so the only in-run visibility is the status line — after tuning, emit one with the outcome (short scout names, no `signals-scout-` prefix):
+4. **Show the result.** This step asks the user nothing, so the only in-run visibility is the status line — after tuning, emit one naming the enabled set (short names, no `signals-scout-` prefix):
 
 ```
-[STATUS] Scout fleet: 12 active, disabled: ai-observability, revenue-analytics, logs, csp-violations, customer-analytics, data-pipelines, experiments, replay-vision
+[STATUS] Scout fleet: 3 active (general, product-analytics, feature-flags); 16 disabled
 ```
 
-(Adjust counts and names to the actual fleet the sync returned and the decisions you made — fleet size varies as posthog adds scouts. If nothing was disabled, say "N active, none disabled".)
+(Adjust counts and names to the actual fleet and your decisions — the enabled set is always `general` + the 1–2 specialists, so "2 active" or "3 active" is expected; error-tracking and session-replay are deliberately among the disabled.)
 
-Fresh configs have never run, so they're due immediately — the first scans fire on the next coordinator tick, within ~30 minutes. Record per-scout decisions (kept / disabled + why) for the report.
+Fresh configs have never run, so they're due immediately — the first scans fire on the next coordinator tick, within ~30 minutes. Record per-scout decisions (enabled / disabled + why) for the report.
