@@ -20,7 +20,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__
 
 ## Do
 
-1. **Materialize**: call `signals-scout-config-sync`. It is idempotent — it seeds the canonical scout skills for this team and creates any missing configs, then returns the troop.
+1. **Materialize**: call `signals-scout-config-sync`. It is idempotent — it seeds the built-in scout skills for this team and creates any missing configs, then returns the troop.
 
    **Soft-degrade if the tool is missing or fails**: fall back to `signals-scout-config-list`. If that returns rows, tune those. If it returns nothing, the troop hasn't been materialized yet — record a follow-up ("the scout troop materializes automatically within ~30 minutes; tune it later in PostHog or re-run this setup") and continue to step 7. **Not an abort.**
 
