@@ -6,7 +6,7 @@ This skill helps you upload source maps (or platform debug symbols) so PostHog E
 
 {references}
 
-The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap inject` and `posthog-cli sourcemap upload`.
+The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap process`, which injects chunk IDs and uploads maps in one step.
 
 ## Steps
 
@@ -23,10 +23,10 @@ Source map upload authenticates with a **personal API key**, not the public proj
 
 ### Apply build-config changes
 
-Wire source map generation, chunk-ID injection, and upload into your **production build** so every deploy ships matching maps. Depending on the platform this is either a build/bundler plugin, or a pair of `posthog-cli sourcemap inject` + `posthog-cli sourcemap upload` steps run after the build. Follow the {display_name} reference for the exact wiring.
+Wire source map generation, chunk-ID injection, and upload into your **production build** so every deploy ships matching maps. Depending on the platform this is either a build/bundler plugin, or a `posthog-cli sourcemap process` step run after the build (it injects chunk IDs and uploads in one pass). Follow the {display_name} reference for the exact wiring.
 
 #### Tips
-- If you wire `posthog-cli` directly (no framework or bundler plugin), generating the maps is **your** responsibility — the CLI only injects chunk IDs into, and uploads, maps your build already produced. Two things must be true before `posthog-cli sourcemap inject` works:
+- If you wire `posthog-cli` directly (no framework or bundler plugin), generating the maps is **your** responsibility — the CLI only injects chunk IDs into, and uploads, maps your build already produced. Two things must be true before `posthog-cli sourcemap process` works:
   - Source maps are emitted next to your output bundles (e.g. `.js.map` files).
   - The maps include `sourcesContent` (the original source embedded inside the map). Without it PostHog has the line/column mappings but not the code, so traces can't be fully resolved.
 - **Inject before deploy**: the *injected* bundles must be the ones shipped to production. Bundles missing the `//# chunkId=…` comment can't be matched to uploaded maps.
@@ -35,7 +35,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - **Link each release to its commit.** The CLI auto-detects the commit from the CI's git env vars — see "Associate the release with a git commit" for making those reachable in Docker/CI builds.
 
 #### Examples
-- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap inject` followed by `posthog-cli sourcemap upload` against the build output dir as post-build steps — both invocations need the upload credentials (see "Make credentials available at build time").
+- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
@@ -48,8 +48,8 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Auto-loads `.env`**: Next.js, Nuxt and similar frameworks read `.env` into the build for you — nothing extra to do.
 - **Vite is a partial exception**: it auto-loads `.env` into `import.meta.env` for client code (only `VITE_`-prefixed vars), but does **not** put vars in `process.env` for your config to read. The upload credentials (`POSTHOG_*`, not `VITE_`-prefixed) are read when the plugin is constructed, so load them yourself — see the Vite example below.
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
-- **Separate-process gotcha**: if injection/upload run as their own `package.json` steps (e.g. `posthog-cli sourcemap inject` / `posthog-cli sourcemap upload` after the bundler), each CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap …` (the flag goes before the subcommand).
-- **`inject` authenticates too.** Even though `posthog-cli sourcemap inject` only edits local files, it resolves credentials exactly like `upload` and fails without them. The reference docs show a bare `inject` command and put `--dotenv-file` only on `upload` — don't copy that asymmetry; pass `--dotenv-file` to **every** `posthog-cli` invocation. (A bare `inject` can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
+- **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
+- **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -66,9 +66,9 @@ The upload credentials must be readable **by the build pipeline at build time**,
   };
   ```
 - **Rollup / webpack / plain Node** Add `import 'dotenv/config'` (or `require('dotenv').config()`) at the top of the config/entry file so the loader runs before the build reads the vars.
-- **Standalone posthog-cli steps** Pass `--dotenv-file .env` to **both** invocations — `inject` and `upload` each need the credentials:
+- **Standalone posthog-cli step** Pass `--dotenv-file .env` to the `process` invocation so it can authenticate:
   ```json
-  "build": "tsc && posthog-cli --dotenv-file .env sourcemap inject --directory ./dist && posthog-cli --dotenv-file .env sourcemap upload --directory ./dist --release-name my-app"
+  "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
 
 ### Write credentials to the env file
