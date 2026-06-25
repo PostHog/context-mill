@@ -38,7 +38,6 @@ Pick exactly one based on what STEP 1 found. When in doubt, read the bundled ref
 ### STEP 3: Install the SDKs
 
 - Install `@posthog/mcp` and `posthog-node` using the project's package manager. Pin `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed `@posthog/mcp` version back from `package.json` / the lockfile rather than guessing a number.
-- Run the install as a background task; continue with the next steps while it completes. Do not hand-edit dependency versions in `package.json`.
 
 ### STEP 4: Instrument the server
 
