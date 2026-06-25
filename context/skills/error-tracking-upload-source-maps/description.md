@@ -271,7 +271,7 @@ Confirm the upload landed and report what changed.
 - Two different keys, two different jobs: a **personal API key** uploads maps at build time; the **public project key** powers the SDK at runtime. Don't swap them.
 - Keep build artifacts and uploaded maps in sync — every deploy should inject + upload within the same build so stack traces always resolve.
 - Uploaded maps live in PostHog and never need to be served publicly.
-- Detect the project's package manager before installing any dependency, and let long installs run in the background instead of blocking on them.
+- Detect the project's package manager before installing any dependency.
 - Read a file (and note its exact contents) immediately before editing it — essential for any temporary test code you'll revert afterwards.
 
 ## Framework guidelines
