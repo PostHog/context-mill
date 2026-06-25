@@ -1,0 +1,23 @@
+# MCP analytics — instrument a user's own MCP server with the @posthog/mcp SDK.
+type: skill
+template: description.md
+category: mcp-analytics
+description: Add PostHog MCP analytics to a TypeScript or JavaScript MCP server. Instruments the server with the @posthog/mcp SDK so every tool call, agent intent, and failure is captured as a $mcp_* event. Detects the server style (official @modelcontextprotocol/sdk Server/McpServer, mcp-handler, or a custom HTTP/edge dispatcher) and wires in the matching instrumentation, credentials, and graceful shutdown.
+tags: [mcp-analytics, mcp]
+cli:
+  role: command
+  command: mcp-analytics
+shared_docs:
+  - https://posthog.com/docs/mcp-analytics/start-here.md
+variants:
+  - id: all
+    display_name: any TypeScript or JavaScript MCP server
+    tags: [javascript_node, mcp]
+    docs_urls:
+      - https://posthog.com/docs/mcp-analytics/installation.md
+      - https://posthog.com/docs/mcp-analytics/custom-servers.md
+      - https://posthog.com/docs/mcp-analytics/intent.md
+      - https://posthog.com/docs/mcp-analytics/identifying-users.md
+      - https://posthog.com/docs/mcp-analytics/conversation-id.md
+      - https://posthog.com/docs/mcp-analytics/events.md
+      - https://posthog.com/docs/mcp-analytics/custom-events.md
