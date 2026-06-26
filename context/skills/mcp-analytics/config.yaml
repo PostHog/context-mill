@@ -2,7 +2,7 @@
 type: skill
 template: description.md
 category: mcp-analytics
-description: Add PostHog MCP analytics to a TypeScript or JavaScript MCP server. Instruments the server with the @posthog/mcp SDK so every tool call, agent intent, and failure is captured as a $mcp_* event. Detects the server style (official @modelcontextprotocol/sdk Server/McpServer, mcp-handler, or a custom HTTP/edge dispatcher) and wires in the matching instrumentation, credentials, and graceful shutdown.
+description: Add PostHog MCP analytics to a TypeScript, JavaScript, or Python MCP server. Instruments the server so every tool call, agent intent, and failure is captured as a $mcp_* event — the @posthog/mcp Node SDK for TS/JS, or posthog.mcp (shipped inside the posthog package) for Python. Detects the server style (official MCP SDK Server/McpServer/FastMCP, mcp-handler, jlowin fastmcp, or a custom HTTP/edge dispatcher) and wires in the matching instrumentation, credentials, and graceful shutdown.
 tags: [mcp-analytics, mcp]
 cli:
   role: command
@@ -21,3 +21,15 @@ variants:
       - https://posthog.com/docs/mcp-analytics/conversation-id.md
       - https://posthog.com/docs/mcp-analytics/events.md
       - https://posthog.com/docs/mcp-analytics/custom-events.md
+  - id: python
+    display_name: any Python MCP server
+    tags: [python, mcp]
+    docs_urls:
+      - https://posthog.com/docs/mcp-analytics/installation.md
+      - https://posthog.com/docs/mcp-analytics/custom-servers.md
+      - https://posthog.com/docs/mcp-analytics/intent.md
+      - https://posthog.com/docs/mcp-analytics/identifying-users.md
+      - https://posthog.com/docs/mcp-analytics/conversation-id.md
+      - https://posthog.com/docs/mcp-analytics/events.md
+      - https://posthog.com/docs/mcp-analytics/custom-events.md
+      - https://posthog.com/docs/libraries/python.md
