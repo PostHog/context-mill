@@ -20,7 +20,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-create,mcp
 
 ## The write recipe (use for every source here and in step 5)
 
-1. Check the baseline list (from step 1; refresh with `inbox-source-configs-list` if you're unsure it's current).
+1. List the current sources with `inbox-source-configs-list` (step 1 no longer pre-fetches them — get the current rows here).
 2. Row exists and `enabled: true` → leave it alone, record "already enabled".
 3. Row exists and `enabled: false` → `inbox-source-configs-partial-update` with `{ enabled: true }`.
 4. No row → `inbox-source-configs-create` with `{ source_product, source_type, enabled: true }`. A 400 about uniqueness means a row appeared since you listed — fall back to 3.
