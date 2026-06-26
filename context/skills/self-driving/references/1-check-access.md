@@ -4,7 +4,7 @@ next_step: 2-read-context.md
 
 # Step 1 — Check access
 
-Verify the Signals API is available for this project before touching anything. Self-driving is in beta and enabled per team by PostHog; there is no flag you can read, so the API itself is the probe.
+Self-driving is in **open beta** — available to every team — so there is no access gate to check here. This step exists only so the run opens with a fast, visible first checkmark. Do no real work: call no tool, fetch nothing.
 
 ## Status
 
@@ -14,22 +14,9 @@ Emit:
 [STATUS] Checking Self-driving access
 ```
 
-## Tools
-
-Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-list` (subsequent steps load their own tools).
-
 ## Do
 
-1. Call `inbox-source-configs-list`.
-2. **Success — including an empty list** — means the API is reachable: proceed. (The probe can't prove beta enrollment — the wizard's detect step and the beta flags own that — but it's the strongest signal available to you.) Keep the returned rows: step 2 and step 4 use them as the already-enabled baseline. Mark your access task completed and continue.
-3. A permission error (403), not-found (404), or "scope" error means Self-driving is not available to this caller. Emit exactly:
+1. Mark this task `in_progress`, then `completed`, right away — make **both** transitions so the run's step tracking registers the step.
+2. **Call no MCP tool here.** No probe, no source list. Step 2 gathers project state and step 4 lists the current sources before it writes, so nothing downstream needs a baseline from this step.
 
-   ```
-   [ABORT] self-driving is not available for this project
-   ```
-
-   and stop — the wizard renders the explanation.
-
-Do not retry the probe more than once; a transient network failure is worth one retry, an authorization error is not.
-
-A 5xx error after a retry is also not access denial — abort is wrong there. Surface it as a plain error instead: report the failure and stop without the `[ABORT]` marker so the wizard treats it as an error, not a clean refusal.
+There is nothing to abort on here. The `[ABORT] self-driving is not available for this project` string still exists as a **safety net for the rest of the run**: if the Signals API later turns out to be genuinely unreachable for this project — a hard 403/404 on *every* Signals call, which is unexpected in open beta — emit it then and stop. A single failed source or scout is never an abort; record it as a follow-up and keep going.
