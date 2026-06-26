@@ -104,13 +104,12 @@ posthog.captureToolCall({
 
 Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
-**Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Call `instrument()` inside it and **return the server** — returning `instrument()`'s handle instead would replace the server and break the module. If a `serverMutator` already exists, compose with it (mutate, instrument, return). Handlers nest registers after `instrument()` runs are still captured.
+**Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Prefer the `instrumentMutator` helper — it instruments the server and returns it, so it drops straight into the hook:
 
 ```ts
 import { Module } from "@nestjs/common"
 import { McpModule } from "@rekog/mcp-nest"
-import { instrument } from "@posthog/mcp"
-import { PostHog } from "posthog-node"
+import { PostHog, instrumentMutator } from "@posthog/mcp"
 
 const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
   host: process.env.POSTHOG_HOST,
@@ -121,15 +120,23 @@ const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
     McpModule.forRoot({
       name: "my-mcp-server",
       version: "1.0.0",
-      serverMutator: (server) => {
-        instrument(server, posthog)
-        return server // return the server, NOT instrument()'s handle
-      },
+      serverMutator: instrumentMutator(posthog),
     }),
   ],
 })
 class AppModule {}
 ```
+
+`instrumentMutator` needs `@posthog/mcp` **≥ 0.5.0**. If the installed version (check `package.json`) doesn't export it, use the explicit form — call `instrument()` and **return the server**, not its handle (returning the handle replaces the server and breaks the module):
+
+```ts
+serverMutator: (server) => {
+  instrument(server, posthog)
+  return server
+}
+```
+
+Either way, handlers nest registers after the mutator runs are still captured, and compose with an existing `serverMutator` if there is one. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), use the explicit form and keep `instrument()`'s returned handle.
 
 ### STEP 5: Wire up credentials
 
