@@ -2,7 +2,7 @@
 type: skill
 template: description.md
 category: mcp-analytics
-description: Add PostHog MCP analytics to a TypeScript or JavaScript MCP server. Instruments the server with the @posthog/mcp SDK so every tool call, agent intent, and failure is captured as a $mcp_* event. Detects the server style (official @modelcontextprotocol/sdk Server/McpServer, mcp-handler, or a custom HTTP/edge dispatcher) and wires in the matching instrumentation, credentials, and graceful shutdown.
+description: Add PostHog MCP analytics to a TypeScript or JavaScript MCP server. Instruments the server with the @posthog/mcp SDK so every tool call, agent intent, and failure is captured as a $mcp_* event. Detects the server style (official @modelcontextprotocol/sdk Server/McpServer, mcp-handler, @rekog/mcp-nest, or a custom HTTP/edge dispatcher) and wires in the matching instrumentation, credentials, and graceful shutdown.
 tags: [mcp-analytics, mcp]
 cli:
   role: command

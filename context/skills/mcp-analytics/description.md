@@ -21,6 +21,7 @@ Follow these steps IN ORDER.
 - Look for MCP server signals in dependencies and source:
   - `@modelcontextprotocol/sdk` — the official SDK (most common).
   - `mcp-handler` — the Next.js / Vercel adapter.
+  - `@rekog/mcp-nest` — the NestJS adapter (tools defined with `@Tool()` decorators; the server is built inside `McpModule.forRoot(...)`, so there's no `new McpServer` in user code).
   - `fastmcp`, `xmcp`, or a similar TS MCP framework.
   - A custom HTTP/edge handler that speaks the MCP protocol directly (JSON-RPC methods like `tools/call`, `initialize`, an `Mcp-Session-Id` header) without any of the above.
 - Identify the file and the exact place where the server is constructed or where MCP requests are dispatched. Read it before editing.
@@ -34,6 +35,7 @@ Pick exactly one based on what STEP 1 found. When in doubt, read the bundled ref
 - **Path A — official SDK server object** (`new Server(...)` or `new McpServer(...)` from `@modelcontextprotocol/sdk`): wrap it with `instrument(server, posthog)`. One line.
 - **Path B — `mcp-handler`** (`createMcpHandler((server) => { ... })`): same `instrument(server, posthog)` call, inside the setup callback. Because Vercel's transport is stateless, also wire `identify` (STEP 4) and flush per invocation (STEP 6).
 - **Path C — custom dispatcher** (Hono / Express / Cloudflare Worker / edge function with no SDK server object to wrap): use the `PostHogMCP` client and call `captureToolCall` / `captureInitialize` yourself at the dispatch points. More placement, same resulting events.
+- **Path D — `@rekog/mcp-nest`** (NestJS): the framework builds the server, so there's no `new McpServer` for you to wrap. Instrument it through the module's `serverMutator` hook in `McpModule.forRoot(...)`. See STEP 4.
 
 ### STEP 3: Install the SDKs
 
@@ -101,6 +103,33 @@ posthog.captureToolCall({
 ```
 
 Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. These calls are fire-and-forget and never throw, so they can't take down a tool.
+
+**Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Call `instrument()` inside it and **return the server** — returning `instrument()`'s handle instead would replace the server and break the module. If a `serverMutator` already exists, compose with it (mutate, instrument, return). Handlers nest registers after `instrument()` runs are still captured.
+
+```ts
+import { Module } from "@nestjs/common"
+import { McpModule } from "@rekog/mcp-nest"
+import { instrument } from "@posthog/mcp"
+import { PostHog } from "posthog-node"
+
+const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
+  host: process.env.POSTHOG_HOST,
+})
+
+@Module({
+  imports: [
+    McpModule.forRoot({
+      name: "my-mcp-server",
+      version: "1.0.0",
+      serverMutator: (server) => {
+        instrument(server, posthog)
+        return server // return the server, NOT instrument()'s handle
+      },
+    }),
+  ],
+})
+class AppModule {}
+```
 
 ### STEP 5: Wire up credentials
 
