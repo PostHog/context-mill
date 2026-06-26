@@ -127,16 +127,7 @@ const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
 class AppModule {}
 ```
 
-`instrumentMutator` needs `@posthog/mcp` **≥ 0.5.0**. If the installed version (check `package.json`) doesn't export it, use the explicit form — call `instrument()` and **return the server**, not its handle (returning the handle replaces the server and breaks the module):
-
-```ts
-serverMutator: (server) => {
-  instrument(server, posthog)
-  return server
-}
-```
-
-Either way, handlers nest registers after the mutator runs are still captured, and compose with an existing `serverMutator` if there is one. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), use the explicit form and keep `instrument()`'s returned handle.
+`instrumentMutator` returns the server (not `instrument()`'s handle), so it slots straight into the hook. Compose with an existing `serverMutator` if there is one, and handlers nest registers after the mutator runs are still captured. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), call `instrument()` directly inside your own mutator and keep its handle, returning the server yourself.
 
 ### STEP 5: Wire up credentials
 
