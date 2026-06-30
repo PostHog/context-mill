@@ -207,8 +207,8 @@ Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher a
 
 ### STEP 5: Wire up credentials
 
-- Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project API token. If a valid `phc_…` token and host are already set, reference those and skip the rest of this step.
-- If the token is missing, use the PostHog MCP server's `projects-get` tool to fetch the project's `api_token`. If multiple projects come back, ask the user which to use. If the MCP server isn't connected, ask the user for their project API token directly.
+- Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project token. If a valid `phc_…` token and host are already set, reference those and skip the rest of this step.
+- If the token is missing, use the PostHog MCP server's `projects-get` tool to fetch the project's `api_token`. If multiple projects come back, ask the user which to use. If the MCP server isn't connected, ask the user for their project token directly.
 - Host: `https://us.i.posthog.com` for US Cloud, `https://eu.i.posthog.com` for EU Cloud.
 - Write `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ[...]` in Python) — never hardcode the token.
 
@@ -251,7 +251,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 - **One server, one wrapper.** `instrument()` is idempotent; don't call it twice on the same server.
 - **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` client once, not per request.
-- **Env, never hardcode.** The project API token and host come from environment variables.
+- **Env, never hardcode.** The project token and host come from environment variables.
 - **Additive only.** Don't change tool behavior or restructure the server — just wrap/capture.
 - **Don't break STDIO.** No `console.*` (JS) or `print()` (Python) on STDIO transports; use a `logger` instead.
 - **Pin the beta SDK** and tell the user it's pre-1.0. (Python: `posthog.mcp` ships inside `posthog`; pin `posthog>=7.21`.)
