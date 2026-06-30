@@ -11,9 +11,18 @@ This is **not** about adding the PostHog MCP *server* to a coding agent (that's 
 ## Scope and guardrails
 
 - **TypeScript / JavaScript and Python are supported.** Detect the language in STEP 1 and follow the matching part of every step. If the MCP server is written in anything else (Go, Rust, …), **stop**: emit `[ABORT] unsupported language for mcp analytics` on its own line and do nothing else.
-- **This must be an MCP server.** If the project is a normal app with no MCP server, **stop**: emit `[ABORT] no mcp server found` on its own line and do nothing else.
+- **This must be an MCP server.** Search thoroughly before concluding there isn't one: check dependency manifests *and* source for the STEP 1 signals across the whole project, including monorepo workspace packages and subdirectories — a server is often under `packages/*`, `apps/*`, `server/`, or `src/`, not the repo root. Only after an exhaustive search finds nothing, **stop**: emit `[ABORT] no mcp server found` on its own line, and in the same message tell the user where you looked and to re-run the command from inside the package or directory that actually defines their MCP server. Do nothing else.
 - **Beta SDK.** Both SDKs are pre-1.0 and may ship breaking changes in minor releases. Pin a version (see STEP 3).
 - **Minimal, additive changes only.** Add instrumentation alongside the existing server; do not restructure tool handlers or change their behavior. The wrapper is designed to be one line.
+
+### Abort cases
+
+If anything blocks instrumentation, **always** emit exactly one `[ABORT] <reason>` line and stop — never halt, finish, or error out silently. The wizard catches `[ABORT]` and terminates the run for you; don't try to exit yourself. A silent stop is recorded as a failed run with no reason, which can't be acted on, so every dead end must carry a reason. Use one of:
+
+- `[ABORT] no mcp server found` — an exhaustive search (see the guardrail above) found no MCP server in the project.
+- `[ABORT] unsupported language for mcp analytics` — the server is neither TypeScript/JavaScript nor Python.
+- `[ABORT] could not locate the server entry point` — MCP signals are present, but the place the server is constructed or where requests are dispatched couldn't be found to instrument.
+- `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or no PostHog credentials and no MCP server connected to fetch them). Keep it short and specific so it's useful when aggregated across runs.
 
 ## Instructions
 
