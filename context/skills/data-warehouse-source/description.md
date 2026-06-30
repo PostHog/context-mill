@@ -17,7 +17,7 @@ Consult the PostHog data warehouse source docs above for source-specific field r
 
 You have the PostHog MCP server and the wizard's local tools available:
 
-- **`mcp__posthog-wizard__external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names.
+- **`mcp__posthog-wizard__external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names. **Pass `source_type` with the kind(s) you need** (e.g. `source_type: "Postgres"`, or comma-separated `"Postgres,Stripe"`). The unfiltered response describes every source and is hundreds of KB — large enough to blow your context budget — so never call it without `source_type`.
 - **`mcp__posthog-wizard__external-data-sources-db-schema`** — validates credentials and lists the tables available for sync. Use this for database sources before creating.
 - **`mcp__posthog-wizard__external-data-sources-create`** — creates the source. Follow its input schema exactly for the `payload` and `schemas` shape; the tool definition is the source of truth.
 - **`mcp__wizard-tools__check_env_keys`** — tells you which `.env` keys EXIST. It never returns values.
@@ -27,13 +27,23 @@ You have the PostHog MCP server and the wizard's local tools available:
 
 1. **Never read or guess secret values.** You cannot read `.env` values — `mcp__wizard-tools__check_env_keys` only reveals which keys exist. Obtain every credential value from the user via `mcp__wizard-tools__wizard_ask`. Never fabricate a host, password, or API key.
 
-2. **Batch credential questions into a single `mcp__wizard-tools__wizard_ask` call.** Ask for all of a source's fields (host, port, database, user, password, schema, …) in one call. Repeated calls are rate-limited and will fail — one source, one prompt.
+2. **Batch a source's credential questions into one `mcp__wizard-tools__wizard_ask` call.** Ask for all of a source's fields (host, port, database, user, password, schema, …) in a single call — up to 8 questions. One call per source is fine; just don't fire several rapid calls for the _same_ source. A follow-up call is allowed when a later question genuinely depends on an earlier answer (e.g. correcting a field after a validation failure). A cancelled or timed-out `wizard_ask` does **not** count against the per-run cap — treat it as "the user declined" and fall back to the deep-link path for that source, without worrying about a wasted call.
 
-3. **The MCP defines the fields, not you.** Call `mcp__posthog-wizard__external-data-sources-wizard` for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
+3. **Don't pass secret references to the PostHog tools.** If you mark a `wizard_ask` field `sensitive`, the answer comes back as `{ secretRef: ... }`, which only `mcp__wizard-tools__set_env_values` can resolve — `external-data-sources-db-schema`/`-create` reject it. For credentials you'll hand straight to those tools, collect them as normal (non-`sensitive`) `text` answers so you get the real value; reserve `sensitive` for secrets you're only writing to `.env`.
 
-4. **Respect the mode.** Only collect credentials and create `in-cli` sources. For `deep-link` sources, provide the URL and stop — do not try to collect OAuth tokens.
+4. **The MCP defines the fields, not you.** Call `mcp__posthog-wizard__external-data-sources-wizard` (with `source_type`) for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
 
-5. **Don't modify project code.** This skill connects external data; it does not edit the user's application. Make no source-code changes.
+5. **Respect the mode.** Only collect credentials and create `in-cli` sources. For `deep-link` sources, provide the URL and stop — do not try to collect OAuth tokens.
+
+6. **Don't modify project code.** This skill connects external data; it does not edit the user's application. Make no source-code changes.
+
+## Pre-flight: credential gotchas that cause most failures
+
+Surface these **before** collecting credentials — they're the top reasons setup fails on the first try, and a failed attempt wastes a `wizard_ask`.
+
+- **The host must be reachable from PostHog's network.** `localhost`, `127.0.0.1`, and private/RFC-1918 hosts (`10.x`, `192.168.x`, `172.16–31.x`) are rejected — PostHog connects from its own infrastructure, not the user's machine. Serverless/managed Postgres (Neon, Supabase, RDS behind strict rules) often also needs PostHog's egress IPs allowlisted first. If the database isn't publicly reachable, go straight to the deep-link path instead of collecting credentials that can't validate.
+- **Supabase is Postgres — set it up as one source.** Use the **Session pooler**, not the direct host (the direct host is IPv6-only). The pooler host looks like `aws-0-<region>.pooler.supabase.com`, the **username** must be `postgres.<project-ref>`, and the **port is 6543** (not 5432). The password is the **database** password (Supabase → Settings → Database), which is distinct from the `anon`/`service_role` JWT keys and the account password. If `SUPABASE_URL` exists in the env, derive the project ref from `db.<ref>.supabase.co` to pre-fill the host/username in your prompt.
+- **Many SaaS sources need a specific key type or plan** — name the right one in your `wizard_ask` prompt so the user doesn't paste the wrong thing: **Stripe** wants a _restricted_ key (`rk_live_…`), not `sk_live_…`; **Sentry** wants an internal-integration token (not a DSN or personal token); **RevenueCat** a v2 secret key with read scopes; **Convex** requires the Professional plan; **Twilio** an API Key SID + Secret (not the account auth token); **Mailchimp** a key with its `-usX` datacenter suffix. For send-only services (Resend, Mailgun) the key in the env is often restricted — the warehouse import needs a full/read-access key.
 
 ## Workflow
 
@@ -44,7 +54,7 @@ Process each detected source in turn.
 ### For an `in-cli` source
 
 1. `[STATUS] Configuring <label>`
-2. Call `mcp__posthog-wizard__external-data-sources-wizard` and read the field list for this `kind`.
+2. Call `mcp__posthog-wizard__external-data-sources-wizard` **with `source_type` set to this `kind`** (never unfiltered) and read the field list. Check the pre-flight gotchas above for this kind before prompting.
 3. Optionally call `mcp__wizard-tools__check_env_keys` to see which matching keys already exist — use this only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set; please paste the connection details"). You still cannot read the value.
 4. Call `mcp__wizard-tools__wizard_ask` ONCE, requesting all required fields for the source. If the user declines or cannot provide them, fall back to the deep-link path below for this source.
 5. For database sources, call `mcp__posthog-wizard__external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it (one more `mcp__wizard-tools__wizard_ask`), or fall back to deep-link.
