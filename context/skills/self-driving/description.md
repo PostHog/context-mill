@@ -6,7 +6,7 @@ The wizard's run prompt supplies the project URLs (integrations settings, organi
 
 ## Workflow
 
-The setup runs as an 8-step chain:
+The setup runs as a 9-step chain:
 
 {workflow}
 
