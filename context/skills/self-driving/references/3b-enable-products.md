@@ -28,9 +28,9 @@ Load via `ToolSearch select:mcp__posthog-wizard__products-enable`.
 { "products": ["session_replay", "error_tracking", "conversations"] }
 ```
 
-   It is idempotent and server-owned: each product comes back as `"enabled"` (just turned on) or `"already_enabled"`. The run prompt's "Project state read at auth time" block also tells you what was already ON. Record the per-product result — the report lists it.
+   It is idempotent and server-owned. The response is `{ "results": { <product>: "enabled" | "already_enabled" } }` — `"enabled"` means just turned on, `"already_enabled"` means it was already on. The run prompt's "Project state read at auth time" block also tells you what was already ON. Record the per-product result — the report lists it.
 
-   If the call is rejected for permissions (enabling Support / replay masking needs **project admin** — error tracking alone doesn't), don't abort: record a follow-up telling the user to enable these from a project-admin account, and continue.
+   **If the call is rejected for permissions** (a `403` — enabling Support / replay masking needs **project admin**; error tracking alone doesn't), the call is atomic, so *nothing* was turned on — including error tracking. Don't abort: **retry with just `{ "products": ["error_tracking"] }`** (that never needs admin, so error tracking still gets turned on), then record a follow-up telling the user to enable **Session Replay** and **Support** from a project-admin account, and continue.
 
 2. **Web app** (this repo serves a browser frontend / loads `posthog-js`): the server flip only takes effect if the client init doesn't override it. Find the `posthog.init(...)` call and check its options:
    - `disable_session_recording: true` cancels the replay enable → remove that option (or set it `false`).
