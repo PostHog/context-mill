@@ -1,0 +1,18 @@
+# Ingestion warnings - docs-only stepwise skill (no example projects)
+type: skill
+template: description.md
+description: Diagnose and fix the instrumentation behind a PostHog project's ingestion warnings — events PostHog had to drop, mis-merge, or degrade on the way in. Queries system.ingestion_warnings to see which warning types are actually firing, traces each one back to the code that produces it, and applies the fix. Covers illegal/already-identified merges, invalid UUIDs and timestamps, future-dated events, the 1MB size limit, ingestion overflow, invalid replay timestamps, $set on exception events, and invalid heatmap data (relative $current_url).
+tags: [best-practices]
+cli:
+  role: command
+  command: ingestion-warnings
+references:
+  preamble: "**Read ONLY this file.** Follow its contents in sequence. Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/data/ingestion-warnings.md
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: PostHog ingestion warnings — diagnose & fix
+    tags: [best-practices]
+    docs_urls: []
