@@ -26,9 +26,8 @@ Each step file lists the exact `[STATUS]` strings to emit. Use them freely — t
 
 ## Abort — `[ABORT]`
 
-Report unrecoverable preconditions with `[ABORT] <reason>` on its own line. The wizard runner catches it and terminates the run — you do not need to halt yourself afterwards. Abort reasons this skill uses:
+Report unrecoverable preconditions with `[ABORT] <reason>` on its own line. The wizard runner catches it and terminates the run — you do not need to halt yourself afterwards. The one abort reason this skill uses (emitted in `1-triage.md`):
 
-- No PostHog SDK initialization found in the project
 - Could not read ingestion warnings and no PostHog instrumentation found to scan
 
 ## Guiding tenets
