@@ -687,14 +687,29 @@ async function generateSkill({
         await processDoc(docEntry);
     }
 
+    // Collect commandments for this skill's tags.
+    const rules = collectCommandments(skill.tags || [], commandmentsConfig);
+    const commandmentsText = formatCommandments(rules);
+
+    // Also emit them as a reference file. The orchestrator installs this skill
+    // as the framework reference and points its task agents at individual
+    // files, so the rules must exist outside the SKILL.md body.
+    if (rules.length > 0) {
+        fs.writeFileSync(
+            path.join(referencesDir, 'COMMANDMENTS.md'),
+            `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
+            'utf8',
+        );
+        references.push({
+            filename: 'COMMANDMENTS.md',
+            description: 'Framework-specific rules the integration must follow',
+        });
+    }
+
     // Build references list for SKILL.md
     const referencesText = references
         .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
         .join('\n');
-
-    // Collect commandments for this skill's tags
-    const rules = collectCommandments(skill.tags || [], commandmentsConfig);
-    const commandmentsText = formatCommandments(rules);
 
     // Format workflow steps for skills that use the {workflow} placeholder
     const workflowText = formatWorkflowSteps(workflowSteps);

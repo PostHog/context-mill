@@ -1,0 +1,21 @@
+---
+type: install
+flow: posthog-integration
+label: Add the PostHog SDK to the manifest
+model: claude-haiku-4-5-20251001
+skills: [basic-integration-install]
+allowedTools: [Read, Edit, Glob, Grep]
+disallowedTools: [enqueue_task]
+dependsOn: []
+---
+
+## Goal
+
+Declare the PostHog SDK in the project's package manifest. Do not run the package
+manager and do not build — the build task installs and verifies everything at the
+end.
+
+## How you know you succeeded
+
+The SDK is listed in the manifest's dependencies at a sensible version. If it is
+already declared, leave it and say so.

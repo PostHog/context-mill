@@ -1,0 +1,381 @@
+type: docs-only
+template: description.md
+description: Initialize PostHog and set its environment variables
+tags:
+  - orchestrator
+  - init
+variants:
+  - id: nextjs-app-router
+    display_name: Next.js App Router
+    tags:
+      - orchestrator
+      - init
+      - nextjs
+      - react
+      - ssr
+      - app-router
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+  - id: nextjs-pages-router
+    display_name: Next.js Pages Router
+    tags:
+      - orchestrator
+      - init
+      - nextjs
+      - react
+      - ssr
+      - pages-router
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/next-js.md
+  - id: react-react-router-6
+    display_name: React Router v6
+    tags:
+      - orchestrator
+      - init
+      - react
+      - react-router
+      - v6
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+  - id: react-react-router-7-framework
+    display_name: React Router v7 - Framework mode
+    tags:
+      - orchestrator
+      - init
+      - react
+      - react-router
+      - v7
+      - framework
+      - ssr
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+  - id: react-react-router-7-data
+    display_name: React Router v7 - Data mode
+    tags:
+      - orchestrator
+      - init
+      - react
+      - react-router
+      - v7
+      - data
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+  - id: react-react-router-7-declarative
+    display_name: React Router v7 - Declarative mode
+    tags:
+      - orchestrator
+      - init
+      - react
+      - react-router
+      - v7
+      - declarative
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+  - id: react-vite
+    display_name: React (Vite)
+    tags:
+      - orchestrator
+      - init
+      - react
+      - vite
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react.md
+  - id: nuxt-3-6
+    display_name: Nuxt 3.6
+    tags:
+      - orchestrator
+      - init
+      - nuxt
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+  - id: nuxt-4
+    display_name: Nuxt 4
+    tags:
+      - orchestrator
+      - init
+      - nuxt
+      - vue
+      - ssr
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/nuxt-js.md
+  - id: vue-3
+    display_name: Vue 3
+    tags:
+      - orchestrator
+      - init
+      - vue
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/vue-js.md
+  - id: django
+    display_name: Django
+    tags:
+      - orchestrator
+      - init
+      - django
+      - python
+    docs_urls:
+      - https://posthog.com/docs/libraries/django.md
+  - id: flask
+    display_name: Flask
+    tags:
+      - orchestrator
+      - init
+      - flask
+      - python
+    docs_urls:
+      - https://posthog.com/docs/libraries/flask.md
+  - id: fastapi
+    display_name: FastAPI
+    tags:
+      - orchestrator
+      - init
+      - fastapi
+      - python
+    docs_urls:
+      - https://posthog.com/docs/libraries/python.md
+  - id: react-tanstack-router-file-based
+    display_name: React with TanStack Router (file-based)
+    tags:
+      - orchestrator
+      - init
+      - react
+      - tanstack-router
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-start.md
+  - id: react-tanstack-router-code-based
+    display_name: React with TanStack Router (code-based)
+    tags:
+      - orchestrator
+      - init
+      - react
+      - tanstack-router
+      - spa
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-start.md
+  - id: tanstack-start
+    display_name: TanStack Start
+    tags:
+      - orchestrator
+      - init
+      - react
+      - tanstack-start
+      - tanstack-router
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/tanstack-start.md
+  - id: laravel
+    display_name: Laravel
+    tags:
+      - orchestrator
+      - init
+      - laravel
+      - php
+    docs_urls:
+      - https://posthog.com/docs/libraries/laravel.md
+  - id: php
+    display_name: PHP
+    tags:
+      - orchestrator
+      - init
+      - php
+    docs_urls:
+      - https://posthog.com/docs/libraries/php.md
+  - id: ruby-on-rails
+    display_name: Ruby on Rails
+    tags:
+      - orchestrator
+      - init
+      - ruby-on-rails
+      - ruby
+    docs_urls:
+      - https://posthog.com/docs/libraries/ruby-on-rails.md
+      - https://posthog.com/docs/libraries/ruby.md
+  - id: android
+    display_name: Android
+    tags:
+      - orchestrator
+      - init
+      - android
+      - java
+      - kotlin
+    docs_urls:
+      - https://posthog.com/docs/libraries/android.md
+  - id: sveltekit
+    display_name: SvelteKit
+    tags:
+      - orchestrator
+      - init
+      - sveltekit
+      - svelte
+      - javascript
+    docs_urls:
+      - https://posthog.com/docs/libraries/svelte.md
+  - id: python
+    display_name: Python
+    tags:
+      - orchestrator
+      - init
+      - python
+    docs_urls:
+      - https://posthog.com/docs/libraries/python.md
+      - https://posthog.com/docs/references/posthog-python.md
+  - id: javascript_node
+    display_name: JavaScript Node
+    tags:
+      - orchestrator
+      - init
+      - javascript_node
+    docs_urls:
+      - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/references/posthog-node.md
+  - id: javascript_web
+    display_name: JavaScript Web
+    tags:
+      - orchestrator
+      - init
+      - javascript_web
+    docs_urls:
+      - https://posthog.com/docs/libraries/js.md
+      - https://posthog.com/docs/references/posthog-js.md
+  - id: ruby
+    display_name: Ruby
+    tags:
+      - orchestrator
+      - init
+      - ruby
+    docs_urls:
+      - https://posthog.com/docs/libraries/ruby.md
+  - id: elixir
+    display_name: Elixir
+    tags:
+      - orchestrator
+      - init
+      - elixir
+      - phoenix
+      - plug
+    docs_urls:
+      - https://posthog.com/docs/libraries/elixir.md
+  - id: go
+    display_name: Go
+    tags:
+      - orchestrator
+      - init
+      - go
+    docs_urls:
+      - https://posthog.com/docs/libraries/go.md
+  - id: swift
+    display_name: Swift (iOS/macOS)
+    tags:
+      - orchestrator
+      - init
+      - swift
+      - ios
+      - macos
+      - swiftui
+    docs_urls:
+      - https://posthog.com/docs/libraries/ios.md
+      - https://posthog.com/docs/libraries/ios/usage.md
+      - https://posthog.com/docs/libraries/ios/configuration.md
+  - id: flutter
+    display_name: Flutter
+    tags:
+      - orchestrator
+      - init
+      - flutter
+      - dart
+      - mobile
+    docs_urls:
+      - https://posthog.com/docs/libraries/flutter.md
+  - id: react-native
+    display_name: React Native
+    tags:
+      - orchestrator
+      - init
+      - react-native
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
+  - id: expo
+    display_name: Expo
+    tags:
+      - orchestrator
+      - init
+      - expo
+      - react-native
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/react-native.md
+  - id: astro-static
+    display_name: Astro (Static)
+    tags:
+      - orchestrator
+      - init
+      - astro
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+  - id: astro-view-transitions
+    display_name: Astro (View Transitions)
+    tags:
+      - orchestrator
+      - init
+      - astro
+      - astro-view-transitions
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+  - id: astro-ssr
+    display_name: Astro (SSR)
+    tags:
+      - orchestrator
+      - init
+      - astro
+      - astro-ssr
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+  - id: astro-hybrid
+    display_name: Astro (Hybrid)
+    tags:
+      - orchestrator
+      - init
+      - astro
+      - astro-hybrid
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/astro.md
+  - id: angular
+    display_name: Angular
+    tags:
+      - orchestrator
+      - init
+      - angular
+      - javascript
+      - typescript
+    docs_urls:
+      - https://posthog.com/docs/libraries/angular.md
