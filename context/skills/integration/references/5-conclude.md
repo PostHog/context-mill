@@ -1,12 +1,14 @@
 ---
 next_step: null
 title: PostHog Setup - Conclusion
-description: Review and fix any errors in the PostHog integration implementation
+description: Locate the dashboard and insights created earlier, surface the link, and write the setup report
 ---
 
-Use the PostHog MCP to create a new dashboard named "Analytics basics (wizard)" based on the events created here. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go. Make sure to use the exact same event names as implemented in the code. Populate it with up to five insights, with special emphasis on things like conversion funnels, churn events, and other business critical insights.
+The dashboard "Analytics basics (wizard)" and its insights were already created earlier, before any code was written. Do not create a new dashboard here. Instead, use the PostHog MCP to **locate** it — by the dashboard id you noted in the dashboard phase, falling back to searching for a dashboard named "Analytics basics (wizard)" (the `(wizard)` tag with that exact casing is how wizard-created artifacts are found). Retrieve the dashboard's URL and the URLs of its insights, and confirm they still exist.
 
-Once the dashboard exists, emit its URL on its own line in your assistant message using this exact marker: `[DASHBOARD_URL] <full https url>`. The wizard parses this marker from your visible message and surfaces the link in the success summary. Mentioning the URL only in thinking or in prose without the marker means the link is dropped.
+If the revise phase reconciled any deviation (an insight added, removed, or renamed to match the final code), confirm those changes are reflected on the dashboard before continuing.
+
+Emit the dashboard's URL on its own line in your assistant message using this exact marker: `[DASHBOARD_URL] <full https url>`. The wizard parses this marker from your visible message and surfaces the link in the success summary. Mentioning the URL only in thinking or in prose without the marker means the link is dropped.
 
 Search for a file called `.posthog-events.json` and read it for available events.
 
@@ -54,5 +56,5 @@ Upon completion, remove .posthog-events.json.
 
 Status to report in this phase:
 
-- Configured dashboard: [insert PostHog dashboard URL]
+- Linked dashboard: [insert PostHog dashboard URL]
 - Created setup report: [insert full local file path]

@@ -1,10 +1,12 @@
 ---
-next_step: 3-revise.md
+next_step: 4-revise.md
 title: PostHog Setup - Edit
 description: Implement PostHog event tracking in the identified files, following best practices and the example project
 ---
 
 For each of the files and events noted in .posthog-events.json, make edits to capture events using PostHog. Make sure to set up any helper files needed. Carefully examine the included example project code: your implementation should match it as closely as possible. Do not spawn subagents.
+
+**Implement each event using the exact `event_name` from `.posthog-events.json`.** The dashboard and insights were already created from these names in the previous phase, so the code must match them character-for-character — do not rename, merge, or drop planned events, or the insights will show no data. If implementation genuinely forces a change to an event (a name must change, an event must be added or removed), update `.posthog-events.json` to reflect the actual code and note it clearly; the revise phase reconciles the dashboard with any such deviation.
 
 Use environment variables for PostHog keys. Do not hardcode PostHog keys.
 

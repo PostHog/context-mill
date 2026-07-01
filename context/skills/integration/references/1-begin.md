@@ -1,12 +1,12 @@
 ---
-next_step: 2-edit.md
+next_step: 2-dashboard.md
 title: PostHog Setup - Begin
 description: Start the event tracking setup process by analyzing the project and creating an event tracking plan
 ---
 
 We're making an event tracking plan for this project.
 
-This is the first of several phases — plan the events, implement them, revise and validate changes, then conclude by creating a dashboard and writing a setup report.
+This is the first of several phases — plan the events, create a dashboard and insights from that plan, implement the events, then revise and validate that the implementation matches the plan, and finally conclude by linking the dashboard and writing a setup report.
 
 ## Task list
 
@@ -34,7 +34,7 @@ Create a new file with a JSON array at the root of the project: .posthog-events.
 
 Track actions only, not pageviews. These can be captured automatically. Exceptions can be made for "viewed"-type events that correspond to the top of a conversion funnel.
 
-As you review files, make an internal note of opportunities to identify users and catch errors. We'll need them for the next step.
+As you review files, make an internal note of opportunities to identify users and catch errors. We'll need them in a later step, when we implement the events in code.
 
 ## Status
 
