@@ -1,5 +1,5 @@
 ---
-next_step: 4-sources.md
+next_step: 3b-enable-products.md
 ---
 
 # Step 3 — Connect GitHub (required)
@@ -20,7 +20,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__integrations-list,mcp__wizard-t
 
 ## Do
 
-1. Call `integrations-list`. If any integration has `kind: "github"`, the team is already connected — record it and continue to step 4. (If step 2's project profile already showed a GitHub integration, this call just confirms it.)
+1. Call `integrations-list`. If any integration has `kind: "github"`, the team is already connected — record it and continue to the next step. (If step 2's project profile already showed a GitHub integration, this call just confirms it.)
 
 2. If absent, build the **one-click install link** from the run prompt's project URLs — same host, project id as a path segment (the same pattern Linear uses in step 5b):
 
@@ -43,7 +43,7 @@ Load via `ToolSearch select:mcp__posthog-wizard__integrations-list,mcp__wizard-t
 ```
 
 3. On **done**: call `integrations-list` again.
-   - GitHub present → continue to step 4.
+   - GitHub present → continue to the next step.
    - Still absent → tell the user it hasn't appeared yet (the install may take a few seconds to land) and re-ask with the same two options. Verify after each "done". Give this **at most 3 rounds**; on the third miss, ask one final time whether to keep waiting or exit.
 
 4. On **cant** (at any point): emit exactly:
