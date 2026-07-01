@@ -1,0 +1,12 @@
+type: docs-only
+template: description.md
+description: Mask PII in session replay — add the ph-no-capture class to sensitive elements and configure recording mask options
+tags: [best-practices, session-replay, privacy, pii]
+shared_docs:
+  - https://posthog.com/docs/session-replay/privacy.md
+  - https://posthog.com/docs/libraries/js/config.md
+variants:
+  - id: all
+    display_name: PII Bouncer
+    tags: [session-replay, privacy, pii]
+    docs_urls: []
