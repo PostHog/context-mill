@@ -9,7 +9,7 @@ import {
     expandSkillGroups,
     serializeSkill,
 } from '../skill-generator.js';
-import { generateCliEntries } from '../build-phases.js';
+import { generateHatEntries, toLegacyCliEntries } from '../build-phases.js';
 
 function createFixture(tree, baseDir) {
     for (const [name, content] of Object.entries(tree)) {
@@ -29,22 +29,22 @@ describe('parseCliBlock', () => {
         expect(parseCliBlock(null, 'ctx')).toBeNull();
     });
 
-    it('accepts a minimal command block with parentCommand and command', () => {
+    it('accepts a minimal hat block with parentHat and hat', () => {
         const result = parseCliBlock(
-            { role: 'command', parentCommand: 'audit', command: 'events' },
+            { role: 'hat', parentHat: 'audit', hat: 'events' },
             'ctx',
         );
-        expect(result).toEqual({ role: 'command', parentCommand: 'audit', command: 'events' });
+        expect(result).toEqual({ role: 'hat', parentHat: 'audit', hat: 'events' });
     });
 
-    it('accepts a flat command block with only command', () => {
-        expect(parseCliBlock({ role: 'command', command: 'revenue' }, 'ctx')).toEqual({
-            role: 'command',
-            command: 'revenue',
+    it('accepts a flat hat block with only hat', () => {
+        expect(parseCliBlock({ role: 'hat', hat: 'revenue' }, 'ctx')).toEqual({
+            role: 'hat',
+            hat: 'revenue',
         });
     });
 
-    it('accepts a skill block with no command/parentCommand', () => {
+    it('accepts a skill block with no hat/parentHat', () => {
         expect(parseCliBlock({ role: 'skill' }, 'ctx')).toEqual({ role: 'skill' });
     });
 
@@ -53,7 +53,7 @@ describe('parseCliBlock', () => {
     });
 
     it('throws when role is missing', () => {
-        expect(() => parseCliBlock({ command: 'events' }, 'ctx')).toThrow(/cli\.role is required/);
+        expect(() => parseCliBlock({ hat: 'events' }, 'ctx')).toThrow(/cli\.role is required/);
     });
 
     it('throws on an unknown role value', () => {
@@ -61,68 +61,83 @@ describe('parseCliBlock', () => {
     });
 
     it('rejects non-object inputs', () => {
-        expect(() => parseCliBlock('command', 'ctx')).toThrow(/must be an object/);
-        expect(() => parseCliBlock(['command'], 'ctx')).toThrow(/must be an object/);
+        expect(() => parseCliBlock('hat', 'ctx')).toThrow(/must be an object/);
+        expect(() => parseCliBlock(['hat'], 'ctx')).toThrow(/must be an object/);
     });
 
-    it('rejects empty-string command or parentCommand', () => {
-        expect(() => parseCliBlock({ role: 'command', command: '' }, 'ctx')).toThrow(/cli\.command must be a non-empty string/);
-        expect(() => parseCliBlock({ role: 'command', parentCommand: '' }, 'ctx')).toThrow(/cli\.parentCommand must be a non-empty string/);
+    it('rejects empty-string hat or parentHat', () => {
+        expect(() => parseCliBlock({ role: 'hat', hat: '' }, 'ctx')).toThrow(/cli\.hat must be a non-empty string/);
+        expect(() => parseCliBlock({ role: 'hat', parentHat: '' }, 'ctx')).toThrow(/cli\.parentHat must be a non-empty string/);
     });
 
     it('rejects unknown keys in the block', () => {
-        expect(() => parseCliBlock({ role: 'command', command: 'events', extra: true }, 'ctx')).toThrow(/unknown keys: extra/);
+        expect(() => parseCliBlock({ role: 'hat', hat: 'events', extra: true }, 'ctx')).toThrow(/unknown keys: extra/);
+    });
+
+    describe('legacy command spellings', () => {
+        it('normalizes role: command to role: hat', () => {
+            expect(parseCliBlock({ role: 'command', command: 'events' }, 'ctx')).toEqual({
+                role: 'hat',
+                hat: 'events',
+            });
+        });
+
+        it('normalizes command/parentCommand to hat/parentHat', () => {
+            expect(
+                parseCliBlock({ role: 'command', parentCommand: 'audit', command: 'events' }, 'ctx'),
+            ).toEqual({ role: 'hat', parentHat: 'audit', hat: 'events' });
+        });
     });
 
     describe('naming convention enforcement', () => {
-        it('rejects non-kebab-case command names', () => {
-            expect(() => parseCliBlock({ role: 'command', command: 'CamelCase' }, 'ctx'))
+        it('rejects non-kebab-case hat names', () => {
+            expect(() => parseCliBlock({ role: 'hat', hat: 'CamelCase' }, 'ctx'))
                 .toThrow(/must be kebab-case/);
-            expect(() => parseCliBlock({ role: 'command', command: 'snake_case' }, 'ctx'))
+            expect(() => parseCliBlock({ role: 'hat', hat: 'snake_case' }, 'ctx'))
                 .toThrow(/must be kebab-case/);
-            expect(() => parseCliBlock({ role: 'command', command: '1leading-digit' }, 'ctx'))
+            expect(() => parseCliBlock({ role: 'hat', hat: '1leading-digit' }, 'ctx'))
                 .toThrow(/must be kebab-case/);
         });
 
-        it('rejects too-short command names', () => {
-            expect(() => parseCliBlock({ role: 'command', command: 'a' }, 'ctx'))
+        it('rejects too-short hat names', () => {
+            expect(() => parseCliBlock({ role: 'hat', hat: 'a' }, 'ctx'))
                 .toThrow(/must be 2–20 characters/);
         });
 
-        it('rejects too-long command names', () => {
+        it('rejects too-long hat names', () => {
             const longName = 'a-very-very-very-long-name';
-            expect(() => parseCliBlock({ role: 'command', command: longName }, 'ctx'))
+            expect(() => parseCliBlock({ role: 'hat', hat: longName }, 'ctx'))
                 .toThrow(/must be 2–20 characters/);
         });
 
         it('rejects yargs reserved words', () => {
             for (const word of ['help', 'version', 'completion']) {
-                expect(() => parseCliBlock({ role: 'command', command: word }, 'ctx'))
+                expect(() => parseCliBlock({ role: 'hat', hat: word }, 'ctx'))
                     .toThrow(/yargs reserved word/);
             }
         });
 
         it('rejects names that collide with internal wizard flags', () => {
             for (const flag of ['playground', 'benchmark', 'yara-report', 'local-mcp', 'ci', 'skill']) {
-                expect(() => parseCliBlock({ role: 'command', command: flag }, 'ctx'))
+                expect(() => parseCliBlock({ role: 'hat', hat: flag }, 'ctx'))
                     .toThrow(/wizard internal flag/);
             }
         });
 
-        it('applies the same checks to parentCommand', () => {
-            expect(() => parseCliBlock({ role: 'command', parentCommand: 'help', command: 'events' }, 'ctx'))
+        it('applies the same checks to parentHat', () => {
+            expect(() => parseCliBlock({ role: 'hat', parentHat: 'help', hat: 'events' }, 'ctx'))
                 .toThrow(/yargs reserved word/);
-            expect(() => parseCliBlock({ role: 'command', parentCommand: 'NotKebab', command: 'events' }, 'ctx'))
+            expect(() => parseCliBlock({ role: 'hat', parentHat: 'NotKebab', hat: 'events' }, 'ctx'))
                 .toThrow(/must be kebab-case/);
         });
 
         it('accepts hyphenated names within the 2-20 char range', () => {
             const result = parseCliBlock({
-                role: 'command',
-                parentCommand: 'audit',
-                command: 'session-replay',
+                role: 'hat',
+                parentHat: 'audit',
+                hat: 'session-replay',
             }, 'ctx');
-            expect(result.command).toBe('session-replay');
+            expect(result.hat).toBe('session-replay');
         });
     });
 });
@@ -132,51 +147,51 @@ describe('resolveVariantCli', () => {
         expect(resolveVariantCli(null, null, { id: 'all' }, 'group-key')).toBeNull();
     });
 
-    it('defaults command to the variant id for the command role', () => {
+    it('defaults hat to the variant id for the hat role', () => {
         const result = resolveVariantCli(
-            { role: 'command', parentCommand: 'migrate' },
+            { role: 'hat', parentHat: 'migrate' },
             null,
             { id: 'statsig' },
             'migrate',
         );
-        expect(result).toEqual({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
+        expect(result).toEqual({ role: 'hat', parentHat: 'migrate', hat: 'statsig' });
     });
 
-    it('requires explicit command when variant id is "all"', () => {
+    it('requires explicit hat when variant id is "all"', () => {
         expect(() =>
-            resolveVariantCli({ role: 'command', parentCommand: 'audit' }, null, { id: 'all' }, 'audit'),
-        ).toThrow(/command is required at the group level/);
+            resolveVariantCli({ role: 'hat', parentHat: 'audit' }, null, { id: 'all' }, 'audit'),
+        ).toThrow(/hat is required at the group level/);
     });
 
-    it('validates the variant id when it is used as the fallback command', () => {
+    it('validates the variant id when it is used as the fallback hat', () => {
         // A reserved word or non-kebab id must be rejected even though it was
-        // never typed as an explicit command.
+        // never typed as an explicit hat.
         expect(() =>
-            resolveVariantCli({ role: 'command', parentCommand: 'audit' }, null, { id: 'help' }, 'audit'),
+            resolveVariantCli({ role: 'hat', parentHat: 'audit' }, null, { id: 'help' }, 'audit'),
         ).toThrow(/yargs reserved word/);
         expect(() =>
-            resolveVariantCli({ role: 'command', parentCommand: 'migrate' }, null, { id: 'CamelCase' }, 'migrate'),
+            resolveVariantCli({ role: 'hat', parentHat: 'migrate' }, null, { id: 'CamelCase' }, 'migrate'),
         ).toThrow(/must be kebab-case/);
     });
 
     it('lets variant-level cli override group-level fields', () => {
         const merged = resolveVariantCli(
-            { role: 'command', parentCommand: 'audit', command: 'all' },
-            { command: 'comprehensive' },
+            { role: 'hat', parentHat: 'audit', hat: 'all' },
+            { hat: 'comprehensive' },
             { id: 'all' },
             'audit',
         );
-        expect(merged).toEqual({ role: 'command', parentCommand: 'audit', command: 'comprehensive' });
+        expect(merged).toEqual({ role: 'hat', parentHat: 'audit', hat: 'comprehensive' });
     });
 
     it('lets variant-level cli flip the role from the group default', () => {
         const merged = resolveVariantCli(
-            { role: 'command', parentCommand: 'audit', command: 'events' },
+            { role: 'hat', parentHat: 'audit', hat: 'events' },
             { role: 'skill' },
             { id: 'all' },
             'audit-events',
         );
-        expect(merged).toEqual({ role: 'skill', parentCommand: 'audit', command: 'events' });
+        expect(merged).toEqual({ role: 'skill', parentHat: 'audit', hat: 'events' });
     });
 });
 
@@ -200,7 +215,7 @@ describe('expandSkillGroups with cli blocks', () => {
             'audit-events': {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { role: 'command', parentCommand: 'audit', command: 'events' },
+                cli: { role: 'hat', parentHat: 'audit', hat: 'events' },
                 variants: [{ id: 'all', display_name: 'PostHog audit — events' }],
             },
         };
@@ -208,13 +223,13 @@ describe('expandSkillGroups with cli blocks', () => {
         expect(skills).toHaveLength(1);
         expect(skills[0].id).toBe('audit-events');
         expect(skills[0]._cli).toEqual({
-            role: 'command',
-            parentCommand: 'audit',
-            command: 'events',
+            role: 'hat',
+            parentHat: 'audit',
+            hat: 'events',
         });
     });
 
-    it('defaults command to variant id for migrate-style user-pick families', () => {
+    it('defaults hat to variant id for migrate-style user-pick families', () => {
         createFixture({
             skills: {
                 migrate: { 'description.md': '# Migrate' },
@@ -224,7 +239,7 @@ describe('expandSkillGroups with cli blocks', () => {
             migrate: {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { role: 'command', parentCommand: 'migrate' },
+                cli: { role: 'hat', parentHat: 'migrate' },
                 variants: [
                     { id: 'statsig', display_name: 'Statsig → PostHog' },
                     { id: 'amplitude', display_name: 'Amplitude → PostHog' },
@@ -233,14 +248,36 @@ describe('expandSkillGroups with cli blocks', () => {
         };
         const skills = expandSkillGroups(config, tmpDir);
         expect(skills[0]._cli).toEqual({
-            role: 'command',
-            parentCommand: 'migrate',
-            command: 'statsig',
+            role: 'hat',
+            parentHat: 'migrate',
+            hat: 'statsig',
         });
         expect(skills[1]._cli).toEqual({
-            role: 'command',
-            parentCommand: 'migrate',
-            command: 'amplitude',
+            role: 'hat',
+            parentHat: 'migrate',
+            hat: 'amplitude',
+        });
+    });
+
+    it('normalizes a legacy command block to the hat shape', () => {
+        createFixture({
+            skills: {
+                'audit-events': { 'description.md': '# Audit events' },
+            },
+        }, tmpDir);
+        const config = {
+            'audit-events': {
+                type: 'docs-only',
+                template: 'description.md',
+                cli: { role: 'command', parentCommand: 'audit', command: 'events' },
+                variants: [{ id: 'all', display_name: 'PostHog audit — events' }],
+            },
+        };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills[0]._cli).toEqual({
+            role: 'hat',
+            parentHat: 'audit',
+            hat: 'events',
         });
     });
 
@@ -272,7 +309,7 @@ describe('expandSkillGroups with cli blocks', () => {
             'audit-events': {
                 type: 'docs-only',
                 template: 'description.md',
-                cli: { role: 'command', parentCommand: 'audit', command: 'events' },
+                cli: { role: 'hat', parentHat: 'audit', hat: 'events' },
                 variants: [{ id: 'all', display_name: 'PostHog audit — events' }],
             },
             integration: {
@@ -285,33 +322,33 @@ describe('expandSkillGroups with cli blocks', () => {
         const tagged = expanded.find(s => s.id === 'audit-events');
         const untagged = expanded.find(s => s.id === 'integration-django');
         expect(serializeSkill(tagged).cli).toEqual({
-            role: 'command',
-            parentCommand: 'audit',
-            command: 'events',
+            role: 'hat',
+            parentHat: 'audit',
+            hat: 'events',
         });
         expect(serializeSkill(untagged)).not.toHaveProperty('cli');
     });
 });
 
-describe('generateCliEntries', () => {
+describe('generateHatEntries', () => {
     it('emits only skills with a cli block', () => {
         const skills = [
             { id: 'integration-django', displayName: 'Django', description: 'd' },
             { id: 'audit-events', displayName: 'Audit events', description: 'a',
-              cli: { role: 'command', parentCommand: 'audit', command: 'events' } },
+              cli: { role: 'hat', parentHat: 'audit', hat: 'events' } },
         ];
-        const entries = generateCliEntries({ allSkills: skills });
+        const entries = generateHatEntries({ allSkills: skills });
         expect(entries).toHaveLength(1);
         expect(entries[0].skillId).toBe('audit-events');
     });
 
     it('returns an empty array when no skills declare a cli block', () => {
-        const entries = generateCliEntries({ allSkills: [] });
+        const entries = generateHatEntries({ allSkills: [] });
         expect(entries).toEqual([]);
     });
 
-    it('omits command and parentCommand when not set on the cli block', () => {
-        const entries = generateCliEntries({
+    it('omits hat and parentHat when not set on the cli block', () => {
+        const entries = generateHatEntries({
             allSkills: [
                 { id: 'doctor', displayName: 'Doctor', description: 'd',
                   cli: { role: 'skill' } },
@@ -325,60 +362,90 @@ describe('generateCliEntries', () => {
         });
     });
 
-    it('sorts entries by role, then parentCommand, then command', () => {
-        const entries = generateCliEntries({
+    it('sorts entries by role, then parentHat, then hat', () => {
+        const entries = generateHatEntries({
             allSkills: [
                 { id: 'b-skill', displayName: 'B', description: 'd', cli: { role: 'skill' } },
                 { id: 'a-int', displayName: 'A', description: 'd', cli: { role: 'internal' } },
                 { id: 'audit-events', displayName: 'AE', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'events' } },
+                  cli: { role: 'hat', parentHat: 'audit', hat: 'events' } },
                 { id: 'audit-all', displayName: 'A', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'all' } },
+                  cli: { role: 'hat', parentHat: 'audit', hat: 'all' } },
                 { id: 'revenue', displayName: 'R', description: 'd',
-                  cli: { role: 'command', command: 'revenue' } },
+                  cli: { role: 'hat', hat: 'revenue' } },
             ],
         });
         const order = entries.map(e => e.skillId);
-        // command flat (no parent) sorts before grouped 'audit', then skill, then internal
+        // hat flat (no parent) sorts before grouped 'audit', then skill, then internal
         expect(order).toEqual(['revenue', 'audit-all', 'audit-events', 'b-skill', 'a-int']);
     });
 
     it('carries default:true through into the entry', () => {
-        const entries = generateCliEntries({
+        const entries = generateHatEntries({
             allSkills: [
                 { id: 'audit-all', displayName: 'Audit', description: 'd',
-                  cli: { role: 'command', parentCommand: 'audit', command: 'all', default: true } },
+                  cli: { role: 'hat', parentHat: 'audit', hat: 'all', default: true } },
             ],
         });
         expect(entries[0]).toMatchObject({
             skillId: 'audit-all',
-            parentCommand: 'audit',
-            command: 'all',
+            parentHat: 'audit',
+            hat: 'all',
             default: true,
         });
     });
 
     it('throws when a family has more than one default leaf', () => {
         expect(() =>
-            generateCliEntries({
+            generateHatEntries({
                 allSkills: [
                     { id: 'audit-all', displayName: 'A', description: 'd',
-                      cli: { role: 'command', parentCommand: 'audit', command: 'all', default: true } },
+                      cli: { role: 'hat', parentHat: 'audit', hat: 'all', default: true } },
                     { id: 'audit-events', displayName: 'AE', description: 'd',
-                      cli: { role: 'command', parentCommand: 'audit', command: 'events', default: true } },
+                      cli: { role: 'hat', parentHat: 'audit', hat: 'events', default: true } },
                 ],
             }),
         ).toThrow(/Family "audit" has more than one cli\.default leaf/);
     });
 
-    it('throws when default is set on a flat command with no parentCommand', () => {
+    it('throws when default is set on a flat hat with no parentHat', () => {
         expect(() =>
-            generateCliEntries({
+            generateHatEntries({
                 allSkills: [
                     { id: 'revenue', displayName: 'R', description: 'd',
-                      cli: { role: 'command', command: 'revenue', default: true } },
+                      cli: { role: 'hat', hat: 'revenue', default: true } },
                 ],
             }),
         ).toThrow(/only valid on a leaf inside a family/);
+    });
+});
+
+describe('toLegacyCliEntries', () => {
+    it('projects hat entries back into the pre-rename command shape', () => {
+        const hatEntries = generateHatEntries({
+            allSkills: [
+                { id: 'audit-all', displayName: 'A', description: 'd',
+                  cli: { role: 'hat', parentHat: 'audit', hat: 'all', default: true } },
+                { id: 'doctor', displayName: 'Doctor', description: 'd',
+                  cli: { role: 'skill' } },
+            ],
+        });
+        expect(toLegacyCliEntries(hatEntries)).toEqual([
+            {
+                skillId: 'audit-all',
+                role: 'command',
+                parentCommand: 'audit',
+                command: 'all',
+                default: true,
+                displayName: 'A',
+                description: 'd',
+            },
+            {
+                skillId: 'doctor',
+                role: 'skill',
+                displayName: 'Doctor',
+                description: 'd',
+            },
+        ]);
     });
 });
