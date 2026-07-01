@@ -200,10 +200,10 @@ The PostHog client is configured with V4 SDK options. If no project token is pro
 import PostHog from 'posthog-react-native'
 import Config from 'react-native-config'
 
-const apiKey = Config.POSTHOG_PROJECT_TOKEN
-const isPostHogConfigured = apiKey && apiKey !== 'phc_your_project_token_here'
+const projectToken = Config.POSTHOG_PROJECT_TOKEN
+const isPostHogConfigured = projectToken && projectToken !== 'phc_your_project_token_here'
 
-export const posthog = new PostHog(apiKey || 'placeholder_key', {
+export const posthog = new PostHog(projectToken || 'placeholder_key', {
   host: Config.POSTHOG_HOST || 'https://us.i.posthog.com',
   disabled: !isPostHogConfigured,  // Disable if no project token
   captureAppLifecycleEvents: true,

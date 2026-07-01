@@ -82,7 +82,7 @@ Create the PostHog client **once at module scope** (never per request), reading 
 ```ts
 import { PostHog } from "posthog-node"
 
-const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
+const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
   host: process.env.POSTHOG_HOST, // https://us.i.posthog.com or https://eu.i.posthog.com
 })
 ```
@@ -115,7 +115,7 @@ const handler = createMcpHandler((server) => {
 ```ts
 import { PostHogMCP } from "@posthog/mcp"
 
-const posthog = new PostHogMCP(process.env.POSTHOG_PROJECT_API_KEY, {
+const posthog = new PostHogMCP(process.env.POSTHOG_PROJECT_TOKEN, {
   host: process.env.POSTHOG_HOST,
 })
 
@@ -145,7 +145,7 @@ import { Module } from "@nestjs/common"
 import { McpModule } from "@rekog/mcp-nest"
 import { PostHog, instrumentMutator } from "@posthog/mcp"
 
-const posthog = new PostHog(process.env.POSTHOG_PROJECT_API_KEY, {
+const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
   host: process.env.POSTHOG_HOST,
 })
 
@@ -170,7 +170,7 @@ import os
 from posthog import Posthog
 
 posthog = Posthog(
-    os.environ["POSTHOG_PROJECT_API_KEY"],
+    os.environ["POSTHOG_PROJECT_TOKEN"],
     host=os.environ["POSTHOG_HOST"],  # https://us.i.posthog.com or https://eu.i.posthog.com
 )
 ```
@@ -193,7 +193,7 @@ analytics = instrument(server, posthog)  # wrap right after constructing the ser
 import time
 from posthog.mcp import PostHogMCP
 
-posthog = PostHogMCP(os.environ["POSTHOG_PROJECT_API_KEY"], host=os.environ["POSTHOG_HOST"])
+posthog = PostHogMCP(os.environ["POSTHOG_PROJECT_TOKEN"], host=os.environ["POSTHOG_HOST"])
 
 # on the initialize handshake:
 posthog.capture_initialize(client_name=client_name, client_version=client_version, distinct_id=distinct_id)
@@ -216,10 +216,10 @@ Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher a
 
 ### STEP 5: Wire up credentials
 
-- Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project API key. If a valid `phc_…` key and host are already set, reference those and skip the rest of this step.
-- If the key is missing, use the PostHog MCP server's `projects-get` tool to fetch the project's `api_token`. If multiple projects come back, ask the user which to use. If the MCP server isn't connected, ask the user for their project API key directly.
+- Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project token. If a valid `phc_…` token and host are already set, reference those and skip the rest of this step.
+- If the token is missing, use the PostHog MCP server's `projects-get` tool to fetch the project's `api_token`. If multiple projects come back, ask the user which to use. If the MCP server isn't connected, ask the user for their project token directly.
 - Host: `https://us.i.posthog.com` for US Cloud, `https://eu.i.posthog.com` for EU Cloud.
-- Write `POSTHOG_PROJECT_API_KEY` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ[...]` in Python) — never hardcode the key.
+- Write `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ[...]` in Python) — never hardcode the token.
 
 ### STEP 6: Ensure events get flushed
 
@@ -260,7 +260,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 - **One server, one wrapper.** `instrument()` is idempotent; don't call it twice on the same server.
 - **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` client once, not per request.
-- **Env, never hardcode.** The project API key and host come from environment variables.
+- **Env, never hardcode.** The project token and host come from environment variables.
 - **Additive only.** Don't change tool behavior or restructure the server — just wrap/capture.
 - **Don't break STDIO.** No `console.*` (JS) or `print()` (Python) on STDIO transports; use a `logger` instead.
 - **Pin the beta SDK** and tell the user it's pre-1.0. (Python: `posthog.mcp` ships inside `posthog`; pin `posthog>=7.21`.)
