@@ -1,0 +1,16 @@
+type: docs-only
+template: description.md
+description: Remediate the findings of a PostHog audit-3000 run by applying safe fixes to the project source (v3000)
+tags: [best-practices]
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/getting-started/identify-users.md
+  - https://posthog.com/docs/product-analytics/best-practices.md
+  - https://posthog.com/docs/session-replay/how-to-control-which-sessions-you-record.md
+  - https://posthog.com/docs/libraries/js/config.md
+variants:
+  - id: all
+    display_name: PostHog remediate 3000
+    tags: [best-practices]
+    docs_urls: []
