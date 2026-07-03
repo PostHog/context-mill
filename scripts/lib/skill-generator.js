@@ -461,33 +461,16 @@ function collectCommandments(tags, commandmentsConfig) {
     const rules = [];
     const commandments = commandmentsConfig.commandments || {};
 
-    // Walk the tag taxonomy (see tag_parents in commandments.yaml): child
-    // tags additively inherit their parent categories' rules, transitively
-    // (react -> javascript_web -> javascript). Expansion never removes tags.
-    const parents = commandmentsConfig.tag_parents || {};
-    const expanded = [];
-    const queue = [...tags];
-    while (queue.length > 0) {
-        const tag = queue.shift();
-        if (expanded.includes(tag)) continue;
-        expanded.push(tag);
-        queue.push(...(parents[tag] || []));
-    }
-
-    for (const tag of expanded) {
+    // A skill collects the commandments for every tag it declares. Runtime
+    // membership (javascript_web / javascript_node) is declared directly in
+    // each skill's config tags, so there is no taxonomy to expand here.
+    for (const tag of tags) {
         if (commandments[tag]) {
             rules.push(...commandments[tag]);
         }
     }
 
-    // Overlapping tag sets can repeat a rule — keep the first occurrence.
-    const seen = new Set();
-    return rules.filter((rule) => {
-        const key = JSON.stringify(rule);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
+    return rules;
 }
 
 /**

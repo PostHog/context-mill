@@ -1,28 +1,8 @@
 # Commandments Configuration
 # Tag-based rules that get folded into skill descriptions
-# Skills collect all commandments matching their tags
-
-# Tag taxonomy — child tags additively inherit their parents' commandments.
-# `javascript_web` / `javascript_node` are runtime categories ("a generic JS
-# web/server framework"); framework tags declare membership in them, and the
-# categories themselves roll up to the `javascript` root. Resolution is
-# transitive (react -> javascript_web -> javascript) and EXCLUSIVELY additive:
-# expansion only ever adds rule sets, never removes or overrides anything.
-# A variant with an unusual runtime can also declare membership directly by
-# listing the category tag in its own tags (see react-router-7-framework).
-tag_parents:
-  javascript_web: [javascript]
-  javascript_node: [javascript]
-  react: [javascript_web]
-  vue: [javascript_web]
-  angular: [javascript_web]
-  astro: [javascript_web]
-  sveltekit: [javascript_web, javascript_node]
-  nuxt: [javascript_web, javascript_node]
-  nextjs: [javascript_web, javascript_node]
-  astro-ssr: [javascript_node]
-  astro-hybrid: [javascript_node]
-  tanstack-start: [javascript_node]
+# Skills collect all commandments matching their tags. Runtime categories
+# (javascript_web / javascript_node) are ordinary tags; each skill declares
+# the ones it belongs to in its own config (see context/skills/*/config.yaml).
 
 commandments:
   javascript:
