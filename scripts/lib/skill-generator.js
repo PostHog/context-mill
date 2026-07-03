@@ -461,13 +461,33 @@ function collectCommandments(tags, commandmentsConfig) {
     const rules = [];
     const commandments = commandmentsConfig.commandments || {};
 
+    // Expand runtime implications (see tag_implications in commandments.yaml)
+    // so framework skills collect their runtimes' rules without every
+    // variant repeating javascript_web / javascript_node in its tag list.
+    const implications = commandmentsConfig.tag_implications || {};
+    const expanded = [...tags];
     for (const tag of tags) {
+        for (const implied of implications[tag] || []) {
+            if (!expanded.includes(implied)) {
+                expanded.push(implied);
+            }
+        }
+    }
+
+    for (const tag of expanded) {
         if (commandments[tag]) {
             rules.push(...commandments[tag]);
         }
     }
 
-    return rules;
+    // Overlapping tag sets can repeat a rule — keep the first occurrence.
+    const seen = new Set();
+    return rules.filter((rule) => {
+        const key = JSON.stringify(rule);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 /**

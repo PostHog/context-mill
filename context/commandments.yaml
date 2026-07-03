@@ -2,6 +2,23 @@
 # Tag-based rules that get folded into skill descriptions
 # Skills collect all commandments matching their tags
 
+# Runtime implications: a skill tagged with a key below also collects the
+# implied tags' commandments. Keeps per-runtime rules (javascript_web /
+# javascript_node) in ONE place instead of repeating them on every
+# framework's tag list. One level deep — implications do not chain.
+tag_implications:
+  react: [javascript_web]        # react-native does NOT carry `react`, so mobile stays out
+  vue: [javascript_web]
+  angular: [javascript_web]
+  astro: [javascript_web]
+  sveltekit: [javascript_web, javascript_node]
+  nuxt: [javascript_web, javascript_node]
+  nextjs: [javascript_web, javascript_node]
+  astro-ssr: [javascript_node]
+  astro-hybrid: [javascript_node]
+  tanstack-start: [javascript_node]
+  ssr: [javascript_node]         # JS server-rendered frameworks (only JS skills carry `ssr`)
+
 commandments:
   javascript:
     - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
