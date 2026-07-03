@@ -5,9 +5,6 @@
 # the ones it belongs to in its own config (see context/skills/*/config.yaml).
 
 commandments:
-  javascript:
-    - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
-
   react:
     # PostHog-specific
     - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically

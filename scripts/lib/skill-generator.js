@@ -461,9 +461,6 @@ function collectCommandments(tags, commandmentsConfig) {
     const rules = [];
     const commandments = commandmentsConfig.commandments || {};
 
-    // A skill collects the commandments for every tag it declares. Runtime
-    // membership (javascript_web / javascript_node) is declared directly in
-    // each skill's config tags, so there is no taxonomy to expand here.
     for (const tag of tags) {
         if (commandments[tag]) {
             rules.push(...commandments[tag]);
