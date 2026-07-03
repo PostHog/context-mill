@@ -25,13 +25,16 @@ export default async function handler(
     users.set(username, user);
   }
 
-  // Capture server-side login event
+  // Capture server-side login event.
+  // PII (usernames, emails, names, free text) belongs in PERSON properties via
+  // identify() — never in capture() event properties.
   const posthog = getPostHogClient();
   posthog.capture({
+    // Derive the distinct ID from the authenticated session; it must match the
+    // ID the client identifies with so events correlate to one person.
     distinctId: username,
     event: 'server_login',
     properties: {
-      username: username,
       isNewUser: isNewUser,
       source: 'api'
     }
