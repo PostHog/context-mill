@@ -68,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return false;
     } catch (error) {
-      posthog.captureException(error);
       console.error('Login error:', error);
       return false;
     }

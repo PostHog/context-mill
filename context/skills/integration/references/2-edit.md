@@ -23,7 +23,7 @@ Two hard rules for properties and IDs:
 - PII (emails, names, usernames, phone numbers, free text the user typed) goes in PERSON properties via identify()/$set — NEVER in capture() event properties. The security scanner blocks event properties containing PII.
 - On the server, derive the distinct ID from the request's authenticated session or auth context (for example a session cookie or the `X-POSTHOG-DISTINCT-ID` header passed from the client) — never a hardcoded string or placeholder. It must match the ID the client identifies with.
 
-Add PostHog error tracking to every file you instrument: EVERY catch block must call posthog.captureException(err) (server-side: posthog.captureException(err, distinctId)) inside the catch, in addition to the existing handling. A catch that only logs or swallows the error is incomplete.
+You should also add PostHog exception capture error tracking to these files where relevant.
 
 Remember: Do not alter the fundamental architecture of existing files. Make your additions minimal and targeted.
 

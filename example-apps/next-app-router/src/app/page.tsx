@@ -1,6 +1,5 @@
 'use client';
 
-import posthog from 'posthog-js';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -23,7 +22,6 @@ export default function Home() {
         setError('Please provide both username and password');
       }
     } catch (err) {
-      posthog.captureException(err);
       console.error('Login failed:', err);
       setError('An error occurred during login');
     }
