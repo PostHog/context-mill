@@ -2,12 +2,18 @@
 # Tag-based rules that get folded into skill descriptions
 # Skills collect all commandments matching their tags
 
-# Runtime implications: a skill tagged with a key below also collects the
-# implied tags' commandments. Keeps per-runtime rules (javascript_web /
-# javascript_node) in ONE place instead of repeating them on every
-# framework's tag list. One level deep — implications do not chain.
-tag_implications:
-  react: [javascript_web]        # react-native does NOT carry `react`, so mobile stays out
+# Tag taxonomy — child tags additively inherit their parents' commandments.
+# `javascript_web` / `javascript_node` are runtime categories ("a generic JS
+# web/server framework"); framework tags declare membership in them, and the
+# categories themselves roll up to the `javascript` root. Resolution is
+# transitive (react -> javascript_web -> javascript) and EXCLUSIVELY additive:
+# expansion only ever adds rule sets, never removes or overrides anything.
+# A variant with an unusual runtime can also declare membership directly by
+# listing the category tag in its own tags (see react-router-7-framework).
+tag_parents:
+  javascript_web: [javascript]
+  javascript_node: [javascript]
+  react: [javascript_web]
   vue: [javascript_web]
   angular: [javascript_web]
   astro: [javascript_web]
@@ -17,7 +23,6 @@ tag_implications:
   astro-ssr: [javascript_node]
   astro-hybrid: [javascript_node]
   tanstack-start: [javascript_node]
-  ssr: [javascript_node]         # JS server-rendered frameworks (only JS skills carry `ssr`)
 
 commandments:
   javascript:

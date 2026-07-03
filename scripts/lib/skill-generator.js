@@ -461,17 +461,17 @@ function collectCommandments(tags, commandmentsConfig) {
     const rules = [];
     const commandments = commandmentsConfig.commandments || {};
 
-    // Expand runtime implications (see tag_implications in commandments.yaml)
-    // so framework skills collect their runtimes' rules without every
-    // variant repeating javascript_web / javascript_node in its tag list.
-    const implications = commandmentsConfig.tag_implications || {};
-    const expanded = [...tags];
-    for (const tag of tags) {
-        for (const implied of implications[tag] || []) {
-            if (!expanded.includes(implied)) {
-                expanded.push(implied);
-            }
-        }
+    // Walk the tag taxonomy (see tag_parents in commandments.yaml): child
+    // tags additively inherit their parent categories' rules, transitively
+    // (react -> javascript_web -> javascript). Expansion never removes tags.
+    const parents = commandmentsConfig.tag_parents || {};
+    const expanded = [];
+    const queue = [...tags];
+    while (queue.length > 0) {
+        const tag = queue.shift();
+        if (expanded.includes(tag)) continue;
+        expanded.push(tag);
+        queue.push(...(parents[tag] || []));
     }
 
     for (const tag of expanded) {

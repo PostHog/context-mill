@@ -29,7 +29,7 @@ variants:
   - id: react-react-router-7-framework
     example_paths: example-apps/react-react-router-7-framework
     display_name: React Router v7 - Framework mode
-    tags: [react, react-router, v7, framework, ssr, javascript]
+    tags: [react, react-router, v7, framework, ssr, javascript, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
 
