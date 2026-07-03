@@ -45,6 +45,7 @@ commandments:
     - Autocapture is ON by default with posthog-js (tracks clicks, form submissions, pageviews). Do NOT disable autocapture unless the user explicitly requests it.
     - NEVER send PII in posthog.capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in posthog.identify() person properties (email, name, role), NOT in capture() event properties
+    - Every catch block in files you instrument must report the error — call posthog.captureException(err) inside the catch, in addition to (not instead of) the existing handling
     - Call posthog.identify(userId, { email, name, role }) on login AND on page refresh if the user is already logged in
     - Call posthog.reset() on logout to unlink future events from the current user
     - For SPAs without a framework router, capture pageviews with posthog.capture($pageview) or use the capture_pageview history_change option in init for History API routing
@@ -54,6 +55,7 @@ commandments:
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
     - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
+    - Every catch block in server files you instrument must report the error — call posthog.captureException(err, distinctId) inside the catch, in addition to the existing handling
     - In long-running servers, the SDK batches events automatically – do NOT set flushAt or flushInterval unless you have a specific reason to
     - For short-lived processes (scripts, CLIs, serverless), set flushAt to 1 and flushInterval to 0 to send events immediately
     - Reverse proxy is NOT needed for server-side Node.js – only client-side JavaScript needs a proxy to avoid ad blockers
