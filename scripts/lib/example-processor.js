@@ -22,15 +22,25 @@ function loadSkipPatterns(configPath) {
         global: {
             includes: config.global?.includes || [],
             regex: (config.global?.regex || []).map(pattern => new RegExp(pattern)),
+            allow: config.global?.allow || [],
         },
         examples: config.examples || {},
     };
 }
 
 /**
- * Check if a file should be skipped based on patterns
+ * Check if a file should be skipped based on patterns.
+ * Allow patterns win over skip patterns, so an example can rescue a file
+ * (e.g. an XcodeGen project.yml) that a global pattern would exclude.
+ * Note: allow only rescues the path it matches — a file inside a skipped
+ * directory is never reached, so allow the directory too if needed.
  */
 function shouldSkip(filePath, skipPatterns) {
+    // Allow patterns (substring matching) override all skip patterns
+    if ((skipPatterns.allow || []).some(pattern => filePath.includes(pattern))) {
+        return false;
+    }
+
     // Check includes patterns (substring matching)
     if (skipPatterns.includes.some(pattern => filePath.includes(pattern))) {
         return true;
@@ -56,6 +66,10 @@ function mergeSkipPatterns(globalPatterns, examplePatterns = {}) {
         regex: [
             ...globalPatterns.regex,
             ...(examplePatterns.regex || []).map(p => new RegExp(p)),
+        ],
+        allow: [
+            ...(globalPatterns.allow || []),
+            ...(examplePatterns.allow || []),
         ],
     };
 }
@@ -185,6 +199,7 @@ const defaultPlugins = [ignoreFilePlugin, ignoreBlockPlugin, ignoreLinePlugin];
 export {
     loadSkipPatterns,
     mergeSkipPatterns,
+    shouldSkip,
     processExample,
     defaultPlugins,
 };

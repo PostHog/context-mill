@@ -217,10 +217,12 @@ variants:
       - https://posthog.com/docs/libraries/go.md
 
   - id: swift
-    example_paths: example-apps/swift
+    example_paths:
+      - example-apps/swift
+      - example-apps/swift-xcodegen
     display_name: Swift (iOS/macOS)
     description: PostHog integration for Swift iOS and macOS applications
-    tags: [swift, ios, macos, swiftui]
+    tags: [swift, ios, macos, swiftui, xcodegen]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
       - https://posthog.com/docs/libraries/ios/usage.md

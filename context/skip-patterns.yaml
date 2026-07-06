@@ -158,8 +158,17 @@ global:
 #       - some-specific-file.ts
 #     regex:
 #       - ^specific-pattern
+#
+# `allow` patterns (substring match) win over all skip patterns — use them to
+# rescue a file a global pattern would exclude. An allow only rescues the path
+# it matches: a file inside a skipped directory is never reached.
 
 examples:
+  swift-xcodegen:
+    allow:
+      # The XcodeGen project spec is the whole point of this example;
+      # rescue it from the global .yml skip
+      - project.yml
   laravel:
     includes:
       - storage/framework

@@ -1,0 +1,31 @@
+# XcodeGen project spec — the .xcodeproj is generated from this file and is
+# NOT committed. Run `xcodegen generate` after editing, then open the project.
+#
+# This file is the single source of truth for the project structure, including
+# the PostHog SPM dependency below. Never add dependencies by editing
+# project.pbxproj directly in an XcodeGen project: the next `xcodegen generate`
+# regenerates the .xcodeproj and silently wipes any direct edit.
+name: BurritoStand
+options:
+  bundleIdPrefix: com.posthog.example
+  deploymentTarget:
+    iOS: "16.0"
+
+# PostHog is declared here (not in Xcode's package UI). Check
+# https://github.com/PostHog/posthog-ios/releases for the latest version.
+packages:
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: 3.64.1
+
+targets:
+  BurritoStand:
+    type: application
+    platform: iOS
+    sources: [BurritoStand]
+    dependencies:
+      - package: PostHog
+    info:
+      path: BurritoStand/Info.plist
+      properties:
+        UILaunchScreen: {}
