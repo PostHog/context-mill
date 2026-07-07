@@ -1,0 +1,16 @@
+# CODEOWNERS for context-mill
+#
+# Path matching is last-match-wins. The wizard-docs catchall is first;
+# team-owned skill trees override it below.
+
+# Default
+*                                                       @PostHog/team-wizard-docs
+
+# Skill trees owned by product teams.
+/context/skills/error-tracking-upload-source-maps/      @PostHog/team-error-tracking
+/context/skills/self-driving/                           @PostHog/team-self-driving
+/context/skills/data-warehouse-source/                  @PostHog/team-warehouse-sources
+/context/skills/mcp-analytics/                          @PostHog/team-mcp-analytics
+/context/skills/revenue-analytics/                      @PostHog/team-web-analytics
+/context/skills/web-analytics/                          @PostHog/team-web-analytics
+/context/skills/integration/                            @PostHog/team-wizard-docs
