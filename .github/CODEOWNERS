@@ -3,7 +3,7 @@
 # Path matching is last-match-wins. The wizard-docs catchall is first;
 # team-owned skill trees override it below.
 
-# Default
+# Default owner
 *                                                       @PostHog/team-wizard-docs
 
 # Skill trees owned by product teams.
