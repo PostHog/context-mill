@@ -46,14 +46,14 @@ function initializePostHog(): bool
 {
     loadEnvFile(__DIR__ . '/.env');
 
-    $apiKey = getenv('POSTHOG_API_KEY');
-    if (!$apiKey || str_starts_with($apiKey, 'phc_your_')) {
-        echo "WARNING: PostHog not configured (POSTHOG_API_KEY not set)\n";
+    $projectToken = getenv('POSTHOG_PROJECT_TOKEN');
+    if (!$projectToken || str_starts_with($projectToken, 'phc_your_')) {
+        echo "WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)\n";
         echo "         App will work but analytics won't be tracked\n";
         return false;
     }
 
-    PostHog::init($apiKey, [
+    PostHog::init($projectToken, [
         'host' => getenv('POSTHOG_HOST') ?: 'https://us.i.posthog.com',
         'error_tracking' => [
             'enabled' => true,
