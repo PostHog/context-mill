@@ -50,44 +50,32 @@ examples/
 └── scripts/                     # Build scripts
 ```
 
-## MCP resources
+## Build outputs
 
-This repository serves as the **single source of truth** for PostHog integration resources accessed via the [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp).
-
-### Build outputs
-
-Run `npm run build:docs` to generate:
+Run `npm run build` to generate the release artifacts:
 
 | Output | Description |
 |--------|-------------|
-| `dist/*.md` | Example projects converted to markdown |
-| `dist/manifest.json` | Resource URIs and metadata |
-| `dist/examples-mcp-resources.zip` | Complete archive for MCP server |
+| `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
+| `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL |
+| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table |
+
+Releases are cut as GitHub releases. Consumers (the wizard, the MCP server,
+anything else) fetch `manifest.json` / `skill-menu.json` from the latest
+release and download the per-skill ZIPs on demand.
 
 ### Manifest structure
 
-The manifest defines:
-- **Skills**: Bundled skill packages, each containing a `SKILL.md`, `references/` step files, and any docs/example content
-- **Docs**: PostHog documentation URLs (fetched at runtime)
-- **Prompts**: MCP command prompts with template variable substitution
-- **Templates**: Resource templates for parameterized access (e.g., `posthog://examples/{framework}`)
+The manifest describes the built skills — one resource per skill, with `id`,
+`name`, `description`, `tags`, `uri`, and a `downloadUrl` pointing at the
+GitHub release asset. Each bundled skill contains a `SKILL.md`, `references/`
+step files, and any shared docs pulled from posthog.com at build time.
 
-### Adding new resources
+### Adding a new skill
 
-**Skill step files**: Add numbered markdown files to `context/skills/<skill>/references/` following the convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next file.
-
-**Examples**: Add new example projects to `basics/` and configure in `scripts/build-examples-mcp-resources.js`
-
-**Prompts**: Add JSON files to `mcp-commands/`
-
-The build script automatically discovers, orders, and generates URIs for all resources.
-
-### Architecture
-
-- **Single source of truth**: All URIs defined in this repo
-- **Zero hardcoding**: MCP server purely reflects the manifest for `resources` and `prompts` (as defined in the MCP [spec](https://modelcontextprotocol.io/specification/2025-11-25#features))
-- **Easy to extend**: Add resources by creating properly named files
-- **Version controlled**: Resources evolve with the examples
+Add numbered step files to `context/skills/<skill>/references/` using the
+convention `<n>-<name>.md` with `next_step:` frontmatter pointing to the next
+file. The build script discovers, orders, and bundles them automatically.
 
 ## Wizard CLI commands
 
@@ -131,6 +119,31 @@ surface. If you (or your agent) knew an older command, here's where it went:
 > **Commands vs. programs:** `integrate` was the *command*; the program behind it
 > is `posthog-integration`, which still exists and powers the default flow. The
 > program id is internal — it was never a command you typed.
+
+## Context mill skill owners
+
+Reviews are auto-requested via [`.github/CODEOWNERS`](.github/CODEOWNERS) — the
+file is the source of truth; this table just mirrors it for readability.
+`team-wizard-docs` is the default reviewer; the team-owned skills below route
+review to their owning team instead.
+
+| Path | Owning team |
+|---|---|
+| `*` (everything else, including all other skills) | `@PostHog/team-wizard-docs` |
+| `context/skills/integration/` | `@PostHog/team-wizard-docs` |
+| `context/skills/error-tracking-upload-source-maps/` | `@PostHog/team-error-tracking` |
+| `context/skills/mcp-analytics/` | `@PostHog/team-mcp-analytics` |
+| `context/skills/revenue-analytics/` | `@PostHog/team-web-analytics` |
+| `context/skills/self-driving/` | `@PostHog/team-self-driving` |
+| `context/skills/data-warehouse-source/` | `@PostHog/team-warehouse-sources` |
+| `context/skills/web-analytics/` | `@PostHog/team-web-analytics` |
+
+Ownership is by directory. Skills not listed above (`audit`, `audit-*`,
+`cost-cutting`, `creating-product-tours`, `error-tracking`, `events-audit`,
+`feature-flags`, `llm-analytics`, `logs`, `migrate`, `omnibus`,
+`posthog-best-practices`, `quack`, `tools-and-features`) fall through the
+default and are owned by `team-wizard-docs`. Today CODEOWNERS only
+auto-requests review — approval is not a merge gate.
 
 ## Security scanning
 
