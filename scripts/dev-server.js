@@ -294,9 +294,9 @@ function createServer() {
             return;
         }
 
-        const agentMatch = req.url?.match(/^\/agents\/([\w-]+\.md)$/);
+        const agentMatch = req.url?.match(/^\/agents\/([\w-]+)\/([\w-]+\.md)$/);
         if (agentMatch) {
-            serveFile(res, path.join(agentsDir, agentMatch[1]), 'text/markdown; charset=utf-8');
+            serveFile(res, path.join(agentsDir, agentMatch[1], agentMatch[2]), 'text/markdown; charset=utf-8');
             return;
         }
 
@@ -316,7 +316,7 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
-        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /agent-menu.json\n  /agents/{type}.md');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /agent-menu.json\n  /agents/{flow}/{type}.md');
     });
 
     server.listen(PORT, () => {
@@ -324,7 +324,7 @@ function createServer() {
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
-        console.log(`🤖 Agent prompt:     http://localhost:${PORT}/agents/{type}.md`);
+        console.log(`🤖 Agent prompt:     http://localhost:${PORT}/agents/{flow}/{type}.md`);
         console.log(`📋 Agents menu:      http://localhost:${PORT}/agent-menu.json`);
     });
 
