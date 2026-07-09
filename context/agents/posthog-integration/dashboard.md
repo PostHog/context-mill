@@ -3,7 +3,7 @@ type: dashboard
 flow: posthog-integration
 label: Create a starter dashboard
 model: claude-sonnet-4-6
-skills: [basic-integration-dashboard]
+skills: [posthog-integration-dashboard]
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, enqueue_task]
 dependsOn: [build]

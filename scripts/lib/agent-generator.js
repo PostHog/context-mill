@@ -1,15 +1,15 @@
 /**
  * Agent-prompt content type — the WHAT of the orchestrator runner.
  *
- * An agent prompt is one markdown file per task type. Its frontmatter carries
- * the artifacts the executor configures the run with (model, skills, tools,
- * dependsOn); its body is the instruction the task agent reads. Unlike skills,
- * agent prompts are self-contained single files with no references/, so they are
- * served as raw markdown rather than zipped. The wizard parses the frontmatter
- * when it loads a task by type.
+ * An agent prompt is one markdown file per task type, grouped in a folder per
+ * flow. Its frontmatter carries the artifacts the executor configures the run
+ * with (model, skills, tools, dependsOn); its body is the instruction the task
+ * agent reads. Unlike skills, agent prompts are self-contained single files
+ * with no references/, so they are served as raw markdown rather than zipped.
+ * The wizard parses the frontmatter when it loads a task by type.
  *
- *   Source:  context/agents/<type>.md
- *   Output:  dist/agents/<type>.md  +  dist/agents/agent-menu.json
+ *   Source:  context/agents/<flow>/<type>.md
+ *   Output:  dist/agents/<flow>/<type>.md  +  dist/agents/agent-menu.json
  */
 
 import fs from 'fs';
@@ -18,22 +18,53 @@ import path from 'path';
 const DEFAULT_AGENTS_BASE_URL =
     'https://github.com/PostHog/context-mill/releases/latest/download/agents';
 
-/** The agent ids available in source, derived from the `<type>.md` filenames. */
-export function loadAgentIds(agentsSourceDir) {
+/**
+ * The agent prompts available in source: one { flow, id } per
+ * `<flow>/<type>.md`. README.md files are author documentation, not served
+ * prompts. A markdown file directly under agents/ is a layout error — prompts
+ * are always flow-scoped.
+ */
+export function loadAgentEntries(agentsSourceDir) {
     if (!fs.existsSync(agentsSourceDir)) return [];
-    return fs
-        .readdirSync(agentsSourceDir)
-        // README.md is documentation for authors, not a served prompt.
-        .filter(f => f.endsWith('.md') && f !== 'README.md')
-        .map(f => f.slice(0, -'.md'.length))
-        .sort();
+    const entries = [];
+    for (const dirent of fs.readdirSync(agentsSourceDir, { withFileTypes: true })) {
+        if (dirent.name === 'README.md') continue;
+        if (dirent.isFile() && dirent.name.endsWith('.md')) {
+            throw new Error(
+                `Agent prompt "${dirent.name}" sits directly under agents/ — move it into a flow folder (agents/<flow>/${dirent.name})`,
+            );
+        }
+        if (!dirent.isDirectory()) continue;
+        const flow = dirent.name;
+        const flowDir = path.join(agentsSourceDir, flow);
+        for (const file of fs.readdirSync(flowDir)) {
+            if (!file.endsWith('.md') || file === 'README.md') continue;
+            entries.push({ flow, id: file.slice(0, -'.md'.length) });
+        }
+    }
+    return entries.sort((a, b) => a.flow.localeCompare(b.flow) || a.id.localeCompare(b.id));
 }
 
 /**
- * Copy every agent-prompt markdown file into dist/agents/ and write the menu the
- * wizard fetches to discover available types. The menu carries a full
- * downloadUrl per agent so the dev-server and the release host can differ
- * without the wizard composing URLs. Returns { count, agentsDistDir }.
+ * A prompt's frontmatter `flow:` must match its folder — the folder is the
+ * registry scope, the frontmatter keeps the file self-describing on disk.
+ */
+function assertFlowMatches(sourcePath, flow) {
+    const text = fs.readFileSync(sourcePath, 'utf8');
+    const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    const declared = match?.[1].match(/^flow:\s*(.+?)\s*$/m)?.[1];
+    if (declared && declared !== flow) {
+        throw new Error(
+            `Agent prompt ${sourcePath} declares flow "${declared}" but lives in agents/${flow}/`,
+        );
+    }
+}
+
+/**
+ * Copy every agent-prompt markdown file into dist/agents/<flow>/ and write the
+ * menu the wizard fetches to discover available types. Each menu entry carries
+ * its flow and a full downloadUrl so the dev-server and the release host can
+ * differ without the wizard composing URLs. Returns { count, agentsDistDir }.
  */
 export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     const agentsSourceDir = path.join(configDir, 'agents');
@@ -42,14 +73,14 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
 
     fs.mkdirSync(agentsDistDir, { recursive: true });
 
-    const ids = loadAgentIds(agentsSourceDir);
+    const entries = loadAgentEntries(agentsSourceDir);
     const agents = [];
-    for (const id of ids) {
-        fs.copyFileSync(
-            path.join(agentsSourceDir, `${id}.md`),
-            path.join(agentsDistDir, `${id}.md`),
-        );
-        agents.push({ id, downloadUrl: `${resolvedBase}/${id}.md` });
+    for (const { flow, id } of entries) {
+        const sourcePath = path.join(agentsSourceDir, flow, `${id}.md`);
+        assertFlowMatches(sourcePath, flow);
+        fs.mkdirSync(path.join(agentsDistDir, flow), { recursive: true });
+        fs.copyFileSync(sourcePath, path.join(agentsDistDir, flow, `${id}.md`));
+        agents.push({ id, flow, downloadUrl: `${resolvedBase}/${flow}/${id}.md` });
     }
 
     const menu = { version: '1.0', buildVersion: version, agents };
@@ -58,12 +89,21 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
         JSON.stringify(menu, null, 2) + '\n',
     );
 
-    // Reconcile: drop dist files whose source markdown was removed.
-    const keep = new Set(ids.map(id => `${id}.md`));
+    // Reconcile: drop dist files and folders whose source markdown was removed.
+    const keep = new Set(entries.map(e => path.join(e.flow, `${e.id}.md`)));
     keep.add('agent-menu.json');
-    for (const file of fs.readdirSync(agentsDistDir)) {
-        if (!keep.has(file)) fs.rmSync(path.join(agentsDistDir, file));
-    }
+    const walk = dir => {
+        for (const dirent of fs.readdirSync(dir, { withFileTypes: true })) {
+            const abs = path.join(dir, dirent.name);
+            if (dirent.isDirectory()) {
+                walk(abs);
+                if (fs.readdirSync(abs).length === 0) fs.rmdirSync(abs);
+            } else if (!keep.has(path.relative(agentsDistDir, abs))) {
+                fs.rmSync(abs);
+            }
+        }
+    };
+    walk(agentsDistDir);
 
     return { count: agents.length, agentsDistDir };
 }

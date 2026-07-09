@@ -3,7 +3,7 @@ type: identify
 flow: posthog-integration
 label: Wire user identification
 model: claude-sonnet-4-6
-skills: [basic-integration-identify]
+skills: [posthog-integration-identify]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]

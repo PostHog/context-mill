@@ -3,7 +3,7 @@ type: report
 flow: posthog-integration
 label: Write the setup report
 model: claude-sonnet-4-6
-skills: [basic-integration-report]
+skills: [posthog-integration-report]
 allowedTools: [Read, Write, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [dashboard]

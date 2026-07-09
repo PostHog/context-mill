@@ -7,3 +7,5 @@ variants:
     display_name: PostHog dashboard step
     tags: [orchestrator, dashboard]
     docs_urls: []
+cli:
+  role: internal

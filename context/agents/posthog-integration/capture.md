@@ -3,7 +3,7 @@ type: capture
 flow: posthog-integration
 label: Capture events
 model: claude-sonnet-4-6
-skills: [basic-integration-capture]
+skills: [posthog-integration-capture]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]

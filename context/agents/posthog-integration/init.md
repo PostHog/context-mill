@@ -3,7 +3,7 @@ type: init
 flow: posthog-integration
 label: Set up PostHog initialization
 model: claude-haiku-4-5-20251001
-skills: [basic-integration-init]
+skills: [posthog-integration-init]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: []

@@ -7,3 +7,5 @@ variants:
     display_name: PostHog report step
     tags: [orchestrator, report]
     docs_urls: []
+cli:
+  role: internal

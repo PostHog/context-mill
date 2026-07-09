@@ -3,7 +3,7 @@ type: build
 flow: posthog-integration
 label: Install dependencies and build
 model: claude-sonnet-4-6
-skills: [basic-integration-build]
+skills: [posthog-integration-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init, identify, error-tracking, capture]

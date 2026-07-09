@@ -7,3 +7,5 @@ variants:
     display_name: PostHog build step
     tags: [orchestrator, build]
     docs_urls: []
+cli:
+  role: internal
