@@ -1,5 +1,5 @@
 ---
-next_step: 5-report.md
+next_step: 5-server-sdk.md
 ---
 
 # Step 4 — Identify (optimize)
@@ -32,7 +32,7 @@ The bundled `cutting-costs.md` reference holds PostHog's authoritative cost-redu
 `description`: `Audit identify-person-profiles-mode`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-person-profiles-mode.
 
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-identify/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/cutting-costs.md`). Focus on the `person_profiles` section — anonymous events are roughly 4x cheaper than identified events, so `'identified_only'` is the right default when most traffic is anonymous, and `'always'` is only justified when nearly all traffic is identified.
@@ -77,14 +77,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task B — `identify-isidentified-guard`
 
 `description`: `Audit identify-isidentified-guard`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-isidentified-guard.
 
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-identify/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/cutting-costs.md`). Focus on the section that recommends guarding `identify()` with `_isIdentified()` to avoid emitting a `$identify` event on every page load / re-render.
@@ -113,14 +113,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task C — `identify-duplicate-identify-per-session`
 
 `description`: `Audit identify-duplicate-identify-per-session`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-duplicate-identify-per-session.
 
 This check requires PostHog MCP access. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure duplicate $identify events"`. Do not block the audit.
@@ -179,14 +179,14 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ### Task D — `identify-duplicate-groupidentify-per-session`
 
 `description`: `Audit identify-duplicate-groupidentify-per-session`
 
 `prompt`:
-```
+````
 You are an audit subagent. Resolve exactly one rule and return: identify-duplicate-groupidentify-per-session.
 
 This check requires PostHog MCP access. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure duplicate $groupidentify events"`. Do not block the audit.
@@ -235,8 +235,8 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 
 Return when the call completes. Do not write the audit report.
-```
+````
 
 ## After all four return
 
-Continue to **`5-report.md`**.
+Continue to **`5-server-sdk.md`**.

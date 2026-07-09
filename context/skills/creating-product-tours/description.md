@@ -2,7 +2,7 @@
 
 Product tours use PostHog feature flags for targeting (who sees the tour and when) and PostHog events for tracking (completion, drop-off, step funnel). UI components should be custom-built but reusable across multiple tours.
 
-**Local-dev behavior**: the tour renders locally even when PostHog isn't initialized (no API key, provider not mounted, ad blocker active). The feature flag infrastructure is still scaffolded for production rollout — it just isn't a hard gate in dev. This lets engineers iterate on the tour without needing a PostHog project wired up. See "Local development" below for how the fail-open works and how to opt out.
+**Local-dev behavior**: the tour renders locally even when PostHog isn't initialized (no project token, provider not mounted, ad blocker active). The feature flag infrastructure is still scaffolded for production rollout — it just isn't a hard gate in dev. This lets engineers iterate on the tour without needing a PostHog project wired up. See "Local development" below for how the fail-open works and how to opt out.
 
 ## Step 1: gather requirements
 
@@ -73,7 +73,7 @@ interface UseTourOptions {
   storageKey?: string; // localStorage key to remember completion; defaults to `tour-${flagKey}`
   // When true, the flag check is enforced even if PostHog isn't initialized
   // (the tour won't render locally without PostHog wired up). Default false:
-  // fail-open in dev so engineers can iterate without an API key.
+  // fail-open in dev so engineers can iterate without a project token.
   requireFlag?: boolean;
 }
 
@@ -100,8 +100,9 @@ export function useTour({
     const ready = isPosthogReady();
     if (ready) {
       // Production path: PostHog is wired, the flag decides.
-      if (!posthog.isFeatureEnabled(flagKey)) return;
-      const payload = posthog.getFeatureFlagPayload(flagKey) as {
+      const result = posthog.getFeatureFlagResult(flagKey);
+      if (!result?.enabled) return;
+      const payload = result.payload as {
         steps?: TourStep[];
       } | null;
       if (payload?.steps) setSteps(payload.steps);

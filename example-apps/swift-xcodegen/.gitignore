@@ -1,0 +1,4 @@
+# The .xcodeproj is generated from project.yml — run `xcodegen generate`
+*.xcodeproj
+# Generated at xcodegen generate time from the `info:` block in project.yml
+BurritoStand/Info.plist

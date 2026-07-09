@@ -86,3 +86,9 @@ posthog-audit-report.md
 *.key
 .cache
 *repomix*
+
+# Doc fetch cache (see fetchDoc in scripts/lib/skill-generator.js)
+.docs-cache/
+
+# Local scratch dirs
+scratch/

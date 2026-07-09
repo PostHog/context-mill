@@ -93,6 +93,16 @@ This area covers cost-side event capture health: whether captured events are act
 
 [Repeat the heading + paragraph + table for each area in ledger order, in case future versions of this skill add new areas.]
 
+### Assumptions and blind spots
+
+Under each area's table above, render a `### Assumptions and blind spots` subsection per the investigation standards in `posthog-best-practices/references/investigation-standards.md` (standard 3). Answer the four questions in plain prose, ≤4 sentences total:
+- Which code paths or files this area did NOT check that could change the findings.
+- Which runtime assumptions are unproven by the static code (mount order, async timing, route gating).
+- Alternative explanations for the patterns the checks flagged.
+- What you would verify in the live PostHog project (event volumes, property fill rates, dashboard usage) to confirm or refute the most important findings.
+
+When an area produced only `pass` rows, write `_No findings to qualify; the standard checks for this area passed cleanly._` and skip the four-question rundown.
+
 ## About this audit
 
 This audit ran the PostHog `audit-events` skill — a focused, read-only check of event capture health across two lenses: **fix** (correctness and quality) and **optimize** (cost). Fix checks scan the project source; optimize checks additionally query the PostHog project via MCP in read-only mode (and gracefully skip when MCP is unavailable).

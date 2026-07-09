@@ -6,7 +6,7 @@ This skill helps you upload source maps (or platform debug symbols) so PostHog E
 
 {references}
 
-The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap inject` and `posthog-cli sourcemap upload`.
+The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap process`, which injects chunk IDs and uploads maps in one step.
 
 ## Steps
 
@@ -23,18 +23,19 @@ Source map upload authenticates with a **personal API key**, not the public proj
 
 ### Apply build-config changes
 
-Wire source map generation, chunk-ID injection, and upload into your **production build** so every deploy ships matching maps. Depending on the platform this is either a build/bundler plugin, or a pair of `posthog-cli sourcemap inject` + `posthog-cli sourcemap upload` steps run after the build. Follow the {display_name} reference for the exact wiring.
+Wire source map generation, chunk-ID injection, and upload into your **production build** so every deploy ships matching maps. Depending on the platform this is either a build/bundler plugin, or a `posthog-cli sourcemap process` step run after the build (it injects chunk IDs and uploads in one pass). Follow the {display_name} reference for the exact wiring.
 
 #### Tips
-- If you wire `posthog-cli` directly (no framework or bundler plugin), generating the maps is **your** responsibility — the CLI only injects chunk IDs into, and uploads, maps your build already produced. Two things must be true before `posthog-cli sourcemap inject` works:
+- If you wire `posthog-cli` directly (no framework or bundler plugin), generating the maps is **your** responsibility — the CLI only injects chunk IDs into, and uploads, maps your build already produced. Two things must be true before `posthog-cli sourcemap process` works:
   - Source maps are emitted next to your output bundles (e.g. `.js.map` files).
   - The maps include `sourcesContent` (the original source embedded inside the map). Without it PostHog has the line/column mappings but not the code, so traces can't be fully resolved.
 - **Inject before deploy**: the *injected* bundles must be the ones shipped to production. Bundles missing the `//# chunkId=…` comment can't be matched to uploaded maps.
 - Wire injection + upload into the build itself (plugin, post-build script, or CI step) — manual uploads drift from deployed code.
 - **Don't ship source maps publicly**: omit `.map` files from the deployed artifact, or use hidden source maps. Uploaded maps live in PostHog, not on your origin.
+- **Link each release to its commit.** The CLI auto-detects the commit from the CI's git env vars — see "Associate the release with a git commit" for making those reachable in Docker/CI builds.
 
 #### Examples
-- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap inject` followed by `posthog-cli sourcemap upload` against the build output dir as post-build steps — both invocations need the upload credentials (see "Make credentials available at build time").
+- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
@@ -47,8 +48,8 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Auto-loads `.env`**: Next.js, Nuxt and similar frameworks read `.env` into the build for you — nothing extra to do.
 - **Vite is a partial exception**: it auto-loads `.env` into `import.meta.env` for client code (only `VITE_`-prefixed vars), but does **not** put vars in `process.env` for your config to read. The upload credentials (`POSTHOG_*`, not `VITE_`-prefixed) are read when the plugin is constructed, so load them yourself — see the Vite example below.
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
-- **Separate-process gotcha**: if injection/upload run as their own `package.json` steps (e.g. `posthog-cli sourcemap inject` / `posthog-cli sourcemap upload` after the bundler), each CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap …` (the flag goes before the subcommand).
-- **`inject` authenticates too.** Even though `posthog-cli sourcemap inject` only edits local files, it resolves credentials exactly like `upload` and fails without them. The reference docs show a bare `inject` command and put `--dotenv-file` only on `upload` — don't copy that asymmetry; pass `--dotenv-file` to **every** `posthog-cli` invocation. (A bare `inject` can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
+- **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
+- **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -65,9 +66,9 @@ The upload credentials must be readable **by the build pipeline at build time**,
   };
   ```
 - **Rollup / webpack / plain Node** Add `import 'dotenv/config'` (or `require('dotenv').config()`) at the top of the config/entry file so the loader runs before the build reads the vars.
-- **Standalone posthog-cli steps** Pass `--dotenv-file .env` to **both** invocations — `inject` and `upload` each need the credentials:
+- **Standalone posthog-cli step** Pass `--dotenv-file .env` to the `process` invocation so it can authenticate:
   ```json
-  "build": "tsc && posthog-cli --dotenv-file .env sourcemap inject --directory ./dist && posthog-cli --dotenv-file .env sourcemap upload --directory ./dist --release-name my-app"
+  "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
 
 ### Write credentials to the env file
@@ -101,7 +102,7 @@ Resolve two concrete commands for this project: the production **build** command
 
 ### Set up CI for automatic uploads
 
-Source maps are only uploaded when the **production build** runs, so the environment that builds and deploys your app needs the same upload credentials you put in the env file. The whole job is: **find where the production build command actually runs, then make the upload credentials reachable at that exact spot.** The build is where maps inject + upload, and env does **not** automatically cross three boundaries — into a Docker build, into a nested/composite action, or into an SSH session. So trace the deploy path before editing anything:
+Source maps are only uploaded when the **production build** runs, so the environment that builds and deploys your app needs the same upload credentials you put in the env file. The whole job is: **find where the production build command actually runs, then make the upload credentials reachable at that exact spot.** **Only ever edit CI/deploy files that already exist — never create a new workflow, pipeline, or deploy file.** Wiring credentials means modifying the build/deploy config this project already has; it is never license to author new CI. The build is where maps inject + upload, and env does **not** automatically cross three boundaries — into a Docker build, into a nested/composite action, or into an SSH session. So trace the deploy path before editing anything:
 
 1. Is there a `Dockerfile`? If the build command runs inside it (`RUN <build>`), the build happens in that image's **build stage**.
 2. Is there a workflow under `.github/workflows/`? Open it and find the step that triggers the build, then follow it to where the build truly executes — it may be:
@@ -113,6 +114,7 @@ Source maps are only uploaded when the **production build** runs, so the environ
 4. No `Dockerfile`, no CI config, no build step you can trace? Don't guess — tell the user where the creds need to be (see "Untraceable setup" under Examples).
 
 #### Tips
+- **A deploy file for another package is not license to author one for this one.** In a monorepo especially, finding a workflow that deploys a *sibling* package (e.g. a `deploy-backend.yml`, or a `Dockerfile`/pipeline for another app) does **not** mean you should create a matching `deploy-frontend.yml` (or any new CI file) for the project you're instrumenting. Wire credentials only into the existing file that builds *this* project. If this project has no build/deploy config you can open and edit, it is untraceable: make no CI changes and hand the requirement to the user (see "Untraceable setup") — do **not** invent one.
 - Reuse the **exact variable names** from "Write credentials to the env file" — the build reads the same names locally and in CI. (`POSTHOG_CLI_*` for direct `posthog-cli`; `POSTHOG_*` for bundler-plugin uploaders.)
 - **In CI, credentials travel as environment variables — never as a file.** Do not materialize a `.env` on the runner (e.g. `printf … > .env` before the build), and never copy or un-ignore one into a Docker image: it's redundant, and a secrets file on disk can leak into artifacts, caches, or image layers. A build script that passes `--dotenv-file .env` to `posthog-cli` works unchanged in CI even though `.env` doesn't exist there: real environment variables take precedence over the file, and a missing file is skipped with a warning.
 - **Never commit secret values.** Reference credentials by name only: Docker `ARG`/`ENV` or BuildKit secret ids, `${{ secrets.* }}` in GitHub Actions. The personal API key stays out of version control.
@@ -235,7 +237,27 @@ Source maps are only uploaded when the **production build** runs, so the environ
   ```
   Then tell the user to add those variables in **Settings → CI/CD → Variables** and the next pipeline picks them up. Edits beyond the comment are only needed when a boundary is crossed: a job that runs `docker build` must forward them (`--build-arg POSTHOG_CLI_API_KEY="$POSTHOG_CLI_API_KEY" …`) into the Dockerfile's build stage (see the Dockerfile example), and a job that builds over SSH must set them inline before the remote build command, exactly like the SSH example above.
 - **Other CI providers (CircleCI, Jenkins, Bitbucket, Azure Pipelines, …)** Same recipe, provider-native mechanics: open the pipeline config, find the job that runs the production build, expose the credentials to that job via the provider's secret store, and thread them through any Docker/SSH boundary just like the examples above. Reference credentials by name only, then tell the user each secret to create and exactly where in the provider's UI it goes.
-- **Untraceable setup** No `Dockerfile`, no CI config, and no build step you can trace: make no CI changes. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+- **Untraceable setup** No `Dockerfile`, no CI config, and no build step you can trace: make no CI changes — do **not** author a new workflow, pipeline, or deploy file to fill the gap. Tell the user that wherever their production build command runs, it must have the upload credentials (`POSTHOG_CLI_*` / `POSTHOG_*`) available as environment variables, or maps won't upload on deploy. If part of the path is still recognisable — e.g. a `Dockerfile` built by an unfamiliar CI — wire the layers you do recognise and tell the user exactly what the remaining layer must pass in (e.g. the `--build-arg` flags).
+
+### Associate the release with a git commit
+
+`posthog-cli` links the release to a **git commit, branch and repo** so Error Tracking can show which deploy an error came from. It auto-detects that from the CI's git env vars or a local `.git` directory — you never touch the CLI invocation itself (it's usually baked into `npm run build` or a bundler plugin), you just make the git context available in the build environment. A `docker build` is where this breaks: it sees **neither** the env vars nor `.git` (the same boundary credentials hit), so the release ends up linked to nothing unless you forward the vars in.
+
+#### Tips
+- **Forward GitHub's git env vars into the Docker build** the same way you forwarded credentials. Declare each as an `ARG` **and** promote it to `ENV` — `ARG` alone isn't visible to the CLI's env lookup. That's all auto-detection needs; no CLI flags, no `.git`.
+
+#### Examples
+- **GitHub Actions → docker build** Forward GitHub's git vars into the build stage and the CLI auto-detects branch + repo + commit:
+  ```yaml
+  build-args: |
+    GITHUB_ACTIONS=true
+    GITHUB_SHA=${{ github.sha }}
+    GITHUB_REF_NAME=${{ github.ref_name }}
+    GITHUB_REPOSITORY=${{ github.repository }}
+    GITHUB_SERVER_URL=${{ github.server_url }}
+  ```
+  Then in the build stage, declare each as `ARG` and re-export it as `ENV` before the build runs.
+- **Inline CI build (no Docker)** GitHub Actions already sets these vars on the runner, so auto-detection just works — nothing to pass.
 
 ### Test the local setup
 
@@ -271,7 +293,7 @@ Confirm the upload landed and report what changed.
 - Two different keys, two different jobs: a **personal API key** uploads maps at build time; the **public project key** powers the SDK at runtime. Don't swap them.
 - Keep build artifacts and uploaded maps in sync — every deploy should inject + upload within the same build so stack traces always resolve.
 - Uploaded maps live in PostHog and never need to be served publicly.
-- Detect the project's package manager before installing any dependency, and let long installs run in the background instead of blocking on them.
+- Detect the project's package manager before installing any dependency.
 - Read a file (and note its exact contents) immediately before editing it — essential for any temporary test code you'll revert afterwards.
 
 ## Framework guidelines

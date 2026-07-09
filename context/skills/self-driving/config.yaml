@@ -1,0 +1,10 @@
+type: skill
+template: description.md
+description: Set up PostHog Self-driving — enable the right signal sources, connect GitHub, tune the scout troop, and design custom scouts
+tags: [signals, self-driving]
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+variants:
+  - id: setup
+    display_name: PostHog Self-driving
+    docs_urls: []

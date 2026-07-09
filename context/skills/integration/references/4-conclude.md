@@ -6,6 +6,56 @@ description: Review and fix any errors in the PostHog integration implementation
 
 Use the PostHog MCP to create a new dashboard named "Analytics basics (wizard)" based on the events created here. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go. Make sure to use the exact same event names as implemented in the code. Populate it with up to five insights, with special emphasis on things like conversion funnels, churn events, and other business critical insights.
 
+When calling `insight-create`, use these known-good query shapes — they are verified against the MCP schema, and the common variations around them are rejected:
+
+A trends insight with a breakdown (breakdowns go in `breakdownFilter.breakdowns`, an array — there is NO top-level `breakdown` field on `TrendsQuery`):
+
+```json
+{
+  "name": "Signups by plan (wizard)",
+  "dashboards": [<dashboard id from dashboard-create>],
+  "query": {
+    "kind": "InsightVizNode",
+    "source": {
+      "kind": "TrendsQuery",
+      "series": [{ "kind": "EventsNode", "event": "user_signed_up", "math": "total" }],
+      "interval": "day",
+      "dateRange": { "date_from": "-30d" },
+      "breakdownFilter": { "breakdowns": [{ "type": "event", "property": "plan" }] },
+      "trendsFilter": { "display": "ActionsBar" }
+    }
+  }
+}
+```
+
+A conversion funnel (the window fields are camelCase and live INSIDE `funnelsFilter` — not at the top level of `FunnelsQuery`, and not snake_case):
+
+```json
+{
+  "name": "Signup funnel (wizard)",
+  "dashboards": [<dashboard id from dashboard-create>],
+  "query": {
+    "kind": "InsightVizNode",
+    "source": {
+      "kind": "FunnelsQuery",
+      "series": [
+        { "kind": "EventsNode", "event": "page_viewed" },
+        { "kind": "EventsNode", "event": "user_signed_up" }
+      ],
+      "dateRange": { "date_from": "-30d" },
+      "funnelsFilter": {
+        "funnelVizType": "steps",
+        "funnelOrderType": "ordered",
+        "funnelWindowInterval": 14,
+        "funnelWindowIntervalUnit": "day"
+      }
+    }
+  }
+}
+```
+
+Valid `trendsFilter.display` values are `ActionsLineGraph`, `ActionsBar`, `ActionsAreaGraph`, `ActionsPie`, `ActionsStackedBar`, `BoldNumber`, and `ActionsTable` — names like `ActionsBarChart` or `ActionsBarGraph` are rejected. If an insight call is rejected anyway, fix the payload against these examples rather than retrying variations.
+
 Once the dashboard exists, emit its URL on its own line in your assistant message using this exact marker: `[DASHBOARD_URL] <full https url>`. The wizard parses this marker from your visible message and surfaces the link in the success summary. Mentioning the URL only in thinking or in prose without the marker means the link is dropped.
 
 Search for a file called `.posthog-events.json` and read it for available events.
@@ -48,7 +98,7 @@ For the "Verify before merging" checklist, write GitHub-style checkboxes (`- [ ]
 
 Do not invent items beyond what applies. If only the two "Always" items apply, the checklist is just those two.
 
-Upon completion, remove .posthog-events.json.
+Upon completion, update `.posthog-events.json` so it matches the events you actually implemented, then remove it with your file tools. If removal is blocked or fails in your environment, leave the file in place and move on — the wizard host cleans it up after the run. Do not retry the removal or reach for shell commands to force it.
 
 ## Status
 

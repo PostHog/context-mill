@@ -105,7 +105,7 @@ PostHog is configured in `src/config/posthog.ts` using environment variables fro
 ```typescript
 import Constants from 'expo-constants'
 
-const apiKey = Constants.expoConfig?.extra?.posthogProjectToken
+const projectToken = Constants.expoConfig?.extra?.posthogProjectToken
 ```
 
 ### Event Tracking

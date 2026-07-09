@@ -3,9 +3,9 @@ import Config from 'react-native-config'
 
 // Environment variables are embedded at build time via react-native-config
 // Ensure .env file exists with POSTHOG_PROJECT_TOKEN and POSTHOG_HOST
-const apiKey = Config.POSTHOG_PROJECT_TOKEN
+const projectToken = Config.POSTHOG_PROJECT_TOKEN
 const host = Config.POSTHOG_HOST || 'https://us.i.posthog.com'
-const isPostHogConfigured = apiKey && apiKey !== 'phc_your_project_token_here'
+const isPostHogConfigured = projectToken && projectToken !== 'phc_your_project_token_here'
 
 if (!isPostHogConfigured) {
   console.warn(
@@ -23,7 +23,7 @@ if (!isPostHogConfigured) {
  *
  * @see https://posthog.com/docs/libraries/react-native
  */
-export const posthog = new PostHog(apiKey || 'placeholder_key', {
+export const posthog = new PostHog(projectToken || 'placeholder_key', {
   // PostHog API host (usually 'https://us.i.posthog.com' or 'https://eu.i.posthog.com')
   host,
 
