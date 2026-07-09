@@ -68,7 +68,7 @@ export default function HomeScreen() {
         <View style={styles.card}>
           <Text style={styles.title}>Welcome back, {user.username}!</Text>
           <Text style={styles.text}>
-            You are now logged in. Feel free to explore:
+            You are logged in. Feel free to explore:
           </Text>
 
           <View style={styles.buttonGroup}>

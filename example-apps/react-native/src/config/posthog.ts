@@ -27,7 +27,7 @@ export const posthog = new PostHog(apiKey || 'placeholder_key', {
   // PostHog API host (usually 'https://us.i.posthog.com' or 'https://eu.i.posthog.com')
   host,
 
-  // Disable PostHog if project token is not configured
+  // Enable PostHog only when a project token is configured
   disabled: !isPostHogConfigured,
 
   // Capture app lifecycle events:
