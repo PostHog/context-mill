@@ -14,13 +14,9 @@ Follow these steps in order to complete the integration:
 
 The example project shows the target implementation pattern. Consult the documentation for API details.
 
-## Region and host URL
-
-PostHog has two cloud regions. Check the `projects-get` MCP response for a `region` field — `US` maps to `https://us.i.posthog.com`, `EU` maps to `https://eu.i.posthog.com`. If the region is not available from the MCP response or from existing project configuration (e.g. an already-set `POSTHOG_HOST` env var), ask the user: "Are you on PostHog US Cloud or EU Cloud?" Do not assume US Cloud.
-
 ## Key principles
 
-- **Environment variables**: Always use environment variables for PostHog keys and host URL. Never hardcode them.
+- **Environment variables**: Always use environment variables for PostHog keys. Never hardcode them.
 - **Minimal changes**: Add PostHog code alongside existing integrations. Don't replace or restructure existing code.
 - **Match the example**: Your implementation should follow the example project's patterns as closely as possible.
 

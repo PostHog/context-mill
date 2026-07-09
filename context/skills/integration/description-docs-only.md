@@ -15,10 +15,6 @@ This skill helps you add PostHog analytics to {display_name} applications using 
 
 {references}
 
-## Region and host URL
-
-PostHog has two cloud regions. Check the `projects-get` MCP response for a `region` field — `US` maps to `https://us.i.posthog.com`, `EU` maps to `https://eu.i.posthog.com`. If the region is not available from the MCP response or from existing project configuration (e.g. an already-set `POSTHOG_HOST` env var), ask the user: "Are you on PostHog US Cloud or EU Cloud?" Do not assume US Cloud.
-
 ## Key principles
 
 - **Environment/configuration values**: Always use environment variables or platform configuration files for PostHog keys. Never hardcode them.
