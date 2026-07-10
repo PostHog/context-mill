@@ -14,7 +14,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__integrations-github-repos-retrieve,mcp__posthog-wizard__external-data-sources-create`.
+Reach `integrations-github-repos-retrieve` and `external-data-sources-create` through the PostHog `exec` tool (`info` then `call` for each).
 
 ## Do
 

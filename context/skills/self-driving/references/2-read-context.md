@@ -16,7 +16,9 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-project-profile-get,mcp__posthog-wizard__query-session-recordings-list,mcp__posthog-wizard__survey-list,mcp__posthog-wizard__error-issue-list`.
+{{> mcp-tool-calling}}
+
+Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `signals-scout-project-profile-get`, `query-session-recordings-list`, `survey-list`, and `error-issue-list`.
 
 ## Do
 

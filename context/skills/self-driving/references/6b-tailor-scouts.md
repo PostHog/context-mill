@@ -20,7 +20,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__llma-skill-get,mcp__posthog-wizard__llma-skill-file-get,mcp__posthog-wizard__llma-skill-create,mcp__posthog-wizard__signals-scout-config-list`. (`signals-scout-config-sync` is already loaded from step 6 if you need it again.)
+Reach these PostHog tools through the `exec` tool — `info` then `call` for `llma-skill-get`, `llma-skill-file-get`, `llma-skill-create`, and `signals-scout-config-list` (`signals-scout-config-sync` from step 6 the same way if you need it again).
 
 ## Do
 
