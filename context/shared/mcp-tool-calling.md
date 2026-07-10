@@ -17,6 +17,6 @@ exec({ "command": "call <tool_name> <json_input>" })    # run the tool
 
 Running `info <tool_name>` before `call <tool_name>` is mandatory, the same way you read a file before editing it. `info` returns the full schema for simple tools; for large ones it summarizes and attaches `hint` entries pointing at fields to drill into with `schema`. Dot-notation descends objects (`query.source`), array items (`series.0.properties`), and unions. Never guess the structure of a field that carries a hint — drill first.
 
-**Dual mode.** If those named tools appear directly in your tool list (some hosts expose the full roster instead of a single `exec`), call them by name with the same JSON — for example `call insight-create {…}` and calling an `insight-create` tool directly are equivalent. Inner tool names and payloads are identical either way, so every JSON body below is correct in both modes.
+Every PostHog tool goes through `exec` this way — there is no separate named tool to call directly. The inner tool names and JSON payloads below are what you pass to `call`.
 
 **Errors** carry a suggestion and similar tool names — read it before retrying. If a name isn't found it may have been renamed; run `search <pattern>` or `tools` again to find the current one.
