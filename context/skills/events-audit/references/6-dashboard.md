@@ -22,17 +22,19 @@ Emit, in order:
 
 ## MCP tools
 
+{{> mcp-tool-calling}}
+
 | MCP tool | When | Use |
 |----------|------|-----|
-| `mcp__posthog-wizard__dashboard-create` | (b) below | Create the parent dashboard. Returns a dashboard with `id` and a PostHog URL. |
-| `mcp__posthog-wizard__insight-create` | (c) below | Create each insight, attached to the dashboard via `dashboards: [<id>]`. |
-| `mcp__posthog-wizard__notebooks-create` | (e.1) below | Create the notebook with a small skeleton (title + section headings + placeholder paragraphs). One call. |
-| `mcp__posthog-wizard__notebook-edit` | (e.2) below | Replace one placeholder paragraph in the cloud notebook with a real ProseMirror node. **Called many times** (~50–80×, one per placeholder). Required because `notebooks-create` cannot accept the full assembled tree in one tool_use input — the model self-truncates. |
-| `mcp__posthog-wizard__notebooks-retrieve` | (e.3) below | Read the cloud notebook back to verify every placeholder has been replaced. |
+| `dashboard-create` | (b) below | Create the parent dashboard. Returns a dashboard with `id` and a PostHog URL. |
+| `insight-create` | (c) below | Create each insight, attached to the dashboard via `dashboards: [<id>]`. |
+| `notebooks-create` | (e.1) below | Create the notebook with a small skeleton (title + section headings + placeholder paragraphs). One call. |
+| `notebook-edit` | (e.2) below | Replace one placeholder paragraph in the cloud notebook with a real ProseMirror node. **Called many times** (~50–80×, one per placeholder). Required because `notebooks-create` cannot accept the full assembled tree in one tool_use input — the model self-truncates. |
+| `notebooks-retrieve` | (e.3) below | Read the cloud notebook back to verify every placeholder has been replaced. |
 
-Load all five via `ToolSearch select:mcp__posthog-wizard__dashboard-create,mcp__posthog-wizard__insight-create,mcp__posthog-wizard__notebooks-create,mcp__posthog-wizard__notebook-edit,mcp__posthog-wizard__notebooks-retrieve` once at the start of (a). They're write tools (except `notebooks-retrieve`) — every call mutates the user's PostHog project. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1 — you'll use it again in (d) and (e).
+Run `info <tool>` on each of these before its first `call` at the start of (a). They're write tools (except `notebooks-retrieve`) — every call mutates the user's PostHog project. `mcp__wizard-tools__audit_resolve_checks` is already loaded from step 1 — you'll use it again in (d) and (e).
 
-If `notebook-edit` doesn't appear in the search results, the project's `notebooks-collaboration` feature flag isn't enabled. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebook-edit unavailable. The local report at posthog-events-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
+If `info notebook-edit` returns a not-found error, the project's `notebooks-collaboration` feature flag isn't enabled. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebook-edit unavailable. The local report at posthog-events-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
 
 ## Action
 
@@ -40,7 +42,7 @@ If `notebook-edit` doesn't appear in the search results, the project's `notebook
 
 `Read` `.posthog-events-inventory.json` once and rebuild the IN-list — same rule as step 4 (b): every distinct `event_name` from `rows[]` where `call_kind == "capture"` and `is_dynamic == false` and `event_name != null`. Hold it as `IN_LIST` in memory; you'll embed it into each insight's HogQL `source`.
 
-Call `mcp__posthog-wizard__dashboard-create` with:
+Call `dashboard-create` with:
 
 ```json
 {
@@ -66,7 +68,7 @@ If the call errors (permission denied, project misconfigured, network), emit one
 
 ### b. Create the three insights
 
-For each insight, call `mcp__posthog-wizard__insight-create` with `dashboards: [DASHBOARD_ID]` so it's attached on creation. The `query` field is a `DataVisualizationNode` wrapping a HogQL query — that's the simplest shape for these three views.
+For each insight, call `insight-create` with `dashboards: [DASHBOARD_ID]` so it's attached on creation. The `query` field is a `DataVisualizationNode` wrapping a HogQL query — that's the simplest shape for these three views.
 
 Embed `IN_LIST` directly in each SQL statement as a comma-separated list of single-quoted event names. Do not use parameter placeholders — the MCP `insight-create` tool persists the query verbatim, so the IN-list has to be inlined.
 
@@ -158,7 +160,7 @@ Substitute `<dashboard name>` and `<dashboard URL>` from the `dashboard-create` 
 
 The report ends up with no dashboard line at all — that's the right UX for "no dashboard available." Don't try to surface the failure reason inside the report; the wizard already shows the failure in the run output. **Always perform this Edit** even on failure — leaving an unresolved `{{dashboard_callout}}` in the report would leak templating internals to the reader.
 
-If every `insight-create` call failed but the dashboard itself was created, also try to delete the empty dashboard via `mcp__posthog-wizard__dashboard-delete` if that tool is available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" in the run output and move on.
+If every `insight-create` call failed but the dashboard itself was created, also try to delete the empty dashboard via `dashboard-delete` if that tool is available; otherwise note "Dashboard created but all insights failed; remove it manually at <URL>" in the run output and move on.
 
 ### d. Resolve the dashboard phase
 

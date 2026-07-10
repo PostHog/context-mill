@@ -4,7 +4,19 @@ title: PostHog Setup - Conclusion
 description: Review and fix any errors in the PostHog integration implementation
 ---
 
-Use the PostHog MCP to create a new dashboard named "Analytics basics (wizard)" based on the events created here. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go. Make sure to use the exact same event names as implemented in the code. Populate it with up to five insights, with special emphasis on things like conversion funnels, churn events, and other business critical insights.
+Create a live PostHog dashboard named "Analytics basics (wizard)" from the events you just instrumented, then populate it with up to five insights — lead with the business-critical views: conversion funnels, churn events, and other key signals. Use the exact same event names as implemented in the code. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go.
+
+{{> mcp-tool-calling}}
+
+Create the parent dashboard first with `dashboard-create`, capture its returned `id`, then attach every insight to it via `dashboards: [<id>]`:
+
+```json
+{
+  "name": "Analytics basics (wizard)",
+  "description": "Key views for the events instrumented by the PostHog wizard.",
+  "tags": ["wizard"]
+}
+```
 
 When calling `insight-create`, use these known-good query shapes — they are verified against the MCP schema, and the common variations around them are rejected:
 

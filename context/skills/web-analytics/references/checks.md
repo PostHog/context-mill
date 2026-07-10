@@ -54,7 +54,7 @@ LIMIT 50
 
 **What it detects:** The user configured authorized URLs in PostHog (via project settings), but one or more of those URLs has zero events in the analysis window. This often means an ad blocker is silently eating events for that domain — or the SDK was never installed there.
 
-**Step A — fetch authorized URLs:** call `mcp__posthog-wizard__project-get` and read `app_urls` from the response.
+**Step A — fetch authorized URLs:** call `project-get` and read `app_urls` from the response.
 
 **Step B — query event volume per known host:**
 
