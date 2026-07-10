@@ -123,8 +123,13 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
                 ? `${scheme}${docPattern.replace('{id}', skill.id)}`
                 : `${scheme}${skillPattern.replace('{group}', skill.group).replace('{id}', skill.shortId)}`;
             const base = {
+                // The MCP resource name is a short, human-readable label (per the
+                // MCP spec) — use the display name, not the description sentence.
+                // Clients that mint a tool per resource derive the tool name from
+                // this; a sentence here overflows the 128-char tool-name limit and
+                // 400s the whole request. Docs carry their short name in `name`.
                 id: skill.id,
-                name: skill.name,
+                name: skill.displayName ?? skill.name,
                 description: skill.description,
                 tags: skill.tags,
                 uri,
