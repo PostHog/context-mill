@@ -40,6 +40,9 @@ export default defineEventHandler(async (event) => {
     },
   })
 
+  // This handler is short-lived; flush so the enqueued event sends before it returns
+  await posthog.flush()
+
   return {
     success: true,
     user: { ...user },

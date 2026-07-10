@@ -53,6 +53,9 @@ export const POST: APIRoute = async ({ request }) => {
       },
     });
 
+    // This endpoint is short-lived; flush so the enqueued events send before it returns
+    await posthog.flush();
+
     return new Response(
       JSON.stringify({
         success: true,

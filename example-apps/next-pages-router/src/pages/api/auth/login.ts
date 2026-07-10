@@ -45,5 +45,8 @@ export default async function handler(
     }
   });
 
+  // This handler is short-lived; flush so the enqueued events send before it returns
+  await posthog.flush();
+
   return res.status(200).json({ success: true, user });
 }

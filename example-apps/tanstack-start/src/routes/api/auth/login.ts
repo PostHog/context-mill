@@ -50,6 +50,9 @@ export const Route = createFileRoute('/api/auth/login')({
           },
         })
 
+        // This handler is short-lived; flush so the enqueued events send before it returns
+        await posthog.flush()
+
         return json({ success: true, user })
       },
     },
