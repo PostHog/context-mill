@@ -18,7 +18,7 @@ Emit:
 
 {{> mcp-tool-calling}}
 
-Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `signals-scout-project-profile-get`, `query-session-recordings-list`, `survey-list`, and `error-issue-list`.
+Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `signals-scout-project-profile-get`, `query-session-recordings-list`, `surveys-get-all`, and `query-error-tracking-issues-list`.
 
 ## Do
 
@@ -28,8 +28,8 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
 
 3. **Server-side product usage.** The run prompt's "Project state" block is authoritative for the opt-ins it lists (session replay recording, exception autocapture, surveys): **opt-in ON = product enabled**, even if no data has arrived yet. Where the block says OFF/unknown and the repo gave no signal, spend ONE cheap probe each for usage evidence (tolerate 403/404 → record "unknown"):
    - `query-session-recordings-list` — any recording → replay in use
-   - `survey-list` — any survey → surveys in use
-   - `error-issue-list` — any issue → error tracking in use, even when this repo doesn't instrument it
+   - `surveys-get-all` — any survey → surveys in use
+   - `query-error-tracking-issues-list` — any issue → error tracking in use, even when this repo doesn't instrument it
 
 4. **Light scan for what the report, profile, and server state won't cover.** Targeted lookups only — package manifests, config files, a grep or two. You are answering these questions:
    - **Revenue**: is there a payment SDK (Stripe, Paddle, LemonSqueezy, RevenueCat…) or revenue events?
