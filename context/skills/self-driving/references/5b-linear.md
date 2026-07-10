@@ -12,7 +12,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__external-data-sources-create` (`integrations-list` from step 3 stays loaded).
+Reach `external-data-sources-create` through the PostHog `exec` tool (`info` then `call`); `integrations-list` from step 3 is reached the same way.
 
 ## Do
 

@@ -18,15 +18,17 @@ Emit, in order:
 
 ## MCP tools
 
+{{> mcp-tool-calling}}
+
 | MCP tool | When | Use |
 |----------|------|-----|
-| `mcp__posthog-wizard__notebooks-create` | (a) of "Upload to a PostHog notebook" | Create the notebook with a small placeholder skeleton (title + section headings + placeholder paragraphs). One call. |
-| `mcp__posthog-wizard__notebook-edit` | (b) of "Upload to a PostHog notebook" | Replace one placeholder paragraph in the cloud notebook with a real ProseMirror node. **Called many times** (one per placeholder). Required because the model can't emit the full assembled tree in a single `notebooks-create` tool_use input — it self-truncates. |
-| `mcp__posthog-wizard__notebooks-retrieve` | (c) of "Upload to a PostHog notebook" | Read the cloud notebook back to verify every placeholder has been replaced. |
+| `notebooks-create` | (a) of "Upload to a PostHog notebook" | Create the notebook with a small placeholder skeleton (title + section headings + placeholder paragraphs). One call. |
+| `notebook-edit` | (b) of "Upload to a PostHog notebook" | Replace one placeholder paragraph in the cloud notebook with a real ProseMirror node. **Called many times** (one per placeholder). Required because the model can't emit the full assembled tree in a single `notebooks-create` tool_use input — it self-truncates. |
+| `notebooks-retrieve` | (c) of "Upload to a PostHog notebook" | Read the cloud notebook back to verify every placeholder has been replaced. |
 
-Load all three via `ToolSearch select:mcp__posthog-wizard__notebooks-create,mcp__posthog-wizard__notebook-edit,mcp__posthog-wizard__notebooks-retrieve` once, right before the upload sub-step — not at the top, so step 5 stays cheap when MCP isn't needed yet. `mcp__wizard-tools__audit_resolve_checks` is already loaded — you'll use it again after the upload.
+Run `info <tool>` on each of these before its first `call`, right before the upload sub-step. `mcp__wizard-tools__audit_resolve_checks` is already loaded — you'll use it again after the upload.
 
-If `notebook-edit` doesn't appear in the search results, the project's `notebooks-collaboration` feature flag isn't enabled. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebook-edit unavailable. The local report at posthog-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
+If `info notebook-edit` returns a not-found error, the project's `notebooks-collaboration` feature flag isn't enabled. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebook-edit unavailable. The local report at posthog-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
 
 ## Action
 

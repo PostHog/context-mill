@@ -26,19 +26,21 @@ The audit never changes anything. Changes happen only in the fix phase, and only
 
 ## Available tools
 
+{{> mcp-tool-calling}}
+
 **Audit (read-only):**
-- `mcp__posthog-wizard__query-run` (HogQL) — primary tool. Use for all event queries.
-- `mcp__posthog-wizard__project-get` — fetch project settings, including `app_urls` (the user-configured authorized URLs).
-- `mcp__posthog-wizard__docs-search` — to fetch the latest doc URL for a remediation link.
+- `query-run` (HogQL) — primary tool. Use for all event queries.
+- `project-get` — fetch project settings, including `app_urls` (the user-configured authorized URLs).
+- `docs-search` — to fetch the latest doc URL for a remediation link.
 
 **Confirm:**
 - `mcp__wizard-tools__wizard_ask` — ask the user which findings to fix. Call it **once** with a single multi-select question (see Phase 2).
 
 **Fix:**
 - `Read` and `Edit` — apply code fixes to the user's project (e.g. PostHog init options).
-- A PostHog settings-mutation MCP tool (e.g. `mcp__posthog-wizard__project-update` or an equivalent settings/property update tool) — apply settings fixes. If you cannot find such a tool, do NOT guess a tool name and do NOT fabricate a call: record the fix as manual guidance in the report instead.
+- A PostHog settings-mutation MCP tool (e.g. `project-update` or an equivalent settings/property update tool) — apply settings fixes. If you cannot find such a tool, do NOT guess a tool name and do NOT fabricate a call: record the fix as manual guidance in the report instead.
 
-If you're unsure which MCP tools exist, discover them (tool search is enabled) and name tools explicitly so their schemas load. Never edit `.env` directly — if a fix needs environment values, use the wizard-tools MCP.
+If you're unsure which MCP tools exist, discover them through the `exec` tool (`search <regex>`, then `info <tool>`) before calling. Never edit `.env` directly — if a fix needs environment values, use the wizard-tools MCP.
 
 ## Pre-flight
 

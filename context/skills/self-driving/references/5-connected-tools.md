@@ -18,7 +18,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__wizard-tools__wizard_ask,mcp__posthog-wizard__external-data-sources-list` (the source-config tools from step 4 stay loaded).
+Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way.
 
 ## Do
 
