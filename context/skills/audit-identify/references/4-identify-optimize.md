@@ -13,6 +13,8 @@ This step resolves four cost-optimization checks **in parallel**, one subagent p
 
 All four are grounded in PostHog's [product analytics cutting-costs guide](https://posthog.com/docs/product-analytics/cutting-costs). Three of them require PostHog MCP access to query the operator's tenant. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure <signal>"`. Do not block the audit.
 
+{{> mcp-tool-calling}}
+
 ## Status
 
 Emit before dispatching:
@@ -43,7 +45,7 @@ Run **one** Grep: `person_profiles`. Read each file that contains a hit, once. R
 - The init file:line where it's set (or where init lives if unset; default is `'identified_only'` for posthog-js).
 
 Step 2 — MCP pass (skip if MCP unavailable):
-Call `mcp__posthog__execute-sql` with this query (adjust column names if the project's schema differs):
+Call `execute-sql` with this query (adjust column names if the project's schema differs):
 
 ```sql
 SELECT
@@ -127,7 +129,7 @@ This check requires PostHog MCP access. If the MCP server is unavailable, auth f
 
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-identify/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/cutting-costs.md`).
 
-Call `mcp__posthog__execute-sql` with:
+Call `execute-sql` with:
 
 ```sql
 SELECT
@@ -195,7 +197,7 @@ Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/
 
 First, verify the project actually uses groups. Run **one** Grep on the codebase: `posthog\.group\(|posthog\.groupIdentify\(|\$groupidentify`. If no matches AND a quick MCP probe returns zero `$groupidentify` events in the last 7 days, resolve `pass` with `details: "skip: project does not use group analytics"` and return.
 
-Otherwise, call `mcp__posthog__execute-sql` with:
+Otherwise, call `execute-sql` with:
 
 ```sql
 SELECT

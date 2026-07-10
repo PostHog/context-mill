@@ -12,6 +12,8 @@ This step resolves three cost-optimization checks **in parallel**, one subagent 
 
 All three are grounded in PostHog's [product analytics cutting-costs guide](https://posthog.com/docs/product-analytics/cutting-costs). Two of them require PostHog MCP access to query the operator's tenant. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure <signal>"`. Do not block the audit.
 
+{{> mcp-tool-calling}}
+
 ## Status
 
 Emit before dispatching:
@@ -40,7 +42,7 @@ This check needs PostHog MCP access to query the operator's tenant. If the MCP s
 
 Procedure:
 1. Run **one** Grep: `posthog\.capture\(`. Collect every distinct static event name passed to `capture()` from the project source.
-2. Call **`posthog:execute-sql`** with a query that joins event names captured in code against PostHog metadata. Specifically check whether each event is referenced by:
+2. Call **`execute-sql`** with a query that joins event names captured in code against PostHog metadata. Specifically check whether each event is referenced by:
    - `system.insights` (saved insights) — search `query::TEXT ILIKE '%<event>%'`
    - `system.dashboards` (via insight membership)
    - `system.cohorts` — `filters::TEXT ILIKE '%<event>%'`
@@ -94,7 +96,7 @@ Read each file that contains a hit, once. Record:
 - The init file:line where these defaults are (or could be) set.
 
 Step 2 — MCP pass (skip if MCP unavailable):
-Call `mcp__posthog__execute-sql` with this query to measure pageview volume:
+Call `execute-sql` with this query to measure pageview volume:
 
 ```sql
 SELECT
@@ -154,7 +156,7 @@ Procedure:
    - `$pageview` (web-only)
    - `$autocapture` (web-only)
    - any custom event captured everywhere (run a quick `posthog\.capture\(` Grep + an MCP count to pick the highest-volume custom event)
-2. Call `mcp__posthog__execute-sql` to break down that event by environment-signal properties over the last 7 days:
+2. Call `execute-sql` to break down that event by environment-signal properties over the last 7 days:
 
 ```sql
 SELECT

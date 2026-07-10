@@ -15,11 +15,13 @@ Consult the PostHog data warehouse source docs above for source-specific field r
 
 ## Tools you will use
 
-You have the PostHog MCP server and the wizard's local tools available:
+You have the PostHog MCP server and the wizard's local tools available. The PostHog tools below are reached through its `exec` tool:
 
-- **`mcp__posthog-wizard__external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names. **Pass `source_type` with the kind(s) you need** (e.g. `source_type: "Postgres"`, or comma-separated `"Postgres,Stripe"`). The unfiltered response describes every source and is hundreds of KB — large enough to blow your context budget — so never call it without `source_type`.
-- **`mcp__posthog-wizard__external-data-sources-db-schema`** — validates credentials and lists the tables available for sync. Use this for database sources before creating.
-- **`mcp__posthog-wizard__external-data-sources-create`** — creates the source. Follow its input schema exactly for the `payload` and `schemas` shape; the tool definition is the source of truth.
+{{> mcp-tool-calling}}
+
+- **`external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names. **Pass `source_type` with the kind(s) you need** (e.g. `source_type: "Postgres"`, or comma-separated `"Postgres,Stripe"`). The unfiltered response describes every source and is hundreds of KB — large enough to blow your context budget — so never call it without `source_type`.
+- **`external-data-sources-db-schema`** — validates credentials and lists the tables available for sync. Use this for database sources before creating.
+- **`external-data-sources-create`** — creates the source. Follow its input schema exactly for the `payload` and `schemas` shape; the tool definition is the source of truth.
 - **`mcp__wizard-tools__check_env_keys`** — tells you which `.env` keys EXIST. It never returns values.
 - **`mcp__wizard-tools__wizard_ask`** — the ONLY way to obtain credential values from the user.
 
@@ -31,7 +33,7 @@ You have the PostHog MCP server and the wizard's local tools available:
 
 3. **Don't pass secret references to the PostHog tools.** If you mark a `wizard_ask` field `sensitive`, the answer comes back as `{ secretRef: ... }`, which only `mcp__wizard-tools__set_env_values` can resolve — `external-data-sources-db-schema`/`-create` reject it. For credentials you'll hand straight to those tools, collect them as normal (non-`sensitive`) `text` answers so you get the real value; reserve `sensitive` for secrets you're only writing to `.env`.
 
-4. **The MCP defines the fields, not you.** Call `mcp__posthog-wizard__external-data-sources-wizard` (with `source_type`) for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
+4. **The MCP defines the fields, not you.** Call `external-data-sources-wizard` (with `source_type`) for the kind and ask for exactly the fields it lists (respecting `required`). Don't invent extra fields or omit required ones.
 
 5. **Respect the mode.** Only collect credentials and create `in-cli` sources. For `deep-link` sources, provide the URL and stop — do not try to collect OAuth tokens.
 
@@ -54,12 +56,12 @@ Process each detected source in turn.
 ### For an `in-cli` source
 
 1. `[STATUS] Configuring <label>`
-2. Call `mcp__posthog-wizard__external-data-sources-wizard` **with `source_type` set to this `kind`** (never unfiltered) and read the field list. Check the pre-flight gotchas above for this kind before prompting.
+2. Call `external-data-sources-wizard` **with `source_type` set to this `kind`** (never unfiltered) and read the field list. Check the pre-flight gotchas above for this kind before prompting.
 3. Optionally call `mcp__wizard-tools__check_env_keys` to see which matching keys already exist — use this only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set; please paste the connection details"). You still cannot read the value.
 4. Call `mcp__wizard-tools__wizard_ask` ONCE, requesting all required fields for the source. If the user declines or cannot provide them, fall back to the deep-link path below for this source.
-5. For database sources, call `mcp__posthog-wizard__external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it (one more `mcp__wizard-tools__wizard_ask`), or fall back to deep-link.
-6. Build the create payload: `source_type` = the kind, the credential `payload`, `access_method` = `warehouse` (use `direct` only if the user explicitly wants live querying without import), and a `schemas` array selecting tables to sync (default: sync the tables the user wants; pick `incremental` sync with the detected incremental field when available, otherwise `full_refresh`). Follow the `mcp__posthog-wizard__external-data-sources-create` input schema for the exact shape.
-7. Call `mcp__posthog-wizard__external-data-sources-create`. On success: `[STATUS] Connected <label>`. On failure: emit `[ABORT] Source creation failed`.
+5. For database sources, call `external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it (one more `mcp__wizard-tools__wizard_ask`), or fall back to deep-link.
+6. Build the create payload: `source_type` = the kind, the credential `payload`, `access_method` = `warehouse` (use `direct` only if the user explicitly wants live querying without import), and a `schemas` array selecting tables to sync (default: sync the tables the user wants; pick `incremental` sync with the detected incremental field when available, otherwise `full_refresh`). Follow the `external-data-sources-create` input schema for the exact shape.
+7. Call `external-data-sources-create`. On success: `[STATUS] Connected <label>`. On failure: emit `[ABORT] Source creation failed`.
 
 ### For a `deep-link` source
 

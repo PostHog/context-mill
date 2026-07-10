@@ -18,7 +18,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__products-enable`.
+Reach `products-enable` through the PostHog `exec` tool (`info products-enable`, then `call products-enable <json>`).
 
 ## Do
 
