@@ -26,6 +26,7 @@ If the project uses a specific PostHog product mentioned below, consult the rele
 - If the project uses consent or privacy controls:
   - Implement an explicit opt-in / opt-out path and honor it consistently.
   - If this applies, consult `references/data-collection.md`.
+- Whenever you name the `phc_` ingestion credential — env vars, config keys, prose — call it the project token (e.g. `POSTHOG_PROJECT_TOKEN`), not a "key". Keep this naming consistent across client and server.
 - If the project uses frontend PostHog initialization:
   - Treat `phc_` project tokens as public.
   - Never expose `phx_` personal API keys.
