@@ -23,7 +23,7 @@ Run **two `Grep` calls in parallel**, both with `output_mode: "files_with_matche
 
 ## Decision
 
-- **Both greps return zero hits anywhere in the project:** emit `[ABORT] No PostHog SDK initialization found` and stop. The wizard catches `[ABORT]` and terminates the run.
+- **Both greps return zero hits anywhere in the project:** emit `[ABORT] PostHog SDK initialization not found` and stop. The wizard catches `[ABORT]` and terminates the run.
 - **Init found, capture not found:** continue. Step 2 (fix) will detect this and resolve its four ledger checks with skip details. Step 3 (optimize) still has work to do because pageview defaults and downstream usage may still matter.
 - **Both found:** continue normally.
 

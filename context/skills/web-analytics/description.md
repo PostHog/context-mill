@@ -154,7 +154,7 @@ Report progress with `[STATUS]` prefixed messages:
 Report abort states with `[ABORT]` prefixed messages — wording must match exactly so the wizard renders the right error UI:
 
 - `[ABORT] No web analytics events` — pre-flight finds no `$pageview` events in the last 30 days, but a PostHog SDK is present.
-- `[ABORT] PostHog SDK not installed` — pre-flight finds no `$pageview` events and no PostHog SDK in the project.
+- `[ABORT] PostHog SDK not installed` — pre-flight finds no `$pageview` events and the PostHog SDK is not present in the project.
 - `[ABORT] Insufficient permissions` — `query-run` returns a permissions error on the pre-flight query.
 
 Stop all further work after emitting `[ABORT]`.

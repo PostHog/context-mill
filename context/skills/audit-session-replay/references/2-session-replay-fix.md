@@ -81,7 +81,7 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 ```
 You are an audit subagent. Resolve exactly one rule and return: replay-disabled-in-test-envs.
 
-Read this skill's bundled `how-to-control-which-sessions-you-record.md` reference once (typically `.claude/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`; otherwise discover with `Glob` `**/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`). Test and CI runs that don't disable session replay flood the recording pipeline with synthetic, useless sessions that consume your replay quota.
+Read this skill's bundled `how-to-control-which-sessions-you-record.md` reference once (typically `.claude/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`; otherwise discover with `Glob` `**/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`). Test and CI runs that leave session replay enabled flood the recording pipeline with synthetic, useless sessions that consume your replay quota.
 
 Run **three** Greps in parallel:
 - `posthog\.init\(|new PostHog\(|posthog\.Posthog\(|Posthog\(` — every PostHog initialization.

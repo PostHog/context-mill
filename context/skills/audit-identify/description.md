@@ -66,7 +66,7 @@ After the final step writes the report, delete `.posthog-audit-checks.json`.
 
 Report abort states with `[ABORT]` prefixed messages. The wizard catches these and terminates the run — do not halt yourself.
 
-- No PostHog SDK initialization found (no `posthog.init` and no `posthog.identify` anywhere in the codebase)
+- PostHog SDK initialization not found (no `posthog.init` and no `posthog.identify` anywhere in the codebase)
 
 ## Framework guidelines
 
