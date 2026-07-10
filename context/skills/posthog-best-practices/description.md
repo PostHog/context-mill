@@ -108,6 +108,8 @@ If the project uses React Native or Expo:
 
 If the project uses Node.js (`posthog-node`):
 
+- `posthog-node` v5+ requires Node 20+ (it uses native `fetch`). On older runtimes v5 fails at runtime; either upgrade Node or pin the SDK to v4.
+- `capture()` takes an object — `capture({ distinctId, event, properties })` — and this signature is identical in v4 and v5. A capture that produces no event is a runtime, flush, or Node-version problem, never a reason to downgrade the SDK.
 - For long-running servers, enable exception autocapture and install the framework's error handler integration.
 - For short-lived processes, call `await posthog.shutdown()` before exit. If needed, use `await posthog.shutdown(shutdownTimeoutMs?)`.
 - Use `posthog.flush()` only for per-request cleanup.
