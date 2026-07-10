@@ -52,6 +52,22 @@ function loadYaml(configPath) {
     return yaml.load(content);
 }
 
+// A line that is exactly `{{> name}}` is replaced at build time with the body
+// of `<configDir>/shared/name.md` (frontmatter stripped), so shared prose like
+// the MCP tool-calling grammar lives in one canonical file and every skill that
+// includes it stays in sync.
+const PARTIAL_DIRECTIVE = /^[ \t]*\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
+
+function expandPartials(body, configDir) {
+    return body.replace(PARTIAL_DIRECTIVE, (_match, name) => {
+        const partialPath = path.join(configDir, 'shared', `${name}.md`);
+        if (!fs.existsSync(partialPath)) {
+            throw new Error(`Partial include {{> ${name}}} references missing file ${partialPath}`);
+        }
+        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
+    });
+}
+
 /**
  * Validate and normalize a raw `cli:` block from a skill `config.yaml`.
  * Returns `null` when the block is absent, throws on malformed input.
@@ -613,7 +629,7 @@ async function generateSkill({
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
-            let body = parsed.content.replace(/^\n+/, '').replace(/\s+$/, '');
+            let body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
             const headingMatch = body.match(/^#\s+(.+)$/m);
             const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
             const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
@@ -869,4 +885,5 @@ export {
     fetchDoc,
     parseCliBlock,
     resolveVariantCli,
+    expandPartials,
 };
