@@ -16,7 +16,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__integrations-list,mcp__wizard-tools__wizard_ask`.
+Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `integrations-list` through the PostHog `exec` tool (`info` then `call`).
 
 ## Do
 

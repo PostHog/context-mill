@@ -724,6 +724,7 @@ async function generateSkill({
         .replace(/{references}/g, referencesText)
         .replace(/{commandments}/g, commandmentsText)
         .replace(/{workflow}/g, workflowText);
+    body = expandPartials(body, configDir);
 
     skillContent += body;
 
