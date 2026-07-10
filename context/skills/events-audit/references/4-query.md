@@ -28,10 +28,12 @@ Emit:
 
 ## MCP tools
 
+{{> mcp-tool-calling}}
+
 | MCP tool | When | Use |
 |----------|------|-----|
-| `mcp__posthog-wizard__execute-sql` | (c) below | Execute HogQL/SQL. Filtered query returns volume + last_seen for inventory events. |
-| `mcp__posthog-wizard__entity-search` | **Avoid.** | Requires project-key permissions; personal API keys get "permission denied". The SQL approach below works regardless. |
+| `execute-sql` | (c) below | Execute HogQL/SQL. Filtered query returns volume + last_seen for inventory events. |
+| `entity-search` | **Avoid.** | Requires project-key permissions; personal API keys get "permission denied". The SQL approach below works regardless. |
 
 The active project comes from the wizard session – don't pick or switch projects yourself.
 
@@ -49,7 +51,7 @@ If the list is empty (every capture row is dynamic), skip the SQL call and proce
 
 ### c. Query volume for inventory events
 
-`mcp__posthog-wizard__execute-sql` with:
+Call `execute-sql` with:
 
 ```sql
 SELECT event,

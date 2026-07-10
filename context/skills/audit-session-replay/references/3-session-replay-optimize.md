@@ -13,6 +13,8 @@ This step resolves four cost-optimization checks **in parallel**, one subagent p
 
 Two of them require PostHog MCP access to read the project's replay settings. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure <signal>"` plus `"mcp_skipped": true` in the JSON details. Do not block the audit.
 
+{{> mcp-tool-calling}}
+
 ## Status
 
 Emit before dispatching:
@@ -39,7 +41,7 @@ This check requires PostHog MCP access. If the MCP server is unavailable, auth f
 
 Read this skill's bundled `how-to-control-which-sessions-you-record.md` reference once (typically `.claude/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`; otherwise discover with `Glob` `**/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`). Focus on the "Sampling" section: sample rate is the deterministic per-session probability of recording. At 100% you record everything; large projects often cut volume meaningfully by sampling to 10-50%.
 
-Step 1 — read project replay settings via MCP. Try `mcp__posthog__project-set-active` then any project-settings read tool (e.g. `mcp__posthog__project-settings-get` or similar). If no specific tool exists, fall back to `mcp__posthog__execute-sql` to estimate recording volume:
+Step 1 — read project replay settings via MCP. Try `project-set-active` then any project-settings read tool (e.g. `project-settings-get` or similar). If no specific tool exists, fall back to `execute-sql` to estimate recording volume:
 
 ```sql
 SELECT count() AS replay_events_7d
@@ -79,7 +81,7 @@ This check requires PostHog MCP access. If the MCP server is unavailable, auth f
 
 Read this skill's bundled `how-to-control-which-sessions-you-record.md` reference once (typically `.claude/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`; otherwise discover with `Glob` `**/skills/audit-session-replay/references/how-to-control-which-sessions-you-record.md`). Focus on the "URL trigger conditions", "Event trigger conditions", and "With feature flags" sections. Triggers let you record only sessions that hit a particular page, fire a particular event (like an exception), or match a feature flag — far cheaper than recording 100% of sessions for a high-volume project.
 
-Step 1 — read project replay-triggers settings via MCP. Try whatever project-settings read tool is available (e.g. `mcp__posthog__project-settings-get`). The settings of interest are URL triggers, event triggers, and the linked feature flag for recordings.
+Step 1 — read project replay-triggers settings via MCP. Try whatever project-settings read tool is available (e.g. `project-settings-get`). The settings of interest are URL triggers, event triggers, and the linked feature flag for recordings.
 
 Step 2 — estimate recording volume to gauge whether triggers would help:
 
