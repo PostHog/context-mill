@@ -30,6 +30,9 @@ export const Route = createFileRoute('/api/burrito/consider')({
           },
         })
 
+        // This handler is short-lived; flush so the enqueued event sends before it returns
+        await posthog.flush()
+
         return json({ success: true })
       },
     },
