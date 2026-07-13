@@ -67,7 +67,8 @@ Process each detected source in turn.
 
 1. `[STATUS] <label> needs browser setup`
 2. Build the URL from the project context in your prompt (PostHog Host + Project ID):
-   `<host>/project/<projectId>/data-warehouse/new-source?kind=<kind>`
+   `<host>/project/<projectId>/data-warehouse/new-source?kind=<kind>&utm_source=wizard&utm_campaign=warehouse-source`
+   Keep the `utm_*` params exactly as written — they let PostHog attribute sources finished in the browser back to the wizard handoff.
 3. Tell the user to open that URL to finish connecting `<label>` (OAuth happens in the app). Include the URL in your report. Do not attempt credential collection.
 
 ### Non-interactive / CI
