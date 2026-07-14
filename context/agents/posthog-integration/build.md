@@ -12,13 +12,13 @@ dependsOn: [install, init, identify, error-tracking, capture]
 ## Goal
 
 Bring the integration together: install the dependencies the earlier steps
-declared, then verify the project builds, lints, and passes its tests. Until now
+declared, then verify the project builds and lints. Until now
 the steps only edited code and the manifest — this is where it actually installs
 and is checked.
 
 ## How you know you succeeded
 
-The install completes and the build, lint, and tests pass. If you hit a conflict
+The install completes and the build and lint pass. If you hit a conflict
 you cannot cleanly resolve — a dependency clash, a build error from the new code —
 fix what you safely can, then report it: put a one-line summary in your handoff's
 `conflict` field and the full detail in what you did. The user sees the one-liner

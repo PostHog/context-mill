@@ -1,12 +1,16 @@
 # Write the setup report
 
 Write `posthog-setup-report.md` at the project root summarizing the integration.
+It is a new file you create — write it directly, do not read it first.
 Draw on two sources only:
 
 - the run's queue log — `.posthog-wizard-cache/queue.json`, which holds each
   task's handoff inline — for what each step did, whether identify was wired
   or skipped, and any build conflict;
 - `.posthog-wizard-cache/.posthog-events.json` — the events that were instrumented.
+  If that file is missing or empty, reconstruct the list instead of dropping the
+  table: grep the changed files for `capture(` calls and read the capture step's
+  handoff in `queue.json`.
 
 Include:
 

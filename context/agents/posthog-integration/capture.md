@@ -4,7 +4,7 @@ flow: posthog-integration
 label: Capture events
 model: openai/gpt-5.6-terra
 skills: [posthog-integration-capture]
-allowedTools: [Read, Edit, Glob, Grep]
+allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]
 ---
