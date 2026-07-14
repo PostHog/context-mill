@@ -1,7 +1,9 @@
-# Install and build
+# Install, build, and review
 
-Install the declared dependencies, then verify the project builds. Be quick and
-decisive — this step must not spiral.
+Install the declared dependencies, verify the project builds, then review the
+whole integration. This is the last check before the report — it is where the
+run either earns trust or loses it. Be quick and decisive; this step must not
+spiral.
 
 ## Install
 
@@ -21,6 +23,25 @@ files this integration changed are yours to fix — a missing import, a wrong ca
 An error in a file the integration never touched is pre-existing: note it and
 move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
 failure clears — it will not, and each re-run is slow.
+
+## Review the integration
+
+Before you finish, review everything the earlier steps changed — the queue log's
+handoffs name the files each one touched. This catches the things users complain
+about most:
+
+- **It builds.** A clean build or typecheck is the goal. If it fails, say so
+  plainly in the handoff `conflict` — the exact failing command and why — and, if
+  the failure is pre-existing, that the integration did not cause it. A silent or
+  vague build failure is the worst outcome; a clearly-reported one is fine.
+- **It matches the codebase.** The added PostHog code must read like the code
+  around it — import style, naming, quotes, indentation, and the framework's
+  idioms. Fix anything that looks foreign to the file it lives in.
+- **Nothing was mangled.** Confirm each touched file still has its original code
+  intact next to the PostHog additions, and that no file unrelated to the
+  integration was edited. If a step deleted or rewrote code it shouldn't have, or
+  reformatted an untouched region, restore it. Flag anything you can't safely fix
+  in `conflict`.
 
 ## Flag out-of-scope conflicts and move on
 
