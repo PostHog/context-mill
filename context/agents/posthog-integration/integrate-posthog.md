@@ -2,7 +2,7 @@
 type: integrate-posthog
 flow: posthog-integration
 seed: true
-model: claude-sonnet-4-6
+model: openai/gpt-5.6-terra
 skills: []
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, complete_task]

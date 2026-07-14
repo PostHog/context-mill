@@ -2,7 +2,7 @@
 type: dashboard
 flow: posthog-integration
 label: Create a starter dashboard
-model: claude-sonnet-4-6
+model: openai/gpt-5.6-terra
 skills: [posthog-integration-dashboard]
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, enqueue_task]

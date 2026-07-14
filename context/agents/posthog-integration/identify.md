@@ -2,7 +2,7 @@
 type: identify
 flow: posthog-integration
 label: Wire user identification
-model: claude-sonnet-4-6
+model: openai/gpt-5.6-terra
 skills: [posthog-integration-identify]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]

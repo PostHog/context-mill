@@ -2,7 +2,7 @@
 type: build
 flow: posthog-integration
 label: Install dependencies and build
-model: claude-sonnet-4-6
+model: openai/gpt-5.6-terra
 skills: [posthog-integration-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
