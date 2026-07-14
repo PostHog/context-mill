@@ -22,11 +22,18 @@ so a prompt never restates them. Frontmatter stays flat: scalars and inline
 This README is documentation, not data: the build serves every other `.md`
 under a flow folder as an agent prompt.
 
+Each agent names its model per harness profile — `model_pi`/`effort_pi` for the
+gpt (pi) run and `model_sdk`/`effort_sdk` for the anthropic (sdk) run — so the
+same flow benchmarks either provider. The mapping is not 1:1: a light task can be
+luna on pi but sonnet on sdk. Effort is optional and overrides the model default.
+
 ```markdown
 ---
 type: example
 flow: my-flow
-model: claude-haiku-4-5-20251001
+model_pi: openai/gpt-5.6-luna
+effort_pi: low
+model_sdk: claude-haiku-4-5-20251001
 skills: []
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [enqueue_task]

@@ -2,7 +2,9 @@
 type: install
 flow: posthog-integration
 label: Add the PostHog SDK to the manifest
-model: openai/gpt-5.6-luna
+model_pi: openai/gpt-5.6-luna
+effort_pi: low
+model_sdk: claude-haiku-4-5-20251001
 skills: [posthog-integration-install]
 allowedTools: [Read, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]

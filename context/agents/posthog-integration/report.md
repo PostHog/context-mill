@@ -2,7 +2,10 @@
 type: report
 flow: posthog-integration
 label: Write the setup report
-model: openai/gpt-5.6-luna
+model_pi: openai/gpt-5.6-luna
+effort_pi: low
+model_sdk: claude-sonnet-4-6
+effort_sdk: high
 skills: [posthog-integration-report, posthog-integration-notebook]
 allowedTools: [Read, Write, Glob, Grep]
 disallowedTools: [enqueue_task]
