@@ -50,6 +50,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
+- **iOS / Xcode does NOT use `.env`.** The dSYM upload runs as an Xcode **Run Script build phase** and Xcode never loads a `.env`. Put the secret personal API key in a **gitignored `.xcconfig`** assigned to the target's build configuration — Xcode exports every build setting into the Run Script phase's environment, so the script sees `$POSTHOG_CLI_API_KEY`. Keep the non-secret `POSTHOG_CLI_PROJECT_ID` / `POSTHOG_CLI_HOST` as `export` lines in the Run Script phase itself, **not** in the xcconfig — in xcconfig `//` begins a comment and would truncate `https://…`.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -70,6 +71,19 @@ The upload credentials must be readable **by the build pipeline at build time**,
   ```json
   "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
+- **iOS (Xcode / posthog-cli)** The posthog-ios SDK ships `upload-symbols.sh`, run as a **Run Script build phase**; it calls `posthog-cli`, which reads `POSTHOG_CLI_*` from the environment. There is no `.env` — wire the credentials through Xcode instead:
+  1. Create a **gitignored** `PostHog.xcconfig` holding only the secret (commit a `PostHog.example.xcconfig` with an empty value so teammates see the setting exists):
+     ```
+     POSTHOG_CLI_API_KEY = phx_your_personal_api_key
+     ```
+  2. Assign `PostHog.xcconfig` to the target's build configuration (Project ▸ Info ▸ Configurations, or `baseConfigurationReference` in the pbxproj). Xcode then exposes `POSTHOG_CLI_API_KEY` to Run Script phases as an environment variable.
+  3. In the dSYM-upload Run Script phase, export the two non-secret values before invoking the script:
+     ```bash
+     export POSTHOG_CLI_PROJECT_ID=12345
+     export POSTHOG_CLI_HOST=https://us.posthog.com
+     "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"
+     ```
+  In CI, do **not** ship the xcconfig — set all three `POSTHOG_CLI_*` as job/environment secrets (Xcode Cloud environment variables, Fastlane `ENV`, GitHub Actions `env:`). Real environment variables take precedence and the build phase inherits them.
 
 ### Write credentials to the env file
 
@@ -77,6 +91,7 @@ Write the personal API key and project identifiers into the env file your build 
 
 #### Tips
 - Picking the file: if an env file already contains PostHog vars (`POSTHOG_*` / `NEXT_PUBLIC_POSTHOG_*`), use that one. Otherwise, if exactly one env file exists use it; if several exist prefer `.env`. Only create a new file when none exists.
+- **iOS exception**: there is no env file. Write only the secret `POSTHOG_CLI_API_KEY` to a gitignored `.xcconfig` (see "Make credentials available at build time"); the project id and host are exported in the Run Script phase, not written to a file.
 - Variable names depend on which uploader you wired:
   - `posthog-cli` direct upload → `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID`, `POSTHOG_CLI_HOST`
   - bundler-plugin variants → `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_HOST`
