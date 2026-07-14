@@ -10,6 +10,12 @@ Use the framework's public env-var convention so the client can read them.
 - the public project token
 - the PostHog host
 
+Then document these keys for other developers: add them to `.env.example` (create
+it if the project has none), with the real names and empty or placeholder values —
+never the real secret. This file is committed, so the next developer knows which
+keys to set. The example file is the only `.env*` you may write directly; the
+actual `.env` still goes through `set_env_values`.
+
 ## Init point
 
 Create the framework's single initialization point that runs once on the client,

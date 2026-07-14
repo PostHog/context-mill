@@ -12,10 +12,11 @@ dependsOn: []
 ## Goal
 
 Initialize PostHog: create the framework's init point so the SDK is configured
-once and available across the app, and set the PostHog environment variables
-through the wizard tools.
+once and available across the app, set the PostHog environment variables through
+the wizard tools, and document those keys in `.env.example` for other developers.
 
 ## How you know you succeeded
 
 The init file exists and the PostHog env keys are present. Keys live in the env
-file, never hardcoded in source.
+file, never hardcoded in source, and `.env.example` lists the key names (with
+placeholder values) so the next developer knows what to set.
