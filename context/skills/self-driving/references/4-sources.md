@@ -40,6 +40,6 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 - `llm_analytics` (internal-only, not a user-facing responder)
 - `logs` (not a v1 responder)
 - Anything with `source_type` `evaluation` or `alert_state_change`
-- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`) — those are step 5, ask-first.
+- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`, `jira`) — those are step 5, ask-first.
 
 Record every enable/skip decision with its reason — the report needs them.
