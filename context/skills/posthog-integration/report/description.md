@@ -24,14 +24,21 @@ Include:
 - Any build conflict, in full.
 - Clear next steps for the user.
 
-End with a short "Before you merge" checklist, including only the items that
-apply to what was set up:
+End with a "Before you merge" checklist as GitHub-style checkboxes (`- [ ] …`),
+including only the items that apply to what was set up — judge each against the
+code changed this run and drop the ones that don't fit:
 
-- If the app ships minified browser bundles, source maps must be uploaded so
-  error stack traces are readable — call it out with the docs link.
-- The new env vars (the project token and host) are documented for other
-  developers and set in the deploy environments, not just locally.
-- Returning users are identified on load, not only at the login moment, so a
-  returning user's events do not fragment across anonymous and identified.
+- Always: run a full production build (the wizard only verified the files it
+  touched) and fix any lint or type errors the generated code introduced.
+- Always: run the test suite — instrumented call sites may need updated mocks or
+  fixtures.
+- If env vars were added: their exact names are in `.env.example` and any
+  monorepo/bootstrap scripts, and set in the deploy environments, not just locally.
+- If the app ships minified browser bundles: wire source-map upload into CI so
+  production stack traces de-minify — call it out with the docs link.
+- If LLM analytics was set up: trigger the instrumented call path and confirm
+  `$ai_generation` events appear in PostHog.
+- If auth exists and identify was wired: the returning-visitor path also calls
+  identify, so returning sessions don't fragment onto anonymous distinct IDs.
 
 Keep it skimmable. This is the artifact the user opens after the run.

@@ -2,7 +2,7 @@
 type: error-tracking
 flow: posthog-integration
 label: Add error tracking
-model: openai/gpt-5.6-terra
+model: openai/gpt-5.6-luna
 skills: [posthog-integration-error-tracking-step]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
