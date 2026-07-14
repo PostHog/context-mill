@@ -63,7 +63,7 @@ Every finding produced by this skill must meet the standards in [posthog-best-pr
 ## Abort statuses
 
 Report abort states with `[ABORT]` prefixed messages. The wizard catches these and terminates the run — do not halt yourself.
-- No PostHog SDK initialization found
+- PostHog SDK initialization not found
 
 ## Framework guidelines
 

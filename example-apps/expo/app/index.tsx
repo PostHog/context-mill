@@ -51,7 +51,7 @@ export default function HomeScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
           <Text style={styles.title}>Welcome back, {user.username}!</Text>
-          <Text style={styles.text}>You are now logged in. Feel free to explore:</Text>
+          <Text style={styles.text}>You are logged in. Feel free to explore:</Text>
 
           <View style={styles.buttonGroup}>
             <TouchableOpacity

@@ -17,6 +17,8 @@ All four are grounded in PostHog's [feature flag cutting-costs guide](https://po
 
 One check (`ff-active-but-unreferenced`) requires PostHog MCP access. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion`, `mcp_skipped: true`, and `details: "PostHog MCP unavailable — could not list active flags"`. Do not block the audit.
 
+{{> mcp-tool-calling}}
+
 ## Status
 
 Emit before dispatching:
@@ -43,7 +45,7 @@ This check requires PostHog MCP access. If the MCP server is unavailable, auth f
 
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-feature-flags/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-feature-flags/references/cutting-costs.md`). Focus on the "unused flags still incur charges" callout — active flags continue to evaluate (and bill) even with zero code references, because survey targeting and the `/flags` endpoint evaluate all active flags. The only way to stop charges is to disable, delete, or archive the flag in PostHog (removing it from code is not enough).
 
-Step 1 — list active flags from PostHog. Prefer `mcp__posthog__feature-flag-get-all` or the equivalent listing tool. If only `mcp__posthog__execute-sql` is available, fall back to:
+Step 1 — list active flags from PostHog. Prefer `feature-flag-get-all` or the equivalent listing tool. If only `execute-sql` is available, fall back to:
 
 ```sql
 SELECT key

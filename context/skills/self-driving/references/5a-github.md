@@ -14,13 +14,13 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__integrations-github-repos-retrieve,mcp__posthog-wizard__external-data-sources-create`.
+Reach `integrations-github-repos-retrieve` and `external-data-sources-create` through the PostHog `exec` tool (`info` then `call` for each).
 
 ## Do
 
-1. **Infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the dormant fallback (below).
+1. **List the connected repos first.** Call `integrations-github-repos-retrieve` with the step-3 GitHub integration id (no search). Exactly **one** repository connected → that's the repo: use it by default and skip repo research entirely — no `git remote` inference, no search calls — and go straight to the confirm (step 3). Several connected → research which one matches this project (step 2). None → dormant fallback (below).
 
-2. **Validate it against the integration.** Call `integrations-github-repos-retrieve` with the step-3 GitHub integration id and `search=<repo name>`. The inferred `full_name` appearing in the results means the GitHub App can see it. Not in the results → dormant fallback (below) — the App isn't installed on this repo, so don't redirect or re-prompt.
+2. **Several connected: infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the dormant fallback (below). Then validate the inferred repo against the step-1 list (search again with `search=<repo name>` if the list was truncated). The inferred `full_name` appearing in the results means the GitHub App can see it. Not in the results → dormant fallback (below) — the App isn't installed on this repo, so don't redirect or re-prompt.
 
 3. **Confirm — never create unconfirmed:**
 

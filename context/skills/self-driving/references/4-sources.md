@@ -16,7 +16,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-create,mcp__posthog-wizard__inbox-source-configs-partial-update,mcp__posthog-wizard__inbox-source-configs-list`.
+Reach the source-config tools through the PostHog `exec` tool — `info` then `call` for `inbox-source-configs-create`, `inbox-source-configs-partial-update`, and `inbox-source-configs-list`.
 
 ## The write recipe (use for every source here and in step 5)
 

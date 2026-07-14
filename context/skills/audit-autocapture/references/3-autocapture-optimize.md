@@ -12,6 +12,8 @@ This step resolves three cost-optimization checks **in parallel**, one subagent 
 
 Two of them require PostHog MCP access to query the operator's tenant. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure <signal>"`. Do not block the audit.
 
+{{> mcp-tool-calling}}
+
 ## Status
 
 Emit before dispatching:
@@ -38,7 +40,7 @@ This check requires PostHog MCP access. If the MCP server is unavailable, auth f
 
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-autocapture/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-autocapture/references/cutting-costs.md`). Focus on the "Configure autocapture" section — when `$autocapture` dominates event volume and few high-value custom events exist, the project is paying for noisy click data instead of meaningful product signals.
 
-Call `mcp__posthog__execute-sql` with:
+Call `execute-sql` with:
 
 ```sql
 SELECT
@@ -118,7 +120,7 @@ Step 1 — codebase pass:
 Run **one** Grep: `capture_dead_clicks`. Read each file that contains a hit, once. Record whether it's set to `true`, `false`, or unset.
 
 Step 2 — MCP pass (skip if MCP unavailable):
-Call `mcp__posthog__execute-sql` with:
+Call `execute-sql` with:
 
 ```sql
 SELECT

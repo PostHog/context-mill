@@ -27,7 +27,7 @@ Use the PostHog MCP tool or the PostHog UI (Flags → New feature flag):
 
 - **Key**: `tour-<name>` (lowercase, hyphens)
 - **Rollout**: set to the target audience using person/group properties or a percentage rollout
-- **Enabled state**: Do not enable the feature flag. Leave that to the user.
+- **Enabled state**: Leave the feature flag disabled – the user enables it when ready.
 - **Payload** (optional): store the step config as JSON so tours can be updated without deploys:
 
 ```json

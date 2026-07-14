@@ -29,7 +29,7 @@ If init sites are found, `Read` each file once and inspect the init options for 
 
 ## Decision
 
-- **Grep returns zero hits anywhere in the project:** emit `[ABORT] No PostHog SDK initialization found` and stop. The wizard catches `[ABORT]` and terminates the run.
+- **Grep returns zero hits anywhere in the project:** emit `[ABORT] PostHog SDK initialization not found` and stop. The wizard catches `[ABORT]` and terminates the run.
 - **Init found, `autocapture: false` is explicitly set on every init site:** autocapture is fully off. Resolve all three Step 2 fix checks (`autocapture-intentional`, `autocapture-mask-config`, `autocapture-allowlists`) in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: autocapture explicitly disabled in init config"`. Then continue to Step 3 — optimize-side checks still have work to do for the dead-clicks and ratio checks.
 - **Init found, autocapture not fully disabled:** continue normally.
 

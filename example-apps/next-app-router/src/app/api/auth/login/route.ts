@@ -38,5 +38,8 @@ export async function POST(request: Request) {
     }
   });
 
+  // This handler is short-lived; flush so the enqueued events send before it returns
+  await posthog.flush();
+
   return NextResponse.json({ success: true, user });
 }
