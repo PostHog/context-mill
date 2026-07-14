@@ -35,3 +35,11 @@ build break, an install that won't resolve, an environment issue unrelated to th
 PostHog code — stop fighting it: put a one-line summary in your handoff `conflict`
 field and the full detail in `did`, then complete the task. The user sees it in
 the outro and the report; reporting it and moving on is the right outcome.
+
+Complete this task with status **done** whenever the integration itself is in
+place — even if the build or typecheck still fails on pre-existing errors in files
+you never touched. Note the pre-existing failure in `conflict` and move on. Only
+use status **failed** when your own integration changes are what break the build
+and you cannot resolve them. A `failed` status stops later steps that depend on
+this one (the dashboard and report), so do not fail the task over breakage the
+integration did not cause.

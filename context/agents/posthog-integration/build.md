@@ -18,8 +18,9 @@ and is checked.
 
 ## How you know you succeeded
 
-The install completes and the build and lint pass. If you hit a conflict
-you cannot cleanly resolve — a dependency clash, a build error from the new code —
-fix what you safely can, then report it: put a one-line summary in your handoff's
-`conflict` field and the full detail in what you did. The user sees the one-liner
+The install completes and the integration is in place. If the build or lint fails
+only on pre-existing errors you did not introduce, that still counts as done —
+note the conflict and finish. Reserve a failed status for when your own changes
+break the build. Put a one-line summary of any conflict in your handoff's
+`conflict` field and the full detail in what you did; the user sees the one-liner
 in the outro and the detail in the report.
