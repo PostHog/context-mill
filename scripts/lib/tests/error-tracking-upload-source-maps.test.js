@@ -53,4 +53,34 @@ describe('error-tracking-upload-source-maps iOS variant', () => {
         // not fall back to the dotenv flow.
         expect(SKILL_BODY).toMatch(/\*\*iOS exception\*\*/);
     });
+
+    it('pins the verified iOS upload pipeline so agents cannot re-hallucinate it', () => {
+        // Every assertion below is a mistake an agent actually made in a live
+        // run (2026-07-15) before the skill pinned the correct form.
+
+        // 1. The canonical upload path is the SDK's bundled script, with
+        //    source bundling on — otherwise traces resolve names but no code.
+        expect(SKILL_BODY).toContain('upload-symbols.sh');
+        expect(SKILL_BODY).toContain('POSTHOG_INCLUDE_SOURCE=1');
+
+        // 2. The only real CLI command (agent invented `posthog-cli upload ios`
+        //    with --api-key/--dsym-path flags).
+        expect(SKILL_BODY).toContain('posthog-cli dsym upload');
+        expect(SKILL_BODY).toContain('no `posthog-cli upload ios` subcommand');
+
+        // 3. API host, not the SDK's ingestion host.
+        expect(SKILL_BODY).toMatch(/`\*\.i\.posthog\.com` ingestion host/);
+
+        // 4. Build-settings prerequisites for the upload phase.
+        expect(SKILL_BODY).toContain('ENABLE_USER_SCRIPT_SANDBOXING = NO');
+        expect(SKILL_BODY).toContain('dwarf-with-dsym');
+
+        // 5. Swift test affordance uses captureException; capture(error)
+        //    does not compile.
+        expect(SKILL_BODY).toContain('PostHogSDK.shared.captureException(error)');
+
+        // CocoaPods base-config chaining — overwriting the Pods xcconfig
+        // breaks the build.
+        expect(SKILL_BODY).toContain('#include?');
+    });
 });
