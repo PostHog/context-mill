@@ -44,7 +44,6 @@ commandments:
     - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
     - posthog-js is the JavaScript SDK package name
     - posthog.init() MUST be called before any other PostHog methods (capture, identify, etc.)
-    - Pass the project API key to posthog.init() straight from its env var — do NOT default it to an empty string or placeholder when missing; a missing key must fail visibly rather than silently disabling analytics (a default host URL is fine)
     - posthog-js is browser-only — do NOT import it in Node.js or server-side contexts (use posthog-node instead)
     - Autocapture is ON by default with posthog-js (tracks clicks, form submissions, pageviews). Keep autocapture enabled unless the user explicitly asks to turn it off.
     - NEVER send PII in posthog.capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
@@ -278,7 +277,6 @@ commandments:
     - Adapt dependency configuration to the appropriate build.gradle(.kts) file according to the project gradle version
     - Call `PostHogAndroid.setup()` only once in the Application class's `onCreate()` method, so it's initialized as early as possible and only once.
     - Initialize PostHog in the Application class's `onCreate()` method
-    - The project token is a public client-side key safe to embed in the app. Source it (BuildConfig field, Gradle/local.properties) but do NOT default it to an empty string when absent — an empty key silently disables analytics; ensure a real value always ships in the build.
     - Ensure every activity has a `android:label` to accurately track screen views.
 
   kmp:
