@@ -1,12 +1,12 @@
 ---
 type: build
-flow: posthog-integration
+flow: integration-v2
 label: Build and review the integration
 model_pi: openai/gpt-5.6-terra
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
-skills: [posthog-integration-build]
+skills: [integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init, identify, error-tracking, capture]

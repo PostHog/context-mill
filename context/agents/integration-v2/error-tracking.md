@@ -1,12 +1,12 @@
 ---
 type: error-tracking
-flow: posthog-integration
+flow: integration-v2
 label: Add error tracking
 model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
-skills: [posthog-integration-error-tracking-step]
+skills: [integration-v2-error-tracking-step]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]

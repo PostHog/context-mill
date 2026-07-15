@@ -1,11 +1,11 @@
 ---
 type: init
-flow: posthog-integration
+flow: integration-v2
 label: Set up PostHog initialization
 model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-haiku-4-5-20251001
-skills: [posthog-integration-init]
+skills: [integration-v2-init]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: []

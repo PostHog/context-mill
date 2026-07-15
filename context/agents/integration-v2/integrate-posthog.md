@@ -1,6 +1,6 @@
 ---
 type: integrate-posthog
-flow: posthog-integration
+flow: integration-v2
 seed: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: medium
