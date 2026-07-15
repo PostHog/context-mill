@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Create PostHog insights (trends, funnels) attached to a dashboard
+tags: [orchestrator, insight]
+variants:
+  - id: all
+    display_name: PostHog insight step
+    tags: [orchestrator, insight]
+    docs_urls: []
+cli:
+  role: internal
