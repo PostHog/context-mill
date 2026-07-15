@@ -43,7 +43,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — it handles PATH lookup, Release gating, CLI version, and release association; do not hand-roll it:
      - SPM: `POSTHOG_INCLUDE_SOURCE=1 "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
      - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
-  The `POSTHOG_INCLUDE_SOURCE=1` prefix is part of the command — dropping it is exactly the "frame resolved but source context not available" symptom (symbols upload, source never does). Direct CLI fallback: `posthog-cli dsym upload --directory "${DWARF_DSYM_FOLDER_PATH}" --main-dsym "${DWARF_DSYM_FILE_NAME}" --include-source` — there is no `upload ios` subcommand, no `--api-key` / `--dsym-path` flags.
+  The `POSTHOG_INCLUDE_SOURCE=1` prefix is part of the command, not optional. Direct CLI fallback: `posthog-cli dsym upload --directory "${DWARF_DSYM_FOLDER_PATH}" --main-dsym "${DWARF_DSYM_FILE_NAME}" --include-source` — there is no `upload ios` subcommand, no `--api-key` / `--dsym-path` flags.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
