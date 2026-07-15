@@ -39,11 +39,11 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
 - **iOS (Xcode)** iOS uploads **dSYM debug symbols**, not source maps. Required target changes:
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
-  2. `ENABLE_USER_SCRIPT_SANDBOXING = NO` (script phases fail with "Operation not permitted" otherwise).
-  3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — it handles PATH lookup, Release gating, CLI version, and release association; do not hand-roll it:
+  2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
+  3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — do not hand-roll the upload:
      - SPM: `POSTHOG_INCLUDE_SOURCE=1 "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
      - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
-  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` prefix HAS to be there. Direct CLI fallback: `posthog-cli dsym upload --directory "${DWARF_DSYM_FOLDER_PATH}" --main-dsym "${DWARF_DSYM_FILE_NAME}" --include-source` — there is no `upload ios` subcommand, no `--api-key` / `--dsym-path` flags.
+  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` prefix HAS to be there.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
@@ -57,7 +57,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
-- **iOS / Xcode does NOT use `.env`.** The secret key goes in a **gitignored `.xcconfig`** set as the target's base configuration — Xcode exports build settings into Run Script phase environments. Non-secret project id / host are `export` lines in the phase itself (in xcconfig `//` starts a comment, truncating URLs). `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com` / `https://eu.posthog.com`) — never the `*.i.posthog.com` ingestion host from the app's `PostHogConfig`.
+- **iOS / Xcode does NOT use `.env`** — all three `POSTHOG_CLI_*` values go in a gitignored `.xcconfig` (see the iOS example). `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -78,21 +78,14 @@ The upload credentials must be readable **by the build pipeline at build time**,
   ```json
   "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
-- **iOS (Xcode / posthog-cli)** No `.env` — wire credentials through Xcode:
-  1. Gitignored `PostHog.xcconfig` holding only the secret (commit an empty `PostHog.example.xcconfig` so teammates see the setting):
-     ```
-     #include? "Pods/Target Support Files/Pods-MyApp/Pods-MyApp.release.xcconfig"
-     POSTHOG_CLI_API_KEY = phx_your_personal_api_key
-     ```
-     The `#include?` line is CocoaPods-only — it chains the existing base config, which step 2 displaces. Chain in this direction; do NOT inject an include of `PostHog.xcconfig` into the generated Pods file via `post_install` (needs a re-run of `pod install`, and a wrong relative path fails silently). SPM projects drop the line.
-  2. Set `PostHog.xcconfig` as the Release configuration's `baseConfigurationReference` (Project ▸ Info ▸ Configurations).
-  3. Export the non-secret values in the upload Run Script phase, before the script:
-     ```bash
-     export POSTHOG_CLI_PROJECT_ID=12345
-     export POSTHOG_CLI_HOST=https://us.posthog.com
-     ```
-  In CI, set all three `POSTHOG_CLI_*` as job secrets instead — real env vars take precedence; no xcconfig on the runner.
-  `permission_denied` on upload usually means the key never reached the build and the CLI fell back to `~/.posthog` login credentials — check `xcodebuild -showBuildSettings -configuration Release | grep POSTHOG_CLI_API_KEY`.
+- **iOS (Xcode / posthog-cli)** No `.env` — a **gitignored** `PostHog.xcconfig`, set as the Release configuration's `baseConfigurationReference` (Project ▸ Info ▸ Configurations), carries all three values. Commit an empty `PostHog.example.xcconfig` so teammates see the settings:
+  ```
+  #include? "Pods/Target Support Files/Pods-MyApp/Pods-MyApp.release.xcconfig"
+  POSTHOG_CLI_API_KEY = phx_your_personal_api_key
+  POSTHOG_CLI_PROJECT_ID = 12345
+  POSTHOG_CLI_HOST = https:/$()/us.posthog.com
+  ```
+  The `#include?` line is CocoaPods-only (it chains the base config this file displaces); SPM projects drop it. The `$()` splits `//`, which would otherwise start an xcconfig comment. In CI, set the three `POSTHOG_CLI_*` as job secrets instead — no xcconfig on the runner.
 
 ### Write credentials to the env file
 
@@ -120,7 +113,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Vite** Build: `npm run build`. Run: `npm run preview`.
 - **Plain Node** Build: `npm run build`. Run: `node <built entry>` — read package.json `main`/`bin` and the build output dir to name the real file (e.g. `node dist/index.js`).
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
-- **iOS** Local build + run are one step: Xcode Run with the scheme's Build Configuration set to Release (the build phase uploads dSYMs). `xcodebuild` is for CI, not local testing.
+- **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
@@ -291,7 +284,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 - The handler must call the SDK's exception-capture method **directly** — do **not** `throw`. Throwing depends on the global error handler and shows a dev overlay; a direct capture is deterministic across platforms.
 - Pass a single Error (or platform-equivalent throwable). No custom message beyond the Error, no extra properties, no second argument — the Error's stack trace is what gets resolved.
 - Use distinctive copy on the trigger (button label / route path) so the resulting event is easy to find in the UI.
-- Read any file before editing it and capture its exact contents; after testing, restore every touched file and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
+- Read any file before editing it and capture its exact contents; after testing, restore every file the affordance touched — the affordance only, leave the upload and credential wiring in place — and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
 - The upload only happens on the *production build*: build, run, trigger the error, then confirm the stack trace in Error Tracking points at real source files, not minified bundle paths.
 
 #### Examples
@@ -308,7 +301,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
       PostHogSDK.shared.captureException(error)
   }
   ```
-  (`capture()` takes an event-name String, not an Error.) Testing needs a **Release** run: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release. This captures an event, not a crash — no debugger-detach or relaunch steps.
+  (`capture()` takes an event-name String, not an Error.) Test with a **Release** run (Edit Scheme ▸ Run ▸ Release); it's an event, not a crash — no debugger or relaunch steps.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
 ### Verify and hand off
