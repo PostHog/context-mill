@@ -82,5 +82,19 @@ describe('error-tracking-upload-source-maps iOS variant', () => {
         // CocoaPods base-config chaining — overwriting the Pods xcconfig
         // breaks the build.
         expect(SKILL_BODY).toContain('#include?');
+
+        // 6. Second live run (same day) inverted the chain via a Podfile
+        //    post_install hook, got the relative path wrong, and never re-ran
+        //    pod install — credentials silently vanished. Pin the direction,
+        //    the path arithmetic, and the debugging affordances.
+        expect(SKILL_BODY).toContain('Do NOT invert');
+        expect(SKILL_BODY).toContain('`../../../`, not `../../`');
+        expect(SKILL_BODY).toContain('~/.posthog');
+        expect(SKILL_BODY).toContain(
+            'xcodebuild -showBuildSettings -configuration Release | grep POSTHOG_CLI_API_KEY',
+        );
+        expect(SKILL_BODY).toContain(
+            '`POSTHOG_INCLUDE_SOURCE=1` prefix is REQUIRED',
+        );
     });
 });

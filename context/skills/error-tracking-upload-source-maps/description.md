@@ -90,6 +90,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
      ```
      #include? "Pods/Target Support Files/Pods-MyApp/Pods-MyApp.release.xcconfig"
      ```
+     Wire it exactly this way round — `PostHog.xcconfig` at the project root includes the Pods file and takes `baseConfigurationReference`. Do NOT invert it by injecting an `#include?` of `PostHog.xcconfig` into the generated Pods xcconfig from a Podfile `post_install` hook: the injection only lands after the next `pod install` (easy to forget), xcconfig includes resolve relative to the **including file's directory** — from `Pods/Target Support Files/Pods-<Target>/` the project root is `../../../`, not `../../` — and `#include?` swallows a wrong path **silently**, so the credentials just vanish.
   2. Assign `PostHog.xcconfig` to the target's build configuration (Project ▸ Info ▸ Configurations, or `baseConfigurationReference` in the pbxproj — the Release configuration is the one the upload runs under). Xcode then exposes `POSTHOG_CLI_API_KEY` to Run Script phases as an environment variable.
   3. In the dSYM-upload Run Script phase, export the two non-secret values before invoking the script (SPM path shown; CocoaPods: `"${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`):
      ```bash
@@ -97,6 +98,8 @@ The upload credentials must be readable **by the build pipeline at build time**,
      export POSTHOG_CLI_HOST=https://us.posthog.com
      POSTHOG_INCLUDE_SOURCE=1 "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"
      ```
+     The `POSTHOG_INCLUDE_SOURCE=1` prefix is REQUIRED, not decorative — without it PostHog resolves symbol names but shows **no source code** in stack traces.
+  **Silent-fallback trap**: if the key never reaches the build, `posthog-cli` falls back to any `~/.posthog` login credentials on the machine, so the upload fails with `permission_denied` (or lands in the wrong project) instead of "no credentials found". Before blaming the key, verify the chain delivers it: `xcodebuild -showBuildSettings -configuration Release | grep POSTHOG_CLI_API_KEY`.
   In CI, do **not** ship the xcconfig — set all three `POSTHOG_CLI_*` as job/environment secrets (Xcode Cloud environment variables, Fastlane `ENV`, GitHub Actions `env:`). Real environment variables take precedence and the build phase inherits them.
 
 ### Write credentials to the env file
