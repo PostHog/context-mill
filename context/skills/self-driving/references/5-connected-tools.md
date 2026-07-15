@@ -4,9 +4,15 @@ next_step: 6-scouts.md
 
 # Step 5 — Connected-tool sources (ask, then connect)
 
-External tools can feed the inbox too: GitHub Issues, Linear, Zendesk, and pganalyze. Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
+External tools can feed the inbox too: GitHub Issues, Linear, Zendesk, pganalyze, and Jira. Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
 
-Two of these the run can connect **itself**: GitHub Issues, and Linear via a one-click OAuth link (dedicated connector files below). The other two — Zendesk and pganalyze — need API credentials this run never collects, so the run does **not** send the user to the UI and does **not** check whether they connected: it just arms the dormant responder and records a follow-up. The user finishes those later (a downstream reminder prompts them).
+The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
+
+- **GitHub Issues** — reuses the GitHub App connected in step 3 (connector: `5a-github.md`).
+- **Linear** — a one-click OAuth link (connector: `5b-linear.md`).
+- **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
+
+A tool falls back to a **dormant responder** (the row is enabled but silent until a warehouse source exists) plus a follow-up **only** when the user skips or can't finish its connect step. That used to be the default for credential sources; it is now the exception.
 
 ## Status
 
@@ -18,7 +24,7 @@ Emit:
 
 ## Tools
 
-Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way.
+Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way. The credential connector (`5c-credentials.md`) additionally uses `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, and `external-data-sources-create` through the same `exec` tool.
 
 ## Do
 
@@ -34,18 +40,19 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
     { label: "GitHub Issues", value: "github-issues" },
     { label: "Linear", value: "linear" },
     { label: "Zendesk", value: "zendesk" },
-    { label: "pganalyze", value: "pganalyze" }
+    { label: "pganalyze", value: "pganalyze" },
+    { label: "Jira", value: "jira" }
   ]
 }
 ```
 
-2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists (`source_type` `Github` / `Linear` / `Zendesk` / `PgAnalyze`): record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
+2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists (`source_type` `Github` / `Linear` / `Zendesk` / `PgAnalyze` / `Jira`): record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
 
 3. Dispatch each picked tool that's still missing:
 
    - **GitHub Issues** → read `references/5a-github.md` and follow it.
    - **Linear** → read `references/5b-linear.md` and follow it.
-   - **Zendesk / pganalyze** → this run can't create their sources (it never collects the API credentials they need), so **don't ask the user to connect them and don't verify**. Just enable the dormant responder (step 4 below) and record "picked but not connected" with a follow-up. A downstream reminder prompts the user to add the warehouse source later; the responder stays dormant (harmless) and starts emitting once that source syncs.
+   - **Zendesk / pganalyze / Jira** (and any other API-credential source) → read `references/5c-credentials.md` and follow it. It hands the user a secure PostHog connect link, waits for them to store their credentials in the browser, then creates the live source from that stored credential. If they skip or don't finish, it falls back to the dormant responder + follow-up (step 4 below).
 
 4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
@@ -53,10 +60,11 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
    - Linear → `linear` / `issue`
    - Zendesk → `zendesk` / `ticket`
    - pganalyze → `pganalyze` / `issue`
+   - Jira → `jira` / `issue`
 
 5. Record each picked tool's final class honestly — the report consumes these verbatim:
 
-   - **connected by this setup** — the connector flow created the source (you have its id; the first sync starts automatically)
+   - **connected by this setup** — the connector flow created the source (you have its id; the first sync starts automatically). This now includes credential sources the user connected through the `5c-credentials.md` link, not just GitHub/Linear.
    - **already connected** / **verified connected** — the source row was seen in `external-data-sources-list`
-   - **picked but not connected** — the user picked the tool but no live warehouse source exists: Zendesk / pganalyze (never connected in-run), Linear when its integration didn't land, or a GitHub Issues fallback the user skipped. **Enable the dormant responder and add a "Connect <tool>…" follow-up** — this is harmless, because a responder only emits once its warehouse source actually syncs, so a dormant row just saves the user a later trip. Record it honestly — never write that the user "confirmed connecting" and never "not used". Phrase it as "you selected <tool>, but no warehouse source was detected — the responder is enabled and stays dormant until you add the source and it starts syncing", plus the follow-up with the new-warehouse-source URL
+   - **picked but not connected** — the user picked the tool but skipped or didn't finish its connect step, so no live warehouse source exists: a connect link they didn't complete (Zendesk / pganalyze / Jira), Linear when its integration didn't land, or a GitHub Issues fallback the user skipped. **Enable the dormant responder and add a "Connect <tool>…" follow-up** — this is harmless, because a responder only emits once its warehouse source actually syncs, so a dormant row just saves the user a later trip. Record it honestly — never write that the user "confirmed connecting" and never "not used". Phrase it as "you selected <tool>, but no warehouse source was connected — the responder is enabled and stays dormant until you add the source and it starts syncing", plus the follow-up with the new-warehouse-source URL
    - **not used** — the tool was **not picked** in the connected-tools multi-select. No responder, no follow-up; record "skipped (not used)".

@@ -38,7 +38,7 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
    - **Logs**: is the PostHog logs product in use (per the profile)?
    - **CSP**: is a Content-Security-Policy with PostHog CSP reporting configured?
    - **Support**: does the team use PostHog support/conversations (per the profile)?
-   - **Issue trackers**: any hints of Linear, Zendesk, or pganalyze (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
+   - **Issue trackers**: any hints of Linear, Zendesk, pganalyze, or Jira (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
 
    Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user about sources; for scouts, an unconfirmed surface won't rank among the most-used products, so step 6 won't enable its scout.
 
