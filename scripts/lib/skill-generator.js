@@ -258,7 +258,9 @@ function resolveVariantsFrom(config) {
             if (v.default) variant.default = v.default;
             return variant;
         });
-        resolved[key] = { ...group, variants };
+        // Drop the reference key — the resolved copy declares variants literally.
+        const { variants_from: _from, ...rest } = group;
+        resolved[key] = { ...rest, variants };
     }
     return resolved;
 }
