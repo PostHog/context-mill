@@ -40,6 +40,8 @@ describe('variants_from', () => {
             {
                 id: 'django',
                 display_name: 'Django',
+                framework: 'django',
+                default: true,
                 tags: ['django', 'python'],
                 docs_urls: ['https://posthog.com/docs/libraries/django.md'],
                 example_paths: 'example-apps/django',
@@ -75,6 +77,21 @@ describe('variants_from', () => {
         const skills = expandSkillGroups(config, tmpDir);
         const step = skills.find(s => s.id === 'flow-x-install-django');
         expect(step._examplePaths).toEqual([]);
+    });
+
+    it('borrows framework and default so variant steps resolve like the source', () => {
+        const config = { integration: integrationGroup(), 'flow-x/install': borrowingGroup() };
+        const skills = expandSkillGroups(config, tmpDir);
+        const step = skills.find(s => s.id === 'flow-x-install-django');
+        expect(step.framework).toBe('django');
+        expect(step.default).toBe(true);
+    });
+
+    it('does not mutate the input config', () => {
+        const config = { integration: integrationGroup(), 'flow-x/install': borrowingGroup() };
+        expandSkillGroups(config, tmpDir);
+        expect(config['flow-x/install'].variants).toBeUndefined();
+        expect(config['flow-x/install']._variantsResolved).toBeUndefined();
     });
 
     it('leaves the source group untouched', () => {

@@ -46,14 +46,22 @@ export function loadAgentEntries(agentsSourceDir) {
 }
 
 /**
- * A prompt's frontmatter `flow:` must match its folder — the folder is the
- * registry scope, the frontmatter keeps the file self-describing on disk.
+ * A prompt's frontmatter `flow:` must be present and match its folder — the
+ * folder is the registry scope, the frontmatter keeps the file
+ * self-describing on disk. Absence is an error, not a pass: consumers filter
+ * prompts by the frontmatter flow, so a missing key would build fine here and
+ * then silently drop the prompt from the registry at runtime.
  */
 function assertFlowMatches(sourcePath, flow) {
     const text = fs.readFileSync(sourcePath, 'utf8');
     const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     const declared = match?.[1].match(/^flow:\s*(.+?)\s*$/m)?.[1];
-    if (declared && declared !== flow) {
+    if (!declared) {
+        throw new Error(
+            `Agent prompt ${sourcePath} is missing the "flow:" frontmatter key — declare flow: ${flow}`,
+        );
+    }
+    if (declared !== flow) {
         throw new Error(
             `Agent prompt ${sourcePath} declares flow "${declared}" but lives in agents/${flow}/`,
         );

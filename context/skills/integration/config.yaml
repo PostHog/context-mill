@@ -1,4 +1,12 @@
 # Integration skills - example-based (code + docs)
+#
+# `framework` names the detection id a variant serves (the id the wizard's
+# detector emits, e.g. `rails`, `react-router`). It is emitted into
+# skill-menu.json so consumers resolve a framework to a variant by exact
+# match. When a family has several variants (app vs pages router), exactly
+# one carries `default: true` — the one a bare framework id resolves to.
+# Variants with no `framework` (e.g. react-vite, php) are only reachable by
+# their full id.
 type: skill
 template: description.md
 description: PostHog integration for {display_name} applications
@@ -6,6 +14,8 @@ shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
   - id: nextjs-app-router
+    framework: nextjs
+    default: true
     example_paths: example-apps/next-app-router
     display_name: Next.js App Router
     tags: [nextjs, react, ssr, app-router, javascript, javascript_web, javascript_node]
@@ -13,6 +23,7 @@ variants:
       - https://posthog.com/docs/libraries/next-js.md
 
   - id: nextjs-pages-router
+    framework: nextjs
     example_paths: example-apps/next-pages-router
     display_name: Next.js Pages Router
     tags: [nextjs, react, ssr, pages-router, javascript, javascript_web, javascript_node]
@@ -20,6 +31,8 @@ variants:
       - https://posthog.com/docs/libraries/next-js.md
 
   - id: react-react-router-6
+    framework: react-router
+    default: true
     example_paths: example-apps/react-react-router-6
     display_name: React Router v6
     tags: [react, react-router, v6, spa, javascript, javascript_web]
@@ -27,6 +40,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v6.md
 
   - id: react-react-router-7-framework
+    framework: react-router
     example_paths: example-apps/react-react-router-7-framework
     display_name: React Router v7 - Framework mode
     tags: [react, react-router, v7, framework, ssr, javascript, javascript_node, javascript_web]
@@ -34,6 +48,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
 
   - id: react-react-router-7-data
+    framework: react-router
     example_paths: example-apps/react-react-router-7-data
     display_name: React Router v7 - Data mode
     tags: [react, react-router, v7, data, spa, javascript, javascript_web]
@@ -41,6 +56,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
 
   - id: react-react-router-7-declarative
+    framework: react-router
     example_paths: example-apps/react-react-router-7-declarative
     display_name: React Router v7 - Declarative mode
     tags: [react, react-router, v7, declarative, spa, javascript, javascript_web]
@@ -56,6 +72,8 @@ variants:
       - https://posthog.com/docs/libraries/react.md
 
   - id: nuxt-3-6
+    framework: nuxt
+    default: true
     example_paths: example-apps/nuxt-3-6
     display_name: Nuxt 3.6
     description: PostHog integration for Nuxt versions 3.0 to 3.6
@@ -64,6 +82,7 @@ variants:
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
 
   - id: nuxt-4
+    framework: nuxt
     example_paths: example-apps/nuxt-4
     display_name: Nuxt 4
     description: PostHog integration for Nuxt 4 applications
@@ -72,6 +91,7 @@ variants:
       - https://posthog.com/docs/libraries/nuxt-js.md
 
   - id: vue-3
+    framework: vue
     example_paths: example-apps/vue-3
     display_name: Vue 3
     description: PostHog integration for Vue 3 applications
@@ -80,6 +100,7 @@ variants:
       - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
+    framework: django
     example_paths: example-apps/django
     display_name: Django
     tags: [django, python]
@@ -87,6 +108,7 @@ variants:
       - https://posthog.com/docs/libraries/django.md
 
   - id: flask
+    framework: flask
     example_paths: example-apps/flask
     display_name: Flask
     tags: [flask, python]
@@ -94,6 +116,7 @@ variants:
       - https://posthog.com/docs/libraries/flask.md
 
   - id: fastapi
+    framework: fastapi
     example_paths: example-apps/fastapi
     display_name: FastAPI
     description: PostHog integration for FastAPI applications
@@ -102,6 +125,7 @@ variants:
       - https://posthog.com/docs/libraries/python.md
 
   - id: react-tanstack-router-file-based
+    framework: tanstack-router
     example_paths: example-apps/react-tanstack-router-file-based
     display_name: React with TanStack Router (file-based)
     description: PostHog integration for React applications using TanStack Router with file-based routing
@@ -110,6 +134,8 @@ variants:
       - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: react-tanstack-router-code-based
+    framework: tanstack-router
+    default: true
     example_paths: example-apps/react-tanstack-router-code-based
     display_name: React with TanStack Router (code-based)
     description: PostHog integration for React applications using TanStack Router with code-based routing
@@ -118,6 +144,7 @@ variants:
       - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: tanstack-start
+    framework: tanstack-start
     example_paths: example-apps/tanstack-start
     display_name: TanStack Start
     description: PostHog integration for TanStack Start full-stack applications
@@ -126,6 +153,7 @@ variants:
       - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: laravel
+    framework: laravel
     example_paths: example-apps/laravel
     display_name: Laravel
     tags: [laravel, php]
@@ -141,6 +169,7 @@ variants:
       - https://posthog.com/docs/libraries/php.md
 
   - id: ruby-on-rails
+    framework: rails
     example_paths: example-apps/ruby-on-rails
     display_name: Ruby on Rails
     tags: [ruby-on-rails, ruby]
@@ -149,6 +178,7 @@ variants:
       - https://posthog.com/docs/libraries/ruby.md
 
   - id: android
+    framework: android
     example_paths: example-apps/android
     display_name: Android
     description: PostHog integration for Android applications
@@ -157,6 +187,7 @@ variants:
       - https://posthog.com/docs/libraries/android.md
       
   - id: sveltekit
+    framework: sveltekit
     example_paths: example-apps/sveltekit
     display_name: SvelteKit
     description: PostHog integration for SvelteKit applications
@@ -166,6 +197,7 @@ variants:
 
   # Language fallback skills, used when no specific framework is detected
   - id: python
+    framework: python
     example_paths: example-apps/python
     display_name: Python
     description: PostHog integration for any Python application using the Python SDK
@@ -175,6 +207,7 @@ variants:
       - https://posthog.com/docs/references/posthog-python.md
 
   - id: javascript_node
+    framework: javascript_node
     example_path: example-apps/javascript-node
     display_name: JavaScript Node
     description: PostHog integration for server-side Node.js applications using posthog-node
@@ -184,6 +217,7 @@ variants:
       - https://posthog.com/docs/references/posthog-node.md
  
   - id: javascript_web
+    framework: javascript_web
     example_path: example-apps/javascript-web
     display_name: JavaScript Web
     description: PostHog integration for client-side web JavaScript applications using posthog-js
@@ -193,6 +227,7 @@ variants:
       - https://posthog.com/docs/references/posthog-js.md
 
   - id: ruby
+    framework: ruby
     example_paths: example-apps/ruby
     display_name: Ruby
     description: PostHog integration for any Ruby application using the Ruby SDK
@@ -217,6 +252,7 @@ variants:
       - https://posthog.com/docs/libraries/go.md
 
   - id: swift
+    framework: swift
     example_paths:
       - example-apps/swift
       - example-apps/swift-xcodegen
@@ -237,6 +273,8 @@ variants:
       - https://posthog.com/docs/libraries/flutter.md
   
   - id: react-native
+    framework: react-native
+    default: true
     example_paths: example-apps/react-native
     display_name: React Native
     description: PostHog integration for React Native applications
@@ -245,6 +283,7 @@ variants:
       - https://posthog.com/docs/libraries/react-native.md
 
   - id: expo
+    framework: react-native
     example_paths: example-apps/expo
     display_name: Expo
     description: PostHog integration for Expo applications
@@ -253,6 +292,7 @@ variants:
       - https://posthog.com/docs/libraries/react-native.md
 
   - id: astro-static
+    framework: astro
     example_paths: example-apps/astro-static
     display_name: Astro (Static)
     description: PostHog integration for static Astro sites using SSG
@@ -261,6 +301,7 @@ variants:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-view-transitions
+    framework: astro
     example_paths: example-apps/astro-view-transitions
     display_name: Astro (View Transitions)
     description: PostHog integration for Astro with ClientRouter view transitions
@@ -269,6 +310,7 @@ variants:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-ssr
+    framework: astro
     example_paths: example-apps/astro-ssr
     display_name: Astro (SSR)
     description: PostHog integration for server-rendered Astro applications with API routes
@@ -277,6 +319,8 @@ variants:
       - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-hybrid
+    framework: astro
+    default: true
     example_paths: example-apps/astro-hybrid
     display_name: Astro (Hybrid)
     description: PostHog integration for Astro hybrid rendering with both static and server-rendered pages
@@ -285,6 +329,7 @@ variants:
       - https://posthog.com/docs/libraries/astro.md
     
   - id: angular
+    framework: angular
     example_paths: example-apps/angular
     display_name: Angular
     description: PostHog integration for Angular applications

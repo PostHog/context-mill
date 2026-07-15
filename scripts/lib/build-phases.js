@@ -190,11 +190,20 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     for (const skill of allSkills) {
         const cat = skill.group;
         if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
-        skillsByCategory[cat].push({
+        // `group` is the hyphenated skill-id prefix and `framework` the
+        // detection id a variant serves, so a consumer resolves a bare skill
+        // id + framework to a menu id by exact match instead of guessing from
+        // id prefixes. `default: true` marks the variant a bare framework id
+        // resolves to when a family has several (e.g. app vs pages router).
+        const entry = {
             id: skill.id,
             name: skill.name,
+            group: skill.group.replace(/\//g, '-'),
             downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
-        });
+        };
+        if (skill.framework) entry.framework = skill.framework;
+        if (skill.default) entry.default = true;
+        skillsByCategory[cat].push(entry);
     }
 
     // The CLI entries are the lookup table the wizard's runtime resolver uses
