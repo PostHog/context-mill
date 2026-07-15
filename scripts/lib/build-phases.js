@@ -197,21 +197,22 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
         if (skill.bundle) {
             let entry = bundleEntries.get(group);
             if (!entry) {
-                // `frameworks` lists what the bundle covers, so consumers can check a match without downloading it.
                 entry = {
                     id: group,
                     name: skill.name,
                     group,
                     bundle: true,
-                    frameworks: [],
+                    variants: [],
                     downloadUrl: url?.replace(/\/[^/]+\.zip$/, `/${group}.json`),
                 };
                 bundleEntries.set(group, entry);
                 skillsByCategory[cat].push(entry);
             }
-            if (skill.framework && !entry.frameworks.includes(skill.framework)) {
-                entry.frameworks.push(skill.framework);
-            }
+            // Each variant keeps its own id/framework/default so consumers resolve it exactly as they would a per-skill zip.
+            const variant = { id: skill.id };
+            if (skill.framework) variant.framework = skill.framework;
+            if (skill.default) variant.default = true;
+            entry.variants.push(variant);
             continue;
         }
         // group/framework/default let consumers resolve a bare skill id + framework by exact match.

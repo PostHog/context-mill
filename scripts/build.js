@@ -83,11 +83,7 @@ async function main() {
                 if (variants[skill.shortId]) {
                     throw new Error(`Duplicate variant "${skill.shortId}" in bundle "${group}"`);
                 }
-                variants[skill.shortId] = {
-                    framework: skill.framework,
-                    default: skill.default || undefined,
-                    files: readSkillFiles(skillDir),
-                };
+                variants[skill.shortId] = readSkillFiles(skillDir);
                 continue;
             }
             const buffer = await zipSkillToBuffer(skillDir);
