@@ -1,7 +1,10 @@
 # Write the setup report
 
 Write `posthog-setup-report.md` at the project root summarizing the integration.
-It is a new file you create — write it directly, do not read it first.
+When the file doesn't exist, write it directly — don't attempt a read first. If a
+previous run left one behind, `Read` it, then replace it wholesale (harnesses
+refuse to overwrite a file that wasn't read; nothing in the old report is worth
+merging).
 Draw on two sources only:
 
 - the run's queue log — `.posthog-wizard-cache/queue.json`, which holds each
