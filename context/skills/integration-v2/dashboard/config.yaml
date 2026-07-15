@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Create a starter PostHog dashboard from the captured events
+tags: [orchestrator, dashboard]
+variants:
+  - id: all
+    display_name: PostHog dashboard step
+    tags: [orchestrator, dashboard]
+    docs_urls: []
+cli:
+  role: internal

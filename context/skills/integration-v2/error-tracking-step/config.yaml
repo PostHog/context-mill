@@ -1,0 +1,9 @@
+# Orchestrator step-skill: fetched by task agents, never surfaced as a command.
+# The framework matrix is borrowed from the canonical integration group.
+type: docs-only
+template: description.md
+description: Capture exceptions with PostHog around critical flows
+tags: [orchestrator, error-tracking]
+cli:
+  role: internal
+variants_from: integration

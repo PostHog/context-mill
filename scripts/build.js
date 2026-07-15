@@ -12,6 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateAllSkills, fetchDoc } from './lib/skill-generator.js';
+import { buildAgents } from './lib/agent-generator.js';
 import { generateMarketplace } from './lib/marketplace-generator.js';
 import {
     loadDocsConfig,
@@ -102,6 +103,15 @@ async function main() {
 
         const skillMenu = JSON.parse(fs.readFileSync(path.join(skillsDir, 'skill-menu.json'), 'utf8'));
         console.log(`  ✓ skill-menu.json (${Object.keys(skillMenu.categories).length} categories, ${skills.length} skills)`);
+
+        console.log('\nBuilding agent prompts...');
+        const agentsResult = buildAgents({
+            configDir,
+            distDir,
+            baseUrl: process.env.AGENTS_BASE_URL,
+            version: BUILD_VERSION,
+        });
+        console.log(`  ✓ ${agentsResult.count} agent prompt(s) → dist/agents/ + agent-menu.json`);
 
         const releaseAssetDocs = docEntries.filter(d => d.release_asset);
         if (releaseAssetDocs.length > 0) {
