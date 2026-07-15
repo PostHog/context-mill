@@ -41,9 +41,9 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
   2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
   3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — do not hand-roll the upload:
-     - SPM: `POSTHOG_INCLUDE_SOURCE=1 "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
-     - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
-  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` prefix HAS to be there.
+     - SPM: `"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
+     - CocoaPods: `"${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
+  Source bundling comes from the `POSTHOG_INCLUDE_SOURCE = 1` line in the xcconfig ("Make credentials available at build time").
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
@@ -57,7 +57,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
-- **iOS / Xcode does NOT use `.env`** — all three `POSTHOG_CLI_*` values go in a gitignored `.xcconfig` (see the iOS example). `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
+- **iOS / Xcode does NOT use `.env`** — the whole config goes in a gitignored `.xcconfig` (see the iOS example). `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -78,14 +78,15 @@ The upload credentials must be readable **by the build pipeline at build time**,
   ```json
   "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
-- **iOS (Xcode / posthog-cli)** No `.env` — a **gitignored** `PostHog.xcconfig`, set as the Release configuration's `baseConfigurationReference` (Project ▸ Info ▸ Configurations), carries all three values. Commit an empty `PostHog.example.xcconfig` so teammates see the settings:
+- **iOS (Xcode / posthog-cli)** No `.env` — a **gitignored** `PostHog.xcconfig` at the project root, set as the Release configuration's `baseConfigurationReference` (Project ▸ Info ▸ Configurations), carries the whole config. Its pbxproj file reference goes in the ROOT group — under the Pods group it resolves to `Pods/PostHog.xcconfig` and breaks the build. Commit an empty `PostHog.example.xcconfig` so teammates see the settings:
   ```
   #include? "Pods/Target Support Files/Pods-MyApp/Pods-MyApp.release.xcconfig"
   POSTHOG_CLI_API_KEY = phx_your_personal_api_key
   POSTHOG_CLI_PROJECT_ID = 12345
   POSTHOG_CLI_HOST = https:/$()/us.posthog.com
+  POSTHOG_INCLUDE_SOURCE = 1
   ```
-  The `#include?` line is CocoaPods-only (it chains the base config this file displaces); SPM projects drop it. The `$()` splits `//`, which would otherwise start an xcconfig comment. In CI, set the three `POSTHOG_CLI_*` as job secrets instead — no xcconfig on the runner.
+  The `#include?` line is CocoaPods-only (it chains the base config this file displaces); SPM projects drop it. The `$()` splits `//`, which would otherwise start an xcconfig comment. In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no xcconfig on the runner.
 
 ### Write credentials to the env file
 
