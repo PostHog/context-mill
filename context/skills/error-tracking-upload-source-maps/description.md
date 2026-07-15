@@ -293,7 +293,6 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
       PostHogSDK.shared.captureException(error)
   }
   ```
-  (`capture()` takes an event-name String, not an Error.) Test with a **Release** run (Edit Scheme ▸ Run ▸ Release); it's an event, not a crash — no debugger or relaunch steps.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
 ### Verify and hand off
