@@ -4,7 +4,7 @@
     <h1 v-else>Welcome to Burrito Consideration App</h1>
 
     <div v-if="user">
-      <p>You are now logged in. Feel free to explore:</p>
+      <p>You are logged in. Feel free to explore:</p>
       <ul>
         <li>Consider the potential of burritos</li>
         <li>View your profile and statistics</li>

@@ -16,7 +16,9 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-project-profile-get,mcp__posthog-wizard__query-session-recordings-list,mcp__posthog-wizard__survey-list,mcp__posthog-wizard__error-issue-list`.
+{{> mcp-tool-calling}}
+
+Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `signals-scout-project-profile-get`, `query-session-recordings-list`, `surveys-get-all`, and `query-error-tracking-issues-list`.
 
 ## Do
 
@@ -26,8 +28,8 @@ Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-pr
 
 3. **Server-side product usage.** The run prompt's "Project state" block is authoritative for the opt-ins it lists (session replay recording, exception autocapture, surveys): **opt-in ON = product enabled**, even if no data has arrived yet. Where the block says OFF/unknown and the repo gave no signal, spend ONE cheap probe each for usage evidence (tolerate 403/404 → record "unknown"):
    - `query-session-recordings-list` — any recording → replay in use
-   - `survey-list` — any survey → surveys in use
-   - `error-issue-list` — any issue → error tracking in use, even when this repo doesn't instrument it
+   - `surveys-get-all` — any survey → surveys in use
+   - `query-error-tracking-issues-list` — any issue → error tracking in use, even when this repo doesn't instrument it
 
 4. **Light scan for what the report, profile, and server state won't cover.** Targeted lookups only — package manifests, config files, a grep or two. You are answering these questions:
    - **Revenue**: is there a payment SDK (Stripe, Paddle, LemonSqueezy, RevenueCat…) or revenue events?
@@ -36,7 +38,7 @@ Load via `ToolSearch select:Read,Glob,Grep,mcp__posthog-wizard__signals-scout-pr
    - **Logs**: is the PostHog logs product in use (per the profile)?
    - **CSP**: is a Content-Security-Policy with PostHog CSP reporting configured?
    - **Support**: does the team use PostHog support/conversations (per the profile)?
-   - **Issue trackers**: any hints of Linear, Zendesk, or pganalyze (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
+   - **Issue trackers**: any hints of Linear, Zendesk, pganalyze, or Jira (you will still ask in step 5 — hints only shape the question, they never authorize enabling).
 
    Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user about sources; for scouts, an unconfirmed surface won't rank among the most-used products, so step 6 won't enable its scout.
 

@@ -16,7 +16,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-create,mcp__posthog-wizard__inbox-source-configs-partial-update,mcp__posthog-wizard__inbox-source-configs-list`.
+Reach the source-config tools through the PostHog `exec` tool — `info` then `call` for `inbox-source-configs-create`, `inbox-source-configs-partial-update`, and `inbox-source-configs-list`.
 
 ## The write recipe (use for every source here and in step 5)
 
@@ -40,6 +40,6 @@ Load via `ToolSearch select:mcp__posthog-wizard__inbox-source-configs-create,mcp
 - `llm_analytics` (internal-only, not a user-facing responder)
 - `logs` (not a v1 responder)
 - Anything with `source_type` `evaluation` or `alert_state_change`
-- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`) — those are step 5, ask-first.
+- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`, `jira`) — those are step 5, ask-first.
 
 Record every enable/skip decision with its reason — the report needs them.

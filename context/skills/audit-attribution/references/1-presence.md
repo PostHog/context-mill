@@ -32,7 +32,7 @@ Run **two `Grep` calls in parallel**, both with `output_mode: "files_with_matche
 
 ### b. Abort or continue
 
-- **Init grep returns zero hits anywhere in the project:** emit `[ABORT] No PostHog SDK initialization found` and stop. The wizard catches `[ABORT]` and terminates the run. Do NOT seed the ledger in this case.
+- **Init grep returns zero hits anywhere in the project:** emit `[ABORT] PostHog SDK initialization not found` and stop. The wizard catches `[ABORT]` and terminates the run. Do NOT seed the ledger in this case.
 - **Init found:** continue to (c). Even projects with no explicit click-id capture rely on PostHog's built-in UTM auto-capture; each step's individual rules decide whether to skip or warn based on the kind of evidence present.
 
 ### c. Seed the audit ledger

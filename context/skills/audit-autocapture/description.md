@@ -15,7 +15,7 @@ The audit ledger is seeded by the wizard with one pending check per autocapture 
 
 **Start by reading the path relative to this file at `references/1-presence.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
 
-`ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:Grep`). Do **not** use it to browse for other tools — every tool the audit needs (`Glob`, `Grep`, `Read`, `Write`, `Bash`, the named `mcp__wizard-tools__audit_*` tools, and `mcp__posthog__*` for optimize-side checks) is already named in this skill.
+`ToolSearch` is only for loading a tool by exact name when the SDK has it deferred (e.g. `select:Grep`). Do **not** use it to browse for other tools — every tool the audit needs (`Glob`, `Grep`, `Read`, `Write`, `Bash`, the named `mcp__wizard-tools__audit_*` tools) is already named in this skill. The optimize-side checks reach PostHog through its single `exec` tool, described in the optimize reference.
 
 **Do not call `TaskCreate` / `TaskUpdate` / `TaskGet` / `TaskList`.** The audit doesn't track its own task list — progress comes from the audit ledger plus `[STATUS]` lines.
 
@@ -65,7 +65,7 @@ After the final step writes the report, delete `.posthog-audit-checks.json`.
 
 Report abort states with `[ABORT]` prefixed messages. The wizard catches these and terminates the run — do not halt yourself.
 
-- No PostHog SDK initialization found (no `posthog.init` anywhere in the codebase)
+- PostHog SDK initialization not found (no `posthog.init` anywhere in the codebase)
 
 ## Framework guidelines
 

@@ -16,7 +16,7 @@ Emit:
 
 ## Tools
 
-Load via `ToolSearch select:mcp__posthog-wizard__signals-scout-config-sync,mcp__posthog-wizard__signals-scout-config-list,mcp__posthog-wizard__signals-scout-config-update`.
+Reach the scout-config tools through the PostHog `exec` tool — `info` then `call` for `signals-scout-config-sync`, `signals-scout-config-list`, and `signals-scout-config-update`.
 
 ## Do
 

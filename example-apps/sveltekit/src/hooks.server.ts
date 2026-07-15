@@ -53,6 +53,9 @@ export const handleError: HandleServerError = async ({ error, status, message })
 		}
 	});
 
+	// handleError runs per request; flush so the enqueued event sends before it returns
+	await posthog.flush();
+
 	return {
 		message,
 		status
