@@ -228,15 +228,19 @@ function normalizeExamplePaths(value) {
 /**
  * Resolve `variants_from` references: a group may borrow another group's
  * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls — never example paths, templates,
- * cli blocks, or shared docs, which stay the borrowing group's own concern.
- * One level only; a source group must declare its variants literally.
+ * across — id, display_name, tags, docs_urls, framework, default — never
+ * example paths, templates, cli blocks, or shared docs, which stay the
+ * borrowing group's own concern. One level only; a source group must declare
+ * its variants literally. Pure — returns a new config, never mutates the input.
  */
 function resolveVariantsFrom(config) {
+    const resolved = {};
     for (const [key, group] of Object.entries(config)) {
-        if (!group.variants_from) continue;
+        if (!group.variants_from) {
+            resolved[key] = group;
+            continue;
+        }
         if (group.variants) {
-            if (group._variantsResolved) continue;
             throw new Error(`Skill group "${key}": declare either variants or variants_from, not both`);
         }
         const source = config[group.variants_from];
@@ -246,14 +250,19 @@ function resolveVariantsFrom(config) {
         if (source.variants_from) {
             throw new Error(`Skill group "${key}": variants_from cannot chain ("${group.variants_from}" also uses variants_from)`);
         }
-        group.variants = source.variants.map(v => {
+        const variants = source.variants.map(v => {
             const variant = { id: v.id, display_name: v.display_name };
             if (v.tags) variant.tags = [...v.tags];
             if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
+            if (v.framework) variant.framework = v.framework;
+            if (v.default) variant.default = v.default;
             return variant;
         });
-        group._variantsResolved = true;
+        // Drop the reference key — the resolved copy declares variants literally.
+        const { variants_from: _from, ...rest } = group;
+        resolved[key] = { ...rest, variants };
     }
+    return resolved;
 }
 
 /**
@@ -263,9 +272,9 @@ function resolveVariantsFrom(config) {
  */
 function expandSkillGroups(config, configDir) {
     const skills = [];
-    resolveVariantsFrom(config);
+    const resolvedConfig = resolveVariantsFrom(config);
 
-    for (const [key, group] of Object.entries(config)) {
+    for (const [key, group] of Object.entries(resolvedConfig)) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
 
@@ -796,6 +805,12 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
+    if (s.framework) {
+        result.framework = s.framework;
+    }
+    if (s.default) {
+        result.default = true;
+    }
     if (s._cli) {
         result.cli = s._cli;
     }

@@ -190,11 +190,16 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     for (const skill of allSkills) {
         const cat = skill.group;
         if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
-        skillsByCategory[cat].push({
+        // group/framework/default let consumers resolve a bare skill id + framework by exact match.
+        const entry = {
             id: skill.id,
             name: skill.name,
+            group: skill.group.replace(/\//g, '-'),
             downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
-        });
+        };
+        if (skill.framework) entry.framework = skill.framework;
+        if (skill.default) entry.default = true;
+        skillsByCategory[cat].push(entry);
     }
 
     // The CLI entries are the lookup table the wizard's runtime resolver uses
