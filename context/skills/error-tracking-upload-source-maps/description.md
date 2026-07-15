@@ -41,9 +41,9 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
   2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
   3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — do not hand-roll the upload:
-     - SPM: `"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
-     - CocoaPods: `"${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
-  Source bundling comes from the `POSTHOG_INCLUDE_SOURCE = 1` line in the xcconfig ("Make credentials available at build time").
+     - SPM: `POSTHOG_INCLUDE_SOURCE=1 "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
+     - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
+  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` prefix HAS to be there.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
@@ -84,7 +84,6 @@ The upload credentials must be readable **by the build pipeline at build time**,
   POSTHOG_CLI_API_KEY = phx_your_personal_api_key
   POSTHOG_CLI_PROJECT_ID = 12345
   POSTHOG_CLI_HOST = https:/$()/us.posthog.com
-  POSTHOG_INCLUDE_SOURCE = 1
   ```
   The `#include?` line is CocoaPods-only (it chains the base config this file displaces); SPM projects drop it. The `$()` splits `//`, which would otherwise start an xcconfig comment. In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no xcconfig on the runner.
 
