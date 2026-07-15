@@ -190,11 +190,7 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     for (const skill of allSkills) {
         const cat = skill.group;
         if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
-        // `group` is the hyphenated skill-id prefix and `framework` the
-        // detection id a variant serves, so a consumer resolves a bare skill
-        // id + framework to a menu id by exact match instead of guessing from
-        // id prefixes. `default: true` marks the variant a bare framework id
-        // resolves to when a family has several (e.g. app vs pages router).
+        // group/framework/default let consumers resolve a bare skill id + framework by exact match.
         const entry = {
             id: skill.id,
             name: skill.name,

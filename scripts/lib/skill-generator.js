@@ -231,8 +231,7 @@ function normalizeExamplePaths(value) {
  * across — id, display_name, tags, docs_urls, framework, default — never
  * example paths, templates, cli blocks, or shared docs, which stay the
  * borrowing group's own concern. One level only; a source group must declare
- * its variants literally. Returns a new config; the input is never mutated,
- * so repeated expansion of the same config is naturally stable.
+ * its variants literally. Pure — returns a new config, never mutates the input.
  */
 function resolveVariantsFrom(config) {
     const resolved = {};

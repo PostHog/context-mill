@@ -46,11 +46,8 @@ export function loadAgentEntries(agentsSourceDir) {
 }
 
 /**
- * A prompt's frontmatter `flow:` must be present and match its folder — the
- * folder is the registry scope, the frontmatter keeps the file
- * self-describing on disk. Absence is an error, not a pass: consumers filter
- * prompts by the frontmatter flow, so a missing key would build fine here and
- * then silently drop the prompt from the registry at runtime.
+ * A prompt's frontmatter `flow:` must be present and match its folder —
+ * consumers filter by it, so a missing key would silently drop the prompt.
  */
 function assertFlowMatches(sourcePath, flow) {
     const text = fs.readFileSync(sourcePath, 'utf8');

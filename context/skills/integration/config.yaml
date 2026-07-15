@@ -1,12 +1,5 @@
 # Integration skills - example-based (code + docs)
-#
-# `framework` names the detection id a variant serves (the id the wizard's
-# detector emits, e.g. `rails`, `react-router`). It is emitted into
-# skill-menu.json so consumers resolve a framework to a variant by exact
-# match. When a family has several variants (app vs pages router), exactly
-# one carries `default: true` — the one a bare framework id resolves to.
-# Variants with no `framework` (e.g. react-vite, php) are only reachable by
-# their full id.
+# `framework` = the detection id a variant serves; `default: true` marks the family default. Both are emitted into skill-menu.json.
 type: skill
 template: description.md
 description: PostHog integration for {display_name} applications
