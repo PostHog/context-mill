@@ -41,9 +41,9 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
   2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
   3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — do not hand-roll the upload:
-     - SPM: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_DOTENV_FILE="${SRCROOT}/.env" "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
-     - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_DOTENV_FILE="${SRCROOT}/.env" "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
-  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` and `POSTHOG_DOTENV_FILE` prefixes HAVE to be there. Update posthog-ios to the latest version first — older `upload-symbols.sh` silently ignores `POSTHOG_DOTENV_FILE`.
+     - SPM: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
+     - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
+  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` and `POSTHOG_CLI_DOTENV_FILE` prefixes HAVE to be there. Update posthog-cli first (`npm install -g @posthog/cli@latest`) — older CLIs silently ignore `POSTHOG_CLI_DOTENV_FILE`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
@@ -57,7 +57,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
-- **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
+- **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -78,7 +78,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
   ```json
   "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
-- **iOS (Xcode / posthog-cli)** A gitignored `.env` next to the `.xcodeproj` — the Run Script invocation's `POSTHOG_DOTENV_FILE="${SRCROOT}/.env"` prefix hands it to posthog-cli. No Xcode project wiring beyond the Run Script phase. In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner.
+- **iOS (Xcode / posthog-cli)** A gitignored `.env` next to the `.xcodeproj` — the Run Script invocation's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix hands it to posthog-cli. No Xcode project wiring beyond the Run Script phase. In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner.
 
 ### Write credentials to the env file
 
