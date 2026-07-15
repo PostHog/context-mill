@@ -187,16 +187,35 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     fs.writeFileSync(path.join(skillsDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
     const skillsByCategory = {};
+    const bundleEntries = new Map();
     for (const skill of allSkills) {
         const cat = skill.group;
         if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+        const group = skill.group.replace(/\//g, '-');
+        const url = manifest.resources.find(r => r.id === skill.id)?.downloadUrl;
+        // A bundled group publishes one entry; the consumer picks the variant inside.
+        if (skill.bundle) {
+            let entry = bundleEntries.get(group);
+            if (!entry) {
+                // `frameworks` lists what the bundle covers, so consumers can check a match without downloading it.
+                entry = {
+                    id: group,
+                    name: skill.name,
+                    group,
+                    bundle: true,
+                    frameworks: [],
+                    downloadUrl: url?.replace(/\/[^/]+\.zip$/, `/${group}.json`),
+                };
+                bundleEntries.set(group, entry);
+                skillsByCategory[cat].push(entry);
+            }
+            if (skill.framework && !entry.frameworks.includes(skill.framework)) {
+                entry.frameworks.push(skill.framework);
+            }
+            continue;
+        }
         // group/framework/default let consumers resolve a bare skill id + framework by exact match.
-        const entry = {
-            id: skill.id,
-            name: skill.name,
-            group: skill.group.replace(/\//g, '-'),
-            downloadUrl: manifest.resources.find(r => r.id === skill.id)?.downloadUrl,
-        };
+        const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
         if (skill.framework) entry.framework = skill.framework;
         if (skill.default) entry.default = true;
         skillsByCategory[cat].push(entry);
