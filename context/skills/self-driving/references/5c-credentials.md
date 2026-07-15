@@ -14,9 +14,17 @@ Emit (substitute the tool name):
 
 ## Tools
 
-Reach all three through the PostHog `exec` tool (`info` then `call`): `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, `data-warehouse-source-setup`.
+Reach all three through the PostHog `exec` tool (`info` then `call`): `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, `external-data-sources-create`.
 
-`<Type>` below is the capitalized data-warehouse source type: `Zendesk`, `PgAnalyze`, `Jira` (the same string `external-data-sources-list` reports). The connect page renders the right credential form for that kind on its own.
+`<Type>` below is the capitalized data-warehouse source type, and `<table>` is the **one** actionable table its responder reads (sync only that one, like the Linear connector — not every table the source has):
+
+| Tool      | `<Type>`    | `<table>`  |
+| --------- | ----------- | ---------- |
+| Zendesk   | `Zendesk`   | `tickets`  |
+| pganalyze | `PgAnalyze` | `issues`   |
+| Jira      | `Jira`      | `issues`   |
+
+The connect page renders the right credential form for that kind on its own.
 
 ## Do
 
@@ -43,18 +51,21 @@ Reach all three through the PostHog `exec` tool (`info` then `call`): `data-ware
    - **Credential present** → create the source (below).
    - **None present** (the user didn't actually store anything, or it expired) → **don't re-ask or wait** — record "picked but not connected" and return to step 5 (the dormant responder + follow-up cover it; the user can finish the connect page later). This run never nudges.
 
-4. **Create the source** with `data-warehouse-source-setup`, passing the stored credential by reference — never inline secrets:
+4. **Create the source** with `external-data-sources-create`, passing the stored credential by reference and syncing **only** the one actionable table — never inline secrets, never every table:
 
 ```json
 {
   "source_type": "<Type>",
-  "payload": { "credential_id": "<credential id>" }
+  "payload": {
+    "credential_id": "<credential id>",
+    "schemas": [{ "name": "<table>", "should_sync": true, "sync_type": "full_refresh" }]
+  }
 }
 ```
 
-   `setup` validates the stored credentials, discovers the tables, and creates the source in one call. It enables **all** discoverable tables (unlike the Linear connector's single `issues` table); that's fine — the responder only reads the actionable one (tickets / issues) and the extra tables are harmless. Note in the report that all tables were enabled so the user can trim them later if they want.
+   `full_refresh`, not incremental: inbox records get edited and closed after they're created, so an incremental append would miss the updates (the same reason the issues connectors use it). `create` validates the stored credentials, creates the source with just that one table, and consumes the credential.
 
    - Success returns the source `id` → record "connected by this setup (source id …, first sync started)".
-   - Any failure (invalid or expired credentials, validation error) → don't loop the user back through the page; record "picked but not connected" and return to step 5 (dormant responder + follow-up). A failed connect never dead-ends the run.
+   - Any failure (invalid or expired credentials, validation error, or a backend old enough that `create` doesn't yet accept `credential_id`) → don't loop the user back through the page; record "picked but not connected" and return to step 5 (dormant responder + follow-up). A failed connect never dead-ends the run.
 
 Return to step 5 (responder enabling and class recording happen there).
