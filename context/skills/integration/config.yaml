@@ -235,6 +235,14 @@ variants:
     tags: [flutter, dart, mobile]
     docs_urls:
       - https://posthog.com/docs/libraries/flutter.md
+
+  - id: kmp
+    template: description-kmp-docs-only.md
+    display_name: Kotlin Multiplatform
+    description: PostHog integration for Kotlin Multiplatform (KMP) shared code targeting Android, iOS, and web using the posthog-kmp SDK
+    tags: [kmp, kotlin, multiplatform, mobile]
+    docs_urls:
+      - https://posthog.com/docs/libraries/kmp.md
   
   - id: react-native
     example_paths: example-apps/react-native
