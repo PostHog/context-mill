@@ -120,7 +120,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Vite** Build: `npm run build`. Run: `npm run preview`.
 - **Plain Node** Build: `npm run build`. Run: `node <built entry>` — read package.json `main`/`bin` and the build output dir to name the real file (e.g. `node dist/index.js`).
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
-- **iOS** Build: `xcodebuild …`. Run: launch the scheme on a simulator/device (Xcode).
+- **iOS** Local build + run are one step: Xcode Run with the scheme's Build Configuration set to Release (the build phase uploads dSYMs). `xcodebuild` is for CI, not local testing.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
@@ -308,7 +308,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
       PostHogSDK.shared.captureException(error)
   }
   ```
-  (`capture()` takes an event-name String, not an Error.) Testing needs a **Release** run: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release.
+  (`capture()` takes an event-name String, not an Error.) Testing needs a **Release** run: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release. This captures an event, not a crash — no debugger-detach or relaunch steps.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
 ### Verify and hand off
