@@ -21,7 +21,7 @@ describe('buildAgents flow frontmatter', () => {
 
     afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
 
-    it('builds a prompt whose flow matches its folder', () => {
+    it('builds a prompt as a flat asset whose flow matches its folder', () => {
         writeFileSync(
             join(configDir, 'agents', 'my-flow', 'task.md'),
             prompt('type: task\nflow: my-flow'),
@@ -29,9 +29,13 @@ describe('buildAgents flow frontmatter', () => {
         const { count } = buildAgents({ configDir, distDir, baseUrl: 'http://x' });
         expect(count).toBe(1);
         const menu = JSON.parse(readFileSync(join(distDir, 'agents', 'agent-menu.json'), 'utf8'));
+        // Flat asset name + a downloadUrl at the same root as the menu — GitHub
+        // release assets can't live at a nested path.
         expect(menu.agents).toEqual([
-            { id: 'task', flow: 'my-flow', downloadUrl: 'http://x/my-flow/task.md' },
+            { id: 'task', flow: 'my-flow', downloadUrl: 'http://x/agent-my-flow-task.md' },
         ]);
+        expect(existsSync(join(distDir, 'agents', 'agent-my-flow-task.md'))).toBe(true);
+        expect(existsSync(join(distDir, 'agents', 'my-flow'))).toBe(false);
     });
 
     it('rejects a prompt missing the flow key — consumers filter by it', () => {
@@ -63,6 +67,19 @@ describe('buildAgents flow frontmatter', () => {
         );
         const { count } = buildAgents({ configDir, distDir, baseUrl: 'http://x' });
         expect(count).toBe(1);
-        expect(existsSync(join(distDir, 'agents', 'my-flow', 'README.md'))).toBe(false);
+        expect(existsSync(join(distDir, 'agents', 'agent-my-flow-README.md'))).toBe(false);
+    });
+
+    it('sweeps away a legacy nested dist layout on rebuild', () => {
+        // Simulate a dist/ left by the old nested build.
+        mkdirSync(join(distDir, 'agents', 'my-flow'), { recursive: true });
+        writeFileSync(join(distDir, 'agents', 'my-flow', 'task.md'), 'stale');
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'task.md'),
+            prompt('type: task\nflow: my-flow'),
+        );
+        buildAgents({ configDir, distDir, baseUrl: 'http://x' });
+        expect(existsSync(join(distDir, 'agents', 'my-flow'))).toBe(false);
+        expect(existsSync(join(distDir, 'agents', 'agent-my-flow-task.md'))).toBe(true);
     });
 });

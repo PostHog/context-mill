@@ -140,6 +140,7 @@ jobs:
             This release contains:
             - **skills-mcp-resources.zip** - Bundle containing skills manifest + all skill ZIPs
             - Individual skill ZIPs for direct download
+            - **agent-menu.json** + agent prompt markdown (drives the wizard-orchestrator flow)
 
             **Version:** ${{ steps.version.outputs.version }}
             **SHA:** ${{ github.sha }}
@@ -177,6 +178,30 @@ jobs:
             echo "Uploading $filename..."
             gh release upload "$RELEASE_TAG" "$file" --clobber
           done
+
+      - name: Upload agent prompts and agent menu
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # Agent prompts drive the wizard-orchestrator flow. They're flat
+          # markdown assets (agent-<flow>-<type>.md) served from the same
+          # release root as agent-menu.json.
+          for file in dist/agents/*.md; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            gh release upload "$RELEASE_TAG" "$file" --clobber
+          done
+          # Upload agent-menu.json (used by the wizard to discover agent prompts)
+          echo "Uploading agent-menu.json..."
+          gh release upload "$RELEASE_TAG" dist/agents/agent-menu.json --clobber
+
+      - name: Verify release assets match menus
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: node scripts/verify-release-assets.js "$RELEASE_TAG"
 
       - name: Update latest tag
         env:
