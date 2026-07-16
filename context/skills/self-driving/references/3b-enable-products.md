@@ -18,11 +18,13 @@ Emit:
 
 ## Tools
 
-Reach `products-enable` through the PostHog `exec` tool (`info products-enable`, then `call products-enable <json>`).
+The purpose-built `products-enable` tool is the preferred path, but it is **not yet published on the PostHog MCP** — check for it exactly once with `info products-enable` and branch on the result. Do not spend turns searching for it under other names. The fallback is `project-settings-update`, which flips the same products as raw project-settings fields.
 
 ## Do
 
-1. Call `products-enable` to turn the products on:
+1. Enable the products. Run `info products-enable` once:
+
+   **If the tool exists**, call it:
 
 ```
 { "products": ["session_replay", "error_tracking", "conversations"] }
@@ -30,7 +32,15 @@ Reach `products-enable` through the PostHog `exec` tool (`info products-enable`,
 
    It is idempotent and server-owned — the response is `{ "results": { <product>: "enabled" | "already_enabled" } }`. The run prompt's "Project state read at auth time" block tells you which are already ON, so you can leave those out (re-sending is harmless either way). Record the per-product result — the report lists it.
 
-   If the call is rejected for permissions (e.g. some of these need project admin the user lacks), don't abort: record a follow-up to enable them from a project-admin account, and continue. **A rejection here does not block the next step** — enabling a product (this step) and enabling its signal source (step 4) are independent calls, so step 4 still switches the sources on. They simply sit idle until the products are on, then pick up data with no re-setup.
+   **If the tool is not found** (the expected case today), call `project-settings-update` instead — PATCH semantics, only the fields you send change:
+
+```
+{ "id": "@current", "session_recording_opt_in": true, "autocapture_exceptions_opt_in": true, "conversations_enabled": true }
+```
+
+   Leave out any field the "Project state read at auth time" block shows as already ON. One difference from `products-enable`: this does not mint the Support widget token, so if Conversations was previously off, record a follow-up to finish Support setup in the PostHog UI even when the call succeeds.
+
+   If either call is rejected for permissions, don't abort — that outcome is expected on some tokens: the wizard's token carries the narrow `product_enablement:write` scope minted for `products-enable`, not the broader project write access `project-settings-update` needs. Record a follow-up to enable the products from a project-admin account (Settings → Session replay / Error tracking / Conversations), and continue. **A rejection here does not block the next step** — enabling a product (this step) and enabling its signal source (step 4) are independent calls, so step 4 still switches the sources on. They simply sit idle until the products are on, then pick up data with no re-setup.
 
 2. **Web app** (this repo serves a browser frontend / loads `posthog-js`): the server flip only takes effect if the client init doesn't override it. Find the `posthog.init(...)` call and check its options:
    - `disable_session_recording: true` cancels the replay enable → remove that option (or set it `false`).
