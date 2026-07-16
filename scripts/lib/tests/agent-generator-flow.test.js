@@ -30,7 +30,7 @@ describe('buildAgents flow frontmatter', () => {
         expect(count).toBe(1);
         const menu = JSON.parse(readFileSync(join(distDir, 'agents', 'agent-menu.json'), 'utf8'));
         expect(menu.agents).toEqual([
-            { id: 'task', flow: 'my-flow', downloadUrl: 'http://x/my-flow/task.md' },
+            { id: 'task', flow: 'my-flow', downloadUrl: 'http://x/agents-my-flow-task.md' },
         ]);
     });
 

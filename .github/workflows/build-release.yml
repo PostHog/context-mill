@@ -175,6 +175,8 @@ jobs:
           # Upload skill-menu.json (used by the wizard to discover available skills)
           echo "Uploading skill-menu.json..."
           gh release upload "$RELEASE_TAG" dist/skills/skill-menu.json --clobber
+          # Upload the orchestrator agent prompts + menu (flat asset names)
+          gh release upload "$RELEASE_TAG" dist/agents/agent-menu.json dist/agents/agents-*.md --clobber
           # Upload each bundled group (one JSON of every variant, in place of per-variant ZIPs)
           for file in dist/skills/*.json; do
             filename=$(basename "$file")

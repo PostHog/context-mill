@@ -14,9 +14,14 @@
 
 import fs from 'fs';
 import path from 'path';
+import { REPO_URL } from './constants.js';
 
-const DEFAULT_AGENTS_BASE_URL =
-    'https://github.com/PostHog/context-mill/releases/latest/download/agents';
+/** Release assets are a flat namespace: agent prompts live at the release root, like skills. */
+function defaultAgentsBaseUrl(version) {
+    return version && version !== 'dev'
+        ? `${REPO_URL}/releases/download/v${version}`
+        : `${REPO_URL}/releases/latest/download`;
+}
 
 /**
  * The agent prompts available in source: one { flow, id } per
@@ -74,7 +79,7 @@ function assertFlowMatches(sourcePath, flow) {
 export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     const agentsSourceDir = path.join(configDir, 'agents');
     const agentsDistDir = path.join(distDir, 'agents');
-    const resolvedBase = (baseUrl || DEFAULT_AGENTS_BASE_URL).replace(/\/+$/, '');
+    const resolvedBase = (baseUrl || defaultAgentsBaseUrl(version)).replace(/\/+$/, '');
 
     fs.mkdirSync(agentsDistDir, { recursive: true });
 
@@ -83,9 +88,9 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     for (const { flow, id } of entries) {
         const sourcePath = path.join(agentsSourceDir, flow, `${id}.md`);
         assertFlowMatches(sourcePath, flow);
-        fs.mkdirSync(path.join(agentsDistDir, flow), { recursive: true });
-        fs.copyFileSync(sourcePath, path.join(agentsDistDir, flow, `${id}.md`));
-        agents.push({ id, flow, downloadUrl: `${resolvedBase}/${flow}/${id}.md` });
+        const assetName = `agents-${flow}-${id}.md`;
+        fs.copyFileSync(sourcePath, path.join(agentsDistDir, assetName));
+        agents.push({ id, flow, downloadUrl: `${resolvedBase}/${assetName}` });
     }
 
     const menu = { version: '1.0', buildVersion: version, agents };
@@ -95,7 +100,7 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     );
 
     // Reconcile: drop dist files and folders whose source markdown was removed.
-    const keep = new Set(entries.map(e => path.join(e.flow, `${e.id}.md`)));
+    const keep = new Set(entries.map(e => `agents-${e.flow}-${e.id}.md`));
     keep.add('agent-menu.json');
     const walk = dir => {
         for (const dirent of fs.readdirSync(dir, { withFileTypes: true })) {
