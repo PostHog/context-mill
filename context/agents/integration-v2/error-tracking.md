@@ -2,7 +2,7 @@
 type: error-tracking
 flow: integration-v2
 label: Add error tracking
-model_pi: openai/gpt-5.6-luna
+model_pi: openai/gpt-5.6-terra
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
