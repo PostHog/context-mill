@@ -1,21 +1,33 @@
 # Identify users
 
-Call the SDK's identify method at the moment the app learns who the user is —
-typically on login and signup success.
+Identity works differently either side of the network, so work out which side you
+are on before you wire anything.
+
+On a client, call the SDK's identify method at the moment the app learns who the
+user is — typically on login and signup success. The library remembers it from
+there, so identify once rather than per page or per event, and reset on logout so
+the next user starts clean.
+
+On a server there is no such moment: one process serves every user at once, so
+identity belongs to the request rather than to a login. Bind it once for the whole
+request — through the SDK's context API, or the framework middleware where the SDK
+ships one — and let the captures inside inherit it. A context around a single
+capture buys nothing.
 
 - Use a stable unique id as the distinct id (the user id from your auth), not an
-  email or display name.
+  email or display name — including in server-side calls, where framework docs
+  sometimes show an email in the example.
 - Attach useful person properties (email, name, plan).
-- Reset the session on logout, where the SDK supports it, so the next user starts
-  clean.
 
 Find the auth flow first: login and signup handlers, session callbacks. If the
 app has no concept of a user, there is nothing to identify — report that and stop.
 
-If the app has both a client and a server, keep them on the same person: forward
-the client's distinct id and session id to the backend (the
-`X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` request headers are the usual
-carrier) so server-side events stitch to the same user rather than splitting off.
+If the app has both a client and a server, keep them on the same person. Set the
+client SDK's `tracing_headers` to the backend's hostname (hostnames only) and it
+adds the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` request headers on its
+own — do not hand-roll a fetch wrapper for it. The server reads those headers, but
+they are client-controlled: prefer the authenticated user id for anything
+security-sensitive.
 
 ## Reference
 

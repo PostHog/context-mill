@@ -34,6 +34,13 @@ If the project uses a specific PostHog product mentioned below, consult the rele
   - If this applies, consult `references/identify-users.md`.
 - If the project uses both browser and server runtimes:
   - Use the SDK that matches each runtime instead of sharing one implementation across both.
+  - Keep both runtimes on one person. Set `tracing_headers` to your backend's
+    hostname (hostnames only — no protocol, path, or port) and `posthog-js` adds
+    `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` to matching `fetch` and
+    `XMLHttpRequest` calls; the server SDK reads them. Without it, server events
+    orphan from the frontend person.
+  - Those headers are client-controlled analytics context, not authentication.
+    For anything security-sensitive, pass the authenticated user id explicitly.
   - If this applies, consult the relevant framework or server docs below.
 - If the project uses browser-side PostHog:
   - Initialize it once and do it early.
@@ -58,7 +65,10 @@ If the project uses React:
 If the project uses Next.js:
 
 - For Next.js 15.3+, initialize PostHog in `instrumentation-client.ts`.
-- Keep browser and server SDK usage separate.
+- Keep browser and server SDK usage separate, but stitch them to one person with
+  `tracing_headers`.
+- The docs' server examples pass `session.user.email` as the distinct id. Do not
+  copy that: use the stable user id and keep the email a person property.
 - If this applies, consult [the Next.js docs](https://posthog.com/docs/libraries/next-js).
 
 ### TanStack Router / Start
@@ -109,6 +119,10 @@ If the project uses React Native or Expo:
 If the project uses Node.js (`posthog-node`):
 
 - For long-running servers, enable exception autocapture and install the framework's error handler integration.
+- Bind identity to the request, not to each capture: `withContext` carries a
+  `distinctId` and properties across every event captured inside it, exceptions
+  included. On Express, `setupExpressRequestContext` does it for the whole request
+  from the incoming tracing headers.
 - For short-lived processes, call `await posthog.shutdown()` before exit. If needed, use `await posthog.shutdown(shutdownTimeoutMs?)`.
 - Use `posthog.flush()` only for per-request cleanup.
 - Reverse proxy guidance does not apply to the server SDK itself.
@@ -120,7 +134,11 @@ If the project uses Python:
 
 - Use the `Posthog()` instance API, not the module-level config.
 - Set `enable_exception_autocapture=True` when exception capture is needed.
-- Use `set(...)` or `identify_context(...)`, not `identify()`.
+- Identity belongs to a context, not to a call: `identify_context(...)` (or
+  `set(...)` for person properties), never `identify()`. Everything captured
+  inside a context inherits it, exceptions included, so bind it once per unit of
+  work — a fresh context at the top of each route — and let plain `capture(...)`
+  calls inherit. Wrapping an individual capture in its own context buys nothing.
 - For scripts or CLIs, register `atexit.register(posthog.shutdown)` or call `posthog.shutdown()` before exit.
 - If this applies, consult [the PostHog Python reference](https://posthog.com/docs/references/posthog-python).
 
@@ -128,7 +146,11 @@ If the project uses Python:
 
 If the project uses Django:
 
-- Add `PosthogContextMiddleware`.
+- Add `PosthogContextMiddleware`, placed after Django's `AuthenticationMiddleware`.
+- That middleware already opens the request context and identifies it — from the
+  `X-POSTHOG-DISTINCT-ID` header, falling back to the authenticated user's `pk`.
+  So do not call `identify_context` yourself, and do not open a context around a
+  capture: plain `capture(...)` in a view already inherits the request's identity.
 - Initialize PostHog in `AppConfig.ready()` from env vars.
 - Do not write custom middleware or `distinct_id` helpers first.
 - For management commands or other short-lived processes, call the underlying Python client's `posthog.shutdown()` before exit.
@@ -139,6 +161,9 @@ If the project uses Django:
 If the project uses Flask:
 
 - Initialize PostHog globally in `create_app()` before blueprint registration.
+- No middleware ships for Flask, so nothing binds identity for you: open a fresh
+  context at the top of each route and identify it there, preferring the
+  authenticated user id and falling back to the incoming `X-POSTHOG-DISTINCT-ID`.
 - Call `posthog.capture_exception(e)` from centralized error handlers.
 - For CLI commands, jobs, or other short-lived processes, call the underlying Python client's `posthog.shutdown()` before exit.
 - If this applies, consult [the Flask docs](https://posthog.com/docs/libraries/flask).
@@ -148,6 +173,9 @@ If the project uses Flask:
 If the project uses FastAPI:
 
 - Initialize PostHog in lifespan startup and call `posthog.shutdown()` in lifespan shutdown.
+- No middleware ships for FastAPI either — bind identity per request yourself, in
+  a dependency or middleware that opens a context and identifies it, rather than
+  at each capture.
 - Prefer Pydantic Settings with `@lru_cache`.
 - Use `Depends` for current user and settings in handlers.
 - If this applies, consult [the Python docs](https://posthog.com/docs/libraries/python).
@@ -169,6 +197,10 @@ If the project uses PHP or Laravel:
 - Use `posthog/posthog-php` and initialize once before calling static SDK methods.
 - Pass associative arrays, not positional args.
 - For Laravel, wrap PostHog in a service and configure it via `config/posthog.php`.
+- Bind identity per request rather than per capture: `PostHog::contextFromHeaders`
+  reads the incoming tracing headers and `PostHog::withContext` wraps the request
+  in that context. Prefer the authenticated id (`auth()->id()`) for anything
+  security-sensitive.
 - If this applies, consult [the Laravel docs](https://posthog.com/docs/libraries/laravel).
 
 ### Swift (iOS/macOS)
