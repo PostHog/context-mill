@@ -147,10 +147,15 @@ If the project uses Python:
 If the project uses Django:
 
 - Add `PosthogContextMiddleware`, placed after Django's `AuthenticationMiddleware`.
-- That middleware already opens the request context and identifies it — from the
+- That middleware opens the request context and identifies it — from the
   `X-POSTHOG-DISTINCT-ID` header, falling back to the authenticated user's `pk`.
-  So do not call `identify_context` yourself, and do not open a context around a
-  capture: plain `capture(...)` in a view already inherits the request's identity.
+  Where the user is already authenticated, a plain `capture(...)` inherits that
+  identity and needs no context of its own.
+- It reads the user once, at the top of the request, before your view runs. So a
+  view that changes who the user is — login, signup, logout — executes under a
+  context identified as whoever they were beforehand, which is nobody on a login.
+  There, open a fresh context and identify it after the auth state changes, or the
+  event is attributed to the wrong person.
 - Initialize PostHog in `AppConfig.ready()` from env vars.
 - Do not write custom middleware or `distinct_id` helpers first.
 - For management commands or other short-lived processes, call the underlying Python client's `posthog.shutdown()` before exit.
