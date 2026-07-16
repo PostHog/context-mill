@@ -284,6 +284,8 @@ function expandSkillGroups(config, configDir) {
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
         const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
+        // `packaging: bundle` ships the group as one JSON whose variants live inside.
+        const bundled = group.packaging === 'bundle';
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -334,6 +336,7 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _group: key,
+                _bundle: bundled,
                 _cli: cli,
             });
         }
@@ -810,6 +813,9 @@ function serializeSkill(s) {
     }
     if (s.default) {
         result.default = true;
+    }
+    if (s._bundle) {
+        result.bundle = true;
     }
     if (s._cli) {
         result.cli = s._cli;
