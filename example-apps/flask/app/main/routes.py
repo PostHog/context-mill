@@ -1,10 +1,10 @@
 """Core view functions demonstrating PostHog integration patterns."""
 
-import posthog
 from flask import flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
-from posthog import capture, identify_context, new_context, tag
+from posthog import identify_context, new_context, tag
 
+from app.extensions import posthog_client
 from app.main import main_bp
 from app.models import User
 
@@ -32,7 +32,7 @@ def home():
                 tag("is_staff", user.is_staff)
                 tag("date_joined", user.date_joined.isoformat())
 
-                capture("user_logged_in", properties={"login_method": "password"})
+                posthog_client.capture("user_logged_in", properties={"login_method": "password"})
 
             return redirect(url_for("main.dashboard"))
         else:
@@ -75,7 +75,7 @@ def signup():
                 tag("is_staff", user.is_staff)
                 tag("date_joined", user.date_joined.isoformat())
 
-                capture("user_signed_up", properties={"signup_method": "form"})
+                posthog_client.capture("user_signed_up", properties={"signup_method": "form"})
 
             # Log the user in
             login_user(user)
@@ -92,7 +92,7 @@ def logout():
     # PostHog: Capture logout event before session ends
     with new_context():
         identify_context(current_user.email)
-        capture("user_logged_out")
+        posthog_client.capture("user_logged_out")
 
     logout_user()
     return redirect(url_for("main.home"))
@@ -105,10 +105,10 @@ def dashboard():
     # PostHog: Capture dashboard view
     with new_context():
         identify_context(current_user.email)
-        capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
+        posthog_client.capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
 
     # Check feature flag
-    show_new_feature = posthog.feature_enabled(
+    show_new_feature = posthog_client.feature_enabled(
         "new-dashboard-feature",
         current_user.email,
         person_properties={
@@ -118,7 +118,7 @@ def dashboard():
     )
 
     # Get feature flag payload
-    feature_config = posthog.get_feature_flag_payload(
+    feature_config = posthog_client.get_feature_flag_payload(
         "new-dashboard-feature", current_user.email
     )
 
@@ -144,6 +144,6 @@ def profile():
     # PostHog: Capture profile view
     with new_context():
         identify_context(current_user.email)
-        capture("profile_viewed")
+        posthog_client.capture("profile_viewed")
 
     return render_template("profile.html")

@@ -18,7 +18,7 @@ class PostHogMiddleware:
     """Pure ASGI middleware that wraps each request in a PostHog context.
 
     If the user is authenticated, identifies them in the context so routes
-    can just call capture() without needing to set up context each time.
+    can just call posthog_client.capture() without setting up context each time.
 
     Uses pure ASGI interface for better performance than BaseHTTPMiddleware.
     """

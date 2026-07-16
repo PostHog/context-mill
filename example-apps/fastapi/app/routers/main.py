@@ -3,11 +3,12 @@
 from pathlib import Path
 from typing import Annotated
 
-import posthog
 from fastapi import APIRouter, Cookie, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from posthog import capture, identify_context, new_context
+from posthog import identify_context, new_context
+
+from app.posthog_client import posthog_client
 
 from app.dependencies import (
     CurrentUser,
@@ -49,7 +50,7 @@ async def login(
         is_new_user = user.record_login(db)
         with new_context():
             identify_context(user.email)
-            capture(
+            posthog_client.capture(
                 "user_logged_in",
                 properties={
                     "$set": {"email": user.email, "is_staff": user.is_staff},
@@ -115,7 +116,7 @@ async def signup(
 
     with new_context():
         identify_context(user.email)
-        capture(
+        posthog_client.capture(
             "user_signed_up",
             properties={
                 "$set": {"email": user.email, "is_staff": user.is_staff},
@@ -138,7 +139,7 @@ async def signup(
 @router.get("/logout")
 async def logout(current_user: RequiredUser):
     """Logout and capture event."""
-    capture("user_logged_out")
+    posthog_client.capture("user_logged_out")
 
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie(key="session_token")
@@ -151,10 +152,10 @@ async def dashboard(
     current_user: RequiredUser,
 ):
     """Dashboard with feature flag demonstration."""
-    capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
+    posthog_client.capture("dashboard_viewed", properties={"is_staff": current_user.is_staff})
 
     # Check feature flag
-    show_new_feature = posthog.feature_enabled(
+    show_new_feature = posthog_client.feature_enabled(
         "new-dashboard-feature",
         current_user.email,
         person_properties={
@@ -164,7 +165,7 @@ async def dashboard(
     )
 
     # Get feature flag payload
-    feature_config = posthog.get_feature_flag_payload(
+    feature_config = posthog_client.get_feature_flag_payload(
         "new-dashboard-feature", current_user.email
     )
 
@@ -196,7 +197,7 @@ async def burrito(
 @router.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, current_user: RequiredUser):
     """User profile page."""
-    capture("profile_viewed")
+    posthog_client.capture("profile_viewed")
 
     return templates.TemplateResponse(
         request, "profile.html", {"current_user": current_user}
@@ -214,7 +215,7 @@ async def update_profile(
     fields_changed = current_user.update_profile(db, name=name)
 
     if fields_changed:
-        capture(
+        posthog_client.capture(
             "profile_updated",
             properties={
                 "username": current_user.email,

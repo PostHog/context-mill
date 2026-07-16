@@ -66,7 +66,9 @@ commandments:
     - posthog is the Python SDK package name
     - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
-    - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
+    - 'Initialize with the Posthog() class constructor — `posthog_client = Posthog("<token>", host="https://us.i.posthog.com")` — and share that ONE instance across the app. Module-level `posthog.api_key = ...` config is the legacy pattern: when a docs snippet shows it, translate it to the constructor. (Exception: Django — its documented apps.py setup is module-level by design; follow the Django docs there)'
+    - 'With a constructor-built client, call capture(), capture_exception(), feature_enabled(), and get_feature_flag_payload() ON THAT INSTANCE. Do NOT mix in the module-level helpers (`from posthog import capture`) — they route to a separate hidden default client configured only by module-level settings, so events sent through them are silently dropped when you initialized via the constructor'
+    - 'The context helpers new_context(), identify_context(), tag(), and set_context_session() DO work with an instance client: import them module-level (`from posthog import new_context, identify_context, tag`) or call them as instance methods — the context stack is process-global. Instance capture calls inside `with new_context():` automatically pick up the context distinct_id and tags, so no distinct_id argument is needed there; pass distinct_id explicitly only when capturing outside a context'
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
@@ -221,14 +223,14 @@ commandments:
 
   react-native:
     - posthog-react-native is the React Native SDK package name
-    - Use react-native-config to load POSTHOG_PROJECT_TOKEN and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
+    - 'In bare React Native (non-Expo) projects, use react-native-config to load POSTHOG_PROJECT_TOKEN and POSTHOG_HOST from .env (variables are embedded at build time, not runtime). Expo projects must NOT use react-native-config — when the expo rules are also present, they take precedence over this line'
     - react-native-svg is a required peer dependency of posthog-react-native (used by the surveys feature) and must be installed alongside it
     - Place PostHogProvider INSIDE NavigationContainer for React Navigation v7 compatibility
 
   expo:
     - posthog-react-native is the React Native SDK package name (same as bare RN)
-    - Use expo-constants with app.config.js extras for POSTHOG_PROJECT_TOKEN and POSTHOG_HOST (NOT react-native-config)
-    - Access config via `Constants.expoConfig?.extra?.posthogProjectToken` in your posthog.ts config file
+    - 'Load PostHog config from EXPO_PUBLIC_-prefixed env vars via process.env (e.g. `process.env.EXPO_PUBLIC_POSTHOG_KEY`) — the standard Expo approach when the project has no app.config.js; when the project already manages config through app.config.js extras, expo-constants extras also works. NEVER use react-native-config in Expo — this rule overrides the bare-React-Native env-var rule when both appear'
+    - 'When using the app.config.js extras approach, access config via `Constants.expoConfig?.extra?.posthogProjectToken` in your posthog.ts config file'
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
