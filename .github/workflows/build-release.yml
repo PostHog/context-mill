@@ -143,7 +143,12 @@ jobs:
 
             **Version:** ${{ steps.version.outputs.version }}
             **SHA:** ${{ github.sha }}
-          draft: false
+          # Publish as a draft so `releases/latest` keeps pointing at the previous
+          # complete release while assets upload. Uploading takes a few minutes and
+          # skill-menu.json lands last, so a live release here would 404 the wizard
+          # for that window. Flipped to published in "Publish release" once every
+          # asset is uploaded.
+          draft: true
           prerelease: false
 
       - name: Upload skills bundle
@@ -184,6 +189,15 @@ jobs:
             echo "Uploading $filename..."
             gh release upload "$RELEASE_TAG" "$file" --clobber
           done
+
+      - name: Publish release
+        # Every asset (bundle, skill ZIPs, skill-menu.json, docs) is now uploaded,
+        # so flip the draft to published atomically. This is the point `releases/latest`
+        # moves to the new version — the wizard never sees it without skill-menu.json.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --draft=false --latest
 
       - name: Update latest tag
         env:
