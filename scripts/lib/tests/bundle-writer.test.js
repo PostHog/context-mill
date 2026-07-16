@@ -97,6 +97,16 @@ describe('writeBundles', () => {
         expect(Object.keys(readBundle().variants)).toEqual(['django']);
     });
 
+    it('rejects duplicate variant ids instead of silently overwriting', () => {
+        expect(() =>
+            writeBundles({
+                skills: [skill('django'), skill('django')],
+                sourceDir: sourceDir(),
+                skillsDir: skillsDir(),
+            }),
+        ).toThrow('duplicate variant id "django"');
+    });
+
     it('returns the written bundles so the caller can archive them', () => {
         const artifacts = writeBundles({
             skills: [skill('django')],

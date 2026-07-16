@@ -351,7 +351,13 @@ function writeBundles({ skills, sourceDir, skillsDir, merge = false, log = () =>
                 ? JSON.parse(fs.readFileSync(file, 'utf8')).variants
                 : {};
         const bundle = { id: group, variants: { ...existing } };
+        const seen = new Set();
         for (const skill of variants) {
+            // Two variants resolving to one short id would silently overwrite each other.
+            if (seen.has(skill.shortId)) {
+                throw new Error(`Bundle "${group}" has duplicate variant id "${skill.shortId}"`);
+            }
+            seen.add(skill.shortId);
             bundle.variants[skill.shortId] = readSkillFiles(path.join(sourceDir, skill.id));
         }
         const json = JSON.stringify(bundle);
