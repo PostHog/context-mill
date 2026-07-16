@@ -7,3 +7,4 @@ tags: [orchestrator, init]
 cli:
   role: internal
 variants_from: integration
+packaging: bundle

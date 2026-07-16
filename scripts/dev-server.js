@@ -282,10 +282,17 @@ function serveFile(res, filePath, contentType, attachmentName = null) {
 
 function createServer() {
     const server = http.createServer((req, res) => {
-        const skillMatch = req.url?.match(/^\/skills\/(.+\.zip)$/);
+        // A skill is served as its own zip, or — for a bundled group — as one JSON of every variant.
+        const skillMatch = req.url?.match(/^\/skills\/(.+\.(zip|json))$/);
         if (skillMatch) {
-            const skillFile = skillMatch[1];
-            serveFile(res, path.join(skillsDir, skillFile), 'application/zip', skillFile);
+            const [skillFile, ext] = [skillMatch[1], skillMatch[2]];
+            const isZip = ext === 'zip';
+            serveFile(
+                res,
+                path.join(skillsDir, skillFile),
+                isZip ? 'application/zip' : 'application/json',
+                isZip ? skillFile : undefined,
+            );
             return;
         }
 
@@ -316,13 +323,14 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
-        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /agent-menu.json\n  /agents/{flow}/{type}.md');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /skills/{group}.json\n  /agent-menu.json\n  /agents/{flow}/{type}.md');
     });
 
     server.listen(PORT, () => {
         console.log('\n🚀 Development server started!');
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
+        console.log(`📦 Bundled group:    http://localhost:${PORT}/skills/{group}.json`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
         console.log(`🤖 Agent prompt:     http://localhost:${PORT}/agents/{flow}/{type}.md`);
         console.log(`📋 Agents menu:      http://localhost:${PORT}/agent-menu.json`);
