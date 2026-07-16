@@ -18,6 +18,7 @@ Decide which events are worth capturing in this app, then instrument them in the
 same pass — read each file once, choose the events, and add the capture calls
 while the file is already open.
 
+
 ## How you know you succeeded
 
 The meaningful user actions across the app have capture calls that fire on the

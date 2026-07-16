@@ -17,6 +17,12 @@ Initialize PostHog: create the framework's init point so the SDK is configured
 once and available across the app, set the PostHog environment variables through
 the wizard tools, and document those keys in `.env.example` for other developers.
 
+Try to follow these principles, in order: codebase convention, don't make any
+unnecessary changes, keep the change as lean as possible for an easy review, and
+follow the shape of the examples provided. How call sites will reach the client
+is part of the convention: match how this project's modules reach shared
+services (usually a plain import), not a registry or locator lookup.
+
 ## How you know you succeeded
 
 The init file exists and the PostHog env keys are present. Keys live in the env

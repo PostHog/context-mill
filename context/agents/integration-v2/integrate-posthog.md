@@ -24,6 +24,8 @@ Plan a PostHog integration and seed the task queue with this graph:
 - `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
   it installs the dependencies and verifies the project builds, lints, and passes
   its tests.
+- `review`, after `build`, parallel to `dashboard` and `report` — a fresh set of
+  eyes over every change the run made, fixing what fails review.
 - `dashboard`, after `build` — only once the integration is confirmed building,
   linting, and testing cleanly.
 - `report`, after `dashboard` — it writes the setup report last.
