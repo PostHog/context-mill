@@ -14,10 +14,15 @@ dependsOn: [install, init]
 
 ## Goal
 
-Wire user identification: call PostHog identify wherever the app establishes who
-the user is, typically at login and signup.
+Wire user identification so everything the app reports — its errors as much as its
+events — carries who the user is. Where the SDK remembers an identity once it is
+established, establish it at the moment the app learns who the user is. Where
+identity is instead scoped to a unit of work, bind it once for that whole scope
+rather than at the individual call sites inside it.
 
 ## How you know you succeeded
 
-An identify call fires at the point the user becomes known, with a stable
-distinct id. If the app has no auth or user concept, say so and stop.
+While a user is known, what the app reports is attributable to them with a stable
+distinct id — the errors it reports, not only the events — and identity is
+established in as few places as the SDK allows. If the app has no auth or user
+concept, say so and stop.

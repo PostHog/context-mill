@@ -17,10 +17,11 @@ dependsOn: []
 Plan a PostHog integration and seed the task queue with this graph:
 
 - `install` and `init`, independent of each other.
-- `identify`, `capture`, and `error-tracking`, each after `install` and `init`
-  and independent of one another, so they run in parallel. `capture` decides the
-  events and instruments them; `error-tracking` wires the single global error
-  boundary — it needs the SDK installed and initialized, not the events.
+- `identify` and `error-tracking`, each after `install` and `init` and independent
+  of one another, so they run in parallel. `error-tracking` wires the single global
+  error boundary — it needs the SDK installed and initialized, not the events.
+- `capture`, after `identify` — it decides the events and instruments them, and it
+  reads how identity is already established before it instruments anything.
 - `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
   it installs the dependencies and verifies the project builds, lints, and passes
   its tests.

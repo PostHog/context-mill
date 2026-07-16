@@ -6,7 +6,7 @@ model_pi: openai/gpt-5.6-terra
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
-skills: [integration-v2-error-tracking-step]
+skills: [integration-v2-error-tracking-step, posthog-best-practices]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
 dependsOn: [install, init]
