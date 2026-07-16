@@ -26,4 +26,6 @@ part of the shape: reach it the way the docs and the example project reach it.
 
 The init file exists and the PostHog env keys are present. Keys live in the env
 file, never hardcoded in source, and `.env.example` lists the key names (with
-placeholder values) so the next developer knows what to set.
+placeholder values) so the next developer knows what to set. Your handoff names the
+files you changed, how the client is constructed in them, and how a call site
+reaches that client — every step after you has to reach the same one the same way.

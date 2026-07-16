@@ -20,4 +20,6 @@ end.
 ## How you know you succeeded
 
 The SDK is listed in the manifest's dependencies at a sensible version. If it is
-already declared, leave it and say so.
+already declared, leave it and say so. Your handoff names the manifest you changed
+and the package and version you declared, so the steps after you import it under
+the name they will actually get.

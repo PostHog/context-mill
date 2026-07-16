@@ -43,5 +43,7 @@ follows from that answer:
 Identification matches the kind of app you are in. While a user is known, what the
 app reports is attributable to them with a stable distinct id — the errors it
 reports, not only the events — established once at the boundary the SDK gives you
-and never re-established at individual call sites. If the app has no auth or user
-concept, say so and stop.
+and never re-established at individual call sites. Your handoff names the files you
+changed, how identity is established in them, and what a later step must do for its
+own calls to inherit it — whether that is nothing at all, or tagging each call
+itself. If the app has no auth or user concept, say so and stop.
