@@ -315,11 +315,61 @@ function validateDefault(entries) {
  * Delete `dist/skills/<id>.zip` files whose IDs are no longer in `allSkills`.
  * Returns the array of removed filenames.
  */
+/** Read a built skill dir into { relativePath: contents }. */
+function readSkillFiles(dir) {
+    const files = {};
+    for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
+        if (!entry.isFile()) continue;
+        const abs = path.join(entry.parentPath ?? entry.path, entry.name);
+        files[path.relative(dir, abs)] = fs.readFileSync(abs, 'utf8');
+    }
+    return files;
+}
+
+/**
+ * Write each bundled group as one `<group>.json` holding every variant's files,
+ * read from the built skill dirs under `sourceDir`.
+ *
+ * `merge` keeps the variants already on disk and replaces only the ones passed
+ * in — the dev server rebuilds a single variant at a time and must not drop the
+ * other 36. A full build writes fresh so a deleted variant cannot survive.
+ *
+ * Returns { filename: Buffer } so the caller can add the bundles to the archive.
+ */
+function writeBundles({ skills, sourceDir, skillsDir, merge = false, log = () => {} }) {
+    const groups = {};
+    for (const skill of skills) {
+        if (!skill.bundle) continue;
+        (groups[skill.group.replace(/\//g, '-')] ??= []).push(skill);
+    }
+
+    const artifacts = {};
+    for (const [group, variants] of Object.entries(groups)) {
+        const file = path.join(skillsDir, `${group}.json`);
+        const existing =
+            merge && fs.existsSync(file)
+                ? JSON.parse(fs.readFileSync(file, 'utf8')).variants
+                : {};
+        const bundle = { id: group, variants: { ...existing } };
+        for (const skill of variants) {
+            bundle.variants[skill.shortId] = readSkillFiles(path.join(sourceDir, skill.id));
+        }
+        const json = JSON.stringify(bundle);
+        fs.writeFileSync(file, json);
+        artifacts[`${group}.json`] = Buffer.from(json);
+        log(
+            `  ✓ ${group}.json (${Object.keys(bundle.variants).length} variants, ${(json.length / 1024).toFixed(1)} KB)`,
+        );
+    }
+    return artifacts;
+}
+
 function reconcileOrphans({ allSkills, distDir, log = () => {} }) {
     const skillsDir = path.join(distDir, 'skills');
     if (!fs.existsSync(skillsDir)) return [];
 
-    const validIds = new Set(allSkills.map(s => s.id));
+    // A bundled skill has no zip of its own, so a leftover one from an earlier build is an orphan.
+    const validIds = new Set(allSkills.filter(s => !s.bundle).map(s => s.id));
     const removed = [];
 
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
@@ -372,12 +422,15 @@ async function partialRebuild({
         });
 
         for (const skill of rebuiltSkills) {
+            if (skill.bundle) continue;
             const skillTempDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillTempDir);
             const filename = `${skill.id}.zip`;
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
+        // Patch the rebuilt variants into their bundle, leaving the group's untouched variants alone.
+        writeBundles({ skills: rebuiltSkills, sourceDir: tempDir, skillsDir, merge: true, log });
 
         writeManifestAndMenu({ allSkills, docContents, distDir, configDir, version });
         reconcileOrphans({ allSkills, distDir, log });
@@ -394,6 +447,7 @@ export {
     loadDocContentsFromManifest,
     zipSkillToBuffer,
     createBundledArchive,
+    writeBundles,
     generateManifest,
     generateCliEntries,
     writeManifestAndMenu,

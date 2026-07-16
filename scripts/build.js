@@ -18,6 +18,7 @@ import {
     loadDocsConfig,
     zipSkillToBuffer,
     createBundledArchive,
+    writeBundles,
     writeManifestAndMenu,
 } from './lib/build-phases.js';
 
@@ -35,17 +36,6 @@ async function fetchDocContent(doc) {
         }
     }
     return parts.join('\n\n---\n\n');
-}
-
-/** Read a built skill dir into { relativePath: contents }. */
-function readSkillFiles(dir) {
-    const files = {};
-    for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
-        if (!entry.isFile()) continue;
-        const abs = path.join(entry.parentPath ?? entry.path, entry.name);
-        files[path.relative(dir, abs)] = fs.readFileSync(abs, 'utf8');
-    }
-    return files;
 }
 
 async function main() {
@@ -72,20 +62,10 @@ async function main() {
 
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
-        const bundles = {};
         for (const skill of skills) {
-            const skillDir = path.join(tempDir, skill.id);
             // A bundled variant ships inside its group's JSON, not as its own zip.
-            if (skill.bundle) {
-                const group = skill.group.replace(/\//g, '-');
-                const variants = (bundles[group] ??= {});
-                // shortId is the only unique key — framework is the family (nextjs, astro), shared by several variants.
-                if (variants[skill.shortId]) {
-                    throw new Error(`Duplicate variant "${skill.shortId}" in bundle "${group}"`);
-                }
-                variants[skill.shortId] = readSkillFiles(skillDir);
-                continue;
-            }
+            if (skill.bundle) continue;
+            const skillDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillDir);
             const filename = `${skill.id}.zip`;
             skillZips[filename] = buffer;
@@ -93,14 +73,12 @@ async function main() {
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
-
-        for (const [group, variants] of Object.entries(bundles)) {
-            const json = JSON.stringify({ id: group, variants });
-            fs.writeFileSync(path.join(skillsDir, `${group}.json`), json);
-            console.log(
-                `  ✓ ${group}.json (${Object.keys(variants).length} variants, ${(json.length / 1024).toFixed(1)} KB)`,
-            );
-        }
+        const bundleFiles = writeBundles({
+            skills,
+            sourceDir: tempDir,
+            skillsDir,
+            log: console.log,
+        });
 
         console.log('\nGenerating marketplace plugins...');
         const marketplaceResult = generateMarketplace({
@@ -160,7 +138,10 @@ async function main() {
 
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
-        const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
+        const bundleSize = await createBundledArchive(bundlePath, manifest, {
+            ...skillZips,
+            ...bundleFiles,
+        });
         console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
 
         console.log('\n' + '='.repeat(50));
