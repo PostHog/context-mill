@@ -14,9 +14,14 @@
 
 import fs from 'fs';
 import path from 'path';
+import { REPO_URL } from './constants.js';
 
-const DEFAULT_AGENTS_BASE_URL =
-    'https://github.com/PostHog/context-mill/releases/latest/download';
+/** Release assets are a flat namespace: agent prompts live at the release root, like skills. */
+function defaultAgentsBaseUrl(version) {
+    return version && version !== 'dev'
+        ? `${REPO_URL}/releases/download/v${version}`
+        : `${REPO_URL}/releases/latest/download`;
+}
 
 /**
  * The agent prompts available in source: one { flow, id } per
@@ -74,7 +79,7 @@ function assertFlowMatches(sourcePath, flow) {
 export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     const agentsSourceDir = path.join(configDir, 'agents');
     const agentsDistDir = path.join(distDir, 'agents');
-    const resolvedBase = (baseUrl || DEFAULT_AGENTS_BASE_URL).replace(/\/+$/, '');
+    const resolvedBase = (baseUrl || defaultAgentsBaseUrl(version)).replace(/\/+$/, '');
 
     fs.mkdirSync(agentsDistDir, { recursive: true });
 
