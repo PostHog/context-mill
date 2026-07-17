@@ -29,6 +29,11 @@ once, up front, and follow it:
 2. Where the handoff says it is not — no middleware, or a call path that runs
    outside the request — tag that call with the distinct id and the session id.
 
+A handoff that answers neither should not reach you. If one does, do not invent a
+fallback and do not guess at the id — instrument the events plainly, and say in your
+handoff that attribution is unresolved and why, so the report raises it as an issue to
+follow up instead of claiming events that belong to nobody.
+
 Never put PII in an event. When new information about the user surfaces, tag the
 user the way the identify docs describe, not the event.
 
