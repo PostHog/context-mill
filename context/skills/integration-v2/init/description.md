@@ -24,9 +24,10 @@ before you write anything.
 1. **Client.** One init, running once in the browser, at the app's entry or its
    provider. The library holds its own state from there, so nothing else constructs
    it — later steps reach the same instance by importing it.
-2. **Fullstack or SSR.** You have both of the others, each initialized its own way.
-   Keep them apart: never share one client across the boundary, and keep the browser
-   SDK from executing during server rendering, since it needs a browser to work.
+2. **Fullstack or SSR.** You will initialize both a client and a server SDK. If
+   there are dedicated docs or example apps for this framework, follow their
+   patterns first. If not, initialize the client and the server clients separately,
+   according to the relevant docs and examples.
 3. **Server.** One client per process, however long that process lives. Where it is
    long-lived, build it once at startup through whatever hook the framework gives
    you, and reuse it for every request. Where the process is per-request or
