@@ -66,12 +66,11 @@ def dashboard_view(request):
     """Dashboard page with feature flag example"""
     user_id = str(request.user.id)
 
-    # PostHog: Track dashboard view
-    with new_context():
-        identify_context(user_id)
-        capture('dashboard_viewed', properties={
-            'is_staff': request.user.is_staff,
-        })
+    # PostHog: the middleware already identified this request's context from the
+    # logged-in user, so a plain capture is attributed to them.
+    capture('dashboard_viewed', properties={
+        'is_staff': request.user.is_staff,
+    })
 
     # PostHog: Check feature flag
     show_new_feature = posthog.feature_enabled(
@@ -116,14 +115,10 @@ def consider_burrito_view(request):
     count = request.session.get('burrito_count', 0) + 1
     request.session['burrito_count'] = count
 
-    user_id = str(request.user.id)
-
     # PostHog: Track custom event
-    with new_context():
-        identify_context(user_id)
-        capture('burrito_considered', properties={
-            'total_considerations': count,
-        })
+    capture('burrito_considered', properties={
+        'total_considerations': count,
+    })
 
     return JsonResponse({
         'success': True,
@@ -137,9 +132,7 @@ def profile_view(request):
     user_id = str(request.user.id)
 
     # PostHog: Track profile view
-    with new_context():
-        identify_context(user_id)
-        capture('profile_viewed')
+    capture('profile_viewed')
 
     context = {
         'user': request.user,
@@ -168,12 +161,10 @@ def trigger_error_view(request):
         posthog.capture_exception(e)
 
         # PostHog: Track error trigger event
-        with new_context():
-            identify_context(str(request.user.id))
-            capture('error_triggered', properties={
-                'error_type': error_type,
-                'error_message': str(e),
-            })
+        capture('error_triggered', properties={
+            'error_type': error_type,
+            'error_message': str(e),
+        })
 
         return JsonResponse({
             'success': False,
@@ -201,17 +192,15 @@ def group_analytics_view(request):
     )
 
     # PostHog: Capture event with group
-    with new_context():
-        identify_context(user_id)
-        capture(
-            'feature_used',
-            properties={
-                'feature_name': 'group_analytics',
-            },
-            groups={
-                'company': 'acme-corp',
-            }
-        )
+    capture(
+        'feature_used',
+        properties={
+            'feature_name': 'group_analytics',
+        },
+        groups={
+            'company': 'acme-corp',
+        }
+    )
 
     return JsonResponse({
         'success': True,

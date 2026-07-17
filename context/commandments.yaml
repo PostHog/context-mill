@@ -113,10 +113,10 @@ commandments:
     - For Microsoft.FeatureManagement, call `UseFeatureManagement<TContextProvider>()` and implement `IPostHogFeatureFlagContextProvider` to provide the current distinct ID, person properties, and groups
 
   django:
-    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
+    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE, after AuthenticationMiddleware, it auto-extracts tracing headers and captures exceptions
     - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
-    - Use the context API pattern with new_context(), identify_context(user_id), then capture()
-    - For login/logout views, create a new context since user state changes during the request
+    - The middleware identifies the request context from the X-POSTHOG-DISTINCT-ID header or the authenticated user's pk, so in a view where the user is already logged in a plain capture() is already attributed - do not wrap it in a context of its own
+    - For login, signup, and logout views, wrap the capture in new_context() and identify_context(user_id) after the auth state changes. The middleware reads the user once, before the view runs, so its context is identified as whoever the user was beforehand - nobody, on a login - and calling login() does not update it. A bare capture there is personless
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
 
   flask:
@@ -257,12 +257,13 @@ commandments:
     - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
     - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
     - 'Configure the singleton with flushAt 1 and flushInterval 0, and `await posthog.flush()` in the API route after capturing and before returning the Response. An SSR endpoint is short-lived per request, so an unflushed batched event is silently dropped'
-    - Pass the client session ID to server via X-PostHog-Session-Id header for unified session tracking
+    - Set tracing_headers to the backend hostname on the client (hostnames only, no port) so posthog-js sends X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID on every request, and read both server-side so its events attribute to the same person
 
   astro-hybrid:
     - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
     - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
     - 'Configure the singleton with flushAt 1 and flushInterval 0, and `await posthog.flush()` in the API route after capturing and before returning the Response. An SSR endpoint is short-lived per request, so an unflushed batched event is silently dropped'
+    - Set tracing_headers to the backend hostname on the client (hostnames only, no port) so posthog-js sends X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID on every request, and read both server-side so its events attribute to the same person
     - In Astro 5, use output static (the default) with an adapter - pages are prerendered by default
     - Use export const prerender = false to opt specific pages into SSR when they need server-side rendering
     - Only pages that need server-side PostHog tracking (like API-backed forms) should opt out of prerendering
