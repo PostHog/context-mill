@@ -19,20 +19,20 @@ actual `.env` still goes through `set_env_values`.
 ## Init point
 
 Where initialization belongs depends on what kind of app this is. Work that out
-before you write anything — the three shapes are different, and the wrong one is
-worse than none.
+before you write anything.
 
 1. **Client.** One init, running once in the browser, at the app's entry or its
    provider. The library holds its own state from there, so nothing else constructs
    it — later steps reach the same instance by importing it.
-2. **Fullstack or SSR.** Two runtimes means two SDKs and two init points: the
-   browser SDK at the client entry, the server SDK as one instance the request
-   handlers share. Keep them apart. The browser SDK needs a browser, so guard it
-   from executing during server rendering, and never reuse one client across both.
-3. **Server.** One client, built once when the process starts, through whatever
-   startup hook the framework gives you, and reused by every request. Not per
-   request — that leaks a client per call. Not at import time either, where it runs
-   before the app has configured itself.
+2. **Fullstack or SSR.** You have both of the others, each initialized its own way.
+   Keep them apart: never share one client across the boundary, and keep the browser
+   SDK from executing during server rendering, since it needs a browser to work.
+3. **Server.** One client per process, however long that process lives. Where it is
+   long-lived, build it once at startup through whatever hook the framework gives
+   you, and reuse it for every request. Where the process is per-request or
+   serverless, there is no startup to hook — use the framework's container or a
+   module singleton, and make sure events reach PostHog before the process dies, or
+   they are lost.
 
 Follow the reference example and the docs for this framework's pattern. Read the
 existing provider, entry, or startup file before editing, and add PostHog alongside
