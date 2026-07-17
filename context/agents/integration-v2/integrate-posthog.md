@@ -18,8 +18,9 @@ Plan a PostHog integration and seed the task queue with this graph:
 
 - `install` and `init`, independent of each other.
 - `identify` and `error-tracking`, each after `install` and `init` and independent
-  of one another, so they run in parallel. `error-tracking` wires the single global
-  error boundary — it needs the SDK installed and initialized, not the events.
+  of one another, so they run in parallel. `error-tracking` makes the errors the app
+  does not catch reach PostHog, by whatever means the SDK offers for that — it needs
+  the SDK installed and initialized, not the events.
 - `capture`, after `identify` — it decides the events and instruments them, and it
   reads how identity is already established before it instruments anything.
 - `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
