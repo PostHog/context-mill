@@ -51,6 +51,7 @@ commandments:
     - Call posthog.identify(userId, { email, name, role }) on login AND on page refresh if the user is already logged in
     - Call posthog.reset() on logout to unlink future events from the current user
     - For SPAs without a framework router, capture pageviews with posthog.capture($pageview) or use the capture_pageview history_change option in init for History API routing
+    - When verifying with an automated browser (Playwright, Puppeteer, Selenium), posthog-js's bot filter silently drops every capture while flags and asset loads still succeed — override navigator.webdriver, the user agent, AND navigator.userAgentData before concluding events do not send. Diagnose with ?__posthog_debug=true ("likely bot" in the console).
 
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
