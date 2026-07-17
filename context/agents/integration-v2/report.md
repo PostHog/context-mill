@@ -14,9 +14,10 @@ dependsOn: [dashboard]
 
 ## Goal
 
-Write the setup report summarizing what this integration did, drawing only on the
-run's queue log and event plan in `.posthog-wizard-cache/` (`queue.json` and
-`.posthog-events.json`), then mirror it into a shareable PostHog notebook.
+Write the setup report summarizing what this integration did, drawing only on what
+the run itself recorded: the queue log and event plan in `.posthog-wizard-cache/`
+(`queue.json` and `.posthog-events.json`), and the handoff each step left behind.
+Then mirror it into a shareable PostHog notebook.
 
 Separate what the run verified from what it did not. A passing build proves the
 code compiles, not that events flow — never write that an event was captured
