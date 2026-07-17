@@ -1,0 +1,93 @@
+# PostHog AI Observability integration.
+# Single skill group, one variant per (LLM provider × language).
+# Reachable via `wizard skill ai-observability`; also spawned as a single node
+# by integration-v2 when an LLM SDK is detected in the project.
+type: skill
+template: description.md
+description: PostHog AI Observability integration for {display_name}
+tags: [ai_observability]
+cli:
+  role: skill
+shared_docs:
+  - https://posthog.com/docs/ai-observability/basics.md
+  - https://posthog.com/docs/ai-observability/generations.md
+  - https://posthog.com/docs/ai-observability/traces.md
+variants:
+  - id: openai-python
+    framework: openai
+    default: true
+    display_name: OpenAI (Python)
+    tags: [openai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: openai-node
+    framework: openai
+    display_name: OpenAI (Node)
+    tags: [openai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openai.md
+      - https://posthog.com/docs/libraries/node.md
+  - id: anthropic-python
+    framework: anthropic
+    default: true
+    display_name: Anthropic (Python)
+    tags: [anthropic, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/anthropic.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: anthropic-node
+    framework: anthropic
+    display_name: Anthropic (Node)
+    tags: [anthropic, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/anthropic.md
+      - https://posthog.com/docs/libraries/node.md
+  - id: langchain-python
+    framework: langchain
+    default: true
+    display_name: LangChain (Python)
+    tags: [langchain, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/langchain.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: langchain-node
+    framework: langchain
+    display_name: LangChain (Node)
+    tags: [langchain, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/langchain.md
+      - https://posthog.com/docs/libraries/node.md
+  - id: vercel-ai
+    framework: vercel-ai
+    display_name: Vercel AI SDK
+    tags: [vercel-ai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/vercel-ai.md
+      - https://posthog.com/docs/libraries/node.md
+  - id: google-python
+    framework: google-gemini
+    default: true
+    display_name: Google Gemini (Python)
+    tags: [google-gemini, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/google.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: google-node
+    framework: google-gemini
+    display_name: Google Gemini (Node)
+    tags: [google-gemini, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/google.md
+      - https://posthog.com/docs/libraries/node.md
+  - id: manual-capture
+    framework: manual-capture
+    display_name: Manual capture
+    description: PostHog AI Observability using explicit $ai_generation capture calls (no auto-instrumentation)
+    tags: [manual-capture, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/manual-capture.md
