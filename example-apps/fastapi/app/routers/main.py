@@ -48,12 +48,11 @@ async def login(
     if user:
         is_new_user = user.record_login(db)
         with new_context():
-            identify_context(user.email)
+            identify_context(str(user.id))
             capture(
                 "user_logged_in",
                 properties={
                     "$set": {"email": user.email, "is_staff": user.is_staff},
-                    "username": user.email,
                     "is_new_user": is_new_user,
                 },
             )
@@ -114,12 +113,11 @@ async def signup(
     user = User.create_user(db, email=email, password=password, is_staff=False)
 
     with new_context():
-        identify_context(user.email)
+        identify_context(str(user.id))
         capture(
             "user_signed_up",
             properties={
                 "$set": {"email": user.email, "is_staff": user.is_staff},
-                "username": user.email,
                 "signup_method": "form",
             },
         )
