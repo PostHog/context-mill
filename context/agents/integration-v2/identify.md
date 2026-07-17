@@ -17,6 +17,12 @@ dependsOn: [install, init]
 Wire user identification so everything the app reports — its errors as much as its
 events — carries who the user is.
 
+The distinct id is the app's own stable identifier for the user — a primary key, a
+uuid, a resource name. Not an email and not a username: those are PII and they change;
+send them as person properties instead. Fall back to email only when the app truly has
+no other stable key, and say so in your handoff — do not invent one by altering the
+app's schema.
+
 Work out first what you are in: a client-only app, a fullstack or SSR app, or a
 backend or API. Identification takes a different shape in each, and the shape
 follows from that answer:

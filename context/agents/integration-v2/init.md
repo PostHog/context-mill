@@ -30,3 +30,5 @@ file, never hardcoded in source, and `.env.example` lists the key names (with
 placeholder values) so the next developer knows what to set. Your handoff names the
 files you changed, how the client is constructed in them, and how a call site
 reaches that client — every step after you has to reach the same one the same way.
+If the app ships a Content-Security-Policy, the handoff also says how the SDK
+loads and sends past it: policy extended, or bundled with a same-origin path.

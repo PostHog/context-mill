@@ -42,6 +42,13 @@ about most:
   integration was edited. If a step deleted or rewrote code it shouldn't have, or
   reformatted an untouched region, restore it. Flag anything you can't safely fix
   in `conflict`.
+- **The CSP lets it run.** If the app ships a Content-Security-Policy — a meta
+  tag or a server-sent header — confirm the policy allows the SDK to load
+  (`script-src`) and events to send (`connect-src`, which falls back to
+  `default-src`). A CSP-blocked integration builds clean and sends nothing: the
+  snippet's stub queues calls into an array nothing drains. The init step's
+  handoff says how it handled the policy; if it didn't, flag the mismatch in
+  `conflict` rather than reworking the integration here.
 
 ## Flag out-of-scope conflicts and move on
 

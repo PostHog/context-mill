@@ -39,6 +39,25 @@ Follow the reference example and the docs for this framework's pattern. Read the
 existing provider, entry, or startup file before editing, and add PostHog alongside
 what is already there rather than replacing it.
 
+## Content Security Policy
+
+Before wiring a browser SDK, check whether the app ships a CSP — a meta tag in
+the HTML or a header the server sends. If it restricts `script-src` or
+`connect-src`, a CDN-loaded snippet is dead on arrival: the browser blocks the
+SDK script, the snippet's stub queues every call into an array nothing drains,
+and the diff looks complete while zero events send. Either:
+
+- **Extend the policy.** Allow the PostHog hosts in `script-src` and
+  `connect-src`, per the CSP reference below.
+- **Work within it.** Bundle the `posthog-js` dependency the manifest already
+  declares instead of loading it from the CDN, which satisfies `script-src`.
+  Events still have to send: allow the PostHog host in `connect-src`, or route
+  them through a same-origin proxy. `connect-src` falls back to `default-src`,
+  so a bare `default-src 'self'` blocks sending too.
+
+Say in your handoff which you did — the review and the report need to know how
+events leave the page.
+
 ## Reference
 
 {references}
