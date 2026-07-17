@@ -84,6 +84,7 @@ variants:
     docs_urls:
       - https://posthog.com/docs/ai-observability/installation/google.md
       - https://posthog.com/docs/libraries/node.md
+
   - id: manual-capture
     framework: manual-capture
     display_name: Manual capture
@@ -91,3 +92,503 @@ variants:
     tags: [manual-capture, ai_observability]
     docs_urls:
       - https://posthog.com/docs/ai-observability/installation/manual-capture.md
+
+  - id: azure-openai-python
+    framework: azure-openai
+    default: true
+    display_name: Azure OpenAI (Python)
+    tags: [azure-openai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/azure-openai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: azure-openai-node
+    framework: azure-openai
+    display_name: Azure OpenAI (Node)
+    tags: [azure-openai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/azure-openai.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: aws-bedrock-python
+    framework: aws-bedrock
+    default: true
+    display_name: AWS Bedrock (Python)
+    tags: [aws-bedrock, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/aws-bedrock.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: aws-bedrock-node
+    framework: aws-bedrock
+    display_name: AWS Bedrock (Node)
+    tags: [aws-bedrock, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/aws-bedrock.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: cerebras-python
+    framework: cerebras
+    default: true
+    display_name: Cerebras (Python)
+    tags: [cerebras, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cerebras.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: cerebras-node
+    framework: cerebras
+    display_name: Cerebras (Node)
+    tags: [cerebras, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cerebras.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: cohere-python
+    framework: cohere
+    default: true
+    display_name: Cohere (Python)
+    tags: [cohere, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cohere.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: cohere-node
+    framework: cohere
+    display_name: Cohere (Node)
+    tags: [cohere, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cohere.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: deepseek-python
+    framework: deepseek
+    default: true
+    display_name: DeepSeek (Python)
+    tags: [deepseek, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/deepseek.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: deepseek-node
+    framework: deepseek
+    display_name: DeepSeek (Node)
+    tags: [deepseek, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/deepseek.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: fireworks-ai-python
+    framework: fireworks-ai
+    default: true
+    display_name: Fireworks AI (Python)
+    tags: [fireworks-ai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/fireworks-ai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: fireworks-ai-node
+    framework: fireworks-ai
+    display_name: Fireworks AI (Node)
+    tags: [fireworks-ai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/fireworks-ai.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: groq-python
+    framework: groq
+    default: true
+    display_name: Groq (Python)
+    tags: [groq, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/groq.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: groq-node
+    framework: groq
+    display_name: Groq (Node)
+    tags: [groq, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/groq.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: hugging-face-python
+    framework: hugging-face
+    default: true
+    display_name: Hugging Face (Python)
+    tags: [hugging-face, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/hugging-face.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: hugging-face-node
+    framework: hugging-face
+    display_name: Hugging Face (Node)
+    tags: [hugging-face, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/hugging-face.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: mistral-python
+    framework: mistral
+    default: true
+    display_name: Mistral (Python)
+    tags: [mistral, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/mistral.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: mistral-node
+    framework: mistral
+    display_name: Mistral (Node)
+    tags: [mistral, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/mistral.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: ollama-python
+    framework: ollama
+    default: true
+    display_name: Ollama (Python)
+    tags: [ollama, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/ollama.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: ollama-node
+    framework: ollama
+    display_name: Ollama (Node)
+    tags: [ollama, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/ollama.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: perplexity-python
+    framework: perplexity
+    default: true
+    display_name: Perplexity (Python)
+    tags: [perplexity, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/perplexity.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: perplexity-node
+    framework: perplexity
+    display_name: Perplexity (Node)
+    tags: [perplexity, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/perplexity.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: together-ai-python
+    framework: together-ai
+    default: true
+    display_name: Together AI (Python)
+    tags: [together-ai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/together-ai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: together-ai-node
+    framework: together-ai
+    display_name: Together AI (Node)
+    tags: [together-ai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/together-ai.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: xai-python
+    framework: xai
+    default: true
+    display_name: xAI (Python)
+    tags: [xai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/xai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: xai-node
+    framework: xai
+    display_name: xAI (Node)
+    tags: [xai, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/xai.md
+      - https://posthog.com/docs/libraries/node.md
+
+  # ── Agent / framework SDKs ──────────────────────────────────────────────
+
+  - id: autogen
+    framework: autogen
+    display_name: AutoGen
+    description: PostHog AI Observability for AutoGen (multi-agent framework, Python)
+    tags: [autogen, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/autogen.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: claude-agent-sdk
+    framework: claude-agent-sdk
+    display_name: Claude Agent SDK
+    description: PostHog AI Observability for Anthropic's Claude Agent SDK (Python)
+    tags: [claude-agent-sdk, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/claude-agent-sdk.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: crewai
+    framework: crewai
+    display_name: CrewAI
+    description: PostHog AI Observability for CrewAI (multi-agent orchestration, Python)
+    tags: [crewai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/crewai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: dspy
+    framework: dspy
+    display_name: DSPy
+    description: PostHog AI Observability for DSPy (Python)
+    tags: [dspy, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/dspy.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: llamaindex
+    framework: llamaindex
+    display_name: LlamaIndex
+    description: PostHog AI Observability for LlamaIndex (Python)
+    tags: [llamaindex, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/llamaindex.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: mirascope
+    framework: mirascope
+    display_name: Mirascope
+    description: PostHog AI Observability for Mirascope (Python)
+    tags: [mirascope, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/mirascope.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: openai-agents
+    framework: openai-agents
+    display_name: OpenAI Agents SDK
+    description: PostHog AI Observability for the OpenAI Agents SDK (Python)
+    tags: [openai-agents, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openai-agents.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: pydantic-ai
+    framework: pydantic-ai
+    display_name: Pydantic AI
+    description: PostHog AI Observability for Pydantic AI (Python)
+    tags: [pydantic-ai, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/pydantic-ai.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: semantic-kernel
+    framework: semantic-kernel
+    display_name: Semantic Kernel
+    description: PostHog AI Observability for Microsoft Semantic Kernel (Python)
+    tags: [semantic-kernel, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/semantic-kernel.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: smolagents
+    framework: smolagents
+    display_name: smolagents
+    description: PostHog AI Observability for smolagents (Python)
+    tags: [smolagents, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/smolagents.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: convex
+    framework: convex
+    display_name: Convex
+    description: PostHog AI Observability for Convex (Node, Vercel AI SDK inside)
+    tags: [convex, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/convex.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: mastra
+    framework: mastra
+    display_name: Mastra
+    description: PostHog AI Observability for Mastra (agent framework, Node)
+    tags: [mastra, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/mastra.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: instructor-python
+    framework: instructor
+    default: true
+    display_name: Instructor (Python)
+    tags: [instructor, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/instructor.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: instructor-node
+    framework: instructor
+    display_name: Instructor (Node)
+    tags: [instructor, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/instructor.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: langgraph-python
+    framework: langgraph
+    default: true
+    display_name: LangGraph (Python)
+    tags: [langgraph, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/langgraph.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: langgraph-node
+    framework: langgraph
+    display_name: LangGraph (Node)
+    tags: [langgraph, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/langgraph.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: cloudflare-ai-gateway-python
+    framework: cloudflare-ai-gateway
+    default: true
+    display_name: Cloudflare AI Gateway (Python)
+    tags: [cloudflare-ai-gateway, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cloudflare-ai-gateway.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: cloudflare-ai-gateway-node
+    framework: cloudflare-ai-gateway
+    display_name: Cloudflare AI Gateway (Node)
+    tags: [cloudflare-ai-gateway, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/cloudflare-ai-gateway.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: helicone-python
+    framework: helicone
+    default: true
+    display_name: Helicone (Python)
+    tags: [helicone, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/helicone.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: helicone-node
+    framework: helicone
+    display_name: Helicone (Node)
+    tags: [helicone, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/helicone.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: openrouter-python
+    framework: openrouter
+    default: true
+    display_name: OpenRouter (Python)
+    tags: [openrouter, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openrouter.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: openrouter-node
+    framework: openrouter
+    display_name: OpenRouter (Node)
+    tags: [openrouter, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openrouter.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: portkey-python
+    framework: portkey
+    default: true
+    display_name: Portkey (Python)
+    tags: [portkey, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/portkey.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: portkey-node
+    framework: portkey
+    display_name: Portkey (Node)
+    tags: [portkey, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/portkey.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: dedalus-python
+    framework: dedalus
+    default: true
+    display_name: Dedalus Labs (Python)
+    tags: [dedalus, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/dedalus.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: dedalus-node
+    framework: dedalus
+    display_name: Dedalus Labs (Node)
+    tags: [dedalus, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/dedalus.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: litellm
+    framework: litellm
+    display_name: LiteLLM
+    description: PostHog AI Observability for LiteLLM (unified LLM SDK / proxy, Python)
+    tags: [litellm, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/litellm.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: opentelemetry-python
+    framework: opentelemetry
+    default: true
+    display_name: OpenTelemetry (Python)
+    tags: [opentelemetry, python, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/opentelemetry.md
+      - https://posthog.com/docs/libraries/python.md
+
+  - id: opentelemetry-node
+    framework: opentelemetry
+    display_name: OpenTelemetry (Node)
+    tags: [opentelemetry, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/opentelemetry.md
+      - https://posthog.com/docs/libraries/node.md
+
+  - id: claude-code
+    framework: claude-code
+    display_name: Claude Code
+    description: PostHog AI Observability for Anthropic Claude Code sessions via the @posthog/ai-plugin
+    tags: [claude-code, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/claude-code.md
+
+  - id: openclaw
+    framework: openclaw
+    display_name: OpenClaw
+    description: PostHog AI Observability for the OpenClaw self-hosted AI gateway via the @posthog/openclaw plugin
+    tags: [openclaw, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/openclaw.md
+
+  - id: pi
+    framework: pi
+    display_name: Pi Coding Agent
+    description: PostHog AI Observability for the Pi terminal coding agent via the @posthog/pi extension
+    tags: [pi, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/pi.md
