@@ -16,19 +16,21 @@ dependsOn: [install, init, identify]
 
 Decide which events are worth capturing in this app, then instrument them in the
 same pass — read each file once, choose the events, and add the capture calls
-while the file is already open.
+while the file is already open. Instrumenting the events is the job; everything
+below is a rule you apply while you do it, not work of its own.
 
-Every capture has to be attributed, and how you get that depends on where it runs:
+The identify step's handoff already says how this app attributes events. Read it
+once, up front, and follow it:
 
-1. On a frontend the library attributes events on its own, as long as the user has
-   been identified. So never put PII in an event — when new information about the
-   user surfaces, tag the user the way the identify docs describe, not the event.
-2. On a backend a capture is attributed only if it runs under an identified
-   context, which you may have to trace up the call tree to establish. Where it
-   does not, tag the call itself with the distinct id and the session id.
+1. Where identity is established for you — a client library that remembers it, or a
+   framework middleware that binds it per request — a plain capture is already
+   attributed. Write the plain call and move on. Do not add a context of your own,
+   and do not go looking through the call tree to prove it.
+2. Where the handoff says it is not — no middleware, or a call path that runs
+   outside the request — tag that call with the distinct id and the session id.
 
-The identify step's handoff tells you which of these this app does; read it before
-you instrument anything.
+Never put PII in an event. When new information about the user surfaces, tag the
+user the way the identify docs describe, not the event.
 
 ## How you know you succeeded
 

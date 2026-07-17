@@ -17,6 +17,14 @@ capture buys nothing.
 - Use a stable unique id as the distinct id (the user id from your auth), not an
   email or display name — including in server-side calls, where framework docs
   sometimes show an email in the example.
+- Prove the id actually reaches the line that identifies, before you rely on it.
+  Frameworks routinely withhold the id from the payload the client receives — an
+  allow-list on the serialized model, a session callback that returns only name and
+  email. Read the shape the code will really see at that point, not the shape of the
+  record it came from. Where the id is missing, expose it deliberately at its source;
+  never substitute an email, and never pass a value that can be undefined. An
+  identify call built from a missing field is rejected by the SDK, and identity then
+  silently never happens for anyone.
 - Attach useful person properties (email, name, plan).
 
 Find the auth flow first: login and signup handlers, session callbacks. If the
