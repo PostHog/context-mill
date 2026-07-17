@@ -117,7 +117,7 @@ commandments:
     - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE, after AuthenticationMiddleware, it auto-extracts tracing headers and captures exceptions
     - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
     - The middleware identifies the request context from the X-POSTHOG-DISTINCT-ID header or the authenticated user's pk, so in a view where the user is already logged in a plain capture() is already attributed - do not wrap it in a context of its own
-    - For login, signup, and logout views, wrap the capture in new_context() and identify_context(user_id) after the auth state changes. The middleware reads the user once, before the view runs, so its context is identified as whoever the user was beforehand - nobody, on a login - and calling login() does not update it. A bare capture there is personless
+    - The middleware reads the user once, before the view runs, so a login request's context is identified as whoever the user was beforehand - nobody - and calling login() does not update it. A bare capture there is personless. Hook Django's user_logged_in signal and call identify_context(str(user.pk)) inside it: the signal runs inside the login request, so it fixes the ambient context and every later capture in that request is attributed. Logout views need no special handling, the user is still authenticated when the middleware runs - capture before calling logout()
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
 
   flask:

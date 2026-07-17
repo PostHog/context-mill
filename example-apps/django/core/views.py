@@ -1,7 +1,7 @@
 """Django views demonstrating PostHog integration patterns"""
 
 import posthog
-from posthog import new_context, identify_context, tag, capture
+from posthog import capture
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -24,20 +24,11 @@ def home_view(request):
         if user is not None:
             login(request, user)
 
-            # PostHog: Identify user and capture login event
-            with new_context():
-                identify_context(str(user.id))
-
-                # Set person properties (PII goes in tag, not capture)
-                tag('email', user.email)
-                tag('username', user.username)
-                tag('name', user.get_full_name() or user.username)
-                tag('is_staff', user.is_staff)
-                tag('date_joined', user.date_joined.isoformat())
-
-                capture('user_logged_in', properties={
-                    'login_method': 'email',
-                })
+            # PostHog: the user_logged_in signal (core/signals.py) has identified
+            # this request's context, so a plain capture is attributed.
+            capture('user_logged_in', properties={
+                'login_method': 'email',
+            })
 
             return redirect('dashboard')
         else:
@@ -49,12 +40,9 @@ def home_view(request):
 def logout_view(request):
     """Logout the current user"""
     if request.user.is_authenticated:
-        user_id = str(request.user.id)
-
-        # PostHog: Track logout before session ends
-        with new_context():
-            identify_context(user_id)
-            capture('user_logged_out')
+        # PostHog: the middleware identified this request's context from the
+        # still-authenticated user, so capture before calling logout().
+        capture('user_logged_out')
 
         logout(request)
 
