@@ -29,7 +29,9 @@ and line to look at.
 Where a handoff reports something a step could not resolve — attribution it could not
 establish, a question the step before it left open — that is not a caveat to bury in
 prose. Raise it as its own issue to follow up, saying what is unresolved and what it
-costs if left alone.
+costs if left alone. A `DISTINCT_ID` placeholder left at a call site means no stable id
+was available: name every file and line carrying one, so the user knows what to replace
+before those events mean anything.
 
 ## How you know you succeeded
 
