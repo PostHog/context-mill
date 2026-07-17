@@ -26,11 +26,13 @@ follows from that answer:
    captured against the anonymous id into the stable distinct id you give it. The
    library persists identity from there, so everything after it is attributed to the
    same user until reset — nothing needs re-identifying per page or per event.
-2. Fullstack or SSR — you are both of the others, so do both, and carry identity
-   across the boundary between them. The distinct id and the session id travel on
-   every request the frontend sends, in the header format the docs describe. Some
-   libraries already do this for you; read the docs and the example app before
-   wiring it by hand.
+2. Fullstack or SSR — your identification hinges on the client side, where the
+   identity is persisted. The distinct id and the session id travel on every request
+   the frontend sends, in the header format the docs describe. Some libraries already
+   do this for you; read the docs and the example app before wiring it by hand. The
+   backend should take note of the session and distinct id as soon as possible and
+   either carry it to every capture or use the identified context to identify the
+   request.
 3. Backend and API — a server serves many users at once, so identity belongs to the
    request, never to the process. Take it from the incoming request or the ambient
    context, as far as the app allows. Then either tag each event with the distinct
