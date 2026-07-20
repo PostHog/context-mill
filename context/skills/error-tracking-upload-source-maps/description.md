@@ -311,7 +311,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 
   PostHog.captureException(Throwable("PostHog source maps test"))
   ```
-  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
+  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` from a terminal (not Android Studio's Run — its Gradle daemon often lacks the shell PATH and can't find `posthog-cli`; if a Studio build already failed that way, run `./gradlew --stop` first) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
 - **iOS (Swift)** `Button` on the root view (SwiftUI) or `UIButton` on the root view controller (UIKit), handler:
   ```swift
   do {
