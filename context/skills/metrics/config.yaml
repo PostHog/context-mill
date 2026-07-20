@@ -1,0 +1,32 @@
+# Metrics skills - docs-only (no example projects)
+type: skill
+template: description.md
+description: PostHog metrics for {display_name}
+tags: [metrics]
+shared_docs:
+  - https://posthog.com/docs/metrics/start-here.md
+  - https://posthog.com/docs/metrics/basics.md
+variants:
+  - id: javascript
+    display_name: Web (JavaScript)
+    tags: [javascript_web, javascript]
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/javascript.md
+
+  - id: nodejs
+    display_name: Node.js
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/nodejs.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/python.md
+
+  - id: other
+    display_name: Other Languages
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/other.md
