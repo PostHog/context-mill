@@ -44,10 +44,10 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
      - SPM: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
      - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
   Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` and `POSTHOG_CLI_DOTENV_FILE` prefixes HAVE to be there. This needs a recent `posthog-cli` (older ones silently ignore `POSTHOG_CLI_DOTENV_FILE`); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
-- **Android (Gradle)** Android uploads **ProGuard/R8 mapping files**, not source maps. Apply the `com.posthog.android` Gradle plugin on the **app module's** `build.gradle(.kts)` (never the root project), per the reference — the plugin hooks the build and uploads automatically, do not hand-roll a `posthog-cli` step. Two gotchas:
-  1. The plugin only hooks build variants with minification on — if the release build type has `isMinifyEnabled = false`, set it to `true` (keep the existing `proguardFiles` line, or add the default one) or nothing is generated or uploaded.
-  2. The upload shells out to `posthog-cli` from the `PATH` (needs v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
-  3. The plugin has its **own version line** (1.x, e.g. `1.2.0`) — never reuse the `posthog-android` SDK version (3.x) for `id("com.posthog.android") version "…"`; the artifact `com.posthog.android:com.posthog.android.gradle.plugin` does not exist at SDK versions and the build fails at plugin resolution. Check the plugin's CHANGELOG (linked from the reference) for the latest 1.x.
+- **Android (Gradle)** Android uploads **ProGuard/R8 mapping files**, not source maps. Apply the `com.posthog.android` Gradle plugin on the **app module's** `build.gradle(.kts)` (never the root project), per the reference — the plugin hooks the build and uploads automatically, do not hand-roll a `posthog-cli` step. Gotchas:
+  1. The plugin only hooks minified variants — if the release build type has `isMinifyEnabled = false`, set it to `true` (keep the existing `proguardFiles` line) or nothing is uploaded.
+  2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
+  3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Flutter** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
@@ -62,7 +62,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
-- **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script: load the gitignored `.env` with `java.util.Properties` and set the values on the plugin's `PostHogCliExecTask` tasks (see the Android example). The tasks fall back to real `POSTHOG_CLI_*` environment variables when a property is unset, so the same wiring works in CI with no `.env` on the runner. The host var follows the same API-host rule as iOS above.
+- **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -98,11 +98,9 @@ The upload credentials must be readable **by the build pipeline at build time**,
       postHogEnv.getProperty("POSTHOG_CLI_API_KEY")?.let { postHogApiKey.set(it) }
       postHogEnv.getProperty("POSTHOG_CLI_PROJECT_ID")?.let { postHogProjectId.set(it) }
       postHogEnv.getProperty("POSTHOG_CLI_HOST")?.let { postHogHost.set(it) }
-      postHogEnv.getProperty("POSTHOG_CLI_PATH")?.let { postHogExecutable.set(it) }
   }
   ```
-  Also write `POSTHOG_CLI_PATH=<absolute path from command -v posthog-cli>` into the same `.env` — IDE-launched Gradle daemons often miss the shell PATH (nvm installs), so the pinned path is what makes Android Studio builds find the CLI.
-  (Groovy `build.gradle`: same shape with `tasks.withType(PostHogCliExecTask).configureEach { … }`.) In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner; unset properties make the tasks inherit the job's environment variables.
+  (Groovy `build.gradle`: same shape with `tasks.withType(PostHogCliExecTask).configureEach { … }`.) In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner.
 
 ### Write credentials to the env file
 
@@ -313,7 +311,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 
   PostHog.captureException(Throwable("PostHog source maps test"))
   ```
-  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
+  Test flow — the upload only runs on the **minified release variant**: `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run), launch the app, tap the button. It's an event, not a crash — the app keeps running.
 - **iOS (Swift)** `Button` on the root view (SwiftUI) or `UIButton` on the root view controller (UIKit), handler:
   ```swift
   do {
