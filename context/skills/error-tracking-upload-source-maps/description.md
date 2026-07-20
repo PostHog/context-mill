@@ -305,7 +305,13 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 - **Browser / SPA / SSR (web, react, nextjs, nuxt, angular, vite, webpack, rollup)** Add a button such as "Test PostHog Error Tracking" on the home/root page whose onClick calls `posthog.captureException(new Error("PostHog source maps test"))`.
 - **Node.js** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that calls `posthog.captureException(new Error("PostHog source maps test"))` and returns 200. With no HTTP layer, add the capture to the existing entry script where the client is initialised rather than creating a new file. Tell the user the exact command/URL to hit.
 - **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`.
-- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick captures a `Throwable` via the PostHog SDK's exception-capture method, per the reference — do not `throw` (it would crash the app). Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
+- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick handler is exactly:
+  ```kotlin
+  import com.posthog.PostHog
+
+  PostHog.captureException(Throwable("PostHog source maps test"))
+  ```
+  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
 - **iOS (Swift)** `Button` on the root view (SwiftUI) or `UIButton` on the root view controller (UIKit), handler:
   ```swift
   do {
