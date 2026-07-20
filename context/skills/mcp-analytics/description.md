@@ -22,8 +22,9 @@ If anything blocks instrumentation, **always** emit exactly one `[ABORT] <reason
 - `[ABORT] no mcp server found` — an exhaustive search (see the guardrail above) found no MCP server in the project.
 - `[ABORT] unsupported language for mcp analytics` — the server is neither TypeScript/JavaScript nor Python.
 - `[ABORT] could not locate the server entry point` — MCP signals are present, but the place the server is constructed or where requests are dispatched couldn't be found to instrument.
-- `[ABORT] manual install required: <command>` — the code changes are in place, but the SDK packages could not be installed. This is commonly a monorepo, where the install has to write a hoisted `node_modules` the current process can't write and fails with a permission error (`EPERM`). Put the **exact** install command for this project after the colon (e.g. `yarn add @posthog/mcp posthog-node`, `pnpm add @posthog/mcp posthog-node`, or the Python equivalent) so the wizard can show the user the precise line to run.
 - `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or no PostHog credentials and no MCP server connected to fetch them). Keep it short and specific so it's useful when aggregated across runs.
+
+A blocked SDK install is **not** an abort. It is an expected handoff (see STEP 3): finish the code changes and flag the install with a `[MANUAL-STEP]` line so the run still succeeds with one step left for the user.
 
 ## Instructions
 
@@ -73,7 +74,7 @@ Pick exactly one based on what STEP 1 found. When in doubt, read the bundled ref
 
 - **TypeScript / JavaScript:** install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing.
 - **Python:** the SDK ships inside `posthog`, so install (or require) `posthog>=7.21` with the project's installer — e.g. `pip install "posthog>=7.21"`, `uv add posthog`, `poetry add posthog`. The MCP SDK itself (`mcp` / `fastmcp`) is a peer dependency you already have — you built the server with it — so don't add it. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
-- **If the install does not succeed, do not fake it.** In a monorepo the install often has to write a hoisted `node_modules` outside the directory you can write to and fails with a permission error (e.g. `EPERM`). Do **not** hand-edit `package.json` to make it look installed. Note that the install is still pending, then continue with the additive code changes in STEP 4–6 so they are ready for the user — but the run must then end at STEP 7 with `[ABORT] manual install required: <the exact install command>`, never a success summary.
+- **If the install is blocked, that is expected. Do not abort, and do not fake it.** In a monorepo the install often has to write a hoisted `node_modules` outside the directory you can write to, and fails with a permission error (e.g. `EPERM`). That is a known limit, not a failure: the install simply has to be run by the user. Do **not** hand-edit `package.json` to make it look installed. Note the exact install command, continue with all the additive code changes in STEP 4-6 so they are ready, and hand the install off at the end via a `[MANUAL-STEP]` line (STEP 7). The run still succeeds.
 
 ### STEP 4: Instrument the server
 
@@ -250,8 +251,8 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 - **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
 - **Python:** run the project's type-check / tests if present (`mypy`, `pytest`) and fix any errors your changes introduced. Run any formatter the project uses (`ruff`, `black`) on the files you touched.
-- **The install must have actually happened.** If the check fails with "Cannot find module '@posthog/mcp'" / "posthog-node" (JS) or an unresolved `posthog` import (Python), the SDK was never installed — this is **not** an error to fix in code, and you must not patch around it. Stop and emit `[ABORT] manual install required: <the exact install command>` (see Abort cases). A green summary on a project that doesn't compile is worse than a clear handoff, so never report success when the packages are missing.
-- **Only once the packages are installed and the check passes,** summarize for the user: which path you used, the files you changed, the env vars to set, and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference.
+- **If the packages were never installed** (the check fails with "Cannot find module '@posthog/mcp'" / "posthog-node" in JS, or an unresolved `posthog` import in Python), that is the blocked-install case from STEP 3, not an error to fix in code. Do not patch around it, and do not keep retrying the install. Finish the run and emit, on its own line, `` [MANUAL-STEP] Run `<the exact install command>` to install the PostHog MCP SDK, then restart your server. ``. This is non-fatal: the wizard shows it as the one step left on an otherwise successful run.
+- **Summarize for the user either way:** which path you used, the files you changed, the env vars to set, whether the SDK install is still pending (when you emitted a `[MANUAL-STEP]`), and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference.
 
 ## Reference files
 
