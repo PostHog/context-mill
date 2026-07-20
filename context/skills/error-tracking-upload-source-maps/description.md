@@ -98,8 +98,10 @@ The upload credentials must be readable **by the build pipeline at build time**,
       postHogEnv.getProperty("POSTHOG_CLI_API_KEY")?.let { postHogApiKey.set(it) }
       postHogEnv.getProperty("POSTHOG_CLI_PROJECT_ID")?.let { postHogProjectId.set(it) }
       postHogEnv.getProperty("POSTHOG_CLI_HOST")?.let { postHogHost.set(it) }
+      postHogEnv.getProperty("POSTHOG_CLI_PATH")?.let { postHogExecutable.set(it) }
   }
   ```
+  Also write `POSTHOG_CLI_PATH=<absolute path from command -v posthog-cli>` into the same `.env` — IDE-launched Gradle daemons often miss the shell PATH (nvm installs), so the pinned path is what makes Android Studio builds find the CLI.
   (Groovy `build.gradle`: same shape with `tasks.withType(PostHogCliExecTask).configureEach { … }`.) In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner; unset properties make the tasks inherit the job's environment variables.
 
 ### Write credentials to the env file
@@ -311,7 +313,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 
   PostHog.captureException(Throwable("PostHog source maps test"))
   ```
-  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` from a terminal (not Android Studio's Run — its Gradle daemon often lacks the shell PATH and can't find `posthog-cli`; if a Studio build already failed that way, run `./gradlew --stop` first) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
+  Test flow — the upload only runs on the **minified release variant**: 1) `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run) — the release build uploads the mapping automatically. 2) Launch the app and tap the "<your test button label>" button. It's an event, not a crash — the app keeps running.
 - **iOS (Swift)** `Button` on the root view (SwiftUI) or `UIButton` on the root view controller (UIKit), handler:
   ```swift
   do {
