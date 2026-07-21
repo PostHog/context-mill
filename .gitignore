@@ -92,3 +92,4 @@ posthog-audit-report.md
 
 # Local scratch dirs
 scratch/
+node_modules
