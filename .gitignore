@@ -24,7 +24,6 @@ Thumbs.db
 
 # Dependencies (covered by individual projects, but included for safety)
 node_modules/
-node_modules
 .pnp
 .pnp.*
 
