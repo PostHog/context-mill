@@ -18,7 +18,10 @@ returned `id` — the insight step attaches every insight to it via
 ```
 
 Then create the insights (see the insight step) and attach each one to this
-dashboard's `id`.
+dashboard's `id`. The dashboard is not done until those insights are attached —
+an empty dashboard shell is not a success, even when no events have been
+ingested yet (fresh insights render empty and fill in as events arrive; that is
+the expected state of a brand-new integration, not a reason to hold back).
 
 ## Hand off the dashboard
 
