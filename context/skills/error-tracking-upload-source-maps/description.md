@@ -52,6 +52,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   1. Release builds omit debug info by default — set `debug = "line-tables-only"` under `[profile.release]` in `Cargo.toml` (enough for file, line, and inline resolution), per the reference.
   2. On macOS also set `split-debuginfo = "packed"` in the same profile — the default leaves debug info in intermediate object files and no `.dSYM` bundle is produced for the CLI to upload.
   3. If the profile sets `strip` explicitly, set it to `"none"` — a stripped binary leaves nothing to upload.
+  4. In a Cargo **workspace**, `[profile.*]` settings are only honored in the workspace root `Cargo.toml` — put the debug-info profile there, not in a member crate — and the build output is the workspace-level `target/release`, so point the upload `--directory` at that.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
 - **React Native / Flutter** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
