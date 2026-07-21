@@ -134,7 +134,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Plain Node** Build: `npm run build`. Run: `node <built entry>` — read package.json `main`/`bin` and the build output dir to name the real file (e.g. `node dist/index.js`).
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
 - **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
-- **Rust** Build: `cargo build --release`. Run: `./target/release/<binary>` — read the binary name from `Cargo.toml` (the `[package]` name, or a `[[bin]]` entry).
+- **Rust** Build: `cargo build --release && posthog-cli --dotenv-file .env symbol-sets upload --directory target/release` — the upload is a separate CLI step, so the resolved build command must include it (use the project's build script/Makefile target instead when you wired the upload into one). Run: `./target/release/<binary>` — read the binary name from `Cargo.toml` (the `[package]` name, or a `[[bin]]` entry).
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
