@@ -1,4 +1,8 @@
-# Connector — Linear warehouse source
+# Connector — Linear (and other one-click OAuth) warehouse source
+
+> Reused for every one-click OAuth source (Linear, Intercom, HubSpot). The flow is identical —
+> substitute the `kind` (`linear` / `intercom` / `hubspot`), the `<kind>_integration_id` payload
+> key, and the DWH `source_type` (`Linear` / `Intercom` / `Hubspot`) throughout.
 
 Creates the Linear warehouse source with at most **one click** from the user: Linear needs an OAuth'd Integration row, and the only part this run can't do is the user consenting in their browser. Hand them the authorize link, then check **once** for the integration — if it's there, create the source yourself (no UI form-filling); if it isn't, leave a dormant responder and move on. Never nudge or wait through retry rounds.
 

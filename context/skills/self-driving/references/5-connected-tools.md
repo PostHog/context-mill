@@ -9,7 +9,7 @@ External tools can feed the inbox too: issue trackers (GitHub Issues, Linear, Ji
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
 - **GitHub Issues** — reuses the GitHub App connected in step 3 (connector: `5a-github.md`).
-- **Linear** — a one-click OAuth link (connector: `5b-linear.md`).
+- **Linear, Intercom, HubSpot** — one-click OAuth links (connector: `5b-linear.md`; the flow is identical, only the `kind` and `<kind>_integration_id` payload key differ).
 - **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
 
 A tool falls back to a **dormant responder** (the row is enabled but silent until a warehouse source exists) plus a follow-up **only** when the user skips or can't finish its connect step. That used to be the default for credential sources; it is now the exception.
@@ -39,6 +39,8 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
     { label: "None of these", value: "none" },
     { label: "GitHub Issues", value: "github-issues" },
     { label: "Linear", value: "linear" },
+    { label: "Intercom", value: "intercom" },
+    { label: "HubSpot", value: "hubspot" },
     { label: "Jira", value: "jira" },
     { label: "GitLab", value: "gitlab" },
     { label: "Gitea", value: "gitea" },
@@ -76,18 +78,20 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
 }
 ```
 
-2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists, match its warehouse `source_type`: `Github` / `Linear` / `Jira` / `GitLab` / `Gitea` / `Shortcut` / `Sentry` / `Rollbar` / `Bugsnag` / `Honeybadger` / `Raygun` / `Zendesk` / `Freshdesk` / `Freshservice` / `Front` / `Gorgias` / `Kustomer` / `Dixa` / `Plain` / `PgAnalyze` / `Snyk` / `Sonarqube` / `Semgrep` / `Rapid7Insightvm` / `Featurebase` / `Frill` / `Aha` / `Uservoice` / `Productboard` / `Canny` / `Asknicely` / `Retently` / `Appfigures` / `Appfollow` / `JudgeMeReviews`. Record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
+2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists, match its warehouse `source_type`: `Github` / `Linear` / `Jira` / `GitLab` / `Gitea` / `Shortcut` / `Sentry` / `Rollbar` / `Bugsnag` / `Honeybadger` / `Raygun` / `Zendesk` / `Freshdesk` / `Freshservice` / `Front` / `Gorgias` / `Kustomer` / `Dixa` / `Plain` / `PgAnalyze` / `Snyk` / `Sonarqube` / `Semgrep` / `Rapid7Insightvm` / `Featurebase` / `Frill` / `Aha` / `Uservoice` / `Productboard` / `Canny` / `Asknicely` / `Retently` / `Appfigures` / `Appfollow` / `JudgeMeReviews` / `Intercom` / `Hubspot`. Record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
 
 3. Dispatch each picked tool that's still missing:
 
    - **GitHub Issues** → read `references/5a-github.md` and follow it.
-   - **Linear** → read `references/5b-linear.md` and follow it.
+   - **Linear / Intercom / HubSpot** (one-click OAuth) → read `references/5b-linear.md` and follow it, substituting the `kind` (`linear` / `intercom` / `hubspot`), the `<kind>_integration_id` payload key, and the DWH `source_type` (`Linear` / `Intercom` / `Hubspot`).
    - **Zendesk / pganalyze / Jira** (and any other API-credential source) → read `references/5c-credentials.md` and follow it. It hands the user a secure PostHog connect link, waits for them to store their credentials in the browser, then creates the live source from that stored credential. If they skip or don't finish, it falls back to the dormant responder + follow-up (step 4 below).
 
 4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
    - GitHub Issues → `github` / `issue`
    - Linear → `linear` / `issue`
+   - Intercom → `intercom` / `ticket`
+   - HubSpot → `hubspot` / `ticket`
    - Jira → `jira` / `issue`
    - GitLab → `gitlab` / `issue`
    - Gitea → `gitea` / `issue`
