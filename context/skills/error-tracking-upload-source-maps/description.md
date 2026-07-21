@@ -336,7 +336,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   client.capture_exception(&error).await.unwrap();
   ```
   Mirror how the project already calls the client: with the blocking client (`default-features = false`), drop the `.await`.
-  Test flow — run the **same release binary** the symbols were uploaded for: `cargo build --release` (the wired pipeline uploads symbols), run `./target/release/<binary>`, trigger the capture. It's an event, not a crash — the process keeps running. A rebuild changes the build ID, so after any rebuild, re-upload before testing.
+  Test flow — the binary you run must be the one whose symbols were uploaded. Use the wired build-and-upload script if one exists; otherwise run both steps explicitly: `cargo build --release && posthog-cli --dotenv-file .env symbol-sets upload --directory target/release`, then run `./target/release/<binary>` and trigger the capture. It's an event, not a crash — the process keeps running. A rebuild changes the build ID, so after any rebuild, re-upload before testing.
 
 ### Verify and hand off
 
