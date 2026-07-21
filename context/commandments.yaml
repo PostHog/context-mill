@@ -87,7 +87,7 @@ commandments:
 
   rust:
     - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and use it as the `posthog_rs` crate (error tracking is a default cargo feature)
-    - Create one client per process — `posthog_rs::client(...)` with `ClientOptionsBuilder`, or `init_global(...)` plus the global `capture`/`capture_exception` functions; never build a client per request
+    - Create one client per process and never build a client per request — `posthog_rs::client(...)` with `ClientOptionsBuilder`; `init_global(...)` is an alternative only for the global `capture`/`capture_exception` functions (feature-flag evaluation has no global helpers and needs a retained `Client`)
     - Call `shutdown()` (or `flush()`) during graceful shutdown so queued events are delivered before the process exits
     - Configure the project token and host from environment variables; never hardcode PostHog secrets
     - For error tracking, use `capture_exception(&err)` for personless captures or `capture_exception_with(&err, options)` with `CaptureExceptionOptions` to set a stable distinct ID, properties, groups, fingerprint, or level

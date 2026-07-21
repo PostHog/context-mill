@@ -330,11 +330,12 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   ```
   (`capture()` takes an event-name String, not an Error.) Test flow — give the user these steps verbatim, everything happens in Xcode (no `xcodebuild`): 1) In Xcode: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release, then Run — the Release build uploads dSYMs automatically. 2) Tap the "<your test button label>" button in the app. It's an event, not a crash — no debugger-detach or relaunch steps.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
-- **Rust** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that captures one error and returns 200; with no HTTP layer, add the capture where the client is initialised. The capture is exactly:
+- **Rust** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that captures one error and returns 200; with no HTTP layer, add the capture where the client is initialised. The capture is:
   ```rust
   let error = std::io::Error::new(std::io::ErrorKind::Other, "PostHog source maps test");
   client.capture_exception(&error).await.unwrap();
   ```
+  Mirror how the project already calls the client: with the blocking client (`default-features = false`), drop the `.await`.
   Test flow — run the **same release binary** the symbols were uploaded for: `cargo build --release` (the wired pipeline uploads symbols), run `./target/release/<binary>`, trigger the capture. It's an event, not a crash — the process keeps running. A rebuild changes the build ID, so after any rebuild, re-upload before testing.
 
 ### Verify and hand off
