@@ -77,6 +77,14 @@ const result = await generateText({
 
 If the project has many call sites, wrap the config into a shared helper rather than repeating it inline.
 
+## The PostHog client
+
+Some shapes need a PostHog client instance — the `manual-capture` variant, and wrappers that take a client. Look for a reusable one before creating anything:
+
+- Search the project for an existing client: a `posthog-js` init on the frontend, a `PostHog` instance from `posthog` / `posthog-node` on the backend.
+- Frontend: the client is a singleton — always reuse it, never instantiate a second one.
+- Backend: reuse a shared instance if the project has one; if none exists, create one where the instrumentation lives — once, at module level, reused across call sites — and use it when initializing the wrappers.
+
 ### `manual-capture` variant
 
 No OTel. Capture each generation explicitly at the call site:
@@ -101,6 +109,6 @@ Refer to `/docs/ai-observability/manual-capture` for the full property list.
 
 ## Do not
 
-- Do not create a second PostHog client instance. Reuse the project token / host already in the app's env — the OTel span processor is a separate exporter, not a separate PostHog install.
+- Do not create a PostHog client where one already exists — search first and reuse it (the frontend client is a singleton). Only a backend with no client creates one, once, at module level. Either way, reuse the project token / host already in the app's env — the OTel span processor is a separate exporter, not a separate PostHog install.
 - Do not put SDK init inside a request handler. Once per process, at startup.
 - Do not import the vendor SDK above the OTel init in the same file — the instrumentor patches the SDK when it loads, so the order matters.
