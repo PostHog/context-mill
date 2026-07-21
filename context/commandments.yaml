@@ -85,6 +85,15 @@ commandments:
     - Avoid deprecated feature flag helpers such as `IsFeatureEnabled`, `GetFeatureFlag`, `GetFeatureFlagPayload`, and `Capture.SendFeatureFlags` in new code
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
+  rust:
+    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and use it as the `posthog_rs` crate (error tracking is a default cargo feature)
+    - Create one client per process — `posthog_rs::client(...)` with `ClientOptionsBuilder`, or `init_global(...)` plus the global `capture`/`capture_exception` functions; never build a client per request
+    - Call `shutdown()` (or `flush()`) during graceful shutdown so queued events are delivered before the process exits
+    - Configure the project token and host from environment variables; never hardcode PostHog secrets
+    - For error tracking, use `capture_exception(&err)` for personless captures or `capture_exception_with(&err, options)` with `CaptureExceptionOptions` to set a stable distinct ID, properties, groups, fingerprint, or level
+    - Panic autocapture is opt-in: enable `capture_panics` in `ErrorTrackingOptions` when initialising the global client
+    - Stack traces are captured at the capture call site (`capture_stacktrace`, on by default); tune in-app frame classification with `in_app_include_paths` / `in_app_exclude_paths` when defaults misclassify frames
+
   dotnet:
     - posthog-dotnet package names are `PostHog` for general .NET apps and `PostHog.AspNetCore` for ASP.NET Core apps
     - Use environment variables, user secrets, or configuration providers for `ProjectToken`, `HostUrl`, and `PersonalApiKey`; never hardcode PostHog secrets
