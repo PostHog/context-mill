@@ -20,11 +20,17 @@ highest-signal insights, so the wizard's output reaches an inbox and the metrics
 that actually matter get flagged.
 
 This step schedules a real recurring email and enrols the user in alert
-notifications, standing side effects beyond the code integration they asked for,
-so get consent before creating anything. Ask exactly this: "Want a weekly email
-digest of your new dashboard, plus alerts on up to two of its most important
-insights that email you when they move the wrong way?" If they decline, skip this
-whole step.
+notifications, standing side effects beyond the code integration they asked for.
+Get consent before creating anything.
+
+## The question
+
+Ask exactly this, then follow the answer:
+
+- "Want a weekly email digest of your new dashboard, plus alerts on up to two of
+  its most important insights that email you when they move the wrong way?"
+- Yes: create the subscription and the alerts.
+- No: skip this whole step and create nothing.
 
 ## How you know you succeeded
 
