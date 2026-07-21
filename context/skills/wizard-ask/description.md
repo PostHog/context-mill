@@ -10,15 +10,15 @@ One call carries 1–8 questions:
 {
   "questions": [
     {
-      "id": "region",
-      "prompt": "Which PostHog region is this project in?",
+      "id": "<your-question-id>",
+      "prompt": "<the question, one line>",
       "kind": "single",
       "options": [
-        { "label": "US cloud", "value": "us" },
-        { "label": "EU cloud", "value": "eu" }
+        { "label": "<what the user sees>", "value": "<what you get back>" },
+        { "label": "<another choice>", "value": "<its value>" }
       ]
     },
-    { "id": "team_name", "prompt": "What should the team be called?", "kind": "text" }
+    { "id": "<another-id>", "prompt": "<a free-text question>", "kind": "text" }
   ]
 }
 ```
