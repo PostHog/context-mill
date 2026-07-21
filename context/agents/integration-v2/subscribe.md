@@ -20,14 +20,14 @@ highest-signal insights, so the wizard's output reaches an inbox and the metrics
 that actually matter get flagged.
 
 This step schedules a real recurring email and enrols the user in alert
-notifications — standing side effects beyond the code integration they asked for,
-so get consent first. Ask before creating anything: tell the user you'd like to
-set up a weekly email digest of the new dashboard plus up to two alerts on its
-highest-signal insights, say in one line what each is, and get a yes/no. If they
-decline, skip this whole step.
+notifications, standing side effects beyond the code integration they asked for,
+so get consent before creating anything. Ask exactly this: "Want a weekly email
+digest of your new dashboard, plus alerts on up to two of its most important
+insights that email you when they move the wrong way?" If they decline, skip this
+whole step.
 
 ## How you know you succeeded
 
 Either the user declined and nothing was created, or what they agreed to exists in
 PostHog with a link to each created record in your handoff, plus which insight(s)
-got an alert and why — the report step relays this to the user.
+got an alert and why. The report step relays this to the user.
