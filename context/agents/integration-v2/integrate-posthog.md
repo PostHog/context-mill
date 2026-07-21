@@ -26,7 +26,9 @@ Plan a PostHog integration and seed the task queue with this graph:
   its tests.
 - `dashboard`, after `build` — only once the integration is confirmed building,
   linting, and testing cleanly.
-- `report`, after `dashboard` — it writes the setup report last.
+- `subscribe`, after `dashboard` — with the user's consent, it subscribes them to
+  the new dashboard by email and alerts on its highest-signal insights.
+- `report`, after `dashboard` and `subscribe` — it writes the setup report last.
 
 ## How you know you succeeded
 

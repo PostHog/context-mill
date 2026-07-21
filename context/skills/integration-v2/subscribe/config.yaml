@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Subscribe the user to the new dashboard by email and alert on its highest-signal insights
+tags: [orchestrator, subscribe]
+variants:
+  - id: all
+    display_name: PostHog subscribe step
+    tags: [orchestrator, subscribe]
+    docs_urls: []
+cli:
+  role: internal
