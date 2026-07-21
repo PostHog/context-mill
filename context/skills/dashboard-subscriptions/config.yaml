@@ -1,0 +1,9 @@
+type: skill
+template: description.md
+description: Set up a dashboard email subscription and alerts on its highest-signal insights
+tags: [dashboard, subscriptions, alerts]
+variants:
+  - id: all
+    display_name: Dashboard subscriptions and alerts
+    tags: [dashboard, subscriptions, alerts]
+    docs_urls: []

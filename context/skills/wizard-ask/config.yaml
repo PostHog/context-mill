@@ -1,0 +1,9 @@
+type: skill
+template: description.md
+description: Ask the user structured questions through the wizard and act on their answers
+tags: [wizard, ask]
+variants:
+  - id: all
+    display_name: Asking the user through the wizard
+    tags: [wizard, ask]
+    docs_urls: []
