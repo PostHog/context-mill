@@ -1,0 +1,10 @@
+# Orchestrator step-skill: fetched by task agents, never surfaced as a command.
+# The framework matrix is borrowed from the canonical integration group.
+type: docs-only
+template: description.md
+description: Initialize PostHog and set its environment variables
+tags: [orchestrator, init]
+cli:
+  role: internal
+variants_from: integration
+packaging: bundle

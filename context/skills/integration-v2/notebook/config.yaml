@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: Mirror the setup report into a shareable PostHog notebook
+tags: [orchestrator, notebook]
+variants:
+  - id: all
+    display_name: PostHog notebook step
+    tags: [orchestrator, notebook]
+    docs_urls: []
+cli:
+  role: internal

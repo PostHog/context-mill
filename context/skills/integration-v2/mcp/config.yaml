@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: How to call PostHog MCP tools (discover, inspect, then call)
+tags: [orchestrator, mcp]
+variants:
+  - id: all
+    display_name: PostHog MCP step
+    tags: [orchestrator, mcp]
+    docs_urls: []
+cli:
+  role: internal
