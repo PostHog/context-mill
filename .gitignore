@@ -24,6 +24,7 @@ Thumbs.db
 
 # Dependencies (covered by individual projects, but included for safety)
 node_modules/
+node_modules
 .pnp
 .pnp.*
 
@@ -92,4 +93,3 @@ posthog-audit-report.md
 
 # Local scratch dirs
 scratch/
-node_modules
