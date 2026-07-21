@@ -4,7 +4,7 @@ next_step: 6-scouts.md
 
 # Step 5 — Connected-tool sources (ask, then connect)
 
-External tools can feed the inbox too: GitHub Issues, Linear, Zendesk, pganalyze, and Jira. Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
+External tools can feed the inbox too: issue trackers (GitHub Issues, Linear, Jira, GitLab, Gitea, Shortcut), error tracking (Sentry, Rollbar, Bugsnag, Honeybadger, Raygun), support desks (Zendesk, Freshdesk, Freshservice, Front, Gorgias, Kustomer, Dixa, Plain), database performance (pganalyze), security scanners (Snyk, SonarQube, Semgrep, Rapid7 InsightVM), and product feedback / reviews (Featurebase, Frill, Aha, UserVoice, Productboard, Canny, AskNicely, Retently, Appfigures, AppFollow, Judge.me). Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
 
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
@@ -39,14 +39,44 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
     { label: "None of these", value: "none" },
     { label: "GitHub Issues", value: "github-issues" },
     { label: "Linear", value: "linear" },
+    { label: "Jira", value: "jira" },
+    { label: "GitLab", value: "gitlab" },
+    { label: "Gitea", value: "gitea" },
+    { label: "Shortcut", value: "shortcut" },
+    { label: "Sentry", value: "sentry" },
+    { label: "Rollbar", value: "rollbar" },
+    { label: "Bugsnag", value: "bugsnag" },
+    { label: "Honeybadger", value: "honeybadger" },
+    { label: "Raygun", value: "raygun" },
     { label: "Zendesk", value: "zendesk" },
+    { label: "Freshdesk", value: "freshdesk" },
+    { label: "Freshservice", value: "freshservice" },
+    { label: "Front", value: "front" },
+    { label: "Gorgias", value: "gorgias" },
+    { label: "Kustomer", value: "kustomer" },
+    { label: "Dixa", value: "dixa" },
+    { label: "Plain", value: "plain" },
     { label: "pganalyze", value: "pganalyze" },
-    { label: "Jira", value: "jira" }
+    { label: "Snyk", value: "snyk" },
+    { label: "SonarQube", value: "sonarqube" },
+    { label: "Semgrep", value: "semgrep" },
+    { label: "Rapid7 InsightVM", value: "rapid7_insightvm" },
+    { label: "Featurebase", value: "featurebase" },
+    { label: "Frill", value: "frill" },
+    { label: "Aha", value: "aha" },
+    { label: "UserVoice", value: "uservoice" },
+    { label: "Productboard", value: "productboard" },
+    { label: "Canny", value: "canny" },
+    { label: "AskNicely", value: "asknicely" },
+    { label: "Retently", value: "retently" },
+    { label: "Appfigures", value: "appfigures" },
+    { label: "AppFollow", value: "appfollow" },
+    { label: "Judge.me", value: "judgeme_reviews" }
   ]
 }
 ```
 
-2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists (`source_type` `Github` / `Linear` / `Zendesk` / `PgAnalyze` / `Jira`): record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
+2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists, match its warehouse `source_type`: `Github` / `Linear` / `Jira` / `GitLab` / `Gitea` / `Shortcut` / `Sentry` / `Rollbar` / `Bugsnag` / `Honeybadger` / `Raygun` / `Zendesk` / `Freshdesk` / `Freshservice` / `Front` / `Gorgias` / `Kustomer` / `Dixa` / `Plain` / `PgAnalyze` / `Snyk` / `Sonarqube` / `Semgrep` / `Rapid7Insightvm` / `Featurebase` / `Frill` / `Aha` / `Uservoice` / `Productboard` / `Canny` / `Asknicely` / `Retently` / `Appfigures` / `Appfollow` / `JudgeMeReviews`. Record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
 
 3. Dispatch each picked tool that's still missing:
 
@@ -58,9 +88,39 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
 
    - GitHub Issues → `github` / `issue`
    - Linear → `linear` / `issue`
-   - Zendesk → `zendesk` / `ticket`
-   - pganalyze → `pganalyze` / `issue`
    - Jira → `jira` / `issue`
+   - GitLab → `gitlab` / `issue`
+   - Gitea → `gitea` / `issue`
+   - Shortcut → `shortcut` / `issue`
+   - Sentry → `sentry` / `issue`
+   - Rollbar → `rollbar` / `issue`
+   - Bugsnag → `bugsnag` / `issue`
+   - Honeybadger → `honeybadger` / `issue`
+   - Raygun → `raygun` / `issue`
+   - Zendesk → `zendesk` / `ticket`
+   - Freshdesk → `freshdesk` / `ticket`
+   - Freshservice → `freshservice` / `ticket`
+   - Front → `front` / `ticket`
+   - Gorgias → `gorgias` / `ticket`
+   - Kustomer → `kustomer` / `ticket`
+   - Dixa → `dixa` / `ticket`
+   - Plain → `plain` / `ticket`
+   - pganalyze → `pganalyze` / `issue`
+   - Snyk → `snyk` / `scanner_finding`
+   - SonarQube → `sonarqube` / `scanner_finding`
+   - Semgrep → `semgrep` / `scanner_finding`
+   - Rapid7 InsightVM → `rapid7_insightvm` / `scanner_finding`
+   - Featurebase → `featurebase` / `feedback`
+   - Frill → `frill` / `feedback`
+   - Aha → `aha` / `feedback`
+   - UserVoice → `uservoice` / `feedback`
+   - Productboard → `productboard` / `feedback`
+   - Canny → `canny` / `feedback`
+   - AskNicely → `asknicely` / `feedback`
+   - Retently → `retently` / `feedback`
+   - Appfigures → `appfigures` / `review`
+   - AppFollow → `appfollow` / `review`
+   - Judge.me → `judgeme_reviews` / `review`
 
 5. Record each picked tool's final class honestly — the report consumes these verbatim:
 
