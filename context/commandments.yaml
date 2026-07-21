@@ -5,6 +5,9 @@
 # the ones it belongs to in its own config (see context/skills/*/config.yaml).
 
 commandments:
+  # Applies to EVERY skill regardless of tags — see collectCommandments in scripts/lib/skill-generator.js
+  all:
+    - A missing PostHog configuration must never break the app — read keys optionally (never a required setting), guard init and capture behind their presence, and keep build and boot working with no PostHog environment set — but never silently: in development or debug builds fail loudly, using the language's idiomatic error, with the message "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once <VAR> is configured" (substituting the actual variable name); production stays a no-op
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
