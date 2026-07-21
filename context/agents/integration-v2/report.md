@@ -7,7 +7,7 @@ effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
 skills: [integration-v2-report, integration-v2-notebook, integration-v2-mcp]
-allowedTools: [Read, Write, Glob, Grep]
+allowedTools: [Read, Write]
 disallowedTools: [enqueue_task]
 dependsOn: [dashboard, review]
 ---
@@ -32,6 +32,12 @@ prose. Raise it as its own issue to follow up, saying what is unresolved and wha
 costs if left alone. A `DISTINCT_ID` placeholder left at a call site means no stable id
 was available: name every file and line carrying one, so the user knows what to replace
 before those events mean anything.
+
+Length follows the work. A small integration on a familiar framework earns a short
+report — what was installed, what is captured, what the user must set before it works.
+Reserve the long form for runs that actually accumulated nuance: conflicts, skipped
+steps, unresolved follow-ups, placeholders. Padding a simple run into a long report
+costs the user time twice, once waiting for it and once reading it.
 
 ## How you know you succeeded
 
