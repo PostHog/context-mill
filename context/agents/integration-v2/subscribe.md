@@ -6,7 +6,7 @@ model_pi: openai/gpt-5.6-luna
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
-skills: [dashboard-subscriptions, integration-v2-mcp]
+skills: [dashboard-subscriptions, wizard-ask, integration-v2-mcp]
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, enqueue_task]
 dependsOn: [dashboard]
