@@ -2,8 +2,8 @@
 type: init
 flow: integration-v2
 label: Set up PostHog initialization
-model_pi: openai/gpt-5.6-terra
-effort_pi: medium
+model_pi: openai/gpt-5.6-luna
+effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: [integration-v2-init, posthog-best-practices]

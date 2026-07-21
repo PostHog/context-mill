@@ -2,7 +2,7 @@
 type: review
 flow: integration-v2
 label: Review the integration
-model_pi: openai/gpt-5.6-terra
+model_pi: openai/gpt-5.6-sol
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
