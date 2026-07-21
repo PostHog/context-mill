@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [integration-v2-report, integration-v2-notebook, integration-v2-mcp]
 allowedTools: [Read, Write, Glob, Grep]
 disallowedTools: [enqueue_task]
-dependsOn: [dashboard]
+dependsOn: [dashboard, review]
 ---
 
 ## Goal
