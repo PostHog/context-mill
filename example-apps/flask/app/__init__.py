@@ -1,13 +1,11 @@
 """Flask application factory."""
 
-import posthog
 from flask import Flask, g, jsonify, render_template, request
 from flask_login import current_user
-from posthog import identify_context, new_context
 from werkzeug.exceptions import HTTPException
 
 from app.config import config
-from app.extensions import db, login_manager
+from app.extensions import db, login_manager, posthog_client
 
 
 def create_app(config_name="default"):
@@ -19,11 +17,9 @@ def create_app(config_name="default"):
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Initialize PostHog
-    if not app.config["POSTHOG_DISABLED"]:
-        posthog.api_key = app.config["POSTHOG_PROJECT_TOKEN"]
-        posthog.host = app.config["POSTHOG_HOST"]
-        posthog.debug = app.config["DEBUG"]
+    # PostHog client is constructed in app.extensions; align debug logging
+    # with the active app config
+    posthog_client.debug = app.config["DEBUG"]
 
     # Import models after db is initialized
     from app.models import User
