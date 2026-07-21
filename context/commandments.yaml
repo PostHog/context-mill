@@ -5,11 +5,13 @@
 # the ones it belongs to in its own config (see context/skills/*/config.yaml).
 
 commandments:
+  # Applies to EVERY skill regardless of tags — see collectCommandments in scripts/lib/skill-generator.js
+  all:
+    - A missing PostHog configuration must never break the app — read keys optionally (never a required setting), guard init and capture behind their presence, and keep build and boot working with no PostHog environment set — but never silently: in development or debug builds fail loudly, using the language's idiomatic error, with the message "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. You can safely remove this error once you configure <VAR> variable" (substituting the actual variable name); production stays a no-op
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
     - Check package.json for type checking or build scripts to validate changes
-    - A missing PostHog configuration must never break the app — read keys optionally (env lookup with a default, never a required setting), guard init and capture behind their presence, and keep build and boot working with no PostHog environment set — but never silently: in development builds throw an error reading "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. You can safely remove this error once you configure <VAR> variable" (substituting the actual variable name); production stays a no-op
     - When identity comes from framework-bridged state (Inertia or SSR shared props, a serialized session), confirm the backend actually shares that field — add the share server-side if missing — before identifying from it
 
   react:
@@ -75,7 +77,6 @@ commandments:
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
-    - A missing PostHog configuration must never break the app — read keys optionally (env get with a default or the app's own optional-settings helper, never a required setting), and keep the app booting and serving normally with no PostHog environment set — but never silently: when settings.DEBUG or the framework dev mode is on, raise an error reading "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. You can safely remove this error once you configure <VAR> variable" (substituting the actual variable name); production stays a no-op
 
   go:
     - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
@@ -141,7 +142,6 @@ commandments:
     - Check composer.json for existing dependencies and autoload configuration before adding new files
     - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init()
     - PHP SDK methods take associative arrays with 'distinctId', 'event', 'properties' keys - not positional arguments
-    - A missing PostHog configuration must never break the app — read keys optionally with a default and keep the app booting normally with no PostHog environment set — but never silently: in development environments throw an exception reading "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. You can safely remove this error once you configure <VAR> variable" (substituting the actual variable name); production stays a no-op
     - Any first-party loader or proxy script you add must load standalone — require its own config includes explicitly rather than assuming the app bootstrapped them
 
   tanstack-router:

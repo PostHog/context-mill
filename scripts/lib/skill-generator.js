@@ -518,11 +518,12 @@ async function fetchDoc(url) {
  * Collect commandments for a set of tags
  */
 function collectCommandments(tags, commandmentsConfig) {
-    const rules = [];
     const commandments = commandmentsConfig.commandments || {};
+    // `all` is language-agnostic and ships with every skill, whatever its tags.
+    const rules = [...(commandments.all || [])];
 
     for (const tag of tags) {
-        if (commandments[tag]) {
+        if (tag !== 'all' && commandments[tag]) {
             rules.push(...commandments[tag]);
         }
     }
