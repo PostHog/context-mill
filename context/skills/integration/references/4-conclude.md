@@ -6,6 +6,8 @@ description: Review and fix any errors in the PostHog integration implementation
 
 Create a live PostHog dashboard named "Analytics basics (wizard)" from the events you just instrumented, then populate it with up to five insights — lead with the business-critical views: conversion funnels, churn events, and other key signals. Use the exact same event names as implemented in the code. Keep the `(wizard)` tag with that exact casing so anyone browsing PostHog can see the wizard created this dashboard, and so a quick search for `(wizard)` surfaces every wizard-created artifact in one go.
 
+Always create the dashboard and insights based on the intended captures, regardless of whether those events have been observed yet. An insight is a definition over event names, not a snapshot of current data: it is expected to render empty until the first events arrive, and it fills in on its own once they do. "No data ingested yet", "the events aren't in the schema", or "the query would return nothing today" are never reasons to skip or defer insights — a dashboard handed off without them is an incomplete integration, not a cautious one.
+
 {{> mcp-tool-calling}}
 
 Create the parent dashboard first with `dashboard-create`, capture its returned `id`, then attach every insight to it via `dashboards: [<id>]`:
