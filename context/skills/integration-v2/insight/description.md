@@ -6,6 +6,14 @@ activation, and churn signals. Use the exact event names from the capture step's
 handoff; never invent events that were not instrumented. Keep each name tagged
 `(wizard)` with that exact casing.
 
+Always create these insights based on the intended captures, regardless of
+whether those events have been observed yet. An insight is a definition over
+event names, not a snapshot of current data: it is expected to render empty
+until the first events arrive, and it fills in on its own once they do. "No
+data ingested yet", "the events aren't in the schema", or "the query would
+return nothing today" are never reasons to skip or defer insights — a dashboard
+handed off without them is an incomplete integration, not a cautious one.
+
 Every call goes through `posthog_exec` (`call insight-create <json>`). Attach each
 insight to the dashboard by passing its id in `dashboards: [<dashboard id>]`.
 

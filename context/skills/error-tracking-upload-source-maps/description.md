@@ -37,8 +37,19 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 #### Examples
 - **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
+- **iOS (Xcode)** iOS uploads **dSYM debug symbols**, not source maps. Required target changes:
+  1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
+  2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
+  3. A Run Script phase, ordered last, with `$(DWARF_DSYM_FOLDER_PATH)/$(DWARF_DSYM_FILE_NAME)/Contents/Resources/DWARF/$(EXECUTABLE_NAME)` in its Input Files, calling the SDK's bundled script — do not hand-roll the upload:
+     - SPM: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/posthog-ios/build-tools/upload-symbols.sh"`
+     - CocoaPods: `POSTHOG_INCLUDE_SOURCE=1 POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env" "${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh"`
+  Copy the invocation verbatim — the `POSTHOG_INCLUDE_SOURCE=1` and `POSTHOG_CLI_DOTENV_FILE` prefixes HAVE to be there. This needs a recent `posthog-cli` (older ones silently ignore `POSTHOG_CLI_DOTENV_FILE`); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
+- **Android (Gradle)** Android uploads **ProGuard/R8 mapping files**, not source maps. Apply the `com.posthog.android` Gradle plugin on the **app module's** `build.gradle(.kts)` (never the root project), per the reference — the plugin hooks the build and uploads automatically, do not hand-roll a `posthog-cli` step. Gotchas:
+  1. The plugin only hooks minified variants — if the release build type has `isMinifyEnabled = false`, set it to `true` (keep the existing `proguardFiles` line) or nothing is uploaded.
+  2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
+  3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
-- **React Native / Android / iOS / Flutter** You upload platform debug symbols (Hermes maps, ProGuard/R8 mappings, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
+- **React Native / Flutter** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
 ### Make credentials available at build time
 
@@ -50,6 +61,8 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **Does NOT auto-load `.env`**: Rollup, plain webpack, and plain Node scripts. Load it explicitly — add `dotenv` (`require('dotenv').config()`, or `import 'dotenv/config'` for ESM) at the top of the bundler/config file.
 - **Separate-process gotcha**: if `posthog-cli sourcemap process` runs as its own `package.json` step (after the bundler), the CLI call is a **separate child process** and will *not* see env vars a loader set inside the bundler config. Point the CLI at the file directly: `posthog-cli --dotenv-file <relative-path> sourcemap process …` (the flag goes before the subcommand).
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
+- **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
+- **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -70,6 +83,24 @@ The upload credentials must be readable **by the build pipeline at build time**,
   ```json
   "build": "tsc && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name my-app"
   ```
+- **iOS (Xcode / posthog-cli)** A gitignored `.env` next to the `.xcodeproj` — the Run Script invocation's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix hands it to posthog-cli. No Xcode project wiring beyond the Run Script phase. In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner.
+- **Android (Gradle / posthog-cli)** A gitignored `.env` at the Gradle project root, bridged into the upload tasks in the **app module's** `build.gradle.kts`:
+  ```kotlin
+  import com.posthog.android.PostHogCliExecTask
+  import java.util.Properties
+
+  val postHogEnv = Properties().apply {
+      val envFile = rootProject.file(".env")
+      if (envFile.exists()) envFile.inputStream().use { load(it) }
+  }
+
+  tasks.withType<PostHogCliExecTask>().configureEach {
+      postHogEnv.getProperty("POSTHOG_CLI_API_KEY")?.let { postHogApiKey.set(it) }
+      postHogEnv.getProperty("POSTHOG_CLI_PROJECT_ID")?.let { postHogProjectId.set(it) }
+      postHogEnv.getProperty("POSTHOG_CLI_HOST")?.let { postHogHost.set(it) }
+  }
+  ```
+  (Groovy `build.gradle`: same shape with `tasks.withType(PostHogCliExecTask).configureEach { … }`.) In CI, set the `POSTHOG_CLI_*` values as job secrets instead — no `.env` on the runner.
 
 ### Write credentials to the env file
 
@@ -96,7 +127,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Vite** Build: `npm run build`. Run: `npm run preview`.
 - **Plain Node** Build: `npm run build`. Run: `node <built entry>` — read package.json `main`/`bin` and the build output dir to name the real file (e.g. `node dist/index.js`).
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
-- **iOS** Build: `xcodebuild …`. Run: launch the scheme on a simulator/device (Xcode).
+- **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
@@ -267,15 +298,30 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 - The handler must call the SDK's exception-capture method **directly** — do **not** `throw`. Throwing depends on the global error handler and shows a dev overlay; a direct capture is deterministic across platforms.
 - Pass a single Error (or platform-equivalent throwable). No custom message beyond the Error, no extra properties, no second argument — the Error's stack trace is what gets resolved.
 - Use distinctive copy on the trigger (button label / route path) so the resulting event is easy to find in the UI.
-- Read any file before editing it and capture its exact contents; after testing, restore every touched file and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
+- Read any file before editing it and capture its exact contents; after testing, restore every file the affordance touched — the affordance only, leave the upload and credential wiring in place — and re-read to confirm nothing is left behind. Never leave the affordance in place — even if the test "didn't work", revert first.
 - The upload only happens on the *production build*: build, run, trigger the error, then confirm the stack trace in Error Tracking points at real source files, not minified bundle paths.
 
 #### Examples
 - **Browser / SPA / SSR (web, react, nextjs, nuxt, angular, vite, webpack, rollup)** Add a button such as "Test PostHog Error Tracking" on the home/root page whose onClick calls `posthog.captureException(new Error("PostHog source maps test"))`.
 - **Node.js** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that calls `posthog.captureException(new Error("PostHog source maps test"))` and returns 200. With no HTTP layer, add the capture to the existing entry script where the client is initialised rather than creating a new file. Tell the user the exact command/URL to hit.
 - **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`.
-- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick captures a `Throwable` via the PostHog SDK, per the reference.
-- **iOS (Swift)** Add a `UIButton` on the root view controller whose action captures an `NSError` via the PostHog SDK, per the reference.
+- **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick handler is exactly:
+  ```kotlin
+  import com.posthog.PostHog
+
+  PostHog.captureException(Throwable("PostHog source maps test"))
+  ```
+  Test flow — the upload only runs on the **minified release variant**: `./gradlew installRelease` (or Android Studio ▸ Build Variants ▸ release, then Run), launch the app, tap the button. It's an event, not a crash — the app keeps running.
+- **iOS (Swift)** `Button` on the root view (SwiftUI) or `UIButton` on the root view controller (UIKit), handler:
+  ```swift
+  do {
+      throw NSError(domain: "PostHogSourceMapTest", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Source map upload test error"])
+  } catch {
+      PostHogSDK.shared.captureException(error)
+  }
+  ```
+  (`capture()` takes an event-name String, not an Error.) Test flow — give the user these steps verbatim, everything happens in Xcode (no `xcodebuild`): 1) In Xcode: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release, then Run — the Release build uploads dSYMs automatically. 2) Tap the "<your test button label>" button in the app. It's an event, not a crash — no debugger-detach or relaunch steps.
 - **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
 
 ### Verify and hand off

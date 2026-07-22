@@ -94,6 +94,14 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
     });
 }
 
+/** Where this build's release assets live: `SKILLS_BASE_URL` wins, then the pinned version, else latest. */
+function resolveBaseDownloadUrl(version) {
+    return process.env.SKILLS_BASE_URL
+        || (version && version !== 'dev'
+            ? `${REPO_URL}/releases/download/v${version}`
+            : `${REPO_URL}/releases/latest/download`);
+}
+
 /**
  * Build the manifest object. Pure — no I/O beyond reading env vars.
  *
@@ -101,23 +109,23 @@ async function createBundledArchive(outputPath, manifest, skillZips) {
  * manifest-builder shape: { id, name, description, tags, type, group, shortId }).
  * Doc entries are detected by `type === 'doc'` and a matching `docContents[id]` —
  * those get inlined under `resource.text`; everything else becomes a skill
- * resource with a download URL.
+ * resource with a download URL. Bundled variants are left out — they ship inside
+ * their group's JSON rather than as a zip, and `skill-menu.json` is where the
+ * group is published.
  */
 function generateManifest({ resources, uriSchema, version, docContents = {} }) {
     const scheme = uriSchema.scheme;
     const skillPattern = uriSchema.patterns.skill;
     const docPattern = uriSchema.patterns.doc;
 
-    const baseDownloadUrl = process.env.SKILLS_BASE_URL
-        || (version && version !== 'dev'
-            ? `${REPO_URL}/releases/download/v${version}`
-            : `${REPO_URL}/releases/latest/download`);
+    const baseDownloadUrl = resolveBaseDownloadUrl(version);
 
     return {
         version: uriSchema.manifest_version,
         buildVersion: version,
         buildTimestamp: new Date().toISOString(),
-        resources: resources.map(skill => {
+        // A bundled variant ships inside its group's JSON, so it has no zip of its own to point at.
+        resources: resources.filter(skill => !skill.bundle).map(skill => {
             const isGuide = skill.type === 'doc' && docContents[skill.id];
             const uri = isGuide
                 ? `${scheme}${docPattern.replace('{id}', skill.id)}`
@@ -203,7 +211,8 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
                     group,
                     bundle: true,
                     variants: [],
-                    downloadUrl: url?.replace(/\/[^/]+\.zip$/, `/${group}.json`),
+                    // Bundled variants are absent from the manifest, so the group's URL is built from the base.
+                    downloadUrl: `${resolveBaseDownloadUrl(version)}/${group}.json`,
                 };
                 bundleEntries.set(group, entry);
                 skillsByCategory[cat].push(entry);
