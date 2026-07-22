@@ -14,11 +14,11 @@ dependsOn: [build]
 
 ## Goal
 
-Review every change this run made, as a strict reviewer who did none of the work,
-and fix what fails. The project had no PostHog before this run, so find the full
-changeset yourself: grep for posthog (all cases) across source and config, read
-each file you find, and read the handoffs for anything the grep cannot see (env
-files, manifest edits).
+Review the code this run wrote, as a strict reviewer who did none of the work, and
+fix what fails. Your subject is code correctness and fit — nothing else. The
+project had no PostHog before this run, so find the full changeset yourself: grep
+for posthog (all cases) across source and config, read each file you find, and read
+the handoffs for anything the grep cannot see (env files, manifest edits).
 
 Judge each change against these dimensions, in order:
 
@@ -40,6 +40,22 @@ Judge each change against these dimensions, in order:
 You never change what is captured — event names, properties, and where events
 fire are a contract the dashboard and report are built on. Refactor how, and
 kill bad changes; never alter the what.
+
+Stay inside code review. These are not your job, and raising them is out of scope:
+
+- Whether events actually reach PostHog in production — you cannot run the app, and
+  a later report already separates what was verified from what was not.
+- The report or the dashboard — other tasks own those; do not write, judge, or
+  second-guess them.
+- Product or analytics design — which events are worth tracking, identity strategy
+  for multi-tenant apps, framework-version tradeoffs. The changeset in front of you
+  is the decision; review whether the code implements it correctly, not whether it
+  was the right decision.
+- Anything the integration did not touch. Do not widen scope to pre-existing issues
+  in the project.
+
+If you notice something real but out of scope, leave it — do not act on it and do
+not enqueue follow-up. Your handoff may mention it in one line, no more.
 
 Only flag what you can pin to a specific line and dimension — no taste-based
 rewrites, and never expand the integration. Fix findings by editing in place. For
