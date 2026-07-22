@@ -258,6 +258,7 @@ variants:
       - https://posthog.com/docs/libraries/ios/configuration.md
 
   - id: flutter
+    framework: flutter
     template: description-docs-only.md
     display_name: Flutter
     description: PostHog integration for Flutter applications using the posthog_flutter SDK
