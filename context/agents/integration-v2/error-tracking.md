@@ -28,9 +28,6 @@ This is an instrument-only task. Do not install dependencies, run the build, run
 tests, or start the app — a later `build` step does all verification. Stay inside
 this project's directory and set up that one place; that is the whole job.
 
-You have no shell here: reading and editing is the whole job, and the build
-task verifies the run. Do not treat the absence of a command tool as a finding.
-
 ## How you know you succeeded
 
 An error the app does not catch reaches PostHog, through the mechanism this SDK

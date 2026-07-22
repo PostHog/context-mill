@@ -42,9 +42,6 @@ to follow up rather than claiming events that belong to nobody.
 Never put PII in an event. When new information about the user surfaces, tag the
 user the way the identify docs describe, not the event.
 
-You have no shell here: reading and editing is the whole job, and the build
-task verifies the run. Do not treat the absence of a command tool as a finding.
-
 ## How you know you succeeded
 
 The meaningful user actions across the app have capture calls that fire on the

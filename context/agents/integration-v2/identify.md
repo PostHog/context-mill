@@ -47,9 +47,6 @@ follows from that answer:
    Where the SDK ships a middleware for this framework, that is what does this — use
    it rather than writing your own. Read the docs and the example app.
 
-You have no shell here: reading and editing is the whole job, and the build
-task verifies the run. Do not treat the absence of a command tool as a finding.
-
 ## How you know you succeeded
 
 Identification matches the kind of app you are in. While a user is known, what the
