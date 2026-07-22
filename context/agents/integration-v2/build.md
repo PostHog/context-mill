@@ -15,8 +15,10 @@ dependsOn: [install, init, identify, error-tracking, capture]
 ## Goal
 
 Bring the integration together: install the dependencies the earlier steps declared,
-then verify the project builds, lints, and passes its tests. Until now the steps only
-edited code and the manifest — this is where it installs and gets checked.
+then verify the project builds, typechecks, and lints — whichever of those the
+project defines. Do not run the test suite; the runtime does not allow it, and a
+green build is the bar here. Until now the steps only edited code and the manifest —
+this is where it installs and gets checked.
 
 Making the project run is the whole job. A separate review step reads the changes
 after you, with fresh eyes and the best-practices skill; judging the work you just

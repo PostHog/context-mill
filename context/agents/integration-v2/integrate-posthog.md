@@ -24,8 +24,8 @@ Plan a PostHog integration and seed the task queue with this graph:
 - `capture`, after `identify` — it decides the events and instruments them, and it
   reads how identity is already established before it instruments anything.
 - `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
-  it installs the dependencies and verifies the project builds, lints, and passes
-  its tests.
+  it installs the dependencies and verifies the project builds, typechecks, and
+  lints.
 - `review`, after `build`, parallel to `dashboard` — a fresh set of
   eyes over every change the run made, fixing what fails review.
 - `dashboard`, after `build` — only once the integration is confirmed building,
