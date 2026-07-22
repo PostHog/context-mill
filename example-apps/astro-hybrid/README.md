@@ -15,14 +15,14 @@ This shows how to:
 - Opt specific pages into SSR with `export const prerender = false`
 - Keep most pages static for performance
 - Track events from API routes using `posthog-node`
-- Pass session IDs from client to server for unified sessions
+- Link client and server sessions automatically with the `tracing_headers` option
 
 ## Features
 
 - **Hybrid rendering**: Static pages by default, SSR when needed
 - **API routes**: Server-side endpoints for auth and event tracking
 - **Dual tracking**: Events captured on both client and server
-- **Session continuity**: Session ID passed to server via headers
+- **Session continuity**: Session and distinct ID forwarded automatically via `tracing_headers`
 - **Product analytics**: Track login and burrito consideration events
 - **Error tracking**: Manual error capture sent to PostHog
 

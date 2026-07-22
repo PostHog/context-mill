@@ -44,11 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
   ): Promise<boolean> => {
     try {
+      // The session and distinct ID are added automatically by the
+      // tracing_headers option configured on the PostHogProvider.
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
         },
         body: JSON.stringify({ username, password }),
       })

@@ -113,16 +113,21 @@ This client is used in API routes to track server-side events.
 
 ### Server-side capture (routes/api/*)
 
-Server-side events include the client's `$session_id` so they appear in the same session in PostHog. The frontend sends it via a header:
+Server-side events include the client's `$session_id` so they appear in the same session in PostHog. The `tracing_headers` option on the `PostHogProvider` adds the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers to same-origin requests automatically, so the frontend fetch needs no PostHog headers of its own:
 
 ```typescript
-// Frontend: include session ID in API requests
+// Client: tracing_headers is configured once on the PostHogProvider
+options={{
+  api_host: '/ingest',
+  // ...
+  // Guarded for SSR, where `window` is undefined.
+  tracing_headers: typeof window !== 'undefined' ? [window.location.host] : [],
+}}
+
+// Frontend fetch — no manual header needed
 await fetch('/api/burrito/consider', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
-  },
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ ... }),
 })
 ```

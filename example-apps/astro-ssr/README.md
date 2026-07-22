@@ -11,7 +11,7 @@ This shows how to:
 
 - Initialize PostHog on both client and server
 - Track events from API routes using `posthog-node`
-- Pass session IDs from client to server for unified sessions
+- Link client and server sessions automatically with the `tracing_headers` option
 - Identify users on both client and server
 - Capture errors via `posthog.captureException()`
 - Reset PostHog state on logout
@@ -21,7 +21,7 @@ This shows how to:
 - **Server-side rendering**: Full SSR with `output: 'server'`
 - **API routes**: Server-side endpoints for auth and event tracking
 - **Dual tracking**: Events captured on both client and server
-- **Session continuity**: Session ID passed to server via headers
+- **Session continuity**: Session and distinct ID forwarded automatically via `tracing_headers`
 - **Product analytics**: Track login and burrito consideration events
 - **Session replay**: Enabled via PostHog snippet configuration
 - **Error tracking**: Manual error capture sent to PostHog
@@ -139,18 +139,24 @@ export const POST: APIRoute = async ({ request }) => {
 };
 ```
 
-### Passing session ID to server (`src/pages/index.astro`)
+### Passing session context to the server (`src/components/posthog.astro`)
+
+The `tracing_headers` option in `posthog.init` automatically adds the
+`X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers to same-origin
+`fetch`/`XHR` requests, so the server route above receives them with no manual
+wiring:
 
 ```javascript
-// Get the session ID from PostHog to pass to the server
-const sessionId = window.posthog?.get_session_id?.() || null;
+posthog.init(apiKey, {
+  api_host: apiHost,
+  defaults: "2026-01-30",
+  tracing_headers: [window.location.host],
+});
 
+// Client fetches then need no PostHog headers of their own:
 const response = await fetch("/api/auth/login", {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-PostHog-Session-Id": sessionId || "",
-  },
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ username, password }),
 });
 ```
