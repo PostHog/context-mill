@@ -22,8 +22,17 @@ one `ph-markdown-notebook` node:
 The report goes in verbatim, but `markdown` is a JSON string field: build the
 whole argument as one valid JSON value so the report's newlines and quotes are
 escaped as normal JSON string encoding (`\n`, `\"`, `\\`). Never paste raw
-multi-line text into the JSON, and never trim or summarize the report to make it
-parse — if the call is rejected, the fix is always the escaping.
+multi-line text into the JSON.
+
+A rejected call is usually the escaping — fix that first, and never trim the
+report just to make it parse. But a long report can also be rejected on size
+alone, however well escaped. Once the same content succeeds when shortened, stop
+re-escaping: create the notebook with the first sections, then send the rest with
+`notebooks-partial-update` (same `posthog_exec`, passing the `short_id` from the
+create response and the full `content` doc with the remaining
+`ph-markdown-notebook` nodes appended).
+The reader still gets the whole report; only the transport is split. Either way
+the file at the project root stays complete.
 
 Take the `short_id` from the response, build the URL as
 `<host>/project/<project_id>/notebooks/<short_id>`, and emit it on its own line in
