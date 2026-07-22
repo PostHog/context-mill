@@ -5,11 +5,15 @@ pass, reading each file once.
 
 ## Choose and record
 
-From the project's files, select between 10 and 15 that might have business value
-for event tracking — especially conversion and churn events. Read them. Track
-actions, not pageviews (autocapture covers those). Server-side events are required
-if there is instrumentable server-side code (API routes, server actions):
-payment/checkout completion, webhook handlers, and auth endpoints.
+From the project's files, select up to 15 that might have business value for event
+tracking — especially conversion and churn events. Read them. Track actions, not
+pageviews (autocapture covers those). Server-side events are required if there is
+instrumentable server-side code (API routes, server actions): payment/checkout
+completion, webhook handlers, and auth endpoints.
+
+Fifteen is a ceiling, not a quota. A small project may hold only two or three
+actions worth capturing — instrument those and stop. Never invent an event to
+reach a count: an event nobody performs is noise in every insight built on it.
 
 First scan for capture calls the project already makes, and note how their event
 names are formatted. Event names, property names, and feature flag keys are an
