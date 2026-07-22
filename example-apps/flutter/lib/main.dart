@@ -5,6 +5,7 @@ import 'posthog/posthog.dart';
 import 'screens/burrito_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,16 @@ class BurritoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Burrito App',
-      theme: ThemeData(colorSchemeSeed: Colors.deepOrange),
+      // Match the web examples' look: system font stack on a light grey
+      // page with #333 body text (see globals.css in the web examples).
+      theme: ThemeData(
+        colorSchemeSeed: AppColors.primary,
+        scaffoldBackgroundColor: AppColors.background,
+        textTheme: Typography.blackCupertino.apply(
+          bodyColor: AppColors.text,
+          displayColor: AppColors.text,
+        ),
+      ),
       // PosthogObserver captures a $screen event on every route change.
       // Routes must be named (like the `routes` map below) or the screen
       // views won't be recorded.

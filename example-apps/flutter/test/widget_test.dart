@@ -6,7 +6,9 @@ void main() {
   testWidgets('shows the login form on launch', (WidgetTester tester) async {
     await tester.pumpWidget(const BurritoApp());
 
-    expect(find.text('Welcome to the Burrito App'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+    expect(find.text('Welcome to Burrito Consideration App'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Username:'), findsOneWidget);
+    expect(find.text('Password:'), findsOneWidget);
   });
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 import '../auth/auth_state.dart';
+import '../theme.dart';
+import '../widgets/page_scaffold.dart';
 
 /// User profile screen with an error tracking demo.
 ///
@@ -25,63 +27,112 @@ class ProfileScreen extends StatelessWidget {
     }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Test error sent to PostHog')),
+        const SnackBar(content: Text('Error captured and sent to PostHog!')),
       );
     }
   }
 
-  Future<void> _logOut(BuildContext context) async {
-    final navigator = Navigator.of(context);
-    await AuthState.instance.logOut();
-    navigator.popUntil((route) => route.isFirst);
+  String _journeyMessage(int considerations) {
+    if (considerations == 0) {
+      return "You haven't considered any burritos yet. "
+          'Visit the Burrito Consideration page to start!';
+    }
+    if (considerations == 1) {
+      return "You've considered the burrito potential once. Keep going!";
+    }
+    if (considerations < 5) {
+      return "You're getting the hang of burrito consideration!";
+    }
+    if (considerations < 10) {
+      return "You're becoming a burrito consideration expert!";
+    }
+    return 'You are a true burrito consideration master! 🌯';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: ListenableBuilder(
+    return PageScaffold(
+      child: ListenableBuilder(
         listenable: AuthState.instance,
         builder: (context, _) {
           final auth = AuthState.instance;
           if (!auth.isLoggedIn) {
-            return const Center(child: Text('Not logged in.'));
+            return const Text('Not logged in.', style: AppTextStyles.body);
           }
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      auth.username!,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Text('User Profile', style: AppTextStyles.h1),
+              ),
+              StatsBox(
+                children: [
+                  const Text('Your Information', style: AppTextStyles.h2),
+                  _BoldLabelText(
+                    label: 'Username:',
+                    value: auth.username!,
+                  ),
+                  _BoldLabelText(
+                    label: 'Burrito Considerations:',
+                    value: '${auth.burritoConsiderations}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => _triggerTestError(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    foregroundColor: Colors.white,
+                    overlayColor: AppColors.dangerHover,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 32,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Burritos considered: ${auth.burritoConsiderations}',
-                      textAlign: TextAlign.center,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    const SizedBox(height: 24),
-                    OutlinedButton(
-                      onPressed: () => _triggerTestError(context),
-                      child: const Text('Trigger test error'),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.tonal(
-                      onPressed: () => _logOut(context),
-                      child: const Text('Log out'),
-                    ),
-                  ],
+                    textStyle: const TextStyle(fontSize: 16, height: 1.6),
+                  ),
+                  child: const Text('Trigger Test Error (for PostHog)'),
                 ),
               ),
-            ),
+              const SizedBox(height: 32),
+              const Text('Your Burrito Journey', style: AppTextStyles.h3),
+              const SizedBox(height: 8),
+              Text(
+                _journeyMessage(auth.burritoConsiderations),
+                style: AppTextStyles.body,
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _BoldLabelText extends StatelessWidget {
+  const _BoldLabelText({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        style: AppTextStyles.body,
+        children: [
+          TextSpan(
+            text: '$label ',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(text: value),
+        ],
       ),
     );
   }
