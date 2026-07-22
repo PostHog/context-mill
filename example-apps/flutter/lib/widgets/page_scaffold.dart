@@ -17,6 +17,7 @@ class PageScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AppHeader(),
           Expanded(
