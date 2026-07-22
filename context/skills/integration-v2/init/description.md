@@ -18,10 +18,45 @@ actual `.env` still goes through `set_env_values`.
 
 ## Init point
 
-Create the framework's single initialization point that runs once on the client,
-following the reference example and the docs for the right pattern. Read the
-existing provider or entry file before editing, and add PostHog alongside what is
-already there rather than replacing it.
+Where initialization belongs depends on what kind of app this is. Work that out
+before you write anything.
+
+1. **Client.** One init, running once in the browser, at the app's entry or its
+   provider. The library holds its own state from there, so nothing else constructs
+   it — later steps reach the same instance by importing it.
+2. **Fullstack or SSR.** You will initialize both a client and a server SDK. If
+   there are dedicated docs or example apps for this framework, follow their
+   patterns first. If not, initialize the client and the server clients separately,
+   according to the relevant docs and examples.
+3. **Server.** One client per process, however long that process lives. Where it is
+   long-lived, build it once at startup through whatever hook the framework gives
+   you, and reuse it for every request. Where the process is per-request or
+   serverless, there is no startup to hook — use the framework's container or a
+   module singleton, and make sure events reach PostHog before the process dies, or
+   they are lost.
+
+Follow the reference example and the docs for this framework's pattern. Read the
+existing provider, entry, or startup file before editing, and add PostHog alongside
+what is already there rather than replacing it.
+
+## Content Security Policy
+
+Before wiring a browser SDK, check whether the app ships a CSP — a meta tag in
+the HTML or a header the server sends. If it restricts `script-src` or
+`connect-src`, a CDN-loaded snippet is dead on arrival: the browser blocks the
+SDK script, the snippet's stub queues every call into an array nothing drains,
+and the diff looks complete while zero events send. Either:
+
+- **Extend the policy.** Allow the PostHog hosts in `script-src` and
+  `connect-src`, per the CSP reference below.
+- **Work within it.** Bundle the `posthog-js` dependency the manifest already
+  declares instead of loading it from the CDN, which satisfies `script-src`.
+  Events still have to send: allow the PostHog host in `connect-src`, or route
+  them through a same-origin proxy. `connect-src` falls back to `default-src`,
+  so a bare `default-src 'self'` blocks sending too.
+
+Say in your handoff which you did — the review and the report need to know how
+events leave the page.
 
 ## Reference
 

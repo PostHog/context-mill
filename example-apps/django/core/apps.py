@@ -35,3 +35,6 @@ class CoreConfig(AppConfig):
         # Optional: Enable debug mode in development
         if settings.DEBUG:
             posthog.debug = True
+
+        # Register the auth signal that identifies the login request's context.
+        from . import signals  # noqa: F401

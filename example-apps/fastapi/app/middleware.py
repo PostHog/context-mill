@@ -36,8 +36,7 @@ class PostHogMiddleware:
 
         with new_context():
             if user:
-                identify_context(user.email)
-                tag("email", user.email)
+                identify_context(str(user.id))
                 tag("is_staff", user.is_staff)
 
             await self.app(scope, receive, send)

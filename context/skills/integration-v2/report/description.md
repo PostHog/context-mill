@@ -39,6 +39,8 @@ code changed this run and drop the ones that don't fit:
   monorepo/bootstrap scripts, and set in the deploy environments, not just locally.
 - If the app ships minified browser bundles: wire source-map upload into CI so
   production stack traces de-minify — call it out with the docs link.
+- If the app ships a Content-Security-Policy: load the app and check the console
+  for CSP violations — a blocked SDK queues events silently and never sends.
 - If LLM analytics was set up: trigger the instrumented call path and confirm
   `$ai_generation` events appear in PostHog.
 - If auth exists and identify was wired: the returning-visitor path also calls

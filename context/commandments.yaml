@@ -5,10 +5,14 @@
 # the ones it belongs to in its own config (see context/skills/*/config.yaml).
 
 commandments:
+  # Applies to EVERY skill regardless of tags — see collectCommandments in scripts/lib/skill-generator.js
+  all:
+    - A missing PostHog configuration must never break the app — read keys optionally (never a required setting), guard init and capture behind their presence, and keep build and boot working with no PostHog environment set — but never silently: in development or debug builds fail loudly, using the language's idiomatic error, with the message "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once <VAR> is configured" (substituting the actual variable name); production stays a no-op
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
     - Check package.json for type checking or build scripts to validate changes
+    - When identity comes from framework-bridged state (Inertia or SSR shared props, a serialized session), confirm the backend actually shares that field — add the share server-side if missing — before identifying from it
 
   react:
     # PostHog-specific
@@ -49,8 +53,9 @@ commandments:
     - NEVER send PII in posthog.capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in posthog.identify() person properties (email, name, role), NOT in capture() event properties
     - Call posthog.identify(userId, { email, name, role }) on login AND on page refresh if the user is already logged in
-    - Call posthog.reset() on logout to unlink future events from the current user
+    - Call posthog.reset() on logout — the transition out of an identified session, never an initially anonymous page load (that discards the anonymous id and its history) — and before identify() when switching directly between accounts
     - For SPAs without a framework router, capture pageviews with posthog.capture($pageview) or use the capture_pageview history_change option in init for History API routing
+    - When verifying with an automated browser (Playwright, Puppeteer, Selenium), posthog-js's bot filter silently drops every capture while flags and asset loads still succeed. Override navigator.webdriver, the user agent, AND navigator.userAgentData before concluding events do not send. Diagnose with ?__posthog_debug=true ("likely bot" in the console).
 
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
@@ -113,10 +118,10 @@ commandments:
     - For Microsoft.FeatureManagement, call `UseFeatureManagement<TContextProvider>()` and implement `IPostHogFeatureFlagContextProvider` to provide the current distinct ID, person properties, and groups
 
   django:
-    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE it auto-extracts tracing headers and captures exceptions
+    - Add 'posthog.integrations.django.PosthogContextMiddleware' to MIDDLEWARE, after AuthenticationMiddleware, it auto-extracts tracing headers and captures exceptions
     - Initialize PostHog in AppConfig.ready() with api_key and host from environment variables
-    - Use the context API pattern with new_context(), identify_context(user_id), then capture()
-    - For login/logout views, create a new context since user state changes during the request
+    - The middleware identifies the request context from the X-POSTHOG-DISTINCT-ID header or the authenticated user's pk, so in a view where the user is already logged in a plain capture() is already attributed - do not wrap it in a context of its own
+    - The middleware reads the user once, before the view runs, so a login request's context is identified as whoever the user was beforehand - nobody - and calling login() does not update it. A bare capture there is personless. Hook Django's user_logged_in signal and call identify_context(str(user.pk)) inside it: the signal runs inside the login request, so it fixes the ambient context and every later capture in that request is attributed. Logout views need no special handling, the user is still authenticated when the middleware runs - capture before calling logout()
     - Do NOT create custom middleware, distinct_id helpers, or conditional checks - the SDK handles these
 
   flask:
@@ -137,6 +142,7 @@ commandments:
     - Check composer.json for existing dependencies and autoload configuration before adding new files
     - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init()
     - PHP SDK methods take associative arrays with 'distinctId', 'event', 'properties' keys - not positional arguments
+    - Any first-party loader or proxy script you add must load standalone — require its own config includes explicitly rather than assuming the app bootstrapped them
 
   tanstack-router:
     - Use TanStack Router's built-in navigation events for pageview tracking instead of useEffect
@@ -257,12 +263,13 @@ commandments:
     - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
     - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
     - 'Configure the singleton with flushAt 1 and flushInterval 0, and `await posthog.flush()` in the API route after capturing and before returning the Response. An SSR endpoint is short-lived per request, so an unflushed batched event is silently dropped'
-    - Pass the client session ID to server via X-PostHog-Session-Id header for unified session tracking
+    - Set tracing_headers to the backend hostname on the client (hostnames only, no port) so posthog-js sends X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID on every request, and read both server-side so its events attribute to the same person
 
   astro-hybrid:
     - Use posthog-node in API routes under src/pages/api/ for server-side event tracking
     - Store the posthog-node client instance in a singleton pattern (src/lib/posthog-server.ts) to avoid creating multiple clients
     - 'Configure the singleton with flushAt 1 and flushInterval 0, and `await posthog.flush()` in the API route after capturing and before returning the Response. An SSR endpoint is short-lived per request, so an unflushed batched event is silently dropped'
+    - Set tracing_headers to the backend hostname on the client (hostnames only, no port) so posthog-js sends X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID on every request, and read both server-side so its events attribute to the same person
     - In Astro 5, use output static (the default) with an adapter - pages are prerendered by default
     - Use export const prerender = false to opt specific pages into SSR when they need server-side rendering
     - Only pages that need server-side PostHog tracking (like API-backed forms) should opt out of prerendering

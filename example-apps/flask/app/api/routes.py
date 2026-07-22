@@ -18,7 +18,7 @@ def consider_burrito():
 
     # PostHog: Capture custom event
     with new_context():
-        identify_context(current_user.email)
+        identify_context(str(current_user.id))
         capture("burrito_considered", properties={"total_considerations": burrito_count})
 
     return jsonify({"success": True, "count": burrito_count})
@@ -44,7 +44,7 @@ def test_error():
         if should_capture:
             # Manually capture this specific exception in PostHog
             with new_context():
-                identify_context(current_user.email)
+                identify_context(str(current_user.id))
                 event_id = posthog.capture_exception(e)
 
             return jsonify({

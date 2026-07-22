@@ -6,5 +6,7 @@ description: Initialize PostHog and set its environment variables
 tags: [orchestrator, init]
 cli:
   role: internal
+shared_docs:
+  - https://posthog.com/docs/advanced/content-security-policy.md
 variants_from: integration
 packaging: bundle
