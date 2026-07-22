@@ -52,7 +52,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             // headers to same-origin requests so server-side events join the
             // same session. Guarded for SSR, where `window` is undefined.
             tracing_headers:
-              typeof window !== 'undefined' ? [window.location.host] : [],
+              typeof window !== 'undefined' ? [window.location.hostname] : [],
           }}
         >
           <AuthProvider>

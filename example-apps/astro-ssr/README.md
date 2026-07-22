@@ -150,7 +150,7 @@ wiring:
 posthog.init(apiKey, {
   api_host: apiHost,
   defaults: "2026-01-30",
-  tracing_headers: [window.location.host],
+  tracing_headers: [window.location.hostname],
 });
 
 // Client fetches then need no PostHog headers of their own:

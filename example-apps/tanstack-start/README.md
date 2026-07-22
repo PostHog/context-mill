@@ -121,7 +121,7 @@ options={{
   api_host: '/ingest',
   // ...
   // Guarded for SSR, where `window` is undefined.
-  tracing_headers: typeof window !== 'undefined' ? [window.location.host] : [],
+  tracing_headers: typeof window !== 'undefined' ? [window.location.hostname] : [],
 }}
 
 // Frontend fetch — no manual header needed
