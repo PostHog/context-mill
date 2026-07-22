@@ -49,7 +49,13 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
-- **React Native / Flutter** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
+- **React Native** Hermes source maps upload from the **native build**, not a bundler step. Two flows — pick by project type, per the reference:
+  1. **Expo** (config plugin): add `"posthog-react-native/expo"` to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro` — the native build phases are injected automatically at prebuild.
+  2. **Bare React Native**: apply the SDK's bundled Gradle script (`tooling/posthog.gradle`, resolved from the installed `posthog-react-native` package) in the **app module's** `android/app/build.gradle`, and prepend the SDK's `posthog-xcode.sh` call to the "Bundle React Native code and images" Xcode build phase — copy both from the reference verbatim, do not hand-roll `posthog-cli` steps.
+  Gotchas:
+  1. Uploads run on **Release** native builds only; both hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
+  2. OTA bundles (`eas update` / `npx expo export --dump-sourcemap`) skip the native build, so they need a manual upload afterwards: `posthog-cli hermes upload --directory dist`.
+- **Flutter** You upload platform debug symbols (dSYMs, mappings) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
 ### Make credentials available at build time
 
@@ -63,6 +69,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 - **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
+- **React Native** Both native hooks (the Gradle task and the Xcode build phase) authenticate with the same `POSTHOG_CLI_*` variables — follow the reference for how each hook picks them up locally. In CI set them as job secrets; the host var follows the same API-host rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -129,7 +136,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
 - **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
-- **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
+- **React Native** Build + run are one step per platform, and the upload only fires on the **Release** configuration: bare RN `npx react-native run-ios --mode Release` / `npx react-native run-android --mode release`; Expo `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
 
 ### Set up CI for automatic uploads
 
@@ -304,7 +311,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
 #### Examples
 - **Browser / SPA / SSR (web, react, nextjs, nuxt, angular, vite, webpack, rollup)** Add a button such as "Test PostHog Error Tracking" on the home/root page whose onClick calls `posthog.captureException(new Error("PostHog source maps test"))`.
 - **Node.js** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that calls `posthog.captureException(new Error("PostHog source maps test"))` and returns 200. With no HTTP layer, add the capture to the existing entry script where the client is initialised rather than creating a new file. Tell the user the exact command/URL to hit.
-- **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`.
+- **React Native** Add a visible `Button` on the main screen whose onPress calls `posthog.captureException(new Error("PostHog source maps test"))`. Test flow — the upload only runs on the **Release** build: use the Release run command from "Identify the build and run commands", launch the app, tap the button. It's an event, not a crash — the app keeps running.
 - **Android (Kotlin)** Add a `Button` on the launcher Activity whose onClick handler is exactly:
   ```kotlin
   import com.posthog.PostHog
