@@ -20,6 +20,8 @@ Emit:
 
 Reach `products-enable` through the PostHog `exec` tool (`info products-enable`, then `call products-enable <json>`).
 
+**Soft-degrade if the tool is missing** (a `search`/`info` miss, not a rejected call) — this is not currently exposed in every environment. Don't abort: record a follow-up ("enable Session Replay, Error Tracking, and Support manually in project settings") and continue to step 4. **A missing tool here does not block the next step** — enabling a product (this step) and enabling its signal source (step 4) are independent calls, so step 4 still switches the sources on; they simply sit idle until the products are on some other way.
+
 ## Do
 
 1. Call `products-enable` to turn the products on:
