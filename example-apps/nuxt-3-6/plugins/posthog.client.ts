@@ -7,6 +7,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   const posthogClient = posthog.init(runtimeConfig.public.posthog.publicKey, {
     api_host: runtimeConfig.public.posthog.host,
     defaults: runtimeConfig.public.posthog.posthogDefaults as any,
+    // Automatically add X-POSTHOG-SESSION-ID and X-POSTHOG-DISTINCT-ID headers
+    // to same-origin requests so server-side events join the same session.
+    tracing_headers: [window.location.hostname],
     loaded: (posthog: PostHogInterface) => {
       if (import.meta.env.MODE === 'development') posthog.debug()
     },
