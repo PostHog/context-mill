@@ -15,10 +15,10 @@ dependsOn: [build]
 ## Goal
 
 Review every change this run made, as a strict reviewer who did none of the work,
-and fix what fails. The project had no PostHog before this run, so find the full
-changeset yourself: grep for posthog (all cases) across source and config, read
-each file you find, and read the handoffs for anything the grep cannot see (env
-files, manifest edits).
+and fix what fails. Start from the handoffs: every step reports the files it edited
+and why, so that list is your changeset. Read those files first. Then grep for
+posthog (all cases) across source and config to catch anything the handoffs missed
+— that grep is a safety net, not your primary search.
 
 Judge each change against these dimensions, in order:
 
@@ -44,8 +44,9 @@ kill bad changes; never alter the what.
 Only flag what you can pin to a specific line and dimension — no taste-based
 rewrites, and never expand the integration. Fix findings by editing in place. For
 each fix, ask what would behave differently if your fix were wrong, and check by
-reading the callers — not by trusting your edit. If you changed anything, re-run
-the project's lint or build the way the build step did, when one exists.
+reading the callers — not by trusting your edit. The build step already ran the
+project's lint and build and reported the result in its handoff; take that as given.
+Re-run them only if you edited code, and only the ones your edit could break.
 
 ## How you know you succeeded
 
