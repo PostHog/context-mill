@@ -29,15 +29,6 @@
     @see https://posthog.com/docs/libraries/flutter
   -->
   <script async>
-    var posthogProjectToken = "phc_your_project_token_here";
-    if (posthogProjectToken === "phc_your_project_token_here") {
-      // Leave window.posthog undefined so posthog_flutter's web bindings
-      // skip gracefully instead of calling methods on an uninitialized stub.
-      console.warn(
-        "PostHog project token not configured in web/index.html. " +
-          "Analytics will be disabled on web."
-      );
-    } else {
     !(function (t, e) {
       var o, n, p, r;
       e.__SV ||
@@ -73,12 +64,11 @@
         (e.__SV = 1));
     })(document, window.posthog || []);
 
-    posthog.init(posthogProjectToken, {
+    posthog.init("phc_your_project_token_here", {
       // Usually 'https://us.i.posthog.com' or 'https://eu.i.posthog.com'
       api_host: "https://us.i.posthog.com",
       defaults: "2025-05-24",
     });
-    }
   </script>
 
   <!-- iOS meta tags & icons -->

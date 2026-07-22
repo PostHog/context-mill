@@ -30,6 +30,9 @@ class AuthState extends ChangeNotifier {
     // Person data (like the username) belongs in userProperties ($set) and
     // userPropertiesSetOnce ($set_once), not in event properties.
     await Posthog().identify(
+      // In a real app, use your database user ID here — a stable identifier
+      // that never changes throughout the user's lifecycle.
+      // @see https://posthog.com/docs/product-analytics/identity-resolution#choosing-your-identity-strategy
       userId: username,
       userProperties: {'username': username},
       userPropertiesSetOnce: {

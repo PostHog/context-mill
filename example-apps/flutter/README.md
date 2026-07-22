@@ -121,7 +121,7 @@ Identify users as soon as they log in; person data goes in `userProperties` (`$s
 
 ```dart
 await Posthog().identify(
-  userId: username,
+  userId: username, // in a real app, use your database user ID here
   userProperties: {'username': username},
   userPropertiesSetOnce: {'first_login_date': DateTime.now().toIso8601String()},
 );
