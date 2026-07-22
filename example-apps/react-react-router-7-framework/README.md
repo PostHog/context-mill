@@ -75,7 +75,7 @@ import { PostHogProvider } from '@posthog/react'
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
   defaults: '2026-01-30',
-  __add_tracing_headers: [ window.location.host, 'localhost' ],
+  tracing_headers: [ window.location.host, 'localhost' ],
 });
 
 <PostHogProvider client={posthog}>
@@ -96,7 +96,7 @@ posthog?.capture('user_logged_in', {
 });
 ```
 
-The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers because we set the `__add_tracing_headers` option in the PostHog initialization.
+The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers because we set the `tracing_headers` option in the PostHog initialization.
 
 **Important**: do not identify users on the server-side.
 

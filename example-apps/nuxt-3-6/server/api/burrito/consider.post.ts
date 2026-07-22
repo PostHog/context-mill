@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
 
   const runtimeConfig = useRuntimeConfig()
 
-  // Relies on __add_tracing_headers being set in the client-side SDK
+  // Relies on tracing_headers being set in the client-side SDK
   const sessionId = getHeader(event, 'x-posthog-session-id')
   const distinctId = getHeader(event, 'x-posthog-distinct-id')
 
