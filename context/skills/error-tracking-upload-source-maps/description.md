@@ -52,9 +52,13 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - **React Native** Hermes source maps upload from the **native build**, not a bundler step. Two flows — pick by project type, per the reference:
   1. **Expo** (config plugin): add `"posthog-react-native/expo"` to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro` — the native build phases are injected automatically at prebuild.
   2. **Bare React Native**: apply the SDK's bundled Gradle script (`tooling/posthog.gradle`, resolved from the installed `posthog-react-native` package) in the **app module's** `android/app/build.gradle`, and prepend the SDK's `posthog-xcode.sh` call to the "Bundle React Native code and images" Xcode build phase — copy both from the reference verbatim, do not hand-roll `posthog-cli` steps.
+  Also wire **native crash symbolication** — the Hermes maps above cover JS errors only; crashes in native iOS/Android code need debug symbols uploaded too:
+  1. **Expo**: make the plugin entry `["posthog-react-native/expo", { "uploadNativeSymbols": true }]` in `app.json` — prebuild then adds an iOS dSYM-upload build phase and applies the `com.posthog.android` Gradle plugin. Leave `includeSource` off: it uploads native source code, so it's user opt-in only.
+  2. **Bare React Native**: iOS follows the standalone **iOS (Xcode)** example above (`upload-symbols.sh` Run Script phase, ordered last); Android follows the standalone **Android (Gradle)** example above (`com.posthog.android` plugin on the app module).
   Gotchas:
   1. Uploads run on **Release** native builds only; both hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   2. OTA bundles (`eas update` / `npx expo export --dump-sourcemap`) skip the native build, so they need a manual upload afterwards: `posthog-cli hermes upload --directory dist`.
+  3. Uploaded native symbols only pay off once native crash autocapture (`errorTracking.autocapture.nativeCrashes`) is enabled in the SDK setup at runtime — tell the user about the pairing, do not change their runtime config yourself.
 - **Flutter** You upload platform debug symbols (dSYMs, mappings) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
 ### Make credentials available at build time
