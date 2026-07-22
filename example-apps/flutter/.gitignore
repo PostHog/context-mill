@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated binary assets (launcher/app icons) are deliberately not committed.
+# Regenerate them with: flutter create --platforms=android,ios,web,macos .
+/android/app/src/main/res/mipmap-*/
+/ios/Runner/Assets.xcassets/
+/macos/Runner/Assets.xcassets/
+/web/favicon.png
+/web/icons/

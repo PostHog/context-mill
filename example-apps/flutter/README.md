@@ -22,11 +22,14 @@ A [Flutter](https://flutter.dev/) example app demonstrating PostHog integration 
 
 ## Getting started
 
-### 1. Install dependencies
+### 1. Regenerate icons and install dependencies
 
 ```bash
+flutter create --platforms=android,ios,web,macos .
 flutter pub get
 ```
+
+Binary launcher/app icons are deliberately not committed. The `flutter create` step regenerates them — it only adds missing files and never overwrites the committed configs.
 
 ### 2. Configure your PostHog project token
 
