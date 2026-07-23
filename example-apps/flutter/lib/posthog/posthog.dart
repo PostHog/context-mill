@@ -20,9 +20,6 @@ class PosthogEnv {
   );
 }
 
-/// Whether a PostHog project token was provided at build time.
-bool get isPostHogConfigured => PosthogEnv.projectToken.isNotEmpty;
-
 /// Sets up the PostHog Flutter SDK manually from Dart.
 ///
 /// Manual setup keeps all configuration in one place and is required for
@@ -35,9 +32,15 @@ bool get isPostHogConfigured => PosthogEnv.projectToken.isNotEmpty;
 /// On Flutter Web the SDK is initialized by the posthog-js snippet in
 /// web/index.html instead — the native `setup()` call is a no-op there.
 ///
+/// The [projectToken] and [host] parameters exist for tests; production code
+/// uses the build-time values from [PosthogEnv].
+///
 /// @see https://posthog.com/docs/libraries/flutter
-Future<void> setupPostHog() async {
-  if (!isPostHogConfigured) {
+Future<void> setupPostHog({
+  String projectToken = PosthogEnv.projectToken,
+  String host = PosthogEnv.host,
+}) async {
+  if (projectToken.isEmpty) {
     debugPrint(
       'PostHog project token not configured. Analytics will be disabled. '
       'Run with --dart-define=POSTHOG_PROJECT_TOKEN=phc_... to enable it.',
@@ -45,8 +48,8 @@ Future<void> setupPostHog() async {
     return;
   }
 
-  final config = PostHogConfig(PosthogEnv.projectToken);
-  config.host = PosthogEnv.host;
+  final config = PostHogConfig(projectToken);
+  config.host = host;
 
   // Verbose SDK logging in debug builds
   config.debug = kDebugMode;
