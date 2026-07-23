@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Profile</title></head>
+<body>
+  <h1>Profile</h1>
+  <p th:if="${error}">Something went wrong: <strong th:text="${error}">error</strong>.</p>
+  <p th:if="${error}">An <code>error_occurred</code> event was sent to PostHog.</p>
+  <a href="/">Back home</a>
+</body>
+</html>

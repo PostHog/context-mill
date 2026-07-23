@@ -236,6 +236,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/elixir.md
 
+  - id: java
+    framework: java
+    example_paths: example-apps/java-spring-boot
+    display_name: Java (Spring Boot)
+    description: PostHog integration for Java and Spring Boot applications using the posthog-server SDK
+    tags: [java, java-server]
+    docs_urls:
+      - https://posthog.com/docs/libraries/java.md
+
   - id: go
     template: description-go-docs-only.md
     display_name: Go

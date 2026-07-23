@@ -97,6 +97,17 @@ commandments:
     - Call `IdentifyAsync` for known users and put PII such as email in person properties, not in event properties
     - Use `CaptureException(exception, distinctId, properties, groups, flags)` for handled exceptions; automatic exception capture is not available in the .NET SDK yet
 
+  # Keyed `java-server` (not `java`) so these backend rules never fold into the Android skill, which carries the `java` tag. The Java variant is tagged [java, java-server].
+  java-server:
+    - posthog-server is the PostHog Java server SDK; add the `com.posthog:posthog-server` dependency via Gradle or Maven and import from `com.posthog.server`
+    - Build one client per process with `PostHogConfig.builder(token).host(host).build()` then `PostHog.with(config)`; share the returned `PostHogInterface` (for example as a singleton Spring `@Bean`), never per request
+    - Read the project token and host from the environment or configuration; never hardcode PostHog secrets
+    - Flush and close on shutdown with `posthog.flush()` and `posthog.close()` (for a Spring `@Bean`, use `destroyMethod = "close"`) so queued events are delivered before exit
+    - Server-side captures must pass a stable `distinctId` as the first argument to `capture(...)` that matches frontend identify calls; avoid anonymous or literal IDs for business events
+    - Identify users by attaching person properties to a capture via `PostHogCaptureOptions.builder().userProperty(...)` / `.userPropertySetOnce(...)`; keep PII in person properties, not event properties
+    - For feature flags, call `posthog.evaluateFlags(distinctId)` once per request, then read values from the snapshot with `isEnabled("flag-key")` / `getFlagPayload("flag-key")`
+    - The Java server SDK has no automatic error tracking, surveys, or session replay; do not promise or scaffold those features
+
   elixir:
     - posthog-elixir is installed as the `posthog` Hex package; add `{:posthog, "~> 2.0"}` to `mix.exs` and run `mix deps.get`
     - Configure PostHog in application config using `api_host`, `api_key`, and `in_app_otp_apps`; read secrets from environment or runtime config, never hardcode them

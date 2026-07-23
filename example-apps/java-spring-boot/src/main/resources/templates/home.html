@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>PostHog Spring Boot example</title></head>
+<body>
+  <h1>🌯 Burrito app</h1>
+
+  <div th:if="${userId}">
+    <p>Logged in as <strong th:text="${userId}">user</strong>.</p>
+    <ul>
+      <li><a href="/dashboard">Dashboard (feature flag)</a></li>
+      <li><a href="/profile">Profile (error reporting)</a></li>
+    </ul>
+    <form method="post" action="/burrito">
+      <button type="submit">Consider a burrito (track event)</button>
+    </form>
+  </div>
+
+  <form th:unless="${userId}" method="post" action="/login">
+    <p>Log in to identify yourself with PostHog:</p>
+    <input name="userId" placeholder="user id" required />
+    <input name="email" placeholder="email" type="email" />
+    <button type="submit">Log in</button>
+  </form>
+</body>
+</html>
