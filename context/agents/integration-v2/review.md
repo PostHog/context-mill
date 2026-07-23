@@ -29,13 +29,13 @@ resolves — and install again. If the failure is the environment, not the
 integration's own change (a pre-existing broken dependency, a package manager that
 cannot provision), note it and move on; do not spiral.
 
-**Review, as a strict reviewer who did none of the writing.** Get the changeset the
-cheap way: run `git diff` (and `git diff --stat` for the shape) — the run's edits are
-the working-tree changes, so the diff is exactly what to review. Read that, not the
-whole tree; do not grep the codebase or read files at random when the diff already
-shows every changed line. Only when the project is not a git repo, or the diff comes
-back empty, fall back to grepping for posthog across source and config. Either way,
-read the handoffs for what a diff cannot show — env values written through
+**Review, as a strict reviewer who did none of the writing.** The changeset is
+already handed to you: `read_handoffs` returns every upstream task's handoff, and
+each one names the files it touched and what it changed in them. That union of
+touched files IS the changeset — read exactly those files and judge them. Do not
+grep the codebase, glob, or read files the handoffs never name; a diff of the whole
+tree is noise (lockfiles, formatting, build output) and the handoffs are the signal.
+The handoffs also carry what no file shows — env values written through
 `set_env_values`, manifest edits. Judge each change against these dimensions, in
 order:
 
