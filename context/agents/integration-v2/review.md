@@ -15,7 +15,7 @@ dependsOn: [install, init, identify, error-tracking, capture]
 ## Goal
 
 You are the last hands on the code. First make the integration run, then review it,
-then leave it building. Do both in one pass — verifying and reviewing are the same
+then leave it building to the best of your ability. Do both in one pass, verifying and reviewing are the same
 reading of the same changeset.
 
 **Install and verify.** The earlier steps edited code and declared the SDK in the
