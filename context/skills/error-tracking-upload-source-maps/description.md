@@ -55,7 +55,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   Gotchas:
   1. Uploads run on **Release** native builds only; both hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   2. OTA bundles (`eas update` / `npx expo export --dump-sourcemap`) skip the native build, so they need a manual upload afterwards: `posthog-cli hermes upload --directory dist`.
-  3. Uploaded native symbols only pay off once native crash autocapture (`errorTracking.autocapture.nativeCrashes`) is enabled in the SDK setup at runtime — tell the user about the pairing, do not change their runtime config yourself.
+  3. Uploaded native symbols are useless without the runtime half: you **must** also enable native crash autocapture (`errorTracking.autocapture.nativeCrashes`) in the SDK setup and install the `@posthog/react-native-plugin` package it depends on — per the reference. Symbols without capture means native crashes are silently never reported.
 - **Flutter** You upload platform debug symbols (dSYMs, mappings) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
 ### Make credentials available at build time
