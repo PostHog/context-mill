@@ -14,12 +14,13 @@ dependsOn: []
 ## Goal
 
 Install the PostHog SDK with the project's own package manager, so the real
-published version lands in the manifest and the lockfile — not a version you typed.
+published version lands in the manifest and the lockfile — not one you made up.
 Run the manager's add command with the bare package name and let it resolve the
 version: `npm install <pkg>` (or the project's pnpm/yarn/bun), `pip install <pkg>`,
-`composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`. Never write a
-version number of your own into the manifest — a version that was never published
-fails the whole run with `ETARGET`, and guessing another one just fails again.
+`composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`. Never invent a
+version — one that was never published fails the whole run with `ETARGET`, and
+guessing another just fails again. The only version you write by hand is one copied
+from the framework reference example, and only in the environment fallback below.
 
 Add the client library, plus the server library if the app has server-side code
 that sends events. If the SDK is already installed, leave it and say so.
@@ -53,7 +54,7 @@ When you hit one of those, fall back: add the PostHog package to the manifest by
 at a valid version (copy the framework reference example's spec, e.g. a `^1.x` range),
 so the dependency is still declared for the later steps and for the user's own
 install. Then move on, and say in your handoff exactly what failed and the command
-you ran, so the build task and the report surface it.
+you ran, so the review step and the report surface it.
 
 ## How you know you succeeded
 
