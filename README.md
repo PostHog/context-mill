@@ -80,8 +80,9 @@ file. The build script discovers, orders, and bundles them automatically.
 ## Wizard CLI commands
 
 Skills in this repo declare how they surface as wizard commands via a `cli:`
-block in their `config.yaml`. That mechanism — `role`, `parentCommand`,
-`command`, flat vs. family — is documented in
+block in their `config.yaml`. A skill promoted to a typed command is a **hat**
+(you wear a different hat to do a different thing). That mechanism — `role`,
+`parentHat`, `hat`, flat vs. family — is documented in
 [`CONTRIBUTING.md`](CONTRIBUTING.md#how-skills-get-into-the-wizard-cli).
 
 The CLI was overhauled to consolidate commands into a smaller, extensible
@@ -111,7 +112,7 @@ surface. If you (or your agent) knew an older command, here's where it went:
 | `wizard audit web-analytics` | *(wizard-native, not a skill in this repo)* |
 
 > **Commands vs. skills:** those audit subcommands **are** skills, promoted to
-> commands via `cli: role: command`. A skill with `role: skill` is reachable only
+> commands (hats) via `cli: role: hat`. A skill with `role: skill` is reachable only
 > through `wizard skill <id>`. Same machinery, two surfaces — so
 > `wizard audit <subcommand>` picks an audit area, it does **not** take a skill
 > name.
