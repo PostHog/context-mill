@@ -49,25 +49,11 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
-- **React Native** Hermes source maps upload from the **native build**, not a bundler step. Two flows — pick by project type, per the reference:
-  1. **Expo** (config plugin): add the `posthog-react-native/expo` plugin entry to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro` — the native build phases are injected automatically at prebuild. The reference badges **native crash symbolication** as *optional* — here it is not: enable `uploadNativeSymbols` with source inclusion on the plugin entry, per the reference. A bare plugin string without options means symbolication is silently missing.
-  2. **Bare React Native**: apply the SDK's bundled Gradle script (`tooling/posthog.gradle`, resolved from the installed `posthog-react-native` package) in the **app module's** `android/app/build.gradle`, and wrap the "Bundle React Native code and images" Xcode build phase with the SDK's `posthog-xcode.sh` — do not hand-roll `posthog-cli` steps. The Xcode wiring is a mechanical, single-line edit; apply it exactly as below rather than deriving a path yourself:
-     - In that build phase, find the one line that **invokes** `react-native-xcode.sh` (the `/bin/sh -c "…react-native-xcode.sh…"` execution line — **not** the `REACT_NATIVE_XCODE="…"` assignment line).
-     - The stock bare template defines `$NODE_BINARY` only *inside* `with-environment.sh`, so it is **empty** at the top of the phase — using the token without this step makes it expand to nothing and the phase dies with `: command not found`. Insert this guarded block right after the phase's `set -e`:
-       ```sh
-       if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
-         source "$PODS_ROOT/../.xcode.env"
-       fi
-       if [[ -f "$PODS_ROOT/../.xcode.env.local" ]]; then
-         source "$PODS_ROOT/../.xcode.env.local"
-       fi
-       ```
-     - Immediately before that existing invocation, insert `/bin/sh ` followed by this path-resolution token verbatim, and leave the rest of the line unchanged. The token resolves `posthog-xcode.sh` from the installed package via `$NODE_BINARY`, so do **not** hardcode a `node_modules`/`$SRCROOT` path:
-       `` `"$NODE_BINARY" --print "require('path').join(require('path').dirname(require.resolve('posthog-react-native')), '..', 'tooling', 'posthog-xcode.sh')"` ``
-     - `posthog-xcode.sh` runs the RN bundle step, then does the Hermes `clone` + `upload` itself; it also extends `PATH` and locates `posthog-cli` on its own, so nothing else in the phase changes.
-   **Native crash symbolication** is not optional here either — wire it per the reference's native symbolication section.
+- **React Native** Hermes source maps upload from the **native build**, not a bundler step. **Supported for Expo apps only** — chunk-ID injection relies on Expo's serialization pipeline, so an app without the `expo` package would upload nothing and resolve nothing.
+  - **Expo** (config plugin), per the reference: add the `posthog-react-native/expo` plugin entry to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro` — the native build phases are injected automatically at prebuild. The reference badges **native crash symbolication** as *optional* — here it is not: enable `uploadNativeSymbols` with source inclusion on the plugin entry, per the reference. A bare plugin string without options means symbolication is silently missing.
+  - **Bare React Native (no `expo` package) is not supported.** Do not try to wire the Gradle script or Xcode build phases by hand — the uploads would succeed while the runtime frames stay unresolvable. Emit `[ABORT] bare react native not supported` and halt.
   Gotchas:
-  1. Uploads run on **Release** native builds only; both hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
+  1. Uploads run on **Release** native builds only; the injected hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   2. OTA bundles (`eas update` / `npx expo export --dump-sourcemap`) skip the native build, so they need a manual upload afterwards: `posthog-cli hermes upload --directory dist`.
   3. Uploaded native symbols are useless without the runtime half: you **must** also enable native crash autocapture (`errorTracking.autocapture.nativeCrashes`) in the SDK setup and install the `@posthog/react-native-plugin` package it depends on — per the reference. Symbols without capture means native crashes are silently never reported.
 - **Flutter** You upload platform debug symbols (dSYMs, mappings) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
@@ -84,7 +70,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 - **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
-- **React Native** Both native hooks (the Gradle task and the Xcode build phase) authenticate with the same `POSTHOG_CLI_*` variables. On iOS, set `POSTHOG_CLI_DOTENV_FILE` as a **user-defined build setting** on the app target — Xcode exports build settings into every Run Script phase, so one setting covers both the bundle-phase hermes upload and the dSYM phase (posthog-cli >= 0.8.4; older CLIs ignore it — then fall back to `posthog-cli login` locally or `POSTHOG_CLI_*` job secrets in CI). Watch the path anchor: `$(SRCROOT)` is the `ios/` directory, and in RN projects `.env` lives at the **app root**, so the value is `$(SRCROOT)/../.env` — the iOS example's `${SRCROOT}/.env` is for plain iOS apps and points at the wrong directory here (a missing file is only a warning, so it fails silently into fallback sources). The host var follows the same API-host rule as iOS above.
+- **React Native (Expo)** Both injected native hooks (the Gradle task and the Xcode build phase) authenticate with the same `POSTHOG_CLI_*` variables. The Expo CLI auto-loads `.env` from the app root into the environment of every native build it spawns, so with the credentials in `.env` both `npx expo run:ios --configuration Release` and `npx expo run:android --variant release` reach `posthog-cli` with no extra wiring. That only holds for builds started through the Expo CLI — invoking `xcodebuild` or `./gradlew` directly skips it; there, fall back to `posthog-cli login` locally or `POSTHOG_CLI_*` job secrets in CI. The host var follows the same API-host rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -151,7 +137,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
 - **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
-- **React Native** Build + run are one step per platform, and the upload only fires on the **Release** configuration: bare RN `npx react-native run-ios --mode Release` / `npx react-native run-android --mode release`; Expo `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
+- **React Native (Expo)** Build + run are one step per platform, and the upload only fires on the **Release** configuration: `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
 
 ### Set up CI for automatic uploads
 
