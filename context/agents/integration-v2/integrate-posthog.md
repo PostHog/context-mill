@@ -23,13 +23,12 @@ Plan a PostHog integration and seed the task queue with this graph:
   the SDK installed and initialized, not the events.
 - `capture`, after `identify` — it decides the events and instruments them, and it
   reads how identity is already established before it instruments anything.
-- `build`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
-  it installs the dependencies and verifies the project builds, typechecks, and
-  lints.
-- `review`, after `build`, parallel to `dashboard` — a fresh set of
-  eyes over every change the run made, fixing what fails review.
-- `dashboard`, after `build` — only once the integration is confirmed building,
-  linting, and testing cleanly.
+- `review`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
+  it installs the dependencies, verifies the project builds/typechecks/lints, and
+  reviews every change the run made, fixing what fails. There is no separate build
+  step: verifying and reviewing are one pass over the same changeset.
+- `dashboard`, after `capture`, parallel to `review` — it builds insights from the
+  instrumented events, which `capture` has already defined; it needs no code review.
 - `report`, after `dashboard` **and** `review` — it writes the setup report last, so
   it describes the integration as reviewed rather than as first written.
 

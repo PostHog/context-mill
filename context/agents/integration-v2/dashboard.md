@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [integration-v2-dashboard, integration-v2-insight, integration-v2-mcp]
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [Write, Edit, Bash, enqueue_task]
-dependsOn: [build]
+dependsOn: [capture]
 ---
 
 ## Goal
