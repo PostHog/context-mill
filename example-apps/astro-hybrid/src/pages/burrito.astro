@@ -75,15 +75,13 @@ export const prerender = false;
       source: 'client'
     });
 
-    // Also send to server-side API for server tracking
+    // Also send to server-side API for server tracking. The session and distinct
+    // ID are added automatically by the tracing_headers option in posthog.init.
     try {
-      const sessionId = window.posthog?.get_session_id?.() || null;
-
       await fetch('/api/events/burrito', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-PostHog-Session-Id': sessionId || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           username: currentUser,

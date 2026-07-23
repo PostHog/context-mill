@@ -185,7 +185,7 @@ If you're using PostHog's JavaScript SDK on the frontend, enable tracing headers
 ```javascript
 posthog.init('<ph_project_token>', {
     api_host: 'https://us.i.posthog.com',
-    __add_tracing_headers: ['your-backend-domain.com'],
+    tracing_headers: ['your-backend-domain.com'],
 })
 ```
 

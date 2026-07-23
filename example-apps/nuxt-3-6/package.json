@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "nuxt": "^3.6.5",
-    "posthog-js": "^1.337.1",
+    "posthog-js": "^1.406.2",
     "posthog-node": "^5.24.9",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4"
