@@ -40,7 +40,14 @@ spiral retrying it. These are environment failures, not yours:
   PostHog,
 - the package manager crashing on the project's existing dependency graph or a
   corrupt/incompatible lockfile (e.g. npm `Cannot read properties of null`),
+- the package manager itself failing to run or provision — corepack unable to
+  switch to a pinned version (`Failed to switch pnpm to …`, `Cannot find matching
+  keyid`), a missing manager binary, a toolchain the machine does not have,
 - no network or registry reachable.
+
+The test: if the failure names your PostHog package or your command, it is yours to
+fix; if it names another dependency, a version pin the project set, or the toolchain
+itself, it is the environment — fall back and move on.
 
 When you hit one of those, fall back: add the PostHog package to the manifest by hand
 at a valid version (copy the framework reference example's spec, e.g. a `^1.x` range),
