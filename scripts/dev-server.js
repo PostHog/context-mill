@@ -301,7 +301,9 @@ function createServer() {
             return;
         }
 
-        const agentMatch = req.url?.match(/^\/(agents-[\w-]+\.md)$/);
+        // The wizard fetches agents under `/agents/…`, mirroring `/skills/…`; the
+        // bare `/agents-…` form is kept for older callers.
+        const agentMatch = req.url?.match(/^\/(?:agents\/)?(agents-[\w-]+\.md)$/);
         if (agentMatch) {
             serveFile(res, path.join(agentsDir, agentMatch[1]), 'text/markdown; charset=utf-8');
             return;

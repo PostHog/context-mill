@@ -1,17 +1,25 @@
-# Add the PostHog SDK to the manifest
+# Install the PostHog SDK
 
-Declare PostHog in the project's package manifest directly. Do not run the package
-manager, and do not build — the build task installs and verifies at the end.
-Adding it to the manifest now keeps this step fast and batches the real install
-into one place.
+Install PostHog with the project's own package manager so the real published version
+is written to the manifest and the lockfile. Run the add command with the bare
+package name and let the manager resolve the version — never type a version number
+yourself; a version that was never published fails the run with `ETARGET`.
 
-Add the PostHog library appropriate for the app — the client library, plus the
-server library if the app has server-side code that should send events. Use the
-docs and the reference example to pick the right package and a current version
-range, and match the style of the dependencies already in the manifest.
+Match the manager the project already uses (read the lockfile: `package-lock.json` →
+npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poetry.lock` →
+poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle). Add the
+client library, plus the server library if the app sends events server-side.
 
-Read the manifest first. If the dependency is already declared, leave it as is and
-say so. Edit only the manifest — no lockfile, no install command.
+Read the manifest first. If the SDK is already installed, leave it and say so.
+
+Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
+version — declare the dependency as the framework reference shows, taking the version
+from the SDK's latest release.
+
+Run the install once. Fix and retry only a mistake you own (wrong package or manager).
+If the environment blocks it — no registry, a pre-existing broken lockfile, a peer
+conflict already in the project — do not spiral: report the exact failure and command
+in your handoff and finish.
 
 ## Reference
 

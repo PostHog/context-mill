@@ -6,26 +6,50 @@ model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-haiku-4-5-20251001
 skills: [integration-v2-install]
-allowedTools: [Read, Edit, Glob, Grep]
+allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
 dependsOn: []
 ---
 
 ## Goal
 
-Declare the PostHog SDK in the project's package manifest. Do not run the package
-manager and do not build — the build task installs and verifies everything at the
-end.
+Install the PostHog SDK with the project's own package manager, so the real
+published version lands in the manifest and the lockfile — not a version you typed.
+Run the manager's add command with the bare package name and let it resolve the
+version: `npm install <pkg>` (or the project's pnpm/yarn/bun), `pip install <pkg>`,
+`composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`. Never write a
+version number of your own into the manifest — a version that was never published
+fails the whole run with `ETARGET`, and guessing another one just fails again.
 
-Never invent a version number. Copy the exact dependency spec the reference example
-declares (e.g. a `^1.x` range) — it is known to resolve. If the example gives none,
-use a range that installs the latest published version, not a specific version you
-guessed: a version that was never published fails the whole build with `ETARGET`,
-and the build task cannot recover from a manifest you got wrong.
+Add the client library, plus the server library if the app has server-side code
+that sends events. If the SDK is already installed, leave it and say so.
+
+Some ecosystems pin an explicit version in a manifest no install command resolves
+(Swift SPM, Gradle). There, declare the dependency the way the framework reference
+shows and take the version from the SDK's latest release — do not invent one.
+
+Attempt the install once. If it fails on something you own — a wrong package name or
+the wrong manager — fix that and run it one more time.
+
+But if the environment prevents the install through no fault of your change, do NOT
+spiral retrying it. These are environment failures, not yours:
+
+- a peer-dependency conflict the project already had (npm `ERESOLVE`),
+- a dependency already in the manifest that itself does not resolve (a bad or yanked
+  version, a package that no longer exists) — the failure names a package that is not
+  PostHog,
+- the package manager crashing on the project's existing dependency graph or a
+  corrupt/incompatible lockfile (e.g. npm `Cannot read properties of null`),
+- no network or registry reachable.
+
+When you hit one of those, fall back: add the PostHog package to the manifest by hand
+at a valid version (copy the framework reference example's spec, e.g. a `^1.x` range),
+so the dependency is still declared for the later steps and for the user's own
+install. Then move on, and say in your handoff exactly what failed and the command
+you ran, so the build task and the report surface it.
 
 ## How you know you succeeded
 
-The SDK is listed in the manifest's dependencies at a sensible version. If it is
-already declared, leave it and say so. Your handoff names the manifest you changed
-and the package and version you declared, so the steps after you import it under
-the name they will actually get.
+The SDK resolved and installed at its real version, or you have reported plainly in
+your handoff why the environment stopped it. Your handoff names the manifest and the
+package, so later steps import it under the name they will actually get.
