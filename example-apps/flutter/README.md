@@ -76,6 +76,13 @@ lib/
     ├── burrito_screen.dart      # Demo feature screen with event capture
     └── profile_screen.dart      # Profile with error tracking demo
 
+test/
+├── mocks.dart                   # FakePosthogPlatform: records identify/capture/
+│                                # screen/captureException calls for assertions
+├── posthog/                     # SDK setup config tests
+├── auth/                        # identify()/reset() lifecycle tests
+└── screens/                     # Event capture + error tracking widget tests
+
 android/                         # AUTO_INIT disabled in AndroidManifest.xml
 ios/                             # AUTO_INIT disabled in Runner/Info.plist; Podfile pins iOS 13+
 web/                             # posthog-js snippet in index.html
@@ -163,6 +170,19 @@ try {
 ### Application lifecycle events
 
 `Application Installed`, `Application Updated`, `Application Opened`, and `Application Backgrounded` are captured automatically (`captureApplicationLifecycleEvents` is enabled by default).
+
+## Testing
+
+```bash
+flutter test
+```
+
+The tests show how to verify a PostHog integration without a network or a
+device. `test/mocks.dart` installs a fake `PosthogFlutterPlatformInterface`
+that records every `identify`, `capture`, `screen`, `reset`, and
+`captureException` call, so tests assert on exactly what would be sent to
+PostHog. The fake must `extend` the platform interface (not `implement` it) —
+`PlatformInterface.verifyToken` rejects generated mockito/mocktail mocks.
 
 ## Learn more
 

@@ -9,9 +9,15 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 ///
 /// @see https://posthog.com/docs/libraries/flutter#identifying-users
 class AuthState extends ChangeNotifier {
-  AuthState._();
+  /// In production, use [instance]. Tests construct fresh instances to
+  /// stay isolated from each other.
+  @visibleForTesting
+  AuthState();
 
-  static final instance = AuthState._();
+  static AuthState _instance = AuthState();
+  static AuthState get instance => _instance;
+  @visibleForTesting
+  static set instance(AuthState value) => _instance = value;
 
   String? _username;
   int _burritoConsiderations = 0;
