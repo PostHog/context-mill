@@ -17,6 +17,12 @@ Declare the PostHog SDK in the project's package manifest. Do not run the packag
 manager and do not build — the build task installs and verifies everything at the
 end.
 
+Never invent a version number. Copy the exact dependency spec the reference example
+declares (e.g. a `^1.x` range) — it is known to resolve. If the example gives none,
+use a range that installs the latest published version, not a specific version you
+guessed: a version that was never published fails the whole build with `ETARGET`,
+and the build task cannot recover from a manifest you got wrong.
+
 ## How you know you succeeded
 
 The SDK is listed in the manifest's dependencies at a sensible version. If it is
