@@ -5,11 +5,19 @@ pass, reading each file once.
 
 ## Choose and record
 
-From the project's files, select between 10 and 15 that might have business value
-for event tracking — especially conversion and churn events. Read them. Track
-actions, not pageviews (autocapture covers those). Server-side events are required
-if there is instrumentable server-side code (API routes, server actions):
-payment/checkout completion, webhook handlers, and auth endpoints.
+From the project's files, find the actions that have business value for event
+tracking — especially conversion and churn events. Read them. Track actions, not
+pageviews (autocapture covers those). Server-side events matter most where there
+is instrumentable server-side code (API routes, server actions): payment/checkout
+completion, webhook handlers, and auth endpoints.
+
+Around ten to fifteen is a rough guide, not a quota. Fewer is right when a small
+project has only a few actions that matter — instrument those and stop; never
+invent an event to reach a number, since an event nobody performs is noise in
+every insight built on it. More than fifteen genuinely valuable events (auth,
+payment, and the like) is also fine, but do not put them all in this run — a
+first integration PR that touches everything is hard to review. Instrument the
+core set now, and record the rest as suggestions for the setup report.
 
 First scan for capture calls the project already makes, and note how their event
 names are formatted. Event names, property names, and feature flag keys are an

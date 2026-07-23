@@ -64,7 +64,11 @@ If the project uses React:
 
 If the project uses Next.js:
 
-- For Next.js 15.3+, initialize PostHog in `instrumentation-client.ts`.
+- For Next.js 15.3+, initialize PostHog in `instrumentation-client.ts`. Below
+  15.3 that file is never executed — it compiles, the build passes, and no event
+  ever fires. Check the installed version before choosing: on older versions
+  initialize in a `'use client'` provider component mounted in the root layout
+  (app router) or in `_app` (pages router) instead.
 - Keep browser and server SDK usage separate, but stitch them to one person with
   `tracing_headers`.
 - The docs' server examples pass `session.user.email` as the distinct id. Do not
