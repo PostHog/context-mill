@@ -29,10 +29,15 @@ resolves — and install again. If the failure is the environment, not the
 integration's own change (a pre-existing broken dependency, a package manager that
 cannot provision), note it and move on; do not spiral.
 
-**Review, as a strict reviewer who did none of the writing.** Find the full changeset
-yourself: grep for posthog (all cases) across source and config, read each file, and
-read the handoffs for what grep cannot see (env files, manifest edits). Judge each
-change against these dimensions, in order:
+**Review, as a strict reviewer who did none of the writing.** Get the changeset the
+cheap way: run `git diff` (and `git diff --stat` for the shape) — the run's edits are
+the working-tree changes, so the diff is exactly what to review. Read that, not the
+whole tree; do not grep the codebase or read files at random when the diff already
+shows every changed line. Only when the project is not a git repo, or the diff comes
+back empty, fall back to grepping for posthog across source and config. Either way,
+read the handoffs for what a diff cannot show — env values written through
+`set_env_values`, manifest edits. Judge each change against these dimensions, in
+order:
 
 1. Minimal — every line earns its place. Delete helpers nothing calls, defensive
    wrapping around code that cannot fail, config for features that were not set up,
