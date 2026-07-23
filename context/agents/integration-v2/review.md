@@ -33,7 +33,7 @@ cannot provision), note it and move on; do not spiral.
 already handed to you: `read_handoffs` returns every upstream task's handoff, and
 each one names the files it touched and what it changed in them. That union of
 touched files IS the changeset — read exactly those files and judge them. Do not
-grep the codebase, glob, or read files the handoffs never name; a diff of the whole
+grep the codebase, glob, or read files the handoffs never name. Expand exploration only when these handoff files lead you there; a diff of the whole
 tree is noise (lockfiles, formatting, build output) and the handoffs are the signal.
 The handoffs also carry what no file shows — env values written through
 `set_env_values`, manifest edits. Judge each change against these dimensions, in
