@@ -70,6 +70,13 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/upload-source-maps/ios.md
 
+  - id: rust
+    display_name: Rust
+    description: Upload native debug symbols to PostHog Error Tracking for Rust
+    tags: [rust]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/upload-source-maps/rust.md
+
   - id: vite
     display_name: Vite
     tags: [vite, javascript]

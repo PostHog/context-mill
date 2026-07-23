@@ -29,6 +29,30 @@ describe('error-tracking-upload-source-maps iOS variant', () => {
     });
 });
 
+describe('error-tracking-upload-source-maps Rust variant', () => {
+    it('expands to the skill contract consumed by the wizard', () => {
+        const config = loadSkillsConfig(CONFIG_DIR);
+        const skills = expandSkillGroups(config, CONFIG_DIR);
+        const rust = skills.find((skill) => skill.id === 'error-tracking-upload-source-maps-rust');
+
+        expect(rust).toMatchObject({
+            id: 'error-tracking-upload-source-maps-rust',
+            _shortId: 'rust',
+            _category: 'error-tracking-upload-source-maps',
+            _group: 'error-tracking-upload-source-maps',
+            display_name: 'Rust',
+            description: 'Upload native debug symbols to PostHog Error Tracking for Rust',
+            tags: ['error-tracking', 'source-maps', 'rust'],
+            docs_urls: ['https://posthog.com/docs/error-tracking/upload-source-maps/rust.md'],
+            _sharedDocs: [
+                'https://posthog.com/docs/error-tracking/upload-source-maps.md',
+                'https://posthog.com/docs/error-tracking/upload-source-maps/cli.md',
+            ],
+            _cli: null,
+        });
+    });
+});
+
 describe('error-tracking-upload-source-maps Android variant', () => {
     it('expands to the skill contract consumed by the wizard', () => {
         const config = loadSkillsConfig(CONFIG_DIR);
