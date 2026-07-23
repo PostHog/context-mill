@@ -244,6 +244,15 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/go.md
 
+  - id: rust
+    framework: rust
+    example_paths: example-apps/rust
+    display_name: Rust
+    description: PostHog integration for Rust applications using the posthog-rs SDK
+    tags: [rust]
+    docs_urls:
+      - https://posthog.com/docs/libraries/rust.md
+
   - id: swift
     framework: swift
     example_paths:
