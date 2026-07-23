@@ -24,11 +24,19 @@ Making the project run is the whole job. A separate review step reads the change
 after you, with fresh eyes and the best-practices skill; judging the work you just
 installed is its job, not yours.
 
+An earlier step wrote the dependency into the manifest but did not install it, so a
+bad version only surfaces now. If the install fails because a declared version does
+not exist (npm `ETARGET`, "no matching version", a yanked release), that is yours to
+fix, not to fail on: you hold Edit and Bash. Correct the manifest to a real
+published version — match the framework reference example's spec, or drop to a
+caret range that resolves — and install again. Only report `failed` when the install
+or build cannot be made to pass by fixing the integration's own changes.
+
 ## How you know you succeeded
 
-The install completes and the project builds, lints, and tests as well as it did
-before the run. If the build or lint fails only on pre-existing errors you did not
-introduce, that still counts as done — note the conflict and finish. Reserve a failed status for when your own
+The install completes and the project builds, typechecks, and lints as well as it
+did before the run. If the build or lint fails only on pre-existing errors you did
+not introduce, that still counts as done — note the conflict and finish. Reserve a failed status for when your own
 changes break the build. Put a one-line summary of any conflict in your handoff's
 `conflict` field and the full detail in what you did; the user sees the one-liner
 in the outro and the detail in the report.
