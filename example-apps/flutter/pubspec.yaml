@@ -1,0 +1,26 @@
+name: burrito_app
+description: "PostHog Flutter example app demonstrating product analytics, user identification, screen tracking, and error tracking."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  # PostHog Flutter SDK — the only dependency to add for PostHog integration.
+  # @see https://posthog.com/docs/libraries/flutter
+  posthog_flutter: ^5.32.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

@@ -259,7 +259,7 @@ variants:
 
   - id: flutter
     framework: flutter
-    template: description-docs-only.md
+    example_paths: example-apps/flutter
     display_name: Flutter
     description: PostHog integration for Flutter applications using the posthog_flutter SDK
     tags: [flutter, dart, mobile]

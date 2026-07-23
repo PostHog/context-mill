@@ -223,6 +223,55 @@ examples:
       # XML files (Android resources and configs, not critical for PostHog understanding)
       - .xml
   
+  # NOTE: for single-example skills the generator looks this section up by the
+  # full skill id (see skill-generator.js), so the key is integration-flutter,
+  # not flutter. Several older sections below (react-native, android, ...) still
+  # use short keys and no longer match — kept as-is here; fixing them changes
+  # their shipped EXAMPLE.md and deserves its own PR.
+  integration-flutter:
+    includes:
+      # Flutter tooling metadata and local state
+      - .metadata
+      - .dart_tool
+      - .flutter-plugins
+      - .idea
+      - .iml
+      - local.properties
+      # Tests
+      - test/
+      - RunnerTests
+      # Generated/boilerplate platform scaffolding — kept in the repo so the
+      # app runs on every platform, but noise as agent context. Unlike
+      # react-native (which skips android/ and ios/ wholesale), the
+      # PostHog-relevant platform files are kept: AndroidManifest.xml,
+      # Info.plist, Podfile, entitlements, and web/index.html carry the
+      # AUTO_INIT / minimum-version / web-snippet setup.
+      - Runner.xcodeproj
+      - Runner.xcworkspace
+      - Assets.xcassets
+      - .storyboard
+      - .xib
+      - .xcconfig
+      - .swift
+      - Runner-Bridging-Header.h
+      - GeneratedPluginRegistrant
+      - ephemeral
+      - ios/Flutter
+      - macos/Flutter
+      - gradle.properties
+      - android/app/src/main/kotlin
+      - android/app/src/main/java
+      - android/app/src/main/res
+      - android/app/src/debug
+      - android/app/src/profile
+    allow:
+      # The dependency manifest (posthog_flutter lives here); rescue it from
+      # the global .yaml skip
+      - pubspec.yaml
+      # Carries the PostHog minSdk requirement; rescue from the global
+      # build/.gradle skips
+      - app/build.gradle
+
   react-native:
     includes:
       - android
