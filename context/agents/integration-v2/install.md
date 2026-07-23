@@ -51,14 +51,13 @@ fix; if it names another dependency, a version pin the project set, or the toolc
 itself, it is the environment — fall back and move on.
 
 When you hit one of those, fall back: add the PostHog package to the manifest by hand
-at a valid version, so the dependency is still declared for the later steps and for
-the user's own install. Take the version from the framework reference example's spec
-if it names one; if it does not, write a caret range on the SDK's current published
-major — `posthog-js` `^1`, `posthog-node` `^4`, `posthog-php` `^3`,
-`posthog-python` `^3`, `posthog-ruby` `^2` — never a hard pin you invented. A caret
-range declares the dependency without guessing an exact release, so do this rather
-than fail the step for lack of a version. Then move on, and say in your handoff
-exactly what failed and the command
+at a known-good version, so the dependency is still declared for the later steps and
+for the user's own install. Use the framework reference example's spec if it names
+one; otherwise use a caret on the SDK's current known-good release — `posthog-js`
+`^1.407.2`, `posthog-node` `^5.46.1`, `posthog-php` `^4.12.1`, `posthog` (Python)
+`^7.29.0`, `posthog-ruby` `^3.21.0`. The caret keeps it current without pinning a
+patch; never invent a version that was never published. Then move on, and say in your
+handoff exactly what failed and the command
 you ran, so the review step and the report surface it.
 
 ## How you know you succeeded
