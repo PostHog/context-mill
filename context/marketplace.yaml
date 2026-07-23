@@ -36,6 +36,12 @@ plugins:
     destination: skills/posthog/logs
     keywords: [posthog, logs, logging, observability]
 
+  metrics:
+    name: posthog-metrics
+    description: Skills for setting up PostHog metric capture
+    destination: skills/posthog/metrics
+    keywords: [posthog, metrics, observability, opentelemetry]
+
   error-tracking:
     name: posthog-error-tracking
     description: Skills for setting up PostHog error tracking across frameworks

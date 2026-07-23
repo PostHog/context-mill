@@ -1,0 +1,18 @@
+# Aggregated metrics skill - all platforms in one skill
+type: skill
+template: description.md
+category: metrics
+description: Add PostHog metric capture to track counters, gauges, and histograms. Use after implementing features or reviewing PRs to ensure key operations are measured, or when asked to add metrics, counters, or track a value over time. Also handles mirroring existing Prometheus/StatsD/OpenTelemetry metrics into PostHog and initial OTLP exporter setup.
+tags: [metrics]
+shared_docs:
+  - https://posthog.com/docs/metrics/start-here.md
+  - https://posthog.com/docs/metrics/basics.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/javascript.md
+      - https://posthog.com/docs/metrics/installation/nodejs.md
+      - https://posthog.com/docs/metrics/installation/python.md
+      - https://posthog.com/docs/metrics/installation/other.md
