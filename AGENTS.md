@@ -7,7 +7,7 @@ This repo packages PostHog's developer content (docs, prompts, example code)
 into [Agent Skills](https://agentskills.io/specification)-compliant skill
 packages. The build pipeline emits a versioned manifest plus per-skill ZIPs,
 consumed by the PostHog [wizard](https://github.com/PostHog/wizard) and the
-PostHog [MCP server](https://github.com/PostHog/posthog/tree/master/products/mcp).
+PostHog [MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp).
 
 User-facing intro: [README.md](README.md). Contributor handbook:
 [CONTRIBUTING.md](CONTRIBUTING.md).
