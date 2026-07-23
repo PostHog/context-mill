@@ -4,13 +4,14 @@ next_step: 6-scouts.md
 
 # Step 5 — Connected-tool sources (ask, then connect)
 
-External tools can feed the inbox too: issue trackers (GitHub Issues, Linear, Jira, GitLab, Gitea, Shortcut), error tracking (Sentry, Rollbar, Bugsnag, Honeybadger, Raygun), support desks (Zendesk, Freshdesk, Freshservice, Front, Gorgias, Kustomer, Dixa, Plain), database performance (pganalyze), security scanners (Snyk, SonarQube, Semgrep, Rapid7 InsightVM), and product feedback / reviews (Featurebase, Frill, Aha, UserVoice, Productboard, Canny, AskNicely, Retently, Appfigures, AppFollow, Judge.me). Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
+External tools can feed the inbox too: issue trackers (GitHub Issues, Linear, Jira, GitLab, Gitea, Shortcut), error tracking (Sentry, Rollbar, Bugsnag, Honeybadger, Raygun), support desks (Zendesk, Freshdesk, Freshservice, Front, Gorgias, Kustomer, Dixa, Plain), database performance (pganalyze), security scanners (Snyk, SonarQube, Semgrep, Rapid7 InsightVM), product feedback / reviews (Featurebase, Frill, Aha, UserVoice, Productboard, Canny, AskNicely, Retently, Appfigures, AppFollow, Judge.me), and search analytics (Google Search Console — surfaces pages that rank in Google but lose clicks to a weak title or description). Each needs a **data warehouse source** before its signal source produces anything — a source row without the warehouse connection is dormant: harmless, but silent until the source syncs. Never enable one the user hasn't confirmed.
 
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
 - **GitHub Issues** — reuses the GitHub App connected in step 3 (connector: `5a-github.md`).
 - **Linear** — a one-click OAuth link (connector: `5b-linear.md`).
 - **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
+- **Google Search Console** — a PostHog **connect link** that runs the Google OAuth grant and property pick in the browser and creates the source there; the run verifies it afterwards (connector: `5d-google-search-console.md`).
 
 A tool falls back to a **dormant responder** (the row is enabled but silent until a warehouse source exists) plus a follow-up **only** when the user skips or can't finish its connect step. That used to be the default for credential sources; it is now the exception.
 
@@ -24,7 +25,7 @@ Emit:
 
 ## Tools
 
-Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way. The credential connector (`5c-credentials.md`) additionally uses `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, and `external-data-sources-create` through the same `exec` tool.
+Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way. The credential connector (`5c-credentials.md`) additionally uses `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, and `external-data-sources-create`, and the Google Search Console connector (`5d-google-search-console.md`) uses `data-warehouse-source-connect-link` and `external-data-sources-list`, all through the same `exec` tool.
 
 ## Do
 
@@ -71,18 +72,20 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
     { label: "Retently", value: "retently" },
     { label: "Appfigures", value: "appfigures" },
     { label: "AppFollow", value: "appfollow" },
-    { label: "Judge.me", value: "judgeme_reviews" }
+    { label: "Judge.me", value: "judgeme_reviews" },
+    { label: "Google Search Console", value: "google_search_console" }
   ]
 }
 ```
 
-2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists, match its warehouse `source_type`: `Github` / `Linear` / `Jira` / `GitLab` / `Gitea` / `Shortcut` / `Sentry` / `Rollbar` / `Bugsnag` / `Honeybadger` / `Raygun` / `Zendesk` / `Freshdesk` / `Freshservice` / `Front` / `Gorgias` / `Kustomer` / `Dixa` / `Plain` / `PgAnalyze` / `Snyk` / `Sonarqube` / `Semgrep` / `Rapid7Insightvm` / `Featurebase` / `Frill` / `Aha` / `Uservoice` / `Productboard` / `Canny` / `Asknicely` / `Retently` / `Appfigures` / `Appfollow` / `JudgeMeReviews`. Record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
+2. Call `external-data-sources-list` once (step 2's project profile also lists warehouse sources when it exists). For each picked tool whose source already exists, match its warehouse `source_type`: `Github` / `Linear` / `Jira` / `GitLab` / `Gitea` / `Shortcut` / `Sentry` / `Rollbar` / `Bugsnag` / `Honeybadger` / `Raygun` / `Zendesk` / `Freshdesk` / `Freshservice` / `Front` / `Gorgias` / `Kustomer` / `Dixa` / `Plain` / `PgAnalyze` / `Snyk` / `Sonarqube` / `Semgrep` / `Rapid7Insightvm` / `Featurebase` / `Frill` / `Aha` / `Uservoice` / `Productboard` / `Canny` / `Asknicely` / `Retently` / `Appfigures` / `Appfollow` / `JudgeMeReviews` / `GoogleSearchConsole`. Record "already connected" — no connector flow needed, just enable its responder row (step 4 below).
 
 3. Dispatch each picked tool that's still missing:
 
    - **GitHub Issues** → read `references/5a-github.md` and follow it.
    - **Linear** → read `references/5b-linear.md` and follow it.
    - **Zendesk / pganalyze / Jira** (and any other API-credential source) → read `references/5c-credentials.md` and follow it. It hands the user a secure PostHog connect link, waits for them to store their credentials in the browser, then creates the live source from that stored credential. If they skip or don't finish, it falls back to the dormant responder + follow-up (step 4 below).
+   - **Google Search Console** → read `references/5d-google-search-console.md` and follow it. It hands the user a PostHog connect link that runs Google's OAuth grant and property pick in the browser and creates the source there, then verifies it via `external-data-sources-list`. If they skip or don't finish, it falls back to the dormant responder + follow-up (step 4 below).
 
 4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
@@ -121,6 +124,7 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
    - Appfigures → `appfigures` / `review`
    - AppFollow → `appfollow` / `review`
    - Judge.me → `judgeme_reviews` / `review`
+   - Google Search Console → `google_search_console` / `search_opportunity`
 
 5. Record each picked tool's final class honestly — the report consumes these verbatim:
 

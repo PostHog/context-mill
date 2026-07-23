@@ -23,7 +23,7 @@ export default defineNuxtConfig({
     host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com', // Optional: defaults to https://us.i.posthog.com. Use https://eu.i.posthog.com for EU region
     clientConfig: {
       capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)
-      __add_tracing_headers: [ 'localhost', 'yourdomain.com' ], // Add your domain here
+      tracing_headers: [ 'localhost', 'yourdomain.com' ], // Add your domain here
     },
     serverConfig: {
       enableExceptionAutocapture: true, // Enables automatic exception capture on the server side (Nitro)

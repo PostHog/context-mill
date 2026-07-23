@@ -46,11 +46,12 @@ function BurritoPage() {
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
 
+    // The session and distinct ID are added automatically by the
+    // tracing_headers option configured on the PostHogProvider.
     await fetch('/api/burrito/consider', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-PostHog-Session-Id': posthog.get_session_id() ?? '',
       },
       body: JSON.stringify({
         username: user.username,

@@ -48,6 +48,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             defaults: '2025-05-24',
             capture_exceptions: true,
             debug: import.meta.env.DEV,
+            // Automatically add X-POSTHOG-SESSION-ID and X-POSTHOG-DISTINCT-ID
+            // headers to same-origin requests so server-side events join the
+            // same session. Guarded for SSR, where `window` is undefined.
+            tracing_headers:
+              typeof window !== 'undefined' ? [window.location.hostname] : [],
           }}
         >
           <AuthProvider>

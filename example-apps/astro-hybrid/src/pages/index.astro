@@ -83,15 +83,12 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     }
 
     try {
-      // Get the session ID from PostHog to pass to the server
-      const sessionId = window.posthog?.get_session_id?.() || null;
-
-      // Call the server-side login API
+      // Call the server-side login API. The session and distinct ID are added
+      // automatically by the tracing_headers option configured in posthog.init.
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-PostHog-Session-Id': sessionId || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ username, password })
       });
