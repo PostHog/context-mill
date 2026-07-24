@@ -237,7 +237,8 @@ variants:
       - https://posthog.com/docs/libraries/elixir.md
 
   - id: go
-    template: description-go-docs-only.md
+    framework: go
+    example_paths: example-apps/go
     display_name: Go
     description: PostHog integration for Go applications using the posthog-go SDK
     tags: [go]
