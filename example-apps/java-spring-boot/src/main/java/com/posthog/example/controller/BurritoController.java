@@ -43,6 +43,11 @@ public class BurritoController {
      * <p>The server SDK identifies a user by attaching person properties to a capture
      * via {@code userProperty(...)}. The {@code distinctId} (first argument) is the
      * stable user id and must match the id used by your frontend {@code identify} call.
+     *
+     * <p><b>Identity note:</b> this demo takes the id from a form field for simplicity.
+     * A real app must derive {@code distinctId} from the authenticated principal
+     * (session / JWT), never from an unverified request parameter — otherwise a client
+     * could pick any id and overwrite another person's profile.
      */
     @PostMapping("/login")
     public String login(@RequestParam String userId,
@@ -97,8 +102,16 @@ public class BurritoController {
     public String dashboard(HttpSession session, Model model) {
         String userId = distinctId(session);
 
-        PostHogFeatureFlagEvaluations flags = posthog.evaluateFlags(userId);
-        boolean showNewFeature = flags.isEnabled("new-dashboard-feature");
+        // evaluateFlags makes a network call; if PostHog is slow or down it can throw.
+        // Never let flag evaluation take the page down — fall back to the flag being off.
+        // (This fetches on every request; a real app should cache/bound it, not fetch per render.)
+        boolean showNewFeature = false;
+        try {
+            PostHogFeatureFlagEvaluations flags = posthog.evaluateFlags(userId);
+            showNewFeature = flags.isEnabled("new-dashboard-feature");
+        } catch (RuntimeException e) {
+            log.warn("feature flag evaluation failed", e);
+        }
 
         model.addAttribute("showNewFeature", showNewFeature);
         return "dashboard";
