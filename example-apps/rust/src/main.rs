@@ -96,6 +96,8 @@ fn distinct_id(jar: &CookieJar) -> String {
 // ---------------------------------------------------------------------------
 async fn home(jar: CookieJar) -> Html<String> {
     let user = distinct_id(&jar);
+    // Escape user-controlled values before putting them in HTML (prevents XSS).
+    let user = html_escape::encode_text(&user);
     Html(format!(
         r#"<h1>Burrito app</h1>
 <p>Signed in as: <strong>{user}</strong></p>
@@ -194,6 +196,8 @@ async fn dashboard(State(client): State<AppState>, jar: CookieJar) -> Html<Strin
     } else {
         "<p>The new dashboard feature is disabled.</p>"
     };
+    // Escape the distinct id before rendering it (the raw value went to the SDK above).
+    let user = html_escape::encode_text(&user);
     Html(format!(
         "<h1>Dashboard</h1><p>User: {user}</p>{body}<p><a href=\"/\">Back</a></p>"
     ))
@@ -228,6 +232,9 @@ async fn profile(State(client): State<AppState>, jar: CookieJar) -> Html<String>
         }
     };
 
+    // Escape user-controlled values before rendering (the raw id went to the SDK above).
+    let user = html_escape::encode_text(&user);
+    let message = html_escape::encode_text(&message);
     Html(format!(
         "<h1>Profile</h1><p>User: {user}</p>\
          <p>Triggered error (captured by PostHog): <code>{message}</code></p>\
