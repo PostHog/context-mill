@@ -2,6 +2,16 @@ defmodule PostHogExampleWeb.Layouts do
   @moduledoc "The root layout wrapping every page."
   use PostHogExampleWeb, :html
 
+  # The app layout wraps each page's content and is itself wrapped by root/1.
+  # Controllers apply it by default (see the `layouts:` option in
+  # posthog_example_web.ex); without it every render fails with
+  # "no app html template defined".
+  def app(assigns) do
+    ~H"""
+    {@inner_content}
+    """
+  end
+
   def root(assigns) do
     ~H"""
     <!DOCTYPE html>
