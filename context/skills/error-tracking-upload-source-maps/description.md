@@ -49,10 +49,10 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
-- **React Native (Expo)** Hermes source maps upload from the **native build**, not a bundler step. Per the reference: add the `posthog-react-native/expo` plugin entry to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro` — the native build phases are injected automatically at prebuild. The reference badges **native crash symbolication** as *optional* — here it is not: enable `uploadNativeSymbols` with source inclusion on the plugin entry, per the reference. A bare plugin string without options means symbolication is silently missing.
+- **React Native (Expo)** Per the reference: add the `posthog-react-native/expo` plugin entry to `plugins` in `app.json`, and switch `metro.config.js` to `getPostHogExpoConfig` from `posthog-react-native/metro`. The reference badges **native crash symbolication** as *optional* — here it is not: enable `uploadNativeSymbols` with source inclusion on the plugin entry.
   Gotchas:
-  1. Uploads run on **Release** native builds only; the injected hooks shell out to `posthog-cli` on the `PATH` (v0.7.8+) — the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
-  2. Uploaded native symbols are useless without the runtime half: you **must** also enable native crash autocapture (`errorTracking.autocapture.nativeCrashes`) in the SDK setup and install the `@posthog/react-native-plugin` package it depends on — per the reference. Symbols without capture means native crashes are silently never reported.
+  1. The PostHog wizard installs `posthog-cli` for you — do not run `npm install -g` yourself.
+  2. You **must** also enable native crash autocapture (`errorTracking.autocapture.nativeCrashes`) in the SDK setup and install the `@posthog/react-native-plugin` package it depends on — per the reference.
 - **Flutter** You upload platform debug symbols (dSYMs, mappings) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
 
 ### Make credentials available at build time
@@ -67,7 +67,7 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 - **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
-- **React Native (Expo)** Add `"dotenvFile": ".env"` to the `posthog-react-native/expo` plugin entry's options in `app.json` (needs posthog-react-native >= 4.60.0 — bump the package if older). At prebuild the plugin delivers that path to every upload hook as `POSTHOG_CLI_DOTENV_FILE` — an Xcode build setting on iOS, a `posthog.dotenvFile` gradle property on Android — so the hermes, dSYM, and mapping uploads all read the gitignored `.env` regardless of how the native build is started. Real environment variables take precedence and a missing file is only a warning, so the same config works unchanged in CI: set the `POSTHOG_CLI_*` values as job secrets there. The host var follows the same API-host rule as iOS above.
+- **React Native (Expo)** Add `"dotenvFile": ".env"` to the `posthog-react-native/expo` plugin entry's options in `app.json` (needs posthog-react-native >= 4.60.0 — bump the package if older). No Xcode or Gradle wiring needed — the plugin handles the native hooks. In CI, set the `POSTHOG_CLI_*` values as job secrets instead. The host var follows the same API-host rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -134,7 +134,7 @@ Resolve two concrete commands for this project: the production **build** command
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
 - **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
 - **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
-- **React Native (Expo)** Build + run are one step per platform, and the upload only fires on the **Release** configuration: `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
+- **React Native (Expo)** Build + run are one step per platform: `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
 
 ### Set up CI for automatic uploads
 
