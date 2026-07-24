@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"time"
@@ -44,7 +45,7 @@ func (a *app) home(w http.ResponseWriter, r *http.Request) {
 			<li><a href="/burrito">Consider a burrito</a> (event tracking)</li>
 			<li><a href="/dashboard">Dashboard</a> (feature flag)</li>
 			<li><a href="/profile">Profile</a> (error tracking)</li>
-		</ul>`, distinctId(r)))
+		</ul>`, html.EscapeString(distinctId(r))))
 }
 
 // login demonstrates user identification.
@@ -99,7 +100,7 @@ func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
 	page(w, "Burrito considered", fmt.Sprintf(`
 		<p>You have considered a burrito <strong>%d</strong> time(s).</p>
 		<p>A <code>burrito_considered</code> event was captured for <code>%s</code>.</p>
-		<p><a href="/">Back home</a></p>`, count, userId))
+		<p><a href="/">Back home</a></p>`, count, html.EscapeString(userId)))
 }
 
 // dashboard demonstrates feature flag evaluation.
@@ -129,7 +130,7 @@ func (a *app) dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	page(w, "Dashboard", body+fmt.Sprintf(`
 		<p>Flag <code>new-dashboard-feature</code> for <code>%s</code>: <strong>%t</strong></p>
-		<p><a href="/">Back home</a></p>`, userId, showNewFeature))
+		<p><a href="/">Back home</a></p>`, html.EscapeString(userId), showNewFeature))
 }
 
 // profile demonstrates error tracking.
@@ -159,7 +160,7 @@ func (a *app) profile(w http.ResponseWriter, r *http.Request) {
 	page(w, "Profile", fmt.Sprintf(`
 		<p>User: <strong>%s</strong></p>
 		<p>Triggered and captured an exception: <code>%s</code></p>
-		<p><a href="/">Back home</a></p>`, userId, caught))
+		<p><a href="/">Back home</a></p>`, html.EscapeString(userId), html.EscapeString(caught)))
 }
 
 func riskyOperation() error {
