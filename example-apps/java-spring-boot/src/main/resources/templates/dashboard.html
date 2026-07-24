@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Dashboard</title></head>
+<body>
+  <h1>Dashboard</h1>
+  <p th:if="${showNewFeature}">✨ The <code>new-dashboard-feature</code> flag is enabled for you.</p>
+  <p th:unless="${showNewFeature}">The <code>new-dashboard-feature</code> flag is off for you.</p>
+  <a href="/">Back home</a>
+</body>
+</html>
