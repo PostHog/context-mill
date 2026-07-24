@@ -131,6 +131,9 @@ global:
     - bin/
     - obj/
 
+    # Rust
+    - target/
+
     # PHP General
     - vendor
     - .phpunit.result.cache
