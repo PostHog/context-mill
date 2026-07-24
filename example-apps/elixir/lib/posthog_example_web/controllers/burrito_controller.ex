@@ -32,6 +32,11 @@ defmodule PostHogExampleWeb.BurritoController do
 
   We derive a stable distinct id from the username and remember it in the
   session so every later request captures against the same person.
+
+  Identity note: this demo takes the username from an unverified form field for
+  simplicity. A real app must derive `distinct_id` from the authenticated
+  principal (session / token), never from an unverified request param — otherwise
+  a client could pick any id and overwrite another person's profile.
   """
   def login(conn, params) do
     username = params["username"] || "burrito_fan"
