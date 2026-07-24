@@ -61,7 +61,12 @@ func (a *app) login(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 
 	// Persist the id in a simple cookie so later requests are attributed.
-	http.SetCookie(w, &http.Cookie{Name: "user_id", Value: userId, Path: "/"})
+	// HttpOnly keeps it away from client-side JS; Secure sends it over HTTPS
+	// only; SameSite guards against CSRF.
+	http.SetCookie(w, &http.Cookie{
+		Name: "user_id", Value: userId, Path: "/",
+		HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode,
+	})
 
 	a.posthog.Enqueue(posthog.Capture{
 		DistinctId: userId,
@@ -88,7 +93,10 @@ func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
 		fmt.Sscanf(c.Value, "%d", &count)
 		count++
 	}
-	http.SetCookie(w, &http.Cookie{Name: "burrito_count", Value: fmt.Sprintf("%d", count), Path: "/"})
+	http.SetCookie(w, &http.Cookie{
+		Name: "burrito_count", Value: fmt.Sprintf("%d", count), Path: "/",
+		HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode,
+	})
 
 	a.posthog.Enqueue(posthog.Capture{
 		DistinctId: userId,
