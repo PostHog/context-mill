@@ -229,7 +229,8 @@ variants:
       - https://posthog.com/docs/libraries/ruby.md
 
   - id: elixir
-    template: description-elixir-docs-only.md
+    framework: elixir
+    example_paths: example-apps/elixir
     display_name: Elixir
     description: PostHog integration for Elixir and Phoenix applications using the posthog SDK
     tags: [elixir, phoenix, plug]

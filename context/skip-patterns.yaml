@@ -144,6 +144,10 @@ global:
     # Angular
     - .angular/
 
+    # Elixir
+    - _build/
+    - deps/
+
   # Regex patterns - skip if path matches
   # Note: Patterns are JavaScript regex syntax
   regex:
