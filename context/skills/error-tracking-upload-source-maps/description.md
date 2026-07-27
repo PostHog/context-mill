@@ -340,7 +340,12 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   }
   ```
   (`capture()` takes an event-name String, not an Error.) Test flow — give the user these steps verbatim, everything happens in Xcode (no `xcodebuild`): 1) In Xcode: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release, then Run — the Release build uploads dSYMs automatically. 2) Tap the "<your test button label>" button in the app. It's an event, not a crash — no debugger-detach or relaunch steps.
-- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(error: Exception("PostHog source maps test"), stackTrace: StackTrace.current)` — arguments are **named**, and `stackTrace` is what the trace resolves against. Verifies the web path only.
+- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(error: Exception("PostHog source maps test"), stackTrace: StackTrace.current)` — arguments are **named**, and `stackTrace` is what the trace resolves against. Give the user a test flow for **every** platform wired, using that platform's build/run pair:
+  - **Web** build + upload, serve `build/web`, tap the button. Confirm the trace shows `.dart` paths, not `main.dart.js` offsets.
+  - **Android** `flutter build apk --release`, then `flutter run --release`, tap the button.
+  - **iOS** `flutter build ipa` (or Xcode ▸ Run with Build Configuration = Release), tap the button.
+
+  On Android and iOS the button raises a **Dart** exception, which arrives readable with no symbol set involved — `mapping.txt` and dSYMs cover the Java/Kotlin and Swift layers, not compiled Dart. So on those two, verify by the new symbol set appearing in PostHog after the build, not by the button's stack trace. Only web is verified end-to-end by the button.
 
 ### Verify and hand off
 
