@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [posthog-best-practices, integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
-dependsOn: [install, init, identify, error-tracking, capture]
+dependsOn: [install, init, identify, error-tracking]
 ---
 
 ## Goal
@@ -57,22 +57,22 @@ order:
    codebase. Codebase idiom beats the example when they conflict; the PostHog
    correctness rules you were given beat both.
 
-You never change what is captured — event names, properties, and where events fire
-are a contract the dashboard and report are built on. Refactor how, and kill bad
-changes; never alter the what.
-
-Events reaching PostHog in production is the point of this code, so a capture wired
-to a place it will never fire, an uninitialized SDK, or a call the runtime silently
-drops is squarely yours to catch and fix — it is a code defect. What you cannot do is
-confirm delivery: you cannot exercise the app, and you never treat "I could not
-verify events arrive" as a finding.
+This run instruments no events, so there is no event contract to police. What has to
+work is the path that would carry them: an SDK that initializes, one client every call
+site can reach, identity established where the app has one, and unhandled errors
+leaving the process. An uninitialized SDK, a second client constructed alongside the
+first, or a call the runtime silently drops is squarely yours to catch and fix — it is
+a code defect. What you cannot do is confirm delivery: you cannot exercise the app,
+and you never treat "I could not verify events arrive" as a finding.
 
 Stay inside verify-and-review. These are not your job:
 
-- The report or the dashboard — other tasks own those; do not write or judge them.
-- Product or analytics design — which events are worth tracking, identity strategy,
-  framework-version tradeoffs. The changeset is the decision; review whether the code
-  implements it correctly, not whether it was the right decision.
+- The report — another task owns it; do not write or judge it.
+- The project's PostHog settings — a different task turns the products on through
+  PostHog and changes no code, so none of it is in your changeset.
+- Product or analytics design — which events would be worth tracking, identity
+  strategy, framework-version tradeoffs. The changeset is the decision; review whether
+  the code implements it correctly, not whether it was the right decision.
 - Anything the integration did not touch. Do not widen scope to pre-existing issues.
 
 If you notice something real but out of scope, leave it — a one-line mention in your
