@@ -1,0 +1,12 @@
+# Orchestrator step-skill: fetched by task agents, never surfaced as a command.
+type: docs-only
+template: description.md
+description: Turn on the PostHog products self-driving reads from
+tags: [orchestrator, enable-features]
+variants:
+  - id: all
+    display_name: PostHog enable-features step
+    tags: [orchestrator, enable-features]
+    docs_urls: []
+cli:
+  role: internal

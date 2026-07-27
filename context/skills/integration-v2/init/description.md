@@ -39,6 +39,26 @@ Follow the reference example and the docs for this framework's pattern. Read the
 existing provider, entry, or startup file before editing, and add PostHog alongside
 what is already there rather than replacing it.
 
+## The products that are init options
+
+Product analytics, web analytics, and session replay are not separate steps of this
+run — they are what a correctly configured init already gives you. For a browser SDK
+that means leaving the defaults alone: autocapture and pageview capture are on unless
+the init switches them off, and pageleave is what turns pageviews into web-analytics
+sessions. Do not pass an option to re-assert a default.
+
+What matters is not *cancelling* them. If the project's existing init, or an example
+you are adapting, carries `autocapture: false`, `capture_pageview: false`, or
+`disable_session_recording: true`, that option is what decides the product is off, and
+no project-side switch can overrule it. Leave a deliberate choice the project already
+made in place — but name in your handoff which of these options are set and where. A
+later step turns these products on in PostHog and needs to know what the client does
+with them.
+
+Server and mobile SDKs have no equivalent: none of this is an init option there, and
+replay or exception capture on those platforms needs its own setup later. Say that
+rather than reaching for an option that doesn't exist.
+
 ## Content Security Policy
 
 Before wiring a browser SDK, check whether the app ships a CSP — a meta tag in

@@ -71,6 +71,5 @@ Complete this task with status **done** whenever the integration itself is in
 place — even if the build or typecheck still fails on pre-existing errors in files
 you never touched. Note the pre-existing failure in `conflict` and move on. Only
 use status **failed** when your own integration changes are what break the build
-and you cannot resolve them. A `failed` status stops later steps that depend on
-this one (the dashboard and report), so do not fail the task over breakage the
-integration did not cause.
+and you cannot resolve them. A `failed` status stops the report that depends on this
+one, so do not fail the task over breakage the integration did not cause.
