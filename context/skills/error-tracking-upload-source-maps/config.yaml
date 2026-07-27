@@ -59,9 +59,13 @@ variants:
 
   - id: flutter
     display_name: Flutter
+    description: Upload Flutter debug symbols to PostHog Error Tracking
     tags: [flutter, dart]
     docs_urls:
       - https://posthog.com/docs/error-tracking/upload-source-maps/flutter.md
+      - https://posthog.com/docs/error-tracking/upload-source-maps/web.md
+      - https://posthog.com/docs/error-tracking/upload-mappings/android.md
+      - https://posthog.com/docs/error-tracking/upload-source-maps/ios.md
 
   - id: ios
     display_name: iOS

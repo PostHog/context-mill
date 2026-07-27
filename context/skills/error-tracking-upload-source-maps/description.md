@@ -49,7 +49,16 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   2. The upload shells out to `posthog-cli` on the `PATH` (v0.7.4+); the PostHog wizard installs it for you, so do not run `npm install -g` yourself.
   3. The Gradle plugin is versioned separately from the `posthog-android` SDK — never reuse the SDK version in `id("com.posthog.android") version "…"`.
 - **Next.js / Nuxt / Angular** Use the framework's documented source-map upload integration from the reference; these own their build pipeline, so configure upload there rather than bolting on a separate CLI step.
-- **React Native / Flutter** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
+- **React Native** You upload platform debug symbols (Hermes maps, dSYMs) rather than plain `.js.map` files — follow the platform reference for the exact build hook.
+- **Flutter** One upload path per platform directory present (`web/`, `android/`, `ios/`) — wire every one that exists. There is no Dart-level upload.
+  - **Web** `flutter build web --source-maps`, then `posthog-cli sourcemap process --directory build/web` as a post-build step.
+  - **Android** Follow the **Android (Gradle)** bullet above, but on `android/app/build.gradle.kts` (never `android/build.gradle.kts`). Flutter's `android/settings.gradle.kts` owns plugin versions: declare `id("com.posthog.android") version "1.4.0" apply false` there, then apply it versionless in the app module. The plugin is on the **1.x** line — do not reuse the 3.x `posthog-android` SDK version, and do not invent one. Skip that bullet's `isMinifyEnabled` step — Flutter always shrinks release builds.
+  - **iOS** Follow the **iOS (Xcode)** bullet above, on the **Runner** target in `ios/Runner.xcworkspace`. Flutter is always CocoaPods: `${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh`.
+
+  Gotchas:
+  1. Set `captureNativeExceptions = true` in `PostHogConfig.errorTrackingConfig` — it defaults to `false`, and while it's off the native SDKs capture nothing to symbolicate.
+  2. No `package.json`, so no `npx` fallback: `posthog-cli` must be on the `PATH`. The PostHog wizard installs it — do not run `npm install -g`.
+  3. dart2js maps carry no `sourcesContent` and no flag adds it. Web traces resolve to Dart paths without source snippets — expected, don't chase a build flag.
 
 ### Make credentials available at build time
 
@@ -63,6 +72,12 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **`process` authenticates from the start.** `posthog-cli sourcemap process` resolves credentials before it injects chunk IDs — the inject phase needs them too, not just the upload — and fails without them. Always pass `--dotenv-file` to the `process` invocation. (It can still appear to work if the developer once ran `posthog-cli login`, which leaves credentials in `~/.posthog` — that won't exist in CI or on a teammate's machine.)
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 - **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
+- **Flutter** One gitignored `.env` at the Flutter project root. Nothing auto-loads it, and both native sub-projects sit one level down, so they reach *up* for it:
+  - Web: `posthog-cli --dotenv-file .env sourcemap process --directory build/web` (flag goes **before** the subcommand).
+  - Android: `rootProject.file("../.env")` — Gradle's root project is `android/`, not the Flutter root.
+  - iOS: `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/../.env"` — `SRCROOT` is `ios/`.
+
+  `POSTHOG_CLI_HOST` is the API host, same rule as iOS above.
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
@@ -128,7 +143,10 @@ Resolve two concrete commands for this project: the production **build** command
 - **Plain Node** Build: `npm run build`. Run: `node <built entry>` — read package.json `main`/`bin` and the build output dir to name the real file (e.g. `node dist/index.js`).
 - **Android** Build: `./gradlew assembleRelease`. Run: launch on a device/emulator (Android Studio, or `./gradlew installRelease`).
 - **iOS** Local build + run are one step: Xcode Run with Build Configuration = Release. `xcodebuild` is CI-only.
-- **Flutter** Build: `flutter build apk` / `flutter build ios`. Run: `flutter run`.
+- **Flutter** One pair per platform you wired:
+  - Web — Build: `flutter build web --source-maps`. Run: `python3 -m http.server 8000 --directory build/web`. Not `flutter run -d chrome` — the dev server skips the upload.
+  - Android — Build: `flutter build apk --release`. Run: `flutter run --release`.
+  - iOS — Build: `flutter build ipa`. Run: `flutter run --release`.
 - **React Native** Run: `npx react-native run-ios` / `npx react-native run-android`.
 
 ### Set up CI for automatic uploads
@@ -322,7 +340,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   }
   ```
   (`capture()` takes an event-name String, not an Error.) Test flow — give the user these steps verbatim, everything happens in Xcode (no `xcodebuild`): 1) In Xcode: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release, then Run — the Release build uploads dSYMs automatically. 2) Tap the "<your test button label>" button in the app. It's an event, not a crash — no debugger-detach or relaunch steps.
-- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(Exception("PostHog source maps test"))`.
+- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(error: Exception("PostHog source maps test"), stackTrace: StackTrace.current)` — arguments are **named**, and `stackTrace` is what the trace resolves against. Verifies the web path only.
 
 ### Verify and hand off
 
