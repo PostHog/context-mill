@@ -31,11 +31,18 @@ Three values for `role`:
 | Role | Where it shows up |
 |---|---|
 | `command` | Registered as `wizard <parentCommand> <command>` (or `wizard <command>` if no parent). The user-facing CLI. |
-| `skill` | Reachable only via `wizard skill <id>`. The full discoverable set. |
+| `skill` | Listed by `wizard skill list` and run via `wizard skill <id>`. The full discoverable set. |
 | `internal` | Hidden everywhere. Only reachable via `wizard --skill=<id>` (a dev escape hatch). Useful for in-progress skills that aren't ready to expose. |
 
-Skills with **no** `cli:` block default to the `skill` role — they're
-discoverable via `wizard skill list` but don't get a top-level command.
+Skills with **no** `cli:` block get no entry at all. They still run under
+`wizard skill <id>`, but `wizard skill list` won't show them, so nobody can
+find them without knowing the id already. **If a user should be able to
+discover your skill, declare `cli: role: skill`** — leaving the block off is
+how you opt out, not a shortcut to the default.
+
+Omit the block only for skills nobody types directly: sub-skills a flow pulls
+in (`posthog-best-practices`), and skills fronted by a wizard-native command
+(`data-warehouse-source` behind `wizard warehouse`).
 
 The same skill can be either surface: `audit-events` sets `role: command` so it's
 `wizard audit events`; a `role: skill` skill is only `wizard skill <id>`. One

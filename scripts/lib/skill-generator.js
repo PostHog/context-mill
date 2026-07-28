@@ -20,7 +20,8 @@
  * @property {'command' | 'skill' | 'internal'} role
  *   How the skill appears: a typed `command`, a `skill` reachable via
  *   `wizard skill <id>`, or `internal` (hidden). Skills with no `cli:` block
- *   default to `skill` and are not emitted into `cli-manifest.json`.
+ *   are not emitted at all, which also keeps them out of `wizard skill list` —
+ *   declare `role: skill` on anything users should be able to discover.
  * @property {string} [command]
  *   The user-typed word that registers this skill (e.g. `'feature-flags'` in
  *   `wizard audit feature-flags`). Required when `role` is `'command'`;
