@@ -105,7 +105,7 @@ posthog.capture(
 )
 ```
 
-Refer to `/docs/ai-observability/manual-capture` for the full property list.
+Refer to https://posthog.com/docs/ai-observability/installation/manual-capture for the full property list.
 
 ## Do not
 

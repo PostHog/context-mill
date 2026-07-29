@@ -4,54 +4,54 @@ template: description.md
 description: PostHog LLM analytics for {display_name}
 tags: [llm-analytics]
 shared_docs:
-  - https://posthog.com/docs/llm-analytics/basics.md
-  - https://posthog.com/docs/llm-analytics/traces.md
-  - https://posthog.com/docs/llm-analytics/calculating-costs.md
+  - https://posthog.com/docs/ai-observability/basics.md
+  - https://posthog.com/docs/ai-observability/traces.md
+  - https://posthog.com/docs/ai-observability/calculating-costs.md
 variants:
   - id: setup
     display_name: all supported providers
     tags: [python, javascript]
     docs_urls:
       # --- Model providers ---
-      - https://posthog.com/docs/llm-analytics/installation/openai.md
-      - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+      - https://posthog.com/docs/ai-observability/installation/openai.md
+      - https://posthog.com/docs/ai-observability/installation/azure-openai.md
       # --- PostHog.AI / .NET OpenAI instrumentation ---
       - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
-      - https://posthog.com/docs/llm-analytics/installation/anthropic.md
-      - https://posthog.com/docs/llm-analytics/installation/google.md
-      - https://posthog.com/docs/llm-analytics/installation/cohere.md
-      - https://posthog.com/docs/llm-analytics/installation/mistral.md
-      - https://posthog.com/docs/llm-analytics/installation/perplexity.md
-      - https://posthog.com/docs/llm-analytics/installation/deepseek.md
-      - https://posthog.com/docs/llm-analytics/installation/groq.md
-      - https://posthog.com/docs/llm-analytics/installation/together-ai.md
-      - https://posthog.com/docs/llm-analytics/installation/fireworks-ai.md
-      - https://posthog.com/docs/llm-analytics/installation/xai.md
-      - https://posthog.com/docs/llm-analytics/installation/cerebras.md
-      - https://posthog.com/docs/llm-analytics/installation/hugging-face.md
-      - https://posthog.com/docs/llm-analytics/installation/ollama.md
-      - https://posthog.com/docs/llm-analytics/installation/openrouter.md
+      - https://posthog.com/docs/ai-observability/installation/anthropic.md
+      - https://posthog.com/docs/ai-observability/installation/google.md
+      - https://posthog.com/docs/ai-observability/installation/cohere.md
+      - https://posthog.com/docs/ai-observability/installation/mistral.md
+      - https://posthog.com/docs/ai-observability/installation/perplexity.md
+      - https://posthog.com/docs/ai-observability/installation/deepseek.md
+      - https://posthog.com/docs/ai-observability/installation/groq.md
+      - https://posthog.com/docs/ai-observability/installation/together-ai.md
+      - https://posthog.com/docs/ai-observability/installation/fireworks-ai.md
+      - https://posthog.com/docs/ai-observability/installation/xai.md
+      - https://posthog.com/docs/ai-observability/installation/cerebras.md
+      - https://posthog.com/docs/ai-observability/installation/hugging-face.md
+      - https://posthog.com/docs/ai-observability/installation/ollama.md
+      - https://posthog.com/docs/ai-observability/installation/openrouter.md
       # --- AI frameworks ---
-      - https://posthog.com/docs/llm-analytics/installation/langchain.md
-      - https://posthog.com/docs/llm-analytics/installation/llamaindex.md
-      - https://posthog.com/docs/llm-analytics/installation/crewai.md
-      - https://posthog.com/docs/llm-analytics/installation/autogen.md
-      - https://posthog.com/docs/llm-analytics/installation/dspy.md
-      - https://posthog.com/docs/llm-analytics/installation/langgraph.md
-      - https://posthog.com/docs/llm-analytics/installation/pydantic-ai.md
-      - https://posthog.com/docs/llm-analytics/installation/vercel-ai.md
-      - https://posthog.com/docs/llm-analytics/installation/litellm.md
-      - https://posthog.com/docs/llm-analytics/installation/instructor.md
-      - https://posthog.com/docs/llm-analytics/installation/semantic-kernel.md
-      - https://posthog.com/docs/llm-analytics/installation/mirascope.md
-      - https://posthog.com/docs/llm-analytics/installation/mastra.md
-      - https://posthog.com/docs/llm-analytics/installation/smolagents.md
-      - https://posthog.com/docs/llm-analytics/installation/openai-agents.md
+      - https://posthog.com/docs/ai-observability/installation/langchain.md
+      - https://posthog.com/docs/ai-observability/installation/llamaindex.md
+      - https://posthog.com/docs/ai-observability/installation/crewai.md
+      - https://posthog.com/docs/ai-observability/installation/autogen.md
+      - https://posthog.com/docs/ai-observability/installation/dspy.md
+      - https://posthog.com/docs/ai-observability/installation/langgraph.md
+      - https://posthog.com/docs/ai-observability/installation/pydantic-ai.md
+      - https://posthog.com/docs/ai-observability/installation/vercel-ai.md
+      - https://posthog.com/docs/ai-observability/installation/litellm.md
+      - https://posthog.com/docs/ai-observability/installation/instructor.md
+      - https://posthog.com/docs/ai-observability/installation/semantic-kernel.md
+      - https://posthog.com/docs/ai-observability/installation/mirascope.md
+      - https://posthog.com/docs/ai-observability/installation/mastra.md
+      - https://posthog.com/docs/ai-observability/installation/smolagents.md
+      - https://posthog.com/docs/ai-observability/installation/openai-agents.md
       # --- Proxy / gateway providers ---
-      - https://posthog.com/docs/llm-analytics/installation/portkey.md
-      - https://posthog.com/docs/llm-analytics/installation/helicone.md
+      - https://posthog.com/docs/ai-observability/installation/portkey.md
+      - https://posthog.com/docs/ai-observability/installation/helicone.md
       # --- Manual / generic ---
-      - https://posthog.com/docs/llm-analytics/installation/manual-capture.md
+      - https://posthog.com/docs/ai-observability/installation/manual-capture.md
 
   - id: dotnet-openai
     display_name: .NET OpenAI / Azure OpenAI (PostHog.AI)
@@ -59,5 +59,5 @@ variants:
     tags: [dotnet, aspnetcore, csharp, openai, azure-openai]
     docs_urls:
       - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
-      - https://posthog.com/docs/llm-analytics/installation/openai.md
-      - https://posthog.com/docs/llm-analytics/installation/azure-openai.md
+      - https://posthog.com/docs/ai-observability/installation/openai.md
+      - https://posthog.com/docs/ai-observability/installation/azure-openai.md

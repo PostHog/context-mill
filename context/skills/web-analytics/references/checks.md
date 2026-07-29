@@ -81,7 +81,7 @@ Define `total_project_pageviews` = sum of `pageviews` across every row returned 
 
 **Evidence:** the dark host name, total project pageviews for context, and any peer authorized hosts with healthy volume.
 
-**Remediation:** https://posthog.com/docs/web-analytics/faq
+**Remediation:** https://posthog.com/docs/web-analytics/troubleshooting
 
 ---
 
@@ -157,7 +157,7 @@ LIMIT 25
 
 **Evidence:** the path, the list of hosts, combined pageview count.
 
-**Remediation:** https://posthog.com/docs/web-analytics/faq — review `$current_url` / `$host` capture, confirm reverse proxy and canonicalization across all domains.
+**Remediation:** https://posthog.com/docs/web-analytics/troubleshooting — review `$current_url` / `$host` capture, confirm reverse proxy and canonicalization across all domains.
 
 ---
 
