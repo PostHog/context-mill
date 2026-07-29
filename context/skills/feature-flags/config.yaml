@@ -3,19 +3,21 @@ type: skill
 template: description.md
 description: PostHog feature flags for {display_name} applications
 tags: [feature-flags]
+references:
+  preamble: "**Read only this step.** Do not preload later workflow steps; follow the `next_step` link when this step is complete."
 shared_docs:
   - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
   - https://posthog.com/docs/feature-flags/best-practices.md
 variants:
   - id: react
     display_name: React
-    tags: [react, javascript]
+    tags: [react, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/react.md
 
   - id: nextjs
     display_name: Next.js
-    tags: [nextjs, nextjs-feature-flags, react, javascript]
+    tags: [nextjs, nextjs-feature-flags, react, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/react.md
       - https://posthog.com/docs/libraries/next-js.md
@@ -28,13 +30,13 @@ variants:
 
   - id: web
     display_name: Web (JavaScript)
-    tags: [javascript]
+    tags: [javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: nodejs
     display_name: Node.js
-    tags: [javascript]
+    tags: [javascript, javascript_node]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/nodejs.md
 

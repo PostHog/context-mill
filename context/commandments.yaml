@@ -37,7 +37,8 @@ commandments:
     - Do NOT wrap components in PostHogProvider just for feature flags - it's unnecessary if posthog-js is initialized globally
     # Server-side feature flags
     - Server Components and Route Handlers cannot use React hooks - use posthog-node SDK instead
-    - Create a server-side PostHog client with posthog-node, call getAllFlags() or getFeatureFlag(), then await posthog.shutdown()
+    - For new server-side code, call posthog-node evaluateFlags() once per person and request, then read the result with isEnabled(), getFlag(), or getFlagPayload(); getAllFlags(), isFeatureEnabled(), getFeatureFlag(), and getFeatureFlagPayload() are legacy APIs
+    - Pass the same evaluated flags snapshot to related server-side capture() calls, filtered with onlyAccessed() or only() when appropriate, instead of making another feature flag request
     - 'Route Handlers and Server Actions are short-lived per request. Create the posthog-node client with flushAt 1 and flushInterval 0, and `await posthog.flush()` after capturing and before returning, or the function freezes before the event is sent and it is silently dropped'
     - Pass flag values from server to client components as props to avoid hydration mismatches
     # Avoiding flicker
