@@ -136,6 +136,10 @@ describe('feature-flags skill contract', () => {
             path.join(generatedDir, 'references', '4-verify.md'),
             'utf8',
         );
+        const implementationStep = fs.readFileSync(
+            path.join(generatedDir, 'references', '3-implement.md'),
+            'utf8',
+        );
 
         expect(firstStep).toContain('Upon completion, continue with:');
         expect(firstStep).toContain('[2-configure.md](2-configure.md)');
@@ -147,9 +151,14 @@ describe('feature-flags skill contract', () => {
         expect(firstStep).toContain('every existing environment file');
         expect(firstStep).toContain('do not assume `.env.local`');
         expect(firstStep).toContain('Do not call a configuration-writing tool');
+        expect(implementationStep).toContain('check every response or SDK result');
+        expect(implementationStep).toContain('non-2xx response');
+        expect(implementationStep).toContain('capturing a success event');
         expect(verificationStep).toContain('standard production build');
         expect(verificationStep).toContain('A type check is not a substitute');
         expect(verificationStep).toContain('framework-unsupported configuration patterns');
+        expect(verificationStep).toContain('failed requests cannot update successful UI state');
+        expect(verificationStep).toContain('emit success events');
         expect(verificationStep).not.toContain('hardcoded PostHog configuration');
         expect(verificationStep).toContain('does not count as executing that path');
         expect(verificationStep).toContain('Do not continue to Step 5');

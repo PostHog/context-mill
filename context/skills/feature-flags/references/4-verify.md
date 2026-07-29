@@ -16,7 +16,7 @@ Emit:
 
 ## Verify the code
 
-Review the final diff for unrelated changes, hardcoded secrets, empty or placeholder PostHog configuration, framework-unsupported configuration patterns, duplicate flag keys, unsafe defaults, and PII in event properties.
+Review the final diff for unrelated changes, hardcoded secrets, empty or placeholder PostHog configuration, framework-unsupported configuration patterns, duplicate flag keys, unsafe defaults, and PII in event properties. For network-backed actions, confirm that failed requests cannot update successful UI state or emit success events.
 
 Run the repository's focused tests, type checker, linter, and standard production build when those commands exist. A type check is not a substitute for the production build. If a command cannot run, record the exact blocker rather than silently omitting it.
 

@@ -33,6 +33,7 @@ Read each file immediately before editing it. Keep the changes close to the exis
 - Evaluate the flag once at the smallest useful boundary instead of scattering repeated checks through the codebase.
 - Keep the application working when PostHog configuration is absent, following `COMMANDMENTS.md`.
 - Do not add a committed test override or development backdoor.
+- When an action depends on one or more network requests, check every response or SDK result before changing local success state or capturing a success event. A rejected request, non-2xx response, or SDK error must follow the application's existing failure path.
 
 Add or update focused tests for both the control and flagged paths when the project has a suitable test setup.
 
