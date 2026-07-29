@@ -9,7 +9,7 @@ shared_docs:
   - https://posthog.com/docs/logs/best-practices.md
   - https://posthog.com/docs/logs/troubleshooting.md
   - https://posthog.com/docs/logs/link-session-replay.md
-  - https://posthog.com/docs/logs/debug-logs-mcp.md
+  - https://posthog.com/docs/logs/surfaces/mcp.md
 variants:
   - id: javascript
     display_name: Web (JavaScript)
