@@ -14,7 +14,8 @@
     "test:skills:watch": "vitest scripts/lib/tests",
     "test": "vitest run scripts/plugins/tests scripts/lib/tests",
     "security-scan": "node scripts/scan-warlock.js",
-    "security-scan:skills": "node scripts/scan-warlock.js dist/skills"
+    "security-scan:skills": "node scripts/scan-warlock.js dist/skills",
+    "check-links": "node scripts/check-links.js"
   },
   "devDependencies": {
     "archiver": "^7.0.1",

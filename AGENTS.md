@@ -109,7 +109,31 @@ npm install        # Install dependencies
 npm test           # vitest run (parsers, expander, plugins, cli block)
 npm run build      # Full build: emits dist/skills/<id>.zip + manifests
 npm run dev        # Partial-rebuild dev server with watch
+npm run check-links # Validate every posthog.com docs URL in the repo
 ```
+
+## Docs URLs and why they break
+
+Skills fetch `.md` docs pages from posthog.com at build time (`docs_urls` /
+`shared_docs` in `config.yaml`, `urls` in `docs.yaml`). Those `.md` files are
+**generated siblings** of the HTML pages, not views of them, and posthog.com's
+redirects are matched against literal paths — so a redirect written for
+`/docs/a/b` does not cover `/docs/a/b.md`. When a docs page moves, the HTML
+redirects and the `.md` can 404.
+
+`scripts/lib/doc-fetcher.js` handles both halves of that:
+
+- **A `.md` 404 is recovered**, not fatal — it asks the extensionless HTML route
+  where the page went and refetches the resolved `.md`, warning with the exact
+  `old → new` pair to paste into the config.
+- **Silently-followed redirects are reported.** `fetch` follows them by default,
+  so a moved doc still builds; the end-of-build `Stale doc URLs` block is what
+  stops configs drifting unnoticed. Releases set `DOCS_STRICT_URLS=1` to turn
+  that into a failure.
+- **HTML served from a `.md` URL is rejected**, so a soft 404 can't be written
+  into `references/*.md` and shipped inside a skill ZIP.
+
+Recovery is a backstop, not a fix — when you see the warning, repoint the URL.
 
 ## Repository conventions
 

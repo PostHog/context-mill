@@ -113,6 +113,10 @@ jobs:
         run: pnpm run build
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
+          # Fail the release if any docs URL redirected. PR builds only warn —
+          # posthog.com moves docs on its own schedule — but a release must not
+          # ship content fetched from a path the config no longer names.
+          DOCS_STRICT_URLS: '1'
 
       - name: Scan skills with Warlock
         env:

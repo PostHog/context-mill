@@ -12,6 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateAllSkills, fetchDoc } from './lib/skill-generator.js';
+import { getRedirectReport } from './lib/doc-fetcher.js';
 import { buildAgents } from './lib/agent-generator.js';
 import { generateMarketplace } from './lib/marketplace-generator.js';
 import {
@@ -36,6 +37,38 @@ async function fetchDocContent(doc) {
         }
     }
     return parts.join('\n\n---\n\n');
+}
+
+/**
+ * Report docs URLs that no longer live where the config says they do.
+ *
+ * `fetch` follows redirects by default, so a moved doc still builds fine and
+ * would otherwise leave no trace — which is how 37 llm-analytics URLs went
+ * stale unnoticed. Printing them here, in copy-pasteable `old → new` form,
+ * gives the drift somewhere to show up.
+ *
+ * PR builds only warn: posthog.com moves docs on its own schedule and that
+ * shouldn't red-X an unrelated change. Releases set DOCS_STRICT_URLS=1 so a
+ * release can't ship content fetched from somewhere the config doesn't name.
+ */
+function reportStaleDocUrls() {
+    const stale = getRedirectReport();
+    if (stale.length === 0) return;
+
+    console.log(`\nStale doc URLs (${stale.length}) — update these in context/**/config.yaml:`);
+    for (const { requested, final, via } of stale) {
+        const note = via === 'md-recovery' ? ' (recovered after a 404)' : '';
+        console.log(`  ${requested}\n    → ${final}${note}`);
+        if (process.env.GITHUB_ACTIONS) {
+            console.log(`::warning::Stale doc URL: ${requested} → ${final}`);
+        }
+    }
+
+    if (process.env.DOCS_STRICT_URLS === '1') {
+        throw new Error(
+            `${stale.length} doc URL(s) redirected and DOCS_STRICT_URLS=1 — repoint them before releasing`,
+        );
+    }
 }
 
 async function main() {
@@ -143,6 +176,8 @@ async function main() {
             ...bundleFiles,
         });
         console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
+
+        reportStaleDocUrls();
 
         console.log('\n' + '='.repeat(50));
         console.log('Build complete!\n');
