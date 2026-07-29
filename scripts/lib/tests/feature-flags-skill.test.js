@@ -151,6 +151,9 @@ describe('feature-flags skill contract', () => {
         expect(firstStep).toContain('every existing environment file');
         expect(firstStep).toContain('do not assume `.env.local`');
         expect(firstStep).toContain('Do not call a configuration-writing tool');
+        expect(firstStep).toContain('selected skill ID and its version');
+        expect(firstStep).toContain('local or published Context Mill menu');
+        expect(firstStep).toContain('mark the source as unavailable');
         expect(implementationStep).toContain('check every response or SDK result');
         expect(implementationStep).toContain('non-2xx response');
         expect(implementationStep).toContain('capturing a success event');
@@ -161,10 +164,18 @@ describe('feature-flags skill contract', () => {
         expect(verificationStep).toContain('emit success events');
         expect(verificationStep).not.toContain('hardcoded PostHog configuration');
         expect(verificationStep).toContain('does not count as executing that path');
+        expect(verificationStep).toContain('record its exact active state and release conditions');
+        expect(verificationStep).toContain('restore the exact prior state');
+        expect(verificationStep).toContain('retain the restoration evidence');
+        expect(verificationStep).toContain('confirm the restored state with a read-back');
         expect(verificationStep).toContain('Do not continue to Step 5');
         expect(verificationStep).toContain('defined production build is still classified as `not run`');
+        expect(verificationStep).toContain('temporary flag-state restoration is unverified');
         expect(finalStep).toContain('`source-reviewed`');
         expect(finalStep).toContain('Use `verified` only when');
+        expect(finalStep).toContain('selected skill ID and version');
+        expect(finalStep).toContain('local or published Context Mill menu');
+        expect(finalStep).toContain('temporary flag-state restoration');
         expect(finalStep).toContain('personal data returned by MCP tools');
         expect(finalStep).toContain('report path supplied by the invoking program');
         expect(finalStep).toContain('Do not create or update a second report file');

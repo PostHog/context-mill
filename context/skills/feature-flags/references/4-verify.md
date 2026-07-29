@@ -26,7 +26,11 @@ Test both the control and flagged paths with the project's normal test doubles o
 
 Read the flag from PostHog again and confirm that its key, project, type, evaluation context, active state, and release conditions still match the plan.
 
-When the application can run locally and safe test targeting is available, perform a runtime smoke test and exercise both flag states. Do not broaden or alter a shared rollout solely for testing without the user's permission. Remove any temporary developer-only condition after testing unless the user wants to keep it. If one or both paths cannot be exercised safely, mark them as not run and state the exact manual step that remains.
+When the application can run locally and safe test targeting is available, perform a runtime smoke test and exercise both flag states. Prefer an SDK-supported local override or a verified developer-only condition that cannot affect other users.
+
+Before changing any PostHog-side flag state for testing, record its exact active state and release conditions and get the user's permission. After testing, restore the exact prior state, read the flag back, and retain the restoration evidence for the report. If restoration fails, stop changing the flag and report the mismatch as unresolved. Do not broaden or alter a shared rollout solely for testing without permission, and do not leave temporary conditions behind unless the user explicitly asks to keep them.
+
+If one or both paths cannot be exercised safely, mark them as not run and state the exact manual step that remains.
 
 Trigger one real evaluation from the running application. Query PostHog for the corresponding feature flag evaluation event and any custom action event added in Step 3. Confirm the event came from the expected environment and contains no PII.
 
@@ -51,5 +55,6 @@ Before continuing to the report:
 1. Inspect the project scripts and list the applicable verification commands.
 2. Run each applicable focused test, type check, lint, and standard production build.
 3. If a defined command cannot run, classify it as `blocked` with the command and exact reason.
+4. If verification changed PostHog-side flag state, restore it and confirm the restored state with a read-back.
 
-Do not continue to Step 5 while a defined production build is still classified as `not run`.
+Do not continue to Step 5 while a defined production build is still classified as `not run` or temporary flag-state restoration is unverified.

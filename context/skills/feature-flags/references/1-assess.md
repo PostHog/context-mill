@@ -57,4 +57,6 @@ Avoid authentication, authorization, billing, data deletion, privacy controls, a
 
 Choose a descriptive lowercase, hyphenated flag key that follows any existing project convention. Prefer a boolean flag. Use variants or payloads only when the behavior requires them.
 
+Record the selected skill ID and its version from the installed `SKILL.md` metadata for the final report. If the invoking program exposes whether the skill came from a local or published Context Mill menu, record that source; otherwise mark the source as unavailable instead of inferring it.
+
 Write down the proposed flag key, control behavior, flagged behavior, evaluation location, safe default, configuration variable names without their values, and the files likely to change. Do not edit source code in this step.
