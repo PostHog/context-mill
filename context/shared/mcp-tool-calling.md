@@ -20,3 +20,5 @@ Running `info <tool_name>` before `call <tool_name>` is mandatory, the same way 
 Every PostHog tool goes through `exec` this way — there is no separate named tool to call directly. The inner tool names and JSON payloads below are what you pass to `call`.
 
 **Errors** carry a suggestion and similar tool names — read it before retrying. If a name isn't found it may have been renamed; run `search <pattern>` or `tools` again to find the current one.
+
+**If the exec tool is unavailable or a call is refused by the permission layer**: delegate the MCP work to a general-purpose subagent via the Agent tool (subagents have the PostHog MCP mounted), and if that also fails, skip the artifact and say so in your summary. Never fall back to the REST API from the shell — never put an API key, bearer token, or other credential into a shell command, a source file, or `.env`; the security scanner blocks these and the attempt wastes the run.
