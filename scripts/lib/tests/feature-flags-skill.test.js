@@ -140,9 +140,24 @@ describe('feature-flags skill contract', () => {
             path.join(generatedDir, 'references', '3-implement.md'),
             'utf8',
         );
+        const configurationStep = fs.readFileSync(
+            path.join(generatedDir, 'references', '2-configure.md'),
+            'utf8',
+        );
 
         expect(firstStep).toContain('Upon completion, continue with:');
         expect(firstStep).toContain('[2-configure.md](2-configure.md)');
+        // Wizard maps these reason prefixes to actionable error outros. Keep
+        // this cross-repo contract in sync with featureFlagsConfig.abortCases.
+        expect(firstStep).toContain(
+            '[ABORT] A working PostHog SDK integration is required.',
+        );
+        expect(firstStep).toContain(
+            '[ABORT] The selected feature flag skill does not match this application.',
+        );
+        expect(configurationStep).toContain(
+            '[ABORT] PostHog feature flag access is required.',
+        );
         expect(firstStep).toContain('Do not open or print value-bearing environment files');
         expect(firstStep).toContain('Prefer the Wizard `check_env_keys` tool');
         expect(firstStep).toContain('project token is a public client-side key, not a secret');
