@@ -33,7 +33,9 @@ Do not hand-roll a fetch wrapper for this, and do not thread a session id throug
 
 If `tracing_headers` is already configured, confirm the backend hostname is in the list and leave it alone otherwise.
 
-`sessionId` requires session replay to be enabled on the client. If replay is off, the header will not carry a session and the project tops out at the `person` tier. Note that on the plan rather than trying to work around it.
+`sessionId` requires session replay to be enabled. If replay is off, the header will not carry a session and the project tops out at the `person` tier. Note that on the plan rather than trying to work around it.
+
+Your prompt context states whether session replay is enabled on the PostHog project. Trust it over repo-local evidence: replay can be turned on from the snippet or from another repo entirely, so the absence of replay config in this codebase does not mean the product is off.
 
 ## Server side, bind identity to the request
 

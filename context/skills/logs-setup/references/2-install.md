@@ -25,9 +25,14 @@ The installation doc hardcodes the US ingestion host. Writing that into an EU pr
 
 Resolve in this order.
 
-1. The PostHog host you found in Step 1. A host containing `eu.i.posthog.com` or `eu.posthog.com` means EU, `us.i.posthog.com` or `app.posthog.com` means US.
-2. A `POSTHOG_HOST` or `NEXT_PUBLIC_POSTHOG_HOST` environment variable in `.env`, `.env.local`, or `.env.example`.
-3. If neither is present, ask. Call `mcp__wizard-tools__wizard_ask` with a single question offering US and EU.
+1. **The `PostHog Host` in your prompt context.** This is the authenticated project's real host and it outranks everything else, because it comes from the account this run is authorizing against rather than from a file that may be stale, proxied, or copied from another project.
+2. The PostHog host you found in Step 1. A host containing `eu.i.posthog.com` or `eu.posthog.com` means EU, `us.i.posthog.com` or `app.posthog.com` means US.
+3. A `POSTHOG_HOST` or `NEXT_PUBLIC_POSTHOG_HOST` environment variable in `.env`, `.env.local`, or `.env.example`.
+4. If none of those resolve it, ask. Call `mcp__wizard-tools__wizard_ask` with a single question offering US and EU.
+
+Treat a reverse proxy as no signal. A project routing through `api_host: '/ingest'` tells you nothing about the region, and a `ui_host` sitting next to it is a display setting that is frequently left at its default — neither is evidence. Fall through to the prompt context.
+
+If the codebase and the prompt context disagree, the prompt context wins, and say so in the report. That mismatch usually means the project config points at a different PostHog project than the one this run is authorized against, which is worth the operator knowing about.
 
 The log ingestion endpoint is the region's host followed by `/i/v1/logs`.
 
