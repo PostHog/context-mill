@@ -200,7 +200,11 @@ describe('feature-flags skill contract', () => {
         expect(finalStep).toContain('`source-reviewed`');
         expect(finalStep).toContain('Use `verified` only when');
         expect(finalStep).toContain('selected skill ID and version');
-        expect(finalStep).toContain('local or published Context Mill menu');
+        expect(finalStep).toContain('A localhost or local development URL');
+        expect(finalStep).toContain('A menu category does not prove the skill was published');
+        expect(finalStep).toContain('mark the source as unavailable instead of inferring it');
+        expect(finalStep).toContain('A passing build does not prove that linting');
+        expect(finalStep).toContain('Never infer that a linter ran');
         expect(finalStep).toContain('temporary flag-state restoration');
         expect(finalStep).toContain('personal data returned by MCP tools');
         expect(finalStep).toContain('report path supplied by the invoking program');
