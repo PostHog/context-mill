@@ -1,0 +1,37 @@
+# PostHog Logs setup — installs the OTLP log export and correlates each record to
+# the session replay and person that produced it.
+#
+# Distinct from the `logs` skill group, which is docs-only reference material.
+# This one is a 7 step chain that edits the project.
+#
+# Reachable via `wizard skill logs-setup-<variant>`; the wizard also registers a
+# native `wizard logs` command that drives it.
+type: skill
+template: description.md
+category: logs-setup
+description: Set up PostHog Logs in an existing codebase and correlate each log record to the session replay and person that produced it. Additive — existing logging keeps working unchanged.
+tags: [logs]
+cli:
+  role: skill
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/logs/start-here.md
+  - https://posthog.com/docs/logs/link-session-replay.md
+  - https://posthog.com/docs/logs/link-person.md
+  - https://posthog.com/docs/logs/best-practices.md
+  - https://posthog.com/docs/logs/troubleshooting.md
+  - https://posthog.com/docs/logs/search.md
+variants:
+  - id: nextjs
+    display_name: Next.js
+    default: true
+    tags: [nextjs, javascript]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/nextjs.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/logs/installation/python.md
