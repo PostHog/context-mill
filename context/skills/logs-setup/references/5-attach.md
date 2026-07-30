@@ -38,6 +38,12 @@ Omit an attribute entirely when its value is missing. Do not attach `undefined`,
 
 Attachment must never throw. A logging call that raises because identity lookup failed turns an observability improvement into an outage. Wrap the lookup so that any failure results in a record without correlation attributes, and never in a raised exception.
 
+## Next.js, leave the Edge surfaces alone
+
+`middleware.ts`, and any route declaring `export const runtime = 'edge'`, run on the Edge runtime rather than the Node runtime that holds the provider from Step 2. Importing the provider into one of them pulls the OTel SDK into the Edge bundle, and since the batch processor exports on a timer, the invocation ends before anything is flushed. This compiles, it reads correctly in review, and the records quietly never arrive.
+
+Do not emit log records from these surfaces. Record them on the plan as a `warning` at tier `none` with a one line reason, the same as any other call site the shared mechanism cannot reach, and let Step 7 report them.
+
 ## Cover the call sites
 
 With the shared mechanism in place, confirm it actually reaches the surfaces in the plan.

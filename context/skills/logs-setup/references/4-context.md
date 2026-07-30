@@ -33,6 +33,8 @@ Do not hand-roll a fetch wrapper for this, and do not thread a session id throug
 
 If `tracing_headers` is already configured, confirm the backend hostname is in the list and leave it alone otherwise.
 
+`tracing_headers` is applied at runtime but is missing from the `PostHogConfig` TypeScript types in current `posthog-js` releases, so a type check will reject it as an unknown property. Cast the options object to `Partial<PostHogConfig>` at the `init` call and carry on. Do not go reading compiled files under `node_modules` to find the correct spelling, and do not conclude from the type error that the option does not exist. Note the cast on the plan so Step 7 can report it as a follow up.
+
 `sessionId` requires session replay to be enabled. If replay is off, the header will not carry a session and the project tops out at the `person` tier. Note that on the plan rather than trying to work around it.
 
 Your prompt context states whether session replay is enabled on the PostHog project. Trust it over repo-local evidence: replay can be turned on from the snippet or from another repo entirely, so the absence of replay config in this codebase does not mean the product is off.

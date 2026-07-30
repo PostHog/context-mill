@@ -45,7 +45,15 @@ Not allowed:
 
 - Refactoring unrelated code.
 - Fixing pre-existing build errors that have nothing to do with this setup.
-- Silencing a type error with `any` or an ignore comment to make the build pass. If a type genuinely cannot be resolved, record it as an error on the verify phase line and let the operator address it.
+- Silencing a type error with `any` or an ignore comment to make the build pass. If a type genuinely cannot be resolved, record it as an error on the verify phase line and let the operator address it. The `tracing_headers` cast from Step 4 is the one known exception, because it covers a gap in a published type definition rather than an unresolved type in the code you wrote.
+
+## When the failure is the environment, not the code
+
+A build can fail for reasons no edit will fix: a sandbox that blocks a subprocess or a port the bundler wants, an environment variable the app reads at build time, a database or API the build expects to reach. Changing flags and running it again resolves none of these, and the build is the slowest command in this run.
+
+Attempt the build once. If it fails, read the error and decide whether it is about the code you wrote or about the environment you are running in. When it is the environment, stop there, record the verify line as a `warning` naming the restriction, and let Step 7 raise it as a manual follow up for the operator to run themselves. Do not run the same build again with different flags.
+
+Pre-existing failures are the same story. A build that was already broken before this run is not yours to fix, and it is not evidence that your changes are wrong.
 
 ## Emit one test record
 
