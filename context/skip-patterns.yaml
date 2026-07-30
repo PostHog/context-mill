@@ -174,6 +174,12 @@ examples:
       # The XcodeGen project spec is the whole point of this example;
       # rescue it from the global .yml skip
       - project.yml
+  fastapi:
+    includes:
+      # Test runner config; the tests themselves are skipped globally
+      - pytest.ini
+      - requirements-dev.txt
+
   laravel:
     includes:
       - storage/framework
