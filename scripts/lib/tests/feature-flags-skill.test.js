@@ -171,6 +171,7 @@ describe('feature-flags skill contract', () => {
         expect(firstStep).toContain('mark the source as unavailable');
         expect(firstStep).toContain('Inspect the current working tree');
         expect(firstStep).toContain('Ask for confirmation in one interaction');
+        expect(firstStep).toContain('format the proposal as plain terminal text');
         expect(firstStep).toContain('Do not invent and implement a demonstration feature without confirmation');
         expect(firstStep).toContain('Do not continue to Step 2 until the user has confirmed');
         expect(configurationStep).toContain('explicit zero-percent rollout');

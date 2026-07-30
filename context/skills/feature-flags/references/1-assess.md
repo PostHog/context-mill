@@ -63,6 +63,30 @@ Before calling a PostHog write tool or editing application code, present one rec
 - The safe initial rollout: zero percent, or inactive when the API represents "off" that way.
 - The application files likely to change.
 
+When using an interactive ask tool, format the proposal as plain terminal text,
+not Markdown. Keep it short and scan-friendly: start with one sentence, then use
+one labeled line each for `Proposal`, `Why`, `Control`, `Flagged`, `Flag key`,
+`Evaluation`, `Rollout`, and `Files`. End with one direct confirmation question.
+Do not include Markdown headings, bold markers, backticks, nested bullets, or
+long prose paragraphs in the prompt.
+
+Use this shape:
+
+```text
+I found a developer-owned change that is a good fit for a feature flag.
+
+Proposal: <short name>
+Why: <one sentence>
+Control: <behavior when the flag is false>
+Flagged: <behavior when the flag is true>
+Flag key: <lowercase-hyphenated-key>
+Evaluation: <client or server location>
+Rollout: 0%
+Files: <comma-separated paths>
+
+Create this flag in PostHog at 0% rollout?
+```
+
 Ask for confirmation in one interaction. If the host provides an interactive ask tool, use it. The user must be able to accept the proposal, describe a different behavior, or choose another candidate when more than one existing change is suitable.
 
 If the user has not named a behavior and the working tree contains no suitable change, offer up to three small, reversible user-facing enhancements supported by the code you inspected. Explain the control and flagged experiences for each, then wait for the user to choose. Do not invent and implement a demonstration feature without confirmation.
