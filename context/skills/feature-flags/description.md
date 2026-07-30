@@ -18,7 +18,7 @@ The workflow references control the job. Consult the framework documentation and
 
 - **Existing integration**: This workflow requires a working PostHog SDK integration. It does not install PostHog from scratch.
 - **Idempotent flag management**: Reuse an exact flag key. Never create a duplicate or silently change an existing flag's conditions, rollout, or evaluation context.
-- **Conservative rollout**: Do not expose a new experience broadly without the user's explicit intent.
+- **Safe initial rollout**: Create every new flag with an explicit zero-percent rollout, or inactive when the API represents "off" that way. Never rely on a tool's default. Read the flag back before editing application code, and require confirmation before wiring new behavior to an existing flag that already reaches users.
 - **Minimal changes**: Add the flag alongside existing logic without restructuring unrelated code.
 - **Boolean flags first**: Use a boolean flag unless the requested behavior needs variants or a payload.
 - **Safe evaluation**: Resolve identity first, handle loading and failure states explicitly, and keep authorization or other security decisions outside feature flags.

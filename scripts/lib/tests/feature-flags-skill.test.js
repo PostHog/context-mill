@@ -169,6 +169,17 @@ describe('feature-flags skill contract', () => {
         expect(firstStep).toContain('selected skill ID and its version');
         expect(firstStep).toContain('local or published Context Mill menu');
         expect(firstStep).toContain('mark the source as unavailable');
+        expect(firstStep).toContain('Inspect the current working tree');
+        expect(firstStep).toContain('Ask for confirmation in one interaction');
+        expect(firstStep).toContain('Do not invent and implement a demonstration feature without confirmation');
+        expect(firstStep).toContain('Do not continue to Step 2 until the user has confirmed');
+        expect(configurationStep).toContain('explicit zero-percent rollout');
+        expect(configurationStep).toContain("never omit release conditions or rely on the tool's default");
+        expect(configurationStep).toContain('`filters.groups` with `rollout_percentage: 0`');
+        expect(configurationStep).toContain('Read every newly created flag back immediately');
+        expect(configurationStep).toContain('If the safe state cannot be restored and confirmed, stop');
+        expect(configurationStep).toContain('When reusing an existing flag that already reaches users');
+        expect(configurationStep).toContain('Do not continue to application changes');
         expect(implementationStep).toContain('check every response or SDK result');
         expect(implementationStep).toContain('non-2xx response');
         expect(implementationStep).toContain('capturing a success event');
