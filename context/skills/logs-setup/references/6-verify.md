@@ -3,9 +3,9 @@ title: Verify the setup
 next_step: 7-report.md
 ---
 
-# Step 6, verify the project still builds and a record arrives
+# Step 6, verify the project still builds and the logging path runs
 
-Two things to prove. The project is not broken, and a log record actually reaches PostHog with its correlation attributes intact.
+Two things to prove. The project is not broken, and the correlated logging path executes end to end without throwing. Emitting one record is the smoke test for the second; confirming it actually landed in PostHog is the operator's step, not this one.
 
 Do not spawn subagents.
 
@@ -27,7 +27,11 @@ Step 2 added package entries without installing. Install once now, using the pac
 
 ## Lint, type check, build
 
-Read the project's manifest for the scripts it defines. Run the linter and formatter only on the files you edited or created in this session, not across the whole codebase. Then run the project's type check (`tsc --noEmit`, `mypy`) and build (`next build`, `python -m py_compile`, or the project's own command).
+Read the project's manifest for the scripts it defines. Run the linter and formatter only on the files you edited or created in this session, not across the whole codebase.
+
+The type check is the gate. Run it (`tsc --noEmit`, `mypy`) and treat a clean result as the primary proof the project is not broken. It is fast and runs anywhere, including sandboxes.
+
+The build (`next build`, `python -m py_compile`, or the project's own command) is a stronger but much slower and more fragile check. Agent sandboxes routinely cannot run it: a bundler that needs to bind a port, spawn a subprocess, or reach a database at build time fails for reasons no edit fixes (see the next section). Attempt it at most once, and only after the type check is already clean. When it cannot run in this environment, that is not a setup failure — a clean type check stands as the proof for this step, and the full build becomes an operator follow-up. Do not re-run it with different flags trying to get past an environment limit.
 
 Capture stdout and stderr. Truncate to the failure region if the output is long.
 
@@ -57,23 +61,21 @@ Pre-existing failures are the same story. A build that was already broken before
 
 ## Emit one test record
 
-Send exactly one log record through the real path, from a request scoped surface if the project has one, so it carries correlation attributes.
+Send exactly one log record through the real logging path so it carries the correlation attributes. This is a smoke test that the path executes without throwing. Whether the record then shows up in PostHog is for the operator to confirm afterwards, not for you to chase here.
 
-Prefer a route the project already exposes over writing a new one. Start the dev server, make one request, then stop the server. If the project cannot be started here, say so on the verify line rather than inventing a harness for it.
+Emit it in process, not through a running server — a dev server needs a bound port that agent sandboxes routinely block. Write one small throwaway script that imports the provider and logger you created, emits a single record with `posthogDistinctId` and `sessionId` set explicitly (a request scoped surface's real values if you can reach them, otherwise clearly synthetic ones like `wizard-verify`), force-flushes the provider, and exits. Run it once with whatever runner the project already uses for its own scripts. Make one attempt: if the script cannot run cleanly here, note that on the verify line and move on — do not iterate on harness or runner problems. Delete the script when you are done.
 
-Then confirm the record arrived. Use the PostHog MCP tools if they are available in this session to query the logs for the record you just emitted. Check three things: the record is present, `posthogDistinctId` is set on it, and `sessionId` is set on it if the plan predicted the `session` tier.
+Do not confirm arrival in this session. Do not query PostHog — not with the MCP tools, not with `curl`, not with anything — and do not hunt for an API key. A record takes a moment to land and the tools to check it belong to the operator, not this run. Step 7 tells them exactly where to look. Record delivery as emitted, note that the operator confirms it, and continue. That is the expected outcome, not a failure.
 
-If the MCP tools are not available, do not guess and do not claim the record arrived. Record on the plan that delivery was not verified, and let the report tell the operator how to check for themselves.
-
-A record that arrives without its attributes is the most valuable failure this step can find. It usually means the attribute names are wrong or the context was empty at emit time. Fix it here, since the operator will otherwise discover it days later while trying to debug something else.
+The attribute names matter more than delivery here: `posthogDistinctId` and `sessionId`, spelled exactly, set at emit time. You already ensured that in Step 5, so if the smoke test runs without throwing, this step is done.
 
 ## Update the plan file
 
 Edit `.posthog-logs-plan.md` and tick the `verify` phase line.
 
 ```
-- [x] verify — pass — build clean, correlated record confirmed in PostHog
-- [x] verify — warning — build clean, delivery not verified (<reason>)
+- [x] verify — pass — type check clean, test record emitted (operator confirms delivery)
+- [x] verify — warning — type check clean, test record could not be emitted here (<reason>)
 - [x] verify — error — <which command failed and a short excerpt>
 ```
 
