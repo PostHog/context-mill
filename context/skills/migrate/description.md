@@ -12,7 +12,7 @@ The migration runs as a 7 step chain.
 4. Rewrite each call site in place (`references/4-replace.md`).
 5. Remove the source SDK from the project (`references/5-cleanup.md`).
 6. Verify the project still builds (`references/6-verify.md`).
-7. Write the migration report and delete the plan file (`references/7-report.md`).
+7. Publish the migration report and delete the plan file (`references/7-report.md`).
 
 Each step file points to the next via `next_step` frontmatter. Read them in order, one at a time. Do not preload future steps. Do not re-read a step file once you have moved past it.
 

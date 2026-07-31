@@ -112,9 +112,7 @@ For the "Verify before merging" checklist, write GitHub-style checkboxes (`- [ ]
 
 Do not invent items beyond what applies. If only the two "Always" items apply, the checklist is just those two.
 
-Then publish the report to the wizard session with a single `publish_handoff` call, passing the complete report markdown as `content`. This call is how the report reaches the user — do not write it to a file instead.
-
-Then mirror the report into a shareable PostHog notebook so the user has an in-app copy to link and comment on. Call `notebooks-create` with a `title` (e.g. `PostHog setup (wizard) – <repo_name>`) and `content` set to a single markdown node wrapping the report verbatim — `{"type":"doc","content":[{"type":"ph-markdown-notebook","attrs":{"nodeId":"markdown-notebook-v2","markdown":"<the full report markdown you composed>"}}]}`. Take the `short_id` from the response, build the notebook URL as `<host>/project/<project_id>/notebooks/<short_id>`, and emit it on its own line so the wizard can surface it: `[NOTEBOOK_URL]` followed by that URL.
+Then publish the report to the wizard session with a single `publish_handoff` call, passing the complete report markdown as `content`. That one call is the whole handoff: it is how the report reaches the user, and the tool creates the shareable PostHog notebook from it and hands the wizard the link. Do not write the report to a file, and do not create the notebook yourself.
 
 Upon completion, update `.posthog-events.json` so it matches the events you actually implemented, then remove it with your file tools. If removal is blocked or fails in your environment, leave the file in place and move on — the wizard host cleans it up after the run. Do not retry the removal or reach for shell commands to force it.
 
@@ -124,4 +122,3 @@ Status to report in this phase:
 
 - Configured dashboard: [insert PostHog dashboard URL]
 - Published setup report to the wizard session
-- Created notebook: [insert PostHog notebook URL]

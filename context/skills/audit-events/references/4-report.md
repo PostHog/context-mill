@@ -2,7 +2,7 @@
 next_step: null
 ---
 
-# Step 4 — Generate the audit report
+# Step 4 — Compose and publish the audit report
 
 The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth. Every check the wizard seeded for this skill ends up in the report, even passes; nothing is invented.
 
@@ -11,14 +11,14 @@ The audit report is rendered **directly from `.posthog-audit-checks.json`** — 
 Emit:
 
 ```
-[STATUS] Writing event capture audit report
+[STATUS] Publishing event capture audit report
 ```
 
 ## Action
 
 `Read` the ledger once, then transform every entry into the report below. Use `area`, `label`, `status`, `file`, and `details` from each entry verbatim where the report calls for them.
 
-`Write` `posthog-audit-events-report.md` at the project root with the structure shown below. After the report is written, delete `.posthog-audit-checks.json`.
+Compose the report as markdown with the structure shown below and publish it in **one** `publish_handoff` call — that call is how the report reaches the user, and the tool creates the shareable PostHog notebook copy and surfaces its URL for you. Do not write a report file. After the call goes through, delete `.posthog-audit-checks.json`.
 
 The report has four sections in this order:
 
@@ -115,8 +115,10 @@ Re-run `posthog-wizard audit-events` after applying fixes to refresh the ledger.
 
 </wizard-report>
 
-After the report is written, emit a final line so the wizard can surface the path to the user:
+Compose the whole report in one model turn — starting with the `#` H1 heading — then call `publish_handoff` once, passing the full markdown as `content`:
 
 ```
-Created audit report: <absolute path to posthog-audit-events-report.md>
+publish_handoff({ "content": "<the full report markdown>" })
 ```
+
+Do not fall back to writing a file. That one call is the whole handoff: the tool stores the report on the wizard session, mirrors it into a PostHog notebook, and surfaces the notebook URL in the wizard outro.

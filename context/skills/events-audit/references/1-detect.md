@@ -57,7 +57,7 @@ Seed all seven pipeline phases. The wizard already pre-seeds the same shape so t
     {
       "id": "write-report",
       "area": "Write report",
-      "label": "Render posthog-events-audit-report.md",
+      "label": "Compose the events audit report",
       "status": "pending"
     },
     {
