@@ -6,7 +6,7 @@ This skill checks an existing PostHog project for common web-analytics misconfig
 2. **Confirm:** present the findings and let the user pick which ones to fix — a single `wizard_ask` multi-select.
 3. **Fix:** apply only the selected fixes — to the user's code and/or their PostHog project settings — then write a report.
 
-The audit never changes anything. Changes happen only in the fix phase, and only for the findings the user explicitly selected. Outputs: a markdown report at `posthog-web-analytics-report.md` and a structured JSON file at `posthog-web-analytics-findings.json`, both at the project root.
+The audit never changes anything. Changes happen only in the fix phase, and only for the findings the user explicitly selected. Outputs: a markdown report published through `publish_handoff` (which the tool turns into a PostHog notebook), and a structured JSON file at `posthog-web-analytics-findings.json` at the project root.
 
 ## Reference files
 
@@ -108,11 +108,11 @@ Report `[STATUS] Applying fix: <name>` before each fix.
 
 Produce the results in **three places**:
 
-1. **Write** `posthog-web-analytics-report.md` to the project root, following `references/report-format.md`. Human-readable, archival.
-2. **Write** `posthog-web-analytics-findings.json` to the project root, following `references/findings-schema.md`. Machine-readable record of the audit and what was fixed.
+1. **Publish** the human-readable report with a single `publish_handoff` call, passing the complete markdown as `content` and following `references/report-format.md`. The tool creates a PostHog notebook from it and the wizard surfaces the link; do not write the report to a file, and do not create a notebook yourself.
+2. **Write** `posthog-web-analytics-findings.json` to the project root, following `references/findings-schema.md`. Machine-readable record of the audit and what was fixed — this one stays a file, since it is written for tooling rather than for a reader.
 3. **Display** the report contents in chat as plain markdown (no extra commentary, no fenced code block wrapping the whole thing — just the report). This is what the user reads when running the skill outside the wizard.
 
-Both files MUST exist. The JSON and the markdown must describe the same set of findings and fixes — two views of the same run.
+The JSON and the published markdown must describe the same set of findings and fixes — two views of the same run.
 
 The report includes:
 
@@ -123,7 +123,7 @@ The report includes:
 - A "Checks passed" section listing every check that found no issues.
 - A "Checks skipped" section listing any checks that couldn't run, with the reason.
 
-After displaying the markdown report, output one final line confirming both file paths (e.g. `Report saved to posthog-web-analytics-report.md and posthog-web-analytics-findings.json`). No further commentary, no recap.
+After displaying the markdown report, output one final line confirming that the report was published and naming the findings file (e.g. `Report published to the wizard session; findings saved to posthog-web-analytics-findings.json`). No further commentary, no recap.
 
 ## Constraints
 

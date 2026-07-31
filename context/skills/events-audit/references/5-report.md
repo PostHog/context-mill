@@ -2,7 +2,7 @@
 next_step: 6-dashboard.md
 ---
 
-# Step 5 – Render the report
+# Step 5 – Compose and publish the report
 
 Produce the audit deliverable in a single pass. The report has three high-level views the reader scans first — Overview, Volume Map, Area Topology — followed by Identity & Segmentation, suggested follow-ups, and appendices.
 
@@ -12,13 +12,13 @@ The skill's job is to give the reader a map plus a few short observations. **Don
 
 This step uses one supporting reference file (not part of the chain):
 
-- `references/5-report-template.md` — verbatim markdown template for the rendered report. Orchestrator reads it once at step (f), substitutes every `{{placeholder}}`, and writes the result to `posthog-events-audit-report.md`.
+- `references/5-report-template.md` — verbatim markdown template for the rendered report. Orchestrator reads it once at step (f) and substitutes every `{{placeholder}}` into the scratch copy described below. Step 6 fills the last placeholder and publishes the result with `publish_handoff`.
 
 ## Output discipline
 
-This is one report `Write`, not a write-then-read-then-rewrite cycle. Prior runs read their own freshly-written report 23 seconds after writing it and regenerated it — that wastes ~3 minutes of generation per cycle. Compose the entire Markdown in one model turn, then call `Write` once. If something is wrong with the result, fix it via `Edit` on the same file — don't `Write` it again.
+The report is assembled in the wizard's scratch directory, `.posthog-wizard-cache/events-audit-report.md`, and published from there in step 6 — never written to the project root, where the user would find it. Substitute each placeholder once and move on: prior runs re-read their own freshly-rendered report seconds after producing it and regenerated it, wasting ~3 minutes of generation per cycle. There is nothing to fix up afterwards.
 
-Also: don't recap the inventory contents in assistant text before writing. Stream straight from the inventory you already read into the report.
+Also: don't recap the inventory contents in assistant text before publishing. Stream straight from the inventory you already read into the `content` argument.
 
 ## Status
 
@@ -30,7 +30,7 @@ Emit, in order:
 [STATUS] Computing area topology
 [STATUS] Computing overview KPIs
 [STATUS] Analyzing identity & segmentation
-[STATUS] Writing report
+[STATUS] Publishing report
 ```
 
 ## Action
@@ -47,7 +47,7 @@ Emit, in order:
 - `mcp_available` – top-level boolean from step 4. `false` means PostHog volume data is missing; render the report in degraded mode (see below).
 - `mcp_skipped_reason` – optional short string explaining why MCP was skipped or failed. Used in the disclaimer when `mcp_available: false`.
 
-If `rows[]` is empty, render a short report explaining the inventory is empty, then resolve `write-report` to `pass` and exit.
+If `rows[]` is empty, publish a short report explaining the inventory is empty, then resolve `write-report` and `upload-notebook` to `pass` and exit.
 
 #### Degraded mode (`mcp_available: false`)
 
@@ -174,11 +174,11 @@ The markdown report template lives in `references/5-report-template.md`. Compose
 
 #### Step f.1 — Write the template verbatim
 
-`Read` `references/5-report-template.md`. Then `Write` `posthog-events-audit-report.md` with the template contents unchanged — every `{{placeholder}}` is preserved as a literal string. This is a small Write (the template itself is bounded in size; no per-event content).
+`Read` `references/5-report-template.md`. Then `Write` `.posthog-wizard-cache/events-audit-report.md` with the template contents unchanged — every `{{placeholder}}` is preserved as a literal string. This is a small Write (the template itself is bounded in size; no per-event content).
 
 #### Step f.2 — Substitute each placeholder with one `Edit`
 
-For each placeholder listed under "Substitution conventions" below, run one `Edit` against `posthog-events-audit-report.md`:
+For each placeholder listed under "Substitution conventions" below, run one `Edit` against `.posthog-wizard-cache/events-audit-report.md`:
 
 - `old_string`: the literal placeholder (e.g. `{{volume_map_rows}}`)
 - `new_string`: the computed substitution value
@@ -187,7 +187,7 @@ The order doesn't matter, but a natural sequence is top-of-report → bottom-of-
 
 #### Step f.3 — Verify before continuing
 
-After all Edits, do a quick `Grep` for `{{` in the file. If any unsubstituted placeholders remain (other than `{{dashboard_callout}}` — see below), the report isn't ready; identify which one and run a follow-up Edit. The wizard surfaces the report to the user via the path emitted in step (g) — shipping a placeholder is visible.
+After all Edits, do a quick `Grep` for `{{` in the file. If any unsubstituted placeholders remain (other than `{{dashboard_callout}}` — see below), the report isn't ready; identify which one and run a follow-up Edit. Step 6 publishes this file as-is, so a placeholder left behind ships to the reader.
 
 **Exception: `{{dashboard_callout}}` is intentionally not substituted in this step.** Step 6 fills that placeholder after dashboard creation runs. Leave it as-is in the rendered output — step 6 always resolves it (to a link on success, or empty string on failure), so it never ships to the reader.
 
@@ -275,9 +275,9 @@ These rules tell you how to format each placeholder. The placeholder names thems
 
 ### g. Surface the deliverable and resolve the phase
 
-**Only one file is produced by this skill:** `posthog-events-audit-report.md`. **Do not write any additional summary, recap, or "what was done" file** (e.g. `posthog-audit-report.md`, `audit-summary.md`, `SUMMARY.md`). The single report from step (f) is the entire deliverable. Don't write an end-of-turn summary as a file — keep that in the chat reply only.
+**No file is produced in the user's project.** The report from step (f) lives in the wizard's scratch directory until step 6 publishes it, and that published report is the entire deliverable. **Do not write any additional summary, recap, or "what was done" file** (e.g. `posthog-audit-report.md`, `audit-summary.md`, `SUMMARY.md`), and don't write an end-of-turn summary as a file — keep that in the chat reply only.
 
-After the report is written, flip the `write-report` row to `pass`:
+After the report is assembled, flip the `write-report` row to `pass`:
 
 ```json
 {
@@ -289,10 +289,10 @@ After the report is written, flip the `write-report` row to `pass`:
 
 **Do not delete `.posthog-audit-checks.json` or `.posthog-events-inventory.json` yet** — step 6 needs the inventory for the IN-list and resolves the final `create-dashboard` row in the same ledger. Step 6 cleans both files up at the end.
 
-Emit one trailing line so the wizard can surface the report to the user:
+Emit one trailing line recording that the report is ready for step 6 to publish:
 
 ```
-Created events audit report: <absolute path to posthog-events-audit-report.md>
+Events audit report assembled: .posthog-wizard-cache/events-audit-report.md
 ```
 
 ## Resolve

@@ -2,7 +2,7 @@
 next_step: null
 ---
 
-# Step 7 — Write the report and hand off
+# Step 7 — Publish the report and hand off
 
 Everything is configured; leave the user a record of exactly what changed and what (if anything) still needs a human.
 
@@ -11,12 +11,18 @@ Everything is configured; leave the user a record of exactly what changed and wh
 Emit:
 
 ```
-[STATUS] Writing the report
+[STATUS] Publishing the report
 ```
 
 ## Do
 
-1. Write `./posthog-self-driving-report.md` (read any existing file first, then overwrite). Sections, in order:
+1. Compose the report and publish it with a single `publish_handoff` call, passing the complete markdown as `content`:
+
+   ```
+   publish_handoff({ "content": "<the full report markdown>" })
+   ```
+
+   That call is how the report reaches the user — the tool creates a PostHog notebook from it and the wizard surfaces the link. Do not write the report to a file, and do not create a notebook yourself. Sections, in order:
 
    - **Summary** — two or three sentences: what products and sources were turned on, and that findings will start appearing in the Self-driving inbox within ~30 minutes (include the inbox URL from the run prompt).
    - **AI data processing** — approved. (The wizard's AI opt-in gate enforces organization approval before the run starts, so by the time you reach the report it is always granted — just record it as approved.)

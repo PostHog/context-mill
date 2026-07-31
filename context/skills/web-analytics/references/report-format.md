@@ -1,6 +1,6 @@
 # Web Analytics Doctor — Report Format
 
-Write the report to `posthog-web-analytics-report.md` at the project root.
+Publish the report with a single `publish_handoff` call, passing the complete markdown as `content`. Do not write it to a file.
 
 ## Required structure
 

@@ -50,7 +50,7 @@ The ledger lives at `.posthog-audit-checks.json` and renders live in the wizard 
     { "id": "attribution-cross-subdomain-cookie",  "area": "Attribution — Configuration", "label": "cross_subdomain_cookie configured for multi-subdomain projects", "status": "pending" },
     { "id": "attribution-cookieless-mode-impact",  "area": "Attribution — Configuration", "label": "cookieless_mode tradeoff acknowledged",                          "status": "pending" },
     { "id": "attribution-consent-integration",     "area": "Attribution — Configuration", "label": "Consent banner wired to PostHog opt_in/opt_out",                 "status": "pending" },
-    { "id": "write-report",                        "area": "Write report",                "label": "Render posthog-audit-attribution-report.md",                     "status": "pending" }
+    { "id": "write-report",                        "area": "Write report",                "label": "Publish the attribution audit report",                           "status": "pending" }
   ]
 }
 ```

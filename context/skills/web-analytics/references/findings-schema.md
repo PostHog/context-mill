@@ -1,6 +1,6 @@
 # Web Analytics Doctor — Findings JSON Schema
 
-The doctor MUST emit `posthog-web-analytics-findings.json` at the project root with this shape. It is the machine-readable record of the audit and any fixes applied; the human-facing view is `posthog-web-analytics-report.md`. The two must describe the same findings.
+The doctor MUST emit `posthog-web-analytics-findings.json` at the project root with this shape. It is the machine-readable record of the audit and any fixes applied; the human-facing view is the report published through `publish_handoff`. The two must describe the same findings.
 
 ## Top-level shape
 

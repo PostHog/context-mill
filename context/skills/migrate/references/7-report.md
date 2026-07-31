@@ -1,25 +1,33 @@
 ---
-title: Write the migration report
+title: Publish the migration report
 next_step: null
 ---
 
-# Step 7, write the migration report
+# Step 7, publish the migration report
 
 The report comes directly from `.posthog-migration-plan.md`. That file is the source of truth for everything that happened. Nothing is invented.
 
 ## Status
 
 ```
-[STATUS] Writing migration report
+[STATUS] Publishing migration report
 ```
 
 ## Read the plan
 
 Read `.posthog-migration-plan.md`. Pull the outcome on each phase line, and every row from the sites table.
 
-## Write the report
+## Publish the report
 
-Write `migration-report.md` at the project root with the structure below. Group the replaced call sites by file, in source tree order. Identification rows in the plan are the ones whose `to` calls `posthog.identify()`. After the report is written, delete `.posthog-migration-plan.md`.
+Compose the report with the structure below and publish it with a single `publish_handoff` call, passing the complete markdown as `content`:
+
+```
+publish_handoff({ "content": "<the full report markdown>" })
+```
+
+Group the replaced call sites by file, in source tree order. Identification rows in the plan are the ones whose `to` calls `posthog.identify()`.
+
+That call is how the report reaches the user — the tool creates a PostHog notebook from it and the wizard surfaces the link. Do not write the report to a file, and do not create a notebook yourself. After it is published, delete `.posthog-migration-plan.md`.
 
 <wizard-report>
 # PostHog migration report — {display_name}
@@ -60,8 +68,8 @@ We've left an agent skill folder in your project. You can use this context for f
 
 </wizard-report>
 
-After the report is written, emit a final line so the wizard can surface the path to the user.
+After the report is published, emit a final line recording it.
 
 ```
-Created migration report: <absolute path to migration-report.md>
+Published migration report to the wizard session
 ```

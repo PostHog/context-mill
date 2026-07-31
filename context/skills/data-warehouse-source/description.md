@@ -77,7 +77,7 @@ If `mcp__wizard-tools__wizard_ask` is unavailable or blocked (CI / headless), do
 
 ## Report
 
-After processing all sources, write the report file requested by the wizard. Summarize:
+After processing all sources, publish the report with a single `publish_handoff` call, passing the complete markdown as `content`. That call is how the report reaches the user — the tool creates a PostHog notebook from it and the wizard surfaces the link. Do not write the report to a file, and do not create a notebook yourself. Summarize:
 
 - Which sources were created in PostHog (kind + which tables sync).
 - Which sources need browser setup, with their URLs.
