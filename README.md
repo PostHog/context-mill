@@ -37,17 +37,42 @@ These are more like model airplanes. They're dramatically simplified to make it 
 But the leanness makes these useful for agent-driven development. Use these as context to help your agent make better integration decisions about PostHog.
 
 ```
-examples/
-├── basics/
-│   ├── next-app-router/         # Next.js 15 with App Router
-│   ├── next-pages-router/       # Next.js 15 with Pages Router
-│   ├── react-react-router/      # React with React Router
-│   ├── react-tanstack-router-file-based/   # React with TanStack Router (file-based)
-│   ├── react-tanstack-router-code-based/   # React with TanStack Router (code-based)
-│   ├── tanstack-start/          # TanStack Start
-│   └── django/                  # Django
-├── mcp-commands/                # MCP command prompts (`/command` in agents)
-└── scripts/                     # Build scripts
+example-apps/
+├── android/                                # Android (Kotlin)
+├── angular/                                # Angular
+├── astro-hybrid/                           # Astro, hybrid rendering
+├── astro-ssr/                              # Astro, server-side rendering
+├── astro-static/                           # Astro, static output
+├── astro-view-transitions/                 # Astro with View Transitions
+├── django/                                 # Django
+├── expo/                                   # Expo (React Native)
+├── fastapi/                                # FastAPI
+├── flask/                                  # Flask
+├── javascript-node/                        # Node.js (Express, server-side)
+├── javascript-web/                         # Plain JavaScript, browser
+├── laravel/                                # Laravel
+├── next-app-router/                        # Next.js 15 with App Router
+├── next-pages-router/                      # Next.js 15 with Pages Router
+├── nuxt-3-6/                               # Nuxt 3.6
+├── nuxt-4/                                 # Nuxt 4
+├── php/                                    # Plain PHP
+├── python/                                 # Plain Python
+├── react-native/                           # React Native
+├── react-react-router-6/                   # React with React Router 6
+├── react-react-router-7-data/              # React Router 7, data mode
+├── react-react-router-7-declarative/       # React Router 7, declarative mode
+├── react-react-router-7-framework/         # React Router 7, framework mode
+├── react-tanstack-router-code-based/       # TanStack Router, code-based
+├── react-tanstack-router-file-based/       # TanStack Router, file-based
+├── react-vite/                             # React with Vite
+├── ruby/                                   # Plain Ruby
+├── ruby-on-rails/                          # Ruby on Rails
+├── sveltekit/                              # SvelteKit
+├── swift/                                  # Swift (iOS)
+├── swift-xcodegen/                         # Swift with XcodeGen
+├── tanstack-start/                         # TanStack Start
+├── vue-3/                                  # Vue 3
+└── wordpress/                              # WordPress
 ```
 
 ## Build outputs
