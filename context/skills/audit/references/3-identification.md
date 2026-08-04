@@ -84,10 +84,13 @@ Read this skill's bundled `identify-users.md` reference once (typically `.claude
 
 Run **one** Grep: `posthog\.init\(|new PostHog\(|posthog\.Posthog\(|Posthog\(` — locate every PostHog initialization across runtimes. Read each file that contains a hit, once. Determine whether both client and server runtimes initialize PostHog, and if so, how distinct_id flows between them.
 
+**Check for a deliberate anonymous-event opt-out before calling a fallback broken.** A server that can't resolve a stable id sometimes emits `$process_person_profile: false` alongside the capture — PostHog's documented mechanism for exactly this situation. With that property set, even a random-UUID `distinct_id` creates no person profile, so it cannot merge with or corrupt person records. Those events are deliberately anonymous, not accidentally orphaned. Read the properties object, not just the `distinct_id` expression, before judging.
+
 Rule:
 - If both client and server runtimes call PostHog, the same distinct_id must be used on both sides for the same user.
 - pass: server-side captures source the client's distinct_id (cookie, session token, or explicit hand-off).
-- error: server-side captures use a different identifier scheme.
+- error: server-side captures use a different identifier scheme for the same user, with no hand-off and no anonymous opt-out.
+- warning: the server falls back to a random or synthetic id for some captures. If `$process_person_profile: false` accompanies the fallback, the cost is limited to losing that dimension — say so, and do not claim it contaminates person counts, funnels, or retention. Prefer recommending an already-available stable id (org, account, or tenant id — check whether one is in scope at the call site, since it often is) over recommending the capture be dropped.
 - Skip (`pass` with details: "single runtime"): only one runtime initializes PostHog.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-distinct-id`, including `file` (path:line of the most relevant init or capture site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
@@ -111,6 +114,13 @@ Rule:
 - error: a logout/account-switch flow is missing `posthog.reset()`.
 - Skip (`pass` with details: "no logout/account-switch flow found"): no detectable logout/account-switch flow exists.
 - note: `posthog.reset(true)` is valid when a completely clean device ID reset is required.
+
+**Verify the location you recommend is safe — a wrong `reset()` placement is worse than a missing one.** A shared sign-out helper (`clearAuthState`, `clearBrowserStorageOnSignOut`, a storage-clearing utility) looks like the ideal single choke point, and recommending one is tempting because it covers every path at once. But these helpers are frequently also invoked when no session ever existed — on initial page load, or from an auth-state listener that fires for anonymous visitors. `posthog.reset()` on that path mints a fresh anonymous ID on **every visit**, which detaches pre-signup pageviews from the account that follows and inflates unique-visitor counts. That is a larger data problem than the identity merge being fixed.
+
+Before naming a location:
+- Trace every caller of the helper. If any caller can run without a prior session, the helper is unsafe — say so explicitly in `details` and recommend the individual sign-out call sites instead.
+- A safe site runs only on a genuine identity transition: an explicit user sign-out action, or a listener branch guarded by a real sign-out event (e.g. `event === 'SIGNED_OUT'`) rather than merely "no session present".
+- Enumerate every sign-out path you found, including forced sign-outs routed through an auth listener. Recommending only the obvious menu-driven `signOut()` methods leaves session-revocation and account-deletion paths unreset.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-reset-on-logout`, including `file` (path:line of the most relevant logout or reset site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
