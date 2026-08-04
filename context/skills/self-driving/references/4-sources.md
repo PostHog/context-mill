@@ -40,6 +40,7 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 
 - `llm_analytics` (internal-only, not a user-facing responder)
 - `logs` (not a v1 responder)
+- `replay_vision` — Replay Vision scanners are **self-authorizing**: the `emits_signals` flag on the scanner itself is the per-source config, so there is no row to create here. Step 6c sets the scanners up.
 - Anything with `source_type` `evaluation` or `alert_state_change`
 - The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`, `jira`, `google_search_console`, …) — those are step 5, ask-first.
 

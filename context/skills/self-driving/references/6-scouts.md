@@ -51,7 +51,7 @@ Reach the scout-config tools through the PostHog `exec` tool — `info` then `ca
    | `signals-scout-experiments` | active A/B experiments |
    | `signals-scout-customer-analytics` | group / accounts analytics (B2B) |
    | `signals-scout-data-pipelines` | CDP destinations, batch exports, or hog flows |
-   | `signals-scout-replay-vision` | Replay Vision scanners configured |
+   | `signals-scout-replay-vision` | Replay Vision scanners the team **already** had before this run — the scanners step 6c creates later don't count, since this scout reads trends *across* accumulated observations and there are none yet |
    | `signals-scout-anomaly-detection` | (cross-product) anomalies in whatever time series exist |
    | `signals-scout-observability-gaps` | (cross-product) events with no insight coverage |
    | `signals-scout-health-checks` | (cross-product) PostHog setup health |
