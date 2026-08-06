@@ -137,6 +137,8 @@ Numbered list, ordered by severity (errors → warnings → suggestions), then b
 2. **Why it matters** — one sentence on the data-quality consequence: which downstream artifact (funnels, retention, person count, billing, replays, experiments, etc.) this finding contaminates if left alone, and how. Use the canonical "why it matters" copy below verbatim when the check id matches; otherwise write one sentence rooted in the check's rule.
 3. **How to fix** — one short imperative sentence pointing at `file:line` and the concrete change. End with a docs link.
 
+**Keep the claim proportionate to what the subagent actually found.** The canonical copy below describes each check's failure in its general form. When the subagent's `details` say the problem is bounded, already mitigated, or narrower than that general form, describe what was found — do not substitute the generic worst case. Concretely: don't call a fixed set of event names "unbounded", don't claim corrupted person profiles when the code sets `$process_person_profile: false`, and don't assert a limit or quota will be hit unless the finding shows unbounded growth. Inventing severity the evidence doesn't support costs the reader more than it saves, because they have to re-derive the finding themselves before they can act on it.
+
 Format:
 
 ```markdown
@@ -162,6 +164,33 @@ For each `area` from the ledger, in first-seen order:
 
 [Per the investigation standards in `posthog-best-practices/references/investigation-standards.md`, standard 3. ≤4 sentences answering: which code paths were not checked, which runtime assumptions are unproven by static code, what alternative explanations exist for the patterns found, and what to verify in the live PostHog project to confirm the most important findings. When the area produced only `pass` rows, write `_No findings to qualify; the standard checks for this area passed cleanly._` instead.]
 ```
+
+### Canonical "why it matters" copy
+
+Use the line matching the check id verbatim, subject to the proportionality rule above. For a check id not listed here, write one sentence rooted in that check's rule.
+
+| Check id | Why it matters |
+|---|---|
+| `sdk-installed` | With no SDK in any dependency manifest, nothing is captured at all — every downstream insight is empty by construction. |
+| `sdk-up-to-date` | Minor releases carry bug fixes and capture-reliability improvements, and each release you fall behind widens the gap you'll have to close in a hurry when a security patch lands. |
+| `init-correct` | An init in the wrong runtime, or two inits racing in one runtime, means captures are silently dropped or double-counted, so every event volume built on them is wrong. |
+| `identify-stable-distinct-id` | A `distinct_id` that resets splits one human across many person records, inflating person counts and breaking any retention or lifecycle analysis that assumes one row per user. |
+| `identify-not-late` | Captures and flag evaluations that run before `identify()` are attributed to an anonymous person, so the first steps of every funnel detach from the user who completed them. |
+| `cross-runtime-distinct-id` | When client and server disagree on a user's `distinct_id`, that user's activity splits across two person records and no funnel spanning both runtimes can be trusted. |
+| `identify-reset-on-logout` | Without a reset, the next user on a shared device inherits the previous user's anonymous ID, and the following `identify()` merges both accounts into a single person profile — corrupting person counts, funnel attribution, and retention cohorts for both. |
+| `capture-event-names-static` | An event name assembled at runtime can't be found by searching the codebase for a name seen in PostHog, and a name that interpolates runtime data creates a fresh event definition per value, leaving those events unusable in insights and funnels. |
+| `capture-uses-proxy` | Browser captures sent to PostHog's default host are blocked outright for the meaningful share of users running ad or tracking blockers, so the data is missing rather than merely delayed. |
+| `capture-growth-events` | Without explicit signup, activation, and purchase events, the conversion funnels those steps define can't be built at all; autocapture can't reliably stitch them across sessions. |
+
+### Canonical area copy
+
+Use the paragraph matching the area name verbatim under that area's heading. For an area not listed here, write one short sentence summarizing what its checks verify.
+
+| Area | Paragraph |
+|---|---|
+| `Installation` | This area verifies that the PostHog SDK is present in at least one dependency manifest and that its installed version is reasonably current. It also confirms the SDK is initialized correctly — token sourced from environment configuration, called in the right runtime — and that no duplicate init sites race each other within one runtime. |
+| `Identification` | This area checks that every `posthog.identify()` call uses a stable, authenticated identifier rather than a session or device id, that identification happens early enough that no captures or flag evaluations fire before the user is known, that client and server agree on one `distinct_id` per user, and that logout and account-switch flows call `posthog.reset()` to prevent cross-user identity merges. |
+| `Event Capture` | This area checks that event names passed to `posthog.capture()` resolve to a fixed, greppable set of strings rather than being assembled from runtime data, that browser captures route through a first-party reverse proxy so ad and tracking blockers don't drop them, and that the three growth-funnel events — signup, first activation action, and purchase or subscription — are instrumented explicitly on some runtime rather than left to autocapture. |
 
 After the report is written, emit a line so the wizard can surface the path to the user:
 
@@ -322,7 +351,7 @@ What `new_value` looks like for each placeholder family:
 | `__SUMMARY_PROBLEMATIC__` | A `table` with the Severity / Area / Check / File / Details columns. If there are no problematic items, send a single `paragraph` with the italicised "No issues found" line instead. Either way, fill the placeholder. |
 | `__RECOMMENDED_ACTIONS__` | An `orderedList` with one `listItem` per action, in severity order. If there are none, send a `paragraph` with the italicised "Nothing to fix" line. |
 | `__FULL_AUDIT_<AREA>_HEADING__` | A level-3 `heading` with the area name (e.g. `Installation`). |
-| `__FULL_AUDIT_<AREA>_PARAGRAPH__` | A single `paragraph` with the canonical area framing (see "Canonical area copy" below). |
+| `__FULL_AUDIT_<AREA>_PARAGRAPH__` | A single `paragraph` with the canonical area framing (see "Canonical area copy" under Section body templates). |
 | `__FULL_AUDIT_<AREA>_TABLE__` | A `table` with header row (Check / Status / File / Details) + one row per check in that area, in ledger order. |
 | `__ABOUT_PARAGRAPH__` | A single `paragraph` with the canonical opening sentence about the five-stage chain. |
 | `__ABOUT_BULLETS__` | A `bulletList` with the three error/warning/suggestion description bullets. |
