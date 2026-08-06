@@ -254,9 +254,10 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
  * invalid `default:` arrangement (see `validateDefault`) so the
  * build fails before bad data reaches the wizard.
  *
- * Only skills with a `cli` block participate. Untagged skills implicitly
- * have the `skill` role (already reachable via `skill-menu.json` and
- * `manifest.json`) and are not emitted here.
+ * Only skills with a `cli` block participate. Untagged skills stay out of
+ * the entries entirely — they remain runnable by id and listed in
+ * `manifest.json`, but `wizard skill list` reads these entries alone, so an
+ * untagged skill is undiscoverable there.
  *
  * Entry shape:
  *   { skillId, role, command?, parentCommand?, default?, displayName, description }

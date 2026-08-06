@@ -43,7 +43,7 @@ cli:
 
 The parser is `parseCliBlock` in `scripts/lib/skill-generator.js`. It enforces:
 
-- `role` is one of `command`, `skill`, `internal` (default: `skill` if no `cli:` block is set at all)
+- `role` is one of `command`, `skill`, `internal`. No `cli:` block at all means no entry: the skill still runs under `wizard skill <id>`, but `wizard skill list` never shows it — declare `role: skill` on anything users should be able to find
 - `command` and `parentCommand` are kebab-case, 2–20 characters
 - Neither field is a yargs reserved word (`help`, `version`, `completion`) or a wizard internal flag (`playground`, `benchmark`, `yara-report`, `local-mcp`, `ci`, `skill`)
 - `default` (optional, boolean) marks the leaf `wizard <family>` runs by default (and pre-highlights it in the picker once a family has several)
