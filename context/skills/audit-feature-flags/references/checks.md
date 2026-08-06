@@ -477,7 +477,7 @@ What it verifies: flags being **evaluated** and evaluations being **reported** a
 
 Two signals, either sufficient for a finding:
 
-1. **Code signal:** Grep for `send_feature_flag_events|sendFeatureFlagEvents|sendFeatureFlagEvent|advanced_disable_feature_flags` and read each hit. A `false`/`true`-inverted setting that suppresses flag-called events in production paths (not test/CI-gated blocks — those are the correct pattern from Task H) is a finding.
+1. **Code signal:** Grep for `send_feature_flag_events|sendFeatureFlagEvents|sendFeatureFlagEvent|advanced_disable_feature_flags|send_event\s*:\s*false|sendEvent\s*:\s*false` and read each hit. Two suppression forms count: config-level (an init/config option that disables flag-called events) and per-call (posthog-js `isFeatureEnabled('key', { send_event: false })` / `getFeatureFlag(..., { send_event: false })`). A suppression in production paths (not test/CI-gated blocks — those are the correct pattern from Task H) is a finding; per-call suppressions matter per flag — a single suppressed flag is enough to make THAT flag look stale.
 2. **Data signal (when MCP query access is available):** count recent `$feature_flag_called` events:
 
 ```sql
