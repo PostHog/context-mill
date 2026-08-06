@@ -392,7 +392,9 @@ FROM feature_flags
 WHERE deleted = false
 ```
 
-If the roster call fails with a permissions error, emit `[ABORT] Insufficient permissions`. If the MCP server is simply unavailable, resolve the roster-dependent checks (`ff-flags-delivered`, `ff-unknown-flags`, `ff-stale-rolled-out`, and `ff-active-but-unreferenced` from Part 1 if still pending) as `suggestion` with `details: {"mcp_skipped": true, "reason": "PostHog MCP unavailable"}` and continue with the checks that need only the probe.
+If the roster call fails with a permissions error, emit `[ABORT] Insufficient permissions`. If the MCP server is simply unavailable, resolve the roster-dependent comparisons (`ff-flags-delivered`, `ff-unknown-flags`, `ff-stale-rolled-out`, `ff-active-but-unreferenced`) as `suggestion` with `details: {"mcp_skipped": true, "reason": "PostHog MCP unavailable"}`.
+
+**MCP loss degrades ONLY the roster comparisons — nothing else.** Every check below that runs on probes or greps MUST still execute in full when MCP is down: Check I (`ff-key-authenticates` — curl only), Check J (`ff-flags-endpoint` — curl only), Check L's code-key collection (grep only; record the keys in `details` even when the roster comparison is skipped), and Check M's code signal (`ff-evaluated-not-reported` — grep only; a `send_event: false` suppression is a full-strength warning with or without the data signal, and it still sets `gates_cleanup: true`). Resolve every check individually; never batch-skip the live phase because one dependency failed.
 
 ### The probe (used by the next three checks)
 

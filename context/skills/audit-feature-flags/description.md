@@ -109,7 +109,12 @@ Classify each finding by fix type using `references/remediation.md`: `code`, `se
 - Otherwise call `mcp__wizard-tools__wizard_ask` **exactly once**:
   - `kind: "multi"`.
   - `prompt`: short summary, e.g. "Found N feature flag issues. Select the ones you'd like me to fix:". Mention manual-only findings are in the report.
-  - `options`: one `{ label, value }` per fixable finding. `label`: `"[<SEVERITY>] <title> — <one-line fix>"`. `value`: the check id (or `"<checkId>:<flag-key>"` for per-flag rows).
+  - `options`: one `{ label, value }` per fixable finding. `value`: the check id (or `"<checkId>:<flag-key>"` for per-flag rows).
+  - **`label` is ONE short line — 80 characters or fewer, no newlines.** The option schema has no description field, so a multi-line label is a wall of text in the overlay. Format: `"[<SEVERITY>] <what will change> — <file or flag>"`. Reasoning, evidence, and file:line detail belong in the report, never here.
+    - Good: `"[SUGGESTION] Fix typo'd flag key beta-serach → beta-search — src/nav.tsx:41"`
+    - Good: `"[WARNING] Send evaluation events for promo-banner — promo-banner.tsx:16"`
+    - Bad: any label that explains *why*, spans lines, or restates the check's rationale.
+  - **Options are fixes the doctor will apply — nothing else.** Never include "Skip", "I'll do it manually", "No action needed", or any informational/placeholder option: selecting nothing already skips everything, and `manual` findings live in the report, not the multi-select. Every option, when selected, must map to a concrete `code` or `settings` remediation from `references/remediation.md`.
 - If `wizard_ask` returns an error (non-interactive host / CI), do NOT fail: skip the fix phase, write the report with all findings under "Manual follow-up", and stop.
 - The user may select nothing — apply nothing and write the report.
 
