@@ -1,5 +1,7 @@
 # Feature Flags Doctor — Report Format
 
+Read this file only when you are ready to write the report.
+
 Write the report to `posthog-feature-flags-report.md` at the project root.
 
 ## Required structure

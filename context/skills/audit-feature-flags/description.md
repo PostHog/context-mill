@@ -12,6 +12,8 @@ The verify phase never changes anything. Changes happen only in the fix phase, a
 
 {references}
 
+**Read discipline.** Read each reference at the phase that needs it, not before: `references/checks.md` when Phase 1 begins; `references/remediation.md` at Phase 2 (and again in Phase 3 when applying fixes); `references/report-format.md` when writing the report. The `prompt-ff-*.md` files are subagent prompts — each dispatched subagent reads exactly its own, and the main loop never reads them. Do not `Glob`/`ls` the skill directory or preload reference files; the fetched doc files (`best-practices.md`, `bootstrapping.md`, `cutting-costs.md`, and the rest) are for subagents and remediation links — never read them wholesale from the main loop.
+
 ## Guiding tenets
 
 1. **Consent-gated changes.** The verify phase is read-only. In the fix phase, change only what the user selected in the `wizard_ask` step — never touch a finding they didn't pick, and never make a change beyond the remediation mapped for that finding in `references/remediation.md`.

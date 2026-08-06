@@ -1,5 +1,7 @@
 # Feature Flags Doctor — Remediation
 
+Read this file at Phase 2 (to classify findings) and again in Phase 3 (to apply them). Nothing in it is applied until the user selects the finding in the confirm step.
+
 How to fix each check's finding. Apply a fix **only** for findings the user selected in the confirm step, and make only the change described here.
 
 Each finding has a **fix type**:
