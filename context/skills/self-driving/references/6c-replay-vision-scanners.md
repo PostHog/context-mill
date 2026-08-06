@@ -42,7 +42,7 @@ Emit:
 
 ## Tools
 
-Reach these through the PostHog `exec` tool — `info` then `call` for `vision-scanners-list`, `vision-scanners-create`, and `vision-scanners-update`. Sizing — the estimate and quota calls (`vision-scanners-estimate-create`, `vision-quota-retrieve`) — is owned by the `creating-replay-vision-scanners` skill you load in "Do" step 2; follow that skill rather than driving those two tools by hand here, so the credit math stays consistent with the rest of PostHog.
+The **create / update / size mechanics** — scanner-type and config shapes, the `RecordingsQuery`, the estimate + quota calls, and the generic gotchas — are all owned by the `creating-replay-vision-scanners` skill you load in "Do" step 2. Follow it for the *how*; this file only supplies the self-driving *what and why* (the skeletons below, and the `emits_signals` → inbox reasoning). So the only exec tools you drive by hand here are `vision-scanners-list`, `vision-scanners-create`, and `vision-scanners-update` — let that skill own the estimate/quota calls and the credit math so it stays consistent with the rest of PostHog.
 
 **If `info vision-scanners-create` says the tool is unknown**, run one `search vision` to confirm, then stop: this deploy doesn't expose the scanner API. Record a follow-up ("set up Replay Vision scanners in PostHog once available") and continue to step 7. Don't hunt for other names.
 
@@ -55,7 +55,9 @@ Reach these through the PostHog `exec` tool — `info` then `call` for `vision-s
    - **No recordings yet** (a fresh project that has never recorded a session): still create the scanners — they cost nothing until recordings exist and start working the day they do, with no second setup. Note it in the report.
    - **Scanners already exist**: read them. A skeleton whose `name` is already taken is a **collision to resolve in step 4** — compare, don't blind-overwrite — not automatically your scanner. And if the team already runs its own scanners covering the same flows, create only the skeletons that add something, and say in the report which you skipped and why.
 
-2. **Size before you ship — defer to the authoritative skill.** Before you create (or update) any scanner, load `creating-replay-vision-scanners` (`skill-get {"skill_name": "creating-replay-vision-scanners"}`) and follow its size-before-you-ship gut-check. It owns estimating a scanner's monthly **credit** spend, reading the org's remaining budget, and comparing **credit-to-credit** — the quota is an **org-wide** monthly credit budget, so a project having no scanners of its own tells you nothing about what's left. **Never infer quota from scanner count**, and never compare an observation count against a credit budget (an observation's price is model-dependent). Apply the check to every scanner you create.
+2. **Load the authoritative scanner skill and size before you ship.** Before you create (or update) any scanner, load `creating-replay-vision-scanners` (`skill-get {"skill_name": "creating-replay-vision-scanners"}`). It is your guide for the whole create/update flow — type and config shapes, the `RecordingsQuery`, the create call, the gotchas — and above all its **size-before-you-ship gut-check**: estimating a scanner's monthly **credit** spend, reading the org's remaining budget, and comparing **credit-to-credit**. The quota is an **org-wide** monthly credit budget, so a project having no scanners of its own tells you nothing about what's left — **never infer quota from scanner count**, and never compare an observation count against a credit budget (an observation's price is model-dependent). Apply the check to every scanner you create.
+
+   **One self-driving override to that skill:** you already know you want *standing* scanners that watch future recordings, so skip its opening "is a scanner even the right thing?" section and do **not** substitute a one-off `vision-scanners-inline-scan-create` — this step always creates standing scanners from the skeletons below.
 
    Two self-driving overlays on top of that skill:
 
@@ -83,7 +85,7 @@ Reach these through the PostHog `exec` tool — `info` then `call` for `vision-s
 
 ## The skeletons
 
-Two scanners — deliberately two, not more. All `monitor` type (we want "there's a problem" findings), all Gemini — the only provider available today.
+Two scanners — deliberately two, not more. All `monitor` type (we want "there's a problem" findings).
 
 Two is not a budget compromise; it's what the disjoint-query rule allows. A third scanner would have to filter on some *third* axis that neither of these touches, and on a typical product there isn't one — a "blocked conversion" scanner, for instance, would just be scanner 1 pointed at the same flow under a different name, and the two would corroborate each other into promoted reports. That's why scanner 1 targets the completion flow directly instead.
 
@@ -148,10 +150,9 @@ The user getting stuck. Gated on `$rageclick` — cheap, high-precision, and her
 
 ## Don't trip on these
 
+The generic scanner gotchas — unique-name/400, `scanner_type` immutable after creation, Gemini-only, one observation per `(scanner, session)` — live in the `creating-replay-vision-scanners` skill. The traps below are the self-driving-specific ones it doesn't know about:
+
 - **Never let the two queries match the same sessions.** Widen one, narrow the other. Overlap doesn't buy coverage — it lets one defect corroborate itself into a promoted report.
-- **`name` is unique per team.** Duplicate create → 400 — but the names are generic, so a 400 doesn't prove the row is yours. Compare before you touch it (step 4): update it back to the skeleton only when it's clearly this setup's; otherwise leave it and report it.
-- **`scanner_type` is immutable after creation.** It cannot be patched. Leave a mismatched existing scanner alone.
-- **Gemini only** for now — don't try another provider.
 - **No `SignalSourceConfig` row.** Replay Vision scanners are self-authorizing: `emits_signals` on the scanner **is** the per-source config. Do not create a `replay_vision` source in step 4 or here.
 - **Don't touch the `signals-scout-replay-vision` scout.** That's the analyst layer reading *across* observations for trends; step 6 owns the troop and it stays off by default. Different layer, same inbox.
 
