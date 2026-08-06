@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.44.0](https://github.com/PostHog/context-mill/compare/v1.43.1...v1.44.0) (2026-08-06)
+
+
+### Features
+
+* **audit:** read PostHog's live data as a step in the comprehensive audit ([be14887](https://github.com/PostHog/context-mill/commit/be148870a66e913c05c58c61007dfbc5062786bf))
+* **audit:** read PostHog's live data as a step in the comprehensive audit ([19ea34e](https://github.com/PostHog/context-mill/commit/19ea34eb6a7945a9a1d6ac73160d28b4203c28c1))
+* **self-driving:** Replay Vision scanners as step 6c ([#313](https://github.com/PostHog/context-mill/issues/313)) ([56ade12](https://github.com/PostHog/context-mill/commit/56ade125205ae05a544793a70e0fcbf0f82324f5))
+
 ## [1.43.1](https://github.com/PostHog/context-mill/compare/v1.43.0...v1.43.1) (2026-08-05)
 
 
