@@ -112,7 +112,7 @@ Classify each finding by fix type using `references/remediation.md`: `code`, `se
   - `kind: "multi"`.
   - `prompt`: short summary, e.g. "Found N feature flag issues. Select the ones you'd like me to fix:". Mention manual-only findings are in the report.
   - `options`: one `{ label, value }` per fixable finding. `value`: the check id (or `"<checkId>:<flag-key>"` for per-flag rows).
-  - **`label` is ONE short line — 80 characters or fewer, no newlines.** The option schema has no description field, so a multi-line label is a wall of text in the overlay. Format: `"[<SEVERITY>] <what will change> — <file or flag>"`. Reasoning, evidence, and file:line detail belong in the report, never here.
+  - **`label` is ONE short line — 80 characters or fewer, no newlines.** `wizard_ask` options have no description field, so a multi-line label is a wall of text in the overlay. Format: `"[<SEVERITY>] <what will change> — <file or flag>"`. Reasoning, evidence, and file:line detail belong in the report, never here. If the run is asking through a harness-native question tool instead (e.g. the Anthropic harness's `AskUserQuestion`, whose options take an optional `description`), keep the label just as short and put a single line of detail in `description` — the report still owns the full reasoning.
     - Good: `"[SUGGESTION] Fix typo'd flag key beta-serach → beta-search — src/nav.tsx:41"`
     - Good: `"[WARNING] Send evaluation events for promo-banner — promo-banner.tsx:16"`
     - Bad: any label that explains *why*, spans lines, or restates the check's rationale.
@@ -136,7 +136,7 @@ Emit `[STATUS] Applying fix: <name>` before each fix.
 
 ## Output
 
-Write `posthog-feature-flags-report.md` to the project root following `references/report-format.md`, then display the report contents in chat as plain markdown (no wrapper commentary). Resolve `write-report` in the ledger, delete `.posthog-audit-checks.json` if present, and output one final line confirming the report path.
+Emit `[STATUS] Writing report`, then write `posthog-feature-flags-report.md` to the project root following `references/report-format.md`, and display the report contents in chat as plain markdown (no wrapper commentary). Resolve `write-report` in the ledger, delete `.posthog-audit-checks.json` if present, output one final line confirming the report path, and emit `[STATUS] Done`.
 
 ## Constraints
 
