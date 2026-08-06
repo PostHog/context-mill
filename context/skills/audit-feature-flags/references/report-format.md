@@ -90,7 +90,7 @@ Fix evaluation reporting first (see Findings), let a few days of data accumulate
 
 - `ff-bootstrap-when-known-set`, `ff-bootstrap-distinct-id-mismatch` → https://posthog.com/docs/feature-flags/bootstrapping
 - `ff-await-readiness`, `ff-default-values`, `ff-identified-only-pre-auth-targeting`, `ff-eval-before-identify` → https://posthog.com/docs/feature-flags/best-practices
-- `ff-key-authenticates`, `ff-flags-endpoint`, `delivered-*`, `ghost-*` → https://posthog.com/docs/feature-flags/troubleshooting
+- `ff-key-authenticates`, `ff-flags-endpoint`, `ff-flags-delivered`, `ff-unknown-flags`, `delivered-*`, `ghost-*` → https://posthog.com/docs/feature-flags/troubleshooting
 - `ff-evaluated-not-reported` → https://posthog.com/docs/experiments/exposures
 - `stale-*`, `ff-active-but-unreferenced` → https://posthog.com/docs/feature-flags/cleaning-up-stale-flags
 - `ff-local-eval-polling-interval`, `ff-local-eval-in-edge-handlers` → https://posthog.com/docs/feature-flags/local-evaluation

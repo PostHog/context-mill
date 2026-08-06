@@ -28,7 +28,9 @@ A 100% rollout does not mean a flag is safe to disable — if deployed code stil
 | `ff-key-authenticates` (missing/wrong key) | code | Wire the correct project token via `set_env_values`; never write `.env` directly. |
 | `ff-key-authenticates` (personal key in client code) | manual | Explain the exposure; the user must rotate the key in PostHog and move server-side calls behind a backend. Never attempt the rotation. |
 | `ff-flags-endpoint` (broken proxy route) | manual | Name the failing path + status; link the proxy docs. Proxy config is infrastructure — no automatic change. |
+| `ff-flags-delivered` (parent row) | manual | No separate fix — the parent row summarizes counts; remediation lives on its per-flag `delivered-<key>` rows. |
 | `delivered-<key>` rows | manual | Per-flag explanation with the `reason` code and what it means; link troubleshooting docs. Targeting/rollout intent is the operator's call. |
+| `ff-unknown-flags` (parent row) | manual | No separate fix — the parent row summarizes counts; remediation lives on its per-flag `ghost-<key>` rows. |
 | `ghost-<key>` rows | code | If a near-match roster key exists (report named it): fix the typo at the call site(s). If no similar flag exists: remove the dead call site's gate conservatively (keep the fallback path) or, when the surrounding code is non-trivial, downgrade to manual with the exact locations. |
 | `ff-evaluated-not-reported` | code | Remove/condition the suppression so `$feature_flag_called` flows in production (keep legitimate test/CI gating intact). This fix is always offered FIRST when the interlock is active. |
 | `ff-eval-before-identify` | code | Add re-evaluation after identify: subscribe via `onFeatureFlags` for the affected surface or call `reloadFeatureFlags()` after `identify()`. Minimal change; don't restructure auth flows. |
