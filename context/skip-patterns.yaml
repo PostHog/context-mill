@@ -149,6 +149,11 @@ global:
   regex:
     # Skip .env files but allow .env.example
     - ^.env(?!\.example$)
+    # Skip a root-level test/ or tests/ dir. The `/test/` substring above only
+    # catches nested ones, because shouldSkip is given a path relative to the
+    # example root, so the root dir has no leading slash to match on. The
+    # separator class also covers path.relative output on Windows.
+    - ^tests?[/\\]
 
 # Example-specific overrides
 # Add patterns here to skip files only for specific examples
@@ -169,6 +174,12 @@ examples:
       # The XcodeGen project spec is the whole point of this example;
       # rescue it from the global .yml skip
       - project.yml
+  fastapi:
+    includes:
+      # Test runner config; the tests themselves are skipped globally
+      - pytest.ini
+      - requirements-dev.txt
+
   laravel:
     includes:
       - storage/framework
