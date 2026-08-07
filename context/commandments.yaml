@@ -59,7 +59,7 @@ commandments:
 
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
-    - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
+    - 'Include enableExceptionAutocapture: true in the posthog-node `PostHog` constructor options — server-side only. The posthog-js browser client has no such option; its equivalent is `capture_exceptions` in `posthog.init()`. On an isomorphic framework (Next.js, Nuxt, SvelteKit, Remix, TanStack Start), only the server-side client takes enableExceptionAutocapture — never add it to the browser init call'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
     - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
     - The SDK batches events and flushes asynchronously. await flush() or await shutdown() before letting that process exit. If unsure, set flushAt 1 and flushInterval 0.
@@ -71,8 +71,7 @@ commandments:
     - posthog is the Python SDK package name
     - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
-    - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
-    - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
+    - For a plain script, CLI, or any framework with no PostHog initialization pattern of its own below, use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config, and include enable_exception_autocapture=True in that constructor to automatically track exceptions. Django, Flask, and FastAPI each have their own initialization pattern in this list — follow that framework's pattern instead when one applies; do not override it with the instance-based client
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit

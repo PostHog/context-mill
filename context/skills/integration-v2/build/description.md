@@ -24,6 +24,11 @@ An error in a file the integration never touched is pre-existing: note it and
 move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
 failure clears — it will not, and each re-run is slow.
 
+If the manifest defines none of build, typecheck, or lint — a start/dev-only
+script is not a substitute — no verification step is required here; say so in
+the handoff and move on. Do not run the app's start or dev script as a stand-in
+check: it does not exit, and this step blocks it either way.
+
 ## Review the integration
 
 Before you finish, review everything the earlier steps changed — the queue log's
