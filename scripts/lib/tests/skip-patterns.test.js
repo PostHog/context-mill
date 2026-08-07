@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeSkipPatterns, shouldSkip } from '../example-processor.js';
+import { mergeSkipPatterns, shouldSkip, skipPatternsForExample } from '../example-processor.js';
 
 const globalPatterns = {
     includes: ['.yml', '.gitignore', 'node_modules'],
@@ -39,6 +39,45 @@ describe('shouldSkip', () => {
 
     it('tolerates merged patterns with no allow key', () => {
         expect(shouldSkip('project.yml', { includes: ['.yml'], regex: [] })).toBe(true);
+    });
+});
+
+describe('skipPatternsForExample', () => {
+    const config = {
+        global: globalPatterns,
+        examples: {
+            laravel: { includes: ['bootstrap/cache'] },
+            'swift-xcodegen': { allow: ['project.yml'] },
+        },
+    };
+
+    it('finds an example override by directory name', () => {
+        const patterns = skipPatternsForExample(config, 'laravel');
+        expect(shouldSkip('bootstrap/cache/services.php', patterns)).toBe(true);
+    });
+
+    // The lookup key is the example directory, never the skill id — a skill
+    // with a single example used to be looked up as `integration-laravel`,
+    // silently missing every override written for `laravel`.
+    it('does not look overrides up by skill id', () => {
+        const patterns = skipPatternsForExample(config, 'integration-laravel');
+        expect(shouldSkip('bootstrap/cache/services.php', patterns)).toBe(false);
+    });
+
+    it('applies allow overrides by directory name', () => {
+        const patterns = skipPatternsForExample(config, 'swift-xcodegen');
+        expect(shouldSkip('project.yml', patterns)).toBe(false);
+    });
+
+    it('falls back to global patterns for an example with no overrides', () => {
+        const patterns = skipPatternsForExample(config, 'php');
+        expect(shouldSkip('node_modules/foo.js', patterns)).toBe(true);
+        expect(shouldSkip('bootstrap/cache/services.php', patterns)).toBe(false);
+    });
+
+    it('tolerates a config with no examples block', () => {
+        const patterns = skipPatternsForExample({ global: globalPatterns }, 'laravel');
+        expect(shouldSkip('node_modules/foo.js', patterns)).toBe(true);
     });
 });
 
