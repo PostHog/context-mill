@@ -1,0 +1,43 @@
+name: PostHog Context Mill - Link check (offline)
+permissions:
+  contents: read
+
+# Blocking PR check for links that CANNOT flake: relative file paths and
+# #anchors within the repo.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  link-check-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # Every .md in the repo, so a new directory is covered without touching
+      # this file. Scoped to *.md rather than '.' because bare '.' also parses
+      # HTML, where root-relative asset paths (/favicon.ico) can't resolve
+      # without --root-dir and report as errors.
+    - name: Check relative links and anchors
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      with:
+        # Pinned: the action SHA alone doesn't pin the lychee binary it fetches.
+        lycheeVersion: v0.24.2
+        args: >-
+          --offline
+          --include-fragments
+          --no-progress
+          --exclude-path node_modules
+          --exclude-path dist
+          './**/*.md'
+        fail: true
+
+    - name: Explain the failure
+      if: failure()
+      run: |
+        echo "::error::A link points at a file or heading that no longer exists — see the step above for each file, line and target."

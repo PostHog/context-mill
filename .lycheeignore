@@ -1,0 +1,20 @@
+# Link-check exclusions, read automatically by lychee in both link-check
+# workflows. One regex per line (Rust regex syntax, unanchored — use ^ when you
+# mean "starts with").
+#
+# Comments must be on their OWN line. A trailing comment is read as part of the
+# regex, so the pattern silently stops matching.
+#
+# BEFORE ADDING A LINE HERE, prefer the structural fix:
+# lychee never extracts URLs inside `inline code spans` or ``` fenced blocks ```.
+# If the URL is illustrative — a config value, an API host, a placeholder like
+# https://example.com/<id> — wrap it in backticks in the markdown and it stops
+# being checked, with no entry here.
+#
+# Add a regex here only for URLs that are real links we cannot check from CI.
+# Always say why.
+
+# Dev-server URLs in example-app READMEs ("open http://localhost:3000").
+# Nothing is listening during a CI run, and nothing should be.
+^https?://localhost(:[0-9]+)?
+^https?://127\.0\.0\.1(:[0-9]+)?
