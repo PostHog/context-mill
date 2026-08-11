@@ -70,6 +70,30 @@ function assertFlowMatches(sourcePath, flow) {
     }
 }
 
+/** Whether a prompt's frontmatter sets a boolean flag such as `seed:` or `sink:`. */
+function declaresFlag(sourcePath, flag) {
+    const text = fs.readFileSync(sourcePath, 'utf8');
+    const frontmatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+    return new RegExp(`^${flag}:\\s*true\\s*$`, 'm').test(frontmatter);
+}
+
+/**
+ * A runner-seeded task is queued by the wizard before the planner runs, so no
+ * prompt tells the flow it is there. What makes the reporting step wait for it
+ * is the sink guard, and a flow with no sink has no guard — the task would run
+ * and its handoff would never be read. Fail the build instead.
+ */
+function assertRunnerSeededHasSink(flows) {
+    for (const [flow, prompts] of flows) {
+        const seeded = prompts.filter(p => p.runnerSeeded).map(p => p.id);
+        if (seeded.length === 0) continue;
+        if (prompts.some(p => p.sink)) continue;
+        throw new Error(
+            `Flow "${flow}" declares runner-seeded ${seeded.join(', ')} but no agent marked "sink: true" — nothing would wait for it`,
+        );
+    }
+}
+
 /**
  * Copy every agent-prompt markdown file into dist/agents/<flow>/ and write the
  * menu the wizard fetches to discover available types. Each menu entry carries
@@ -85,13 +109,21 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
 
     const entries = loadAgentEntries(agentsSourceDir);
     const agents = [];
+    const flows = new Map();
     for (const { flow, id } of entries) {
         const sourcePath = path.join(agentsSourceDir, flow, `${id}.md`);
         assertFlowMatches(sourcePath, flow);
+        if (!flows.has(flow)) flows.set(flow, []);
+        flows.get(flow).push({
+            id,
+            sink: declaresFlag(sourcePath, 'sink'),
+            runnerSeeded: declaresFlag(sourcePath, 'runnerSeeded'),
+        });
         const assetName = `agents-${flow}-${id}.md`;
         fs.copyFileSync(sourcePath, path.join(agentsDistDir, assetName));
         agents.push({ id, flow, downloadUrl: `${resolvedBase}/${assetName}` });
     }
+    assertRunnerSeededHasSink(flows);
 
     const menu = { version: '1.0', buildVersion: version, agents };
     fs.writeFileSync(
