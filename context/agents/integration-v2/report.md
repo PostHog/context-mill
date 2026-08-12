@@ -2,12 +2,13 @@
 type: report
 flow: integration-v2
 label: Write the setup report
+sink: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: high
 skills: [integration-v2-report, integration-v2-notebook, integration-v2-mcp]
-allowedTools: [Read, Glob, Grep]
+allowedTools: [Read, Glob, Grep, posthog_exec]
 disallowedTools: [enqueue_task]
 dependsOn: [dashboard, review]
 ---
@@ -28,6 +29,10 @@ unless the run observed it arrive. Where a step failed or was skipped, say so
 plainly instead of rounding it up to success. Anything only the user can confirm
 belongs in a checklist to work through before merging, each item naming the file
 and line to look at.
+
+Where a handoff carries a report section, that step already wrote the part of
+the report it owns. Include it as its own section instead of rewriting or
+summarizing it, and do not restate its contents elsewhere.
 
 Where a handoff reports something a step could not resolve — attribution it could not
 establish, a question the step before it left open — that is not a caveat to bury in

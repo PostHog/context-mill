@@ -1,0 +1,18 @@
+type: docs-only
+template: description.md
+description: Connect the detected data sources to the PostHog data warehouse
+tags: [orchestrator, data-warehouse, sources]
+shared_docs:
+  - https://posthog.com/docs/cdp/sources.md
+variants:
+  - id: all
+    display_name: PostHog warehouse step
+    tags: [orchestrator, data-warehouse]
+    docs_urls:
+      - https://posthog.com/docs/cdp/sources/postgres.md
+      - https://posthog.com/docs/cdp/sources/mysql.md
+      - https://posthog.com/docs/cdp/sources/snowflake.md
+      - https://posthog.com/docs/cdp/sources/bigquery.md
+      - https://posthog.com/docs/cdp/sources/stripe.md
+cli:
+  role: internal

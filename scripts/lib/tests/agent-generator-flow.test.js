@@ -54,6 +54,40 @@ describe('buildAgents flow frontmatter', () => {
         );
     });
 
+    it('rejects a runner-seeded task in a flow with no sink to wait for it', () => {
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'warehouse.md'),
+            prompt('type: warehouse\nflow: my-flow\nrunnerSeeded: true'),
+        );
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'report.md'),
+            prompt('type: report\nflow: my-flow'),
+        );
+        expect(() => buildAgents({ configDir, distDir, baseUrl: 'http://x' })).toThrow(
+            /runner-seeded warehouse but no agent marked "sink: true"/,
+        );
+    });
+
+    it('accepts a runner-seeded task once a sink waits for it', () => {
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'warehouse.md'),
+            prompt('type: warehouse\nflow: my-flow\nrunnerSeeded: true'),
+        );
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'report.md'),
+            prompt('type: report\nflow: my-flow\nsink: true'),
+        );
+        expect(buildAgents({ configDir, distDir, baseUrl: 'http://x' }).count).toBe(2);
+    });
+
+    it('leaves a flow with no runner-seeded task alone', () => {
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'task.md'),
+            prompt('type: task\nflow: my-flow'),
+        );
+        expect(buildAgents({ configDir, distDir, baseUrl: 'http://x' }).count).toBe(1);
+    });
+
     it('still ignores README.md files at both levels', () => {
         writeFileSync(join(configDir, 'agents', 'README.md'), '# docs');
         writeFileSync(join(configDir, 'agents', 'my-flow', 'README.md'), '# docs');
