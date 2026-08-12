@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.46.0](https://github.com/PostHog/context-mill/compare/v1.45.0...v1.46.0) (2026-08-12)
+
+
+### Features
+
+* **integration-v2:** warehouse agent and skill for the orchestrator's optional data-source task ([fdc7872](https://github.com/PostHog/context-mill/commit/fdc787245f4fa9f7bf862f56e72aaba026139323))
+* **integration-v2:** warehouse agent, skill, and sink guard for runner-seeded tasks ([8dbb1df](https://github.com/PostHog/context-mill/commit/8dbb1dfd9b8620f613956d36cc1d9b91b8a4998d))
+
 ## [1.45.0](https://github.com/PostHog/context-mill/compare/v1.44.0...v1.45.0) (2026-08-07)
 
 
