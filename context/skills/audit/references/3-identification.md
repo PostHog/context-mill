@@ -4,11 +4,12 @@ next_step: 4-event-capture.md
 
 # Step 3 — Identification
 
-This step resolves four identification checks **in parallel**, one subagent per check:
+This step resolves five identification checks **in parallel**, one subagent per check:
 
 - `identify-stable-distinct-id`
 - `identify-not-late`
 - `cross-runtime-distinct-id`
+- `cross-runtime-session-id`
 - `identify-reset-on-logout`
 
 Each subagent owns its own grep, reads, evaluates its single rule, and emits one `audit_resolve_checks` call with one update. The ledger's mutex serializes concurrent writes — there's no race.
@@ -21,9 +22,9 @@ Emit before dispatching:
 [STATUS] Auditing identification
 ```
 
-## Action — dispatch four subagents in one message
+## Action — dispatch five subagents in one message
 
-Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
+Make **five `Agent` tool calls in a single message** so they run concurrently. Wait for all five to return, then continue to `4-event-capture.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `identify-users.md` reference holds PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit/references/identify-users.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/identify-users.md`. Each subagent reads it once before judging.
 
@@ -93,7 +94,33 @@ Rule:
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-distinct-id`, including `file` (path:line of the most relevant init or capture site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
 
-### Task D — `identify-reset-on-logout`
+### Task D — `cross-runtime-session-id`
+
+`description`: `Audit cross-runtime-session-id`
+
+`prompt`:
+```
+You are an audit subagent. Resolve exactly one rule and return: cross-runtime-session-id.
+
+Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit/references/best-practices.md`; otherwise discover it with `Glob` `**/skills/audit/references/best-practices.md`). Focus on the browser-and-server runtime guidance. Do not treat tracing headers as authentication.
+
+Run **two** Greps in parallel:
+- `posthog\.init\(|new PostHog\(|posthog\.Posthog\(|Posthog\(` — locate PostHog initialization across runtimes.
+- `tracing_headers|setupExpressRequestContext|PosthogContextMiddleware|X-POSTHOG-SESSION-ID|x-posthog-session-id|withContext\(` — locate the client-to-server correlation wiring.
+
+Read each file that contains a hit, once. Determine whether the project initializes both a browser SDK and a server SDK. If it does, verify both halves of the hand-off: the browser sends the PostHog tracing headers to the actual backend hostname, and the server binds the incoming session id to request-scoped PostHog context.
+
+Rule:
+- pass: `posthog-js` configures `tracing_headers` for the backend hostname and the server consumes the incoming session id through supported middleware (for example `setupExpressRequestContext` or `PosthogContextMiddleware`) or passes it as `sessionId` to request-scoped context.
+- error: both browser and server runtimes initialize PostHog, but either the browser does not send tracing headers or the server does not bind `X-POSTHOG-SESSION-ID` to PostHog context.
+- warning: both halves appear present, but the configured hostname or request-context flow cannot be matched to the backend from source.
+- Skip (`pass` with details: "single runtime"): only a browser or only a server runtime initializes PostHog.
+- Never accept a hand-written constant session id. The value must come from the browser SDK's current session through the request header.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-session-id`, including `file` (path:line of the missing or most relevant wiring) and `details` (one-line explanation of both the client and server evidence). Return when the call completes. Do not write the audit report.
+```
+
+### Task E — `identify-reset-on-logout`
 
 `description`: `Audit identify-reset-on-logout`
 
