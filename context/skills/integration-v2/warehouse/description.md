@@ -77,6 +77,13 @@ first attempt fails, and a failed attempt wastes the user's time.
   `service_role` key nor the account password. When `SUPABASE_URL` exists in
   the env, read the project ref from `db.<ref>.supabase.co` and pre-fill the
   host and username in your question.
+- **Scope a database source to one schema, and never sync auth tables.** Set the
+  `schema` field (default `public`) so discovery and sync cover only that schema.
+  A managed database exposes internal schemas alongside your data — Supabase adds
+  `auth`, `storage`, and more — so an unscoped discovery both returns hundreds of
+  tables (the response truncates before you can review them) and walks the
+  customer's auth schema. Keep discovery on the user's own schema, and never
+  select an `auth` or other internal-schema table into the `schemas` array.
 - **Many SaaS sources need a specific key type or plan.** Name the right one in
   your question so the user does not paste the wrong thing: **Stripe** wants a
   restricted key (`rk_live_…`), not `sk_live_…`; **Sentry** an
