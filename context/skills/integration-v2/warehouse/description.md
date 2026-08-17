@@ -34,11 +34,15 @@ behavior.
 1. **Never read or guess a secret.** Every credential value comes from
    `wizard_ask`. Never invent a host, password, or API key.
 
-2. **One `wizard_ask` call per source.** Ask for all of a source's fields —
-   host, port, database, user, password, schema — in a single call of up to 8
-   questions. A follow-up call is right only when a later question genuinely
-   depends on an earlier answer, such as correcting a field after a validation
-   failure.
+2. **Batch credential questions up front; don't make one call per source.** The
+   runtime nudges you once if several `wizard_ask` calls land in a row, so with
+   more than a couple of sources a call-per-source pattern trips it. Gather the
+   fields in as few calls as you can: each call takes up to 8 questions, so pack
+   several sources into one call wherever they fit — a handful of API-key SaaS
+   sources share a call easily, while a many-field database source (host, port,
+   database, user, password, …) may need its own. A follow-up call is right only
+   when a later question genuinely depends on an earlier answer, such as
+   correcting a field after a validation failure.
 
 3. **Collect these as plain `text` answers.** Marking a field `sensitive`
    returns a `{ secretRef }` that only `set_env_values` can resolve, and the
@@ -88,7 +92,10 @@ first attempt fails, and a failed attempt wastes the user's time.
 
 ## Workflow
 
-Take the sources in turn.
+Read every source's field list first (step 2 below), then collect the `in-cli`
+credentials in as few `wizard_ask` calls as possible (tenet 2) before you start
+creating sources — batching up front is what keeps you clear of the runtime's
+in-a-row nudge. Then take the sources in turn to create them.
 
 ### An `in-cli` source
 
@@ -98,8 +105,9 @@ Take the sources in turn.
 3. Optionally call `check_env_keys` to see which matching keys exist, and use
    that to word your question — "we noticed `DATABASE_URL` is set, please paste
    the connection details". You still cannot read the value.
-4. Call `wizard_ask` once for every required field. On a decline, fall back to
-   the deep-link path for this source.
+4. Ask for the required fields with `wizard_ask`, batching across sources per
+   tenet 2 rather than one call per source. On a decline, fall back to the
+   deep-link path for this source.
 5. For a database source, call `external-data-sources-db-schema` to validate
    the credentials and list tables. On a validation failure, report the error
    and let the user correct it once, or fall back to deep-link.
