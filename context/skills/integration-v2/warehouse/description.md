@@ -115,8 +115,15 @@ Take the sources in turn.
 ### A `deep-link` source
 
 1. `[STATUS] <label> needs browser setup`
-2. Build the URL from your project context:
-   `<host>/project/<projectId>/data-warehouse/new-source?kind=<kind>&utm_source=wizard&utm_campaign=warehouse-source`
+2. Build the URL against the PostHog **app** host — the `Base URL` the PostHog
+   MCP reports in its active-environment block (for example
+   `https://us.posthog.com`). Do **not** use the ingestion host shown as
+   `PostHog Host` in your project context (for example `https://us.i.posthog.com`):
+   that serves the API, not the app UI, so a link built from it lands the user
+   nowhere.
+
+   `<app-host>/project/<projectId>/data-warehouse/new-source?kind=<kind>&utm_source=wizard&utm_campaign=warehouse-source`
+
    Keep the `utm_*` parameters exactly as written — they attribute a source
    finished in the browser back to this run.
 3. Tell the user to open it to finish connecting `<label>`, and carry the URL
