@@ -138,7 +138,7 @@ A rolling sample of plain-language session summaries, so the user sees the bread
 
 Emit `[STATUS] Wrapping up`.
 
-Tell the user, briefly and concretely:
+Write the report to `./posthog-replay-vision-report.md` (the wizard shows this file at the end of the run), then summarize it for the user. Cover, briefly and concretely:
 
 - What is now recording (or the follow-up needed to make it record).
 - Each scanner created or updated: its name, what it watches, its query scope, and its estimated monthly credit spend.
