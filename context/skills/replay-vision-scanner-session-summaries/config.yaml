@@ -1,0 +1,12 @@
+# Orchestrator step-skill: the Session summaries summarizer skeleton.
+type: docs-only
+template: description.md
+description: The Session summaries summarizer skeleton for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: Session summaries scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

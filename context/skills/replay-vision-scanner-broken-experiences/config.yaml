@@ -1,0 +1,12 @@
+# Orchestrator step-skill: the Broken experiences monitor skeleton.
+type: docs-only
+template: description.md
+description: The Broken experiences monitor skeleton for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: Broken experiences scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

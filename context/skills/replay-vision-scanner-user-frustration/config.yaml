@@ -1,0 +1,12 @@
+# Orchestrator step-skill: the User frustration monitor skeleton.
+type: docs-only
+template: description.md
+description: The User frustration monitor skeleton for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: User frustration scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []
