@@ -21,10 +21,22 @@ behavior.
   **Always call it for a kind before you create that kind**, and always pass
   `source_type` (e.g. `source_type: "Postgres"`, or `"Postgres,Stripe"`). The
   unfiltered response describes every source and runs to hundreds of KB.
+- **`data-warehouse-source-setup`** — the **default** way to create a source. It
+  validates the credentials, discovers the tables, applies sensible sync
+  defaults, and creates the source in one call — **no `schemas` array**. Use it
+  for every SaaS source (Stripe, Resend, Sentry, …): those have small fixed
+  schemas, and the low-level create tool rejects them when no `schemas` array is
+  supplied. For a webhook-capable source it also registers the webhook — read
+  the `webhook` key in the response, and if `webhook.pending_inputs` is
+  non-empty, ask for those values and submit them.
 - **`external-data-sources-db-schema`** — validates credentials and lists the
-  tables available to sync. Use it for database sources before creating.
-- **`external-data-sources-create`** — creates the source. Its input schema is
-  the source of truth for the `payload` and `schemas` shape.
+  tables available to sync. Use it for a database source when the user wants
+  only some of its tables, so you can build a `schemas` array.
+- **`external-data-sources-create`** — the **advanced** create, for hand-picking
+  tables or per-table sync types on a database source. The `schemas` array goes
+  **inside** `payload`, not as a top-level argument; its input schema is the
+  source of truth. Don't reach for it on a SaaS source — `data-warehouse-source-setup`
+  is the one-step path there.
 - **`check_env_keys`** — tells you which `.env` keys exist. It never returns
   values.
 - **`wizard_ask`** — the only way to obtain a credential value from the user.
@@ -115,17 +127,23 @@ in-a-row nudge. Then take the sources in turn to create them.
 4. Ask for the required fields with `wizard_ask`, batching across sources per
    tenet 2 rather than one call per source. On a decline, fall back to the
    deep-link path for this source.
-5. For a database source, call `external-data-sources-db-schema` to validate
-   the credentials and list tables. On a validation failure, report the error
-   and let the user correct it once, or fall back to deep-link.
-6. Build the create payload: `source_type` = the kind, the credential
-   `payload`, `access_method` = `warehouse`, and a `schemas` array selecting
-   the tables to sync — `incremental` with the detected incremental field where
-   one exists, otherwise `full_refresh`.
-7. Call `external-data-sources-create`. On success: `[STATUS] Connected
-   <label>`. On failure, record the error against that source and move on to
-   the next one — one source that will not connect is not a reason to abandon
-   the rest.
+5. Create the source, choosing the tool by kind:
+   - **A SaaS source** (an API key or token — Stripe, Resend, Sentry, …): call
+     `data-warehouse-source-setup` with `source_type` = the kind and the
+     credential `payload`. It discovers the tables and applies sync defaults —
+     pass no `schemas`. Check the `webhook` key on the response for a
+     webhook-capable source.
+   - **A database source** (Postgres, MySQL, …): first call
+     `external-data-sources-db-schema` to validate the credentials and list
+     tables. On a validation failure, report the error and let the user correct
+     it once, or fall back to deep-link. Then create with
+     `external-data-sources-create`, putting the credential fields, a `schemas`
+     array selecting the tables to sync (`incremental` with the detected
+     incremental field where one exists, otherwise `full_refresh`), and
+     `access_method` = `warehouse` together in `payload`.
+6. On success: `[STATUS] Connected <label>`. On failure, record the error
+   against that source and move on to the next one — one source that will not
+   connect is not a reason to abandon the rest.
 
 ### A `deep-link` source
 
@@ -160,9 +178,9 @@ of three ends it reached:
 - **needs the browser** — give the full URL.
 - **skipped** — say why, in one line.
 
-Claim nothing you did not observe. A source is connected when
-`external-data-sources-create` returned success, not when the credentials
-looked right.
+Claim nothing you did not observe. A source is connected when the create tool
+(`data-warehouse-source-setup` or `external-data-sources-create`) returned
+success, not when the credentials looked right.
 
 ## Status
 
