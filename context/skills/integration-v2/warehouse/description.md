@@ -46,11 +46,15 @@ behavior.
 1. **Never read or guess a secret.** Every credential value comes from
    `wizard_ask`. Never invent a host, password, or API key.
 
-2. **One `wizard_ask` call per source.** Ask for all of a source's fields —
-   host, port, database, user, password, schema — in a single call of up to 8
-   questions. A follow-up call is right only when a later question genuinely
-   depends on an earlier answer, such as correcting a field after a validation
-   failure.
+2. **Batch credential questions up front; don't make one call per source.** The
+   runtime nudges you once if several `wizard_ask` calls land in a row, so with
+   more than a couple of sources a call-per-source pattern trips it. Gather the
+   fields in as few calls as you can: each call takes up to 8 questions, so pack
+   several sources into one call wherever they fit — a handful of API-key SaaS
+   sources share a call easily, while a many-field database source (host, port,
+   database, user, password, …) may need its own. A follow-up call is right only
+   when a later question genuinely depends on an earlier answer, such as
+   correcting a field after a validation failure.
 
 3. **Collect these as plain `text` answers.** Marking a field `sensitive`
    returns a `{ secretRef }` that only `set_env_values` can resolve, and the
@@ -89,6 +93,13 @@ first attempt fails, and a failed attempt wastes the user's time.
   `service_role` key nor the account password. When `SUPABASE_URL` exists in
   the env, read the project ref from `db.<ref>.supabase.co` and pre-fill the
   host and username in your question.
+- **Scope a database source to one schema, and never sync auth tables.** Set the
+  `schema` field (default `public`) so discovery and sync cover only that schema.
+  A managed database exposes internal schemas alongside your data — Supabase adds
+  `auth`, `storage`, and more — so an unscoped discovery both returns hundreds of
+  tables (the response truncates before you can review them) and walks the
+  customer's auth schema. Keep discovery on the user's own schema, and never
+  select an `auth` or other internal-schema table into the `schemas` array.
 - **Many SaaS sources need a specific key type or plan.** Name the right one in
   your question so the user does not paste the wrong thing: **Stripe** wants a
   restricted key (`rk_live_…`), not `sk_live_…`; **Sentry** an
@@ -100,7 +111,10 @@ first attempt fails, and a failed attempt wastes the user's time.
 
 ## Workflow
 
-Take the sources in turn.
+Read every source's field list first (step 2 below), then collect the `in-cli`
+credentials in as few `wizard_ask` calls as possible (tenet 2) before you start
+creating sources — batching up front is what keeps you clear of the runtime's
+in-a-row nudge. Then take the sources in turn to create them.
 
 ### An `in-cli` source
 
@@ -110,8 +124,9 @@ Take the sources in turn.
 3. Optionally call `check_env_keys` to see which matching keys exist, and use
    that to word your question — "we noticed `DATABASE_URL` is set, please paste
    the connection details". You still cannot read the value.
-4. Call `wizard_ask` once for every required field. On a decline, fall back to
-   the deep-link path for this source.
+4. Ask for the required fields with `wizard_ask`, batching across sources per
+   tenet 2 rather than one call per source. On a decline, fall back to the
+   deep-link path for this source.
 5. Create the source, choosing the tool by kind:
    - **A SaaS source** (an API key or token — Stripe, Resend, Sentry, …): call
      `data-warehouse-source-setup` with `source_type` = the kind and the
@@ -133,8 +148,15 @@ Take the sources in turn.
 ### A `deep-link` source
 
 1. `[STATUS] <label> needs browser setup`
-2. Build the URL from your project context:
-   `<host>/project/<projectId>/data-warehouse/new-source?kind=<kind>&utm_source=wizard&utm_campaign=warehouse-source`
+2. Build the URL against the PostHog **app** host — the `Base URL` the PostHog
+   MCP reports in its active-environment block (for example
+   `https://us.posthog.com`). Do **not** use the ingestion host shown as
+   `PostHog Host` in your project context (for example `https://us.i.posthog.com`):
+   that serves the API, not the app UI, so a link built from it lands the user
+   nowhere.
+
+   `<app-host>/project/<projectId>/data-warehouse/new-source?kind=<kind>&utm_source=wizard&utm_campaign=warehouse-source`
+
    Keep the `utm_*` parameters exactly as written — they attribute a source
    finished in the browser back to this run.
 3. Tell the user to open it to finish connecting `<label>`, and carry the URL
