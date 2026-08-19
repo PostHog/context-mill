@@ -45,6 +45,12 @@ Follow the reference example and the docs for this framework's pattern. Read the
 existing provider, entry, or startup file before editing, and add PostHog alongside
 what is already there rather than replacing it.
 
+An app that builds for several platforms needs an init point per platform it
+targets, not one shared init — a single SDK call often covers only some of them,
+and the rest stay uninstrumented while the build still succeeds. Check which
+targets this project actually ships, and follow the docs and reference example for
+how each one initializes.
+
 ## Content Security Policy
 
 Before wiring a browser SDK, check whether the app ships a CSP — a meta tag in
