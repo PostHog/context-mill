@@ -1,0 +1,13 @@
+# Orchestrator step-skill: fetched by the enable-replay task agent, never
+# surfaced as a command. The framework matrix is borrowed from the canonical
+# integration group so the agent sees this framework's init shape.
+type: docs-only
+template: description.md
+description: Make session replay record for {display_name}
+tags: [orchestrator, replay-vision, session-replay]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/session-replay/installation.md
+variants_from: integration
+packaging: bundle
