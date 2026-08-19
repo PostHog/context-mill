@@ -1,6 +1,6 @@
 {
   "name": "@posthog/context-mill",
-  "version": "1.46.0",
+  "version": "1.46.1",
   "private": true,
   "type": "module",
   "description": "PostHog Context Mill: assembling and packaging context for AI agents and LLMs",

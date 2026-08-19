@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.46.1](https://github.com/PostHog/context-mill/compare/v1.46.0...v1.46.1) (2026-08-18)
+
+
+### Bug Fixes
+
+* **integration-v2:** batch warehouse credential asks across sources ([9e5b5c0](https://github.com/PostHog/context-mill/commit/9e5b5c0c56a8e8aebc906ed06f3bdedb5fe52ee3))
+* **integration-v2:** batch warehouse credential asks across sources ([e850016](https://github.com/PostHog/context-mill/commit/e85001655bc9f2da4251c2cfe68f915b4bad84db))
+* **integration-v2:** build warehouse deep links from the app host ([56c583a](https://github.com/PostHog/context-mill/commit/56c583a031e300faf7712e1dd6505356afa9be99))
+* **integration-v2:** build warehouse deep links from the app host ([bb52957](https://github.com/PostHog/context-mill/commit/bb52957510ff7be8dcada37c79018ad9f43bd59b))
+* **integration-v2:** create SaaS sources via the one-step setup tool ([99f36c0](https://github.com/PostHog/context-mill/commit/99f36c0ecf67af08f315d89e36f01d20cf672c72))
+* **integration-v2:** create SaaS sources via the one-step setup tool ([bc5bf3d](https://github.com/PostHog/context-mill/commit/bc5bf3d6b585a5cc70a38ea6c91cedbefe84a6ff))
+* **integration-v2:** scope warehouse discovery to the user's schema ([11d8f99](https://github.com/PostHog/context-mill/commit/11d8f991f264aab9c649fcab52752d317036e299))
+* **integration-v2:** scope warehouse discovery to the user's schema ([ef05ea7](https://github.com/PostHog/context-mill/commit/ef05ea74e0913d1bbcb435700525e816f3b7a99a))
+
 ## [1.46.0](https://github.com/PostHog/context-mill/compare/v1.45.0...v1.46.0) (2026-08-12)
 
 
