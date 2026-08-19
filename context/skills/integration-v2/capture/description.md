@@ -8,7 +8,7 @@ pass, reading each file once.
 From the project's files, find the actions that have business value for event
 tracking — especially conversion and churn events. Read them. Track actions, not
 pageviews, wherever this SDK autocaptures them. Where it does not — the docs and
-reference example for this framework say so — wire the screen-view mechanism they
+reference example for this framework will say so explicitly — wire the screen-view mechanism they
 show, since without it this integration records no navigation at all. Server-side
 events matter most where there is instrumentable server-side code (API routes,
 server actions): payment/checkout completion, webhook handlers, and auth
