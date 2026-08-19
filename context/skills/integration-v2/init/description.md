@@ -49,7 +49,7 @@ An app that builds for several platforms needs an init point per platform it
 targets, not one shared init — a single SDK call often covers only some of them,
 and the rest stay uninstrumented while the build still succeeds. Check which
 targets this project actually ships, and follow the docs and reference example for
-how each one initializes.
+how each one initializes. Consult the docs, it will point this out explicitly.
 
 ## Content Security Policy
 
