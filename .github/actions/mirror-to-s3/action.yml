@@ -1,0 +1,134 @@
+name: "Mirror dist to S3"
+description: >-
+  Rewrite the built dist/ so its baked-in download URLs point at the CDN mirror,
+  then upload the flattened result to the release bucket under v<version>/.
+
+# Used by two callers so they cannot drift:
+#   - build-release.yml, after the GitHub release is published and durable
+#   - mirror-dryrun.yml, on workflow_dispatch, against a throwaway prefix
+#
+# The caller is responsible for checkout, Node/pnpm setup, `pnpm install`, and
+# `pnpm run build` — this action assumes dist/ already exists.
+#
+# AWS config arrives as inputs the caller fills from org secrets, matching
+# wizard-workbench's AWS_WIZARD_ARTIFACTS_* pattern. Composite actions cannot
+# read `secrets` themselves, so the caller must pass them through.
+
+inputs:
+  version:
+    description: "Release version without the leading v, e.g. 1.46.0"
+    required: true
+  role-to-assume:
+    description: "IAM role ARN for OIDC (secrets.AWS_CONTEXT_MILL_RELEASES_ROLE_ARN)"
+    required: true
+  bucket:
+    description: "Target S3 bucket name (secrets.AWS_CONTEXT_MILL_RELEASES_BUCKET)"
+    required: true
+  aws-region:
+    description: "AWS region (secrets.AWS_CONTEXT_MILL_RELEASES_REGION)"
+    required: true
+  prefix:
+    description: >-
+      Object key prefix to write under, without a trailing slash. Defaults to
+      v<version>. Dry runs pass something like v0.0.0-dryrun-<run_id>.
+    required: false
+    default: ""
+  base-url:
+    description: >-
+      Public base URL the mirrored artifacts should point at, without a trailing
+      slash and without the version segment. Not a secret — it is baked into
+      every published artifact.
+    required: false
+    default: "https://context-mill.posthog.com"
+
+outputs:
+  prefix:
+    description: "The prefix objects were written under"
+    value: ${{ steps.resolve.outputs.prefix }}
+  object-count:
+    description: "Number of objects uploaded"
+    value: ${{ steps.verify.outputs.count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve prefix
+      id: resolve
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PREFIX_IN: ${{ inputs.prefix }}
+        BASE_URL: ${{ inputs.base-url }}
+      run: |
+        set -euo pipefail
+        PREFIX="${PREFIX_IN:-v$VERSION}"
+        echo "prefix=$PREFIX" >> "$GITHUB_OUTPUT"
+        # The mirrored artifacts must resolve under the prefix they are uploaded
+        # to, or every download URL in them 404s.
+        echo "base=${BASE_URL%/}/$PREFIX" >> "$GITHUB_OUTPUT"
+
+    # posthog-cloud-infra pins this same SHA; keep them in step.
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+      with:
+        role-to-assume: ${{ inputs.role-to-assume }}
+        aws-region: ${{ inputs.aws-region }}
+        # Matches wizard-workbench's artifact upload: keep the account id out of
+        # logs, and don't inherit whatever credentials an earlier step left set.
+        mask-aws-account-id: true
+        unset-current-credentials: true
+
+    - name: Rewrite asset URLs for the mirror
+      shell: bash
+      env:
+        BUILD_VERSION: ${{ inputs.version }}
+        MIRROR_BASE: ${{ steps.resolve.outputs.base }}
+      run: |
+        set -euo pipefail
+        node scripts/mirror-dist.js --base "$MIRROR_BASE"
+
+    - name: Upload versioned prefix
+      shell: bash
+      env:
+        BUCKET: ${{ inputs.bucket }}
+        PREFIX: ${{ steps.resolve.outputs.prefix }}
+      run: |
+        set -euo pipefail
+        DEST="s3://$BUCKET/$PREFIX/"
+        # Keys are immutable and version-scoped, so they can cache forever. This
+        # is what makes the CDN hit ratio approach 100% and removes any need to
+        # ever invalidate.
+        CC="public, max-age=31536000, immutable"
+        # Explicit content types per extension — the CLI guesses badly for .md,
+        # and a wrong type on skill-menu.json breaks consumers that check it.
+        aws s3 sync dist-s3-flat/ "$DEST" --exclude "*" --include "*.json" \
+          --content-type "application/json" --cache-control "$CC" --no-progress
+        aws s3 sync dist-s3-flat/ "$DEST" --exclude "*" --include "*.zip" \
+          --content-type "application/zip" --cache-control "$CC" --no-progress
+        aws s3 sync dist-s3-flat/ "$DEST" --exclude "*" --include "*.md" \
+          --content-type "text/markdown; charset=utf-8" --cache-control "$CC" --no-progress
+        aws s3 cp dist-s3-flat/SHA256SUMS "$DEST" \
+          --content-type "text/plain; charset=utf-8" --cache-control "$CC" --no-progress
+
+    - name: Verify the uploaded object set
+      id: verify
+      shell: bash
+      env:
+        BUCKET: ${{ inputs.bucket }}
+        PREFIX: ${{ steps.resolve.outputs.prefix }}
+      run: |
+        set -euo pipefail
+        # Phase 1 has no CDN to fetch through, so verification is credentialed:
+        # assert every local file arrived, and nothing extra is sitting there.
+        ls dist-s3-flat/ | sort > /tmp/mirror-local.txt
+        # `grep -v` exits 1 when it matches nothing, which under pipefail would
+        # kill the step with no message on an empty listing. Let the diff below
+        # report that instead — it says what actually went wrong.
+        aws s3 ls "s3://$BUCKET/$PREFIX/" | awk '{print $4}' | { grep -v '^$' || true; } | sort > /tmp/mirror-remote.txt
+        if ! diff -u /tmp/mirror-local.txt /tmp/mirror-remote.txt; then
+          echo "::error::Uploaded object set does not match dist-s3-flat/"
+          exit 1
+        fi
+        COUNT=$(wc -l < /tmp/mirror-local.txt | tr -d ' ')
+        echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+        echo "Verified $COUNT objects under $PREFIX/"

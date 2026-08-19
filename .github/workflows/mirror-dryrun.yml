@@ -1,0 +1,95 @@
+name: Mirror dry run
+
+# Proves the S3 mirror path end to end without cutting a release.
+#
+# build-release.yml cannot be used for this: its build-and-release job is gated
+# on `is-new-version == 'true'`, which compares package.json to the latest
+# published release. With no pending version bump a workflow_dispatch skips the
+# job entirely, so the mirror steps never run.
+#
+# The OIDC role assumption is the one thing that can only be proven from CI —
+# running mirror-dist.js and `aws s3 sync` locally under your own SSO
+# credentials exercises the script and the bucket, but not the trust policy
+# subject, `id-token: write`, or the resource scoping.
+#
+# This calls the SAME composite action build-release.yml does, so the two
+# cannot drift. It writes to a throwaway prefix and never touches releases.
+#
+# Cleanup: the release role deliberately has no s3:DeleteObject, so dry-run
+# prefixes accumulate. They are a few MB each, nothing references them, and
+# /latest never points at them. Sweep with SSO credentials if they pile up:
+#   aws s3 rm --recursive s3://$BUCKET/v0.0.0-dryrun-<run_id>/
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build as (without leading v). Any value — nothing is published."
+        required: false
+        default: "0.0.0"
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: Build and mirror to a throwaway prefix
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # required for OIDC
+    env:
+      # The prefix must match the IAM policy's `v*` scope, so it starts with v.
+      DRYRUN_PREFIX: v0.0.0-dryrun-${{ github.run_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 'lts/*'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build skills
+        env:
+          BUILD_VERSION: ${{ inputs.version }}
+        run: pnpm run build
+
+      - name: Mirror to S3
+        id: mirror
+        uses: ./.github/actions/mirror-to-s3
+        with:
+          version: ${{ inputs.version }}
+          prefix: ${{ env.DRYRUN_PREFIX }}
+          role-to-assume: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_ROLE_ARN }}
+          bucket: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_BUCKET }}
+          aws-region: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_REGION }}
+
+      - name: Dry run summary
+        env:
+          PREFIX: ${{ steps.mirror.outputs.prefix }}
+          COUNT: ${{ steps.mirror.outputs.object-count }}
+        run: |
+          {
+            echo "### Mirror dry run"
+            echo ""
+            echo "- **Prefix:** \`${PREFIX}/\`"
+            echo "- **Objects:** ${COUNT}"
+            echo ""
+            echo "Nothing was published. Clean up with:"
+            echo ""
+            echo '```'
+            echo "aws s3 rm --recursive s3://\$BUCKET/${PREFIX}/"
+            echo '```'
+            echo ""
+            echo "(bucket name is in the AWS_CONTEXT_MILL_RELEASES_BUCKET org secret)"
+          } >> "$GITHUB_STEP_SUMMARY"
