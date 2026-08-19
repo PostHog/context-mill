@@ -33,13 +33,16 @@ Follow these steps IN ORDER. Each step has a **TypeScript / JavaScript** part an
 Determine the language first, then route to the matching instructions throughout:
 
 - **TypeScript / JavaScript** — there's a `package.json`. Look for MCP signals in dependencies and source:
-  - `@modelcontextprotocol/sdk` — the official SDK (most common).
+  - `@modelcontextprotocol/sdk` — the official SDK, **v1** (most common).
+  - `@modelcontextprotocol/server` / `@modelcontextprotocol/core` / `@modelcontextprotocol/client` — the official SDK, **v2**. A v2 project has no `@modelcontextprotocol/sdk` at all, so never read that one package's absence as "no MCP server here".
   - `mcp-handler` — the Next.js / Vercel adapter.
   - `@rekog/mcp-nest` — the NestJS adapter (tools defined with `@Tool()` decorators; the server is built inside `McpModule.forRoot(...)`, so there's no `new McpServer` in user code).
   - `fastmcp`, `xmcp`, or a similar TS MCP framework.
   - A custom HTTP/edge handler speaking the MCP protocol directly (JSON-RPC methods like `tools/call`, `initialize`, an `Mcp-Session-Id` header) with none of the above.
 
   Determine the package manager from the lockfile (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lockb`).
+
+  **Note which SDK major the project is on** — STEP 3 and STEP 4 both depend on it. `sdk-v2.md` is the reference for everything v2-specific.
 
 - **Python** — there's a `pyproject.toml`, `requirements.txt`, or `setup.py`, or `.py` sources. Look for MCP signals:
   - the official `mcp` package — `from mcp.server.fastmcp import FastMCP` or `from mcp.server.lowlevel import Server`.
@@ -54,11 +57,11 @@ Then identify the file and the exact place where the server is constructed or wh
 
 ### STEP 2: Choose the instrumentation path
 
-Pick exactly one based on what STEP 1 found. When in doubt, read the bundled reference docs — `installation.md` covers the wrapping paths; `custom-servers.md` covers the custom-dispatcher paths.
+Pick exactly one based on what STEP 1 found. When in doubt, read the bundled reference docs — `installation.md` covers the wrapping paths; `custom-servers.md` covers the custom-dispatcher paths; `sdk-v2.md` covers what differs on MCP SDK v2.
 
 **TypeScript / JavaScript:**
 
-- **Path A — official SDK server object** (`new Server(...)` or `new McpServer(...)` from `@modelcontextprotocol/sdk`): wrap it with `instrument(server, posthog)`. One line.
+- **Path A — official SDK server object** (`new Server(...)` or `new McpServer(...)`, from `@modelcontextprotocol/sdk` on v1 or `@modelcontextprotocol/server` on v2): wrap it with `instrument(server, posthog)`. One line. `instrument()` detects the server's shape at runtime, so the call is the same on both majors — never branch the code you write on which major is installed.
 - **Path B — `mcp-handler`** (`createMcpHandler((server) => { ... })`): same `instrument(server, posthog)` call, inside the setup callback. Because Vercel's transport is stateless, also wire `identify` (STEP 4) and flush per invocation (STEP 6).
 - **Path C — custom dispatcher** (Hono / Express / Cloudflare Worker / edge function with no SDK server object to wrap): use the `PostHogMCP` client and call `captureToolCall` / `captureInitialize` yourself at the dispatch points.
 - **Path D — `@rekog/mcp-nest`** (NestJS): the framework builds the server, so there's no `new McpServer` for you to wrap. Instrument it through the module's `serverMutator` hook in `McpModule.forRoot(...)`. See STEP 4.
@@ -71,6 +74,8 @@ Pick exactly one based on what STEP 1 found. When in doubt, read the bundled ref
 ### STEP 3: Install the SDK
 
 - **TypeScript / JavaScript:** install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing.
+  - **Never install an MCP SDK.** Both majors are *optional* peer dependencies, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
+  - **On SDK v2, `@posthog/mcp` must be `>=0.11.2`.** If the project already depends on something older, upgrade it — earlier versions rejected high-level v2 servers in a compatibility check that `instrument()` swallows, so the integration looked healthy and captured nothing at all.
 - **Python:** the SDK ships inside `posthog`, so install (or require) `posthog>=7.21` with the project's installer — e.g. `pip install "posthog>=7.21"`, `uv add posthog`, `poetry add posthog`. The MCP SDK itself (`mcp` / `fastmcp`) is a peer dependency you already have — you built the server with it — so don't add it. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
 
 ### STEP 4: Instrument the server
@@ -90,6 +95,8 @@ const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 **Path A — official SDK server:**
 
 ```ts
+// v1: import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+// v2: import { McpServer } from "@modelcontextprotocol/server"
 import { instrument } from "@posthog/mcp"
 
 const server = new McpServer({ name: "my-mcp-server", version: "1.0.0" })
@@ -97,18 +104,27 @@ const analytics = instrument(server, posthog) // wrap immediately after construc
 // register tools as usual — tools added after instrument() are still captured
 ```
 
-`instrument()` is idempotent per server and returns an analytics handle (used later for custom events). It works on both the low-level `Server` and the high-level `McpServer`.
+Match the import to the major found in STEP 1; the `instrument()` line is identical either way. On v2 tools register with `registerTool()` — the deprecated `server.tool()` was removed.
+
+`instrument()` is idempotent per server and returns an analytics handle (used later for custom events). It works on both the low-level `Server` and the high-level `McpServer`. If the project already calls `instrument(server.server)` — a workaround for an old compatibility check that rejected high-level v2 servers — change it back to `instrument(server)`.
 
 **Path B — `mcp-handler`:** call `instrument(server, posthog)` as the first line of the setup callback, with the `posthog` client created at module scope (not per request). Because the transport is stateless, group calls by user with `identify`:
 
 ```ts
+import { instrument, getRequestHeaders } from "@posthog/mcp"
+
 const handler = createMcpHandler((server) => {
   instrument(server, posthog, {
-    identify: (request, extra) => ({ distinctId: getUserId(extra) }),
+    identify: async (request, extra) => {
+      const token = getRequestHeaders(extra)?.["authorization"]
+      return token ? { distinctId: await resolveUserId(token) } : null
+    },
   })
   server.registerTool("...", { /* ... */ }, async () => { /* ... */ })
 })
 ```
+
+**Always read request headers through `getRequestHeaders(extra)`** — in `identify`, `intentFallback`, `eventProperties` and `beforeSend` alike. The callback receives the MCP SDK's `extra` unchanged, and the majors shape it differently: v1 puts a plain object at `extra.requestInfo.headers`, v2 attaches a WHATWG `Request` at `extra.http.req` whose headers only answer to `.get()`. A v1-shaped read returns `undefined` on v2, so `identify()` returns `null` and every event goes out anonymous with no error anywhere. The helper handles both and returns a plain lowercase-keyed object. See `sdk-v2.md`.
 
 **Path C — custom dispatcher:** swap the existing PostHog client for `PostHogMCP` (a drop-in `posthog-node` subclass) and call the capture helpers at the dispatch points. Read `custom-servers.md` for the full field reference before editing.
 
@@ -162,6 +178,8 @@ class AppModule {}
 ```
 
 `instrumentMutator` returns the server (not `instrument()`'s handle), so it slots straight into the hook. Compose with an existing `serverMutator` if there is one, and handlers nest registers after the mutator runs are still captured. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), call `instrument()` directly inside your own mutator and keep its handle, returning the server yourself.
+
+**Sessions on an SDK v2 server.** Protocol revision is a property of each *request*, not of the server — a v2 server serves `2025-11-25` traffic too — so instrument once and never branch on the major. The `2026-07-28` revision removed the `initialize` handshake and the `Mcp-Session-Id` header, so on that traffic **every request becomes its own `$session_id`** unless `enableConversationId: true` is set. If the project targets it, offer that option and say what it buys. `sdk-v2.md` has the rest, including why `$mcp_client_name` can be absent on `2025-11-25` traffic behind `createMcpHandler`, and which `2026-07-28` features aren't instrumented yet.
 
 #### Python
 
@@ -254,7 +272,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 {references}
 
-`installation.md` is the source of truth for the wrapping paths (A/B and Python P1) and the full `instrument()` options table (`identify`, `context`/intent, `enableConversationId`/`enable_conversation_id`, `reportMissing`/`report_missing`, `beforeSend`/`before_send`, `eventProperties`/`event_properties`). `custom-servers.md` is the source of truth for the custom-dispatcher paths (C and P2) — `PostHogMCP`, `captureToolCall`/`capture_tool_call`, `captureInitialize`/`capture_initialize`, and the per-call field mapping. `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured. The event/property vocabulary is identical across both SDKs.
+`installation.md` is the source of truth for the wrapping paths (A/B and Python P1) and the full `instrument()` options table (`identify`, `context`/intent, `enableConversationId`/`enable_conversation_id`, `reportMissing`/`report_missing`, `beforeSend`/`before_send`, `eventProperties`/`event_properties`). `custom-servers.md` is the source of truth for the custom-dispatcher paths (C and P2) — `PostHogMCP`, `captureToolCall`/`capture_tool_call`, `captureInitialize`/`capture_initialize`, and the per-call field mapping. `sdk-v2.md` (TypeScript only) is the source of truth for everything that differs between MCP TypeScript SDK v1 and v2 — which package is which major, the `getRequestHeaders` migration, sessions on `2026-07-28`, and the revision features not instrumented yet. `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured. The event/property vocabulary is identical across both SDKs.
 
 ## Key principles
 
