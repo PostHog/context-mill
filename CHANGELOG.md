@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.47.0](https://github.com/PostHog/context-mill/compare/v1.46.1...v1.47.0) (2026-08-19)
+
+
+### Features
+
+* **replay-vision:** orchestrator flow and scanner step-skills ([3f9cd79](https://github.com/PostHog/context-mill/commit/3f9cd79f89ba612de3c96ee89ecb5cef05d10394))
+* **skills:** add replay-vision wizard command ([1dcc90e](https://github.com/PostHog/context-mill/commit/1dcc90e5f5e32160a869e783db68e7a88ad8be87))
+
 ## [1.46.1](https://github.com/PostHog/context-mill/compare/v1.46.0...v1.46.1) (2026-08-18)
 
 
