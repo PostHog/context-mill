@@ -115,7 +115,7 @@ The product visibly breaking, on the flow where breaking costs the most. This is
     ]
   },
   "sampling_rate": 0.5,
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3-flash-preview"
 }
 ```
 
@@ -136,7 +136,7 @@ The user getting stuck. Gated on `$rageclick` — cheap, high-precision, and her
     "events": [{ "id": "$rageclick", "type": "events" }]
   },
   "sampling_rate": 1.0,
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3-flash-preview"
 }
 ```
 

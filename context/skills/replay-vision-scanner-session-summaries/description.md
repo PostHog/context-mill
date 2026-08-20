@@ -15,7 +15,7 @@ blank: `{{PRODUCT_CONTEXT}}`. Everything else is locked.
     "kind": "RecordingsQuery"
   },
   "sampling_rate": 0.1,
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3-flash-preview"
 }
 ```
 

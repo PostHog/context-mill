@@ -20,7 +20,7 @@ Create with `vision-scanners-create`. Two blanks: the `query` and
     ]
   },
   "sampling_rate": 0.5,
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3-flash-preview"
 }
 ```
 

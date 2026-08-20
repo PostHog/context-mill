@@ -17,7 +17,7 @@ is locked.
     "events": [{ "id": "$rageclick", "type": "events" }]
   },
   "sampling_rate": 1.0,
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3-flash-preview"
 }
 ```
 
