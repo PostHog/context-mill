@@ -15,6 +15,8 @@ variants:
     tags: [javascript_node, mcp]
     docs_urls:
       - https://posthog.com/docs/mcp-analytics/installation.md
+      - url: https://posthog.com/docs/mcp-analytics/sdk-v2.md
+        title: MCP TypeScript SDK v1 vs v2 — read when the project uses @modelcontextprotocol/server
       - https://posthog.com/docs/mcp-analytics/custom-servers.md
       - https://posthog.com/docs/mcp-analytics/intent.md
       - https://posthog.com/docs/mcp-analytics/identifying-users.md
@@ -26,6 +28,11 @@ variants:
     tags: [python, mcp]
     docs_urls:
       - https://posthog.com/docs/mcp-analytics/installation.md
+      # Bundled here too, even though it's a TypeScript page: description.md is
+      # shared by both variants and points at it, so omitting it would leave a
+      # dangling reference. Its own callout tells a Python reader what applies.
+      - url: https://posthog.com/docs/mcp-analytics/sdk-v2.md
+        title: MCP TypeScript SDK v1 vs v2 — read when the project uses @modelcontextprotocol/server
       - https://posthog.com/docs/mcp-analytics/custom-servers.md
       - https://posthog.com/docs/mcp-analytics/intent.md
       - https://posthog.com/docs/mcp-analytics/identifying-users.md
