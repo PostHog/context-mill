@@ -1,12 +1,12 @@
-# Orchestrator step-skill: the Session summaries summarizer skeleton.
+# Orchestrator step-skill: The summary scanner brief for replay vision.
 type: docs-only
 template: description.md
-description: The Session summaries summarizer skeleton for Replay vision
+description: The summary scanner brief for Replay vision
 tags: [orchestrator, replay-vision]
 cli:
   role: internal
 variants:
   - id: all
-    display_name: Session summaries scanner
+    display_name: Summary scanner
     tags: [orchestrator, replay-vision]
     docs_urls: []

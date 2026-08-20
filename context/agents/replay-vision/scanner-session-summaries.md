@@ -14,13 +14,15 @@ dependsOn: [enable-replay]
 
 ## Goal
 
-Create the **Session summaries** summarizer: a rolling sample of
-plain-language session summaries, so the user sees the breadth of what
-scanners produce. The skeleton, the locked fields, and the create/collision
-mechanics are in your skills — you fill exactly one blank from the repo:
+Create the summary scanner: a rolling sample of plain-language session
+summaries in this product's own vocabulary, so the user sees the breadth of
+what scanners produce. The brief, the locked scaffold, and the create/re-run
+mechanics are in your skills — you fill the blanks from the repo:
 
-- **`{{PRODUCT_CONTEXT}}`** — one plain factual sentence, in the product's
-  own vocabulary.
+- **`name`** — in this product's own words.
+- **`{{VOCABULARY}}`** — the nouns and verbs this product's UI uses for its
+  key flows, so summaries read like the product.
+- **`{{PRODUCT_CONTEXT}}`** — one plain factual sentence.
 
 It samples every recording with no query scope, kept cheap by a low sampling
 rate — **never raise the sampling rate during setup**.
@@ -31,5 +33,5 @@ outcome.
 
 ## How you know you succeeded
 
-The scanner exists in PostHog at the skeleton's sampling rate, or your
+The scanner exists in PostHog at the brief's sampling rate, or your
 handoff says exactly why it was skipped or deferred.

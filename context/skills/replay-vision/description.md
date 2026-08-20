@@ -13,9 +13,9 @@ The mechanics live in dedicated step skills - install each one with `install_ski
 | --- | --- |
 | `replay-vision-enable-replay` | making session replay record (both halves) |
 | `replay-vision-scanners-core` | scanner create/update mechanics, sizing, collisions, security ground rules |
-| `replay-vision-scanner-broken-experiences` | the Broken experiences monitor skeleton |
-| `replay-vision-scanner-user-frustration` | the User frustration monitor skeleton |
-| `replay-vision-scanner-session-summaries` | the Session summaries summarizer skeleton |
+| `replay-vision-scanner-broken-experiences` | the breakage monitor brief |
+| `replay-vision-scanner-user-frustration` | the frustration monitor brief |
+| `replay-vision-scanner-session-summaries` | the summary scanner brief |
 
 ### Abort cases
 
@@ -54,13 +54,13 @@ Install and follow `replay-vision-scanners-core`. It owns loading the authoritat
 
 Emit `[STATUS] Creating scanners`.
 
-Create three scanners, one skeleton each, in this order:
+Create three scanners, one brief each, in this order:
 
-1. `replay-vision-scanner-broken-experiences` - the completion-flow monitor.
-2. `replay-vision-scanner-user-frustration` - the `$rageclick` monitor.
+1. `replay-vision-scanner-broken-experiences` - the completion-flow breakage monitor.
+2. `replay-vision-scanner-user-frustration` - the `$rageclick` frustration monitor.
 3. `replay-vision-scanner-session-summaries` - the sampled summarizer.
 
-Install each skill, fill exactly the blanks it names from the repo (the `query` where the skeleton has one, and the `{{PRODUCT_CONTEXT}}` sentence), and create with `vision-scanners-create`. Don't reword locked fields, don't invent extra scanners.
+Install each skill, fill the blanks its brief names from the repo, and create with `vision-scanners-create` - `replay-vision-scanners-core` owns what is locked and how re-runs match. Reuse STEP 1's scanner inventory for the re-run check instead of listing again. Don't invent extra scanners.
 
 Per-scanner notes:
 
