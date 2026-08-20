@@ -85,6 +85,7 @@ commandments:
     - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
     - Server-side captures must set `DistinctId` to a stable user ID that matches frontend identify calls; avoid anonymous or literal IDs for business events
     - Use `posthog.NewProperties().Set(...)` for event properties and keep PII in person properties via `$set`, not in event properties
+    - "Identify a user with the SDK's `posthog.Identify` type rather than hand-rolling one as a `posthog.Capture` with the `$identify` event name"
     - For new feature flag code, prefer `client.EvaluateFlags(...)` once per user/request, then use the returned snapshot's `IsEnabled` or `GetFlag` methods
     - When capturing events related to feature-gated code, attach the evaluated flag snapshot with `Flags`, optionally filtered with `OnlyAccessed()` or `Only(...)`
     - Avoid deprecated feature flag helpers such as `IsFeatureEnabled`, `GetFeatureFlag`, `GetFeatureFlagPayload`, and `Capture.SendFeatureFlags` in new code
