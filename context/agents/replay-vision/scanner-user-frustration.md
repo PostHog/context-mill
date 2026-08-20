@@ -14,17 +14,16 @@ dependsOn: [enable-replay]
 
 ## Goal
 
-Create the **User frustration** monitor: the user getting stuck. It is gated
-on `$rageclick` — cheap and high-precision, because here the gating event *is*
-the friction. The skeleton, the locked fields, and the create/collision
-mechanics are in your skills — you fill exactly one blank from the repo:
+Create the frustration monitor: the user getting stuck, named and written
+for this product. It is gated on `$rageclick` — cheap and high-precision,
+because here the gating event *is* the friction. The brief, the locked
+scaffold, and the create/re-run mechanics are in your skills — you fill the
+blanks from the repo:
 
+- **`name`** — what it watches, in this product's own words.
+- **`{{STUCK_MOMENTS}}`** — where a user of this product realistically gets
+  stuck, on screen, in the product's vocabulary.
 - **`{{PRODUCT_CONTEXT}}`** — one plain factual sentence.
-
-**Leave the `$rageclick` gate as the only filter.** Adding a URL scope is the
-change most likely to collide with the broken-experiences scanner, whose
-query owns the *where*; this one owns the *what they did*. The two must never
-match the same sessions.
 
 If the enable-replay handoff says this product has no web surface and no
 recorded web sessions at all, skip creation and say why — that is a correct

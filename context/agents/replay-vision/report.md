@@ -8,7 +8,7 @@ effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: []
-allowedTools: [Read, Glob, Grep, posthog_exec]
+allowedTools: [Read, Glob, Grep, Write, posthog_exec]
 disallowedTools: [enqueue_task]
 dependsOn: [scanner-broken-experiences, scanner-user-frustration, scanner-session-summaries]
 ---
@@ -28,6 +28,9 @@ every task in the run. Briefly and concretely:
 
 If the run also installed and initialized the SDK, say so — the user started
 this command without PostHog and now has it.
+
+Write the report to `./posthog-replay-vision-report.md` (the wizard shows this
+file at the end of the run), then publish the same content as your handoff.
 
 ## How you know you succeeded
 
