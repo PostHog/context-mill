@@ -15,8 +15,15 @@ conflict to report (below), not a problem to fight.
 
 ## Build and verify
 
+Before building, re-read the framework rules you were given and check each one
+that applies to this project against the diff you are about to verify. A rule
+naming a file or a wiring this project has, with nothing in the diff answering
+it, is unfinished work — do it now. This is the last step that can catch it.
+
 Run the project's build (or typecheck) and lint scripts if they exist
-(check the manifest's scripts). Do not run the test suite — the runtime only
+(check the manifest's scripts). Where the toolchain ships its own analyzer rather
+than manifest scripts, run that instead — it is the only thing that will catch a
+lint the project itself enforces. Do not run the test suite — the runtime only
 permits install, build, typecheck, lint, and format commands, so a test command
 is blocked; a build that compiles is sufficient verification. Only errors in the
 files this integration changed are yours to fix — a missing import, a wrong call shape.
