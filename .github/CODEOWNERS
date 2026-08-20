@@ -14,3 +14,6 @@
 /context/skills/revenue-analytics/                      @PostHog/team-web-analytics
 /context/skills/web-analytics/                          @PostHog/team-web-analytics
 /context/skills/integration/                            @PostHog/team-wizard-docs
+/context/skills/replay-vision*/                         @PostHog/team-replay
+/context/skills/ai-observability/                       @PostHog/team-ai-observability
+/context/skills/llm-analytics/                          @PostHog/team-ai-observability

@@ -94,3 +94,6 @@ posthog-audit-report.md
 
 # Local scratch dirs
 scratch/
+
+# Agent-created git worktrees
+.claude/worktrees/
