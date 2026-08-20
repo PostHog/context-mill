@@ -29,6 +29,9 @@ every task in the run. Briefly and concretely:
 If the run also installed and initialized the SDK, say so — the user started
 this command without PostHog and now has it.
 
+Write the report to `./posthog-replay-vision-report.md` (the wizard shows this
+file at the end of the run), then publish the same content as your handoff.
+
 ## How you know you succeeded
 
 A user who reads only your report knows what watches their product, what it
