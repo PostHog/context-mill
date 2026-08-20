@@ -42,7 +42,7 @@ Determine the language first, then route to the matching instructions throughout
 
   Determine the package manager from the lockfile (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lockb`).
 
-  **Note which SDK major the project is on** — STEP 3 and STEP 4 both depend on it. `sdk-v2.md` is the reference for everything v2-specific.
+  **Record which SDK major the project is on.** STEP 2, STEP 3, and STEP 4 each contain a **For `@modelcontextprotocol/sdk` (v1)** and a **For `@modelcontextprotocol/server` (v2)** section — follow only the one matching the major found here. `sdk-v2.md` is the reference for everything v2-specific.
 
 - **Python** — there's a `pyproject.toml`, `requirements.txt`, or `setup.py`, or `.py` sources. Look for MCP signals:
   - the official `mcp` package — `from mcp.server.fastmcp import FastMCP` or `from mcp.server.lowlevel import Server`.
@@ -59,24 +59,47 @@ Then identify the file and the exact place where the server is constructed or wh
 
 Pick exactly one based on what STEP 1 found. When in doubt, read the bundled reference docs — `installation.md` covers the wrapping paths; `custom-servers.md` covers the custom-dispatcher paths; `sdk-v2.md` covers what differs on MCP SDK v2.
 
-**TypeScript / JavaScript:**
+#### TypeScript / JavaScript
 
-- **Path A — official SDK server object** (`new Server(...)` or `new McpServer(...)`, from `@modelcontextprotocol/sdk` on v1 or `@modelcontextprotocol/server` on v2): wrap it with `instrument(server, posthog)`. One line. `instrument()` detects the server's shape at runtime, so the call is the same on both majors — never branch the code you write on which major is installed.
+- **Path A — official SDK server object** (`new Server(...)` or `new McpServer(...)` from the official SDK, either major): wrap it with `instrument(server, posthog)`. One line. `instrument()` detects the server's shape at runtime, so the call is the same on both majors — never branch the code you write on which major is installed.
 - **Path B — `mcp-handler`** (`createMcpHandler((server) => { ... })`): same `instrument(server, posthog)` call, inside the setup callback. Because Vercel's transport is stateless, also wire `identify` (STEP 4) and flush per invocation (STEP 6).
 - **Path C — custom dispatcher** (Hono / Express / Cloudflare Worker / edge function with no SDK server object to wrap): use the `PostHogMCP` client and call `captureToolCall` / `captureInitialize` yourself at the dispatch points.
 - **Path D — `@rekog/mcp-nest`** (NestJS): the framework builds the server, so there's no `new McpServer` for you to wrap. Instrument it through the module's `serverMutator` hook in `McpModule.forRoot(...)`. See STEP 4.
 
-**Python:**
+On Paths A and B, the SDK major recorded in STEP 1 decides the specifics — STEP 3 and STEP 4 each have a matching section per major:
+
+##### For @modelcontextprotocol/sdk (v1)
+
+The server object comes from `@modelcontextprotocol/sdk`. Follow the **v1** sections of STEP 3 and STEP 4; `installation.md` is the reference.
+
+##### For @modelcontextprotocol/server (v2)
+
+The server object comes from `@modelcontextprotocol/server`. Follow the **v2** sections of STEP 3 and STEP 4; `sdk-v2.md` is the reference for everything v2-specific.
+
+#### Python
 
 - **Path P1 — a FastMCP or low-level Server** (the official `mcp` package's `FastMCP`/`Server`, or jlowin's `fastmcp` 2.0): wrap it with `instrument(server, posthog)`. One line — the SDK detects which framework it is.
 - **Path P2 — custom dispatcher** (FastAPI / Starlette / Flask / edge with no server object to wrap): use the `PostHogMCP` client and call `capture_tool_call` / `capture_initialize` yourself at the dispatch points.
 
 ### STEP 3: Install the SDK
 
-- **TypeScript / JavaScript:** install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing.
-  - **Never install an MCP SDK.** Both majors are *optional* peer dependencies, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
-  - **On SDK v2, `@posthog/mcp` must be `>=0.11.2`.** If the project already depends on something older, upgrade it — earlier versions rejected high-level v2 servers in a compatibility check that `instrument()` swallows, so the integration looked healthy and captured nothing at all.
-- **Python:** the SDK ships inside `posthog`, so install (or require) `posthog>=7.21` with the project's installer — e.g. `pip install "posthog>=7.21"`, `uv add posthog`, `poetry add posthog`. The MCP SDK itself (`mcp` / `fastmcp`) is a peer dependency you already have — you built the server with it — so don't add it. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
+#### TypeScript / JavaScript
+
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing.
+
+**Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
+
+##### For @modelcontextprotocol/sdk (v1)
+
+No extra constraint — pinning the current published `@posthog/mcp` release is enough.
+
+##### For @modelcontextprotocol/server (v2)
+
+`@posthog/mcp` must be **`>=0.11.2`**. If the project already depends on something older, upgrade it — earlier versions rejected high-level v2 servers in a compatibility check that `instrument()` swallows, so the integration looked healthy and captured nothing at all.
+
+#### Python
+
+The SDK ships inside `posthog`, so install (or require) `posthog>=7.21` with the project's installer — e.g. `pip install "posthog>=7.21"`, `uv add posthog`, `poetry add posthog`. The MCP SDK itself (`mcp` / `fastmcp`) is a peer dependency you already have — you built the server with it — so don't add it. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
 
 ### STEP 4: Instrument the server
 
@@ -92,11 +115,12 @@ const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 })
 ```
 
-**Path A — official SDK server:**
+**Path A — official SDK server:** wrap the server with `instrument(server, posthog)` immediately after constructing it. `instrument()` is idempotent per server and returns an analytics handle (used later for custom events). It works on both the low-level `Server` and the high-level `McpServer`, and the wrapping line is identical on both majors — only the SDK import differs. Use the section matching the major from STEP 1:
+
+##### For @modelcontextprotocol/sdk (v1)
 
 ```ts
-// v1: import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-// v2: import { McpServer } from "@modelcontextprotocol/server"
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { instrument } from "@posthog/mcp"
 
 const server = new McpServer({ name: "my-mcp-server", version: "1.0.0" })
@@ -104,9 +128,22 @@ const analytics = instrument(server, posthog) // wrap immediately after construc
 // register tools as usual — tools added after instrument() are still captured
 ```
 
-Match the import to the major found in STEP 1; the `instrument()` line is identical either way. On v2 tools register with `registerTool()` — the deprecated `server.tool()` was removed.
+##### For @modelcontextprotocol/server (v2)
 
-`instrument()` is idempotent per server and returns an analytics handle (used later for custom events). It works on both the low-level `Server` and the high-level `McpServer`. If the project already calls `instrument(server.server)` — a workaround for an old compatibility check that rejected high-level v2 servers — change it back to `instrument(server)`.
+```ts
+import { McpServer } from "@modelcontextprotocol/server"
+import { instrument } from "@posthog/mcp"
+
+const server = new McpServer({ name: "my-mcp-server", version: "1.0.0" })
+const analytics = instrument(server, posthog) // wrap immediately after constructing the server
+// register tools with registerTool() as usual — tools added after instrument() are still captured
+```
+
+v2 reminders:
+
+- Tools register with `registerTool()` — the deprecated `server.tool()` was removed in v2.
+- `@posthog/mcp` must be `>=0.11.2` (STEP 3).
+- If the project already calls `instrument(server.server)` — a workaround for an old compatibility check that rejected high-level v2 servers — change it back to `instrument(server)`.
 
 **Path B — `mcp-handler`:** call `instrument(server, posthog)` as the first line of the setup callback, with the `posthog` client created at module scope (not per request). Because the transport is stateless, group calls by user with `identify`:
 
@@ -124,7 +161,7 @@ const handler = createMcpHandler((server) => {
 })
 ```
 
-**Always read request headers through `getRequestHeaders(extra)`** — in `identify`, `intentFallback`, `eventProperties` and `beforeSend` alike. The callback receives the MCP SDK's `extra` unchanged, and the majors shape it differently: v1 puts a plain object at `extra.requestInfo.headers`, v2 attaches a WHATWG `Request` at `extra.http.req` whose headers only answer to `.get()`. A v1-shaped read returns `undefined` on v2, so `identify()` returns `null` and every event goes out anonymous with no error anywhere. The helper handles both and returns a plain lowercase-keyed object. See `sdk-v2.md`.
+**Always read request headers through `getRequestHeaders(extra)`** — in `identify`, `intentFallback`, `eventProperties` and `beforeSend` alike, on either major. The callbacks receive the MCP SDK's `extra` unchanged, and the two majors shape its headers differently — a hand-rolled read that works on one silently returns `undefined` on the other, so `identify()` returns `null` and every event goes out anonymous with no error anywhere. The helper handles both majors and returns a plain lowercase-keyed object. `sdk-v2.md` documents the per-major shapes.
 
 **Path C — custom dispatcher:** swap the existing PostHog client for `PostHogMCP` (a drop-in `posthog-node` subclass) and call the capture helpers at the dispatch points. Read `custom-servers.md` for the full field reference before editing.
 
@@ -179,7 +216,9 @@ class AppModule {}
 
 `instrumentMutator` returns the server (not `instrument()`'s handle), so it slots straight into the hook. Compose with an existing `serverMutator` if there is one, and handlers nest registers after the mutator runs are still captured. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), call `instrument()` directly inside your own mutator and keep its handle, returning the server yourself.
 
-**Sessions on an SDK v2 server.** Protocol revision is a property of each *request*, not of the server — a v2 server serves `2025-11-25` traffic too — so instrument once and never branch on the major. The `2026-07-28` revision removed the `initialize` handshake and the `Mcp-Session-Id` header, so on that traffic **every request becomes its own `$session_id`** unless `enableConversationId: true` is set. If the project targets it, offer that option and say what it buys. `sdk-v2.md` has the rest, including why `$mcp_client_name` can be absent on `2025-11-25` traffic behind `createMcpHandler`, and which `2026-07-28` features aren't instrumented yet.
+##### For @modelcontextprotocol/server (v2), any path — sessions and protocol revisions
+
+Protocol revision is a property of each *request*, not of the server — a v2 server serves `2025-11-25` traffic too — so instrument once and never branch on the major. The `2026-07-28` revision removed the `initialize` handshake and the `Mcp-Session-Id` header, so on that traffic **every request becomes its own `$session_id`** unless `enableConversationId: true` is set. If the project targets it, offer that option and say what it buys. `sdk-v2.md` has the rest, including why `$mcp_client_name` can be absent on `2025-11-25` traffic behind `createMcpHandler`, and which `2026-07-28` features aren't instrumented yet.
 
 #### Python
 
