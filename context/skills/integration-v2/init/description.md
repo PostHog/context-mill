@@ -4,16 +4,20 @@ Set up PostHog so the SDK is configured once and available across the app.
 
 ## Environment variables
 
-Set the PostHog keys through the wizard tools (`set_env_values`), never hardcoded.
-Use the framework's public env-var convention so the client can read them.
+Set the PostHog keys through the wizard tools (`set_env_values`) wherever the
+framework reads configuration from an environment, using its public env-var
+convention so the client can read them. The project token is public and is meant
+to ship: where a file the build serves has no environment to read from, write the
+real token into that file. Inventing an injection step, or leaving a global for
+someone else to define, ships an integration that captures nothing.
 
 - the public project token
 - the PostHog host
 
-Where a build genuinely has no valid environment to read from, often
-mobile projects, (iOS/Android release and archive builds), embed the
-real public token in the config the build ships — never an empty string or
-placeholder. Env-based configuration still covers development and any build
+Where a build genuinely has no valid environment to read from — mobile release
+and archive builds, and any static asset the build ships — embed the real public
+token in the config that ships, never an empty string, a placeholder, or a global
+some later step is expected to define. Env-based configuration still covers development and any build
 that can read the environment.
 
 Then document these keys for other developers: add them to `.env.example` (create

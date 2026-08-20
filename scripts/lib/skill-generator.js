@@ -762,7 +762,7 @@ async function generateSkill({
     if (rules.length > 0) {
         fs.writeFileSync(
             path.join(referencesDir, 'COMMANDMENTS.md'),
-            `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
+            `# Framework rules\n\nEvery rule below that applies to this project is part of the work, not background advice. Before you finish, check each one against what this project actually ships, and do the ones that apply.\n\n${commandmentsText}\n`,
             'utf8',
         );
         references.push({
