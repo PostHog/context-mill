@@ -8,7 +8,7 @@ effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: []
-allowedTools: [Read, Glob, Grep, posthog_exec]
+allowedTools: [Read, Glob, Grep, Write, posthog_exec]
 disallowedTools: [enqueue_task]
 dependsOn: [scanner-broken-experiences, scanner-user-frustration, scanner-session-summaries]
 ---
