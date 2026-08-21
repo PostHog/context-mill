@@ -1,0 +1,6 @@
+# Build artifacts and dependencies
+/_build/
+/deps/
+
+# Secrets
+.env

@@ -1,0 +1,12 @@
+# Orchestrator step-skill: The breakage monitor brief for replay vision.
+type: docs-only
+template: description.md
+description: The breakage monitor brief for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: Breakage scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

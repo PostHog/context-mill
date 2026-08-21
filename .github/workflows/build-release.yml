@@ -205,6 +205,7 @@ jobs:
           done
 
       - name: Publish release
+        id: publish
         # Every asset (bundle, skill ZIPs, skill-menu.json, docs) is now uploaded,
         # so flip the draft to published atomically. This is the point
         # `releases/latest` moves to the new version — the wizard never sees it
@@ -393,12 +394,25 @@ jobs:
       # completed, and this step still fails the run loudly if the mirror breaks.
       # It only reads dist/, which nothing above mutates.
       #
+      # Running last also means the default "skip if any earlier step failed"
+      # rule would let the PostHog/skills and PostHog/ai-plugin mirrors above
+      # take S3 down with them — which is exactly what happened in v1.47.0, when
+      # a transient 502 from the skills commit skipped this step and the release
+      # shipped with no S3 mirror. Those two mirrors are explicitly NOT gating
+      # (see the "Notify Slack" comment above), so the condition below keys off
+      # the release actually being published rather than off the whole job's
+      # health. `!cancelled()` is what opts out of the default skip-on-failure;
+      # it's preferred over `always()` so a cancelled run doesn't still upload.
+      # If anything release-critical failed, `publish` never ran, its conclusion
+      # isn't 'success', and the mirror correctly stays skipped.
+      #
       # Nothing consumes these objects yet: the bucket is private with no CDN in
       # front of it. That arrives in a later phase, at which point these same
       # objects become publicly fetchable with no re-upload, because the URLs
       # baked into them already point at the final hostname.
       - name: Mirror release to S3
         id: mirror
+        if: ${{ !cancelled() && steps.publish.conclusion == 'success' }}
         uses: ./.github/actions/mirror-to-s3
         with:
           version: ${{ env.RELEASE_VERSION }}

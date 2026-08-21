@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.48.0](https://github.com/PostHog/context-mill/compare/v1.47.0...v1.48.0) (2026-08-20)
+
+
+### Features
+
+* **replay-vision:** customize the scanner briefs per app and share them with self-driving ([13e63c4](https://github.com/PostHog/context-mill/commit/13e63c4844d806d19ea1956ac2613cc8f18530af))
+* **replay-vision:** customize the three scanners per app instead of adding more ([aaa5c44](https://github.com/PostHog/context-mill/commit/aaa5c44fd13e5a2d509d95c6a957788f41ca1ca4))
+
+
+### Bug Fixes
+
+* allow the report task to write its report file ([37232bf](https://github.com/PostHog/context-mill/commit/37232bf667fc5b75e529f7e1baf73184c5d1233a))
+* report task writes posthog-replay-vision-report.md like the linear arm ([6dead5f](https://github.com/PostHog/context-mill/commit/6dead5f89bfc4d1c67d1c02c2f75904acccf4726))
+
+## [1.47.0](https://github.com/PostHog/context-mill/compare/v1.46.1...v1.47.0) (2026-08-19)
+
+
+### Features
+
+* **replay-vision:** orchestrator flow and scanner step-skills ([3f9cd79](https://github.com/PostHog/context-mill/commit/3f9cd79f89ba612de3c96ee89ecb5cef05d10394))
+* **skills:** add replay-vision wizard command ([1dcc90e](https://github.com/PostHog/context-mill/commit/1dcc90e5f5e32160a869e783db68e7a88ad8be87))
+
 ## [1.46.1](https://github.com/PostHog/context-mill/compare/v1.46.0...v1.46.1) (2026-08-18)
 
 

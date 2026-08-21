@@ -1,0 +1,15 @@
+# Orchestrator step-skill: the shared mechanics every scanner task loads —
+# create/update calls, sizing, collision rules, and the security ground rules.
+type: docs-only
+template: description.md
+description: Shared mechanics for creating Replay vision scanners
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/replay-vision.md
+variants:
+  - id: all
+    display_name: Replay vision scanner mechanics
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

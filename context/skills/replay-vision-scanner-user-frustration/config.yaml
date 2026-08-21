@@ -1,0 +1,12 @@
+# Orchestrator step-skill: The frustration monitor brief for replay vision.
+type: docs-only
+template: description.md
+description: The frustration monitor brief for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: Frustration scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

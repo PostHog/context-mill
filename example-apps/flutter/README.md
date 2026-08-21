@@ -8,7 +8,12 @@ A [Flutter](https://flutter.dev/) example app demonstrating PostHog integration 
 - **Screen tracking**: Automatic `$screen` events for named routes via `PosthogObserver`
 - **Error tracking**: Manual `captureException()` plus autocapture of uncaught Flutter errors
 - **User authentication**: Demo login flow with PostHog `identify()`/`reset()`
-- **Manual SDK setup**: Single Dart-side configuration with native auto-init disabled (required for session replay and surveys)
+- **Manual SDK setup**: Dart-side configuration with native auto-init disabled (required for session replay and surveys)
+
+**Flutter Web initializes separately.** `Posthog().setup()` is a no-op on web, so
+an app that ships a `web/` target needs the posthog-js snippet in `web/index.html`
+as well — a Dart-side setup alone leaves web builds capturing nothing. See
+`web/index.html` in this example.
 
 ## Prerequisites
 
