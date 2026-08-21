@@ -19,10 +19,13 @@ per-service concern: every service gets its own SDK install and its own
 `service_name`.
 
 First map the repo. A single-package repo is one service. A workspace or
-monorepo (root manifest listing workspaces, or several packages with their
-own manifests) holds several packages — classify each: a **service** runs
-server-side work (server entrypoints, workers, APIs); browser-only apps and
-libraries are not services and get no chain (the report notes them).
+monorepo holds several packages — and the workspace list in a root manifest
+is not the whole map: a repo can mix ecosystems, so glob for every manifest
+kind (`package.json`, `pyproject.toml`, `requirements.txt`, `Pipfile`,
+`go.mod`, `composer.json`, `Gemfile`, ...) across subdirectories. Classify
+each package found: a **service** runs server-side work (server entrypoints,
+workers, APIs — whatever the language); browser-only apps and libraries are
+not services and get no chain (the report notes them).
 
 Then seed, per service:
 
