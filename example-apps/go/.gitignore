@@ -1,0 +1,5 @@
+.env
+
+# Compiled binary (built from `go build`)
+/posthog-go-example
+*.exe
