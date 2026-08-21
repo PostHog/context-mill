@@ -6,17 +6,16 @@ model_pi: openai/gpt-5.6-sol
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
-skills: []
-allowedTools: [Read, Edit, Glob, Grep, Bash, install_skill]
+skills: [metrics]
+allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
 dependsOn: []
 ---
 
 ## Goal
 
-Leave the project with a PostHog SDK that can record metrics. Start by calling
-`install_skill` with the skill id in your task input — it carries the platform's
-install and init specifics — then work through three checks, in order:
+Leave the project with a PostHog SDK that can record metrics. Your skill
+carries the platform's install and init specifics. Three checks, in order:
 
 1. **Installed?** Look for the SDK in the dependency manifest. Missing →
    install it with the project's own package manager and let it resolve the
