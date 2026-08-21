@@ -76,6 +76,14 @@ describe('writeManifestAndMenu', () => {
         expect(new Set(entries.map(e => e.downloadUrl)).size).toBe(1);
     });
 
+    it('an empty frameworks list falls back to a single bare entry', () => {
+        write([skill('python', { frameworks: [] })]);
+
+        const entries = menuEntries();
+        expect(entries).toHaveLength(1);
+        expect(entries[0].framework).toBeUndefined();
+    });
+
     it('expands multi-framework variants inside a bundle the same way', () => {
         write([
             skill('python', { bundle: true, frameworks: ['django', 'flask'] }),
