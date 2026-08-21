@@ -24,42 +24,50 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 | Manifest output | `dist/skills/manifest.json`, `dist/skills/skill-menu.json` (CLI entries live under `cliEntries`) |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |
 
-## How skills become wizard commands — the `cli:` block
+## How skills become wizard commands (hats) — the `cli:` block
 
-Every skill's `config.yaml` may declare an optional `cli:` block that tells the
-wizard whether and how to expose the skill as a CLI command. It's compiled into
-`cliEntries` in `dist/skills/skill-menu.json`, which the wizard fetches at
-runtime. **Adding or renaming a skill-backed command is a context-mill release —
-no wizard code change.** The full schema, the YAML→command mapping, and the
-promotion criterion live in
+A skill that surfaces as a typed wizard command is a **hat** — you wear a
+different hat to do a different thing. Every skill's `config.yaml` may declare an
+optional `cli:` block that tells the wizard whether the skill is a hat (and how
+it's named), a plain skill, or internal. It's compiled into `hatEntries` in
+`dist/skills/skill-menu.json`, which the wizard fetches at runtime. **Adding or
+renaming a hat is a context-mill release — no wizard code change.** The full
+schema, the YAML→hat mapping, and the promotion criterion live in
 [CONTRIBUTING.md](CONTRIBUTING.md#how-skills-get-into-the-wizard-cli). Quick shape:
 
 ```yaml
 cli:
-  role: command          # command | skill | internal
-  parentCommand: audit   # optional — nests this command under another
-  command: events        # the user-typed word; required when role is command
+  role: hat          # hat | skill | internal
+  parentHat: audit   # optional — nests this hat under another
+  hat: events        # the user-typed word; required when role is hat
 ```
 
 The parser is `parseCliBlock` in `scripts/lib/skill-generator.js`. It enforces:
 
-- `role` is one of `command`, `skill`, `internal` (default: `skill` if no `cli:` block is set at all)
-- `command` and `parentCommand` are kebab-case, 2–20 characters
+- `role` is one of `hat`, `skill`, `internal` (default: `skill` if no `cli:` block is set at all)
+- `hat` and `parentHat` are kebab-case, 2–20 characters
 - Neither field is a yargs reserved word (`help`, `version`, `completion`) or a wizard internal flag (`playground`, `benchmark`, `yara-report`, `local-mcp`, `ci`, `skill`)
 - `default` (optional, boolean) marks the leaf `wizard <family>` runs by default (and pre-highlights it in the picker once a family has several)
 
 Failures throw at build time, before drift can ship to the wizard.
 
-**Flat vs. family rule:** a public command is flat when there's only one option
+> **Legacy spellings:** the pre-rename keys `role: command`, `command:`, and
+> `parentCommand:` are still accepted on input and normalized to `hat` /
+> `hat:` / `parentHat:`. New skills should use the `hat` vocabulary. The build
+> also still emits a legacy `cliEntries` mirror (old `role: command` shape)
+> alongside `hatEntries` so the current wizard keeps resolving; drop it once the
+> wizard reads `hatEntries`.
+
+**Flat vs. family rule:** a public hat is flat when there's only one option
 today, a family when the user must pick. Don't pre-create `wizard migrate
 <vendor>` while there's only one vendor — restructure to a family when a second
 lands. See [CONTRIBUTING.md § Flat vs. family](CONTRIBUTING.md#flat-vs-family--the-convention).
 
 ### When you're about to change a `cli:` block
 
-1. Read [CONTRIBUTING.md § Promotion criterion for `role: command`](CONTRIBUTING.md#promotion-criterion-for-role-command).
+1. Read [CONTRIBUTING.md § Promotion criterion for `role: hat`](CONTRIBUTING.md#promotion-criterion-for-role-hat).
 2. Run `npm test` — the parser's suite (`scripts/lib/tests/cli-block.test.js`) covers every naming-convention case.
-3. Run `npm run build` — confirm the entry appears (or disappears) under `cliEntries` in `dist/skills/skill-menu.json` with the values you expect.
+3. Run `npm run build` — confirm the entry appears (or disappears) under `hatEntries` in `dist/skills/skill-menu.json` with the values you expect.
 4. The wizard resolves new entries at runtime, so no wizard release is required unless the change needs wizard-side hooks (custom outro, content blocks, abort cases).
 
 ## Wizard CLI command mapping (old → new)
@@ -89,7 +97,7 @@ longer exist — only some keep an alias.
 | `wizard audit web-analytics` | *(wizard-native, not a skill here)* |
 
 **Commands vs. skills:** those audit subcommands **are** skills, promoted to
-commands via `cli: role: command`. A `role: skill` skill is reachable only via
+commands (hats) via `cli: role: hat`. A `role: skill` skill is reachable only via
 `wizard skill <id>`. Same machinery, two surfaces — so `wizard audit <subcommand>`
 picks an audit area, it does **not** take a skill name.
 
@@ -114,10 +122,10 @@ npm run dev        # Partial-rebuild dev server with watch
 ## Repository conventions
 
 - Skill content lives in markdown, never in JS/TS. The build pipeline reads YAML configs and stitches markdown together; it doesn't generate prose.
-- The `cli:` block is the **single source of truth** for the wizard's command surface for any skill. Don't duplicate command names in the wizard repo; they're derived from the manifest.
-- `additionalProperties: false` is set on the JSON Schema — adding a new field to the manifest shape is a coordinated change (bump the schema, bump consumer types in the wizard). See [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md) for the wizard-side contract.
+- The `cli:` block is the **single source of truth** for the wizard's command surface for any skill. Don't duplicate hat names in the wizard repo; they're derived from the manifest.
+- `additionalProperties: false` is set on the JSON Schema — adding a new field to the manifest shape (e.g. the `hatEntries` array) is a coordinated change (bump the schema, bump consumer types in the wizard). See [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md) for the wizard-side contract.
 
 ## Companion projects
 
-- **[wizard](https://github.com/PostHog/wizard)** — the CLI that consumes the manifest at build time and turns each `role: command` entry into a registered command.
+- **[wizard](https://github.com/PostHog/wizard)** — the CLI that consumes the manifest at build time and turns each `role: hat` entry into a registered command.
 - **[warlock](https://github.com/PostHog/warlock)** — the security scanner used by the wizard. Unrelated to skill content but lives alongside in the same engineering scope.
