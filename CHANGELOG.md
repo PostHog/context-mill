@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.49.0](https://github.com/PostHog/context-mill/compare/v1.48.0...v1.49.0) (2026-08-21)
+
+
+### Features
+
+* **build:** variants declare the frameworks they serve — one menu entry per framework ([e9b0aca](https://github.com/PostHog/context-mill/commit/e9b0aca89f11fcad91b4943f4d3b1a5d6c40294b))
+* **integration:** add Java (Spring Boot) as a full example-based variant ([#270](https://github.com/PostHog/context-mill/issues/270)) ([7ab67b4](https://github.com/PostHog/context-mill/commit/7ab67b4af60a8e769ffc349fc7b768e1e7cd47f0))
+* **integration:** add Rust as a full example-based variant ([#269](https://github.com/PostHog/context-mill/issues/269)) ([716684b](https://github.com/PostHog/context-mill/commit/716684bcaad849baa101d140081e2657761a3dcb))
+* **integration:** make Elixir a full example-based variant ([#268](https://github.com/PostHog/context-mill/issues/268)) ([86619ad](https://github.com/PostHog/context-mill/commit/86619ad9a84441a1f1eec20abdb01e96ca431644))
+* **integration:** make Go a full example-based variant ([#267](https://github.com/PostHog/context-mill/issues/267)) ([d2896b8](https://github.com/PostHog/context-mill/commit/d2896b89aefdd294ee7c39210eeb0863ae0c08f4))
+* **mcp-analytics:** detect and instrument MCP TypeScript SDK v2 servers ([c27f00a](https://github.com/PostHog/context-mill/commit/c27f00a767b49c23dd60ae2171729882c6c7ec82))
+* **metrics:** orchestrator flow — verify the SDK before instrumenting ([3dca124](https://github.com/PostHog/context-mill/commit/3dca1245bc56ca389b0aec92498622d08d7cf129))
+* **metrics:** orchestrator flow — verify the SDK before instrumenting ([3545b0f](https://github.com/PostHog/context-mill/commit/3545b0f9c2aa007dd27ba752f605ef5cf2e09955))
+* **metrics:** seed fans out one verify→instrument chain per service — monorepo-aware, parallel chains ([223b229](https://github.com/PostHog/context-mill/commit/223b229e07bcca85f6533a2ce37b853f9726dc5e))
+* **metrics:** seed picks the skill variant and hands it to tasks as input ([50b9342](https://github.com/PostHog/context-mill/commit/50b93426dfa8401deec55fc9be8d4373f1e67bf1))
+* **skills:** add metrics skill family (posthog.metrics) ([f57b7d9](https://github.com/PostHog/context-mill/commit/f57b7d9b95e101d4e263054ae8277fd924983b11))
+
+
+### Bug Fixes
+
+* **integration-v2:** make step prose platform-aware instead of web-shaped ([9f35f18](https://github.com/PostHog/context-mill/commit/9f35f182c18aa932e32df5d12658c141f5b7f089))
+* **metrics:** report mirrors into a PostHog notebook like integration-v2 — no report file ([6bbc198](https://github.com/PostHog/context-mill/commit/6bbc1985396cf21ce296d4363f1ae05fa7925012))
+* **metrics:** report task writes posthog-metrics-report.md like replay-vision — outro has a file to show ([bdd2a5e](https://github.com/PostHog/context-mill/commit/bdd2a5ee168ee244d207e54185926405c3c52f39))
+* **metrics:** seed manifest sweep is mechanical — one find per pattern, every ecosystem ([956bbf0](https://github.com/PostHog/context-mill/commit/956bbf0b747bc228bf926e9ac41b2870ebf4c47f))
+* **metrics:** seed maps every manifest ecosystem — a python worker inside an npm workspace gets its chain ([45388be](https://github.com/PostHog/context-mill/commit/45388be67c703d45701707e5c3e56c7c273b939d))
+* **metrics:** tasks declare the metrics skill — the seed's pick pins the variant, not an install_skill call ([5e06f15](https://github.com/PostHog/context-mill/commit/5e06f1588290b128a2687188065215a4fdea224d))
+* **metrics:** verify-sdk at sol-medium, report on luna like the integration report ([cb931da](https://github.com/PostHog/context-mill/commit/cb931da6da838c3a06104ca12d0046bfcd081cbd))
+* **rust:** flush and shutdown are unconditional, not gated on an existing shutdown path ([fe6959d](https://github.com/PostHog/context-mill/commit/fe6959d9e520580c5ff92f0fc31fc2918d0773f8))
+* **rust:** flush and shutdown are unconditional, not gated on an existing shutdown path ([47a0db5](https://github.com/PostHog/context-mill/commit/47a0db5702521e87bc7b9438161e600b478837ed))
+
+
+### Reverts
+
+* **metrics:** keep the five platform variants — tasks pull the matching one themselves ([9a3e880](https://github.com/PostHog/context-mill/commit/9a3e8805c2aef87eeaca277de750eaf4d4b80adb))
+
 ## [1.48.0](https://github.com/PostHog/context-mill/compare/v1.47.0...v1.48.0) (2026-08-20)
 
 
