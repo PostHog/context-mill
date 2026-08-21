@@ -6,16 +6,20 @@ model_pi: openai/gpt-5.6-sol
 effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
-skills: [metrics]
-allowedTools: [Read, Edit, Glob, Grep, Bash]
+skills: []
+allowedTools: [Read, Edit, Glob, Grep, Bash, load_skill_menu, install_skill]
 disallowedTools: [enqueue_task]
 dependsOn: []
 ---
 
 ## Goal
 
-Leave the project with a PostHog SDK that can record metrics. Your skill
-carries the platform's install and init specifics. Three checks, in order:
+Leave the project with a PostHog SDK that can record metrics. First call
+`load_skill_menu` with `category: "metrics"` and `install_skill` for the
+variant matching the project's platform — the menu is the source of truth,
+one variant per platform, and a full-stack app takes the server variant
+because metrics measure service work. The installed skill carries the
+platform's install and init specifics. Then three checks, in order:
 
 1. **Installed?** Look for the SDK in the dependency manifest. Missing →
    install it with the project's own package manager and let it resolve the
@@ -34,5 +38,6 @@ carries the platform's install and init specifics. Three checks, in order:
 
 The manifest holds the SDK at a metrics-capable version and exactly one client
 init carries the metrics config — or your handoff plainly says why the
-environment stopped you. Name the manifest, the version, and the init site in
-your handoff, so instrumentation knows what to import and where.
+environment stopped you. Name the skill variant you installed, the manifest, the version, and the
+init site in your handoff, so instrumentation installs the same skill and
+knows what to import and where.

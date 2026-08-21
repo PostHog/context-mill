@@ -1,20 +1,39 @@
-# Metrics skill - docs-only, one skill for every platform.
-# The per-platform installation docs ship as reference files inside the one
-# skill; the agent reads the reference matching the project's platform.
+# Metrics skills - docs-only (no example projects)
 type: skill
 template: description.md
-description: PostHog application metrics (posthog.metrics)
+description: PostHog metrics for {display_name}
 tags: [metrics]
 shared_docs:
   - https://posthog.com/docs/metrics/start-here.md
   - https://posthog.com/docs/metrics/basics.md
   - https://posthog.com/docs/metrics/architecture.md
 variants:
-  - id: all
-    display_name: Application Metrics
+  - id: javascript
+    display_name: Web (JavaScript)
+    tags: [javascript_web, javascript]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/javascript.md
+
+  - id: nodejs
+    display_name: Node.js
+    tags: [javascript]
+    docs_urls:
       - https://posthog.com/docs/metrics/installation/nodejs.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
       - https://posthog.com/docs/metrics/installation/python.md
+
+  - id: kubernetes
+    display_name: Kubernetes
+    tags: [kubernetes]
+    docs_urls:
       - https://posthog.com/docs/metrics/installation/kubernetes.md
+
+  - id: other
+    display_name: Other Languages
+    tags: []
+    docs_urls:
       - https://posthog.com/docs/metrics/installation/other.md

@@ -1,12 +1,12 @@
-# PostHog application metrics
+# PostHog metrics for {display_name}
 
-This skill helps you add PostHog application metrics (`posthog.metrics`) to a project. Metrics are pre-aggregated, service-level telemetry — counters, gauges, and histograms — distinct from product analytics events.
+This skill helps you add PostHog application metrics (`posthog.metrics`) to {display_name} applications. Metrics are pre-aggregated, service-level telemetry — counters, gauges, and histograms — distinct from product analytics events.
 
 ## Reference files
 
 {references}
 
-Identify the project's platform from its manifest, then read **exactly one** installation reference for it — `python` for Python tooling, `nodejs` for server-side or full-stack JavaScript (metrics measure service work, so full-stack apps take the server SDK), `javascript` for browser-only apps, `kubernetes` for cluster-level scraping, `other` for any other language via OTLP. The shared references (start-here, basics, architecture) cover the API and the data model.
+Consult the documentation for API details and platform-specific patterns.
 
 ## Where to instrument
 
