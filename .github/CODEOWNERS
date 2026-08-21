@@ -11,6 +11,8 @@
 /context/skills/self-driving/                           @PostHog/team-self-driving
 /context/skills/data-warehouse-source/                  @PostHog/team-warehouse-sources
 /context/skills/mcp-analytics/                          @PostHog/team-mcp-analytics
+/context/skills/metrics/                                @PostHog/apm
+/context/agents/metrics/                                @PostHog/apm
 /context/skills/revenue-analytics/                      @PostHog/team-web-analytics
 /context/skills/web-analytics/                          @PostHog/team-web-analytics
 /context/skills/integration/                            @PostHog/team-wizard-docs
