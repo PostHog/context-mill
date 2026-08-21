@@ -7,8 +7,8 @@ model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
-skills: []
-allowedTools: [Read, Glob, Grep, Write, posthog_exec]
+skills: [integration-v2-notebook]
+allowedTools: [Read, Glob, Grep, posthog_exec]
 disallowedTools: [enqueue_task]
 dependsOn: [instrument-metrics]
 ---
@@ -30,10 +30,14 @@ in the run. Briefly and concretely:
 If the run also installed or initialized the SDK, say so — the user started
 this command without PostHog and now has it.
 
-Write the report to `./posthog-metrics-report.md` (the wizard shows this file
-at the end of the run), then publish the same content as your handoff.
+Publish the report with a single `publish_handoff` call, and mirror the same
+markdown into a shareable PostHog notebook, emitting its URL with the
+`[NOTEBOOK_URL]` marker. Do not write a report file — the handoff call and the
+notebook are how the report reaches the user.
 
 ## How you know you succeeded
 
 A user who reads only your report knows what their service measures, where
-each number comes from, what still needs them, and where to look first.
+each number comes from, what still needs them, and where to look first. The
+report went through one `publish_handoff` call and is mirrored into a PostHog
+notebook whose URL is emitted with the `[NOTEBOOK_URL]` marker.
