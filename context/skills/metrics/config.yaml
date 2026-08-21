@@ -11,18 +11,24 @@ variants:
   - id: javascript
     display_name: Web (JavaScript)
     tags: [javascript_web, javascript]
+    # Browser-only frameworks: metrics ride posthog-js.
+    frameworks: [javascript_web, vue, angular]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/javascript.md
 
   - id: nodejs
     display_name: Node.js
     tags: [javascript]
+    # Server and full-stack JS frameworks: metrics measure service work, so
+    # full-stack apps take the server variant.
+    frameworks: [javascript_node, nextjs, nuxt, react-router, tanstack-start, tanstack-router, sveltekit, astro]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/nodejs.md
 
   - id: python
     display_name: Python
     tags: [python]
+    frameworks: [python, django, flask, fastapi]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/python.md
 
@@ -35,5 +41,7 @@ variants:
   - id: other
     display_name: Other Languages
     tags: []
+    # Plain OTLP exporter for languages without posthog.metrics SDK support.
+    frameworks: [laravel, rails, ruby]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/other.md

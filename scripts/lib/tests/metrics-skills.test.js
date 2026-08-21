@@ -22,6 +22,7 @@ describe('metrics Python variant', () => {
 
         expect(python).toMatchObject({
             id: 'metrics-python',
+            frameworks: ['python', 'django', 'flask', 'fastapi'],
             _shortId: 'python',
             _category: 'metrics',
             _group: 'metrics',
