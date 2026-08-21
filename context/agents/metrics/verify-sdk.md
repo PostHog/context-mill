@@ -6,21 +6,22 @@ model_pi: openai/gpt-5.6-sol
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
-skills: [metrics]
-allowedTools: [Read, Edit, Glob, Grep, Bash]
+skills: []
+allowedTools: [Read, Edit, Glob, Grep, Bash, install_skill]
 disallowedTools: [enqueue_task]
 dependsOn: []
 ---
 
 ## Goal
 
-Leave the project with a PostHog SDK that can record metrics. Three checks, in
-order:
+Leave the project with a PostHog SDK that can record metrics. Start by calling
+`install_skill` with the skill id in your task input — it carries the platform's
+install and init specifics — then work through three checks, in order:
 
 1. **Installed?** Look for the SDK in the dependency manifest. Missing →
    install it with the project's own package manager and let it resolve the
    version — never invent one.
-2. **New enough?** `posthog.metrics` ships in recent SDK releases only — your
+2. **New enough?** `posthog.metrics` ships in recent SDK releases only — the
    skill states the version floor for this platform. Below it → bump with the
    package manager's upgrade command. At or above → leave it alone and say so
    in your handoff.
