@@ -1,0 +1,122 @@
+name: PostHog Context Mill - Link check (external)
+permissions:
+  contents: read
+
+# Nightly check of external URLs. Deliberately NOT a PR check: an external site
+# going down has nothing to do with the PR in front of it, and blocking merges
+# on someone else's 502 trains people to ignore CI.
+#
+# Why this exists: a dead link in context/ ships into agent context windows and
+# degrades every wizard and MCP user until a human notices by hand.
+
+on:
+  schedule:
+    # 08:00 UTC daily (00:00 PST).
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  link-check-external:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # We only want to hear about links that are GONE — a server successfully
+      # telling us the resource does not exist. Anything else is the server
+      # failing to answer, which says nothing about the link and resolves on
+      # its own. So each non-2xx below is accepted, with the reason:
+      #
+      #   403  Ambiguous: usually bot/WAF blocking of datacenter IPs (the link
+      #        is fine in a browser), occasionally a genuine access change. Not
+      #        distinguishable from the status code alone, and the noise case
+      #        dominates. TRADE-OFF: if a docs page ever goes auth-only, this
+      #        check stays silent about it.
+      #   429  Rate limiting — a statement about our request volume, not about
+      #        whether the resource exists.
+      #   timeouts  Transient network trouble; --accept-timeouts covers the
+      #        case retries do not.
+      #   3xx  Followed, not flagged. posthog.com redirects moved docs rather
+      #        than 404ing, so a moved page still resolves and an agent still
+      #        lands on the content. Flagging redirects would mean triaging
+      #        ~40 a night, most of them auth gates that are correct as
+      #        written. When a redirect is eventually retired it becomes a
+      #        404 and this check catches it the same night.
+      #
+      # 5xx is deliberately NOT accepted. lychee retries (see --max-retries
+      # below), which absorbs a momentary blip; a 5xx that survives retries
+      # every night means the host is durably broken and the link is
+      # effectively dead for an agent, which is worth hearing about.
+      #
+      # --max-retries 5 / --retry-wait-time 2, up from the 3-at-1s default.
+      # Retries fire on connection-level failures (DNS, refused, reset) but NOT
+      # on a resolved status code: a 404 is returned immediately without
+      # retrying, so raising this costs nothing on the path that matters and
+      # only buys patience for transient network trouble. The wait backs off
+      # exponentially rather than staying flat, so these numbers are a ceiling
+      # of roughly a minute for a genuinely unreachable host, not 5x2s.
+      #
+      # No --include-fragments here, unlike the offline check. posthog.com
+      # renders some headings client-side, so a #fragment that works in a
+      # browser is absent from the HTML lychee sees — indistinguishable from
+      # real rot, on the host that dominates our links. Anchors are still
+      # checked offline, where the target is a local file and can't lie.
+      #
+      # Every .md in the repo, so a new directory is covered without touching
+      # this file. Scoped to *.md rather than '.' because bare '.' also parses
+      # HTML, where root-relative asset paths (/favicon.ico) can't resolve
+      # without --root-dir and report as errors.
+    - name: Check external links
+      id: lychee
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      with:
+        # Pinned: the action SHA alone doesn't pin the lychee binary it fetches.
+        lycheeVersion: v0.24.2
+        args: >-
+          -X get
+          --accept 200..=204,403,429
+          --accept-timeouts
+          --max-retries 5
+          --retry-wait-time 2
+          --no-progress
+          --exclude-path node_modules
+          --exclude-path dist
+          './**/*.md'
+        # Don't fail here — the webhook step below still needs to run. The job
+        # fails at the end instead, so GitHub shows it red too.
+        fail: false
+
+      # Mirrors the failure-reporting pattern in e2e.yml / integration.yml.
+      # -f so the workflow fails if the webhook is down and we can fix it.
+    - name: Send failure event to PostHog
+      if: steps.lychee.outputs.exit_code == 2
+      env:
+        COMMIT_SHA: ${{ github.sha }}
+        GH_REF: ${{ github.ref }}
+        GH_WORKFLOW: ${{ github.workflow }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_NUMBER: ${{ github.run_number }}
+        JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        curl -f -X POST https://webhooks.us.posthog.com/public/webhooks/019a7a81-7961-0000-d3e3-b5f34cc2a32b \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n \
+            --arg event "posthog-context-mill-repo-link-rot" \
+            --arg commitSha "$COMMIT_SHA" \
+            --arg ref "$GH_REF" \
+            --arg workflow "$GH_WORKFLOW" \
+            --arg runId "$RUN_ID" \
+            --arg runNumber "$RUN_NUMBER" \
+            --arg jobUrl "$JOB_URL" \
+            '{event: $event, commitSha: $commitSha, ref: $ref, workflow: $workflow, runId: $runId, runNumber: $runNumber, jobUrl: $jobUrl}')"
+
+      # Last, so the webhook always fires first. Also catches the case where
+      # lychee exits nonzero for a reason other than 2 — without this the job
+      # would go green having checked nothing.
+    - name: Fail on dead links
+      if: steps.lychee.outputs.exit_code != 0
+      run: |
+        echo "::error::Link check failed (lychee exit ${{ steps.lychee.outputs.exit_code }}) — see the 'Check external links' step above for each file, line and URL."
+        echo "False positive? .lycheeignore at the repo root explains how to handle it."
+        exit 1
