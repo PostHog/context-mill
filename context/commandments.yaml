@@ -94,7 +94,7 @@ commandments:
     - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
-    - Because `capture` is fire-and-forget, always call `client.flush().await` and `client.shutdown().await` during graceful shutdown so queued events are delivered before exit
+    - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
     - Server-side captures must set a stable `distinct_id` on `Event::new(event, distinct_id)` that matches frontend identify calls; avoid anonymous or literal IDs for business events
     - The SDK has no `identify` or `alias` helper; set person properties by inserting a `$set` property on an event
     - For feature flags, call `client.evaluate_flags(distinct_id, EvaluateFlagsOptions::default()).await` once per user/request, then read values from the returned snapshot with `is_enabled(...)`
