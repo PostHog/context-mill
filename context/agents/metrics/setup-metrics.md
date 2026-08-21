@@ -18,14 +18,19 @@ Plan an application-metrics setup and seed the task queue. Metrics are a
 per-service concern: every service gets its own SDK install and its own
 `service_name`.
 
-First map the repo. A single-package repo is one service. A workspace or
-monorepo holds several packages — and the workspace list in a root manifest
-is not the whole map: a repo can mix ecosystems, so glob for every manifest
-kind (`package.json`, `pyproject.toml`, `requirements.txt`, `Pipfile`,
-`go.mod`, `composer.json`, `Gemfile`, ...) across subdirectories. Classify
-each package found: a **service** runs server-side work (server entrypoints,
-workers, APIs — whatever the language); browser-only apps and libraries are
-not services and get no chain (the report notes them).
+First map the repo — mechanically, before any judgment. Run one `find` per
+manifest pattern across the whole tree, every time, even when the root looks
+like a plain npm workspace (repos mix ecosystems, and the workspace list in a
+root manifest is not the whole map):
+
+    **/package.json  **/pyproject.toml  **/requirements.txt  **/Pipfile
+    **/go.mod  **/composer.json  **/Gemfile
+
+Every directory holding a hit is a package. Classify each: a **service** runs
+server-side work (server entrypoints, workers, APIs — whatever the language);
+browser-only apps and libraries are not services and get no chain (the report
+notes them). Ignore installed-dependency and scaffolding directories
+(`node_modules`, `.claude`, caches) — they are not packages.
 
 Then seed, per service:
 
