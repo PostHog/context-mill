@@ -3,7 +3,7 @@ type: verify-sdk
 flow: metrics
 label: Verify the PostHog SDK is ready for metrics
 model_pi: openai/gpt-5.6-sol
-effort_pi: low
+effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: []

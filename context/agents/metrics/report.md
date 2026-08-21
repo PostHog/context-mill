@@ -3,7 +3,7 @@ type: report
 flow: metrics
 label: Report and hand off
 sink: true
-model_pi: openai/gpt-5.6-sol
+model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
