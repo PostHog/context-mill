@@ -218,25 +218,17 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
                 skillsByCategory[cat].push(entry);
             }
             // Each variant keeps its own id/framework/default so consumers resolve it exactly as they would a per-skill zip.
-            // A variant serving several frameworks lists one entry per framework, all pointing at the same skill.
-            const variantFrameworks = skill.frameworks?.length ? skill.frameworks : [skill.framework];
-            for (const framework of variantFrameworks) {
-                const variant = { id: skill.id };
-                if (framework) variant.framework = framework;
-                if (skill.default) variant.default = true;
-                entry.variants.push(variant);
-            }
+            const variant = { id: skill.id };
+            if (skill.framework) variant.framework = skill.framework;
+            if (skill.default) variant.default = true;
+            entry.variants.push(variant);
             continue;
         }
         // group/framework/default let consumers resolve a bare skill id + framework by exact match.
-        // A variant serving several frameworks lists one entry per framework, all pointing at the same skill.
-        const entryFrameworks = skill.frameworks?.length ? skill.frameworks : [skill.framework];
-        for (const framework of entryFrameworks) {
-            const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
-            if (framework) entry.framework = framework;
-            if (skill.default) entry.default = true;
-            skillsByCategory[cat].push(entry);
-        }
+        const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
+        if (skill.framework) entry.framework = skill.framework;
+        if (skill.default) entry.default = true;
+        skillsByCategory[cat].push(entry);
     }
 
     // The CLI entries are the lookup table the wizard's runtime resolver uses

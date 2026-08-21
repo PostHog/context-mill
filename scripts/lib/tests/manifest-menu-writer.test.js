@@ -67,34 +67,4 @@ describe('writeManifestAndMenu', () => {
         expect(entry.downloadUrl).toMatch(/\/integration-v2-capture-nextjs\.zip$/);
     });
 
-    it('emits one menu entry per framework for a multi-framework variant', () => {
-        write([skill('python', { frameworks: ['python', 'django', 'flask'] })]);
-
-        const entries = menuEntries();
-        expect(entries.map(e => e.framework).sort()).toEqual(['django', 'flask', 'python']);
-        expect(new Set(entries.map(e => e.id)).size).toBe(1);
-        expect(new Set(entries.map(e => e.downloadUrl)).size).toBe(1);
-    });
-
-    it('an empty frameworks list falls back to a single bare entry', () => {
-        write([skill('python', { frameworks: [] })]);
-
-        const entries = menuEntries();
-        expect(entries).toHaveLength(1);
-        expect(entries[0].framework).toBeUndefined();
-    });
-
-    it('expands multi-framework variants inside a bundle the same way', () => {
-        write([
-            skill('python', { bundle: true, frameworks: ['django', 'flask'] }),
-            skill('nodejs', { bundle: true, framework: 'nextjs' }),
-        ]);
-
-        const [entry] = menuEntries();
-        expect(entry.variants).toEqual([
-            { id: 'integration-v2-capture-python', framework: 'django' },
-            { id: 'integration-v2-capture-python', framework: 'flask' },
-            { id: 'integration-v2-capture-nodejs', framework: 'nextjs' },
-        ]);
-    });
 });
