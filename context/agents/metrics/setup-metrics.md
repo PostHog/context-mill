@@ -14,20 +14,39 @@ dependsOn: []
 
 ## Goal
 
-Plan an application-metrics setup and seed the task queue with this graph:
+Plan an application-metrics setup and seed the task queue. Metrics are a
+per-service concern: every service gets its own SDK install and its own
+`service_name`.
 
-- `verify-sdk`, with no dependencies — it settles the SDK question (installed,
-  new enough, initialized for metrics) before any instrumentation.
-- `instrument-metrics`, after `verify-sdk`.
-- `report`, after `instrument-metrics`. It writes the handoff last, so it
-  describes what actually shipped.
+First map the repo. A single-package repo is one service. A workspace or
+monorepo (root manifest listing workspaces, or several packages with their
+own manifests) holds several packages — classify each: a **service** runs
+server-side work (server entrypoints, workers, APIs); browser-only apps and
+libraries are not services and get no chain (the report notes them).
 
-Metrics ride the project's existing PostHog SDK (`posthog.metrics`), so the
+Then seed, per service:
+
+- `verify-sdk`, with no dependencies — it settles that service's SDK question
+  (installed, new enough, initialized for metrics) before any
+  instrumentation. Pass `inputs: { package: "<path>", service_name: "<name>" }`
+  so the task knows which package it owns; omit `package` in a single-package
+  repo.
+- `instrument-metrics`, after that service's `verify-sdk`, with the same
+  inputs.
+
+Chains for different services are independent — do not wire edges between
+them, so they run in parallel. Last, one `report` that depends on every
+`instrument-metrics`. It writes the handoff last, so it describes what
+actually shipped.
+
+Metrics ride each service's existing PostHog SDK (`posthog.metrics`), so the
 graph is the same whether or not the repo has PostHog today — `verify-sdk`
 absorbs the difference. Never plan an identify, capture, or dashboard task:
 this run sets up application metrics, not the full integration.
 
 ## How you know you succeeded
 
-All three tasks are queued in that dependency chain, the report last, and
-`verify-sdk` runnable. Keep labels short — the action in a few words.
+Every service has its own verify → instrument chain carrying its package and
+service name, the chains share no edges, the report depends on all of them,
+and every `verify-sdk` is runnable. Keep labels short — the action in a few
+words, naming the service when there are several.

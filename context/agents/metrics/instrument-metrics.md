@@ -14,8 +14,9 @@ dependsOn: [verify-sdk]
 
 ## Goal
 
-Instrument the service with application metrics. Install the platform's
-skill the way the verify handoff names it (`load_skill_menu` category
+Instrument your service with application metrics. When your task input names
+a `package`, stay inside it — sibling packages belong to other chains.
+Install the platform's skill the way the verify handoff names it (`load_skill_menu` category
 "metrics", then `install_skill`), and follow it end-to-end — it owns where
 metrics belong (request middleware, background
 jobs, external calls, business commit sites), which of counter, gauge, and

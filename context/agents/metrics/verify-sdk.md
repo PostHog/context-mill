@@ -14,7 +14,10 @@ dependsOn: []
 
 ## Goal
 
-Leave the project with a PostHog SDK that can record metrics. First call
+Leave your service with a PostHog SDK that can record metrics. When your
+task input names a `package`, that package is your whole world — its
+manifest, its init site, its `service_name`; do not touch sibling packages.
+First call
 `load_skill_menu` with `category: "metrics"` and `install_skill` for the
 variant matching the project's platform — the menu is the source of truth,
 one variant per platform, and a full-stack app takes the server variant
