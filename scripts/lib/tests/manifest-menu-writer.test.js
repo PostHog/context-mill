@@ -66,4 +66,5 @@ describe('writeManifestAndMenu', () => {
         expect(entry.bundle).toBeUndefined();
         expect(entry.downloadUrl).toMatch(/\/integration-v2-capture-nextjs\.zip$/);
     });
+
 });
