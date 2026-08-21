@@ -94,7 +94,7 @@ commandments:
     - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
-    - Because `capture` is fire-and-forget, always call `client.flush().await` and `client.shutdown().await` during graceful shutdown so queued events are delivered before exit
+    - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
     - Server-side captures must set a stable `distinct_id` on `Event::new(event, distinct_id)` that matches frontend identify calls; avoid anonymous or literal IDs for business events
     - The SDK has no `identify` or `alias` helper; set person properties by inserting a `$set` property on an event
     - For feature flags, call `client.evaluate_flags(distinct_id, EvaluateFlagsOptions::default()).await` once per user/request, then read values from the returned snapshot with `is_enabled(...)`
@@ -107,6 +107,17 @@ commandments:
     - For CLIs, scripts, workers, and other short-lived processes, create one `PostHogClient` for the process lifetime and call `FlushAsync()` before exit
     - Call `IdentifyAsync` for known users and put PII such as email in person properties, not in event properties
     - Use `CaptureException(exception, distinctId, properties, groups, flags)` for handled exceptions; automatic exception capture is not available in the .NET SDK yet
+
+  # Keyed `java-server` (not `java`) so these backend rules never fold into the Android skill, which carries the `java` tag. The Java variant is tagged [java, java-server].
+  java-server:
+    - posthog-server is the PostHog Java server SDK; add the `com.posthog:posthog-server` dependency via Gradle or Maven and import from `com.posthog.server`
+    - Build one client per process with `PostHogConfig.builder(token).host(host).build()` then `PostHog.with(config)`; share the returned `PostHogInterface` (for example as a singleton Spring `@Bean`), never per request
+    - Read the project token and host from the environment or configuration; never hardcode PostHog secrets
+    - Flush and close on shutdown with `posthog.flush()` and `posthog.close()` (for a Spring `@Bean`, use `destroyMethod = "close"`) so queued events are delivered before exit
+    - Server-side captures must pass a stable `distinctId` as the first argument to `capture(...)` that matches frontend identify calls; avoid anonymous or literal IDs for business events
+    - Identify users by attaching person properties to a capture via `PostHogCaptureOptions.builder().userProperty(...)` / `.userPropertySetOnce(...)`; keep PII in person properties, not event properties
+    - For feature flags, call `posthog.evaluateFlags(distinctId)` once per request, then read values from the snapshot with `isEnabled("flag-key")` / `getFlagPayload("flag-key")`
+    - The Java server SDK has no automatic error tracking, surveys, or session replay; do not promise or scaffold those features
 
   elixir:
     - posthog-elixir is installed as the `posthog` Hex package; add `{:posthog, "~> 2.0"}` to `mix.exs` and run `mix deps.get`
@@ -265,8 +276,8 @@ commandments:
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
     - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
     - For Session Replay or Surveys, disable auto-init with `com.posthog.posthog.AUTO_INIT=false` and initialize manually so the required options can be enabled
-    - For Flutter Web, add the posthog-js web snippet to `web/index.html`; Flutter Web session replay also requires Canvas capture in project settings
-    - Capture screen views with `PosthogObserver()` and named routes; unnamed routes will not produce useful `$screen` names
+    - For Flutter Web, add the posthog-js web snippet to `web/index.html`. If you are instructed to ever embed the HTML snippet into the user's code, write the real token directly into the snippet. It is not a secret, and when used as an HTML snippet, it should be written in literally. The example token phc_your_project_token_here is a placeholder for readers. It is not the shape to copy. Flutter Web session replay also requires Canvas capture in project settings
+    - Capture screen views by adding `PosthogObserver()` to the app's `navigatorObservers`, whatever routing package the app uses; where its routes are unnamed, name them so `$screen` is readable
     - Call `Posthog().identify(...)` after login and `Posthog().reset()` on logout; keep PII in user properties, not event properties
     - Use `beforeSend` to redact or drop Dart-captured events, but remember it does not intercept native session replay, lifecycle, or system properties
 

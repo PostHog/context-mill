@@ -1,0 +1,16 @@
+# Replay vision — enable session replay and create vision scanners tailored to the user's product.
+type: skill
+template: description.md
+category: replay-vision
+description: Set up PostHog Replay vision. Makes sure session replay is recording (server-side enable plus a posthog-js init check), then creates vision scanners scoped to the product's key flows, read out of the repo. Scanners watch each new session recording with an LLM and report scores, tags, and summaries as queryable events.
+tags: [replay-vision, session-replay]
+cli:
+  role: command
+  command: replay-vision
+shared_docs:
+  - https://posthog.com/docs/replay-vision.md
+variants:
+  - id: setup
+    display_name: PostHog Replay vision
+    docs_urls:
+      - https://posthog.com/docs/session-replay/installation.md

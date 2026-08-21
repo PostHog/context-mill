@@ -76,6 +76,8 @@ routeTree.gen.ts
 
 # Build artifacts
 dist/
+# Mirror staging dir (scripts/mirror-dist.js) — rebuilt from dist/ on every release
+dist-s3-flat/
 
 # Audit skill runtime ledger
 .posthog-audit-checks.json
@@ -92,3 +94,6 @@ posthog-audit-report.md
 
 # Local scratch dirs
 scratch/
+
+# Agent-created git worktrees
+.claude/worktrees/

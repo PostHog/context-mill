@@ -55,10 +55,27 @@ jobs:
           LATEST_PUBLISHED_VERSION=${LATEST_PUBLISHED_TAG#v}
           echo "package.json version: ${VERSION}"
           echo "latest published release: ${LATEST_PUBLISHED_TAG}"
-          if [ "$VERSION" != "$LATEST_PUBLISHED_VERSION" ]; then
-            echo "is-new-version=true" >> "$GITHUB_OUTPUT"
-          else
+          # Compare versions, don't just test inequality. A bare `!=` treats a
+          # BACKWARDS version as releasable, and releasing backwards is
+          # destructive: "Create or reuse draft release" reuses the existing
+          # release, every asset is re-uploaded with --clobber, `latest` moves
+          # back to the older version, and the S3 mirror prefix is overwritten.
+          # A reverted release-please commit or a merge conflict resolved toward
+          # the older side is enough to trigger it.
+          #
+          # `sort -V` orders plain X.Y.Z correctly. It disagrees with semver on
+          # prereleases (it ranks 1.0.0-rc1 above 1.0.0), which can't bite here:
+          # /releases/latest never returns a prerelease, and we don't publish
+          # any. If that changes, the miss is benign anyway — a prerelease tag is
+          # a new tag and a new prefix, so it can't overwrite a published one.
+          NEWEST=$(printf '%s\n%s\n' "$VERSION" "$LATEST_PUBLISHED_VERSION" | sort -V | tail -1)
+          if [ "$VERSION" = "$LATEST_PUBLISHED_VERSION" ]; then
             echo "is-new-version=false" >> "$GITHUB_OUTPUT"
+          elif [ "$NEWEST" != "$VERSION" ]; then
+            echo "::error::package.json is ${VERSION} but ${LATEST_PUBLISHED_VERSION} is already published — refusing to release backwards"
+            exit 1
+          else
+            echo "is-new-version=true" >> "$GITHUB_OUTPUT"
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
@@ -72,6 +89,7 @@ jobs:
       contents: write        # create/edit releases, push `latest` tag
       pull-requests: write   # relabel release-please's PR after publish
       issues: write          # create the "autorelease: tagged" label if missing
+      id-token: write        # OIDC for the S3 mirror upload
     env:
       RELEASE_VERSION: ${{ needs.check-version.outputs.version }}
       RELEASE_TAG: ${{ needs.check-version.outputs.tag }}
@@ -187,6 +205,7 @@ jobs:
           done
 
       - name: Publish release
+        id: publish
         # Every asset (bundle, skill ZIPs, skill-menu.json, docs) is now uploaded,
         # so flip the draft to published atomically. This is the point
         # `releases/latest` moves to the new version — the wizard never sees it
@@ -358,13 +377,70 @@ jobs:
         if: always()
         run: rm -rf "$GITHUB_WORKSPACE/.skills-push" "$GITHUB_WORKSPACE/.ai-plugin-push"
 
+      # Mirror the release to S3 so consumers have a second origin to fetch from
+      # when GitHub Releases is unavailable.
+      #
+      # Deliberately the LAST thing the job does. Two constraints pull in
+      # opposite directions:
+      #
+      #   - It must run after "Publish release", so GitHub stays the source of
+      #     truth and a mirror failure can never unwind a durable release.
+      #   - It must not run before "Update latest tag" or "Close release-please
+      #     PR lifecycle". Those are release-critical: a failure here would skip
+      #     them, stranding the `latest` tag and leaving the release PR labelled
+      #     `autorelease: pending`, which blocks the NEXT release entirely.
+      #
+      # Running last satisfies both — everything release-critical has already
+      # completed, and this step still fails the run loudly if the mirror breaks.
+      # It only reads dist/, which nothing above mutates.
+      #
+      # Running last also means the default "skip if any earlier step failed"
+      # rule would let the PostHog/skills and PostHog/ai-plugin mirrors above
+      # take S3 down with them — which is exactly what happened in v1.47.0, when
+      # a transient 502 from the skills commit skipped this step and the release
+      # shipped with no S3 mirror. Those two mirrors are explicitly NOT gating
+      # (see the "Notify Slack" comment above), so the condition below keys off
+      # the release actually being published rather than off the whole job's
+      # health. `!cancelled()` is what opts out of the default skip-on-failure;
+      # it's preferred over `always()` so a cancelled run doesn't still upload.
+      # If anything release-critical failed, `publish` never ran, its conclusion
+      # isn't 'success', and the mirror correctly stays skipped.
+      #
+      # Nothing consumes these objects yet: the bucket is private with no CDN in
+      # front of it. That arrives in a later phase, at which point these same
+      # objects become publicly fetchable with no re-upload, because the URLs
+      # baked into them already point at the final hostname.
+      - name: Mirror release to S3
+        id: mirror
+        if: ${{ !cancelled() && steps.publish.conclusion == 'success' }}
+        uses: ./.github/actions/mirror-to-s3
+        with:
+          version: ${{ env.RELEASE_VERSION }}
+          role-to-assume: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_ROLE_ARN }}
+          bucket: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_BUCKET }}
+          aws-region: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_REGION }}
+
+      # always(), because the S3 mirror is the only step after the release is
+      # already published. If the mirror fails we still want the release summary
+      # rendered — losing it would make a fully-successful release look opaque.
       - name: Build Summary
+        if: always()
+        env:
+          MIRROR_PREFIX: ${{ steps.mirror.outputs.prefix }}
+          MIRROR_COUNT: ${{ steps.mirror.outputs.object-count }}
         run: |
           echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** $RELEASE_VERSION" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag:** $RELEASE_TAG" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle:** skills-mcp-resources.zip" >> $GITHUB_STEP_SUMMARY
+          # Bucket name comes from a secret, so it would render as *** here. The
+          # prefix and object count are the useful parts anyway.
+          if [ -n "$MIRROR_PREFIX" ]; then
+            echo "- **S3 mirror:** \`$MIRROR_PREFIX/\` ($MIRROR_COUNT objects)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **S3 mirror:** :warning: did not complete — the GitHub release above is published and unaffected" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Skills Manifest" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
