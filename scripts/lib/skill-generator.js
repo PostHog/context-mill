@@ -255,6 +255,7 @@ function resolveVariantsFrom(config) {
             if (v.tags) variant.tags = [...v.tags];
             if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
             if (v.framework) variant.framework = v.framework;
+            if (v.frameworks) variant.frameworks = [...v.frameworks];
             if (v.default) variant.default = v.default;
             return variant;
         });
@@ -815,6 +816,9 @@ function serializeSkill(s) {
     };
     if (s.framework) {
         result.framework = s.framework;
+    }
+    if (s.frameworks) {
+        result.frameworks = [...s.frameworks];
     }
     if (s.default) {
         result.default = true;
