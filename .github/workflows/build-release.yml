@@ -204,6 +204,16 @@ jobs:
             gh release upload "$RELEASE_TAG" "$file" --clobber
           done
 
+      - name: Upload marketplace plugins bundle
+        # PostHog/skills syncs from this asset (sync-plugins.yml over there):
+        # the built plugin trees plus push-manifest.json, whose entries name
+        # each plugin's destination path in that repo.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          (cd dist && zip -qr marketplace-plugins.zip marketplace push-manifest.json)
+          gh release upload "$RELEASE_TAG" dist/marketplace-plugins.zip --clobber
+
       - name: Publish release
         id: publish
         # Every asset (bundle, skill ZIPs, skill-menu.json, docs) is now uploaded,
@@ -245,9 +255,9 @@ jobs:
 
       # Fire Slack once the release is genuinely shipped for consumers (draft
       # flipped to --latest, `latest` git tag moved, release-please PR
-      # lifecycle closed). The downstream mirror steps below (PostHog/skills,
-      # PostHog/ai-plugin) are useful side effects but not gating for the
-      # wizard, so their failure shouldn't swallow the release announcement.
+      # lifecycle closed). The sync dispatch below is a useful side effect but
+      # not gating for the wizard, so its failure shouldn't swallow the
+      # release announcement.
       - name: Notify Slack of release
         uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
         with:
@@ -258,124 +268,30 @@ jobs:
               "text": ":rocket: context-mill *<https://github.com/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}>* released"
             }
 
+      # The plugins themselves are no longer pushed from here. PostHog/skills
+      # pulls marketplace-plugins.zip from this release via its own
+      # sync-plugins.yml (repository_dispatch below + a daily cron), mirroring
+      # how PostHog/ai-plugin has always synced — its sync-skills.yml cron pulls
+      # skills-mcp-resources.zip, which is why ai-plugin stayed current while
+      # the push-based skills mirror sat broken. Pull + PR + auto-merge also
+      # satisfies both org rulesets (signed commits, require-PR) without the
+      # single giant createCommitOnBranch mutation that 504'd here on every
+      # release since the catch-up diff outgrew one GraphQL call.
       - name: Generate skills repo token
         id: skills_token
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1.12.0
         with:
           app-id: ${{ secrets.SKILLS_PUSH_APP_ID }}
           private-key: ${{ secrets.SKILLS_PUSH_APP_PRIVATE_KEY }}
-          repositories: skills,ai-plugin
+          repositories: skills
 
-      - name: Push plugins to skills repo
-        id: skills_push
+      - name: Dispatch plugin sync to skills repo
         env:
-          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
+          GH_TOKEN: ${{ steps.skills_token.outputs.token }}
         run: |
-          MANIFEST="dist/push-manifest.json"
-          TARGET_REPO=$(jq -r '.target_repo' "$MANIFEST")
-          # ghcommit-action resolves its `repository` input under $GITHUB_WORKSPACE,
-          # so the clone lives there rather than in a mktemp dir.
-          WORK_DIR="$GITHUB_WORKSPACE/.skills-push"
-          rm -rf "$WORK_DIR"
-
-          echo "Cloning $TARGET_REPO..."
-          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/${TARGET_REPO}.git" "$WORK_DIR"
-          {
-            echo "target_repo=$TARGET_REPO"
-            echo "target_branch=$(git -C "$WORK_DIR" rev-parse --abbrev-ref HEAD)"
-          } >> "$GITHUB_OUTPUT"
-
-          # Read each plugin entry from the push manifest and sync to the destination
-          jq -c '.plugins[]' "$MANIFEST" | while read -r entry; do
-            NAME=$(echo "$entry" | jq -r '.name')
-            SOURCE="dist/$(echo "$entry" | jq -r '.source')"
-            DEST="$WORK_DIR/$(echo "$entry" | jq -r '.destination')"
-
-            echo "  Syncing $NAME → $(echo "$entry" | jq -r '.destination')"
-
-            # Clear destination (preserve README.md if present)
-            if [ -d "$DEST" ]; then
-              find "$DEST" -mindepth 1 -not -name 'README.md' -not -name '.' -exec rm -rf {} + 2>/dev/null || true
-            fi
-            mkdir -p "$DEST"
-
-            # Copy plugin contents
-            cp -r "$SOURCE"/. "$DEST"/
-          done
-
-          cd "$WORK_DIR"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to push"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Both target repos require signed commits, so the mirrored content is
-      # committed through the GitHub API instead of pushed with git.
-      - name: Commit plugins to skills repo
-        if: steps.skills_push.outputs.changed == 'true'
-        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
-        with:
-          commit_message: Update generated plugins from context-mill ${{ env.RELEASE_TAG }}
-          repo: ${{ steps.skills_push.outputs.target_repo }}
-          branch: ${{ steps.skills_push.outputs.target_branch }}
-          repository: .skills-push
-        env:
-          GITHUB_TOKEN: ${{ steps.skills_token.outputs.token }}
-
-      - name: Push omnibus skills to ai-plugin repo
-        id: ai_plugin_push
-        env:
-          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
-        run: |
-          # Under $GITHUB_WORKSPACE so ghcommit-action can resolve it (see above).
-          WORK_DIR="$GITHUB_WORKSPACE/.ai-plugin-push"
-          rm -rf "$WORK_DIR"
-          MEGA_SKILLS="dist/marketplace/plugins/posthog-all/skills"
-
-          echo "Cloning PostHog/ai-plugin..."
-          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/PostHog/ai-plugin.git" "$WORK_DIR"
-          echo "target_branch=$(git -C "$WORK_DIR" rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
-
-          # Sync each omnibus skill, stripping the "omnibus-" prefix to match ai-plugin's layout
-          for src in "$MEGA_SKILLS"/omnibus-*; do
-            SKILL_NAME=$(basename "$src" | sed 's/^omnibus-//')
-            DEST="$WORK_DIR/skills/$SKILL_NAME"
-
-            echo "  Syncing $SKILL_NAME"
-            rm -rf "$DEST/references" "$DEST/SKILL.md"
-            mkdir -p "$DEST"
-            cp -r "$src/references" "$DEST/"
-            cp "$src/SKILL.md" "$DEST/"
-          done
-
-          cd "$WORK_DIR"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to push to PostHog/ai-plugin"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit omnibus skills to ai-plugin repo
-        if: steps.ai_plugin_push.outputs.changed == 'true'
-        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
-        with:
-          commit_message: Update generated skills from context-mill ${{ env.RELEASE_TAG }}
-          repo: PostHog/ai-plugin
-          branch: ${{ steps.ai_plugin_push.outputs.target_branch }}
-          repository: .ai-plugin-push
-        env:
-          GITHUB_TOKEN: ${{ steps.skills_token.outputs.token }}
-
-      # Both clones embed the App token in their remote URL and now live in the
-      # workspace rather than a mktemp dir, so drop them before any later step runs.
-      - name: Remove the mirror clones
-        if: always()
-        run: rm -rf "$GITHUB_WORKSPACE/.skills-push" "$GITHUB_WORKSPACE/.ai-plugin-push"
+          gh api "repos/PostHog/skills/dispatches" \
+            -f event_type=sync-plugins \
+            -F "client_payload[tag]=$RELEASE_TAG"
 
       # Mirror the release to S3 so consumers have a second origin to fetch from
       # when GitHub Releases is unavailable.
@@ -395,16 +311,16 @@ jobs:
       # It only reads dist/, which nothing above mutates.
       #
       # Running last also means the default "skip if any earlier step failed"
-      # rule would let the PostHog/skills and PostHog/ai-plugin mirrors above
-      # take S3 down with them — which is exactly what happened in v1.47.0, when
-      # a transient 502 from the skills commit skipped this step and the release
-      # shipped with no S3 mirror. Those two mirrors are explicitly NOT gating
-      # (see the "Notify Slack" comment above), so the condition below keys off
-      # the release actually being published rather than off the whole job's
-      # health. `!cancelled()` is what opts out of the default skip-on-failure;
-      # it's preferred over `always()` so a cancelled run doesn't still upload.
-      # If anything release-critical failed, `publish` never ran, its conclusion
-      # isn't 'success', and the mirror correctly stays skipped.
+      # rule would let the sync dispatch above take S3 down with it — which is
+      # exactly what happened in v1.47.0, when a transient 502 from the old
+      # skills commit step skipped this step and the release shipped with no S3
+      # mirror. The dispatch is explicitly NOT gating (see the "Notify Slack"
+      # comment above), so the condition below keys off the release actually
+      # being published rather than off the whole job's health. `!cancelled()`
+      # is what opts out of the default skip-on-failure; it's preferred over
+      # `always()` so a cancelled run doesn't still upload. If anything
+      # release-critical failed, `publish` never ran, its conclusion isn't
+      # 'success', and the mirror correctly stays skipped.
       #
       # Nothing consumes these objects yet: the bucket is private with no CDN in
       # front of it. That arrives in a later phase, at which point these same
