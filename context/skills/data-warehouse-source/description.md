@@ -7,6 +7,8 @@ The wizard has already scanned the project and lists the detected sources in you
 - **`in-cli`** — create the source directly from here (databases and API-key SaaS).
 - **`deep-link`** — give the user a pre-filled URL to finish in the PostHog app (OAuth sources; no safe terminal credential path).
 
+Each detected source also names the signal that matched it, and the file that holds it. An example signal is: found `OPENAI_API_KEY` in apps/api/.env.local. The wizard read that file itself. Trust the path it gives you. Do not assume the key is in `.env`.
+
 ## Reference files
 
 {references}
@@ -22,7 +24,7 @@ You have the PostHog MCP server and the wizard's local tools available. The Post
 - **`external-data-sources-wizard`** — returns the required fields per source type. **Always call this for a source kind before creating it** — never guess field names. **Pass `source_type` with the kind(s) you need** (e.g. `source_type: "Postgres"`, or comma-separated `"Postgres,Stripe"`). The unfiltered response describes every source and is hundreds of KB — large enough to blow your context budget — so never call it without `source_type`.
 - **`external-data-sources-db-schema`** — validates credentials and lists the tables available for sync. Use this for database sources before creating.
 - **`external-data-sources-create`** — creates the source. Follow its input schema exactly for the `payload` and `schemas` shape; the tool definition is the source of truth.
-- **`mcp__wizard-tools__check_env_keys`** — tells you which `.env` keys EXIST. It never returns values.
+- **`mcp__wizard-tools__check_env_keys`** — tells you which `.env` keys EXIST, and in which file. Call it with `keys` and **no `filePath`**. It then scans every `.env` file in the project, including `.env.local` and nested files such as `apps/api/.env`. Pass `filePath` only to limit the check to one file. It answers `{ "status": "present" | "missing", "foundIn": [file paths] }` for each key. It never returns values.
 - **`mcp__wizard-tools__wizard_ask`** — the ONLY way to obtain credential values from the user. It takes up to 8 `questions` and an optional `subject` tag. Always set `subject` to the source kind you are collecting for.
 
 ## Guiding tenets
@@ -73,7 +75,7 @@ Process each detected source in turn.
 
 1. `[STATUS] Configuring <label>`
 2. Call `external-data-sources-wizard` **with `source_type` set to this `kind`** (never unfiltered) and read the field list. Check the pre-flight gotchas above for this kind before prompting.
-3. Optionally call `mcp__wizard-tools__check_env_keys` to see which matching keys already exist — use this only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set; please paste the connection details"). You still cannot read the value.
+3. Optionally call `mcp__wizard-tools__check_env_keys` with the key names and no `filePath`. It scans the whole project, so its answer agrees with the signal in your prompt. Use the answer only to tailor your prompt (e.g. "we noticed `DATABASE_URL` is set in `apps/api/.env`; please paste the connection details"). You still cannot read the value. A `missing` answer is not a reason to stop — go on to step 4 and ask the user.
 4. Call `mcp__wizard-tools__wizard_ask` ONCE for this source. Request every required field in that one call, and set `subject` to this `kind`. If the user declines or cannot supply the fields, give this source the deep-link path below, then continue with the next source.
 5. For database sources, call `external-data-sources-db-schema` with the credentials to validate them and list tables. If validation fails, report the error and let the user correct it. Use one more `mcp__wizard-tools__wizard_ask` with the **same** `subject`, or fall back to deep-link.
 6. Build the create payload: `source_type` = the kind, the credential `payload`, `access_method` = `warehouse` (use `direct` only if the user explicitly wants live querying without import), and a `schemas` array selecting tables to sync (default: sync the tables the user wants; pick `incremental` sync with the detected incremental field when available, otherwise `full_refresh`). Follow the `external-data-sources-create` input schema for the exact shape.
