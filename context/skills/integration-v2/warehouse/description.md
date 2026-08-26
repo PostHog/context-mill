@@ -93,14 +93,15 @@ first attempt fails, and a failed attempt wastes the user's time.
   Managed Postgres (Neon, Supabase, RDS behind strict rules) often needs
   PostHog's egress IPs allowlisted first. If the database is not publicly
   reachable, go straight to the deep-link path.
-- **Supabase is Postgres — set it up as one source.** Use the **Session
-  pooler**, not the direct host, which is IPv6-only. The pooler host looks like
-  `aws-0-<region>.pooler.supabase.com`, the **username** is
-  `postgres.<project-ref>`, and the **port is 6543**. The password is the
-  database password from Settings → Database, which is neither the `anon` or
-  `service_role` key nor the account password. When `SUPABASE_URL` exists in
-  the env, read the project ref from `db.<ref>.supabase.co` and pre-fill the
-  host and username in your question.
+- **Supabase has its own source type — use `Supabase`, not `Postgres`.**
+  PostHog lists `Supabase` as a source type of its own. Call
+  `external-data-sources-wizard` with `source_type: "Supabase"` and ask for the
+  fields it returns. Its `host` field carries the Session-pooler guidance in
+  its own caption. Pass that caption on to the user rather than writing your
+  own. The password is the database password from Settings → Database. It is
+  neither the `anon` or `service_role` key nor the account password. When
+  `SUPABASE_URL` exists in the env, read the project ref from
+  `db.<ref>.supabase.co` and pre-fill the host and username in your question.
 - **Scope a database source to one schema, and never sync auth tables.** Set the
   `schema` field (default `public`) so discovery and sync cover only that schema.
   A managed database exposes internal schemas alongside your data — Supabase adds
