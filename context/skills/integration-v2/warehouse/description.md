@@ -8,6 +8,10 @@ one carries a **kind** (the PostHog source-type name, e.g. `Postgres`,
 - **`deep-link`** — hand the user a pre-filled URL to finish in the PostHog app
   (OAuth sources have no safe terminal credential path).
 
+The signal also names the file that holds it. An example signal is: found
+`OPENAI_API_KEY` in apps/api/.env.local. The wizard read that file itself.
+Trust the path it gives you. Do not assume the key is in `.env`.
+
 ## Reference files
 
 {references}
@@ -37,8 +41,12 @@ behavior.
   **inside** `payload`, not as a top-level argument; its input schema is the
   source of truth. Don't reach for it on a SaaS source — `data-warehouse-source-setup`
   is the one-step path there.
-- **`check_env_keys`** — tells you which `.env` keys exist. It never returns
-  values.
+- **`check_env_keys`** — tells you which `.env` keys exist, and in which file.
+  Call it with `keys` and **no `filePath`**. It then scans every `.env` file in
+  the project, including `.env.local` and nested files such as `apps/api/.env`.
+  Pass `filePath` only to limit the check to one file. It answers
+  `{ "status": "present" | "missing", "foundIn": [file paths] }` for each key.
+  It never returns values.
 - **`wizard_ask`** — the only way to obtain a credential value from the user.
 
 ## Guiding tenets
@@ -121,9 +129,12 @@ in-a-row nudge. Then take the sources in turn to create them.
 1. `[STATUS] Configuring <label>`
 2. Call `external-data-sources-wizard` with `source_type` set to this kind and
    read the field list. Check the pre-flight gotchas for the kind.
-3. Optionally call `check_env_keys` to see which matching keys exist, and use
-   that to word your question — "we noticed `DATABASE_URL` is set, please paste
-   the connection details". You still cannot read the value.
+3. Optionally call `check_env_keys` with the key names and no `filePath`. It
+   scans the whole project, so its answer agrees with the signal in your task
+   input. Use the answer only to word your question — "we noticed
+   `DATABASE_URL` is set in `apps/api/.env`, please paste the connection
+   details". You still cannot read the value. A `missing` answer is not a
+   reason to stop — go on to step 4 and ask the user.
 4. Ask for the required fields with `wizard_ask`, batching across sources per
    tenet 2 rather than one call per source. On a decline, fall back to the
    deep-link path for this source.
