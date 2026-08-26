@@ -2,11 +2,19 @@
 
 Your task input lists the data sources the wizard found in this project. Each
 one carries a **kind** (the PostHog source-type name, e.g. `Postgres`,
-`Stripe`), a **label**, the **signal** it was detected by, and a **mode**:
+`Stripe`), a **label**, the **signal** it was detected by, and a **mode**. The
+`kind` is the only valid `source_type`. The `label` is display text, and it is
+often not a valid source type: the kind `HuggingFace` has the label `Hugging
+Face`. The steps below say `source_type` = the kind — copy that token verbatim,
+and use the `label` only in text you show the user. The modes are:
 
 - **`in-cli`** — create the source from here (databases and API-key SaaS).
 - **`deep-link`** — hand the user a pre-filled URL to finish in the PostHog app
   (OAuth sources have no safe terminal credential path).
+
+The signal also names the file that holds it. An example signal is: found
+`OPENAI_API_KEY` in apps/api/.env.local. The wizard read that file itself.
+Trust the path it gives you. Do not assume the key is in `.env`.
 
 ## Reference files
 
@@ -37,8 +45,12 @@ behavior.
   **inside** `payload`, not as a top-level argument; its input schema is the
   source of truth. Don't reach for it on a SaaS source — `data-warehouse-source-setup`
   is the one-step path there.
-- **`check_env_keys`** — tells you which `.env` keys exist. It never returns
-  values.
+- **`check_env_keys`** — tells you which `.env` keys exist, and in which file.
+  Call it with `keys` and **no `filePath`**. It then scans every `.env` file in
+  the project, including `.env.local` and nested files such as `apps/api/.env`.
+  Pass `filePath` only to limit the check to one file. It answers
+  `{ "status": "present" | "missing", "foundIn": [file paths] }` for each key.
+  It never returns values.
 - **`wizard_ask`** — the only way to obtain a credential value from the user.
   It takes up to 8 `questions` and an optional `subject` tag. Always set
   `subject` to the source kind you are collecting for.
@@ -99,14 +111,15 @@ first attempt fails, and a failed attempt wastes the user's time.
   Managed Postgres (Neon, Supabase, RDS behind strict rules) often needs
   PostHog's egress IPs allowlisted first. If the database is not publicly
   reachable, go straight to the deep-link path.
-- **Supabase is Postgres — set it up as one source.** Use the **Session
-  pooler**, not the direct host, which is IPv6-only. The pooler host looks like
-  `aws-0-<region>.pooler.supabase.com`, the **username** is
-  `postgres.<project-ref>`, and the **port is 6543**. The password is the
-  database password from Settings → Database, which is neither the `anon` or
-  `service_role` key nor the account password. When `SUPABASE_URL` exists in
-  the env, read the project ref from `db.<ref>.supabase.co` and pre-fill the
-  host and username in your question.
+- **Supabase has its own source type — use `Supabase`, not `Postgres`.**
+  PostHog lists `Supabase` as a source type of its own. Call
+  `external-data-sources-wizard` with `source_type: "Supabase"` and ask for the
+  fields it returns. Its `host` field carries the Session-pooler guidance in
+  its own caption. Pass that caption on to the user rather than writing your
+  own. The password is the database password from Settings → Database. It is
+  neither the `anon` or `service_role` key nor the account password. When
+  `SUPABASE_URL` exists in the env, read the project ref from
+  `db.<ref>.supabase.co` and pre-fill the host and username in your question.
 - **Scope a database source to one schema, and never sync auth tables.** Set the
   `schema` field (default `public`) so discovery and sync cover only that schema.
   A managed database exposes internal schemas alongside your data — Supabase adds
@@ -139,9 +152,12 @@ have asked too many questions.
 1. `[STATUS] Configuring <label>`
 2. Call `external-data-sources-wizard` with `source_type` set to this kind and
    read the field list. Check the pre-flight gotchas for the kind.
-3. Optionally call `check_env_keys` to see which matching keys exist, and use
-   that to word your question — "we noticed `DATABASE_URL` is set, please paste
-   the connection details". You still cannot read the value.
+3. Optionally call `check_env_keys` with the key names and no `filePath`. It
+   scans the whole project, so its answer agrees with the signal in your task
+   input. Use the answer only to word your question — "we noticed
+   `DATABASE_URL` is set in `apps/api/.env`, please paste the connection
+   details". You still cannot read the value. A `missing` answer is not a
+   reason to stop — go on to step 4 and ask the user.
 4. Ask for this source's required fields in ONE `wizard_ask` call, with
    `subject` set to this kind. On a decline, give this source the deep-link
    path, then continue with the next source.
