@@ -21,8 +21,9 @@ instruments. The wizard found them in the project; your job is to turn each one
 into a real connection, or into a link the user can finish in the browser.
 
 You are the only step that stops to ask the user for anything, so make the ask
-count: gather what a source needs in one round of questions, and treat a
-decline as an answer rather than a reason to ask again.
+count: gather what a source needs in one `wizard_ask` call, tagged with that
+source's kind as its `subject`. A decline answers that one source. Move on to
+the next source rather than re-asking or ending the round.
 
 Touch no project code. This step connects data; it does not edit the app.
 
@@ -32,3 +33,7 @@ Every source in your input reached a decided end: connected in PostHog, handed
 back as a link to finish, or skipped with a reason. Your handoff carries a
 finished report section naming each source and which of those three it was, so
 the reporting step can include it as it stands.
+
+A link is a handoff, not a connection. Your report section opens with the count
+you connected, and your `complete_task` status matches it: `done` only when you
+connected at least one source.
