@@ -245,12 +245,9 @@ jobs:
 
       # Fire Slack once the release is genuinely shipped for consumers (draft
       # flipped to --latest, `latest` git tag moved, release-please PR
-      # lifecycle closed). The downstream skills-repo sync below is a useful
-      # side effect but not gating for the wizard, so its failure shouldn't
-      # swallow the release announcement. (PostHog/ai-plugin needs no step
-      # here at all: its own sync-skills.yml cron pulls this release's assets
-      # daily, which is why it stayed current while the push-based mirror
-      # below sat broken.)
+      # lifecycle closed). The downstream mirror steps below (PostHog/skills,
+      # PostHog/ai-plugin) are useful side effects but not gating for the
+      # wizard, so their failure shouldn't swallow the release announcement.
       - name: Notify Slack of release
         uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
         with:
@@ -311,53 +308,110 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to push"
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-          # Stage the sync on a branch. The branch tip is the existing main
-          # commit, so this plain push creates no new (unsigned) commits and
-          # passes the signed-commits ruleset; the batched API commits below
-          # land on top of it.
-          SYNC_BRANCH="chore/sync-plugins-${RELEASE_TAG}-$(date +%Y%m%d%H%M%S)"
-          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
-          echo "sync_branch=$SYNC_BRANCH" >> "$GITHUB_OUTPUT"
-
-      # The target repo requires signed commits, so the mirrored content is
-      # committed through the GitHub API (GitHub signs API commits) — in
-      # batches, because one createCommitOnBranch mutation carrying the whole
-      # tree times out with a 504 once the diff is large; that is why this
-      # step's ghcommit-action predecessor failed on every release. Committing
-      # to a branch and merging via PR keeps main atomic: a partial batch run
-      # leaves only a dead branch behind, never a half-synced main.
-      - name: Commit plugins to sync branch in signed batches
+      # Both target repos require signed commits, so the mirrored content is
+      # committed through the GitHub API instead of pushed with git. The API
+      # takes a whole commit in one request and times out once the tree is
+      # big enough, so the changed files are sent a batch at a time.
+      - name: Commit plugins to skills repo
         if: steps.skills_push.outputs.changed == 'true'
         working-directory: .skills-push
         env:
           GH_TOKEN: ${{ steps.skills_token.outputs.token }}
-          TARGET_REPO: ${{ steps.skills_push.outputs.target_repo }}
-          BRANCH: ${{ steps.skills_push.outputs.sync_branch }}
-          COMMIT_MESSAGE: Update generated plugins from context-mill ${{ env.RELEASE_TAG }}
-        run: python3 "$GITHUB_WORKSPACE/.github/scripts/commit_in_batches.py"
-
-      - name: Open auto-merging sync PR on the skills repo
-        if: steps.skills_push.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ steps.skills_token.outputs.token }}
-          TARGET_REPO: ${{ steps.skills_push.outputs.target_repo }}
-          BASE: ${{ steps.skills_push.outputs.target_branch }}
-          HEAD: ${{ steps.skills_push.outputs.sync_branch }}
+          REPO: ${{ steps.skills_push.outputs.target_repo }}
+          BRANCH: ${{ steps.skills_push.outputs.target_branch }}
+          MESSAGE: Update generated plugins from context-mill ${{ env.RELEASE_TAG }}
+          FILES_PER_COMMIT: '200'
         run: |
-          PR_URL=$(gh pr create --repo "$TARGET_REPO" \
-            --base "$BASE" \
-            --head "$HEAD" \
-            --title "Update generated plugins from context-mill $RELEASE_TAG" \
-            --body "Automated plugin sync from the context-mill $RELEASE_TAG release.")
-          gh pr merge --repo "$TARGET_REPO" "$PR_URL" --auto --squash
+          commit_file_changes() { # $1: file holding a fileChanges object
+            OID=$(jq -n --arg r "$REPO" --arg b "$BRANCH" --arg m "$MESSAGE" \
+                        --arg o "$OID" --slurpfile changes "$1" \
+              '{query: "mutation($i:CreateCommitOnBranchInput!){createCommitOnBranch(input:$i){commit{oid}}}",
+                variables: {i: {branch: {repositoryNameWithOwner: $r, branchName: $b},
+                                message: {headline: $m}, expectedHeadOid: $o,
+                                fileChanges: $changes[0]}}}' \
+              | gh api graphql --input - --jq '.data.createCommitOnBranch.commit.oid')
+            echo "  committed $OID"
+          }
 
+          OID=$(git rev-parse HEAD)
+          changes=$(mktemp -d)
+
+          git diff --cached --name-only --diff-filter=D > "$changes/deleted-files"
+          if [ -s "$changes/deleted-files" ]; then
+            echo "Deleting $(wc -l < "$changes/deleted-files") files"
+            jq -R '{path: .}' < "$changes/deleted-files" \
+              | jq -s '{deletions: .}' > "$changes/payload.json"
+            commit_file_changes "$changes/payload.json"
+          fi
+
+          git diff --cached --name-only --diff-filter=d > "$changes/updated-files"
+          if [ -s "$changes/updated-files" ]; then
+            echo "Updating $(wc -l < "$changes/updated-files") files, $FILES_PER_COMMIT per commit"
+            split -l "$FILES_PER_COMMIT" "$changes/updated-files" "$changes/file-group."
+            for group in "$changes"/file-group.*; do
+              while IFS= read -r file; do
+                jq -n --arg path "$file" --rawfile body "$file" \
+                  '{$path, contents: ($body | @base64)}'
+              done < "$group" | jq -s '{additions: .}' > "$changes/payload.json"
+              commit_file_changes "$changes/payload.json"
+            done
+          fi
+
+      - name: Push omnibus skills to ai-plugin repo
+        id: ai_plugin_push
+        env:
+          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
+        run: |
+          # Under $GITHUB_WORKSPACE so ghcommit-action can resolve it (see above).
+          WORK_DIR="$GITHUB_WORKSPACE/.ai-plugin-push"
+          rm -rf "$WORK_DIR"
+          MEGA_SKILLS="dist/marketplace/plugins/posthog-all/skills"
+
+          echo "Cloning PostHog/ai-plugin..."
+          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/PostHog/ai-plugin.git" "$WORK_DIR"
+          echo "target_branch=$(git -C "$WORK_DIR" rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
+
+          # Sync each omnibus skill, stripping the "omnibus-" prefix to match ai-plugin's layout
+          for src in "$MEGA_SKILLS"/omnibus-*; do
+            SKILL_NAME=$(basename "$src" | sed 's/^omnibus-//')
+            DEST="$WORK_DIR/skills/$SKILL_NAME"
+
+            echo "  Syncing $SKILL_NAME"
+            rm -rf "$DEST/references" "$DEST/SKILL.md"
+            mkdir -p "$DEST"
+            cp -r "$src/references" "$DEST/"
+            cp "$src/SKILL.md" "$DEST/"
+          done
+
+          cd "$WORK_DIR"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to push to PostHog/ai-plugin"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit omnibus skills to ai-plugin repo
+        if: steps.ai_plugin_push.outputs.changed == 'true'
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: Update generated skills from context-mill ${{ env.RELEASE_TAG }}
+          repo: PostHog/ai-plugin
+          branch: ${{ steps.ai_plugin_push.outputs.target_branch }}
+          repository: .ai-plugin-push
+        env:
+          GITHUB_TOKEN: ${{ steps.skills_token.outputs.token }}
+
+      # Both clones embed the App token in their remote URL and now live in the
+      # workspace rather than a mktemp dir, so drop them before any later step runs.
       - name: Remove the mirror clones
         if: always()
-        run: rm -rf "$GITHUB_WORKSPACE/.skills-push"
+        run: rm -rf "$GITHUB_WORKSPACE/.skills-push" "$GITHUB_WORKSPACE/.ai-plugin-push"
 
       # Mirror the release to S3 so consumers have a second origin to fetch from
       # when GitHub Releases is unavailable.
@@ -377,10 +431,10 @@ jobs:
       # It only reads dist/, which nothing above mutates.
       #
       # Running last also means the default "skip if any earlier step failed"
-      # rule would let the PostHog/skills sync above take S3 down with it —
-      # which is exactly what happened in v1.47.0, when a transient 502 from
-      # the skills commit skipped this step and the release shipped with no S3
-      # mirror. That sync is explicitly NOT gating
+      # rule would let the PostHog/skills and PostHog/ai-plugin mirrors above
+      # take S3 down with them — which is exactly what happened in v1.47.0, when
+      # a transient 502 from the skills commit skipped this step and the release
+      # shipped with no S3 mirror. Those two mirrors are explicitly NOT gating
       # (see the "Notify Slack" comment above), so the condition below keys off
       # the release actually being published rather than off the whole job's
       # health. `!cancelled()` is what opts out of the default skip-on-failure;
