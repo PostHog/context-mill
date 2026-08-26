@@ -2,7 +2,7 @@
 
 This skill connects a data source the project already uses (a database like Postgres/MySQL, or an API-key source like Stripe) to PostHog's data warehouse, so the data can be queried alongside product analytics.
 
-The wizard has already scanned the project and lists the detected sources in your prompt. Each detected source has a **kind** (e.g. `Postgres`, `Stripe` — this is the PostHog source-type name), a **label**, and a **mode**:
+The wizard has already scanned the project and lists the detected sources in your prompt. Each detected source has a **kind** (e.g. `Postgres`, `Stripe` — this is the PostHog source-type name), a **label**, and a **mode**. The `kind` is the only valid `source_type`. The `label` is display text, and it is often not a valid source type: the kind `HuggingFace` has the label `Hugging Face`. The steps below say `source_type` = the kind — copy that token verbatim, and use the `label` only in text you show the user. The modes are:
 
 - **`in-cli`** — create the source directly from here (databases and API-key SaaS).
 - **`deep-link`** — give the user a pre-filled URL to finish in the PostHog app (OAuth sources; no safe terminal credential path).

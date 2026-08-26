@@ -2,7 +2,11 @@
 
 Your task input lists the data sources the wizard found in this project. Each
 one carries a **kind** (the PostHog source-type name, e.g. `Postgres`,
-`Stripe`), a **label**, the **signal** it was detected by, and a **mode**:
+`Stripe`), a **label**, the **signal** it was detected by, and a **mode**. The
+`kind` is the only valid `source_type`. The `label` is display text, and it is
+often not a valid source type: the kind `HuggingFace` has the label `Hugging
+Face`. The steps below say `source_type` = the kind — copy that token verbatim,
+and use the `label` only in text you show the user. The modes are:
 
 - **`in-cli`** — create the source from here (databases and API-key SaaS).
 - **`deep-link`** — hand the user a pre-filled URL to finish in the PostHog app
