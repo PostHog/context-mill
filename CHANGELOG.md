@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.49.1](https://github.com/PostHog/context-mill/compare/v1.49.0...v1.49.1) (2026-08-26)
+
+
+### Bug Fixes
+
+* **build:** skip .nuxt, .output, and sourcemaps in example processing ([4c106ec](https://github.com/PostHog/context-mill/commit/4c106ec69552c15b7c50df36b07b5bf462ac936c))
+* **build:** skip .nuxt, .output, and sourcemaps in example processing ([b5166e7](https://github.com/PostHog/context-mill/commit/b5166e7daee188704e877f45106731efb37a177d))
+* **data-warehouse-source:** tell the agent to scan every .env file ([163fade](https://github.com/PostHog/context-mill/commit/163fadec3bb82a134ce72cfa88c15f5207fc344f))
+* **data-warehouse-source:** tell the agent to scan every .env file ([e7fb5ce](https://github.com/PostHog/context-mill/commit/e7fb5ce2a0418648d5a84b4c8ca6f3cc0dc1d205))
+* **integration-v2-warehouse:** port the check_env_keys project-wide scan guidance ([83b0e87](https://github.com/PostHog/context-mill/commit/83b0e8751569bcb4e5e22d4d4efe19db63230f62))
+* **warehouse-skills:** point Supabase at its own source type, not Postgres ([0d0c938](https://github.com/PostHog/context-mill/commit/0d0c9381866be8fb4c97aed33af7f21b54120f57))
+* **warehouse-skills:** port the env-key fix to the seeded skill, correct Supabase, warn on label vs kind ([3610107](https://github.com/PostHog/context-mill/commit/361010702d6c9a8f8b9ee62d31c4889137072ebe))
+* **warehouse-skills:** warn that the label is not a valid source_type ([32e8ce0](https://github.com/PostHog/context-mill/commit/32e8ce05b1d9599cfafa3fd76e309c4f3ae43150))
+* **warehouse:** ask once per source, and report what was actually created ([836f7a3](https://github.com/PostHog/context-mill/commit/836f7a301b403e267f8f9cee7a697f6a15e23ac9))
+* **warehouse:** ask once per source, and report what was actually created ([d61f300](https://github.com/PostHog/context-mill/commit/d61f3007a78032ac2d530c658fca3897e4af77e0))
+
 ## [1.49.0](https://github.com/PostHog/context-mill/compare/v1.48.0...v1.49.0) (2026-08-24)
 
 
