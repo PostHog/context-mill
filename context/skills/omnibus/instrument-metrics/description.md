@@ -2,7 +2,7 @@
 
 Use this skill to add PostHog metric capture (counters, gauges, and histograms) for new or changed code. Use it after implementing features or reviewing PRs to ensure key operations are measured, when the user asks to add metrics or counters, or to mirror existing metrics instrumentation into PostHog. Supports any platform or language.
 
-Supported platforms: Web (JavaScript), Node.js, Python via the `posthog.metrics` SDK API, and any language via OpenTelemetry (OTLP).
+Supported platforms: Web (JavaScript), Node.js, Python via the `posthog.metrics` SDK API, Kubernetes via the metrics agent, and any language via OpenTelemetry (OTLP).
 
 ## Instructions
 

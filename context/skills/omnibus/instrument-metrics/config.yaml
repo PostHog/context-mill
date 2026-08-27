@@ -7,6 +7,7 @@ tags: [metrics]
 shared_docs:
   - https://posthog.com/docs/metrics/start-here.md
   - https://posthog.com/docs/metrics/basics.md
+  - https://posthog.com/docs/metrics/architecture.md
 variants:
   - id: all
     display_name: all supported platforms
@@ -15,4 +16,5 @@ variants:
       - https://posthog.com/docs/metrics/installation/javascript.md
       - https://posthog.com/docs/metrics/installation/nodejs.md
       - https://posthog.com/docs/metrics/installation/python.md
+      - https://posthog.com/docs/metrics/installation/kubernetes.md
       - https://posthog.com/docs/metrics/installation/other.md
