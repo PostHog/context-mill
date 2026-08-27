@@ -6,6 +6,7 @@ tags: [metrics]
 shared_docs:
   - https://posthog.com/docs/metrics/start-here.md
   - https://posthog.com/docs/metrics/basics.md
+  - https://posthog.com/docs/metrics/architecture.md
 variants:
   - id: javascript
     display_name: Web (JavaScript)
@@ -24,6 +25,12 @@ variants:
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/metrics/installation/python.md
+
+  - id: kubernetes
+    display_name: Kubernetes
+    tags: [kubernetes]
+    docs_urls:
+      - https://posthog.com/docs/metrics/installation/kubernetes.md
 
   - id: other
     display_name: Other Languages
