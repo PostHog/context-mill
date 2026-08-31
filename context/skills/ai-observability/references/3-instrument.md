@@ -20,6 +20,8 @@ Route the token and host through env vars with `set_env_values`. Reuse the names
 
 Agent frameworks use their own tracing hook in place of a wrapper. Take it from the install doc. Do not substitute an OTel instrumentor.
 
+On the OpenTelemetry path (`opentelemetry-*` variants, which includes every Go project) there is no wrapper to swap. Register the PostHog span processor from the install doc, start one span per turn so the calls in it share a trace, and attach `$ai_session_id` and `posthog.distinct_id` the way the doc shows. The cardinality rules below apply unchanged.
+
 ## Attach identity to every call
 
 Three per-call parameters carry the tree. Node uses camelCase.

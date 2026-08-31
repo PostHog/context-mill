@@ -33,6 +33,8 @@ Portkey also needs `portkey-ai`.
 
 AWS Bedrock has no wrapper client. It instruments the AWS SDK through OpenTelemetry, so its package list differs from every other provider.
 
+`opentelemetry-go` declares `github.com/posthog/posthog-go/otel` and the OpenTelemetry SDK modules in `go.mod`. There are no Go instrumentation libraries for provider SDKs; step 3 hand-authors the `gen_ai.*` spans instead.
+
 ## Do not
 
 - Do not run `npm install` or `pip install`.
