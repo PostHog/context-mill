@@ -1,5 +1,5 @@
 ---
-next_step: 3b-enable-products.md
+next_step: 3-enable-products.md
 ---
 
 # Step 2 — Read context

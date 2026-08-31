@@ -49,7 +49,7 @@ Core also owns loading the in-product `creating-replay-vision-scanners` skill (`
 
 ## Do
 
-1. **Check recordings and existing scanners.** You already know from step 2 whether this project has recordings, and step 3b turned Session Replay on. Call `vision-scanners-list` once and reuse the inventory for every brief's re-run check.
+1. **Check recordings and existing scanners.** You already know from step 2 whether this project has recordings, and step 3 turned Session Replay on. Call `vision-scanners-list` once and reuse the inventory for every brief's re-run check.
 
    - **No recordings yet** (a fresh project that has never recorded a session): still create the scanners — they cost nothing until recordings exist and start working the day they do, with no second setup. Note it in the report.
    - **The team already runs its own scanners** covering a brief's ground (they fail core's re-run test): create only the briefs that add something, and say in the report which you skipped and why.
