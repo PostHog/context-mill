@@ -1,5 +1,5 @@
 ---
-next_step: 3-github.md
+next_step: 3b-enable-products.md
 ---
 
 # Step 2 — Read context
@@ -42,4 +42,4 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
 
    Do NOT crawl the whole source tree. If a question can't be answered cheaply, record "unknown" and move on — unknowns default to asking the user about sources; for scouts, an unconfirmed surface won't rank among the most-used products, so step 6 won't enable its scout.
 
-5. **Write down your working checklist** (in your own notes, not a file): candidate native sources, candidate connected tools, which products this project uses most (drives step 6's pick: `general` + up to five most-used specialists, so carry the full ranking rather than truncating it here), GitHub status if the profile revealed it. Steps 4–6 consume this.
+5. **Write down your working checklist** (in your own notes, not a file): candidate native sources, candidate connected tools, which products this project uses most (drives step 6's pick: `general` + up to five most-used specialists, so carry the full ranking rather than truncating it here). Steps 4–6 consume this.
