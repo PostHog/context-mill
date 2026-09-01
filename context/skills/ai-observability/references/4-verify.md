@@ -42,6 +42,7 @@ Before you hand over, run the import the code depends on, such as `python3 -c "f
 | `$ai_provider` says `openai` on a gateway | the per-call override is missing |
 | Anonymous person | `posthog_distinct_id` is missing |
 | No tool spans | the `$ai_span` captures are missing or carry another trace id |
+| A trace with no root, on the OTel path | the turn span fails the bridge's AI filter, so the processor drops it |
 | Nothing arrives | the code still calls the vendor client, the key or host is unset, or a short script exits before the flush |
 
 ## Do not

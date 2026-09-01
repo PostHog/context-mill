@@ -28,7 +28,7 @@ The linked install page carries the exact code blocks for this variant's languag
 ## Key principles
 
 - **Environment variables.** Read `<ph_project_token>` and `<ph_client_api_host>` from env, using the framework's env-var convention. Never hardcode either value.
-- **The SDK wrapper is the default, not OpenTelemetry.** OTel makes the session tree awkward to build and maintain, so provider and gateway variants use PostHog's drop-in wrapper client. Reserve OTel for the `opentelemetry-*` variants and LlamaIndex, and never swap a framework's own tracing hook for an instrumentor. Go is the exception: it has no wrapper SDK, so every Go project uses the `opentelemetry-go` bridge.
+- **The SDK wrapper is the default, not OpenTelemetry.** OTel makes the session tree awkward to build and maintain, so provider and gateway variants use PostHog's drop-in wrapper client. Reserve OTel for the `opentelemetry-*` variants and LlamaIndex, and never swap a framework's own tracing hook for an instrumentor. Go is the exception: it has no wrapper SDK, so model calls made from Go use the `opentelemetry-go` bridge.
 - **Minimal changes.** The wrapper swaps a client constructor and adds parameters to existing calls. Don't restructure the app, and don't wrap the setup in an init function or module globals.
 - **Match the docs.** Package names and wrapper imports change between AIO releases. The install page for this variant is the source of truth.
 - **Cardinality is what gets graded.** One `$ai_session_id` per conversation, one `posthog_trace_id` per turn, shared by every call in it. An id minted per call is worse than none — it looks instrumented and groups nothing.

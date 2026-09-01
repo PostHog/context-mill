@@ -12,9 +12,13 @@ This skill ships 69 variants. Call `load_skill_menu` with `category: "ai-observa
 
 Apply these rules in order. The first match wins. Frameworks wrap providers, and gateways look like OpenAI, so the order matters.
 
-### 1. A Go project always takes OpenTelemetry
+### 1. Model calls made from Go take OpenTelemetry
 
-A `go.mod` means Go. Go has no PostHog wrapper SDK, so every Go project takes `opentelemetry-go`, whatever SDK or framework makes the model calls. The bridge is `github.com/posthog/posthog-go/otel`; the install doc carries the code. The rules below apply to Python and Node projects only.
+Go has no PostHog wrapper SDK, so a project whose model calls are in Go takes `opentelemetry-go`, whatever SDK or framework makes them. The bridge is `github.com/posthog/posthog-go/otel`, and the install doc carries the code.
+
+A `go.mod` on its own is not the signal. If the repo also has a `package.json`, `pyproject.toml`, or `requirements.txt`, find the call sites before you route. A Go service beside a Node or Python LLM app takes the rules below. If it stays unclear, use `wizard_ask`.
+
+The bridge needs Go 1.25 or newer. An older toolchain fails with `module requires go >= 1.25.0`. Say so in the report rather than raising the project's Go version yourself.
 
 ### 2. A framework wins over the provider under it
 
@@ -56,7 +60,7 @@ Pick the variant that names the provider. The install shape matches plain OpenAI
 - The app already emits its own OTel spans: `opentelemetry-{python,node}`.
 - No LLM SDK at all: `manual-capture`.
 
-Language follows the manifest. A `package.json` means Node. A `pyproject.toml` or `requirements.txt` means Python. A `go.mod` means Go, which rule 1 already routed to `opentelemetry-go`. Framework variants have no language suffix.
+Language follows the manifest. A `package.json` means Node. A `pyproject.toml` or `requirements.txt` means Python. Go call sites went to `opentelemetry-go` under rule 1. Framework variants have no language suffix.
 
 Report the variant and the reason in a `[STATUS]` line, then call `install_skill` with the full id.
 
