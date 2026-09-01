@@ -2,7 +2,7 @@
 type: install
 flow: error-tracking
 label: Add the PostHog SDK to the manifest
-model_pi: openai/gpt-5.6-terra
+model_pi: openai/gpt-5.6-sol
 effort_pi: low
 model_sdk: claude-haiku-4-5-20251001
 skills: [integration-v2-install]
