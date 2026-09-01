@@ -199,7 +199,7 @@ posthog.captureToolCall({
 })
 ```
 
-Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. On `2026-07-28`, there is no initialize handshake or protocol session: don't fabricate `$mcp_initialize`, and pass the protocol version on each capture. `captureModel` and conversation-id injection aren't available on the custom-dispatcher path, so don't add `$mcp_llm_model` manually. These calls are fire-and-forget and never throw, so they can't take down a tool.
+Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocolVersion` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't fabricate `$mcp_initialize` on `2026-07-28`. `captureModel` and conversation-id injection aren't available on the custom-dispatcher path, so don't add `$mcp_llm_model` manually. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
 **Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Prefer the `instrumentMutator` helper — it instruments the server and returns it, so it drops straight into the hook:
 
@@ -301,7 +301,7 @@ posthog.capture_tool_call(
 )
 ```
 
-Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher already has; omit them rather than inventing values. On `2026-07-28`, don't call `capture_initialize`; pass the current request's `protocol_version` on each other capture. Python doesn't support self-reported model capture yet, so don't add an `llm_model` field. These calls are fire-and-forget and never throw, so they can't take down a tool.
+Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocol_version` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't call `capture_initialize` on `2026-07-28`. Python doesn't support self-reported model capture yet, so don't add an `llm_model` field. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
 ### STEP 5: Wire up credentials
 
@@ -340,6 +340,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 - For a TypeScript wrapping path with model capture, verify `tools/list` advertises a required `llm_model` string, the tool handler doesn't receive it, and a non-`unknown` answer lands on `$mcp_tool_call` as `$mcp_llm_model` with `$mcp_llm_model_source = "self_reported"`.
 - For a `2026-07-28` wrapping path, verify the first tool call captures without an initialize request. When conversation IDs are enabled, verify the returned handle is echoed on the next call and produces the same `$session_id`.
 - Don't expect automatic `$mcp_resources_list`, `$mcp_resource_read`, `$mcp_prompts_list`, or `$mcp_prompt_get` events. Those names are reserved, but the wrappers don't emit them yet.
+- Check every event name in the final report against `events.md`. Failed tools remain `$mcp_tool_call` events with `$mcp_is_error = true` and can emit a sibling `$exception`; there is no `$mcp_tool_failed` event.
 - Summarize for the user: which path you used, the files you changed, the env vars to set, and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference.
 
 ## Reference files
