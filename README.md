@@ -140,8 +140,8 @@ review to their owning team instead.
 
 Ownership is by directory. Skills not listed above (`audit`, `audit-*`,
 `cost-cutting`, `creating-product-tours`, `error-tracking`, `events-audit`,
-`feature-flags`, `llm-analytics`, `logs`, `migrate`, `omnibus`,
-`posthog-best-practices`, `quack`, `tools-and-features`) fall through the
+`feature-flags`, `feature-flags-setup`, `llm-analytics`, `logs`, `migrate`,
+`omnibus`, `posthog-best-practices`, `quack`, `tools-and-features`) fall through the
 default and are owned by `team-wizard-docs`. Today CODEOWNERS only
 auto-requests review — approval is not a merge gate.
 

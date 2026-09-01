@@ -1,84 +1,85 @@
-# Add PostHog feature flags (Next.js App Router)
+# Add PostHog feature flags
 
-Use this skill to give a Next.js App Router app a **correct, cheap** feature-flag install: server-side evaluation bootstrapped into the client, one real flag in the user's PostHog project, one gated UI path, and CI configured so forgotten test environments don't poll `/flags`.
+Use this skill to add PostHog feature flags to a **Next.js App Router** app. Once installed, flags are evaluated once per request on the server with `posthog-node`'s `evaluateFlags()`, those values are bootstrapped into the client so the first paint has no flicker and no extra `/flags` fetch, one real boolean flag exists in the user's project, and one UI path is gated behind it.
 
-This is **not** `wizard audit feature-flags` (read-only, after the fact) and **not** the default `wizard` install (product analytics; its prompt explicitly excludes the feature-flags category). This is the missing expert first hour.
+This is **not** `wizard audit feature-flags` (read-only, after the fact). This is **not** the default `wizard` install (product analytics). This skill is the flags install: instrument, create, gate.
 
-## Scope — one stack, one pattern
+## Scope and guardrails
 
-**Supported: Next.js App Router only** (`app/` directory, `next` in `package.json`).
+- **Next.js App Router only.** Require `next` in `package.json` and an `app/` directory (or `src/app/`). If the project is Pages Router, a different framework, or backend-only, **stop**: emit `[ABORT] unsupported stack for feature flags` on its own line and do nothing else. Do not invent a second pattern. Do not add local evaluation. Do not install `@posthog/next`.
+- **One evaluation per request.** Call `evaluateFlags(distinctId)` once, then read with `flags.isEnabled(key)` / `flags.getFlag(key)`. Do not call the deprecated `getFeatureFlag`, `isFeatureEnabled`, or `getAllFlags` — each of those is its own `/flags` request.
+- **Same distinct_id on server and client.** Percentage rollout is deterministic per id. If they differ, bootstrap lies.
+- **Additive gating only.** Flag off = current behavior. Never gate auth, checkout, payments, data-mutation handlers, or middleware that can 404 a route.
+- **Minimal, additive changes.** Match the project's folder style. Read a file immediately before editing it. Do not restructure unrelated code. Do not commit.
 
-If the project is Pages Router, a different framework, or a backend-only package, **stop**: emit `[ABORT] unsupported stack — currently Next.js App Router only` on its own line and do nothing else. Do not invent a second pattern. Do not "also support" middleware-only, local evaluation, or `@posthog/next` (pre-release).
+### Abort cases
 
-**The pattern (do this, nothing else):**
+If anything blocks the run, **always** emit exactly one `[ABORT] <reason>` line and stop — never halt, finish, or error out silently. The wizard catches `[ABORT]` and terminates the run for you; don't try to exit yourself. A silent stop is recorded as a failed run with no reason, which can't be acted on, so every dead end must carry a reason. Use one of:
 
-1. Evaluate flags **once per request** on the server with `posthog-node`'s `evaluateFlags()`.
-2. Pass those values + the same `distinct_id` into the client via `bootstrap` on `PostHogProvider`.
-3. Gate UI with `useFeatureFlagEnabled` from `@posthog/react`.
-4. Create **one** boolean flag at 100% rollout and gate **one** additive UI path after the user confirms.
-
-This avoids flicker (the client has values on first paint) and a duplicate `/flags` request on init. It also avoids local evaluation, whose default 30s poll costs an idle server ~864k requests/month (see `cutting-costs.md`).
-
-## Abort cases
-
-If anything blocks the run, **always** emit exactly one `[ABORT] <reason>` line and stop. The wizard catches `[ABORT]` and terminates the run; don't try to exit yourself. Use one of:
-
-- `[ABORT] unsupported stack — currently Next.js App Router only` — no `app/` directory, or `next` is not a dependency.
-- `[ABORT] could not locate a UI surface to gate` — exhaustive search found no page or component safe to add an additive, flag-gated element to.
+- `[ABORT] unsupported stack for feature flags` — no `app/` directory, or `next` is not a dependency.
+- `[ABORT] could not locate a UI surface to gate` — exhaustive search found no page or component that is safe to add an additive, flag-gated element to.
 - `[ABORT] no posthog project credentials` — no `phc_…` token in env and no PostHog MCP available to fetch one.
-- `[ABORT] <short specific reason>` — anything else that blocks (unreadable project, MCP flag-create failed after retry). Keep it short.
+- `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or flag create failed after retry). Keep it short and specific so it's useful when aggregated across runs.
 
-## Tools
+## Available tools
 
 {{> mcp-tool-calling}}
 
 Wizard tools (when running inside the wizard):
 
-- `mcp__wizard-tools__wizard_ask` — the **only** way to ask the user which UI path to gate. Call it **exactly once**. Do not ask via chat.
+- `mcp__wizard-tools__wizard_ask` — the only way to ask which UI path to gate. Call it **exactly once**. Do not ask via chat.
 - `mcp__wizard-tools__check_env_keys` / `mcp__wizard-tools__set_env_values` — env keys. Never hardcode the project token.
 
-PostHog MCP (via `exec`): `create-feature-flag`, `feature-flag-get-definition-by-key`, `projects-get`, `execute-sql` (to confirm `$feature_flag_called`). Always `info` before `call`.
+For PostHog operations (create a flag, look up a flag by key, list projects, query `$feature_flag_called`), go through `exec` as above. Inner tool names move; discover them, don't assume them.
 
 ## Instructions
 
-Follow these steps IN ORDER. Emit `[STATUS] <short phrase>` at the start of each step.
+Follow these steps IN ORDER. Emit the `[STATUS]` line named at the start of each step.
 
 ### STEP 1: Confirm Next.js App Router
 
-Look for `next` in `package.json` **and** an `app/` directory (or `src/app/`). Lockfile decides the package manager (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lockb`).
+Emit `[STATUS] Detecting Next.js App Router`.
 
-If this is not Next.js App Router, apply the unsupported-stack abort.
+Look for `next` in `package.json` **and** an `app/` directory (or `src/app/`). The lockfile decides the package manager (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lockb`).
 
-Record: package manager, whether `src/` is used, whether PostHog is already initialized (`posthog.init`, `PostHogProvider`, `instrumentation-client`, `posthog-js` / `posthog-node` in dependencies).
+If this is not Next.js App Router, apply the unsupported-stack abort. In the same message, say where you looked.
+
+Record: package manager, whether `src/` is used, and whether PostHog is already initialized (`posthog.init`, `PostHogProvider`, `instrumentation-client`, `posthog-js` / `posthog-node` in dependencies). If flags are already wired the way this skill describes (`evaluateFlags` + bootstrap + a gated call site), verify they are correct and skip to STEP 10.
 
 ### STEP 2: Credentials
 
-- If `.env` / `.env.local` already has a `phc_…` token and a host, reuse those keys (don't rename working names).
-- Otherwise use `projects-get` to fetch `api_token`. If several projects come back, pick the one the wizard session is already authenticated to; if that's unclear, abort with `no posthog project credentials` rather than guessing.
-- Host: `https://us.i.posthog.com` (US) or `https://eu.i.posthog.com` (EU). Match the project's region from `projects-get`.
+Emit `[STATUS] Resolving PostHog credentials`.
+
+- If `.env` / `.env.local` already has a `phc_…` token and a host, reuse those key names. Do not rename working names.
+- Otherwise fetch the project's `api_token` via PostHog MCP. If several projects come back, use the one the current session is authenticated to. If that is unclear, abort with `no posthog project credentials` rather than guessing.
+- Host: `https://us.i.posthog.com` (US) or `https://eu.i.posthog.com` (EU). Match the project's region from the MCP response.
 - Write `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEXT_PUBLIC_POSTHOG_HOST` via `set_env_values` if missing. Never hardcode.
 
 ### STEP 3: Install packages
 
-Install, with the project's package manager:
+Emit `[STATUS] Installing PostHog packages`.
 
-- `posthog-js` — client
-- `posthog-node` — server evaluation
-- `@posthog/react` — `useFeatureFlagEnabled` / `PostHogProvider`
+Install with the project's package manager:
 
-Do not install `@posthog/next` (pre-release). Do not install extra OTel or analytics packages.
+- `posthog-js`
+- `posthog-node`
+- `@posthog/react`
 
-If they're already present, leave the versions alone unless they're so old that `evaluateFlags` doesn't exist — then bump `posthog-node` only.
+Import **both** `PostHogProvider` and `useFeatureFlagEnabled` from `@posthog/react`. Do not import the provider from `posthog-js/react`. Do not install `@posthog/next`.
 
-### STEP 4: Server client + `evaluateFlags`
+If the packages are already present, leave the versions alone unless `evaluateFlags` is missing from `posthog-node` — then bump `posthog-node` only.
 
-Add a small server helper (e.g. `lib/posthog-server.ts` or `app/posthog.ts` — match the project's folder style):
+### STEP 4: Server client
+
+Emit `[STATUS] Adding the server client`.
+
+Add a small helper, matching the project's folder style (`lib/posthog-server.ts` or `app/posthog.ts`):
 
 ```ts
 import { PostHog } from 'posthog-node'
 
-export function PostHogServer() {
-  return new PostHog(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
+export function PostHogServer(token: string) {
+  return new PostHog(token, {
     host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     flushAt: 1,
     flushInterval: 0,
@@ -86,41 +87,79 @@ export function PostHogServer() {
 }
 ```
 
-`flushAt: 1` / `flushInterval: 0` is required in Next.js server functions — they freeze before a batched flush lands. Always `await client.shutdown()` after evaluating.
+`flushAt: 1` / `flushInterval: 0` is required in Next.js server functions — they freeze before a batched flush lands. Always `await client.shutdown()` after evaluating. A missing token is handled in STEP 7 (render children without evaluating); do not throw at import time.
 
-**Use `evaluateFlags()`, not the deprecated `getFeatureFlag` / `isFeatureEnabled` / `getAllFlags`.** One `evaluateFlags(distinctId)` call is one `/flags` request; then read with `flags.isEnabled(key)` / `flags.getFlag(key)`. Calling the old methods once each is the billing footgun this program exists to prevent.
+### STEP 5: Distinct ID
+
+Emit `[STATUS] Wiring a shared distinct id`.
+
+- **Identified app** (`posthog.identify`, a session user id, etc.): use that stable id on the server and bootstrap `distinctID` with `isIdentifiedID: true`. Do not add the cookie below.
+- **Anonymous app**: persist the id in a `ph_distinct_id` cookie. Mint it in `middleware.ts` if missing. Read it in the root layout. Bootstrap `distinctID` with `isIdentifiedID: false`. Do not call `identify()` with a shared literal like `"anonymous"`. If `middleware.ts` already exists, add the cookie logic to the existing handler — do not replace it.
 
 ```ts
-const client = PostHogServer()
-const flags = await client.evaluateFlags(distinctId)
-const enabled = flags.isEnabled(flagKey) === true
-await client.shutdown()
-// Bootstrap at least the flag we created. If the snapshot exposes an
-// enumerable map of all evaluated flags, pass that instead so the client
-// is fully seeded — one /flags round-trip, no client refetch on init.
-const featureFlags = { [flagKey]: enabled }
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+  if (!request.cookies.get('ph_distinct_id')) {
+    response.cookies.set('ph_distinct_id', crypto.randomUUID(), { path: '/' })
+  }
+  return response
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+}
 ```
 
-If you can only bootstrap the one flag, say so in the report (hack). Never call `getFeatureFlag` / `isFeatureEnabled` / `getAllFlags` — those are deprecated and each one is its own `/flags` request.
-
-### STEP 5: Distinct ID that matches on server and client
-
-Percentage rollout is deterministic per `distinct_id`. Server and client **must** use the same one.
-
-- **If the app already identifies users** (`posthog.identify`, next-auth session id, etc.): use that stable id on the server and bootstrap `distinctID` + `isIdentifiedID: true`.
-- **If there is no auth** (typical of wizard-workbench apps): set a cookie (e.g. `ph_distinct_id`) in the root layout or a tiny helper, reuse it on both sides, bootstrap `distinctID` with `isIdentifiedID: false`. **This is a hack.** Call it out in the report. Do not invent `identify('anonymous')`.
+Reading `cookies()` in the root layout opts that tree into dynamic rendering. That is required — flags are per-user.
 
 Do not introduce local evaluation.
 
-### STEP 6: Client provider with bootstrap
+### STEP 6: Create one boolean flag
 
-Add a client provider (e.g. `app/providers.tsx`) and wrap `{children}` from the root layout.
+Emit `[STATUS] Creating the feature flag`.
 
-The root layout (a Server Component) evaluates flags, then passes them in:
+Search existing flags for a key matching the feature you plan to gate. Reuse it if it is a boolean flag. Otherwise create one:
+
+- key: kebab-case, descriptive (`new-todo-empty-state`, `show-about-banner`)
+- type: boolean, not multivariate
+- active: true
+- rollout: 100% (deterministic for this install; targeting is out of scope)
+- name: one sentence naming the UI path it will gate
+
+Create via `exec`. If create fails, retry once after `info`; then abort with a specific reason.
+
+### STEP 7: Client provider with bootstrap
+
+Emit `[STATUS] Bootstrapping flags into the client`.
+
+The root layout is a Server Component. If `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` is missing, render `{children}` without evaluating or wrapping — boot must still work. Otherwise evaluate once and pass the snapshot into the provider:
+
+```ts
+const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const cookieStore = await cookies()
+const distinctId =
+  cookieStore.get('ph_distinct_id')?.value ?? crypto.randomUUID()
+
+if (!token) {
+  return <html><body>{children}</body></html>
+}
+
+const client = PostHogServer(token)
+const flags = await client.evaluateFlags(distinctId)
+const enabled = flags.isEnabled(flagKey)
+await client.shutdown()
+// Bootstrap docs drop false and empty values. Seed only the enabled flag.
+const featureFlags = enabled ? { [flagKey]: true } : {}
+```
+
+Add `app/providers.tsx` (or `src/app/providers.tsx`) and wrap `{children}` from the root layout. Use the `apiKey` + `options` form of `PostHogProvider` (not `client={posthog}`) so bootstrap can be passed per request:
 
 ```tsx
 'use client'
-import { PostHogProvider } from 'posthog-js/react'
+import { PostHogProvider } from '@posthog/react'
 
 export function PHProvider({
   children,
@@ -133,10 +172,13 @@ export function PHProvider({
     featureFlags: Record<string, boolean | string>
   }
 }) {
+  const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+  if (!token) return children
+
   const isTestEnv = process.env.NODE_ENV === 'test' || process.env.CI === 'true'
   return (
     <PostHogProvider
-      apiKey={process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!}
+      apiKey={token}
       options={{
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
         bootstrap,
@@ -149,43 +191,35 @@ export function PHProvider({
 }
 ```
 
-`advanced_disable_feature_flags: true` in test/CI is the cutting-costs default: CI pipelines silently accumulate `/flags` requests otherwise.
+`advanced_disable_feature_flags: true` in test/CI stops forgotten CI jobs from polling `/flags` (see `cutting-costs.md`). A missing token in production is a no-op (render `children`); in development throw the missing-config error named in the framework guidelines.
 
-**If `instrumentation-client.ts` (or `.js`) already inits `posthog-js`:** relocate that init into this provider so bootstrap can be passed per request. Keep the existing `api_host` / `defaults` / other options — this is a move, not a rewrite of analytics behavior. Don't leave both inits in place (double-init is worse than relocating).
+**If `instrumentation-client.ts` (or `.js`) already inits `posthog-js`:** move that init into this provider so bootstrap can be passed per request. Keep the existing `api_host` / `defaults` / other options. Do not leave both inits in place. Do not follow any framework note that says to keep init in `instrumentation-client.ts` — that path cannot take per-request bootstrap.
 
-**If there is no existing client init:** the provider is the only client init. Do not also add `instrumentation-client.ts`.
+**If there is no existing client init:** the provider is the only client init. Do not add `instrumentation-client.ts`.
 
-### STEP 7: Create one real flag
+### STEP 8: Confirm the gate target
 
-Search existing flags (`feature-flag-get-definition-by-key` or list) for a key matching the feature you plan to gate. Reuse it if it's a boolean flag. Otherwise create one:
+Emit `[STATUS] Asking which UI path to gate`.
 
-- key: kebab-case, descriptive (`new-todo-empty-state`, `show-about-banner`)
-- type: **boolean** (not multivariate — that's a Learn-card concept, not this demo)
-- active: true
-- rollout: **100%** (deterministic. Targeting/phased rollout are taught, not made flaky here)
-- name: one sentence saying the wizard created it and which UI path it gates
+Flags change production UI. Ask **once**, then gate only what they picked.
 
-Use `create-feature-flag` via `exec`. If create fails, retry once after `info`; then abort with a specific reason.
-
-### STEP 8: Confirm the gate target — exactly one `wizard_ask`
-
-Flags break real production UI. Ask **once**, then gate only what they picked.
-
-1. Scan pages/components for **additive** surfaces (a banner, an extra card, a "new" empty-state illustration). Prefer new elements over wrapping existing critical logic.
-2. **Never** propose gating auth, checkout, payments, data-mutation handlers, or middleware that could 404 a route.
+1. Scan pages and components for additive surfaces (a banner, an extra card, an empty-state illustration). Prefer a new element over wrapping existing critical logic.
+2. Never propose gating auth, checkout, payments, data-mutation handlers, or route-blocking middleware.
 3. Call `mcp__wizard-tools__wizard_ask` **exactly once**:
    - `subject`: `"gate-target"`
    - one `kind: "select"` question
-   - `prompt`: explain you're about to gate one UI path with the flag you created, flag-off = current behavior, and they should pick a low-risk additive target.
-   - `options`: the **recommended** additive target first (label includes "recommended"), then 1–2 alternatives, then a last option `{ label: "Skip gating — install only", value: "skip" }`.
-4. If `wizard_ask` errors (CI / headless): do **not** fail. Gate the recommended additive target and record "auto-picked (no TTY)" in the report.
-5. If they pick `skip`: still leave the install + flag in place; write the report saying no UI was gated.
+   - `prompt`: you are about to gate one UI path with the flag you created; flag-off equals current behavior; pick a low-risk additive target or skip.
+   - Put **skip first** so it is the default highlight — an accidental Enter then declines instead of wrapping UI: `{ label: "Skip gating — install only", value: "skip" }`, then the recommended additive target (label includes "recommended"), then 1–2 alternatives.
+4. If `wizard_ask` errors (CI / headless): do not fail. Gate the recommended additive target and record in the report that the target was auto-picked because the host was non-interactive.
+5. If they pick `skip`: leave the install and the flag in place; write the report saying no UI was gated.
 
 Do not ask any other question. Credentials come from MCP/env, not from the user.
 
 ### STEP 9: Gate the chosen path
 
-Additive only. Flag off = current behavior.
+Emit `[STATUS] Gating the chosen UI path`.
+
+If STEP 8 returned `skip`, skip this step. Otherwise additive only — flag off = current behavior:
 
 ```tsx
 'use client'
@@ -194,49 +228,50 @@ import { useFeatureFlagEnabled } from '@posthog/react'
 export function FlaggedBanner() {
   const enabled = useFeatureFlagEnabled('<flag-key>', false)
   if (!enabled) return null
-  return <aside>New: this banner is gated by <code>&lt;flag-key&gt;</code>.</aside>
+  return <aside>This banner is gated by <code>&lt;flag-key&gt;</code>.</aside>
 }
 ```
 
-Pass `false` as the default so the type is `boolean` and the banner stays hidden while flags load (no flicker of the new element).
-
-Do not restructure the file. Read it immediately before editing it.
+Pass `false` as the default so the type is `boolean` and the new element stays hidden while flags load. Read the target file immediately before editing it. Do not restructure the file.
 
 ### STEP 10: Verify
 
-1. Typecheck / lint the files you touched (`tsc --noEmit` or the project's `build` if that's the only check). Fix errors you introduced.
-2. From a short server-side snippet or the helper you added: `evaluateFlags(distinctId)` → `flags.isEnabled(flagKey)` should be `true` at 100% rollout. `await client.shutdown()`.
-3. Query `$feature_flag_called` via `execute-sql` for that flag key in the last 15 minutes. If the event hasn't landed yet, say so in the report (ingestion can lag ~1 minute) — that's a warning, not an abort.
+Emit `[STATUS] Verifying the flag`.
+
+1. Typecheck / lint the files you touched (`tsc --noEmit`, or the project's `build` if that is the only check). Fix errors you introduced.
+2. `evaluateFlags(distinctId)` → `flags.isEnabled(flagKey)` should be `true` at 100% rollout. `await client.shutdown()`.
+3. Query `$feature_flag_called` for that flag key in the last 15 minutes via `exec`. If the event has not landed yet, record it in the report as a warning (ingestion can lag about a minute) — not an abort.
 
 ### STEP 11: Report
 
-Write `posthog-feature-flags-report.md` at the project root covering:
+Emit `[STATUS] Writing the report`.
 
-- Stack detected, pattern used (server `evaluateFlags` → client bootstrap)
-- Packages added, files changed
-- Flag key + PostHog URL
+Write `./posthog-feature-flags-report.md` at the project root covering:
+
+- Stack detected and the pattern used (server `evaluateFlags` → client bootstrap)
+- Packages added and files changed
+- Flag key and its PostHog URL
 - Which UI path was gated (or skipped) and why it was additive
-- Bill-aware defaults applied (`evaluateFlags` once per request, CI `advanced_disable_feature_flags`, no local evaluation)
-- **Hacks acknowledged** — cookie distinct_id, relocated `instrumentation-client` init, bootstrap of one flag rather than the full snapshot, auto-picked gate target in CI, anything else you did that isn't the general case
+- Bill-aware defaults: one `evaluateFlags` per request, CI `advanced_disable_feature_flags`, no local evaluation
+- Constraints of this install, named plainly: anonymous `ph_distinct_id` cookie (if used); `instrumentation-client` init relocated (if it was); bootstrap seeds only this flag (`false` is dropped by the client SDK); gate target auto-picked on a non-interactive host (if it was)
 - How to demo the kill-switch: disable the flag in PostHog → reload → gated UI disappears
-- What this did *not* do (local evaluation, experiments, multivariate, other frameworks)
-
-## Key principles
-
-- **One stack, one pattern.** Next.js App Router + server eval + bootstrap. Everything else aborts.
-- **`evaluateFlags` once per request.** Never the deprecated per-call methods.
-- **Same distinct_id on both sides.** Otherwise bootstrap lies.
-- **Additive gating.** Flag off = current behavior. Never auth/checkout/mutations.
-- **One `wizard_ask`.** The gate target. Nothing else.
-- **Env, never hardcode.**
-- **Don't commit.** The operator reviews the diff.
-- **Ack the hacks** in the report instead of generalizing the skill to hide them.
+- Out of scope: local evaluation, experiments, multivariate flags, other frameworks
 
 ## Reference files
 
 {references}
 
-`libraries/next-js.md` is the Next.js SDK source of truth (App Router server client, env names). `bootstrapping.md` is the source of truth for `bootstrap.featureFlags` + matching `distinctID`. `cutting-costs.md` is why we disable flags in CI and refuse local evaluation as the default. `adding-feature-flag-code.md` is the source of truth for `evaluateFlags` / `useFeatureFlagEnabled`. `start-here.md` is the product overview.
+`libraries/next-js.md` is the source of truth for the Next.js SDK (App Router server client, env names). `bootstrapping.md` is the source of truth for `bootstrap.featureFlags` and matching `distinctID`. `cutting-costs.md` is why flags are disabled in CI and why local evaluation is not the default. `adding-feature-flag-code.md` is the source of truth for `evaluateFlags` and `useFeatureFlagEnabled`. `start-here.md` is the product overview.
+
+## Key principles
+
+- **One stack, one pattern.** Next.js App Router + server `evaluateFlags` + client bootstrap. Everything else aborts.
+- **`evaluateFlags` once per request.** Never the deprecated per-call methods.
+- **Same distinct_id on both sides.** Otherwise bootstrap lies.
+- **Additive gating.** Flag off = current behavior. Never auth, checkout, or mutations.
+- **One `wizard_ask`.** The gate target. Skip is first so a stray Enter declines. Nothing else is a question.
+- **Env, never hardcode.** A missing token must not crash boot.
+- **Don't commit.** The operator reviews the diff.
 
 ## Framework guidelines
 

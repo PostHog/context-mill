@@ -1,13 +1,10 @@
-# Feature flags — expert install for Next.js App Router.
-# One stack, one pattern (Edwin/Vincent SuperDay constraint): server-side
-# evaluateFlags() bootstrapped into the client, one real flag, one gated UI path.
-# Distinct from wizard audit feature-flags (read-only, post-hoc) and from the
-# docs-only `feature-flags` group (per-platform references, no workflow).
+# Feature flags install — Next.js App Router. Distinct from wizard audit
+# feature-flags (read-only) and from the docs-only `feature-flags` group.
 type: skill
 template: description.md
 category: feature-flags
-description: Add PostHog feature flags to a Next.js App Router app the expert way. Evaluates flags server-side with posthog-node.evaluateFlags(), bootstraps the values into the client to avoid flicker and a duplicate /flags fetch, creates one real boolean flag, gates one UI path (after a single user confirm), and configures CI so forgotten test environments don't poll the /flags endpoint.
-tags: [feature-flags, nextjs]
+description: Add PostHog feature flags to a Next.js App Router app. Evaluates flags server-side with posthog-node.evaluateFlags(), bootstraps the values into the client to avoid flicker and a duplicate /flags fetch, creates one boolean flag, gates one UI path after a single confirm, and disables /flags polling in CI.
+tags: [feature-flags, javascript, react]
 cli:
   role: command
   command: feature-flags
@@ -19,7 +16,7 @@ shared_docs:
 variants:
   - id: all
     display_name: Next.js App Router
-    tags: [nextjs]
+    tags: []
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
       - https://posthog.com/docs/libraries/js/config.md
