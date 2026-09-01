@@ -3,7 +3,7 @@
 type: skill
 template: description.md
 category: feature-flags
-description: Add PostHog feature flags to a Next.js App Router app. Evaluates flags server-side with posthog-node.evaluateFlags(), bootstraps the values into the client to avoid flicker and a duplicate /flags fetch, creates one boolean flag, gates one UI path after a single confirm, and disables /flags polling in CI.
+description: Add PostHog feature flags to a Next.js App Router app. Evaluates flags server-side with posthog-node.evaluateFlags(), bootstraps the values into the client to avoid flicker and a duplicate /flags fetch, and disables /flags polling in CI. After one confirm, optionally creates one boolean flag at 0% rollout and gates one additive UI path so production users are unchanged until rollout is raised.
 tags: [feature-flags, javascript, react]
 cli:
   role: command
