@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.50.0](https://github.com/PostHog/context-mill/compare/v1.49.1...v1.50.0) (2026-09-01)
+
+
+### Features
+
+* **self-driving:** drop the in-run GitHub gate ([6156694](https://github.com/PostHog/context-mill/commit/61566946bd430c9003766aadb06d104dd899a0af))
+* **self-driving:** drop the in-run GitHub gate ([d0a0e61](https://github.com/PostHog/context-mill/commit/d0a0e610e5c2b85478ccf340928841da00476046))
+* **skills:** add instrument-metrics skill family ([6cd6522](https://github.com/PostHog/context-mill/commit/6cd65228d9a8049a29e43c96c0a3a7cbbbcae220))
+* **skills:** give the omnibus skill the full metrics doc set ([c47432c](https://github.com/PostHog/context-mill/commit/c47432c4f0c976d0ee7dd9bbcb721f2d05ededf2))
+* **wizard-ci:** let a PR comment pin the wizard ref ([6d791cf](https://github.com/PostHog/context-mill/commit/6d791cfa6570b6b190d5df18d64fdd2de3171fdc))
+* **wizard-ci:** let a PR comment pin the wizard ref ([a4aa53e](https://github.com/PostHog/context-mill/commit/a4aa53e596beb288efbff3cc851c2ccf2ab56fd6))
+
+
+### Bug Fixes
+
+* **skills:** pin dependency installs to latest, write one credential set ([#368](https://github.com/PostHog/context-mill/issues/368)) ([59ca667](https://github.com/PostHog/context-mill/commit/59ca66799cf4a2856ac5edf3b65f1ee2131a95cf))
+* **skills:** stop self-driving enabling the retired replay source ([a528e96](https://github.com/PostHog/context-mill/commit/a528e968ca6b58352e2556e5114a386d3156b69b))
+* **skills:** stop self-driving enabling the retired replay source ([4eadd62](https://github.com/PostHog/context-mill/commit/4eadd62e069a1c8513346b42649f99ae11f0281d))
+
 ## [1.49.1](https://github.com/PostHog/context-mill/compare/v1.49.0...v1.49.1) (2026-08-26)
 
 
