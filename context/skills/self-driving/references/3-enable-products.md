@@ -2,7 +2,7 @@
 next_step: 4-sources.md
 ---
 
-# Step 3b — Enable products
+# Step 3 — Enable products
 
 Turn ON the PostHog products that Signals reads from — **Session Replay**, **Error Tracking**, and **Support** (Conversations) — so the sources you enable in the next step have data to read. A source with its product switched off just sits idle. This is a server-side flip with conservative defaults the server owns (you don't pass any settings); enabling Support also mints its widget token but leaves the widget itself off until a channel is connected.
 

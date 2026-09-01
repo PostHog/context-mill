@@ -1,8 +1,8 @@
 # Connector — GitHub Issues warehouse source
 
-Creates the GitHub Issues warehouse source directly — no browser trips. Reuses the GitHub App integration verified in step 3; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
+Creates the GitHub Issues warehouse source directly — no browser trips. Reuses the GitHub App integration the wizard verified before this run started; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
 
-**Dependency on step 3:** this can only auto-connect a repo the step-3 App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — leave GitHub Issues as a dormant source and record a follow-up telling the user to grant this repo to the PostHog GitHub App. No browser trip — same dormant posture as Zendesk.
+**Dependency on the App install:** this can only auto-connect a repo the App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — leave GitHub Issues as a dormant source and record a follow-up telling the user to grant this repo to the PostHog GitHub App. No browser trip — same dormant posture as Zendesk.
 
 ## Status
 
@@ -18,7 +18,7 @@ Reach `integrations-github-repos-retrieve` and `external-data-sources-create` th
 
 ## Do
 
-1. **List the connected repos first.** Call `integrations-github-repos-retrieve` with the step-3 GitHub integration id (no search). Exactly **one** repository connected → that's the repo: use it by default and skip repo research entirely — no `git remote` inference, no search calls — and go straight to the confirm (step 3). Several connected → research which one matches this project (step 2). None → dormant fallback (below).
+1. **List the connected repos first.** Call `integrations-github-repos-retrieve` with the GitHub integration id (no search). Exactly **one** repository connected → that's the repo: use it by default and skip repo research entirely — no `git remote` inference, no search calls — and go straight to the confirm (step 3). Several connected → research which one matches this project (step 2). None → dormant fallback (below).
 
 2. **Several connected: infer the repository.** Run `git remote get-url origin` in the project root and parse `owner/repo` from either form (`git@github.com:owner/repo.git` or `https://github.com/owner/repo[.git]`). No remote, or not a github.com remote → go to the dormant fallback (below). Then validate the inferred repo against the step-1 list (search again with `search=<repo name>` if the list was truncated). The inferred `full_name` appearing in the results means the GitHub App can see it. Not in the results → dormant fallback (below) — the App isn't installed on this repo, so don't redirect or re-prompt.
 

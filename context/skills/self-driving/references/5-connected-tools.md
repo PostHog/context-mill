@@ -16,7 +16,7 @@ The brackets carry the per-tool detail, which is what keeps the **prompt one lin
 
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
-- **GitHub Issues** — reuses the GitHub App connected in step 3 (connector: `5a-github.md`).
+- **GitHub Issues** — reuses the GitHub App the wizard connected before this run started (connector: `5a-github.md`).
 - **Linear** — a one-click OAuth link (connector: `5b-linear.md`).
 - **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
 - **Google Search Console** — a PostHog **connect link** that runs the Google OAuth grant and property pick in the browser and creates the source there; the run verifies it afterwards (connector: `5d-google-search-console.md`).

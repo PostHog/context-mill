@@ -4,7 +4,7 @@ next_step: 5-connected-tools.md
 
 # Step 4 — Enable native signal sources
 
-Switch on the PostHog-native sources (the inbox's "Responders") that match what this product actually uses, per your step-2 checklist. For most sources, conditional means conditional: one for a surface the product doesn't have just adds noise. **Error tracking and support are the exception — enable them by default** (see the table): step 3b (Enable products) just turned both products ON, so wire their sources to match even with no current signal. An idle source costs nothing until data arrives. Session replay has no source to enable here — recordings reach the inbox through the Replay Vision scanners you create in step 6c.
+Switch on the PostHog-native sources (the inbox's "Responders") that match what this product actually uses, per your step-2 checklist. For most sources, conditional means conditional: one for a surface the product doesn't have just adds noise. **Error tracking and support are the exception — enable them by default** (see the table): step 3 (Enable products) just turned both products ON, so wire their sources to match even with no current signal. An idle source costs nothing until data arrives. Session replay has no source to enable here — recordings reach the inbox through the Replay Vision scanners you create in step 6c.
 
 ## Status
 
@@ -33,7 +33,7 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 | Scout gate | **Always** — it lets the step-6 troop's findings reach the inbox | `signals_scout` / `cross_source_issue` |
 | Health checks | **Always** — instrumentation issues (missing events, proxy gaps, outdated SDKs) are always actionable and a good thing for the agent to fix | `health_checks` / `health_issue` |
 | Error tracking | **Enable by default**, even with no current signal — teams adopt error tracking sooner or later, and with no errors there are no findings and no cost. Evidence (report, exception autocapture ON, or error issues from the step-2 probe) only raises confidence; its absence is **not** a reason to skip | **All three rows**: `error_tracking` / `issue_created`, `error_tracking` / `issue_reopened`, `error_tracking` / `issue_spiking` — the product UI treats them as one switch |
-| Support | **Enable by default** — step 3b turned the Conversations product ON, so wire its source. It stays idle until an inbound channel (email / inbox / Slack) is connected, so record that channel connection as a follow-up — but enabling the source now means tickets reach the inbox automatically once a channel exists, with no second setup. Don't gate on profile evidence. | `conversations` / `ticket` |
+| Support | **Enable by default** — step 3 turned the Conversations product ON, so wire its source. It stays idle until an inbound channel (email / inbox / Slack) is connected, so record that channel connection as a follow-up — but enabling the source now means tickets reach the inbox automatically once a channel exists, with no second setup. Don't gate on profile evidence. | `conversations` / `ticket` |
 
 ## Nothing to create here
 
