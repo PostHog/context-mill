@@ -8,7 +8,7 @@ Pick the variant, then read the code. Do not edit anything in this step.
 
 ## Pick the variant
 
-This skill ships 68 variants. Call `load_skill_menu` with `category: "ai-observability"`. That list is the source of truth.
+This skill ships 69 variants. Call `load_skill_menu` with `category: "ai-observability"`. That list is the source of truth.
 
 Apply these rules in order. The first match wins. Frameworks wrap providers, and gateways look like OpenAI, so the order matters.
 
@@ -32,6 +32,7 @@ Apply these rules in order. The first match wins. Frameworks wrap providers, and
 | `instructor` | `instructor-{python,node}` |
 | `litellm` | `litellm` |
 | `mastra`, `@mastra/core` | `mastra` |
+| `@google/adk` | `google-adk` |
 | `convex` | `convex` |
 
 Instrument the framework, not the provider below it. A provider instrumentor keeps the model calls and loses the agent, tool, and handoff structure.

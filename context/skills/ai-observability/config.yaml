@@ -426,6 +426,15 @@ variants:
       - https://posthog.com/docs/ai-observability/installation/mastra.md
       - https://posthog.com/docs/libraries/node.md
 
+  - id: google-adk
+    framework: google-adk
+    display_name: Google ADK
+    description: PostHog AI Observability for the Google Agent Development Kit (agent framework, Node)
+    tags: [google-adk, javascript_node, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/google-adk.md
+      - https://posthog.com/docs/libraries/node.md
+
   - id: instructor-python
     framework: instructor
     default: true

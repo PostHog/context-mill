@@ -6,7 +6,7 @@ Wire up PostHog's AI Observability so calls made through {display_name} land in 
 
 This skill instruments the LLM calls the project *already makes*. It does **not** install the vendor SDK for you.
 
-Check the project's manifest for an LLM package. The catalog is far wider than the obvious providers — 68 variants covering agent frameworks (`openai-agents`, `claude-agent-sdk`, LangGraph, CrewAI, Mastra, …) and OpenAI-compatible gateways (Groq, OpenRouter, Together, Ollama, …), which an app reaches through the `openai` package plus a `baseURL` override. `1-begin.md` carries the ordered decision rules; follow them rather than matching on the first familiar package name. If no LLM SDK is present, switch to the `manual-capture` variant — it posts `$ai_generation` events directly and works standalone.
+Check the project's manifest for an LLM package. The catalog is far wider than the obvious providers — 69 variants covering agent frameworks (`openai-agents`, `claude-agent-sdk`, LangGraph, CrewAI, Mastra, …) and OpenAI-compatible gateways (Groq, OpenRouter, Together, Ollama, …), which an app reaches through the `openai` package plus a `baseURL` override. `1-begin.md` carries the ordered decision rules; follow them rather than matching on the first familiar package name. If no LLM SDK is present, switch to the `manual-capture` variant — it posts `$ai_generation` events directly and works standalone.
 
 Everything else this skill needs — PostHog credentials, instrumentation packages, env vars — the skill installs and configures itself. It does **not** require a pre-existing `posthog.init(...)`. If one is already there, reuse its env-var names in `3-instrument.md`; if not, that step sets fresh values via `set_env_values`.
 
