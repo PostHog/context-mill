@@ -35,13 +35,16 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 | Error tracking | **Enable by default**, even with no current signal — teams adopt error tracking sooner or later, and with no errors there are no findings and no cost. Evidence (report, exception autocapture ON, or error issues from the step-2 probe) only raises confidence; its absence is **not** a reason to skip | **All three rows**: `error_tracking` / `issue_created`, `error_tracking` / `issue_reopened`, `error_tracking` / `issue_spiking` — the product UI treats them as one switch |
 | Support | **Enable by default** — step 3b turned the Conversations product ON, so wire its source. It stays idle until an inbound channel (email / inbox / Slack) is connected, so record that channel connection as a follow-up — but enabling the source now means tickets reach the inbox automatically once a channel exists, with no second setup. Don't gate on profile evidence. | `conversations` / `ticket` |
 
-## Skip — do not create
+## Nothing to create here
 
-- `llm_analytics` (internal-only, not a user-facing responder)
-- `logs` (not a v1 responder)
-- `session_replay` / `session_analysis_cluster` — **retired.** The session summarization feature behind it is gone, so the row emits nothing: PostHog deleted the existing rows and now skips this pair when it checks whether a team has a working source. Creating one puts a dead switch in the user's inbox. Replay coverage is step 6c's scanners.
-- `replay_vision` — Replay Vision scanners are **self-authorizing**: the `emits_signals` flag on the scanner itself is the per-source config, so there is no row to create here. Step 6c sets the scanners up.
-- Anything with `source_type` `evaluation` or `alert_state_change`
-- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`, `jira`, `google_search_console`, …) — those are step 5, ask-first.
+The rest of the pairs have no row for this run to write. Each one's coverage lives somewhere else:
 
-Record every enable/skip decision with its reason — the report needs them.
+| Pair | Where its coverage lives |
+|---|---|
+| `session_replay` / `session_analysis_cluster` | Step 6c's Replay Vision scanners. This pair is **retired** — the session summarization feature behind it is gone, PostHog deleted the existing rows, and the server now skips the pair when it checks whether a team has a working source, so a row written here is a dead switch in the user's inbox. |
+| `replay_vision` | The scanners themselves. Replay Vision is **self-authorizing**: `emits_signals` on each scanner *is* its per-source config, so step 6c's writes are the whole story. |
+| `llm_analytics` | Nowhere — it's internal, with no user-facing responder behind it. |
+| `logs`, plus any `source_type` of `evaluation` or `alert_state_change` | Nowhere yet — no v1 responder. |
+| `github`, `linear`, `zendesk`, `pganalyze`, `jira`, `google_search_console`, … | Step 5, on the user's answer, once each tool's warehouse source exists. |
+
+Record every source decision with its reason — the report needs them.
