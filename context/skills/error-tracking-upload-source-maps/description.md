@@ -33,9 +33,10 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 - Wire injection + upload into the build itself (plugin, post-build script, or CI step) — manual uploads drift from deployed code.
 - **Don't ship source maps publicly**: omit `.map` files from the deployed artifact, or use hidden source maps. Uploaded maps live in PostHog, not on your origin.
 - **Link each release to its commit.** The CLI auto-detects the commit from the CI's git env vars — see "Associate the release with a git commit" for making those reachable in Docker/CI builds.
+- **Never write a dependency version from memory.** When a variant needs the CLI or a plugin *inside the project* — the JS/web build tools (Node, web, Next.js, React, Angular, Nuxt, Vite, Webpack, Rollup) — install it with the project's package manager pinned to `latest` (`npm install --save-dev @posthog/cli@latest`, `pnpm add -D @posthog/cli@latest`, `yarn add -D @posthog/cli@latest`) and let the manager write the resolved version into `package.json`. A version recalled from memory is usually far behind and silently breaks the commands in this skill — `--dotenv-file`, for one, is rejected outright by 0.5.x. iOS, Android, React Native, Flutter, Go and Rust are the exception: the wizard pre-installs a global `posthog-cli` for those, so add no project dependency for them at all.
 
 #### Examples
-- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
+- **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Add the CLI to the project with `npm install --save-dev @posthog/cli@latest` (or the project's package manager) so the build script and CI resolve the same binary — never hand-write the version string. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
 - **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
 - **iOS (Xcode)** iOS uploads **dSYM debug symbols**, not source maps. Required target changes:
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
@@ -139,6 +140,7 @@ Write the personal API key and project identifiers into the env file your build 
 - Variable names depend on which uploader you wired:
   - `posthog-cli` direct upload → `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID`, `POSTHOG_CLI_HOST`
   - bundler-plugin variants → `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_HOST`
+- **Write one set only — the names the mechanism you actually wired reads.** The uploader you chose in "Wire the upload" decides the names; the other set is never read by anything in the project. Writing both as a fallback leaves live credentials in the user's env file that no code consumes. If you are unsure which names apply, re-read the config you just wrote and use the names it references.
 - Set the `*_HOST` var when you're not on US Cloud's default (e.g. EU Cloud or self-hosted); setting it explicitly always is safe. Follow the reference for the variant.
 - In CI/CD, set the same vars as secrets — never commit the key.
 

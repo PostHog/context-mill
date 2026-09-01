@@ -2,11 +2,19 @@
 
 Your task input lists the data sources the wizard found in this project. Each
 one carries a **kind** (the PostHog source-type name, e.g. `Postgres`,
-`Stripe`), a **label**, the **signal** it was detected by, and a **mode**:
+`Stripe`), a **label**, the **signal** it was detected by, and a **mode**. The
+`kind` is the only valid `source_type`. The `label` is display text, and it is
+often not a valid source type: the kind `HuggingFace` has the label `Hugging
+Face`. The steps below say `source_type` = the kind — copy that token verbatim,
+and use the `label` only in text you show the user. The modes are:
 
 - **`in-cli`** — create the source from here (databases and API-key SaaS).
 - **`deep-link`** — hand the user a pre-filled URL to finish in the PostHog app
   (OAuth sources have no safe terminal credential path).
+
+The signal also names the file that holds it. An example signal is: found
+`OPENAI_API_KEY` in apps/api/.env.local. The wizard read that file itself.
+Trust the path it gives you. Do not assume the key is in `.env`.
 
 ## Reference files
 
@@ -37,24 +45,34 @@ behavior.
   **inside** `payload`, not as a top-level argument; its input schema is the
   source of truth. Don't reach for it on a SaaS source — `data-warehouse-source-setup`
   is the one-step path there.
-- **`check_env_keys`** — tells you which `.env` keys exist. It never returns
-  values.
+- **`check_env_keys`** — tells you which `.env` keys exist, and in which file.
+  Call it with `keys` and **no `filePath`**. It then scans every `.env` file in
+  the project, including `.env.local` and nested files such as `apps/api/.env`.
+  Pass `filePath` only to limit the check to one file. It answers
+  `{ "status": "present" | "missing", "foundIn": [file paths] }` for each key.
+  It never returns values.
 - **`wizard_ask`** — the only way to obtain a credential value from the user.
+  It takes up to 8 `questions` and an optional `subject` tag. Always set
+  `subject` to the source kind you are collecting for.
 
 ## Guiding tenets
 
 1. **Never read or guess a secret.** Every credential value comes from
    `wizard_ask`. Never invent a host, password, or API key.
 
-2. **Batch credential questions up front; don't make one call per source.** The
-   runtime nudges you once if several `wizard_ask` calls land in a row, so with
-   more than a couple of sources a call-per-source pattern trips it. Gather the
-   fields in as few calls as you can: each call takes up to 8 questions, so pack
-   several sources into one call wherever they fit — a handful of API-key SaaS
-   sources share a call easily, while a many-field database source (host, port,
-   database, user, password, …) may need its own. A follow-up call is right only
-   when a later question genuinely depends on an earlier answer, such as
-   correcting a field after a validation failure.
+2. **One `wizard_ask` call per source, tagged with `subject`.** Ask for all of
+   that source's fields in a single call. The schema takes up to 8 questions
+   per call. Set `subject` to the source kind — for example
+   `subject: "Postgres"`. The runtime counts its batching guard per subject, so
+   one call per source is never interrupted, whatever the number of sources.
+   Never put two different sources in one call: five sources need 15 to 25
+   fields, and no single call can hold them.
+
+   Reuse a `subject` only for the same source, such as re-asking a field after
+   a validation failure. Three calls in a row on one subject earn a one-time
+   nudge. That nudge is not a refusal and not a reason to stop: send the call
+   again and it goes through. A cancelled or timed-out `wizard_ask` does not
+   count against the per-run cap.
 
 3. **Collect these as plain `text` answers.** Marking a field `sensitive`
    returns a `{ secretRef }` that only `set_env_values` can resolve, and the
@@ -71,8 +89,16 @@ behavior.
 6. **Change no project code.** This step connects external data. It edits
    nothing in the app.
 
-7. **A decline is an answer.** If the user cancels, times out, or says no, that
-   source falls back to the deep-link URL. Do not re-ask.
+7. **A decline answers one source, not the run.** If the user cancels, times
+   out, or says no, that source falls back to the deep-link URL. Do not re-ask
+   for it. Do ask for the next source: one cancellation says nothing about the
+   sources you have not reached yet. Stop asking only after two cancellations
+   in a row, and give the rest their links.
+
+8. **Report what you created, not what you attempted.** A deep link is a
+   handoff, not a connected source. When you created no source, say so plainly
+   in your report section and in your task status. The wording for each case is
+   in **Your report section** and **Task status** below.
 
 ## Pre-flight: the gotchas that cause most failures
 
@@ -85,14 +111,15 @@ first attempt fails, and a failed attempt wastes the user's time.
   Managed Postgres (Neon, Supabase, RDS behind strict rules) often needs
   PostHog's egress IPs allowlisted first. If the database is not publicly
   reachable, go straight to the deep-link path.
-- **Supabase is Postgres — set it up as one source.** Use the **Session
-  pooler**, not the direct host, which is IPv6-only. The pooler host looks like
-  `aws-0-<region>.pooler.supabase.com`, the **username** is
-  `postgres.<project-ref>`, and the **port is 6543**. The password is the
-  database password from Settings → Database, which is neither the `anon` or
-  `service_role` key nor the account password. When `SUPABASE_URL` exists in
-  the env, read the project ref from `db.<ref>.supabase.co` and pre-fill the
-  host and username in your question.
+- **Supabase has its own source type — use `Supabase`, not `Postgres`.**
+  PostHog lists `Supabase` as a source type of its own. Call
+  `external-data-sources-wizard` with `source_type: "Supabase"` and ask for the
+  fields it returns. Its `host` field carries the Session-pooler guidance in
+  its own caption. Pass that caption on to the user rather than writing your
+  own. The password is the database password from Settings → Database. It is
+  neither the `anon` or `service_role` key nor the account password. When
+  `SUPABASE_URL` exists in the env, read the project ref from
+  `db.<ref>.supabase.co` and pre-fill the host and username in your question.
 - **Scope a database source to one schema, and never sync auth tables.** Set the
   `schema` field (default `public`) so discovery and sync cover only that schema.
   A managed database exposes internal schemas alongside your data — Supabase adds
@@ -111,22 +138,29 @@ first attempt fails, and a failed attempt wastes the user's time.
 
 ## Workflow
 
-Read every source's field list first (step 2 below), then collect the `in-cli`
-credentials in as few `wizard_ask` calls as possible (tenet 2) before you start
-creating sources — batching up front is what keeps you clear of the runtime's
-in-a-row nudge. Then take the sources in turn to create them.
+Take the `in-cli` sources one at a time, in the order your task input lists
+them. For each one: read its field list, ask for its fields in a single
+`wizard_ask` call tagged with its kind, then create it. Finish a source before
+you start the next one, so a later cancellation cannot lose an earlier source.
+
+A run often carries 5 to 8 `in-cli` sources. That is normal, and the
+per-subject guard is built for it. Never drop a source because you think you
+have asked too many questions.
 
 ### An `in-cli` source
 
 1. `[STATUS] Configuring <label>`
 2. Call `external-data-sources-wizard` with `source_type` set to this kind and
    read the field list. Check the pre-flight gotchas for the kind.
-3. Optionally call `check_env_keys` to see which matching keys exist, and use
-   that to word your question — "we noticed `DATABASE_URL` is set, please paste
-   the connection details". You still cannot read the value.
-4. Ask for the required fields with `wizard_ask`, batching across sources per
-   tenet 2 rather than one call per source. On a decline, fall back to the
-   deep-link path for this source.
+3. Optionally call `check_env_keys` with the key names and no `filePath`. It
+   scans the whole project, so its answer agrees with the signal in your task
+   input. Use the answer only to word your question — "we noticed
+   `DATABASE_URL` is set in `apps/api/.env`, please paste the connection
+   details". You still cannot read the value. A `missing` answer is not a
+   reason to stop — go on to step 4 and ask the user.
+4. Ask for this source's required fields in ONE `wizard_ask` call, with
+   `subject` set to this kind. On a decline, give this source the deep-link
+   path, then continue with the next source.
 5. Create the source, choosing the tool by kind:
    - **A SaaS source** (an API key or token — Stripe, Resend, Sentry, …): call
      `data-warehouse-source-setup` with `source_type` = the kind and the
@@ -165,14 +199,19 @@ in-a-row nudge. Then take the sources in turn to create them.
 ### When you cannot ask
 
 If `wizard_ask` is unavailable, do not block. Treat every source as deep-link:
-emit the new-source URL for each and say the credentials go in the app.
+emit the new-source URL for each and say the credentials go in the app. You
+connected no source, so report the task as `not needed`.
 
 ## Your report section
 
 Put a finished markdown section in your handoff's `reportSection`. The
 reporting step includes it as its own section rather than rewriting it, so
-write it for the user. Give it a heading, then one line per source saying which
-of three ends it reached:
+write it for the user. Give it a heading, then one line that counts what you
+created:
+
+- `Connected N of M detected sources.`
+
+Then write one line per source saying which of three ends it reached:
 
 - **connected** — name the tables that sync and how.
 - **needs the browser** — give the full URL.
@@ -180,9 +219,34 @@ of three ends it reached:
 
 Claim nothing you did not observe. A source is connected when the create tool
 (`data-warehouse-source-setup` or `external-data-sources-create`) returned
-success, not when the credentials looked right.
+success, not when the credentials looked right. A deep link is a handoff, not a
+connection.
+
+When you connected no source, say so in that first line and give the reason.
+For example: `Connected 0 of 5 detected sources. The user cancelled the
+credential prompts, so all 5 need browser setup.` Do not call the step
+complete, successful, or set up.
+
+## Task status
+
+Pick your `complete_task` status from what you created. Use only the values the
+tool accepts:
+
+- **`done`** — you connected at least one source. Name the connected sources in
+  the handoff, and name any source you handed to the browser.
+- **`not needed`** — you connected no source, and a retry cannot change that.
+  Use this when the user cancelled or declined, when the hosts are unreachable
+  from PostHog's network, or when every detected source is `deep-link`. Say
+  which reason applies, and list every browser URL you gave. Do **not** use
+  `done`.
+- **`failed`** — you connected no source because every create call returned a
+  tool error. Put the errors in the handoff. The wizard may retry the task, so
+  use this only for an error a retry could clear — never for a user who
+  declined.
 
 ## Status
 
 Report progress with `[STATUS]` messages, such as `Configuring Postgres`,
-`Connected Postgres`, `Stripe needs browser setup`.
+`Connected Postgres`, `Stripe needs browser setup`. End with one `[STATUS]`
+line carrying the same count as your report section, such as
+`Connected 2 of 5 sources; 3 need browser setup`.

@@ -4,7 +4,7 @@ next_step: 5-connected-tools.md
 
 # Step 4 — Enable native signal sources
 
-Switch on the PostHog-native sources (the inbox's "Responders") that match what this product actually uses, per your step-2 checklist. For most sources, conditional means conditional: one for a surface the product doesn't have just adds noise. **Error tracking, session replay, and support are the exception — enable them by default** (see the table): step 3 (Enable products) just turned all three products ON, so wire their sources to match even with no current signal. An idle source costs nothing until data arrives.
+Switch on the PostHog-native sources (the inbox's "Responders") that match what this product actually uses, per your step-2 checklist. For most sources, conditional means conditional: one for a surface the product doesn't have just adds noise. **Error tracking and support are the exception — enable them by default** (see the table): step 3 (Enable products) just turned both products ON, so wire their sources to match even with no current signal. An idle source costs nothing until data arrives. Session replay has no source to enable here — recordings reach the inbox through the Replay Vision scanners you create in step 6c.
 
 ## Status
 
@@ -33,15 +33,18 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 | Scout gate | **Always** — it lets the step-6 troop's findings reach the inbox | `signals_scout` / `cross_source_issue` |
 | Health checks | **Always** — instrumentation issues (missing events, proxy gaps, outdated SDKs) are always actionable and a good thing for the agent to fix | `health_checks` / `health_issue` |
 | Error tracking | **Enable by default**, even with no current signal — teams adopt error tracking sooner or later, and with no errors there are no findings and no cost. Evidence (report, exception autocapture ON, or error issues from the step-2 probe) only raises confidence; its absence is **not** a reason to skip | **All three rows**: `error_tracking` / `issue_created`, `error_tracking` / `issue_reopened`, `error_tracking` / `issue_spiking` — the product UI treats them as one switch |
-| Session replay | **Enable by default**, same reasoning — arm it now even with no current signal; recordings are only analyzed once they exist, so an idle source costs nothing and teams turn replay on eventually. Evidence (recording opt-in ON, recordings from the step-2 probe, or the report) only raises confidence; its absence is **not** a reason to skip | `session_replay` / `session_analysis_cluster` — don't pass a `config`; the server injects the default sample rate. A 400 mentioning AI approval is unexpected (approval is enforced upstream) → skip this source and record a follow-up |
 | Support | **Enable by default** — step 3 turned the Conversations product ON, so wire its source. It stays idle until an inbound channel (email / inbox / Slack) is connected, so record that channel connection as a follow-up — but enabling the source now means tickets reach the inbox automatically once a channel exists, with no second setup. Don't gate on profile evidence. | `conversations` / `ticket` |
 
-## Skip — do not create
+## Nothing to create here
 
-- `llm_analytics` (internal-only, not a user-facing responder)
-- `logs` (not a v1 responder)
-- `replay_vision` — Replay Vision scanners are **self-authorizing**: the `emits_signals` flag on the scanner itself is the per-source config, so there is no row to create here. Step 6c sets the scanners up.
-- Anything with `source_type` `evaluation` or `alert_state_change`
-- The connected-tool sources (`github`, `linear`, `zendesk`, `pganalyze`, `jira`, `google_search_console`, …) — those are step 5, ask-first.
+The rest of the pairs have no row for this run to write. Each one's coverage lives somewhere else:
 
-Record every enable/skip decision with its reason — the report needs them.
+| Pair | Where its coverage lives |
+|---|---|
+| `session_replay` / `session_analysis_cluster` | Step 6c's Replay Vision scanners. This pair is **retired** — the session summarization feature behind it is gone, PostHog deleted the existing rows, and the server now skips the pair when it checks whether a team has a working source, so a row written here is a dead switch in the user's inbox. |
+| `replay_vision` | The scanners themselves. Replay Vision is **self-authorizing**: `emits_signals` on each scanner *is* its per-source config, so step 6c's writes are the whole story. |
+| `llm_analytics` | Nowhere — it's internal, with no user-facing responder behind it. |
+| `logs`, plus any `source_type` of `evaluation` or `alert_state_change` | Nowhere yet — no v1 responder. |
+| `github`, `linear`, `zendesk`, `pganalyze`, `jira`, `google_search_console`, … | Step 5, on the user's answer, once each tool's warehouse source exists. |
+
+Record every source decision with its reason — the report needs them.

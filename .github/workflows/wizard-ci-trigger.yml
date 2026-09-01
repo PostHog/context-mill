@@ -131,6 +131,11 @@ jobs:
             }
 
             bodyParts.push('');
+            bodyParts.push('**Test against a wizard branch:**');
+            bodyParts.push('- `/wizard-ci all wizard:my-branch`');
+            bodyParts.push('');
+            bodyParts.push('Add `wizard:<branch>` to any command above to pin the wizard branch. It defaults to `main`.');
+            bodyParts.push('');
             bodyParts.push('Results will be posted here when complete.');
 
             const body = bodyParts.join('\n');
@@ -153,6 +158,7 @@ jobs:
     if: |
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
       startsWith(github.event.comment.body, '/wizard-ci')
     runs-on: ubuntu-latest
     steps:
@@ -185,7 +191,36 @@ jobs:
 
             const comment = context.payload.comment.body;
             const match = comment.match(/\/wizard-ci\s+(\S+)/);
-            const app = match ? match[1] : 'all';
+            const firstArg = match ? match[1] : 'all';
+
+            // A reviewer can pin the companion repo with `wizard:<ref>`.
+            // A lone pin is not an app name, so fall back to every app.
+            const app = firstArg.startsWith('wizard:') ? 'all' : firstArg;
+
+            // The ref arrives in a PR comment, so treat it as untrusted. Accept
+            // git ref characters only. Reject traversal, a leading dash and a
+            // trailing slash.
+            const isPlausibleRef = (ref) =>
+              ref.length <= 200 &&
+              /^[A-Za-z0-9._\/-]+$/.test(ref) &&
+              !ref.includes('..') &&
+              !ref.startsWith('-') &&
+              !ref.startsWith('/') &&
+              !ref.endsWith('/');
+
+            // Read the pin from the command line only, not from later prose.
+            const companion = comment
+              .split(/\r?\n/)[0]
+              .match(/(?:^|\s)wizard:(\S+)/);
+            const wizardRef = companion ? companion[1] : null;
+
+            if (wizardRef && !isPlausibleRef(wizardRef)) {
+              core.setFailed(
+                'The wizard ref is not a valid git ref. ' +
+                  'Use `/wizard-ci <app> wizard:<branch>`.'
+              );
+              return;
+            }
 
             // React with rocket to show we're processing
             await github.rest.reactions.createForIssueComment({
@@ -207,9 +242,12 @@ jobs:
                 source_pr_number: context.payload.issue.number,
                 source_pr_url: pr.data.html_url,
                 context_mill_ref: pr.data.head.ref,
+                // Omit the key when unpinned. The workbench then uses `main`.
+                ...(wizardRef ? { wizard_ref: wizardRef } : {}),
                 notify_slack: 'false',
                 notify_pr: 'true'
               }
             });
 
-            console.log(`Triggered wizard-ci for app: ${app}`);
+            const pinNote = wizardRef ? ` (wizard ref ${wizardRef})` : '';
+            console.log(`Triggered wizard-ci for app: ${app}${pinNote}`);

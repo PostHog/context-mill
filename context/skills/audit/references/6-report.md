@@ -22,13 +22,13 @@ Emit, in order:
 
 | MCP tool | When | Use |
 |----------|------|-----|
-| `notebooks-create` | (a) of "Upload to a PostHog notebook" | Create the notebook with a small placeholder skeleton (title + section headings + placeholder paragraphs). One call. |
-| `notebook-edit` | (b) of "Upload to a PostHog notebook" | Replace one placeholder paragraph in the cloud notebook with a real ProseMirror node. **Called many times** (one per placeholder). Required because the model can't emit the full assembled tree in a single `notebooks-create` tool_use input — it self-truncates. |
-| `notebooks-retrieve` | (c) of "Upload to a PostHog notebook" | Read the cloud notebook back to verify every placeholder has been replaced. |
+| `notebooks-create-markdown` | (a) of "Upload to a PostHog notebook" | Create the notebook with a `title` and the report's opening sections as `markdown`. One call. |
+| `notebooks-add-cell` | (b) of "Upload to a PostHog notebook" | Append one remaining report section per call as a markdown cell (`cell_type: "markdown"`). Called once per section — required because the model can't emit the full report in a single tool_use input; it self-truncates. |
+| `notebooks-get` | (c) of "Upload to a PostHog notebook" | Read the cloud notebook back to verify every report section arrived. |
 
 Run `info <tool>` on each of these before its first `call`, right before the upload sub-step. `mcp__wizard-tools__audit_resolve_checks` is already loaded — you'll use it again after the upload.
 
-If `info notebook-edit` returns a not-found error, the project's `notebooks-collaboration` feature flag isn't enabled. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebook-edit unavailable. The local report at posthog-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
+If `info notebooks-add-cell` returns a not-found error, the notebook tools aren't available in this project. Skip the notebook-upload sub-step entirely; emit `Notebook upload skipped: notebooks-add-cell unavailable. The local report at posthog-audit-report.md is still the source of truth.` and resolve `upload-notebook` to `suggestion` with that reason.
 
 ## Action
 
@@ -198,165 +198,60 @@ The markdown report on disk is the source of truth. The notebook is a shareable,
 
 ### Why two MCP tools instead of one
 
-Earlier versions of this skill called `notebooks-create` once with the full assembled ProseMirror tree as the `content` argument. The assistant turn that emits that tool_use has to *generate the tree as output tokens*, even if it's just copying from a file it just read. For a 12-check audit with tables and bullet lists the full tree is several thousand tokens — past the per-turn output budget for some runs. The model self-truncates and the notebook ships with sections missing.
+The notebook stores markdown natively, and the report on disk already is markdown — the upload is a verbatim copy, not a translation. The one constraint is output budget: the assistant turn that emits a tool_use has to *generate its argument as output tokens*, even when it's just copying from a file it just read, and a 12-check audit report is past the per-turn output budget for some runs. The model self-truncates and the notebook ships with sections missing.
 
-The fix is to **build the cloud notebook incrementally**. `notebooks-create` carries only a small skeleton (title + section headings + placeholder paragraphs). Then `notebook-edit` replaces one placeholder paragraph at a time with the real ProseMirror node. Each `notebook-edit` tool_use input is bounded — never more than one block-level node — so it always fits in one turn. The notebook is complete only after the last edit lands.
+The fix is to **build the cloud notebook incrementally**. `notebooks-create-markdown` carries the title and the report's opening sections; then `notebooks-add-cell` appends one section per call as a markdown cell. Each call's input is bounded — one section — so it always fits in one turn. The notebook is complete only after the last append lands.
 
-There's no local notebook payload scratch file in this design. Section content is computed on demand from the ledger and the on-disk report.
+There's no local notebook payload scratch file and no translation step in this design. Section content comes verbatim from the on-disk report.
 
 ### Orientation: re-read the report
 
-`Read` `posthog-audit-report.md` once. You'll use it as a reference for what content to send in each edit. Don't translate the whole thing up front — translate per placeholder, as you fill each one.
+`Read` `posthog-audit-report.md` once. Its sections go into the calls below verbatim — copy each section from disk as you send it; don't re-compose from memory.
 
-### Node mapping (apply per placeholder as you `notebook-edit`)
+### a. Create the notebook with the report's head
 
-| Markdown | ProseMirror node |
-|---|---|
-| `# / ## / ### heading` | `{"type":"heading","attrs":{"level":<N>},"content":[{"type":"text","text":"<heading text>"}]}` |
-| paragraph | `{"type":"paragraph","content":[{"type":"text","text":"<...>"}]}` |
-| bulleted list | `{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"<item>"}]}]}, ...]}` |
-| numbered list | `{"type":"orderedList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"<item>"}]}]}, ...]}` |
-| inline `code` | text node with a `code` mark: `{"type":"text","marks":[{"type":"code"}],"text":"<code>"}` |
-| `**bold**` | text node with a `bold` mark |
-| `[label](url)` | text node with a `link` mark: `{"type":"text","marks":[{"type":"link","attrs":{"href":"<url>"}}],"text":"<label>"}` |
-| pipe table | `{"type":"table","content":[ <tableRow>, ... ]}` — every cell wraps text in a paragraph. First row uses `tableHeader`; remaining rows use `tableCell`. |
-
-Table example (mirrors the report's "Problematic items" table):
-
-```json
-{"type":"table","content":[
-  {"type":"tableRow","content":[
-    {"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Severity"}]}]},
-    {"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Area"}]}]},
-    {"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Check"}]}]},
-    {"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"File"}]}]}
-  ]},
-  {"type":"tableRow","content":[
-    {"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"error"}]}]},
-    {"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"Installation"}]}]},
-    {"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"init-correct"}]}]},
-    {"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"app/layout.tsx:14"}]}]}
-  ]}
-]}
-```
-
-### a. Create the notebook with a placeholder skeleton
-
-**One** `notebooks-create` call. The `content` is small — title + intro + section heading nodes + one placeholder paragraph per block-level node you'll later fill. Every placeholder text must be a unique string (the verification + edits depend on uniqueness).
-
-`notebook-edit` replaces **one node** with **one node** — so each block-level part of a section needs its own placeholder. A Full-audit area that renders as `heading + paragraph + table` needs THREE placeholders. Plan the placeholder count from the ledger before sending.
-
-For a typical doctor deliverable the placeholder set is:
-
-| Region | Placeholders | Count |
-|---|---|---|
-| Summary | `__SUMMARY_OVERVIEW__` (one paragraph), `__SUMMARY_COUNTS__` (one bulletList), `__SUMMARY_PROBLEMATIC__` (one table or fallback paragraph) | 3 |
-| Recommended actions | `__RECOMMENDED_ACTIONS__` (one orderedList, or fallback paragraph if none) | 1 |
-| Full audit per area | `__FULL_AUDIT_<AREA>_HEADING__` (level-3 heading), `__FULL_AUDIT_<AREA>_PARAGRAPH__` (framing paragraph), `__FULL_AUDIT_<AREA>_TABLE__` (per-area table), `__FULL_AUDIT_<AREA>_BLIND_SPOTS_HEADING__` (level-4 heading "Assumptions and blind spots"), `__FULL_AUDIT_<AREA>_BLIND_SPOTS__` (paragraph) | 5 × N (one set per distinct area in the ledger) |
-| About this audit | `__ABOUT_PARAGRAPH__`, `__ABOUT_BULLETS__`, `__ABOUT_CLOSING__` | 3 |
-
-Use uppercased, underscored area names (e.g. `INSTALLATION`, `IDENTIFICATION`, `EVENT_CAPTURE`). Build the skeleton with that count and call `notebooks-create`:
+**One** `notebooks-create-markdown` call. The `title` becomes the notebook's leading `# heading`, so the `markdown` starts below it: the mirror line, then the Summary section verbatim (overview, counts, problematic-items table).
 
 ```json
 {
   "title": "PostHog audit (wizard) – <repo_name> – <timestamp>",
-  "text_content": "<plain-text summary, ~1 paragraph, used for PostHog search>",
-  "content": {
-    "type": "doc",
-    "content": [
-      {"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"PostHog audit (wizard) – <repo_name>"}]},
-      {"type":"paragraph","content":[
-        {"type":"text","text":"Mirror of "},
-        {"type":"text","marks":[{"type":"code"}],"text":"posthog-audit-report.md"},
-        {"type":"text","text":" generated by the audit skill on <timestamp>."}
-      ]},
-
-      {"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Summary"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__SUMMARY_OVERVIEW__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__SUMMARY_COUNTS__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__SUMMARY_PROBLEMATIC__"}]},
-
-      {"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Recommended actions"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__RECOMMENDED_ACTIONS__"}]},
-
-      {"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Full audit"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_PARAGRAPH__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_TABLE__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_BLIND_SPOTS_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_INSTALLATION_BLIND_SPOTS__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_PARAGRAPH__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_TABLE__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_BLIND_SPOTS_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_IDENTIFICATION_BLIND_SPOTS__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_PARAGRAPH__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_TABLE__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_BLIND_SPOTS_HEADING__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__FULL_AUDIT_EVENT_CAPTURE_BLIND_SPOTS__"}]},
-      // … add five placeholders per additional area in the ledger …
-
-      {"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"About this audit"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__ABOUT_PARAGRAPH__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__ABOUT_BULLETS__"}]},
-      {"type":"paragraph","content":[{"type":"text","text":"__ABOUT_CLOSING__"}]}
-    ]
-  }
+  "markdown": "Mirror of `posthog-audit-report.md` generated by the audit skill on <timestamp>.\n\n## Summary\n\n<the report's Summary section, verbatim>"
 }
 ```
 
-(Strip the `//` comments before sending — JSON doesn't allow them.)
-
 Substitute `<repo_name>` and `<timestamp>` literally before sending.
 
-Capture the returned `short_id` and `url`. **Hold them; do not emit `[NOTEBOOK_URL]` yet.** The notebook exists in PostHog Cloud at this point but the placeholder paragraphs are still visible. The marker fires only after every edit in (b) succeeds and (c) verifies the cloud notebook is clean.
+Capture the returned `short_id` and URL. **Hold them; do not emit `[NOTEBOOK_URL]` yet.** The notebook exists in PostHog Cloud at this point but most report sections are still missing. The marker fires only after every append in (b) succeeds and (c) verifies the cloud notebook is complete.
 
-If `notebooks-create` errors (permission denied, project misconfigured, network, MCP unavailable), emit one line — `Notebook upload failed at notebooks-create: <short reason>. The local report at posthog-audit-report.md is still the source of truth.` — and skip to the resolve sub-step with `upload-notebook` resolved per the matrix below. Don't retry. Don't emit `[NOTEBOOK_URL]`.
+If `notebooks-create-markdown` errors (permission denied, project misconfigured, network, MCP unavailable), emit one line — `Notebook upload failed at notebooks-create-markdown: <short reason>. The local report at posthog-audit-report.md is still the source of truth.` — and skip to the resolve sub-step with `upload-notebook` resolved per the matrix below. Don't retry. Don't emit `[NOTEBOOK_URL]`.
 
-### b. Fill each placeholder via `notebook-edit`
+### b. Append the remaining sections with `notebooks-add-cell`
 
-For every placeholder in the skeleton, call `notebook-edit` once with:
+One call per remaining top-level section of the report, in the report's order — Recommended actions, Full audit (all areas with their tables and blind-spot notes), About this audit:
 
-- `short_id`: the value returned from (a)
-- `old_value`: the placeholder paragraph node, exactly as it appears in the skeleton, e.g. `{"type":"paragraph","content":[{"type":"text","text":"__SUMMARY_OVERVIEW__"}]}`
-- `new_value`: the real ProseMirror node for that block
+```json
+{
+  "notebook_id": "<short_id from (a)>",
+  "cell_type": "markdown",
+  "markdown": "## Recommended actions\n\n<the section verbatim from the report, starting at its heading>"
+}
+```
 
-The matcher compares `old_value` to subtrees in the notebook by deep equality. Every key matters — `attrs`, `marks`, `content`. Copy the placeholder shape exactly; don't add a `marks` field that wasn't there.
+If the Full audit section is large (many areas), split it into one call per area — each starting at the area's `###` heading. Every check row from the ledger ships; do not subset.
 
-What `new_value` looks like for each placeholder family:
+Pace the appends one per turn, sequential — cells default to the end of the document, so parallel calls can land out of order. If one call errors, run `notebooks-get` to see what actually landed, then re-send just the missing section.
 
-| Placeholder family | `new_value` shape |
-|---|---|
-| `__SUMMARY_OVERVIEW__` | A single `paragraph` with the 1–2 sentence overview (runtimes covered, overall health). |
-| `__SUMMARY_COUNTS__` | A `bulletList` with one item per severity tier: Errors, Warnings, Suggestions, Passes. |
-| `__SUMMARY_PROBLEMATIC__` | A `table` with the Severity / Area / Check / File / Details columns. If there are no problematic items, send a single `paragraph` with the italicised "No issues found" line instead. Either way, fill the placeholder. |
-| `__RECOMMENDED_ACTIONS__` | An `orderedList` with one `listItem` per action, in severity order. If there are none, send a `paragraph` with the italicised "Nothing to fix" line. |
-| `__FULL_AUDIT_<AREA>_HEADING__` | A level-3 `heading` with the area name (e.g. `Installation`). |
-| `__FULL_AUDIT_<AREA>_PARAGRAPH__` | A single `paragraph` with the canonical area framing (see "Canonical area copy" below). |
-| `__FULL_AUDIT_<AREA>_TABLE__` | A `table` with header row (Check / Status / File / Details) + one row per check in that area, in ledger order. |
-| `__ABOUT_PARAGRAPH__` | A single `paragraph` with the canonical opening sentence about the audit's stages. |
-| `__ABOUT_BULLETS__` | A `bulletList` with the three error/warning/suggestion description bullets. |
-| `__ABOUT_CLOSING__` | A single `paragraph` with the "Re-run posthog-wizard audit" closing sentence. |
+### c. Verify the notebook is complete
 
-Pace your edits one per turn. Don't bundle multiple `notebook-edit` calls in a single assistant message — each MCP call carries a `version` for optimistic concurrency, and parallel calls will 409 each other. Sequential is correct.
+**Required step. Do not skip.** After the last append, call `notebooks-get` with the `short_id`. In the returned `markdown`, check that every `##` (and per-area `###`) heading of the on-disk report appears.
 
-**Error handling per edit:**
-- `409 Conflict` or `410 Gone`: the version moved under you. Run `notebooks-retrieve` to refresh, then re-apply the same edit. The server tells you the latest version in the 409 body.
-- `0 matches`: `old_value` didn't match exactly. Run `notebooks-retrieve` to dump the current notebook content and compare; the most common cause is a typo in the placeholder text. Fix the `old_value` and retry.
-- `Multiple matches`: not expected with unique placeholder strings. If it happens, include more surrounding structure or set `replace_all: true`.
+Expected: **every section present**. If one is missing, its append never landed — re-send it, then re-get and re-verify until complete.
 
-### c. Verify the notebook is clean
-
-**Required step. Do not skip.** After the last `notebook-edit`, call `notebooks-retrieve` with the `short_id`. In the returned `content`, search the text nodes for any remaining `__` markers (e.g. via the agent's own pattern matching of the `JSON.stringify`'d content).
-
-Expected: **zero `__` markers**. If any remain, the agent skipped at least one `notebook-edit` — identify which placeholder(s) survive, run the missing edit(s), then re-retrieve and re-verify until clean.
-
-A leftover placeholder renders as the literal string `__FULL_AUDIT_INSTALLATION_TABLE__` in the notebook UI. The check is cheap; skipping it is the failure mode we've observed in the events-audit twin of this flow.
+A missing section renders as a hole in the notebook UI. The check is cheap; skipping it is the failure mode we've observed in the events-audit twin of this flow.
 
 ### d. Surface the notebook URL
 
-**Only emit `[NOTEBOOK_URL]` after (c) verifies the notebook has zero remaining placeholders.** Until then the notebook still has placeholder strings showing in PostHog Cloud — exactly the half-baked state we don't want the user to see.
+**Only emit `[NOTEBOOK_URL]` after (c) verifies the notebook is complete.** Until then the notebook is missing sections in PostHog Cloud — exactly the half-baked state we don't want the user to see.
 
 Emit a single line on its own (no quotes, no code fence):
 
@@ -370,10 +265,10 @@ The wizard scans for the literal marker `[NOTEBOOK_URL]` and stores the URL that
 
 Flip the `upload-notebook` row based on outcome:
 
-- Notebook created and fully filled (every `notebook-edit` succeeded, (c) verified clean) → status `pass`, `file` set to the notebook URL.
-- `notebooks-create` errored → status `warning`, `details: "Notebook upload failed at notebooks-create: <short reason>"`. URL marker not emitted.
-- Some `notebook-edit` calls failed, leaving placeholders in the cloud notebook → status `warning`, `details: "Notebook partially uploaded: <N> of <total> placeholders filled; remaining placeholders visible in the notebook"`. URL marker not emitted (the notebook is half-baked).
-- `notebook-edit` unavailable (no `notebooks-collaboration` feature flag) or MCP unavailable → status `suggestion`, `details: "Skipped — <short reason>"`. URL marker not emitted.
+- Notebook created and complete (every `notebooks-add-cell` succeeded, (c) verified complete) → status `pass`, `file` set to the notebook URL.
+- `notebooks-create-markdown` errored → status `warning`, `details: "Notebook upload failed at notebooks-create-markdown: <short reason>"`. URL marker not emitted.
+- Some `notebooks-add-cell` calls failed, leaving sections missing from the cloud notebook → status `warning`, `details: "Notebook partially uploaded: <N> of <total> sections landed"`. URL marker not emitted (the notebook is half-baked).
+- `notebooks-add-cell` unavailable or MCP unavailable → status `suggestion`, `details: "Skipped — <short reason>"`. URL marker not emitted.
 
 ```json
 {

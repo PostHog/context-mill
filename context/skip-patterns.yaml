@@ -57,6 +57,9 @@ global:
     - node_modules
     - .git
     - .next
+    - .nuxt
+    - .output
+    - .map
     - dist
     - playwright-report
     - test-results
