@@ -221,7 +221,7 @@ export function PHProvider({
 
 `advanced_disable_feature_flags: true` in test/CI stops forgotten CI jobs from polling `/flags` (see `cutting-costs.md`). A missing token in production is a no-op (render `children`); in development throw the missing-config error named in the framework guidelines.
 
-**If `instrumentation-client.ts` (or `.js`) already inits `posthog-js`:** move that init into this provider so bootstrap can be passed per request. Keep the existing `api_host` / `defaults` / other options. Do not leave both inits in place. Do not follow any framework note that says to keep init in `instrumentation-client.ts` — that path cannot take per-request bootstrap.
+**If `instrumentation-client.ts` (or `.js`) already inits `posthog-js`:** move that init into this provider so bootstrap can be passed per request. Keep the existing `api_host` / `defaults` / other options. Do not leave both inits in place. The `nextjs-flags-bootstrap` commandment is the source of truth — the generic Next.js commandment (`instrumentation-client.ts`) is the analytics-simple path and does not apply here.
 
 **If there is no existing client init:** the provider is the only client init. Do not add `instrumentation-client.ts`.
 

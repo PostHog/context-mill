@@ -44,6 +44,16 @@ commandments:
     - For flags that affect initial render, evaluate server-side and pass as props to prevent UI flicker
     - Client-side hooks may return undefined initially while flags load - handle this loading state
 
+  # Exception to `nextjs` / `nextjs-feature-flags` (analytics-simple path:
+  # instrumentation-client, no provider). Only for skills that server-evaluate
+  # flags and bootstrap them into the client. Do not add this tag to the
+  # docs-only `feature-flags` group.
+  nextjs-flags-bootstrap:
+    - When flags are evaluated on the server and bootstrapped into the client, initialize posthog-js via PostHogProvider with a per-request bootstrap option — not in instrumentation-client.ts, which cannot take per-request bootstrap
+    - If instrumentation-client.ts (or .js) already inits posthog-js, move that init into the provider and keep existing api_host / defaults / other options. Do not leave both inits in place
+    - If there is no existing client init, the provider is the only client init — do not add instrumentation-client.ts
+    - Evaluate flags with posthog-node evaluateFlags() once per request. Do not call getAllFlags, getFeatureFlag, or isFeatureEnabled — each is its own /flags request
+
   javascript_web:
     - When a reverse proxy is configured, both /static/* AND /array/* must route to the assets origin (us-assets.i.posthog.com or eu-assets.i.posthog.com).
     - posthog-js is the JavaScript SDK package name
