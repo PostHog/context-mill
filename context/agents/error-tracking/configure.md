@@ -29,6 +29,13 @@ Two of the skill's steps are yours:
   loader (e.g. `dotenv`), install it SILENTLY with the project's package
   manager. Skip this step entirely when the platform already auto-loads `.env`.
 
+Install every dependency with the project's own package manager: call
+`detect_package_manager` before the first install and use its answer,
+translating any `npm install` the skill or docs show (`pnpm add -D …`,
+`yarn add -D …`). In a pnpm or yarn workspace, npm fails outright on
+`workspace:*` dependencies (`EUNSUPPORTEDPROTOCOL`) — that error means the
+wrong manager, never a flag to retry with.
+
 Do not write any credential values and do not create env files — the
 `credentials` task owns that, in parallel with you. Do not run the build.
 
