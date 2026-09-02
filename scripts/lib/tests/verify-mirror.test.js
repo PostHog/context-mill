@@ -40,11 +40,13 @@ function makeMirror({ origin = HOST, menus = {}, overrides = {}, omitFromSums = 
 
     const routes = { ...bodies, SHA256SUMS: sums + '\n', ...overrides };
     const requested = [];
+    const expectedOrigin = new URL(origin).origin;
 
     const fetchImpl = async (url, options = {}) => {
         requested.push({ url, method: options.method ?? 'GET' });
-        const { pathname } = new URL(url);
-        if (!url.startsWith(origin)) return response(404, 'wrong origin');
+        const parsed = new URL(url);
+        const { pathname } = parsed;
+        if (parsed.origin !== expectedOrigin) return response(404, 'wrong origin');
 
         // /latest is the edge function's job; model it by serving both prefixes.
         const name = pathname.replace(`/v${VERSION}/`, '').replace('/latest/', '');
@@ -212,7 +214,8 @@ describe('verifyMirror', () => {
                 expectHost: 'context-mill.posthog.com',
             });
             expect(result.failures).toEqual([]);
-            expect(requested.every(r => r.url.startsWith(CDN))).toBe(true);
+            const cdnOrigin = new URL(CDN).origin;
+            expect(requested.every(r => new URL(r.url).origin === cdnOrigin)).toBe(true);
         });
 
         // The action always passes --expect-host, empty once DNS resolves.
