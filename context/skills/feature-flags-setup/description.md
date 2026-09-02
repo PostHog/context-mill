@@ -20,7 +20,6 @@ This is **not** `wizard audit feature-flags` (read-only, after the fact). This i
 If anything blocks the run, **always** emit exactly one `[ABORT] <reason>` line and stop — never halt, finish, or error out silently. The wizard catches `[ABORT]` and terminates the run for you; don't try to exit yourself. A silent stop is recorded as a failed run with no reason, which can't be acted on, so every dead end must carry a reason. Use one of:
 
 - `[ABORT] unsupported stack for feature flags` — no `app/` directory, or `next` is not a dependency.
-- `[ABORT] could not locate a UI surface to gate` — exhaustive search found no page or component that is safe to add an additive, flag-gated element to.
 - `[ABORT] no posthog project credentials` — no `phc_…` token in env and no PostHog MCP available to fetch one.
 - `[ABORT] could not create the feature flag` — they confirmed a gate target, but creating the 0% flag failed after retry (missing `feature_flag:write`, or the create tool errored).
 - `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project). Keep it short and specific so it's useful when aggregated across runs. Do not paper over a failed flag create by writing "create this manually" and continuing.
@@ -129,13 +128,14 @@ Flags change production UI. Ask **once**, then create a flag and gate only if th
 
 1. Scan pages and components for additive surfaces (a banner, an extra card, an empty-state illustration). Prefer a new element over wrapping existing critical logic.
 2. Never propose gating auth, checkout, payments, data-mutation handlers, or route-blocking middleware.
-3. Call `mcp__wizard-tools__wizard_ask` **exactly once**:
+3. If the scan found no safe additive surface: do **not** abort. Do **not** call `wizard_ask`. Treat as skip (`flagKey` unset) and continue to STEP 8. The example gate is optional; the SDK install is the product. Record in the report that gating was skipped because no safe UI surface was found.
+4. Otherwise call `mcp__wizard-tools__wizard_ask` **exactly once**:
    - `subject`: `"gate-target"`
    - one `kind: "select"` question
    - `prompt`: the SDK install does not change what users see. Optionally add one additive UI path behind a new boolean flag at **0% rollout** (off for everyone, including production, until someone raises rollout in PostHog). Pick a low-risk target or skip.
    - Put **skip first** so it is the default highlight — an accidental Enter then declines instead of wrapping UI: `{ label: "Skip gating — install only", value: "skip" }`, then the recommended additive target (label includes "recommended"), then 1–2 alternatives.
-4. If `wizard_ask` errors (CI / headless): do not fail. Treat it as the recommended additive target (still 0% rollout) and record in the report that the target was auto-picked because the host was non-interactive.
-5. If they pick `skip`: do **not** create a flag. Do **not** call `isEnabled` / `getFlag` on an invented key. Continue to STEP 8 with no `flagKey`. Write the report saying no flag was created and no UI was gated.
+5. If `wizard_ask` errors (CI / headless): do not fail. Treat it as the recommended additive target (still 0% rollout) and record in the report that the target was auto-picked because the host was non-interactive.
+6. If they pick `skip`: do **not** create a flag. Do **not** call `isEnabled` / `getFlag` on an invented key. Continue to STEP 8 with no `flagKey`. Write the report saying no flag was created and no UI was gated.
 
 Do not ask any other question. Credentials come from MCP/env, not from the user.
 
@@ -261,8 +261,8 @@ Write `./posthog-feature-flags-report.md` at the project root covering:
 
 - Stack detected and the pattern used (server `evaluateFlags` → client bootstrap)
 - Packages added and files changed
-- Whether a flag was created. If yes: key, 0% rollout, PostHog URL. If skip: say no flag was created
-- Which UI path was gated (or skipped) and why it was additive
+- Whether a flag was created. If yes: key, 0% rollout, PostHog URL. If skip (user declined, or no safe UI surface was found): say no flag was created
+- Which UI path was gated (or skipped) and why it was additive — if skipped for no safe surface, say that plainly
 - Bill-aware defaults: one `evaluateFlags` per request, CI `advanced_disable_feature_flags`, no local evaluation
 - Constraints of this install, named plainly: anonymous `ph_distinct_id` cookie (if used); `instrumentation-client` init relocated (if it was); bootstrap seeds only enabled flags (`false` is dropped by the client SDK); 0% default so production users are unchanged; gate target auto-picked on a non-interactive host (if it was)
 - How to demo the kill-switch (only if a path was gated): PostHog → that flag → set rollout to **100%** → save → reload the app → gated UI appears → set rollout back to **0%** → reload → UI disappears. Do not tell them to start from 100%.
@@ -281,7 +281,8 @@ Write `./posthog-feature-flags-report.md` at the project root covering:
 - **Same distinct_id on both sides.** Otherwise bootstrap lies.
 - **Additive gating.** Flag off (including 0% rollout) = current behavior. Never auth, checkout, or mutations.
 - **Off until they turn it on.** Skip = no new flag. Confirm = 0% rollout, never 100%. Abort if create fails.
-- **One `wizard_ask`.** The gate target. Skip is first so a stray Enter declines. Nothing else is a question.
+- **No safe surface is skip, not abort.** The example gate is optional. Finish the SDK install.
+- **One `wizard_ask`.** The gate target, and only if a safe surface exists. Skip is first so a stray Enter declines. Nothing else is a question.
 - **Env, never hardcode.** A missing token must not crash boot.
 - **Don't commit.** The operator reviews the diff.
 
