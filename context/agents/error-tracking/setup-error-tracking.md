@@ -48,6 +48,14 @@ When a variant matched, the uploader skill id is
 tasks as `inputs: { skillId: "<id>", displayName: "<human platform name>" }`
 so no task re-detects.
 
+The two facts are independent — settle BOTH before you enqueue anything.
+"PostHog is already integrated" answers fact 1 only; it never decides fact 2,
+and an already-integrated project still gets the upload subgraph when a
+variant matches. A compiled or bundled JS project always has one: a Node
+service built with `tsc` ships minified/compiled output, so it is the `node`
+variant, not "none". Only the readable-stack platforms listed above skip the
+subgraph.
+
 Then seed the graph:
 
 - `install` and `init`, independent of each other — **only when PostHog is
@@ -75,4 +83,8 @@ that `install` and `init` leave behind is enough for exceptions to flow.
 Every task in the chosen graph is queued with that dependency shape, the four
 upload tasks (when queued) share the same `{ skillId, displayName }` inputs,
 `report` depends on the rest (directly or transitively), and the first task is
-runnable. Keep labels short — the action in a few words.
+runnable. Your plan states both facts explicitly: whether PostHog was
+integrated, and which uploader variant matched — or, when you queue no upload
+tasks, which readable-stack platform this is and why no variant applies. A
+plan that never mentions fact 2 is an incomplete plan, not a decision. Keep
+labels short — the action in a few words.
