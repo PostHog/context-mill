@@ -40,6 +40,25 @@ inputs:
       every published artifact.
     required: false
     default: "https://context-mill.posthog.com"
+  verify-origin:
+    description: >-
+      Send verification requests here instead of to base-url's host, so the
+      mirror is verifiable before base-url has a DNS record. Artifacts still bake
+      base-url and are still asserted to.
+    required: false
+    default: ""
+  flip-latest:
+    description: >-
+      Move the /latest pointer to this prefix once it verifies. The one
+      irreversible step, so only build-release.yml sets it.
+    required: false
+    default: "false"
+  kvs-arn:
+    description: >-
+      CloudFront KeyValueStore holding the `latest` key
+      (secrets.AWS_CONTEXT_MILL_RELEASES_KVS_ARN).
+    required: false
+    default: ""
 
 outputs:
   prefix:
@@ -59,6 +78,7 @@ runs:
         VERSION: ${{ inputs.version }}
         PREFIX_IN: ${{ inputs.prefix }}
         BASE_URL: ${{ inputs.base-url }}
+        VERIFY_ORIGIN: ${{ inputs.verify-origin }}
       run: |
         set -euo pipefail
         PREFIX="${PREFIX_IN:-v$VERSION}"
@@ -66,6 +86,18 @@ runs:
         # The mirrored artifacts must resolve under the prefix they are uploaded
         # to, or every download URL in them 404s.
         echo "base=${BASE_URL%/}/$PREFIX" >> "$GITHUB_OUTPUT"
+
+        # Empty expect-host means "same host as the base", verify-mirror.js's default.
+        if [ -n "$VERIFY_ORIGIN" ]; then
+          echo "verify-base=${VERIFY_ORIGIN%/}/$PREFIX" >> "$GITHUB_OUTPUT"
+          echo "latest-base=${VERIFY_ORIGIN%/}/latest" >> "$GITHUB_OUTPUT"
+          echo "expect-host=$(printf '%s' "${BASE_URL%/}" | sed -E 's#^https?://##')" >> "$GITHUB_OUTPUT"
+          echo "Verifying via ${VERIFY_ORIGIN%/} while asserting URLs point at ${BASE_URL%/}"
+        else
+          echo "verify-base=${BASE_URL%/}/$PREFIX" >> "$GITHUB_OUTPUT"
+          echo "latest-base=${BASE_URL%/}/latest" >> "$GITHUB_OUTPUT"
+          echo "expect-host=" >> "$GITHUB_OUTPUT"
+        fi
 
     # posthog-cloud-infra pins this same SHA; keep them in step.
     - name: Configure AWS credentials
@@ -132,3 +164,75 @@ runs:
         COUNT=$(wc -l < /tmp/mirror-local.txt | tr -d ' ')
         echo "count=$COUNT" >> "$GITHUB_OUTPUT"
         echo "Verified $COUNT objects under $PREFIX/"
+
+    # The step above proves the objects landed. This proves a consumer can fetch
+    # them: the CDN, the OAC, the bucket policy, and the baked-in URLs.
+    - name: Verify the mirror over HTTPS
+      shell: bash
+      env:
+        BASE: ${{ steps.resolve.outputs.verify-base }}
+        EXPECT_HOST: ${{ steps.resolve.outputs.expect-host }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        node scripts/verify-mirror.js "$BASE" \
+          --expect-version "$VERSION" --expect-host "$EXPECT_HOST"
+
+    # Describe and PutKey are granted by the same policy statement, so a dry run
+    # can prove the flip's permissions without moving anything.
+    - name: Check the release role can reach the key-value store
+      if: ${{ inputs.flip-latest != 'true' && inputs.kvs-arn != '' }}
+      shell: bash
+      env:
+        KVS_ARN: ${{ inputs.kvs-arn }}
+      run: |
+        set -euo pipefail
+        aws cloudfront-keyvaluestore describe-key-value-store \
+          --kvs-arn "$KVS_ARN" --query ETag --output text > /dev/null
+        echo "Key-value store reachable; PutKey rides the same policy statement"
+
+    # The publishing step. Everything above is invisible, so a failure there
+    # leaves /latest on the previous good release.
+    - name: Point /latest at this release
+      if: ${{ inputs.flip-latest == 'true' }}
+      shell: bash
+      env:
+        KVS_ARN: ${{ inputs.kvs-arn }}
+        PREFIX: ${{ steps.resolve.outputs.prefix }}
+      run: |
+        set -euo pipefail
+        if [ -z "$KVS_ARN" ]; then
+          echo "::error::flip-latest is true but kvs-arn is empty — /latest would silently not move"
+          exit 1
+        fi
+        # --if-match: two releases racing means the loser gets a 412 and fails
+        # loudly, rather than last-write-wins leaving /latest on the older one.
+        ETAG=$(aws cloudfront-keyvaluestore describe-key-value-store \
+          --kvs-arn "$KVS_ARN" --query ETag --output text)
+        aws cloudfront-keyvaluestore put-key \
+          --kvs-arn "$KVS_ARN" --key latest --value "$PREFIX" --if-match "$ETAG"
+        echo "/latest now points at $PREFIX"
+
+    - name: Verify /latest serves this release
+      if: ${{ inputs.flip-latest == 'true' }}
+      shell: bash
+      env:
+        LATEST_BASE: ${{ steps.resolve.outputs.latest-base }}
+        EXPECT_HOST: ${{ steps.resolve.outputs.expect-host }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        # The write reaches edges in seconds, so an immediate check can race it and
+        # see the old version — a skew, not a torn read. Retry rather than fail.
+        # Checksums are skipped: same objects the versioned run just hashed.
+        for attempt in 1 2 3 4 5 6; do
+          if node scripts/verify-mirror.js "$LATEST_BASE" \
+               --expect-version "$VERSION" --expect-host "$EXPECT_HOST" \
+               --checksum-sample 0; then
+            exit 0
+          fi
+          echo "attempt ${attempt}: /latest has not caught up yet, retrying in 10s"
+          sleep 10
+        done
+        echo "::error::/latest did not serve ${VERSION} within 60s of the flip"
+        exit 1
