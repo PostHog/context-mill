@@ -8,11 +8,19 @@ Pick the variant, then read the code. Do not edit anything in this step.
 
 ## Pick the variant
 
-This skill ships 68 variants. Call `load_skill_menu` with `category: "ai-observability"`. That list is the source of truth.
+This skill ships 69 variants. Call `load_skill_menu` with `category: "ai-observability"`. That list is the source of truth.
 
 Apply these rules in order. The first match wins. Frameworks wrap providers, and gateways look like OpenAI, so the order matters.
 
-### 1. A framework wins over the provider under it
+### 1. Model calls made from Go take OpenTelemetry
+
+Go has no PostHog wrapper SDK, so a project whose model calls are in Go takes `opentelemetry-go`, whatever SDK or framework makes them. The bridge is `github.com/posthog/posthog-go/otel`, and the install doc carries the code.
+
+A `go.mod` on its own is not the signal. If the repo also has a `package.json`, `pyproject.toml`, or `requirements.txt`, find the call sites before you route. A Go service beside a Node or Python LLM app takes the rules below. If it stays unclear, use `wizard_ask`.
+
+The bridge needs Go 1.25 or newer. An older toolchain fails with `module requires go >= 1.25.0`. Say so in the report rather than raising the project's Go version yourself.
+
+### 2. A framework wins over the provider under it
 
 | Package in the manifest | Variant |
 |---|---|
@@ -36,23 +44,23 @@ Apply these rules in order. The first match wins. Frameworks wrap providers, and
 
 Instrument the framework, not the provider below it. A provider instrumentor keeps the model calls and loses the agent, tool, and handoff structure.
 
-### 2. An `openai` client with a base URL override means a gateway
+### 3. An `openai` client with a base URL override means a gateway
 
 Most OpenAI-compatible providers ship no SDK. Apps call them with the `openai` package aimed at another host. Check the client constructor and `OPENAI_BASE_URL`. Common hosts are `api.groq.com`, `openrouter.ai`, `api.together.xyz`, and `localhost:11434`.
 
 Pick the variant that names the provider. The install shape matches plain OpenAI, but the provider name does not. Step 3 explains why that matters.
 
-### 3. A plain provider SDK maps to that provider
+### 4. A plain provider SDK maps to that provider
 
 `openai`, `anthropic`, `@anthropic-ai/sdk`, `google-genai`, `@google/genai`, `mistralai`, and `cohere` each have a variant. `boto3` with `bedrock-runtime` maps to `aws-bedrock`.
 
-### 4. Anything else
+### 5. Anything else
 
 - Several candidates and no framework: prefer the higher-level one. If it stays unclear, use `wizard_ask` with the candidates as options.
 - The app already emits its own OTel spans: `opentelemetry-{python,node}`.
 - No LLM SDK at all: `manual-capture`.
 
-Language follows the manifest. A `package.json` means Node. A `pyproject.toml` or `requirements.txt` means Python. Framework variants have no language suffix.
+Language follows the manifest. A `package.json` means Node. A `pyproject.toml` or `requirements.txt` means Python. Go call sites went to `opentelemetry-go` under rule 1. Framework variants have no language suffix.
 
 Report the variant and the reason in a `[STATUS]` line, then call `install_skill` with the full id.
 

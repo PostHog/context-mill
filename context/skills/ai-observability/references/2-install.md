@@ -33,9 +33,13 @@ Portkey also needs `portkey-ai`.
 
 AWS Bedrock has no wrapper client. It instruments the AWS SDK through OpenTelemetry, so its package list differs from every other provider.
 
+`opentelemetry-go` declares `github.com/posthog/posthog-go/otel` and the OpenTelemetry SDK modules in `go.mod`. There are no Go instrumentation libraries for provider SDKs; step 3 hand-authors the `gen_ai.*` spans instead.
+
+Go is the exception to the no-package-manager and no-lockfile rules on this page. A `go.mod` require line with no matching `go.sum` entry fails the build with `missing go.sum entry for module`, so let the tool write both files: `go get github.com/posthog/posthog-go/otel go.opentelemetry.io/otel go.opentelemetry.io/otel/sdk`, then `go mod tidy`. Do not hand-edit `go.mod` or `go.sum`.
+
 ## Do not
 
 - Do not run `npm install` or `pip install`.
-- Do not edit the lockfile.
+- Do not edit the lockfile. On Go, `go get` and `go mod tidy` write `go.mod` and `go.sum` for you.
 - Do not upgrade the vendor SDK.
 - Do not add OpenTelemetry to a wrapper variant.

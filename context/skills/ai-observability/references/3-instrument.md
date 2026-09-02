@@ -20,9 +20,20 @@ Route the token and host through env vars with `set_env_values`. Reuse the names
 
 Agent frameworks use their own tracing hook in place of a wrapper. Take it from the install doc. Do not substitute an OTel instrumentor.
 
+### The OpenTelemetry path
+
+On the `opentelemetry-*` variants, which is where Go call sites land, there is no wrapper to swap and no PostHog client to build. Register the PostHog span processor from the install doc on the tracer provider the app already owns. Flush before exit with `ForceFlush` or `Shutdown`, or the buffered spans are lost.
+
+The processor forwards a span only when its **name** or one of its **span attribute keys** starts with `gen_ai.`, `llm.`, `ai.`, or `traceloop.`. It drops every other span silently, with no error. Two things follow:
+
+- Start one span per turn so the calls in it share a trace, and make that turn span pass the filter. Name it in the `gen_ai.` or `ai.` namespace, or give it a `gen_ai.*` attribute. A turn span named `handle turn` never reaches PostHog, and the generations under it arrive with no root.
+- `$ai_session_id` begins with `$`, so it does not satisfy the filter on its own. The filter reads span attributes only, never resource attributes. Set `$ai_session_id` on every span in the conversation, and carry `posthog.distinct_id` the way the install doc shows.
+
+Cardinality is the same as the wrapper path: one `$ai_session_id` per conversation, one trace per turn. The OTel trace carries the grouping, so the per-call parameters in the next section do not exist here.
+
 ## Attach identity to every call
 
-Three per-call parameters carry the tree. Node uses camelCase.
+On the wrapper path, three per-call parameters carry the tree. Node uses camelCase. The OpenTelemetry path has none of them; the section above covers it.
 
 | Parameter | Holds | Cardinality |
 |---|---|---|
@@ -54,6 +65,8 @@ The wrapper records the model call. It never sees the tool dispatch loop, so not
 
 If the app registers tools, capture each run as an `$ai_span` event with `posthog.capture()`. Give it the turn's `$ai_trace_id` so the span joins the trace. The install doc lists the span properties.
 
+On the OpenTelemetry path there is no PostHog client to call. Record the tool run as a child span of the turn span instead, with `gen_ai.*` attributes so it passes the AI span filter. A plain span named after the tool is dropped.
+
 Put the capture next to the existing dispatch. Do not restructure the tool loop.
 
 Agent frameworks and the Vercel AI SDK emit tool spans on their own. Add nothing on those variants.
@@ -64,6 +77,7 @@ An app that registers no tools has no spans. That is a complete result, not a ga
 
 - Do not restructure the app. This step swaps a constructor and adds arguments to calls.
 - Do not omit `posthog_trace_id` and expect the calls to group.
+- Do not leave a turn span that fails the AI span filter on the OpenTelemetry path.
 - Do not mint a session id per call or per turn.
 - Do not leave a gateway reporting `$ai_provider` as `openai`.
 - Do not add spans when the app registers no tools.

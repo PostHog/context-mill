@@ -571,6 +571,14 @@ variants:
       - https://posthog.com/docs/ai-observability/installation/opentelemetry.md
       - https://posthog.com/docs/libraries/node.md
 
+  - id: opentelemetry-go
+    framework: opentelemetry
+    display_name: OpenTelemetry (Go)
+    tags: [opentelemetry, go, ai_observability]
+    docs_urls:
+      - https://posthog.com/docs/ai-observability/installation/opentelemetry.md
+      - https://posthog.com/docs/libraries/go.md
+
   - id: claude-code
     framework: claude-code
     display_name: Claude Code
