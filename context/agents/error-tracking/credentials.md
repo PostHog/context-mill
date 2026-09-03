@@ -38,6 +38,12 @@ write it in this one task (the key never survives across tasks):
    `values: { "POSTHOG_CLI_API_KEY": { secretRef: "<the ref>" }, "POSTHOG_CLI_PROJECT_ID": "<PROJECT_ID>", "POSTHOG_CLI_HOST": "<UI_HOST>" }`.
    The exact variable names follow the skill's per-uploader convention. The
    wizard resolves the ref locally, so you never see the key value.
+4. Document the same variable names for other developers: append them to
+   `.env.example` (create it if the project has none) with empty or
+   placeholder values — never a real value, and never the key itself. The
+   example file is committed and is the only `.env*` you may write directly;
+   it is how the next developer, and the next wizard run's `check_env_keys`,
+   learns the project expects these variables.
 
 Replace `<SETTINGS_URL>`, `<PROJECT_ID>`, and `<UI_HOST>` from your project
 context. Do not touch the build config — the `configure` task owns that.
@@ -46,5 +52,6 @@ context. Do not touch the build config — the `configure` task owns that.
 
 The env file holds the upload variables (the key as a resolved secret, the
 non-secret project id and host as literals), written through the wizard tools,
-never hardcoded in source. Your handoff names the env file and every variable
-name — never a value — so the CI task carries the same names into the pipeline.
+never hardcoded in source, and `.env.example` documents the same names with
+placeholders. Your handoff names the env file and every variable name — never
+a value — so the CI task carries the same names into the pipeline.
