@@ -422,9 +422,6 @@ jobs:
           # The only caller that moves the pointer.
           flip-latest: "true"
           kvs-arn: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_KVS_ARN }}
-          # TEMPORARY: context-mill.posthog.com has no DNS record yet.
-          # DELETE THIS LINE once the CNAME is live.
-          verify-origin: "https://d3pmc2dxh35inl.cloudfront.net"
 
       # always(), because the S3 mirror is the only step after the release is
       # already published. If the mirror fails we still want the release summary

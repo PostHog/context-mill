@@ -75,8 +75,6 @@ jobs:
           aws-region: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_REGION }}
           # Permissions probe only — flip-latest stays false here.
           kvs-arn: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_KVS_ARN }}
-          # TEMPORARY: remove alongside the same line in build-release.yml.
-          verify-origin: "https://d3pmc2dxh35inl.cloudfront.net"
 
       - name: Dry run summary
         env:
