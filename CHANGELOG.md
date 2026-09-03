@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.51.0](https://github.com/PostHog/context-mill/compare/v1.50.0...v1.51.0) (2026-09-03)
+
+
+### Features
+
+* add google-adk variant to ai-observability skill ([c21ab41](https://github.com/PostHog/context-mill/commit/c21ab41ddc294ef54c8b73f2d223c3c86a5d1422))
+* **skills:** route Go projects to the OpenTelemetry AIO variant ([61565ef](https://github.com/PostHog/context-mill/commit/61565efd755368181a20e553c29388ee294bdf4a))
+
 ## [1.50.0](https://github.com/PostHog/context-mill/compare/v1.49.1...v1.50.0) (2026-09-01)
 
 
