@@ -46,8 +46,9 @@ Then cover, briefly and concretely:
   started this command without PostHog and now has it.
 - When source-map upload was wired: the files changed (paths only), the exact
   production build command, and that every production build now uploads.
-- When it was skipped: one line saying why (readable stack traces on this
-  platform) — an outcome, not an apology.
+- When it was skipped: one line saying why — readable stack traces on this
+  platform, or that Astro is not supported by the uploader. An outcome, not an
+  apology. Say plainly that the build command was left untouched.
 - How to verify: trigger any error and look at
   `<UI_HOST>/project/<PROJECT_ID>/error_tracking`; uploaded symbol sets appear
   at `<UI_HOST>/project/<PROJECT_ID>/error_tracking/configuration`.
