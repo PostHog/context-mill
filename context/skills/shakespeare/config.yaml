@@ -1,0 +1,14 @@
+# Shakespeare - INTERNAL TESTING ONLY - docs-only skill (no example projects)
+# A minimal skill written to learn the skill pipeline end to end and to test
+# hooking a skill up to a dedicated wizard-native program (`wizard shakespeare`).
+# It is NOT intended for end users or production use.
+type: skill
+template: description.md
+description: Add a line of Shakespeare to your codebase (for internal dev and testing)
+tags: [shakespeare, internal-test]
+shared_docs: []
+variants:
+  - id: all
+    display_name: Shakespeare Quote Comment (for internal dev and testing)
+    tags: [internal-test]
+    docs_urls: []
