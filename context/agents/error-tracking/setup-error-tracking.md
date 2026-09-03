@@ -33,6 +33,11 @@ and pick at most one, by this precedence (first match wins):
 - a Gradle build file (`build.gradle`, `build.gradle.kts`, `settings.gradle`) → `android`
 - `go.mod` → `go`
 - `Cargo.toml` → `rust`
+- `astro` in `package.json` dependencies → **none**. Astro is not supported by
+  the uploader: it inlines scripts below its asset limit into the HTML, so a
+  build routinely emits a `.map` with no `.js` beside it, and the upload step
+  then fails the whole build. This rule wins over every `package.json` match
+  below — an Astro project that also depends on `vite` is still **none**.
 - otherwise read `package.json` dependencies, first match wins:
   `react-native` → `react-native`; `nuxt` → `nuxt`; `next` → `nextjs`;
   `@angular/core` → `angular`; `vite` → `vite`; `webpack` → `webpack`;
@@ -51,10 +56,10 @@ so no task re-detects.
 The two facts are independent — settle BOTH before you enqueue anything.
 "PostHog is already integrated" answers fact 1 only; it never decides fact 2,
 and an already-integrated project still gets the upload subgraph when a
-variant matches. A compiled or bundled JS project always has one: a Node
+variant matches. A compiled or bundled JS project normally has one: a Node
 service built with `tsc` ships minified/compiled output, so it is the `node`
-variant, not "none". Only the readable-stack platforms listed above skip the
-subgraph.
+variant, not "none". Only two kinds of project skip the subgraph — the
+readable-stack platforms listed above, and Astro.
 
 Then seed the graph:
 
@@ -85,6 +90,7 @@ upload tasks (when queued) share the same `{ skillId, displayName }` inputs,
 `report` depends on the rest (directly or transitively), and the first task is
 runnable. Your plan states both facts explicitly: whether PostHog was
 integrated, and which uploader variant matched — or, when you queue no upload
-tasks, which readable-stack platform this is and why no variant applies. A
+tasks, why no variant applies: which readable-stack platform this is, or that
+Astro is not supported by the uploader. A
 plan that never mentions fact 2 is an incomplete plan, not a decision. Keep
 labels short — the action in a few words.
