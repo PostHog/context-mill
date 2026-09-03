@@ -1,0 +1,18 @@
+type: skill
+template: description.md
+description: Audit where a PostHog integration's code and its actual flag configuration have drifted apart — ghost keys, stale rollouts, undocumented long-lived flags, unreferenced active flags, and multivariate flags misread as booleans
+tags: [best-practices]
+cli:
+  role: command
+  parentCommand: audit
+  command: flag-health
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/feature-flags/cutting-costs.md
+  - https://posthog.com/docs/feature-flags/cleaning-up-stale-flags.md
+variants:
+  - id: all
+    display_name: PostHog audit — flag roster alignment
+    tags: [best-practices]
+    docs_urls: []
