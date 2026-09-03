@@ -406,10 +406,10 @@ jobs:
       # If anything release-critical failed, `publish` never ran, its conclusion
       # isn't 'success', and the mirror correctly stays skipped.
       #
-      # Nothing consumes these objects yet: the bucket is private with no CDN in
-      # front of it. That arrives in a later phase, at which point these same
-      # objects become publicly fetchable with no re-upload, because the URLs
-      # baked into them already point at the final hostname.
+      # The action uploads the versioned prefix, verifies it over HTTPS, and only
+      # then moves /latest to it. Ordering is the safety argument: the prefix is
+      # immutable and unreferenced until the pointer moves, so any failure before
+      # that leaves /latest on the previous good release.
       - name: Mirror release to S3
         id: mirror
         if: ${{ !cancelled() && steps.publish.conclusion == 'success' }}
@@ -419,6 +419,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_ROLE_ARN }}
           bucket: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_BUCKET }}
           aws-region: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_REGION }}
+          # The only caller that moves the pointer.
+          flip-latest: "true"
+          kvs-arn: ${{ secrets.AWS_CONTEXT_MILL_RELEASES_KVS_ARN }}
+          # TEMPORARY: context-mill.posthog.com has no DNS record yet.
+          # DELETE THIS LINE once the CNAME is live.
+          verify-origin: "https://d3pmc2dxh35inl.cloudfront.net"
 
       # always(), because the S3 mirror is the only step after the release is
       # already published. If the mirror fails we still want the release summary
@@ -438,6 +444,7 @@ jobs:
           # prefix and object count are the useful parts anyway.
           if [ -n "$MIRROR_PREFIX" ]; then
             echo "- **S3 mirror:** \`$MIRROR_PREFIX/\` ($MIRROR_COUNT objects)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Mirror URL:** https://context-mill.posthog.com/latest/skill-menu.json" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **S3 mirror:** :warning: did not complete — the GitHub release above is published and unaffected" >> $GITHUB_STEP_SUMMARY
           fi

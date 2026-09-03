@@ -59,8 +59,12 @@ function rewriteUrls(text, froms, to) {
     return froms.reduce((acc, from) => acc.split(from).join(to), text);
 }
 
-/** Collect every URL-bearing field we expect to point at the mirror after a rewrite. */
-function collectDownloadUrls({ manifest, skillMenu, agentMenu }) {
+/**
+ * Collect every URL-bearing field we expect to point at the mirror after a
+ * rewrite. Exported so verify-mirror.js checks published artifacts against the
+ * same idea of where URLs live.
+ */
+export function collectDownloadUrls({ manifest, skillMenu, agentMenu }) {
     const urls = [];
     for (const resource of manifest?.resources ?? []) {
         if (resource.downloadUrl) urls.push(resource.downloadUrl);
@@ -106,8 +110,6 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
         claimed.set(name, from);
         return path.join(outDir, name);
     };
-
-    const readJson = src => JSON.parse(fs.readFileSync(src, 'utf8'));
 
     /** Rewrite a JSON file's URLs and write it flat. Parses after replacing so a
      *  malformed result fails here rather than at a consumer. */
