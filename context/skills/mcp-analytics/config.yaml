@@ -2,7 +2,7 @@
 type: skill
 template: description.md
 category: mcp-analytics
-description: Add PostHog MCP analytics to a TypeScript, JavaScript, or Python MCP server. Captures tool calls, agent intent, failures, and protocol revision, plus self-reported model identity on supported TypeScript wrappers. Both SDKs support legacy sessions and the handshake-free 2026-07-28 revision. Detects the server style and wires in compatible instrumentation, credentials, conversation correlation, and graceful shutdown.
+description: Add PostHog MCP analytics to a TypeScript, JavaScript, or Python MCP server. Captures tool calls, agent intent, failures, and protocol revision, plus self-reported model identity on supported TypeScript paths. Both SDKs support legacy sessions and the handshake-free 2026-07-28 revision. Detects the server style and wires in compatible instrumentation, credentials, conversation correlation, and graceful shutdown.
 tags: [mcp-analytics, mcp]
 cli:
   role: command

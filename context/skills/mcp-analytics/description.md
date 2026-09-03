@@ -1,6 +1,6 @@
 # Add PostHog MCP analytics
 
-Use this skill to instrument a user's own **MCP server** with PostHog MCP analytics. Once instrumented, every tool call, agent intent, and failure the server handles is captured as a `$mcp_*` event in PostHog. Supported TypeScript wrappers can also capture the agent's self-reported model, so the user can compare quality, errors, and latency by model.
+Use this skill to instrument a user's own **MCP server** with PostHog MCP analytics. Once instrumented, every tool call, agent intent, and failure the server handles is captured as a `$mcp_*` event in PostHog. Supported TypeScript instrumentation paths can also capture the agent's self-reported model, so the user can compare quality, errors, and latency by model.
 
 There are two SDKs and this skill handles both:
 - **TypeScript / JavaScript** — the [`@posthog/mcp`](https://posthog.com/docs/mcp-analytics) Node package.
@@ -87,7 +87,7 @@ The server object comes from `@modelcontextprotocol/server`. Follow the **v2** s
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing. Self-reported model capture requires `@posthog/mcp>=0.12.0`; upgrade an older installed version before enabling it.
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's pre-1.0) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing. Self-reported model capture requires `@posthog/mcp>=0.12.0` on wrapping paths and `@posthog/mcp>=0.13.0` on the custom-dispatcher path; upgrade an older installed version before enabling it.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 
@@ -179,27 +179,44 @@ import { PostHogMCP } from "@posthog/mcp"
 
 const posthog = new PostHogMCP(process.env.POSTHOG_PROJECT_TOKEN, {
   host: process.env.POSTHOG_HOST,
+  captureModel: true,
 })
+
+// when building the tools/list response:
+const serverTools = getServerTools()
+const advertisedTools = posthog.prepareToolList(serverTools)
 
 // only on a 2025-11-25 initialize handshake:
 posthog.captureInitialize({ clientName, clientVersion, distinctId, protocolVersion: "2025-11-25" })
 
 // after each tools/call resolves (wrap the existing handler, time it):
 const start = Date.now()
-// ...run the tool...
+const originalTool = serverTools.find((tool) => tool.name === request.params.name)
+const { args, intent, intentSource, llmModel, llmModelSource } = posthog.prepareToolCall(
+  request.params.name,
+  request.params.arguments,
+  { originalTool },
+)
+const result = await runTool(request.params.name, args)
 posthog.captureToolCall({
   toolName: request.params.name,
-  parameters: request.params.arguments,
+  parameters: args,
   response: result,
   durationMs: Date.now() - start,
   isError: false,
+  intent,
+  intentSource,
+  llmModel,
+  llmModelSource,
   distinctId, // who the request is from, if known
   sessionId,  // your transport/session id, if you have one
   protocolVersion, // read this from the current request
 })
 ```
 
-Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocolVersion` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't fabricate `$mcp_initialize` on `2026-07-28`. `captureModel` and conversation-id injection aren't available on the custom-dispatcher path, so don't add `$mcp_llm_model` manually. These calls are fire-and-forget and never throw, so they can't take down a tool.
+Return `advertisedTools` from `tools/list`. Always dispatch the cleaned `args`, not the raw request arguments. Pass the raw `originalTool` descriptor on every call so model ownership remains correct when `tools/list` and `tools/call` reach different replicas. The helper preserves an application-owned `llm_model` field and declines to capture it.
+
+Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocolVersion` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't fabricate `$mcp_initialize` on `2026-07-28`. Conversation-id injection isn't available on the custom-dispatcher path. Model capture is self-reported and unverified. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
 **Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Prefer the `instrumentMutator` helper — it instruments the server and returns it, so it drops straight into the hook:
 
@@ -337,7 +354,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 - **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
 - **Python:** run the project's type-check / tests if present (`mypy`, `pytest`) and fix any errors your changes introduced. Run any formatter the project uses (`ruff`, `black`) on the files you touched.
-- For a TypeScript wrapping path with model capture, verify `tools/list` advertises a required `llm_model` string, the tool handler doesn't receive it, and a non-`unknown` answer lands on `$mcp_tool_call` as `$mcp_llm_model` with `$mcp_llm_model_source = "self_reported"`.
+- For any supported TypeScript path with model capture, verify `tools/list` advertises a required `llm_model` string, the tool handler doesn't receive it, and a non-`unknown` answer lands on `$mcp_tool_call` as `$mcp_llm_model` with `$mcp_llm_model_source = "self_reported"`.
 - For a `2026-07-28` wrapping path, verify the first tool call captures without an initialize request. When conversation IDs are enabled, verify the returned handle is echoed on the next call and produces the same `$session_id`.
 - Don't expect automatic `$mcp_resources_list`, `$mcp_resource_read`, `$mcp_prompts_list`, or `$mcp_prompt_get` events. Those names are reserved, but the wrappers don't emit them yet.
 - Check every event name in the final report against `events.md`. Failed tools remain `$mcp_tool_call` events with `$mcp_is_error = true` and can emit a sibling `$exception`; there is no `$mcp_tool_failed` event.
