@@ -40,6 +40,7 @@ The bridge needs Go 1.25 or newer. An older toolchain fails with `module require
 | `instructor` | `instructor-{python,node}` |
 | `litellm` | `litellm` |
 | `mastra`, `@mastra/core` | `mastra` |
+| `@google/adk` | `google-adk` |
 | `convex` | `convex` |
 
 Instrument the framework, not the provider below it. A provider instrumentor keeps the model calls and loses the agent, tool, and handoff structure.
