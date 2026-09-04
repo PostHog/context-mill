@@ -112,5 +112,7 @@ Rule:
 - pass: no completion-named capture waits on a server, OR every one of them sits in a success branch (after `if (response.ok)` / `if (!error)`, inside `.then()`, or after an `await` that throws on failure and is not swallowed by a `try`).
 - warning: any completion-named capture runs before its `await`, or outside the success guard so it also runs on a failed response.
 
+Include the case with no `await` beside the capture at all: a submission running through a Next.js Server Action, `useActionState`, a form `action` prop, or a mutation hook, with the capture in the submit path rather than gated on the returned success state. Same defect, easier to miss. The fix is to capture inside the action on the server after the mutation succeeds, or off the returned success state.
+
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `capture-fires-on-success`, including `file` (path:line of the most material violation, otherwise a representative completion capture) and `details` (one-line explanation naming the branch the call belongs in). Return when the call completes. Do not write the audit report.
 ```

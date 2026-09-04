@@ -192,6 +192,8 @@ Consider only captures whose event name reads as a **completed outcome** — nam
 
 For each completion-named capture, determine whether it sits inside an `async` function, a promise chain, or a callback that receives a server result. If it does not (pure client-side state change, no network call), it passes — there is no outcome to wait for.
 
+Watch for the case that has no awaited response at all: a component whose submission runs through a Next.js Server Action, `useActionState`, a form `action` prop, or a mutation hook, with the capture sitting in the submit path rather than gated on the returned success state. That is the same defect and it is easy to miss, because there is no `await` next to the capture to notice. The fix to report is to move the capture into the action itself, on the server, after the mutation succeeds — or, where it must stay in the browser, to fire it off the returned success state.
+
 Where it does, decide whether the capture executes:
 - AFTER the awaited call resolved AND inside the branch taken on success (after an `if (response.ok)` / `if (!error)` guard, inside `.then()`, or after an `await` that would throw on failure and is not wrapped in a `try` that swallows the error) — correct.
 - BEFORE the `await`, or after it but OUTSIDE any success guard so it also runs on a rejected/failed response (for example after a `try/catch` that swallows, or before `if (!response.ok) return`) — a violation.

@@ -45,6 +45,16 @@ as well where the drop-off between the two is worth measuring, under its own
 name — one name must never mean both. Use clear `lower_snake_case` names and
 useful properties. Edit each file while it is already open.
 
+Some frameworks never hand the client a response to branch on — a Next.js Server
+Action driven by `useActionState`, a form action, a mutation hook that only
+exposes `isSuccess`. Do not settle for firing on submit there. Put the capture
+inside the action itself, on the server, immediately after the mutation succeeds:
+that is where the outcome is actually known, and it needs no client state at all.
+Keep it in the browser only when the action cannot take the server SDK, and then
+fire it off the returned success state — reacting to state is the correct answer
+in this one case, not the effect-driven anti-pattern the framework rules warn
+about.
+
 Server-side, use the authenticated user's id as the distinct id. For a genuinely
 unauthenticated action, emit a personless event — never fabricate a placeholder
 id like `'anonymous'`, which collapses every anonymous user into one person and

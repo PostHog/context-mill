@@ -17,7 +17,8 @@ commandments:
   react:
     # PostHog-specific
     - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
-    - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes - and when the handler awaits a server call, capture in the success branch after it resolves, never at the top of the handler where a rejected request still counts as a success
+    - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes
+    - When the handler awaits a server call, capture in the success branch after it resolves, never at the top of the handler - a request the server rejects must not count as a success. When the outcome only ever arrives as state (useActionState, a mutation hook's isSuccess), capture inside the server action instead, or off that success state - the one legitimate exception to the useEffect rule above.
     # General React patterns (react.dev/learn/you-might-not-need-an-effect)
     - Do NOT use useEffect for data transformation - calculate derived values during render instead
     - Do NOT use useEffect to respond to user events - put that logic in the event handler itself
