@@ -30,6 +30,9 @@ jobs:
     - name: Install dependencies
       run: pnpm install
 
+    - name: Check embedded browser snippets
+      run: pnpm check:browser-snippets
+
     - name: Test
       run: pnpm test
 

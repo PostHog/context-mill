@@ -7,6 +7,8 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "node scripts/dev-server.js",
+    "generate:browser-snippets": "node scripts/generate-browser-snippets.js",
+    "check:browser-snippets": "node scripts/generate-browser-snippets.js --check",
     "visual-dags": "node scripts/visual-dags.js",
     "test:plugins": "vitest run scripts/plugins/tests",
     "test:plugins:watch": "vitest scripts/plugins/tests",
@@ -29,10 +31,5 @@
     "@posthog/warlock": "^0.2.2",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
