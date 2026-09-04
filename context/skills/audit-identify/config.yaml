@@ -12,6 +12,8 @@ shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
   - https://posthog.com/docs/product-analytics/cutting-costs.md
   - https://posthog.com/docs/libraries/js/config.md
+  - https://posthog.com/docs/references/posthog-node.md
+  - https://posthog.com/docs/product-analytics/best-practices.md
   - https://posthog.com/docs/data/anonymous-vs-identified-events.md
 variants:
   - id: all
