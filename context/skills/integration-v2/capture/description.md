@@ -37,14 +37,43 @@ and it is the source the report reads later.
 ## Instrument
 
 For each event call the SDK's capture method on the real user action — the click
-or submit handler, the server action — not on render or page load. Use clear
-`lower_snake_case` names and useful properties. Edit each file while it is already
-open.
+or submit handler, the server action — not on render or page load. Where that
+action waits on a server, capture the outcome rather than the attempt: the call
+belongs in the branch that runs after the awaited response confirms success, so a
+submission the server rejects never counts as one that worked. Capture the attempt
+as well where the drop-off between the two is worth measuring, under its own
+name — one name must never mean both. Use clear `lower_snake_case` names and
+useful properties. Edit each file while it is already open.
+
+Some frameworks never hand the client a response to branch on — a Next.js Server
+Action driven by `useActionState`, a form action, a mutation hook that only
+exposes `isSuccess`. Do not settle for firing on submit there. Put the capture
+inside the action itself, on the server, immediately after the mutation succeeds:
+that is where the outcome is actually known, and it needs no client state at all.
+Keep it in the browser only when the action cannot take the server SDK, and then
+fire it off the returned success state — reacting to state is the correct answer
+in this one case, not the effect-driven anti-pattern the framework rules warn
+about.
 
 Server-side, use the authenticated user's id as the distinct id. For a genuinely
 unauthenticated action, emit a personless event — never fabricate a placeholder
 id like `'anonymous'`, which collapses every anonymous user into one person and
 corrupts the data.
+
+Backend SDKs process a person profile on every capture that carries a distinct id,
+and the runtime metadata they attach — `$os`, `$lib`, and the rest — overwrites
+whatever the browser set on that same person, so an event captured from a Linux
+host rewrites a macOS user's profile. Pass `$process_person_profile: false` on
+server-side events that only record that something happened — a row was written, a
+job ran, a webhook arrived.
+
+Not on the events that decide who the person is or what they are worth. Signup,
+subscription started, plan changed, churn: those are supposed to reach the person,
+and silencing them is worse than the metadata they overwrite, because it costs the
+project cohorts, person-property filters, lifecycle insights, and the funnel from
+first visit to paying. Let those through, and pair them with the `identify()` or
+`$set` that records what changed. Never blanket the flag across every server
+capture — a project with the flag everywhere has no person profiles at all.
 
 Leave `.posthog-wizard-cache/.posthog-events.json` in place for the report.
 

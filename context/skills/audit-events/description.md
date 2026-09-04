@@ -11,7 +11,7 @@ The audit covers two lenses:
 
 The audit runs as a step chain. **The exact step list lives in the reference files themselves, not in this overview.** Step 1 lives at `references/1-presence.md`; each step file ends with a `next_step:` frontmatter pointer to the next, and the final step has `next_step: null`. Follow them in the order they point. You must resolve each step in order before any source-tree exploration.
 
-The audit ledger is seeded by the wizard with one pending check per event check. **Each step gracefully handles a missing check id**: if a step's expected id is not in the ledger, it skips its `audit_resolve_checks` call for that id and continues. Use `mcp__wizard-tools__audit_resolve_checks` to patch each check as you finish it.
+The audit ledger is seeded by Step 1, not by the wizard — `wizard audit events` runs through the generic skill program, which pre-seeds nothing. Step 1 calls `mcp__wizard-tools__audit_seed_checks` with one pending entry per check; skip it and every later `audit_resolve_checks` call is rejected as an unknown id. **Each later step still handles a missing check id gracefully**: if a step's expected id is not in the ledger, it skips its `audit_resolve_checks` call for that id and continues. Use `mcp__wizard-tools__audit_resolve_checks` to patch each check as you finish it.
 
 **Start by reading the path relative to this file at `references/1-presence.md`.** Do not Glob, ls, or find the skill directory. Do not preload future steps. Do not re-read a step file once you've moved past it. Do not re-read SKILL.md.
 
@@ -33,6 +33,7 @@ The wizard intercepts these and updates the spinner. Use them freely — they ar
 
 The ledger lives at `.posthog-audit-checks.json` and is rendered live in the "Audit plan" tab. It is owned by MCP tools — **never `Write` this file directly**:
 
+- `mcp__wizard-tools__audit_seed_checks({ checks })` — create the ledger. Called once, by Step 1, with the exact payload that step lists.
 - `mcp__wizard-tools__audit_resolve_checks({ updates })` — patch one or more checks by `id`. Each `update` is `{ id, status, file?, details? }`. Batch updates from the same step into a single call.
 
 All audit ledger calls are atomic and serialize internally — **concurrent calls from parallel subagents cannot lose updates**, so feel free to fan out runtime checks across `Agent` subagents when a step says so.

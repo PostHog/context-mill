@@ -4,11 +4,12 @@ next_step: 5-live-data.md
 
 # Step 4 — Event capture
 
-This step resolves three event-capture checks **in parallel**, one subagent per check:
+This step resolves four event-capture checks **in parallel**, one subagent per check:
 
 - `capture-event-names-static`
 - `capture-uses-proxy`
 - `capture-growth-events`
+- `capture-fires-on-success`
 
 Each subagent owns its own grep, reads, evaluates its single rule, and emits one `audit_resolve_checks` call with one update. The ledger's mutex serializes concurrent writes.
 
@@ -20,9 +21,9 @@ Emit before dispatching:
 [STATUS] Auditing event capture
 ```
 
-## Action — dispatch three subagents in one message
+## Action — dispatch four subagents in one message
 
-Make **three `Agent` tool calls in a single message** so they run concurrently. Wait for all three to return, then continue to `5-live-data.md`. Do not run any other tools between dispatch and the next step.
+Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `5-live-data.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `best-practices.md` reference holds PostHog's authoritative guidance on event-name shape, reverse-proxy setup, and growth-event coverage. It's typically at `.claude/skills/audit/references/best-practices.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit/references/best-practices.md`. Each subagent reads it once before judging.
 
@@ -90,4 +91,28 @@ Rule:
 - Skip (`pass` with details: "no auth/billing paths detected"): no detectable signup/billing surfaces.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `capture-growth-events`, including `file` (path:line of the most relevant capture or growth-surface site) and `details` (one-line explanation, listing missing growth events when applicable). Return when the call completes. Do not write the audit report.
+```
+
+### Task D — `capture-fires-on-success`
+
+`description`: `Audit capture-fires-on-success`
+
+`prompt`:
+```
+You are an audit subagent. Resolve exactly one rule and return: capture-fires-on-success.
+
+Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit/references/best-practices.md`).
+
+Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once.
+
+Consider only captures whose event name reads as a completed outcome — `_saved`, `_created`, `_updated`, `_deleted`, `_completed`, `_purchased`, `_submitted`, `_signed_up`, `_subscribed`, `_upgraded`, `_paid`, `_published`, or the project's own past-tense equivalent. Ignore intent-stage names (`_clicked`, `_started`, `_viewed`, `_opened`) — those are supposed to fire on the action itself, and flagging them is a false positive.
+
+Rule:
+- A completion event must fire only after the server confirms the action: inside the success branch, after the awaited call resolves. Fired at the top of a submit handler instead, a submission the server rejects still counts as a success, which over-reports the metric and inflates the event bill.
+- pass: no completion-named capture waits on a server, OR every one of them sits in a success branch (after `if (response.ok)` / `if (!error)`, inside `.then()`, or after an `await` that throws on failure and is not swallowed by a `try`).
+- warning: any completion-named capture runs before its `await`, or outside the success guard so it also runs on a failed response.
+
+Include the case with no `await` beside the capture at all: a submission running through a Next.js Server Action, `useActionState`, a form `action` prop, or a mutation hook, with the capture in the submit path rather than gated on the returned success state. Same defect, easier to miss. The fix is to capture inside the action on the server after the mutation succeeds, or off the returned success state.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `capture-fires-on-success`, including `file` (path:line of the most material violation, otherwise a representative completion capture) and `details` (one-line explanation naming the branch the call belongs in). Return when the call completes. Do not write the audit report.
 ```
