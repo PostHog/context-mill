@@ -1,0 +1,25 @@
+# Cull stale feature flags. The wizard seeds the ledger deterministically
+# (scan + fetch + classify host-side); this skill verifies, asks once, applies,
+# and reports. One variant per framework the wizard's scanner supports;
+# `framework` is the detection id the wizard resolves the variant from.
+# Reachable via `wizard cull-feature-flags` (wizard-registered flat command)
+# and `wizard skill cull-feature-flags-<variant>`.
+type: docs-only
+template: description.md
+description: Remove stale PostHog feature flags from a {display_name} codebase and disable them in PostHog, from a ledger the wizard seeds
+tags: [feature-flags]
+cli:
+  role: skill
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/feature-flags/best-practices.md
+variants:
+  - id: nextjs
+    framework: nextjs
+    default: true
+    display_name: Next.js
+    tags: [nextjs, nextjs-feature-flags, react, javascript, javascript_web, javascript_node]
+    docs_urls:
+      - https://posthog.com/docs/feature-flags/installation/react.md
+      - https://posthog.com/docs/libraries/next-js.md
