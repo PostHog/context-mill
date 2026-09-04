@@ -29,8 +29,6 @@ Outcome sections, reading the suffix the earlier steps appended to `details`:
 3. **Failed**: `status: error`
 4. **Kept**: `status: pass` with `; kept:` plus every row the wizard seeded as healthy, and every `multi-callsite-no-wrapper` row (list those under a "Suggested wrappers" heading with the call-site count)
 
-If the wizard prompt said the PostHog fetch failed, say so in the summary and note that only code-side buckets could be evaluated.
-
 ## Report template
 
 <wizard-report>
