@@ -20,14 +20,14 @@ Emit:
 
 The report serves two readers: someone who declined everything and wants a findings list to act on by hand, and someone who approved changes and wants to see what happened. So it always opens with the full findings table, then groups rows by outcome.
 
-Findings verdict per row comes from `area`: `healthy` is **healthy**, `multi-callsite-no-wrapper` is **warning**, every other bucket is **stale**.
+Findings verdict per row comes from `area`: `Healthy` is **healthy**, `Many call sites` is **warning**, every other bucket is **stale**.
 
 Outcome sections, reading the suffix the earlier steps appended to `details`:
 
 1. **Applied**: `status: pass` with `; applied`
 2. **Manual action**: `status: pass` with `; declined by user`, plus every `warning` row still unapplied when `wizard_ask` was unavailable. Each row keeps its proposed action so the reader can do it by hand.
 3. **Failed**: `status: error`
-4. **Kept**: `status: pass` with `; kept:` plus every row the wizard seeded as healthy, and every `multi-callsite-no-wrapper` row (list those under a "Suggested wrappers" heading with the call-site count)
+4. **Kept**: `status: pass` with `; kept:` plus every row the wizard seeded as healthy, and every `Many call sites` row (list those under a "Suggested wrappers" heading with the call-site count)
 
 ## Report template
 
@@ -73,7 +73,7 @@ Same table plus a "Why" column from `details`.
 
 ### Suggested wrappers
 
-For each `multi-callsite-no-wrapper` row: the flag, the number of files evaluating it directly, and one sentence recommending a single hook or helper module.
+For each `Many call sites` row: the flag, the number of files evaluating it directly, and one sentence recommending a single hook or helper module.
 
 ## Undo
 

@@ -14,7 +14,7 @@ Emit:
 [STATUS] Waiting for confirmation
 ```
 
-`Read` `.posthog-audit-checks.json`. Collect every row with `status: "warning"` whose `area` is not `multi-callsite-no-wrapper` (that bucket is report-only).
+`Read` `.posthog-audit-checks.json`. Collect every row with `status: "warning"` whose `area` is not `Many call sites` (that bucket is report-only).
 
 Zero such rows: skip to the Output section, nothing to apply.
 
@@ -41,13 +41,13 @@ Emit per row:
 
 For each approved row, in ledger order:
 
-1. **Code edit** (skip for `unreferenced`; for `unreferenced-comment-only` remove the mention only):
+1. **Code edit** (skip for `Unreferenced`; for `Comment only` remove the mention only):
    - `Read` each call site listed in `details`.
    - Keep the winning branch recorded in `details` (`winning branch: true` keeps the code that ran when the flag was on; `false` keeps the code that ran when it was off). Delete the other branch, the flag call, and any import or hook that is now unused.
-   - `dead-code-reference`: delete the unreachable file instead of editing it.
-   - `deleted-still-referenced`: code edit only, there is no flag to disable.
+   - `Dead code`: delete the unreachable file instead of editing it.
+   - `Deleted in PostHog`: code edit only, there is no flag to disable.
    - Re-`Read` the edited file once to confirm it still parses by eye (balanced braces, no dangling variable).
-2. **Disable the flag in PostHog** (every bucket except `deleted-still-referenced`, and only after step 1 succeeded for this row):
+2. **Disable the flag in PostHog** (every bucket except `Deleted in PostHog`, and only after step 1 succeeded for this row):
    - `exec({ "command": "search feature-flag" })`, pick the tool whose description says it disables a flag.
    - `exec({ "command": "info <tool_name>" })`, then `exec({ "command": "call <tool_name> <json> })` with the flag key or id from `details`.
    - Never call a delete or archive tool.
@@ -57,7 +57,7 @@ For each approved row, in ledger order:
 
 ## Output
 
-Every `warning` row outside `multi-callsite-no-wrapper` is now `pass` or `error`. Emit:
+Every `warning` row outside `Many call sites` is now `pass` or `error`. Emit:
 
 ```
 [STATUS] Applied <a> flags, <f> failed, <d> declined

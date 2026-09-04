@@ -31,19 +31,19 @@ Emit:
 [STATUS] Verifying <n> flag call sites
 ```
 
-For each `pending` row, in ledger order, `Read` the file named in `file` (and every other call site listed in `details`) around the given line. Decide one of:
+For each `pending` row, in ledger order, emit `[STATUS] Verifying <key>` and `Read` the file named in `file` (and every other call site listed in `details`) around the given line. Decide one of:
 
 | bucket (`area`) | confirm as `warning` when | downgrade to `pass` when |
 |---|---|---|
-| `fully-rolled-out` | the call site is a boolean check whose true branch is the current behaviour | the flag gates something that must stay switchable (kill switch, ops toggle named as such) |
-| `never-enabled` | the call site is a boolean check whose false branch is the current behaviour | the feature is clearly mid-build (recent scaffolding, TODOs pointing at it) |
-| `archived-still-referenced`, `disabled-but-referenced` | the call site is a boolean check; keep the false branch | never, these are always safe to propose |
-| `deleted-still-referenced` | no live flag in PostHog resembles the key | the key looks like a typo of a healthy flag key in the ledger (note the match in `details`) |
-| `unreferenced`, `unreferenced-comment-only` | the prompt says no bulk evaluation and no dynamic keys | the prompt reports `getAllFlags` or dynamic keys and the bulk or dynamic call site could reach this key |
-| `dead-code-reference` | nothing imports the file (the wizard checked; confirm with one `Grep` for the module's basename) | something imports it after all |
-| `multi-callsite-no-wrapper` | always `warning`, it is a suggestion, not a removal | never |
+| `Rolled out` | the call site is a boolean check whose true branch is the current behaviour | the flag gates something that must stay switchable (kill switch, ops toggle named as such) |
+| `Never enabled` | the call site is a boolean check whose false branch is the current behaviour | the feature is clearly mid-build (recent scaffolding, TODOs pointing at it) |
+| `Archived in PostHog`, `Disabled in PostHog` | the call site is a boolean check; keep the false branch | never, these are always safe to propose |
+| `Deleted in PostHog` | no live flag in PostHog resembles the key | the key looks like a typo of a healthy flag key in the ledger (note the match in `details`) |
+| `Unreferenced`, `Comment only` | the prompt says no bulk evaluation and no dynamic keys | the prompt reports `getAllFlags` or dynamic keys and the bulk or dynamic call site could reach this key |
+| `Dead code` | nothing imports the file (the wizard checked; confirm with one `Grep` for the module's basename) | something imports it after all |
+| `Many call sites` | always `warning`, it is a suggestion, not a removal | never |
 
-Resolve every pending row through one `mcp__wizard-tools__audit_resolve_checks` call per batch of decisions:
+Resolve each row through `mcp__wizard-tools__audit_resolve_checks` as soon as it is decided (one call per row, so the run screen moves while you work):
 
 - confirmed: `status: "warning"`, `details` = the seeded details plus `; winning branch: true|false|n/a`
 - downgraded: `status: "pass"`, `details` = the seeded details plus `; kept: <one-line reason>`

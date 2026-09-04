@@ -8,11 +8,11 @@ Your job is three steps: verify each proposed row at its call site, ask the user
 
 ## State
 
-- `.posthog-audit-checks.json` (project root): the ledger. `Read` it once at the start of each step. Each row is `{ id, area, label, status, file?, details? }` where `id` is the flag key, `area` is the bucket the wizard assigned, `label` names the proposed action, `file` is the first call site as `path:line`, and `details` carries the rollout summary and every call site.
+- `.posthog-audit-checks.json` (project root): the ledger. `area` is one of: `Rolled out` (100% to everyone, no conditions), `Never enabled` (0% everywhere), `Archived in PostHog`, `Disabled in PostHog`, `Unreferenced` (in PostHog, never evaluated in code), `Comment only` (key appears only in a comment or config string), `Dead code` (the only file evaluating it is unreachable), `Deleted in PostHog` (code evaluates a key PostHog does not have), `Many call sites` (three or more files evaluate it directly, suggestion only), `Healthy`. `Read` it once at the start of each step. Each row is `{ id, area, label, status, file?, details? }` where `id` is the flag key, `area` is the bucket the wizard assigned, `label` names the proposed action, `file` is the first call site as `path:line`, and `details` carries the rollout summary and every call site.
 - Rows change only through `mcp__wizard-tools__audit_resolve_checks`. Never `Edit` or `Write` the ledger file. Never delete it.
 - Row statuses this skill uses: `pending` (seeded, not yet verified), `warning` (verified, proposed to the user), `pass` (kept, declined, or applied), `error` (apply failed, reason in `details`).
 
-The wizard prompt tells you whether the repo uses bulk evaluation (`getAllFlags`) or dynamic flag keys. When it does, every `unreferenced` or `unreferenced-comment-only` row needs a real check at the bulk or dynamic call site before it can be proposed.
+The wizard prompt tells you whether the repo uses bulk evaluation (`getAllFlags`) or dynamic flag keys. When it does, every `Unreferenced` or `Comment only` row needs a real check at the bulk or dynamic call site before it can be proposed.
 
 ## Status
 
