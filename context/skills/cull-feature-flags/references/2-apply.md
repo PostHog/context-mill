@@ -18,7 +18,11 @@ Emit:
 
 Zero such rows: skip to the Output section, nothing to apply.
 
-Call `mcp__wizard-tools__wizard_ask` exactly once, `kind: "multi"`, one option per row plus a decline option listed first:
+Call `mcp__wizard-tools__wizard_ask` exactly once, `kind: "multi"`, with this question text verbatim:
+
+> Nothing has been changed yet. Pick the flags to cull. Each one gets disabled in PostHog (re-enable any time from the flag page) and its check removed from code (revert with git).
+
+One option per row plus a decline option listed first:
 
 - decline option: label `Apply nothing, report only`, value `none`
 - per row: label `[<area>] <key>: <proposed action from label>`, value `<key>`

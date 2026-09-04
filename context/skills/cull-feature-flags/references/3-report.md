@@ -77,9 +77,16 @@ Same table plus a "Why" column from `details`.
 
 For each `multi-callsite-no-wrapper` row: the flag, the number of files evaluating it directly, and one sentence recommending a single hook or helper module.
 
+## Undo
+
+Only present when something was applied. Everything here is reversible in one step each:
+
+- Code: `git checkout -- <every file the wizard edited>` (run `git status` first; the tree was clean when the run started, so every change is the wizard's). List the files.
+- PostHog: one line per disabled flag, `Re-enable <key>: <app host>/project/<project id>/feature_flags/<flag id>`. Read the app host and project id from the wizard prompt or the MCP project state.
+
 ## Follow-ups
 
-- Flags disabled here are still in PostHog. Archive or delete them from the app once the deploy is out.
+- Flags disabled here are still in PostHog. Archive or delete them from the app once the deploy is out; the wizard never does either.
 - Any `Failed` row needs a manual pass at the listed call sites.
 
 ## About this report
