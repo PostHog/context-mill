@@ -31,7 +31,7 @@ Emit:
 [STATUS] Verifying <n> flag call sites
 ```
 
-For each `pending` row, in ledger order, emit `[STATUS] Verifying <key>` and `Read` the file named in `file` (and every other call site listed in `details`) around the given line. Decide one of:
+For each `pending` row, in ledger order, emit `[STATUS] Verifying <key>`. For `Rolled out` and `Off for everyone`, `Read` the call site named in `file` and every extra site listed in `details` as `also <path:line>`, around the given line. For `Archived in PostHog`, `Disabled in PostHog`, and `Deleted in PostHog`, `Read` only the first call site named in `file`. Emit `[STATUS] Reading <file>` before each call-site file `Read`. `Dead code` keeps its one `Grep` for the module's basename; do not read call-site files for that row. Decide one of:
 
 | bucket (`area`) | confirm as `warning` when | downgrade to `pass` when |
 |---|---|---|
@@ -56,4 +56,10 @@ Every row that was `pending` is now `warning` or `pass`. No other file changed. 
 
 ```
 [STATUS] <w> flags proposed, <k> kept
+```
+
+Then emit:
+
+```
+[STATUS] Ready to ask
 ```

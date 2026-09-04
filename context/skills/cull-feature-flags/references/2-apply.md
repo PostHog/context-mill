@@ -59,9 +59,10 @@ For each approved row, in ledger order:
 
 2. `Unreferenced` has no call site: skip the rest of this list, the row goes straight to the verify and disable passes. `Comment only` removes the mention only.
 3. `Read` the call site named in `file` and every extra site listed in `details`.
-4. Keep the winning branch recorded in `details` (`winning branch: true` keeps the code that ran when the flag was on; `false` keeps the code that ran when it was off). Delete the other branch, the flag call, and any import or hook that is now unused.
-5. `Dead code`: delete the unreachable file instead of editing it.
-6. `Deleted in PostHog`: code edit only, there is no flag to disable.
+4. Emit `[STATUS] Editing <file>` before each file edit.
+5. Keep the winning branch recorded in `details` (`winning branch: true` keeps the code that ran when the flag was on; `false` keeps the code that ran when it was off). Delete the other branch, the flag call, and any import or hook that is now unused.
+6. `Dead code`: delete the unreachable file instead of editing it.
+7. `Deleted in PostHog`: code edit only, there is no flag to disable.
 
 A failed code edit resolves the row to `status: "error"` with `details` = the seeded details plus `; failed: <one-line reason>`. That row is finished: it never reaches the disable pass, and PostHog is never touched for it.
 
@@ -77,13 +78,14 @@ A row whose file still fails resolves to `error` in the format above and never r
 
 ### Disable and resolve
 
+Before the loop below, run `exec({ "command": "search feature-flag" })` once, pick the tool whose description says it disables a flag, then run `exec({ "command": "info <tool_name>" })` once.
+
 For each approved row whose code edit and file verification passed, in ledger order:
 
-1. `Deleted in PostHog` has no flag, and `Archived in PostHog` and `Disabled in PostHog` are already off: these rows need no PostHog call, go straight to step 5.
-2. `exec({ "command": "search feature-flag" })`, pick the tool whose description says it disables a flag.
-3. `exec({ "command": "info <tool_name>" })`, then run `exec({ "command": "call <tool_name> <json> })` with the flag key or id from `details`.
-4. Never call a delete or archive tool.
-5. Resolve the row: `status: "pass"`, `details` = seeded details plus `; culled`. Anything that failed in this pass resolves to `error` in the format above instead.
+1. `Deleted in PostHog` has no flag, and `Archived in PostHog` and `Disabled in PostHog` are already off: these rows need no PostHog call, go straight to step 4.
+2. Emit `[STATUS] Disabling <key> in PostHog`, then run only `exec({ "command": "call <tool_name> <json> })` with the flag key or id from `details`.
+3. Never call a delete or archive tool.
+4. Resolve the row: `status: "pass"`, `details` = seeded details plus `; culled`. Anything that failed in this pass resolves to `error` in the format above instead.
 
 ## Output
 
