@@ -32,7 +32,12 @@ Call `mcp__wizard-tools__wizard_ask` exactly once, with two questions in that on
 
    > Pick the flags to cull. Each one gets disabled in PostHog (re-enable any time from the flag page) and its check removed from code (revert with git).
 
-   One option per row: label `[<area>] <key>: <proposed action from label>`, value `<key>`.
+   One option per row, in ledger order:
+   - `label`: `<key>`
+   - `value`: `<key>`
+   - `description`: `<area>, <reason from details>. <what culling does from label>.`
+
+   For example: `Rolled out, 100% to everyone. Keeps the on path, drops the check, disables the flag.` Or: `Off for everyone, 0% everywhere, may be a rollback. Keeps the off path, drops the check, disables the flag.`
 
 If the call errors (non-interactive host, cap reached), treat it as report-only. Do not retry more than once.
 
