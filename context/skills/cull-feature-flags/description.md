@@ -29,7 +29,7 @@ Report unrecoverable preconditions with exactly one `[ABORT] <reason>` line and 
 
 1. **Disable, never delete.** The only PostHog mutation this skill makes is disabling a flag. Archiving and deleting are for the user to do in the app.
 2. **Code before PostHog.** For a row that needs both a code edit and a disable, the edit lands first and the disable only after the edit succeeded, so a failed edit never leaves a disabled flag behind live code.
-3. **One consent call.** Exactly one `wizard_ask` for the whole run, listing every proposed row, decline option first. Nothing is applied without it.
+3. **One consent call.** Exactly one `wizard_ask` for the whole run: a report-only choice first, then the flag list. Nothing is applied without it.
 4. **Winning branch only.** Removing a flag check means keeping the branch the flag would resolve to and deleting the other one, plus the now-unused import or hook. Do not restructure beyond that.
 5. **Downgrade freely, never upgrade.** During verification a row may be resolved to `pass` (keep) with a reason. A `pass` row seeded as healthy is never touched.
 

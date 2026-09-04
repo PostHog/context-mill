@@ -18,18 +18,27 @@ Emit:
 
 Zero such rows: skip to the Output section, nothing to apply.
 
-Call `mcp__wizard-tools__wizard_ask` exactly once, `kind: "multi"`, with this question text verbatim:
+Call `mcp__wizard-tools__wizard_ask` exactly once, with two questions in that one call so the report-only choice stands on its own instead of hiding in the flag list:
 
-> Nothing has been changed yet. Pick the flags to cull. Each one gets disabled in PostHog (re-enable any time from the flag page) and its check removed from code (revert with git).
+1. `id: "mode"`, `kind: "single"`, prompt verbatim:
 
-One option per row plus a decline option listed first:
+   > Nothing has been changed yet. Do you want to cull flags now, or just get the report?
 
-- decline option: label `Apply nothing, report only`, value `none`
-- per row: label `[<area>] <key>: <proposed action from label>`, value `<key>`
+   Options, in this order:
+   - label `Report only, change nothing`, value `report-only`
+   - label `Cull the flags I pick below`, value `cull`
 
-If the call errors (non-interactive host, cap reached), treat it as decline. Do not retry more than once.
+2. `id: "flags"`, `kind: "multi"`, prompt verbatim:
 
-Rows the user did not pick: resolve to `status: "pass"` with `details` = seeded details plus `; declined by user`.
+   > Pick the flags to cull. Each one gets disabled in PostHog (re-enable any time from the flag page) and its check removed from code (revert with git).
+
+   One option per row: label `[<area>] <key>: <proposed action from label>`, value `<key>`.
+
+If the call errors (non-interactive host, cap reached), treat it as report-only. Do not retry more than once.
+
+`mode` is `report-only`: nothing is approved, whatever `flags` holds. Otherwise the approved rows are exactly the `flags` answer.
+
+Rows not approved: resolve to `status: "pass"` with `details` = seeded details plus `; declined by user`.
 
 ## Apply
 
@@ -47,7 +56,7 @@ For each approved row, in ledger order:
    - `Dead code`: delete the unreachable file instead of editing it.
    - `Deleted in PostHog`: code edit only, there is no flag to disable.
    - Re-`Read` the edited file once to confirm it still parses by eye (balanced braces, no dangling variable).
-2. **Disable the flag in PostHog** (every bucket except `Deleted in PostHog`, and only after step 1 succeeded for this row):
+2. **Disable the flag in PostHog** (skip for `Deleted in PostHog`, there is no flag, and for `Archived in PostHog` and `Disabled in PostHog`, the flag is already off; only after step 1 succeeded for this row):
    - `exec({ "command": "search feature-flag" })`, pick the tool whose description says it disables a flag.
    - `exec({ "command": "info <tool_name>" })`, then `exec({ "command": "call <tool_name> <json> })` with the flag key or id from `details`.
    - Never call a delete or archive tool.
