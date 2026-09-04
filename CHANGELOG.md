@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.51.1](https://github.com/PostHog/context-mill/compare/v1.51.0...v1.51.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **integration:** initialize snippets with read-only toString ([#382](https://github.com/PostHog/context-mill/issues/382)) ([6149f9d](https://github.com/PostHog/context-mill/commit/6149f9d654affa4bf5ce5d1f716e003295a53d9e))
+* **self-driving:** scout-gate source is on by default — align step 4 with the inbox-source-configs-create contract ([#369](https://github.com/PostHog/context-mill/issues/369)) ([706a8d3](https://github.com/PostHog/context-mill/commit/706a8d3ca73465b293c1c2ef61e82acfa17790dc))
+
 ## [1.51.0](https://github.com/PostHog/context-mill/compare/v1.50.0...v1.51.0) (2026-09-03)
 
 
