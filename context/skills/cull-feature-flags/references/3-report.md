@@ -36,11 +36,12 @@ Outcome sections, reading the suffix the earlier steps appended to `details`:
 
 ## Summary
 
-One paragraph: how many flags the wizard looked at, how many were proposed, culled, left for you, failed, kept. Whether bulk evaluation or dynamic keys limited what could be proposed.
+One paragraph: how many flags the wizard looked at, how many were proposed, culled, how many of the culled had a live flag to disable, left for you, failed, kept. Whether bulk evaluation or dynamic keys limited what could be proposed.
 
 | Outcome | Count |
 |---|---|
 | Culled | n |
+| of which disabled in PostHog | n |
 | Left for you | n |
 | Failed | n |
 | Kept | n |
@@ -55,9 +56,13 @@ Every flag the wizard looked at, one row each, ledger order.
 
 ## Culled
 
-| Flag | Bucket | What changed | Call sites |
-|---|---|---|---|
-| `<id>` | `<area>` | `<label>` | `<file>` and the rest from `details` |
+Culled means the code check is gone where there was one. The PostHog column says what happened to the flag itself, since only a live flag gets disabled.
+
+| Flag | Bucket | Code | PostHog | Call sites |
+|---|---|---|---|---|
+| `<id>` | `<area>` | `<label>` | see below | `<file>` and the rest from `details` |
+
+PostHog column by bucket: `Rolled out`, `Off for everyone`, `Unreferenced`, `Comment only`, `Dead code` say **disabled**; `Archived in PostHog` says **already archived, untouched**; `Disabled in PostHog` says **already off, untouched**; `Deleted in PostHog` says **no flag, nothing to disable**.
 
 ## Left for you
 
