@@ -4,7 +4,7 @@ next_step: 6b-tailor-scouts.md
 
 # Step 6 — Configure the scout troop
 
-Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which step 4's scout gate lets into the inbox). Every enabled scout is a recurring LLM spend — it costs a full run every tick even when it finds nothing — so the troop is kept **deliberately selective**: the `general` scout, plus the **three to five specialists** for the products this project uses most. Everything else is disabled.
+Scouts are the pull side of Signals: scheduled agents that scan the project on an interval and emit findings as `signals_scout` / `cross_source_issue` signals (which reach the inbox by default — step 4's scout gate row exists only as an opt-out). Every enabled scout is a recurring LLM spend — it costs a full run every tick even when it finds nothing — so the troop is kept **deliberately selective**: the `general` scout, plus the **three to five specialists** for the products this project uses most. Everything else is disabled.
 
 **The whole troop shares one ceiling of about ten enabled scouts** — `general` + 3–5 specialists from this step + 3–5 custom scouts from step 6b, traded against each other so the total stays at or under ten. That ceiling is about quality, not cost: across the fleet, the share of runs that produce a finding holds steady from roughly five to ten enabled scouts and then drops by about half past ten, because a troop that big stops being selective about which surfaces it watches.
 

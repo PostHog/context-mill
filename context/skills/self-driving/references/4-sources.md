@@ -30,7 +30,7 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 
 | Source | When | Payload |
 |---|---|---|
-| Scout gate | **Always** — it lets the step-6 troop's findings reach the inbox | `signals_scout` / `cross_source_issue` |
+| Scout gate | **On by default — never create a row.** The server lets scout findings into the inbox with no config row; a `signals_scout` / `cross_source_issue` row only exists to opt OUT. If you find one with `enabled: false` (an earlier opt-out), flip it back on with `inbox-source-configs-partial-update`; with no row, do nothing and record "on by default" | `signals_scout` / `cross_source_issue` — existing disabled row only |
 | Health checks | **Always** — instrumentation issues (missing events, proxy gaps, outdated SDKs) are always actionable and a good thing for the agent to fix | `health_checks` / `health_issue` |
 | Error tracking | **Enable by default**, even with no current signal — teams adopt error tracking sooner or later, and with no errors there are no findings and no cost. Evidence (report, exception autocapture ON, or error issues from the step-2 probe) only raises confidence; its absence is **not** a reason to skip | **All three rows**: `error_tracking` / `issue_created`, `error_tracking` / `issue_reopened`, `error_tracking` / `issue_spiking` — the product UI treats them as one switch |
 | Support | **Enable by default** — step 3 turned the Conversations product ON, so wire its source. It stays idle until an inbound channel (email / inbox / Slack) is connected, so record that channel connection as a follow-up — but enabling the source now means tickets reach the inbox automatically once a channel exists, with no second setup. Don't gate on profile evidence. | `conversations` / `ticket` |
