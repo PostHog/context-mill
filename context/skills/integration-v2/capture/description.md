@@ -37,14 +37,26 @@ and it is the source the report reads later.
 ## Instrument
 
 For each event call the SDK's capture method on the real user action — the click
-or submit handler, the server action — not on render or page load. Use clear
-`lower_snake_case` names and useful properties. Edit each file while it is already
-open.
+or submit handler, the server action — not on render or page load. Where that
+action waits on a server, capture the outcome rather than the attempt: the call
+belongs in the branch that runs after the awaited response confirms success, so a
+submission the server rejects never counts as one that worked. Capture the attempt
+as well where the drop-off between the two is worth measuring, under its own
+name — one name must never mean both. Use clear `lower_snake_case` names and
+useful properties. Edit each file while it is already open.
 
 Server-side, use the authenticated user's id as the distinct id. For a genuinely
 unauthenticated action, emit a personless event — never fabricate a placeholder
 id like `'anonymous'`, which collapses every anonymous user into one person and
 corrupts the data.
+
+Backend SDKs process a person profile on every capture that carries a distinct id,
+and the runtime metadata they attach — `$os`, `$lib`, and the rest — overwrites
+whatever the browser set on that same person, so an event captured from a Linux
+host rewrites a macOS user's profile. Pass `$process_person_profile: false` on
+server-side business events that are not meant to update person properties, which
+is most of them. Leave it off only where the capture deliberately updates the
+person, paired with an `identify()` or `$set` in the same flow.
 
 Leave `.posthog-wizard-cache/.posthog-events.json` in place for the report.
 

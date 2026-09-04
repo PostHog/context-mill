@@ -8,12 +8,14 @@ Do not read this page unless a rule below is violated and you need further expli
 
 - `suggestion`: Track **growth events first** using `posthog.capture()`: signups, activations, purchases, subscriptions, invites, core feature adoption. Do not rely on autocapture for key business milestones.
 - `warning`: If signup or activation is missing, add that before lower-value clicks or page interactions.
+- `error`: Do not capture a success or completion event before the server confirms it. Put the call in the branch that runs after the awaited response resolves, so a submission the server rejects is never counted as a success. Where the attempt is worth measuring too, capture it as a separate, distinctly named event.
 - `suggestion`: Keep names **static, lowercase, and consistent**. Prefer present-tense verbs and snake case.
 - `suggestion`: Prefer `category:object_action` for events, e.g. `signup_flow:pricing_page_view`.
 - `suggestion`: Prefer descriptive, bounded properties like `signup_method`, `plan_name`, `is_test_user`, `last_login_timestamp`.
 - `error`: Never generate event names or property keys dynamically. Put variable data in property values.
 - `error`: Use one stable `distinct_id` across frontend and backend. Do not collapse user-scoped server events onto IDs like `system` or `backend`.
 - `error`: If an event is truly anonymous or system-level, disable person processing instead of sharing one identifier. Consult [Capture anonymous events / disable person processing](https://posthog.com/docs/product-analytics/capture-events#how-to-capture-anonymous-events) for the exact SDK pattern.
+- `warning`: Backend SDKs process a person profile on every capture that carries a `distinct_id`, and the runtime metadata they attach (`$os`, `$lib`) overwrites what the browser set on that person. Pass `$process_person_profile: false` on server-side business events that are not deliberately updating person properties.
 - `warning`: Capture critical business events on the backend when accuracy matters. Use frontend tracking for journeys and UI interactions where some loss is acceptable.
 - `warning`: Do not duplicate the same milestone in frontend and backend unless each event serves a distinct analytical purpose.
 - `warning`: Do not assume cross-client event ordering. Use timestamps for analysis, not ingestion order.

@@ -45,7 +45,10 @@ user the way the identify docs describe, not the event.
 ## How you know you succeeded
 
 The meaningful user actions across the app have capture calls that fire on the
-real action, not on page load, each one attributable to the user who took it, and
+real action, not on page load — and where the action waits on a server, in the
+branch that runs once the response confirms success, never before it. Each one is
+attributable to the user who took it, server-side business events that are not
+updating the person pass `$process_person_profile: false`, and
 `.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented.
 
 You do not run builds, linters, or tests — the review task verifies the whole integration after you; your edits just need to be right by reading.
