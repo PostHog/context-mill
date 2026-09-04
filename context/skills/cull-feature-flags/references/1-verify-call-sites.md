@@ -43,6 +43,8 @@ For each `pending` row, in ledger order, emit `[STATUS] Verifying <key>` and `Re
 | `Dead code` | nothing imports the file (the wizard checked; confirm with one `Grep` for the module's basename) | something imports it after all |
 | `Many call sites` | always `warning`, it is a suggestion, not a removal | never |
 
+**Truncated scan.** When the Scan facts say the scan was truncated, `Unreferenced` and `Comment only` are unproven: the wizard stopped before reading every file. Downgrade those rows to `pass` with `; kept: scan truncated, not proven unreferenced` so they land in the report's Kept table with that reason. Do not Grep for the key; the rule against grepping for flags holds.
+
 Resolve each row through `mcp__wizard-tools__audit_resolve_checks` as soon as it is decided (one call per row, so the run screen moves while you work):
 
 - confirmed: `status: "warning"`, `details` = the seeded details plus `; winning branch: true|false|n/a`
