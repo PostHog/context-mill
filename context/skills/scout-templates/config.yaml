@@ -1,0 +1,16 @@
+type: skill
+template: description.md
+description: Set up one self-driving scout from the PostHog template catalog — check the project actually emits the events the scout reads, instrument what's missing, then create it
+tags: [signals, self-driving]
+cli:
+  role: skill
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+variants:
+  - id: all
+    display_name: PostHog scout templates
+    # Fetched at build time and written into the zip as
+    # `references/self-driving-catalog.md`. The agent reads it off disk — it has no
+    # network reach to posthog.com, so this bake-in is the only channel.
+    docs_urls:
+      - https://posthog.com/templates/self-driving-catalog.md
