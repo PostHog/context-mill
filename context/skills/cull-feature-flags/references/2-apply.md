@@ -66,7 +66,7 @@ For each approved row, in ledger order:
 
 ## Output
 
-Every `warning` row outside `Many call sites` is now `pass` or `error`. Emit:
+Every `warning` row outside `Many call sites` is now `pass` or `error`. `Read` the ledger once more and count from it, not from memory: culled = rows whose `details` end with `; culled`, failed = rows with `status: "error"`, left for you = rows whose `details` end with `; declined by user`. Emit:
 
 ```
 [STATUS] Culled <a> flags, <f> failed, <d> left for you
