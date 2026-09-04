@@ -8,6 +8,14 @@ Your job is three steps: verify each proposed row at its call site, ask the user
 
 ## State
 
+| Lane | Ledger areas | What culling does |
+|---|---|---|
+| Decided in PostHog | `Rolled out` | Keeps the code that runs today, drops the check, and disables the flag. |
+| Decided in PostHog | `Off for everyone` | Keeps the off branch, drops the check, and disables the flag. |
+| Off in PostHog, still in code | `Archived in PostHog`, `Disabled in PostHog`, `Deleted in PostHog` | Keeps the off branch, drops the check, and makes no PostHog change. |
+| In PostHog, not in code | `Unreferenced`, `Comment only`, `Dead code` | Disables the flag and removes the mention or deletes the dead module when present. |
+| Nothing to cull | `Many call sites`, `Healthy` | Report only. |
+
 - `.posthog-audit-checks.json` (project root): the ledger. `area` is one of: `Rolled out` (100% to everyone, no conditions), `Off for everyone` (0% everywhere, possibly rolled back), `Archived in PostHog`, `Disabled in PostHog`, `Unreferenced` (in PostHog, never evaluated in code), `Comment only` (key appears only in a comment or config string), `Dead code` (the only file evaluating it is unreachable), `Deleted in PostHog` (code evaluates a key PostHog does not have), `Many call sites` (three or more files evaluate it directly, suggestion only), `Healthy`. `Read` it once at the start of each step. Each row is `{ id, area, label, status, file?, details? }` where `id` is the flag key, `area` is the bucket the wizard assigned, `label` names the proposed action, `file` is the first call site as `path:line`, and `details` carries the rollout summary and every call site.
 - Rows change only through `mcp__wizard-tools__audit_resolve_checks`. Never `Edit` or `Write` the ledger file. Never delete it.
 - Row statuses this skill uses: `pending` (seeded, not yet verified), `warning` (verified, proposed to the user), `pass` (kept, left for you, or culled), `error` (cull failed, reason in `details`).
@@ -29,7 +37,7 @@ Report unrecoverable preconditions with exactly one `[ABORT] <reason>` line and 
 
 1. **Disable, never delete.** The only PostHog mutation this skill makes is disabling a flag. Archiving and deleting are for the user to do in the app.
 2. **Code before PostHog.** For a row that needs both a code edit and a disable, the edit lands first and the disable only after the edit succeeded, so a failed edit never leaves a disabled flag behind live code.
-3. **One consent call.** Exactly one `wizard_ask` for the whole run: a report-only choice first, then the flag list. Nothing is culled without it.
+3. **One consent call.** Exactly one `wizard_ask` for the whole run: one pick list per lane, then the report-only or cull choice last. Nothing is culled without it.
 4. **Winning branch only.** Removing a flag check means keeping the branch the flag would resolve to and deleting the other one, plus the now-unused import or hook. Do not restructure beyond that.
 5. **Downgrade freely, never upgrade.** During verification a row may be resolved to `pass` (keep) with a reason. A `pass` row seeded as healthy is never touched.
 

@@ -16,34 +16,55 @@ Emit:
 
 `Read` `.posthog-audit-checks.json`. Collect every row with `status: "warning"` whose `area` is not `Many call sites` (that bucket is report-only).
 
-Zero such rows: skip to the Output section, nothing to apply.
+Zero such rows: do not call `wizard_ask`; skip to the Output section, nothing to apply.
 
-Call `mcp__wizard-tools__wizard_ask` exactly once, with two questions in that one call so the report-only choice stands on its own instead of hiding in the flag list:
+Call `mcp__wizard-tools__wizard_ask` exactly once. Build its questions in this order. Include a `multi` question only when its listed areas contain at least one collected row.
 
-1. `id: "mode"`, `kind: "single"`, prompt verbatim:
+1. For `Rolled out`, use `id: "rolled-out"`, `kind: "multi"`, and `required: false`. Prompt:
 
-   > Nothing has been changed yet. Do you want to cull flags now, or just get the report?
+   > Pick rolled-out flags to cull. These flags are at 100% for everyone with no conditions, so the code only ever runs the "on" branch. Culling keeps that branch, drops the check, and disables the flag in PostHog. Re-enable it with one toggle; rollout conditions are kept.
+
+   Example description: `100% to everyone with no conditions; keeps the code that runs today; src/checkout.ts:42, src/cart.ts:18; disables the flag`.
+
+2. For `Off for everyone`, use `id: "off-for-everyone"`, `kind: "multi"`, and `required: false`. Prompt:
+
+   > Pick flags that are off for everyone to cull. These flags are at 0% for everyone. A flag rolled back after an incident looks exactly like one that never shipped, so a 0% flag may be a rollback lever. Keeping it costs nothing. Culling keeps the "off" branch, drops the check, and disables the flag.
+
+   Example description: `0% to everyone after the checkout rollback; keeps the off branch; src/checkout.ts:42; disables the flag`.
+
+3. For `Archived in PostHog`, `Disabled in PostHog`, and `Deleted in PostHog`, use `id: "off-in-posthog"`, `kind: "multi"`, and `required: false`. Prompt:
+
+   > Pick flags that are already off or absent in PostHog to cull. PostHog already turned these off or no longer has them, but the code still checks them. Culling keeps the "off" branch and drops the check. Nothing changes in PostHog for these flags.
+
+   Example description: `disabled in PostHog; keeps the off branch; src/search.ts:27; no PostHog change`.
+
+4. For `Unreferenced`, `Comment only`, and `Dead code`, use `id: "not-in-code"`, `kind: "multi"`, and `required: false`. Prompt:
+
+   > Pick flags not evaluated in this repository to cull. PostHog has these flags, but nothing in this repository evaluates them. Only this repository was scanned, so a flag read by another service, a mobile app, or a bulk fetch elsewhere will look unreferenced here. Culling disables the flag and removes the comment or deletes the dead module when present.
+
+   Example description: `the only evaluation is in an unreachable module; deletes the module; src/legacy-checkout.ts:1; disables the flag`.
+
+5. Always include `id: "mode"`, `kind: "single"`, last. Prompt verbatim:
+
+   > Cull the flags you picked, or report only and change nothing?
 
    Options, in this order:
    - label `Report only, change nothing`, value `report-only`
-   - label `Cull the flags I pick below`, value `cull`
+   - label `Cull the flags I picked`, value `cull`
 
-2. `id: "flags"`, `kind: "multi"`, prompt verbatim:
+For every `multi` question, keep rows in ledger order and do not preselect an option. Build every option as follows:
 
-   > Pick the flags to cull. Each one gets disabled in PostHog (re-enable any time from the flag page) and its check removed from code (revert with git).
+- `label`: the flag key.
+- `value`: the flag key.
+- `description`: one line containing, in order, the seeded rollout summary clause from `details`; the code outcome; every call site as `path:line`, starting with `file` and then each `also <path:line>` entry from `details`; and the PostHog outcome.
 
-   One option per row, in ledger order:
-   - `label`: `<key>`
-   - `value`: `<key>`
-   - `description`: `<area>, <reason from details>. <what culling does from label>.`
+Translate `winning branch: true` to `keeps the code that runs today` and `winning branch: false` to `keeps the off branch`. Use `removes the mention` for `Comment only` and `deletes the module` for `Dead code`. Omit the code outcome for `Unreferenced`. Use `disables the flag` for `Rolled out`, `Off for everyone`, `Unreferenced`, `Comment only`, and `Dead code`. Use `no PostHog change` for `Archived in PostHog`, `Disabled in PostHog`, and `Deleted in PostHog`. Omit any empty call-site fragment.
 
-   For example: `Rolled out, 100% to everyone. Keeps the on path, drops the check, disables the flag.` Or: `Off for everyone, 0% everywhere, may be a rollback. Keeps the off path, drops the check, disables the flag.`
+Approved rows are the union of the four `multi` answers only when `mode` is `cull`. Nothing is approved when `mode` is `report-only`, the union is empty, or the call errors or is cancelled with Esc. Do not retry the call.
 
-If the call errors (non-interactive host, cap reached), treat it as report-only. Do not retry more than once.
+Resolve every collected row not approved to `status: "pass"` with `details` = seeded details plus `; declined by user`.
 
-`mode` is `report-only`: nothing is approved, whatever `flags` holds. Otherwise the approved rows are exactly the `flags` answer.
-
-Rows not approved: resolve to `status: "pass"` with `details` = seeded details plus `; declined by user`.
+When nothing is approved, skip the Cull section and follow the Output instructions.
 
 ## Cull
 
@@ -93,4 +114,10 @@ Every `warning` row outside `Many call sites` is now `pass` or `error`. `Read` t
 
 ```
 [STATUS] Culled <a> flags, <f> failed, <d> left for you
+```
+
+When nothing was approved, emit this once instead and continue to the report step:
+
+```
+[STATUS] Report only, nothing changed
 ```
