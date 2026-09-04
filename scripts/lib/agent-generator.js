@@ -14,13 +14,23 @@
 
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { REPO_URL } from './constants.js';
 
-/** Release assets are a flat namespace: agent prompts live at the release root, like skills. */
-function defaultAgentsBaseUrl(version) {
+/**
+ * Where a build says its prompts live.
+ *
+ * Release assets are a flat namespace: agent prompts live at the release root,
+ * like skills. An unversioned build has no release, so it points at the files
+ * it just wrote: `releases/latest/download` made it advertise prompts the
+ * latest release does not carry, and a flow still on a branch then failed the
+ * whole run with a bare 404. Set `AGENTS_BASE_URL`, as the dev server does, to
+ * serve the same files over HTTP.
+ */
+function defaultAgentsBaseUrl(version, agentsDistDir) {
     return version && version !== 'dev'
         ? `${REPO_URL}/releases/download/v${version}`
-        : `${REPO_URL}/releases/latest/download`;
+        : pathToFileURL(agentsDistDir).href;
 }
 
 /**
@@ -98,12 +108,13 @@ function assertRunnerSeededHasSink(flows) {
  * Copy every agent-prompt markdown file into dist/agents/<flow>/ and write the
  * menu the wizard fetches to discover available types. Each menu entry carries
  * its flow and a full downloadUrl so the dev-server and the release host can
- * differ without the wizard composing URLs. Returns { count, agentsDistDir }.
+ * differ without the wizard composing URLs. Returns
+ * { count, agentsDistDir, baseUrl }.
  */
 export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     const agentsSourceDir = path.join(configDir, 'agents');
     const agentsDistDir = path.join(distDir, 'agents');
-    const resolvedBase = (baseUrl || defaultAgentsBaseUrl(version)).replace(/\/+$/, '');
+    const resolvedBase = (baseUrl || defaultAgentsBaseUrl(version, agentsDistDir)).replace(/\/+$/, '');
 
     fs.mkdirSync(agentsDistDir, { recursive: true });
 
@@ -147,5 +158,5 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     };
     walk(agentsDistDir);
 
-    return { count: agents.length, agentsDistDir };
+    return { count: agents.length, agentsDistDir, baseUrl: resolvedBase };
 }
