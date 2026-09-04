@@ -4,16 +4,17 @@ next_step: 3-events-optimize.md
 
 # Step 2 — Event capture (fix)
 
-This step resolves four event-capture quality checks **in parallel**, one subagent per check. These are the same ids the broader PostHog audit seeds — `audit-events` reuses them so a fix once made here is observable from either entry point.
+This step resolves five event-capture quality checks **in parallel**, one subagent per check. These are the same ids the broader PostHog audit seeds — `audit-events` reuses them so a fix once made here is observable from either entry point.
 
 - `capture-event-names-static`
 - `event-naming-standardization`
 - `event-duplicates-and-bloat`
 - `event-quality-context-review`
+- `capture-fires-on-success`
 
 ## Skip case — no `posthog.capture` calls found
 
-If Step 1's capture grep returned **zero** hits, resolve all four checks in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.capture call sites detected"`. Then continue to **`3-events-optimize.md`**. Do not dispatch subagents.
+If Step 1's capture grep returned **zero** hits, resolve all five checks in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.capture call sites detected"`. Then continue to **`3-events-optimize.md`**. Do not dispatch subagents.
 
 ## Status
 
@@ -23,9 +24,9 @@ Emit before dispatching:
 [STATUS] Auditing event capture quality
 ```
 
-## Action — dispatch four subagents in one message
+## Action — dispatch five subagents in one message
 
-Make **four `Agent` tool calls in a single message** so they run concurrently. Wait for all four to return, then continue to `3-events-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **five `Agent` tool calls in a single message** so they run concurrently. Wait for all five to return, then continue to `3-events-optimize.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `best-practices.md` reference holds PostHog's authoritative guidance on event-name shape, naming consistency, duplication, and event-quality patterns. It's typically at `.claude/skills/audit-events/references/best-practices.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-events/references/best-practices.md`. Each subagent reads it once before judging.
 
@@ -175,6 +176,48 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 Return when the call completes. Do not write the audit report.
 ```
 
-## After all four return
+### Task E — `capture-fires-on-success`
+
+`description`: `Audit capture-fires-on-success`
+
+`prompt`:
+```
+You are an audit subagent. Resolve exactly one rule and return: capture-fires-on-success.
+
+Background: a capture call placed at the top of a submit handler fires on the user's *intent*, before the server has accepted anything. A form that fails server-side validation then counts as a success, so the event over-reports the thing it is supposed to measure and inflates the event bill. The correct placement for a completion event is the branch that runs after the awaited call resolves successfully — after `if (response.ok)`, inside the `.then()`, after the `await` that would have thrown.
+
+Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once.
+
+Consider only captures whose event name reads as a **completed outcome** — names ending in or containing `_saved`, `_created`, `_updated`, `_deleted`, `_completed`, `_purchased`, `_submitted`, `_signed_up`, `_subscribed`, `_upgraded`, `_paid`, `_sent`, `_published`, or an equivalent past-tense completion in this project's own naming convention. Ignore intent-stage names (`_clicked`, `_started`, `_viewed`, `_opened`, `_attempted`) — those are *supposed* to fire on the action itself, and flagging them is a false positive.
+
+For each completion-named capture, determine whether it sits inside an `async` function, a promise chain, or a callback that receives a server result. If it does not (pure client-side state change, no network call), it passes — there is no outcome to wait for.
+
+Where it does, decide whether the capture executes:
+- AFTER the awaited call resolved AND inside the branch taken on success (after an `if (response.ok)` / `if (!error)` guard, inside `.then()`, or after an `await` that would throw on failure and is not wrapped in a `try` that swallows the error) — correct.
+- BEFORE the `await`, or after it but OUTSIDE any success guard so it also runs on a rejected/failed response (for example after a `try/catch` that swallows, or before `if (!response.ok) return`) — a violation.
+
+Rule:
+- pass: no completion-named captures wait on a server, OR every one of them fires only on the success path.
+- suggestion: 1–2 completion-named captures fire before the awaited response resolves or outside the success branch.
+- warning: 3+ such captures, OR any one of them on a payment, checkout, subscription, or billing path — those inflate the metrics the business is steered by.
+
+Report the fix concretely: name the guard or branch the call should move inside, at that `path:line`. Do not rewrite any code — this is an audit.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `capture-fires-on-success`, with `file` set to the most material violation's path:line if any, and `details` as compact JSON:
+
+```
+{
+  "completion_event_count": <N>,
+  "fires_on_intent_count": <N>,
+  "examples": [
+    {"event": "<name>", "file": "<path:line>", "issue": "before-await | outside-success-branch", "fix": "<one line: which branch it belongs in>"}
+  ]
+}
+```
+
+Return when the call completes. Do not write the audit report.
+```
+
+## After all five return
 
 Continue to **`3-events-optimize.md`**. Do not write the report yet — that's Step 4's job after Step 3 finishes.
