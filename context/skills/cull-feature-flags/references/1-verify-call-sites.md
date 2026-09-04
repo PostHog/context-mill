@@ -36,7 +36,7 @@ For each `pending` row, in ledger order, emit `[STATUS] Verifying <key>` and `Re
 | bucket (`area`) | confirm as `warning` when | downgrade to `pass` when |
 |---|---|---|
 | `Rolled out` | the call site is a boolean check whose true branch is the current behaviour | the flag gates something that must stay switchable (kill switch, ops toggle named as such) |
-| `Never enabled` | the call site is a boolean check whose false branch is the current behaviour | the feature is clearly mid-build (recent scaffolding, TODOs pointing at it) |
+| `Off for everyone` | the call site is a boolean check whose false branch is the current behaviour | the feature is clearly mid-build (recent scaffolding, TODOs pointing at it), or the flag or its call site reads like a kill switch or rollback (name, comment, a recent change back to 0%) |
 | `Archived in PostHog`, `Disabled in PostHog` | the call site is a boolean check; keep the false branch | never, these are always safe to propose |
 | `Deleted in PostHog` | no live flag in PostHog resembles the key | the key looks like a typo of a healthy flag key in the ledger (note the match in `details`) |
 | `Unreferenced`, `Comment only` | the prompt says no bulk evaluation and no dynamic keys | the prompt reports `getAllFlags` or dynamic keys and the bulk or dynamic call site could reach this key |
