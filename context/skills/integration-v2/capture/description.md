@@ -64,9 +64,16 @@ Backend SDKs process a person profile on every capture that carries a distinct i
 and the runtime metadata they attach — `$os`, `$lib`, and the rest — overwrites
 whatever the browser set on that same person, so an event captured from a Linux
 host rewrites a macOS user's profile. Pass `$process_person_profile: false` on
-server-side business events that are not meant to update person properties, which
-is most of them. Leave it off only where the capture deliberately updates the
-person, paired with an `identify()` or `$set` in the same flow.
+server-side events that only record that something happened — a row was written, a
+job ran, a webhook arrived.
+
+Not on the events that decide who the person is or what they are worth. Signup,
+subscription started, plan changed, churn: those are supposed to reach the person,
+and silencing them is worse than the metadata they overwrite, because it costs the
+project cohorts, person-property filters, lifecycle insights, and the funnel from
+first visit to paying. Let those through, and pair them with the `identify()` or
+`$set` that records what changed. Never blanket the flag across every server
+capture — a project with the flag everywhere has no person profiles at all.
 
 Leave `.posthog-wizard-cache/.posthog-events.json` in place for the report.
 
