@@ -2,7 +2,7 @@
 next_step: 3-report.md
 ---
 
-# Step 2: Ask once, then apply the approved rows
+# Step 2: Ask once, then cull the approved rows
 
 This step asks the user which `warning` rows to apply, then applies them: code edit first, PostHog disable second. It does NOT write the report; that belongs to step 3. Step 1 already decided the winning branch for every row; do not re-verify.
 
@@ -40,12 +40,12 @@ If the call errors (non-interactive host, cap reached), treat it as report-only.
 
 Rows not approved: resolve to `status: "pass"` with `details` = seeded details plus `; declined by user`.
 
-## Apply
+## Cull
 
 Emit per row:
 
 ```
-[STATUS] Applying <key>
+[STATUS] Culling <key>
 ```
 
 For each approved row, in ledger order:
@@ -61,7 +61,7 @@ For each approved row, in ledger order:
    - `exec({ "command": "info <tool_name>" })`, then `exec({ "command": "call <tool_name> <json> })` with the flag key or id from `details`.
    - Never call a delete or archive tool.
 3. Resolve the row:
-   - both parts succeeded: `status: "pass"`, `details` = seeded details plus `; applied`
+   - both parts succeeded: `status: "pass"`, `details` = seeded details plus `; culled`
    - anything failed: `status: "error"`, `details` = seeded details plus `; failed: <one-line reason>`. If the code edit failed, do not touch PostHog for this row.
 
 ## Output
@@ -69,5 +69,5 @@ For each approved row, in ledger order:
 Every `warning` row outside `Many call sites` is now `pass` or `error`. Emit:
 
 ```
-[STATUS] Applied <a> flags, <f> failed, <d> declined
+[STATUS] Culled <a> flags, <f> failed, <d> left for you
 ```

@@ -2,7 +2,7 @@
 
 This skill removes feature flags that have outlived their purpose: rolled out to everyone, never enabled, archived or deleted in PostHog but still checked in code, or defined in PostHog and never evaluated anywhere. The wizard already did the detection before you started: it scanned the source tree for flag calls, fetched the project's flags, classified every flag with plain rules, and wrote one row per flag into `.posthog-audit-checks.json` at the project root. That ledger is the ground truth. You never grep for flags, never re-classify a row, and never promote a healthy flag into a removal.
 
-Your job is three steps: verify each proposed row at its call site, ask the user once which rows to apply, apply the approved ones (code first, PostHog second), then write the report.
+Your job is three steps: verify each proposed row at its call site, ask the user once which rows to apply, cull the approved ones (code first, PostHog second), then write the report.
 
 **Start by reading `references/1-verify-call-sites.md`.** Do not Glob, ls, or find the skill directory. Do not read `2-apply.md` or `3-report.md` until the current step tells you to.
 
@@ -10,7 +10,7 @@ Your job is three steps: verify each proposed row at its call site, ask the user
 
 - `.posthog-audit-checks.json` (project root): the ledger. `area` is one of: `Rolled out` (100% to everyone, no conditions), `Never enabled` (0% everywhere), `Archived in PostHog`, `Disabled in PostHog`, `Unreferenced` (in PostHog, never evaluated in code), `Comment only` (key appears only in a comment or config string), `Dead code` (the only file evaluating it is unreachable), `Deleted in PostHog` (code evaluates a key PostHog does not have), `Many call sites` (three or more files evaluate it directly, suggestion only), `Healthy`. `Read` it once at the start of each step. Each row is `{ id, area, label, status, file?, details? }` where `id` is the flag key, `area` is the bucket the wizard assigned, `label` names the proposed action, `file` is the first call site as `path:line`, and `details` carries the rollout summary and every call site.
 - Rows change only through `mcp__wizard-tools__audit_resolve_checks`. Never `Edit` or `Write` the ledger file. Never delete it.
-- Row statuses this skill uses: `pending` (seeded, not yet verified), `warning` (verified, proposed to the user), `pass` (kept, declined, or applied), `error` (apply failed, reason in `details`).
+- Row statuses this skill uses: `pending` (seeded, not yet verified), `warning` (verified, proposed to the user), `pass` (kept, left for you, or culled), `error` (cull failed, reason in `details`).
 
 The wizard prompt tells you whether the repo uses bulk evaluation (`getAllFlags`) or dynamic flag keys. When it does, every `Unreferenced` or `Comment only` row needs a real check at the bulk or dynamic call site before it can be proposed.
 
@@ -29,7 +29,7 @@ Report unrecoverable preconditions with exactly one `[ABORT] <reason>` line and 
 
 1. **Disable, never delete.** The only PostHog mutation this skill makes is disabling a flag. Archiving and deleting are for the user to do in the app.
 2. **Code before PostHog.** For a row that needs both a code edit and a disable, the edit lands first and the disable only after the edit succeeded, so a failed edit never leaves a disabled flag behind live code.
-3. **One consent call.** Exactly one `wizard_ask` for the whole run: a report-only choice first, then the flag list. Nothing is applied without it.
+3. **One consent call.** Exactly one `wizard_ask` for the whole run: a report-only choice first, then the flag list. Nothing is culled without it.
 4. **Winning branch only.** Removing a flag check means keeping the branch the flag would resolve to and deleting the other one, plus the now-unused import or hook. Do not restructure beyond that.
 5. **Downgrade freely, never upgrade.** During verification a row may be resolved to `pass` (keep) with a reason. A `pass` row seeded as healthy is never touched.
 

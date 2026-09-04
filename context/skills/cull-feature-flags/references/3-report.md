@@ -18,14 +18,14 @@ Emit:
 
 `Read` the ledger once. `Write` `posthog-feature-flag-cull-report.md` at the project root using the template below. Use `id`, `area`, `label`, `file`, and `details` verbatim where the template calls for them.
 
-The report serves two readers: someone who declined everything and wants a findings list to act on by hand, and someone who approved changes and wants to see what happened. So it always opens with the full findings table, then groups rows by outcome.
+The report serves two readers: someone who declined everything and wants a findings list to act on by hand, and someone who culled flags and wants to see what happened. So it always opens with the full findings table, then groups rows by outcome.
 
 Findings verdict per row comes from `area`: `Healthy` is **healthy**, `Many call sites` is **warning**, every other bucket is **stale**.
 
 Outcome sections, reading the suffix the earlier steps appended to `details`:
 
-1. **Applied**: `status: pass` with `; applied`
-2. **Manual action**: `status: pass` with `; declined by user`, plus every `warning` row still unapplied when `wizard_ask` was unavailable. Each row keeps its proposed action so the reader can do it by hand.
+1. **Culled**: `status: pass` with `; culled`
+2. **Left for you**: `status: pass` with `; declined by user`, plus every `warning` row still open when `wizard_ask` was unavailable. Each row keeps its proposed action so the reader can do it by hand.
 3. **Failed**: `status: error`
 4. **Kept**: `status: pass` with `; kept:` plus every row the wizard seeded as healthy, and every `Many call sites` row (list those under a "Suggested wrappers" heading with the call-site count)
 
@@ -36,12 +36,12 @@ Outcome sections, reading the suffix the earlier steps appended to `details`:
 
 ## Summary
 
-One paragraph: how many flags the wizard looked at, how many were proposed, applied, declined, failed, kept. Whether bulk evaluation or dynamic keys limited what could be proposed.
+One paragraph: how many flags the wizard looked at, how many were proposed, culled, left for you, failed, kept. Whether bulk evaluation or dynamic keys limited what could be proposed.
 
 | Outcome | Count |
 |---|---|
-| Applied | n |
-| Manual action | n |
+| Culled | n |
+| Left for you | n |
 | Failed | n |
 | Kept | n |
 
@@ -53,13 +53,13 @@ Every flag the wizard looked at, one row each, ledger order.
 |---|---|---|---|---|
 | `<id>` | stale, warning, or healthy | `<area>` | `<label>` | `<file>` and the rest from `details` |
 
-## Applied
+## Culled
 
 | Flag | Bucket | What changed | Call sites |
 |---|---|---|---|
 | `<id>` | `<area>` | `<label>` | `<file>` and the rest from `details` |
 
-## Manual action
+## Left for you
 
 Same table, column "What to do" instead of "What changed".
 
@@ -77,7 +77,7 @@ For each `Many call sites` row: the flag, the number of files evaluating it dire
 
 ## Undo
 
-Only present when something was applied. Everything here is reversible in one step each:
+Only present when something was culled. Everything here is reversible in one step each:
 
 - Code: `git checkout -- <every file the wizard edited>` (run `git status` first; the tree was clean when the run started, so every change is the wizard's). List the files.
 - PostHog: one line per disabled flag, `Re-enable <key>: <app host>/project/<project id>/feature_flags/<flag id>`. Read the app host and project id from the wizard prompt or the MCP project state.
@@ -89,7 +89,7 @@ Only present when something was applied. Everything here is reversible in one st
 
 ## About this report
 
-Two sentences: the wizard scanned the source tree and the project's flags with fixed rules and seeded a ledger; this skill verified each row at its call site, applied only what was confirmed, and never deleted anything.
+Two sentences: the wizard scanned the source tree and the project's flags with fixed rules and seeded a ledger; this skill verified each row at its call site, culled only what was confirmed, and never deleted anything.
 </wizard-report>
 
 ## Output
