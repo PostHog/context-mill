@@ -50,14 +50,26 @@ against an env file nothing reads.
 
 Some platforms have no environment to read at all, and there the answer is not
 a loader. Angular on the stock `@angular/build` builder is the common one:
-nothing defines `process.env` or `import.meta.env` in the browser bundle, so a
-config reading either one throws while the module evaluates and the app renders
-a blank page. Never invent the mechanism — `import.meta.env` and the `NG_APP_`
-prefix come from `@ngx-env/builder`, so use them only when that dependency is
-already in `package.json`. When the project has no such mechanism, put the real
-public project token straight into the committed `src/environments/*` files;
-this is the skill's "no valid environment to read from" case, and the public
-token is publishable — it ships inside the browser bundle either way.
+nothing populates `process.env`, `import.meta.env`, or the project's own
+`src/environments/.env.ts` with your keys.
+
+The trap is that each of those *looks* like a mechanism. `import.meta.env` and
+the `NG_APP_` prefix only exist with `@ngx-env/builder` installed, and a
+generated `.env.ts` usually carries one unrelated key such as
+`npm_package_version` and nothing else. Read from either and your key is
+`undefined`: in development the guard throws while the module evaluates and the
+app renders a blank page, and in a production build the guard returns quietly,
+so the app looks fine while PostHog never initialises at all.
+
+So do not wire a lookup unless you have opened the thing it reads from and seen
+your key defined there. When nothing populates it, write the real public project
+token as a literal in the committed `src/environments/*` files. This is the
+skill's "no valid environment to read from" case, and the public token is
+publishable — it ships inside the browser bundle either way.
+
+Prove it before you finish: build, serve the built output, load a page, and
+confirm a request goes to the PostHog host. An app that renders but sends
+nothing has not been initialised.
 
 ## How you know you succeeded
 
