@@ -42,6 +42,14 @@ When your changes make the build emit a bundle to a new directory (`dist/`,
 never executes the bundle the maps were uploaded for, so every uploaded map
 goes unused. Add or fix the script that serves the built output.
 
+Then run the build and start that script once. Pointing `start` at a bundle
+the project cannot execute is worse than leaving it on the source, because the
+breakage only shows up at boot. The usual cause is a module-format mismatch:
+`esbuild --platform=node` emits CommonJS unless you pass `--format=esm`, so in a
+package with `"type": "module"` the bundle dies with
+`ReferenceError: module is not defined in ES module scope`. Match the bundle's
+format to the package's type.
+
 Do not write any credential values and do not create env files — the
 `credentials` task owns that, in parallel with you. Do not run the build.
 
