@@ -48,6 +48,17 @@ with `POSTHOG_… variable required by PostHog is missing or un-configured` is a
 failed init, not a finished one — that message is the guard you wrote firing
 against an env file nothing reads.
 
+Some platforms have no environment to read at all, and there the answer is not
+a loader. Angular on the stock `@angular/build` builder is the common one:
+nothing defines `process.env` or `import.meta.env` in the browser bundle, so a
+config reading either one throws while the module evaluates and the app renders
+a blank page. Never invent the mechanism — `import.meta.env` and the `NG_APP_`
+prefix come from `@ngx-env/builder`, so use them only when that dependency is
+already in `package.json`. When the project has no such mechanism, put the real
+public project token straight into the committed `src/environments/*` files;
+this is the skill's "no valid environment to read from" case, and the public
+token is publishable — it ships inside the browser bundle either way.
+
 ## How you know you succeeded
 
 An init point exists with the PostHog env keys present — whether it already
