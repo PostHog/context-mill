@@ -36,6 +36,12 @@ translating any `npm install` the skill or docs show (`pnpm add -D …`,
 `workspace:*` dependencies (`EUNSUPPORTEDPROTOCOL`) — that error means the
 wrong manager, never a flag to retry with.
 
+When your changes make the build emit a bundle to a new directory (`dist/`,
+`build/`), check that some script actually runs that output. A project whose
+`build` writes `dist/index.js` while `start` still runs the original source
+never executes the bundle the maps were uploaded for, so every uploaded map
+goes unused. Add or fix the script that serves the built output.
+
 Do not write any credential values and do not create env files — the
 `credentials` task owns that, in parallel with you. Do not run the build.
 
