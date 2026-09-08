@@ -51,7 +51,8 @@ package with `"type": "module"` the bundle dies with
 format to the package's type.
 
 Do not write any credential values and do not create env files — the
-`credentials` task owns that, in parallel with you. Do not run the build.
+`credentials` task owns that, in parallel with you. Apart from the one
+verification above, do not run the build.
 
 ## How you know you succeeded
 
