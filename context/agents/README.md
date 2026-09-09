@@ -33,7 +33,7 @@ type: example
 flow: my-flow
 model_pi: openai/gpt-5.6-luna
 effort_pi: low
-model_sdk: claude-haiku-4-5-20251001
+model_sdk: claude-haiku-4-5
 skills: []
 allowedTools: [Read, Glob, Grep]
 disallowedTools: [enqueue_task]

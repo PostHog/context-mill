@@ -4,7 +4,7 @@ flow: metrics
 label: Instrument the service with metrics
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: []
 allowedTools: [Read, Write, Edit, Glob, Grep, load_skill_menu, install_skill]

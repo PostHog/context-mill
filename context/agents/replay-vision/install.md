@@ -4,7 +4,7 @@ flow: replay-vision
 label: Add the PostHog SDK to the manifest
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-haiku-4-5-20251001
+model_sdk: claude-haiku-4-5
 skills: [integration-v2-install]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]

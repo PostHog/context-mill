@@ -4,7 +4,7 @@ flow: replay-vision
 label: Breakage scanner
 model_pi: openai/gpt-5.6-terra
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: [replay-vision-scanners-core, replay-vision-scanner-broken-experiences]
 allowedTools: [Read, Glob, Grep, posthog_exec]

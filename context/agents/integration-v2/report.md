@@ -5,7 +5,7 @@ label: Write the setup report
 sink: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: [integration-v2-report, integration-v2-notebook, integration-v2-mcp]
 allowedTools: [Read, Glob, Grep, posthog_exec]

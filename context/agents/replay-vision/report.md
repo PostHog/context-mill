@@ -5,7 +5,7 @@ label: Report and hand off
 sink: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: []
 allowedTools: [Read, Glob, Grep, Write, posthog_exec]
