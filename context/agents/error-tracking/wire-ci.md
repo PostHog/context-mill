@@ -29,9 +29,33 @@ config that is not there. You cannot create the CI secret that holds the API
 key; reference it by name and carry that follow-up, plus any deploy path you
 could not trace, into your handoff for the report.
 
+## Two things cross the boundary, not one
+
+Credentials are half of it. The uploader also needs a **release identity** — a
+name and a version — and it derives that from the CI's own git variables or
+from a `.git` directory. A container build sees neither: `.git` is almost
+always in `.dockerignore`, and the CI's variables stop at the `docker build`
+command. Nor does a hardcoded release name rescue you; the uploader wants both
+halves, and stops the build when it has only one.
+
+So forward the provider's git variables into the build the same way you forward
+credentials, and declare each one as `ARG` **and** `ENV` — `ARG` alone is not
+visible to the uploader's environment lookup. Your skill's "Associate the
+release with a git commit" step lists the variables per provider. Read that
+step even though it is not the CI step: this boundary is where it applies.
+
+That `ARG`-plus-`ENV` shape is for the git variables and the non-secret settings
+only. The API key is a secret and keeps whatever secret-carrying mechanism the
+build system offers — a build secret mounted for the one step that needs it, a
+masked variable, a secret file. A secret in `ARG` or `ENV` is recorded in the
+build history, and the builder itself will warn you: *do not use ARG or ENV
+instructions for sensitive data*. Widening the git-variable pattern to cover the
+key is a downgrade, not consistency.
+
 ## How you know you succeeded
 
 The pipeline that runs the production build carries the upload credentials by
-the same names the credentials task used, and every secret the user still has
-to create is named in your handoff. Your handoff lists the CI files you changed
+the same names the credentials task used and reaches the uploader with a
+resolvable release identity. Every secret the user still has to create is named
+in your handoff. Your handoff lists the CI files you changed
 and every manual follow-up, so the report can hand them to the user.
