@@ -7,7 +7,7 @@ effort_pi: low
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: [integration-v2-init, posthog-best-practices]
-allowedTools: [Read, Write, Edit, Glob, Grep, Bash]
+allowedTools: [Read, Write, Edit, Glob, Grep, Bash, check_env_keys, set_env_values]
 disallowedTools: [enqueue_task]
 dependsOn: []
 ---
@@ -24,6 +24,27 @@ You only exist in this flow because the user asked for error tracking on a
 repo without PostHog. Initialize the SDK so exceptions can flow and stop —
 no instrumentation, no extras. Don't set up exception capture either way;
 the capture-exceptions task after you owns that.
+
+## An existing init still needs its variable defined
+
+"Already initialised" is a property of the pair, not of the call. An init point
+that reads `process.env.SOMETHING` only works when `SOMETHING` is defined in the
+env file the project loads. A repo can carry an init that has never once run:
+the call is there, the variable it names is nowhere, and the client is built
+from an empty string.
+
+So before you leave an existing init alone, call `check_env_keys` on that env
+file and look for the exact name the init reads. It returns names, never values.
+
+- **Present** — the pair is complete. Leave it alone and say so.
+- **Absent** — the init is not wired yet, whoever wrote it. Write that variable
+  with `set_env_values` under the name the code already reads, and document it
+  in `.env.example`. Do not rename the code to match a name you would rather
+  have written; the code is the half that already exists.
+
+An empty key is the quiet failure here. A client constructed from `''` throws
+nothing and logs nothing. The build is clean, the app starts, every capture call
+returns — and no event ever arrives.
 
 ## Make the environment actually reachable
 
@@ -71,9 +92,10 @@ publishable — it ships inside the browser bundle either way.
 ## How you know you succeeded
 
 An init point exists with the PostHog env keys present — whether it already
-did or you just created it — keys in the env file, never hardcoded. On a
-platform that does not auto-load `.env`, the loading is wired; on a platform
-with no environment at all, the token is a literal rather than a lookup into
-something that never defines it. Your handoff names the files involved, how the client is
-constructed, and how `.env` reaches it, so the capture-exceptions task can find
-the init options without re-discovering them.
+did or you just created it — keys in the env file and confirmed there with
+`check_env_keys`, never hardcoded. On a platform that does not auto-load
+`.env`, the loading is wired; on a platform with no environment at all, the
+token is a literal rather than a lookup into something that never defines it.
+Your handoff names the files involved, how the client is constructed, and how
+`.env` reaches it, so the capture-exceptions task can find the init options
+without re-discovering them.
