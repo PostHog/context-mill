@@ -52,10 +52,29 @@ build history, and the builder itself will warn you: *do not use ARG or ENV
 instructions for sensitive data*. Widening the git-variable pattern to cover the
 key is a downgrade, not consistency.
 
+## The runtime boundary has names too
+
+Upload credentials are a build-time concern. The app also reads its own
+variables at **run** time, and the step that starts it is another place a name
+has to match — a `docker run -e`, a compose file, a systemd unit, a platform's
+environment settings. That step was written before PostHog existed here, so the
+name it passes is whatever the project used back then. If `init` settled on a
+different one, the deployed process starts with an undefined key.
+
+Nothing fails loudly. In production the init guard returns quietly instead of
+throwing, so the process boots, serves traffic, and reports nothing — the same
+silent shape as a mismatched upload variable, one boundary later.
+
+So read the names the app's own source reads, and make the start step pass
+exactly those. Rename the deploy step's variable, not the code: the code is the
+half that already exists. Name any secret the user must create under its new
+name in your handoff.
+
 ## How you know you succeeded
 
 The pipeline that runs the production build carries the upload credentials by
 the same names the credentials task used and reaches the uploader with a
-resolvable release identity. Every secret the user still has to create is named
+resolvable release identity, and the step that starts the app passes the
+variable names the app's own source reads. Every secret the user still has to create is named
 in your handoff. Your handoff lists the CI files you changed
 and every manual follow-up, so the report can hand them to the user.
