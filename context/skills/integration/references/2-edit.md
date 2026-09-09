@@ -20,6 +20,37 @@ It's essential to do this in both client code and server code, so that user beha
 
 You should also add PostHog exception capture error tracking to these files where relevant.
 
+## AI Observability and Logs
+
+Include both in a default integration where applicable, after the SDK and event
+instrumentation above and before the revise and conclusion steps. Run AIO first,
+then Logs, so edits to manifests and initialization files do not conflict.
+
+1. **AI Observability:** inspect existing LLM call sites. If there are none, skip
+   AIO and record that reason; do not add a vendor SDK or artificial model calls.
+   Otherwise call `load_skill_menu` with `category: "ai-observability"`, install
+   the matching variant with `install_skill`, and follow its references. Choose
+   the provider/framework and language from the actual calling code. Use manual
+   capture only for existing calls without a supported wrapper. Reuse the client
+   and identity already established. If the provider remains ambiguous, skip with
+   that reason instead of asking a question during the default run.
+2. **Logs:** call `load_skill_menu` with `category: "logs"`, install the matching
+   skill, and follow the documented setup for this runtime. Use SDK-native log
+   capture where documented, otherwise the platform's OTLP exporter. Do not add a
+   server exporter to browser-only code. If no documented setup applies, skip with
+   the reason. Preserve existing handlers, outputs, and any AIO tracing provider;
+   an existing PostHog exporter needs no duplicate. Keep edits to log setup and
+   existing logging paths, without adding logs to unrelated code.
+
+For both skills, use the project credentials and region supplied by the wizard.
+Inspect and change environment files only through `check_env_keys` and
+`set_env_values`, reusing existing variable names. Do not ask for credentials or
+guess a region. Follow this runtime's tool restrictions; defer any dependency
+installation or verification still needed to the revise step. Do not make paid
+LLM calls or claim delivery based on code changes. Keep each result (configured,
+already present, or skipped with a reason) for the final report, including a
+concrete path the user can trigger to check delivery.
+
 Remember: Do not alter the fundamental architecture of existing files. Make your additions minimal and targeted.
 
 Remember the documentation and example project resources you were provided at the beginning. Read them now.

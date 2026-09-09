@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [posthog-best-practices, integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
-dependsOn: [install, init, identify, error-tracking, capture]
+dependsOn: [install, init, identify, error-tracking, capture, ai-observability, logs]
 ---
 
 ## Goal
