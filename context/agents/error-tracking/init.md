@@ -20,10 +20,10 @@ leave it alone and say so in your handoff. If it doesn't, create it following
 your skill — it owns the how: the framework's init point, the env-var wiring
 through the wizard tools, and `.env.example`.
 
-You only exist in this flow because the user asked for error tracking on a
-repo without PostHog. Initialize the SDK so exceptions can flow and stop —
-no instrumentation, no extras. Don't set up exception capture either way;
-the capture-exceptions task after you owns that.
+You exist in this flow because the user asked for error tracking on a repo
+whose PostHog init is missing or unproven. Initialize the SDK so exceptions can
+flow and stop — no instrumentation, no extras. Don't set up exception capture
+either way; the capture-exceptions task after you owns that.
 
 ## An existing init still needs its variable defined
 
