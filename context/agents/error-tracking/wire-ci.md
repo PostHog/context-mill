@@ -44,6 +44,15 @@ visible to the uploader's environment lookup. Your skill's "Associate the
 release with a git commit" step lists the variables per provider. Read that
 step even though it is not the CI step: this boundary is where it applies.
 
+Forward them only where a provider actually sets them. A project with no
+pipeline — an image built and run by hand — has nothing to inherit from, and
+variables declared but never filled resolve to no release at all: it reads as
+wired and still fails the build. There the identity has to be supplied outright,
+both halves, from something the build itself holds — a build argument the
+operator passes, or the manifest's own version — so name and version are always
+present. Decide which case you are in by reading the repo, not by assuming a
+provider exists.
+
 That `ARG`-plus-`ENV` shape is for the git variables and the non-secret settings
 only. The API key is a secret and keeps whatever secret-carrying mechanism the
 build system offers — a build secret mounted for the one step that needs it, a
