@@ -43,10 +43,10 @@ reads `process.env` on one of those, wire the loading too, either way:
 - add `--env-file=.env` to the `start` and `dev` scripts, when the project is on
   Node 20.6+ and would rather not take a new dependency.
 
-Then start the app once and confirm it boots. An app that exits at module load
-with `POSTHOG_… variable required by PostHog is missing or un-configured` is a
-failed init, not a finished one — that message is the guard you wrote firing
-against an env file nothing reads.
+You cannot run the app, so this has to be right by construction. Writing the
+guard without the loader is what produces
+`POSTHOG_… variable required by PostHog is missing or un-configured` at module
+load: the guard you wrote firing against an env file nothing reads.
 
 Some platforms have no environment to read at all, and there the answer is not
 a loader. Angular on the stock `@angular/build` builder is the common one:
@@ -67,15 +67,13 @@ token as a literal in the committed `src/environments/*` files. This is the
 skill's "no valid environment to read from" case, and the public token is
 publishable — it ships inside the browser bundle either way.
 
-Prove it before you finish: build, serve the built output, load a page, and
-confirm a request goes to the PostHog host. An app that renders but sends
-nothing has not been initialised.
 
 ## How you know you succeeded
 
 An init point exists with the PostHog env keys present — whether it already
 did or you just created it — keys in the env file, never hardcoded. On a
-platform that does not auto-load `.env`, the loading is wired and the app
-starts cleanly. Your handoff names the files involved, how the client is
+platform that does not auto-load `.env`, the loading is wired; on a platform
+with no environment at all, the token is a literal rather than a lookup into
+something that never defines it. Your handoff names the files involved, how the client is
 constructed, and how `.env` reaches it, so the capture-exceptions task can find
 the init options without re-discovering them.
