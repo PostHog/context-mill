@@ -33,11 +33,12 @@ write it in this one task (the key never survives across tasks):
    its `POSTHOG_*` vars to, when there is one). Call `check_env_keys` on it
    first (it returns present/absent, never values — never read the file
    directly).
-3. Call `set_env_values`, passing the secretRef as a value object, not a
-   literal string — e.g.
-   `values: { "POSTHOG_CLI_API_KEY": { secretRef: "<the ref>" }, "POSTHOG_CLI_PROJECT_ID": "<PROJECT_ID>", "POSTHOG_CLI_HOST": "<UI_HOST>" }`.
-   The exact variable names follow the skill's per-uploader convention. The
-   wizard resolves the ref locally, so you never see the key value.
+3. Settle the variable names before you write them — see "The names are a
+   contract" below. Then call `set_env_values`, passing the secretRef as a
+   value object, not a literal string — e.g.
+   `values: { "POSTHOG_CLI_API_KEY": { secretRef: "<the ref>" }, "POSTHOG_CLI_PROJECT_ID": "<PROJECT_ID>", "POSTHOG_CLI_HOST": "<UI_HOST>" }`
+   with whichever names you settled on. The wizard resolves the ref locally, so
+   you never see the key value.
 4. Document the same variable names for other developers: append them to
    `.env.example` (create it if the project has none) with empty or
    placeholder values — never a real value, and never the key itself. The
@@ -47,6 +48,28 @@ write it in this one task (the key never survives across tasks):
 
 Replace `<SETTINGS_URL>`, `<PROJECT_ID>`, and `<UI_HOST>` from your project
 context. Do not touch the build config — the `configure` task owns that.
+
+## The names are a contract
+
+An env variable only works if the name in the file is the name the code reads.
+You write the file; the `configure` task writes the code that reads it, and you
+two run in parallel. So never invent a name that already exists somewhere else
+— look for the other half of the contract first, and adopt it:
+
+- **Read the build config before you choose.** If it already references PostHog
+  env variables, use exactly those names, whatever they are, even when they are
+  not the ones your skill would suggest. Reading config is safe — it holds
+  names, not secrets.
+- **Only when nothing references them yet** are you the one deciding. Use the
+  names your skill documents for the mechanism that was actually wired.
+- **Either way, say which set you chose in your handoff, in full.** That is how
+  `configure` and `wire-ci` learn what to match. A handoff that says "the usual
+  variables" hands the next task the same guess you just made.
+
+Names that merely look plausible are the failure here. A build reading
+`POSTHOG_API_KEY` beside an env file holding `POSTHOG_CLI_API_KEY` throws no
+error anywhere — the upload simply never runs, and every stack trace stays
+minified.
 
 ## How you know you succeeded
 
