@@ -49,6 +49,14 @@ whose `package.json` sets `"type": "module"` the bundle dies at boot with
 `ReferenceError: module is not defined in ES module scope`. Read the `type`
 field before writing the command.
 
+Types are the same kind of trap. In a config the compiler checks — a `.ts`
+config, or JS under `checkJs` — `process.env.ANYTHING` is `string | undefined`,
+while a plugin's options usually require `string`. Where your skill's example
+asserts or defaults that lookup, keep that part exactly: dropping a `!` or a
+`?? ''` turns a working example into a build that fails type checking. The
+upload step often runs before the type check, so the maps land and the build
+still exits non-zero — a broken build that looks half-successful in the log.
+
 ## The names are a contract
 
 An env variable only works if the name the code reads is the name in the file.
