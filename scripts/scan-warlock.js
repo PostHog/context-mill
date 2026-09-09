@@ -59,7 +59,7 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 
 // LLM used to triage Warlock matches as real threats vs false positives.
-const TRIAGE_MODEL = "claude-haiku-4-5-20251001";
+const TRIAGE_MODEL = "claude-haiku-4-5";
 
 const isCI = Boolean(process.env.CI);
 

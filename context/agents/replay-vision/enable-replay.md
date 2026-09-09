@@ -4,7 +4,7 @@ flow: replay-vision
 label: Make session replay record
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: [replay-vision-enable-replay]
 allowedTools: [Read, Edit, Glob, Grep, posthog_exec]

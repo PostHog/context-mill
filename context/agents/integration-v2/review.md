@@ -4,7 +4,7 @@ flow: integration-v2
 label: Verify and review the integration
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: [posthog-best-practices, integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]

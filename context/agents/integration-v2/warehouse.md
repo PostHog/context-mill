@@ -5,7 +5,7 @@ label: Connect your data sources
 runnerSeeded: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: [integration-v2-warehouse, integration-v2-mcp]
 allowedTools: [Read, Glob, Grep, wizard_ask, posthog_exec]

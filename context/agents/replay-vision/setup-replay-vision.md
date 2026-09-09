@@ -4,7 +4,7 @@ flow: replay-vision
 seed: true
 model_pi: openai/gpt-5.6-terra
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: []
 allowedTools: [Read, Glob, Grep, posthog_exec]

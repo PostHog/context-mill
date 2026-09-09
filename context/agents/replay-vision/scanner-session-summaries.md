@@ -4,7 +4,7 @@ flow: replay-vision
 label: Session summaries scanner
 model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: [replay-vision-scanners-core, replay-vision-scanner-session-summaries]
 allowedTools: [Read, Glob, Grep, posthog_exec]
