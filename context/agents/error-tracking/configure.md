@@ -7,7 +7,7 @@ effort_pi: medium
 model_sdk: claude-sonnet-4-6
 effort_sdk: medium
 skills: []
-allowedTools: [Read, Write, Edit, Glob, Grep, Bash, load_skill_menu, install_skill]
+allowedTools: [Read, Write, Edit, Glob, Grep, Bash, load_skill_menu, install_skill, check_env_keys]
 disallowedTools: [enqueue_task]
 dependsOn: [capture-exceptions]
 ---
@@ -48,6 +48,26 @@ command — you cannot run it, so it has to be right by construction. `esbuild
 whose `package.json` sets `"type": "module"` the bundle dies at boot with
 `ReferenceError: module is not defined in ES module scope`. Read the `type`
 field before writing the command.
+
+## The names are a contract
+
+An env variable only works if the name the code reads is the name in the file.
+You write the code that reads them; the `credentials` task writes the file, and
+you two run in parallel. So never invent a name that already exists somewhere
+else — look for the other half of the contract first, and adopt it:
+
+- **Call `check_env_keys` before you write the config.** It returns names, never
+  values. If the PostHog upload variables are already there, make your config
+  read exactly those names, whatever they are, even when they are not the ones
+  your skill's example shows.
+- **Only when they are absent yet** are you the one deciding. Use the names your
+  skill documents for the mechanism you are wiring, and name them in your
+  handoff in full so `credentials` and `wire-ci` can match them.
+
+Names that merely look plausible are the failure here. A build reading
+`POSTHOG_API_KEY` beside an env file holding `POSTHOG_CLI_API_KEY` throws no
+error anywhere — the upload is skipped silently, the build looks clean, and
+every stack trace stays minified.
 
 Do not write any credential values and do not create env files — the
 `credentials` task owns that, in parallel with you. Do not run the build.
