@@ -25,6 +25,17 @@ First establish two facts from the repo:
 the dependency manifests, or a `posthog.init(...)` / snippet in the source.
 Check the project state for existing events if the repo is ambiguous.
 
+Integrated means the init runs, not that the package is listed. An init point
+is a pair: the call, and the key it is constructed from. A repo can carry the
+call while the key it names is defined nowhere — then the client is built from
+an empty string and captures nothing, however complete the manifest looks. So
+when you find an init that reads a variable, look for that same name in the
+repo's committed env template or its build config. Found, or the project state
+shows real events arriving: integrated. Named nowhere, or you cannot tell:
+**queue `init`**. It re-checks the pair itself and leaves a complete init
+alone, so queuing it when you are unsure costs one cheap task, while skipping
+it on a keyless init costs the whole run.
+
 **2. Which uploader variant is this project — or none?** Read the manifests
 and pick at most one, by this precedence (first match wins):
 
@@ -63,10 +74,11 @@ readable-stack platforms listed above, and Astro.
 
 Then seed the graph:
 
-- `install` and `init`, independent of each other — **only when PostHog is
-  not integrated**. Do not stop on an uninstrumented repo, integrate.
-- `capture-exceptions`, after `install` and `init` (with no dependencies when
-  PostHog was already integrated).
+- `install`, only when the SDK is missing from the manifest.
+- `init`, independent of `install` — whenever fact 1 did not show a complete
+  pair. Do not stop on an uninstrumented repo, integrate.
+- `capture-exceptions`, after whichever of `install` and `init` you queued
+  (with no dependencies when you queued neither).
 - When an uploader variant matched, add the upload subgraph:
   - `credentials`, no dependencies — it stops to ask the user for a personal
     API key, so keep it a root task: the prompt reaches the user early while
@@ -89,7 +101,8 @@ Every task in the chosen graph is queued with that dependency shape, the four
 upload tasks (when queued) share the same `{ skillId, displayName }` inputs,
 `report` depends on the rest (directly or transitively), and the first task is
 runnable. Your plan states both facts explicitly: whether PostHog was
-integrated, and which uploader variant matched — or, when you queue no upload
+integrated — and, when you called it integrated, the name of the key you found
+defined — and which uploader variant matched — or, when you queue no upload
 tasks, why no variant applies: which readable-stack platform this is, or that
 Astro is not supported by the uploader. A
 plan that never mentions fact 2 is an incomplete plan, not a decision. Keep
