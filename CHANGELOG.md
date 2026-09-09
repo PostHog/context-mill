@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.52.0](https://github.com/PostHog/context-mill/compare/v1.51.0...v1.52.0) (2026-09-09)
+
+
+### Features
+
+* **mcp:** teach wizard modern capture support ([#372](https://github.com/PostHog/context-mill/issues/372)) ([f8f89ca](https://github.com/PostHog/context-mill/commit/f8f89ca9f2165ccc319212c9089b9cefefb7a148))
+
+
+### Bug Fixes
+
+* **agents:** use allowed wizard models ([#389](https://github.com/PostHog/context-mill/issues/389)) ([9574858](https://github.com/PostHog/context-mill/commit/9574858256d3325ecc9c53fac733e47581add371))
+* **integration:** initialize snippets with read-only toString ([#382](https://github.com/PostHog/context-mill/issues/382)) ([6149f9d](https://github.com/PostHog/context-mill/commit/6149f9d654affa4bf5ce5d1f716e003295a53d9e))
+* **self-driving:** scout-gate source is on by default — align step 4 with the inbox-source-configs-create contract ([#369](https://github.com/PostHog/context-mill/issues/369)) ([706a8d3](https://github.com/PostHog/context-mill/commit/706a8d3ca73465b293c1c2ef61e82acfa17790dc))
+
 ## [1.51.0](https://github.com/PostHog/context-mill/compare/v1.50.0...v1.51.0) (2026-09-03)
 
 
