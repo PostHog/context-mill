@@ -42,13 +42,18 @@ When your changes make the build emit a bundle to a new directory (`dist/`,
 never executes the bundle the maps were uploaded for, so every uploaded map
 goes unused. Add or fix the script that serves the built output.
 
-A run script also has to reach the values the app reads. When the credentials
-live in an env file and the platform does not load it on its own, the script you
-add or fix has to load it — export it before the binary, pass the runtime's own
-flag for it, whatever that platform offers. Skip that and the artifact starts,
-prints its own "variable missing" guard, and reports nothing: the build is
-green, the symbols are uploaded, and the one command you told the user to run is
-the one that cannot capture.
+That run script has its own environment to satisfy, and it is not the build's.
+The uploader's credentials are handled — your build step passes them itself. The
+separate question is the variables **the application reads when it starts**: the
+project token and host its init looks up. Those live in the same gitignored env
+file, and a compiled binary or a bare interpreter loads nothing on its own.
+
+So open the init point, note the variables it reads, and make the run script
+provide exactly those — export the env file ahead of the command, pass the
+runtime's own flag for it, whatever that platform offers. Skip it and the
+artifact starts, prints its own "variable missing" guard, and reports nothing:
+the build is green, the symbols are uploaded, and the single command you hand
+the user to verify with is the one command that cannot capture.
 
 Match the bundle's module format to the package's type while you write the
 command — you cannot run it, so it has to be right by construction. `esbuild
