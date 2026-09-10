@@ -21,6 +21,11 @@ error handler, some give you a boundary to mount at the app entry. Follow the
 docs and the reference example for this one, and set it up in one place —
 never manual capture calls sprinkled across files.
 
+A page often shows two setups side by side: a global initializer, and an
+explicit client you hold. Follow one of them the whole way through. Taking the
+wiring from one and the calls from the other reads fine and compiles nowhere —
+an initializer that hands back nothing leaves you nothing to call methods on.
+
 The SDK is installed and initialized — either it already was, or the install
 and init tasks before you did it (see their handoffs); build on that, do not
 re-check it.

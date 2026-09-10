@@ -55,6 +55,10 @@ artifact starts, prints its own "variable missing" guard, and reports nothing:
 the build is green, the symbols are uploaded, and the single command you hand
 the user to verify with is the one command that cannot capture.
 
+Put a multi-step build somewhere the tool actually runs it — a script file, a
+make target, the manifest's own scripts — never an alias mechanism you are
+assuming exists, borrowed from a neighbouring tool.
+
 Match the bundle's module format to the package's type while you write the
 command — you cannot run it, so it has to be right by construction. `esbuild
 --platform=node` emits CommonJS unless you pass `--format=esm`, so in a package
