@@ -42,6 +42,14 @@ When your changes make the build emit a bundle to a new directory (`dist/`,
 never executes the bundle the maps were uploaded for, so every uploaded map
 goes unused. Add or fix the script that serves the built output.
 
+A run script also has to reach the values the app reads. When the credentials
+live in an env file and the platform does not load it on its own, the script you
+add or fix has to load it — export it before the binary, pass the runtime's own
+flag for it, whatever that platform offers. Skip that and the artifact starts,
+prints its own "variable missing" guard, and reports nothing: the build is
+green, the symbols are uploaded, and the one command you told the user to run is
+the one that cannot capture.
+
 Match the bundle's module format to the package's type while you write the
 command — you cannot run it, so it has to be right by construction. `esbuild
 --platform=node` emits CommonJS unless you pass `--format=esm`, so in a package
