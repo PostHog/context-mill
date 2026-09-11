@@ -103,7 +103,6 @@ variants:
   - https://posthog.com/docs/error-tracking/installation/react.md
 - id: nuxt-3-6
   framework: nuxt
-  default: true
   display_name: Nuxt 3.6
   tags:
   - nuxt
@@ -114,6 +113,7 @@ variants:
   - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
 - id: nuxt-4
   framework: nuxt
+  default: true
   display_name: Nuxt 4
   tags:
   - nuxt
