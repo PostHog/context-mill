@@ -37,10 +37,32 @@ either way; when the flow includes a configure task, it owns those files.
 Stay inside this project's directory and set up that one place; that is the
 whole job.
 
+## Do not copy the SDK's own listeners
+
+Exception autocapture already registers the global handlers: `window.onerror`
+and `unhandledrejection` in the browser, `uncaughtException` and
+`unhandledRejection` in Node, `sys.excepthook` in Python, the panic hook in
+Rust, and the uncaught-exception and signal handlers on iOS and Android. Turn
+that on with the SDK's own option — `capture_exceptions`,
+`enableExceptionAutocapture`, `enable_exception_autocapture`, `capture_panics`,
+`errorTrackingConfig.autoCapture` — and register none of those handlers
+yourself. A second listener on the same event sends every error twice, and it
+stops matching the SDK's handling the moment the SDK changes.
+
+What the SDK cannot see is yours to add: errors a framework catches before any
+global handler fires. Express error middleware, Fastify `setErrorHandler`, Hono
+`onError`, Vue `app.config.errorHandler`, Angular `ErrorHandler`, SvelteKit
+`handleError`, a React error boundary, Next.js `global-error` — hook those,
+because the framework swallows the error and the global listener never hears
+of it. A platform with no autocapture at all, such as Go, is the other case:
+there the capture boundary at the entry point is the mechanism, not a copy of
+one.
+
 ## How you know you succeeded
 
 An error the app does not catch reaches PostHog, through the mechanism this
-SDK gives you rather than one you invented. You did not install anything, run
+SDK gives you rather than one you invented, and no global error listener of
+your own sits beside the SDK's autocapture. You did not install anything, run
 a build, lint, or tests, search outside the project, or read through the whole
 app or hand-wrap individual components or routes. Your handoff names the files
 you changed and the capture mechanism, so the report can explain it to the
