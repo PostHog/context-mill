@@ -38,7 +38,7 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
 
 #### Examples
 - **Node / tsc** Emit maps with embedded sources by setting both in `tsconfig.json`: `"sourceMap": true` and `"inlineSources": true`. Add the CLI to the project with `npm install --save-dev @posthog/cli@latest` (or the project's package manager) so the build script and CI resolve the same binary — never hand-write the version string. Then run `posthog-cli sourcemap process` against the build output dir as a post-build step — it injects chunk IDs and uploads in one pass, and needs the upload credentials (see "Make credentials available at build time").
-- **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. Make sure the bundler is configured to emit source maps.
+- **Vite / Webpack / Rollup** Prefer the bundler plugin from the reference over hand-rolling the CLI — it injects and uploads in one pass. For Vite and Rollup, make sure the bundler is configured to emit source maps. **Webpack is the exception:** with `sourcemaps.enabled`, the PostHog webpack plugin adds its own `SourceMapDevToolPlugin`, so do not also set a `devtool` that emits maps. Remove `devtool: 'source-map'` or `'hidden-source-map'`, or set `devtool: false`. When both emit `[file].map`, the build fails with `Conflict: Multiple assets emit different content to the same filename index.js.map` and nothing uploads.
 - **iOS (Xcode)** iOS uploads **dSYM debug symbols**, not source maps. Required target changes:
   1. `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` for Release.
   2. `ENABLE_USER_SCRIPT_SANDBOXING = NO`.
