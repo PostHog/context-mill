@@ -4,7 +4,7 @@ flow: error-tracking
 label: Wire up exception capture
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: [integration-v2-error-tracking-step, posthog-best-practices]
 allowedTools: [Read, Write, Edit, Glob, Grep]

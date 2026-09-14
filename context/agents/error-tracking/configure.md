@@ -4,7 +4,7 @@ flow: error-tracking
 label: Apply build-config changes
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: []
 allowedTools: [Read, Write, Edit, Glob, Grep, Bash, load_skill_menu, install_skill, check_env_keys]
