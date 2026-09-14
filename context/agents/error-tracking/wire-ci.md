@@ -3,8 +3,8 @@ type: wire-ci
 flow: error-tracking
 label: Set up CI for automatic uploads
 model_pi: openai/gpt-5.6-sol
-effort_pi: high
-model_sdk: claude-sonnet-4-6
+effort_pi: medium
+model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: []
 allowedTools: [Read, Write, Edit, Glob, Grep, load_skill_menu, install_skill]

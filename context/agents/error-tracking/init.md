@@ -2,9 +2,9 @@
 type: init
 flow: error-tracking
 label: Set up PostHog initialization
-model_pi: openai/gpt-5.6-sol
+model_pi: openai/gpt-5.6-terra
 effort_pi: low
-model_sdk: claude-sonnet-4-6
+model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: [integration-v2-init, posthog-best-practices]
 allowedTools: [Read, Write, Edit, Glob, Grep, Bash, check_env_keys, set_env_values]
