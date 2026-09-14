@@ -8,7 +8,7 @@ effort_pi: low
 model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: []
-allowedTools: [Read, Glob, Grep, Write, posthog_exec]
+allowedTools: [Read, Glob, Grep, Write]
 disallowedTools: [enqueue_task]
 dependsOn: [capture-exceptions, wire-ci, test-setup]
 ---
@@ -20,11 +20,6 @@ to do, from the handoffs of every task in the run. `read_handoffs` gives you
 each task's report — the capture mechanism, the files changed, the env
 variable names, the CI secret to create, and any deploy path that could not be
 traced. Do not re-derive any of it from the project.
-
-First, turn on the Error Tracking product for the team (`products-enable`
-through `posthog_exec`) so the captured exceptions have a UI to land in. If
-the call fails or the tool is missing, carry it as a follow-up — never fail
-the report over it.
 
 Write the hand-off to `posthog-error-tracking-report.md` at the top level of
 this project's directory. When the run wired source-map upload, START it with
