@@ -46,7 +46,9 @@ and pick at most one, by this precedence (first match wins):
   and every JavaScript stack trace stays minified.
 - `pubspec.yaml` → `flutter`
 - an `.xcodeproj`, `Podfile`, or `Package.swift` → `ios`
-- a Gradle build file (`build.gradle`, `build.gradle.kts`, `settings.gradle`) → `android`
+- a Gradle build file that applies `com.android.application` or
+  `com.android.library`, or an `AndroidManifest.xml` → `android`. A Gradle
+  project without these markers is a JVM server: keep reading.
 - `go.mod` → `go`
 - `Cargo.toml` → `rust`
 - `astro` in `package.json` dependencies → **none**. Astro is not supported by
