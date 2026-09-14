@@ -39,6 +39,11 @@ it on a keyless init costs the whole run.
 **2. Which uploader variant is this project — or none?** Read the manifests
 and pick at most one, by this precedence (first match wins):
 
+- `react-native` or `expo` in `package.json` dependencies → `react-native`.
+  A React Native repo also carries `ios/Podfile`, an `.xcodeproj` and Gradle
+  files for its native shells, so this rule wins over every native marker
+  below. Picking `ios` or `android` for it uploads no JavaScript source maps,
+  and every JavaScript stack trace stays minified.
 - `pubspec.yaml` → `flutter`
 - an `.xcodeproj`, `Podfile`, or `Package.swift` → `ios`
 - a Gradle build file (`build.gradle`, `build.gradle.kts`, `settings.gradle`) → `android`
@@ -50,7 +55,7 @@ and pick at most one, by this precedence (first match wins):
   then fails the whole build. This rule wins over every `package.json` match
   below — an Astro project that also depends on `vite` is still **none**.
 - otherwise read `package.json` dependencies, first match wins:
-  `react-native` → `react-native`; `nuxt` → `nuxt`; `next` → `nextjs`;
+  `nuxt` → `nuxt`; `next` → `nextjs`;
   `@angular/core` → `angular`; `vite` → `vite`; `webpack` → `webpack`;
   `rollup` → `rollup`; `react` → `react`; server-only Node → `node`;
   any other browser JS → `web`
