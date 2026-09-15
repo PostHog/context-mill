@@ -93,10 +93,12 @@ Then seed the graph:
   - `configure`, after `capture-exceptions` — build-config changes; it runs
     after the code edits so the two never fight over the same files.
   - `wire-ci`, after `configure` and `credentials`.
-  - `test-setup`, after `wire-ci` — offers the user a local end-to-end test
-    last, once everything is wired.
-- `report`, after every other queued task. It writes the handoff last, so it
-  describes what actually shipped.
+- `report`, after every other queued task except `test-setup`. It writes the
+  handoff once the work is done, so it describes what actually shipped.
+- When you queued the upload subgraph, `test-setup` last, after `report` — it
+  offers the user an optional local end-to-end test. The report comes first on
+  purpose: a user who walks away still gets it. Queue `report` before
+  `test-setup`, because `test-setup` names `report` as its dependency.
 
 Never plan an identify, capture, dashboard, or session-replay task — this run
 sets up error tracking, not the full integration. The minimal SDK footprint
@@ -106,8 +108,9 @@ that `install` and `init` leave behind is enough for exceptions to flow.
 
 Every task in the chosen graph is queued with that dependency shape, the four
 upload tasks (when queued) share the same `{ skillId, displayName }` inputs,
-`report` depends on the rest (directly or transitively), and the first task is
-runnable. Your plan states both facts explicitly: whether PostHog was
+`report` depends on every other task except `test-setup` (directly or
+transitively), `test-setup` (when queued) depends on `report`, and the first
+task is runnable. Your plan states both facts explicitly: whether PostHog was
 integrated — and, when you called it integrated, the name of the key you found
 defined — and which uploader variant matched — or, when you queue no upload
 tasks, why no variant applies: which readable-stack platform this is, or that

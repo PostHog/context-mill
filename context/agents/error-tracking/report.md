@@ -2,7 +2,6 @@
 type: report
 flow: error-tracking
 label: Summarise and hand off
-sink: true
 model_pi: openai/gpt-5.6-luna
 effort_pi: low
 model_sdk: claude-sonnet-5
@@ -10,7 +9,7 @@ effort_sdk: medium
 skills: []
 allowedTools: [Read, Glob, Grep, Write]
 disallowedTools: [enqueue_task]
-dependsOn: [capture-exceptions, wire-ci, test-setup]
+dependsOn: [capture-exceptions, wire-ci]
 ---
 
 ## Goal
