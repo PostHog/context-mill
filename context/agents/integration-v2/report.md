@@ -45,7 +45,8 @@ before those events mean anything.
 
 One `publish_handoff` call went through with the full report: what was
 installed and initialized, the events captured, whether identify was wired or
-skipped, error tracking added, the dashboard link, any build conflict in full,
+skipped, error tracking added, AI Observability and Logs configured or skipped
+with reasons, the dashboard link, any build conflict in full,
 and the next steps for the user. Every claim in it traces to a handoff, and
 what the run could not confirm reads as unconfirmed. The same report is
 mirrored into a PostHog notebook whose URL is emitted with the

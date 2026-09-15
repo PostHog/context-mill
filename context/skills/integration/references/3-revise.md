@@ -8,6 +8,11 @@ Check the project for errors. Read the package.json file for any type checking o
 
 Ensure that any components created were actually used.
 
+Install any dependencies declared by the AI Observability and Logs steps before
+verification, using the project's package manager. Include their changed files
+in this review and check that Logs preserved any AIO tracing setup. Verification
+of delivery belongs to the user's checklist; do not make paid LLM calls.
+
 Once all other tasks are complete, run any linter or prettier-like scripts found in the package.json, but ONLY on the files you have edited or created during this session. Do not run formatting or linting across the entire project's codebase.
 
 ## Status

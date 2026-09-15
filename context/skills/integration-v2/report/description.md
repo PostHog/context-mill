@@ -26,6 +26,9 @@ Draw on two sources only:
   (from `.posthog-wizard-cache/.posthog-events.json`).
 - Whether user identification was wired or skipped, and why.
 - The error tracking added.
+- AI Observability and Logs: what was configured or already present, or why each
+  was skipped. Use the task handoffs, including changed files and outstanding
+  verification; do not treat a skipped task as a successful setup.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.
@@ -46,6 +49,8 @@ code changed this run and drop the ones that don't fit:
   for CSP violations — a blocked SDK queues events silently and never sends.
 - If LLM analytics was set up: trigger the instrumented call path and confirm
   `$ai_generation` events appear in PostHog.
+- If Logs was set up: trigger the log path named in its handoff and confirm the
+  entry appears in PostHog Logs with the expected service and severity.
 - If auth exists and identify was wired: the returning-visitor path also calls
   identify, so returning sessions don't fragment onto anonymous distinct IDs.
 
