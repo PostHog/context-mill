@@ -68,11 +68,13 @@ const isCI = Boolean(process.env.CI);
 // matches. The LLM decides whether each match is a real threat or a
 // false positive
 //
-// The gateway's `ci` product serves CI runs with a personal API key. The
-// legacy `wizard` product is retired and refuses every caller with a 403.
-//   US:    https://gateway.us.posthog.com/ci
-//   EU:    https://gateway.eu.posthog.com/ci
-//   Local: http://localhost:3308/ci
+// Auth is a pre-issued gateway bearer read from the file named by
+// CONTEXT_MILL_WARLOCK_GATEWAY_TOKEN_FILE (CI writes the secret there), the
+// same mechanism the wizard's CI uses (WIZARD_CI_GATEWAY_TOKEN_FILE).
+// The URL carries no path; the SDK appends /v1/messages.
+//   US: https://ai-gateway.us.posthog.com
+//   EU: https://ai-gateway.eu.posthog.com
+// ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN override both for local runs.
 
 function getGatewayUrl() {
   const host = process.env.POSTHOG_HOST || "https://us.posthog.com";
@@ -88,25 +90,32 @@ function getGatewayUrl() {
     }
   }
 
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
-    return "http://localhost:3308/ci";
-  }
   if (hostname === "eu.posthog.com" || hostname === "eu.i.posthog.com") {
-    return "https://gateway.eu.posthog.com/ci";
+    return "https://ai-gateway.eu.posthog.com";
   }
-  return "https://gateway.us.posthog.com/ci";
+  return "https://ai-gateway.us.posthog.com";
+}
+
+function readGatewayToken() {
+  if (process.env.ANTHROPIC_AUTH_TOKEN) return process.env.ANTHROPIC_AUTH_TOKEN;
+  const tokenFile = process.env.CONTEXT_MILL_WARLOCK_GATEWAY_TOKEN_FILE;
+  if (!tokenFile) return null;
+  try {
+    return fs.readFileSync(tokenFile, "utf8").trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 function createLLMProvider() {
-  // Prefer the wizard's local proxy if available (ANTHROPIC_BASE_URL),
-  // otherwise fall back to the PostHog gateway.
   const baseURL = process.env.ANTHROPIC_BASE_URL || getGatewayUrl();
-  const apiKey = process.env.ANTHROPIC_AUTH_TOKEN || process.env.CONTEXT_MILL_WARLOCK_POSTHOG_PERSONAL_KEY;
-  if (!apiKey) return null;
+  const authToken = readGatewayToken();
+  if (!authToken) return null;
 
+  // authToken sends `Authorization: Bearer`; the gateway rejects `x-api-key`.
   const client = new Anthropic({
     baseURL,
-    apiKey,
+    authToken,
   });
 
   return async (prompt) => {
@@ -273,7 +282,7 @@ async function main() {
     console.log("LLM triage enabled (using PostHog gateway).\n");
   } else {
     console.log(
-      "LLM triage disabled (no API key configured). All matches will be treated as threats.\n",
+      "LLM triage disabled (no gateway token configured). All matches will be treated as threats.\n",
     );
   }
 
