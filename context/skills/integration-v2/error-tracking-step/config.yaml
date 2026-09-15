@@ -1,10 +1,433 @@
 # Orchestrator step-skill: fetched by task agents, never surfaced as a command.
-# The framework matrix is borrowed from the canonical integration group.
+# The framework matrix mirrors the canonical integration group's ids, but the
+# docs are its own: integration teaches SDK setup, this step teaches exception
+# capture, and for several platforms those are different pages. Borrowing the
+# matrix would hand the capture task the library page and nothing about panic
+# hooks, log handlers, or framework error boundaries.
 type: docs-only
 template: description.md
 description: Capture exceptions with PostHog around critical flows
 tags: [orchestrator, error-tracking]
 cli:
   role: internal
-variants_from: integration
+variants:
+- id: nextjs-app-router
+  framework: nextjs
+  default: true
+  display_name: Next.js App Router
+  tags:
+  - nextjs
+  - react
+  - ssr
+  - app-router
+  - javascript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/nextjs.md
+- id: nextjs-pages-router
+  framework: nextjs
+  display_name: Next.js Pages Router
+  tags:
+  - nextjs
+  - react
+  - ssr
+  - pages-router
+  - javascript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/nextjs.md
+- id: react-react-router-6
+  framework: react-router
+  default: true
+  display_name: React Router v6
+  tags:
+  - react
+  - react-router
+  - v6
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+- id: react-react-router-7-framework
+  framework: react-router
+  display_name: React Router v7 - Framework mode
+  tags:
+  - react
+  - react-router
+  - v7
+  - framework
+  - ssr
+  - javascript
+  - javascript_node
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+- id: react-react-router-7-data
+  framework: react-router
+  display_name: React Router v7 - Data mode
+  tags:
+  - react
+  - react-router
+  - v7
+  - data
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+- id: react-react-router-7-declarative
+  framework: react-router
+  display_name: React Router v7 - Declarative mode
+  tags:
+  - react
+  - react-router
+  - v7
+  - declarative
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+- id: react-vite
+  display_name: React (Vite)
+  tags:
+  - react
+  - vite
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+- id: nuxt-3-6
+  framework: nuxt
+  display_name: Nuxt 3.6
+  tags:
+  - nuxt
+  - javascript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
+- id: nuxt-4
+  framework: nuxt
+  default: true
+  display_name: Nuxt 4
+  tags:
+  - nuxt
+  - vue
+  - ssr
+  - javascript
+  - typescript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+- id: vue-3
+  framework: vue
+  display_name: Vue 3
+  tags:
+  - vue
+  - javascript
+  - typescript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+  - https://posthog.com/docs/libraries/vue-js.md
+- id: django
+  framework: django
+  display_name: Django
+  tags:
+  - django
+  - python
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/python.md
+  - https://posthog.com/docs/libraries/django.md
+- id: flask
+  framework: flask
+  display_name: Flask
+  tags:
+  - flask
+  - python
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/python.md
+  - https://posthog.com/docs/libraries/flask.md
+- id: fastapi
+  framework: fastapi
+  display_name: FastAPI
+  tags:
+  - fastapi
+  - python
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/python.md
+  - https://posthog.com/docs/libraries/python.md
+- id: react-tanstack-router-file-based
+  framework: tanstack-router
+  display_name: React with TanStack Router (file-based)
+  tags:
+  - react
+  - tanstack-router
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+  - https://posthog.com/docs/libraries/tanstack-start.md
+- id: react-tanstack-router-code-based
+  framework: tanstack-router
+  default: true
+  display_name: React with TanStack Router (code-based)
+  tags:
+  - react
+  - tanstack-router
+  - spa
+  - javascript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+  - https://posthog.com/docs/libraries/tanstack-start.md
+- id: tanstack-start
+  framework: tanstack-start
+  display_name: TanStack Start
+  tags:
+  - react
+  - tanstack-start
+  - tanstack-router
+  - javascript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react.md
+  - https://posthog.com/docs/libraries/tanstack-start.md
+- id: laravel
+  framework: laravel
+  display_name: Laravel
+  tags:
+  - laravel
+  - php
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/php.md
+  - https://posthog.com/docs/libraries/laravel.md
+- id: php
+  display_name: PHP
+  tags:
+  - php
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/php.md
+- id: wordpress
+  framework: wordpress
+  display_name: WordPress
+  tags:
+  - wordpress
+  - php
+  - cms
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/php.md
+  - https://posthog.com/docs/libraries/wordpress.md
+  - https://posthog.com/docs/libraries/php.md
+- id: ruby-on-rails
+  framework: rails
+  display_name: Ruby on Rails
+  tags:
+  - ruby-on-rails
+  - ruby
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+- id: android
+  framework: android
+  display_name: Android
+  tags:
+  - android
+  - java
+  - kotlin
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/android.md
+- id: sveltekit
+  framework: sveltekit
+  display_name: SvelteKit
+  tags:
+  - sveltekit
+  - svelte
+  - javascript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/svelte.md
+  - https://posthog.com/docs/libraries/svelte.md
+- id: python
+  framework: python
+  display_name: Python
+  tags:
+  - python
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/python.md
+- id: javascript_node
+  framework: javascript_node
+  display_name: JavaScript Node
+  tags:
+  - javascript_node
+  - javascript
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/node.md
+- id: javascript_web
+  framework: javascript_web
+  display_name: JavaScript Web
+  tags:
+  - javascript_web
+  - javascript
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+- id: ruby
+  framework: ruby
+  display_name: Ruby
+  tags:
+  - ruby
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/ruby.md
+- id: elixir
+  framework: elixir
+  display_name: Elixir
+  tags:
+  - elixir
+  - phoenix
+  - plug
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/elixir.md
+- id: java
+  framework: java
+  display_name: Java (Spring Boot)
+  tags:
+  - java
+  - java-server
+  docs_urls:
+  - https://posthog.com/docs/libraries/java.md
+- id: go
+  framework: go
+  display_name: Go
+  tags:
+  - go
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/go.md
+- id: rust
+  framework: rust
+  display_name: Rust
+  tags:
+  - rust
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/rust.md
+- id: swift
+  framework: swift
+  display_name: Swift (iOS/macOS)
+  tags:
+  - swift
+  - ios
+  - macos
+  - swiftui
+  - xcodegen
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/ios.md
+  - https://posthog.com/docs/libraries/ios.md
+  - https://posthog.com/docs/libraries/ios/usage.md
+  - https://posthog.com/docs/libraries/ios/configuration.md
+- id: flutter
+  framework: flutter
+  display_name: Flutter
+  tags:
+  - flutter
+  - dart
+  - mobile
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/flutter.md
+- id: kmp
+  display_name: Kotlin Multiplatform
+  tags:
+  - kmp
+  - kotlin
+  - multiplatform
+  - mobile
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/kmp.md
+- id: react-native
+  framework: react-native
+  default: true
+  display_name: React Native
+  tags:
+  - react-native
+  - javascript
+  - typescript
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react-native.md
+- id: expo
+  framework: react-native
+  display_name: Expo
+  tags:
+  - expo
+  - react-native
+  - javascript
+  - typescript
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/react-native.md
+  - https://posthog.com/docs/libraries/react-native.md
+- id: astro-static
+  framework: astro
+  display_name: Astro (Static)
+  tags:
+  - astro
+  - javascript
+  - typescript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+  - https://posthog.com/docs/libraries/astro.md
+- id: astro-view-transitions
+  framework: astro
+  display_name: Astro (View Transitions)
+  tags:
+  - astro
+  - astro-view-transitions
+  - javascript
+  - typescript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+  - https://posthog.com/docs/libraries/astro.md
+- id: astro-ssr
+  framework: astro
+  display_name: Astro (SSR)
+  tags:
+  - astro
+  - astro-ssr
+  - javascript
+  - typescript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+  - https://posthog.com/docs/libraries/astro.md
+- id: astro-hybrid
+  framework: astro
+  default: true
+  display_name: Astro (Hybrid)
+  tags:
+  - astro
+  - astro-hybrid
+  - javascript
+  - typescript
+  - javascript_web
+  - javascript_node
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/web.md
+  - https://posthog.com/docs/libraries/astro.md
+- id: angular
+  framework: angular
+  display_name: Angular
+  tags:
+  - angular
+  - javascript
+  - typescript
+  - javascript_web
+  docs_urls:
+  - https://posthog.com/docs/error-tracking/installation/angular.md
 packaging: bundle
