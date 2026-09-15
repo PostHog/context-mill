@@ -47,15 +47,18 @@ Run **two** Greps in parallel:
 - `\$process_person_profile|process_person_profile|processPersonProfile` — explicit usage of the property anywhere.
 
 Read each file that contains a server-side `capture(` hit, once. For each server-side capture, determine whether:
-- The capture is intended to update person properties (it should follow a corresponding `identify()` and pass `$set` / `$set_once`), OR
-- The capture is a transactional/business event that shouldn't touch person properties (most cases — `subscription_upgraded`, `webhook_received`, `cron_job_completed`).
+- The capture defines the person or their account state — signup/registration, subscription started, plan changed, churn, or anything that should follow a corresponding `identify()` and pass `$set` / `$set_once`. These are **supposed** to reach the person, OR
+- The capture only records that something happened — a row written, a job run, a webhook received (`webhook_received`, `cron_job_completed`).
 
 For the second category, check whether `$process_person_profile: false` is set in the properties object.
 
+This check reads in **both** directions. A missing flag corrupts person properties; a flag on everything is worse, because the project then has no person profiles at all and loses cohorts, person-property filters, lifecycle insights, and its acquisition funnel. Judge each capture on which category it falls in, not on a global preference.
+
 Rule:
-- pass: every server-side capture either passes `$process_person_profile: false` OR is paired with an explicit identify()/$set in the same flow (intentional person-property update).
-- suggestion: 1–3 server-side captures lack `$process_person_profile: false` and don't appear to update person properties intentionally — recommend adding the flag to prevent silent property corruption.
-- warning: 4+ server-side captures or any high-frequency server-side capture (cron, webhook, polling loop) without `$process_person_profile: false` — high blast radius for property corruption.
+- pass: every server-side capture that only records an activity passes `$process_person_profile: false`, AND every person-defining capture (signup, subscription, plan change, churn) does **not** — each paired with an explicit identify()/$set in the same flow.
+- suggestion: 1–3 activity-only captures lack `$process_person_profile: false` and don't appear to update person properties intentionally — recommend adding the flag to prevent silent property corruption.
+- warning: 4+ activity-only captures or any high-frequency server-side capture (cron, webhook, polling loop) without `$process_person_profile: false` — high blast radius for property corruption.
+- warning: `$process_person_profile: false` is set on a person-defining event (signup, subscription started, plan changed, churn), or on **every** server capture in the project with no `identify()` anywhere — the project creates no person profiles at all. Name the events that should be let through.
 
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `server-process-person-profile`, including `file` (path:line of the most representative offending capture) and `details` as compact JSON:
 
