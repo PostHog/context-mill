@@ -68,10 +68,11 @@ const isCI = Boolean(process.env.CI);
 // matches. The LLM decides whether each match is a real threat or a
 // false positive
 //
-// Gateway URL pattern matches the wizard:
-//   US:    https://gateway.us.posthog.com/wizard
-//   EU:    https://gateway.eu.posthog.com/wizard
-//   Local: http://localhost:3308/wizard
+// The gateway's `ci` product serves CI runs with a personal API key. The
+// legacy `wizard` product is retired and refuses every caller with a 403.
+//   US:    https://gateway.us.posthog.com/ci
+//   EU:    https://gateway.eu.posthog.com/ci
+//   Local: http://localhost:3308/ci
 
 function getGatewayUrl() {
   const host = process.env.POSTHOG_HOST || "https://us.posthog.com";
@@ -88,12 +89,12 @@ function getGatewayUrl() {
   }
 
   if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
-    return "http://localhost:3308/wizard";
+    return "http://localhost:3308/ci";
   }
   if (hostname === "eu.posthog.com" || hostname === "eu.i.posthog.com") {
-    return "https://gateway.eu.posthog.com/wizard";
+    return "https://gateway.eu.posthog.com/ci";
   }
-  return "https://gateway.us.posthog.com/wizard";
+  return "https://gateway.us.posthog.com/ci";
 }
 
 function createLLMProvider() {
