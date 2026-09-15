@@ -36,6 +36,14 @@ translating any `npm install` the skill or docs show (`pnpm add -D …`,
 `workspace:*` dependencies (`EUNSUPPORTEDPROTOCOL`) — that error means the
 wrong manager, never a flag to retry with.
 
+When the upload step you wire runs a machine-global `posthog-cli` rather than
+one from the project's own dependencies, check that it is on the `PATH`
+(`command -v posthog-cli`). Do not try to install it: a global install is
+blocked for you, and the wizard already tried before your task. When it is
+missing, name it in your handoff as a manual follow-up — run
+`npm install -g @posthog/cli@latest` before the next release build — because
+without it the upload step cannot run.
+
 When your changes make the build emit a bundle to a new directory (`dist/`,
 `build/`), check that some script actually runs that output. A project whose
 `build` writes `dist/index.js` while `start` still runs the original source

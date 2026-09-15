@@ -30,7 +30,7 @@ a **"What you still need to do"** section — numbered, copy-pasteable:
 2. Add it as the CI secret the wire-ci step referenced, named exactly as in
    the pipeline config.
 3. Any other manual follow-up the handoffs carry (an untraceable deploy path,
-   provider-side settings).
+   provider-side settings, installing a missing `posthog-cli`).
 
 Then cover, briefly and concretely:
 
