@@ -17,7 +17,7 @@ The brackets carry the per-tool detail, which is what keeps the **prompt one lin
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
 - **GitHub Issues** — reuses the GitHub App the wizard connected before this run started (connector: `5a-github.md`).
-- **Linear** — a one-click OAuth link (connector: `5b-linear.md`).
+- **Linear** — a one-click OAuth link, then one multi-select for which Linear teams Self-driving reads (connector: `5b-linear.md`).
 - **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
 - **Google Search Console** — a PostHog **connect link** that runs the Google OAuth grant and property pick in the browser and creates the source there; the run verifies it afterwards (connector: `5d-google-search-console.md`).
 
@@ -131,7 +131,7 @@ Two things narrow what actually bills, so don't imply every record becomes a PR:
 4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
    - GitHub Issues → `github` / `issue`
-   - Linear → `linear` / `issue`
+   - Linear → `linear` / `issue`. When `5b-linear.md` recorded `linear_team_ids`, add `config: { "linear_team_ids": [...] }` to the create, or to the partial-update when a row already exists. No recorded pick (already connected, or picked but not connected) → write no `config`; the row reads every team.
    - Jira → `jira` / `issue`
    - GitLab → `gitlab` / `issue`
    - Gitea → `gitea` / `issue`
