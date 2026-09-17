@@ -88,7 +88,9 @@ Reach `external-data-sources-create` through the PostHog `exec` tool (`info` the
 
    - One or more teams picked (and not "All teams") → record `linear_team_ids` as those team ids. Step 5's enable writes them as `config.linear_team_ids` on the `linear` / `issue` row.
    - "All teams" picked, or "All teams" together with teams → record `linear_team_ids: []`. An empty list means every team.
-   - The teams call fails, or returns no teams → don't re-ask; record `linear_team_ids: []` and note in the report that the user can pick teams later in the inbox (the Linear source's Filters button).
+   - The user escapes the question (the answer arrives as `__cancelled__`, which a decline and a timeout share), the teams call fails, or it returns no teams → don't re-ask; record `linear_team_ids: []` and note in the report that the user can pick teams later in the inbox (the Linear source's Filters button).
+
+   **`All teams` holds the first slot as this question's decline** — the narrowing is the opt-in here, so declining it is the one answer that changes nothing about what the user already agreed to. Every branch above still enables the responder: the user authorized Linear back in step 5, under a prompt that says Self-driving reads everything open in it, and its warehouse source is already syncing, so a declined or failed narrowing keeps that agreed scope rather than dropping the connection — on is the only direction this run moves a source. That is what makes the report line load-bearing: it has to name the scope as "all teams" and say where to change it.
 
    Existing Linear connections never get this question: the run only asks for a source it created itself.
 
