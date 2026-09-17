@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.0](https://github.com/PostHog/context-mill/compare/v1.53.0...v1.54.0) (2026-09-17)
+
+
+### Features
+
+* **skills:** add tracing skill family ([#391](https://github.com/PostHog/context-mill/issues/391)) ([aa2d54a](https://github.com/PostHog/context-mill/commit/aa2d54a1fd06f8bb0ec2c135a2adebd18be6c607))
+
 ## [1.53.0](https://github.com/PostHog/context-mill/compare/v1.52.0...v1.53.0) (2026-09-15)
 
 
