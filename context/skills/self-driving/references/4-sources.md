@@ -21,10 +21,12 @@ Reach the source-config tools through the PostHog `exec` tool — `info` then `c
 ## The write recipe (use for every source here and in step 5)
 
 1. List the current sources with `inbox-source-configs-list` (step 1 no longer pre-fetches them — get the current rows here).
-2. Row exists and `enabled: true` → leave it alone, record "already enabled".
+2. Row exists and `enabled: true` → leave it alone, record "already enabled" (one exception below, Linear's).
 3. Row exists and `enabled: false` → `inbox-source-configs-partial-update` with `{ enabled: true }`.
 4. No row → `inbox-source-configs-create` with `{ source_product, source_type, enabled: true }`. A 400 about uniqueness means a row appeared since you listed — fall back to 3.
 5. Any other failure → record it as a follow-up and move on; a single failed source never stops the run.
+
+**The one write here that isn't `enabled`.** When step 5b recorded a Linear team pick, the `linear` / `issue` row takes its `config.linear_team_ids` write on whichever branch above it landed — branch 2 included, because an already-enabled row is the designed-for case there: a run enables that responder as dormant when the user picks Linear but skips the OAuth, so the run that finally records a pick meets a row it would otherwise leave alone. Skipping the write makes the report claim a narrowing the server never received, which is worse than never asking. `5-connected-tools.md`'s Linear bullet carries the merge rules. Every other source in this step and step 5 writes `enabled` and nothing else.
 
 ## Enable
 
