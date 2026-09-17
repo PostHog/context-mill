@@ -84,6 +84,8 @@ Reach `external-data-sources-create` through the PostHog `exec` tool (`info` the
 }
 ```
 
+   **Every label in that list has to be unique, the sentinel included.** The picker keys ticks by label, so two rows sharing one label tick together and submit both values — one tick on either of two teams named `Platform` hands over both, and a team named exactly `All teams` would select every team. Linear enforces uniqueness on a team's key, not on its display name, and this call returns only `id` and `name`. So when a name repeats, or matches `All teams`, append ` (<team id>)` to each colliding row's label. The `value`s never change.
+
    - One or more teams picked (and not "All teams") → record `linear_team_ids` as those team ids. Step 5's enable writes them as `config.linear_team_ids` on the `linear` / `issue` row.
    - "All teams" picked, or "All teams" together with teams → record `linear_team_ids: []`. An empty list means every team.
    - The teams call fails, or returns no teams → don't re-ask; record `linear_team_ids: []` and note in the report that the user can pick teams later in the inbox (the Linear source's Filters button).
