@@ -18,6 +18,7 @@ commandments:
     # PostHog-specific
     - For feature flags, use useFeatureFlagEnabled() or useFeatureFlagPayload() hooks - they handle loading states and external sync automatically
     - Add analytics capture in event handlers where user actions occur, NOT in useEffect reacting to state changes
+    - When the handler awaits a server call, capture in the success branch after it resolves, never at the top of the handler - a request the server rejects must not count as a success. When the outcome only ever arrives as state (useActionState, a mutation hook's isSuccess), capture inside the server action instead, or off that success state - the one legitimate exception to the useEffect rule above.
     # General React patterns (react.dev/learn/you-might-not-need-an-effect)
     - Do NOT use useEffect for data transformation - calculate derived values during render instead
     - Do NOT use useEffect to respond to user events - put that logic in the event handler itself
@@ -60,7 +61,8 @@ commandments:
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
-    - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
+    - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties, captured after the write succeeds rather than on entry to the handler
+    - 'Backend SDKs process a person profile on every capture carrying a distinct id, and the runtime metadata they attach ($os, $lib) overwrites what the browser set on that person. Pass `$process_person_profile: false` on server events that only record that something happened - a row written, a job run, a webhook received. NOT on signup, subscription, plan-change or churn events: those must reach the person, paired with identify()/$set. Never put the flag on every capture - that leaves the project with no person profiles at all.'
     - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
     - The SDK batches events and flushes asynchronously. await flush() or await shutdown() before letting that process exit. If unsure, set flushAt 1 and flushInterval 0.
     - '`posthog.capture()` enqueues synchronously and returns; the batched HTTP send happens afterwards. Treat every per-request handler as short-lived even when the framework feels like a server: Next.js / Nuxt / SvelteKit / Remix route handlers, serverless and edge functions, and Lambda are torn down per invocation before the send runs. Create the client with flushAt 1 and flushInterval 0, then await the send before returning. Always use `await posthog.flush()` for a shared/singleton client, `await posthog.shutdown()` for a per-request client. Never skip the awaited flush or risk the enqueued event being silently dropped.'
