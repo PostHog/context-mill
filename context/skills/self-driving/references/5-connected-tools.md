@@ -33,7 +33,7 @@ Emit:
 
 ## Tools
 
-Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way. The credential connector (`5c-credentials.md`) additionally uses `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, and `external-data-sources-create`, and the Google Search Console connector (`5d-google-search-console.md`) uses `data-warehouse-source-connect-link` and `external-data-sources-list`, all through the same `exec` tool.
+Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `external-data-sources-list` through the PostHog `exec` tool (`info` then `call`); the source-config tools from step 4 are reached the same way, plus `inbox-source-configs-retrieve` — step 4's list response omits `config`, and the Linear team-ids write below needs the stored keys. The credential connector (`5c-credentials.md`) additionally uses `data-warehouse-source-connect-link`, `data-warehouse-stored-credentials-list`, and `external-data-sources-create`, and the Google Search Console connector (`5d-google-search-console.md`) uses `data-warehouse-source-connect-link` and `external-data-sources-list`, all through the same `exec` tool.
 
 ## Do
 
@@ -131,7 +131,7 @@ Two things narrow what actually bills, so don't imply every record becomes a PR:
 4. Enable the source row (step 4's write recipe) for every tool the user picked — created, verified, and picked-but-not-connected alike (a dormant row is harmless and saves a later trip):
 
    - GitHub Issues → `github` / `issue`
-   - Linear → `linear` / `issue`. When `5b-linear.md` recorded `linear_team_ids`, add `config: { "linear_team_ids": [...] }` to the create, or to the partial-update when a row already exists. No recorded pick (already connected, or picked but not connected) → write no `config`; the row reads every team.
+   - Linear → `linear` / `issue`. When `5b-linear.md` recorded `linear_team_ids`, add `config: { "linear_team_ids": [...] }` to the create. When a row already exists, **read it with `inbox-source-configs-retrieve` first** and send that row's existing `config` keys back with the team ids merged in — a partial update replaces `config` as one whole object, and `inbox-source-configs-list` doesn't return it, so team ids written on their own delete the user's `steering` text and `default_not_actionable` flag. Both keys drive the actionability gate, so losing them silently changes which Linear issues become signals and which ones get a paid draft PR. A failed retrieve → still write `enabled: true`, write no `config`, and record the team pick as a follow-up; reading every team costs the user less than losing their steering. No recorded pick (already connected, or picked but not connected) → write no `config`; the row reads every team.
    - Jira → `jira` / `issue`
    - GitLab → `gitlab` / `issue`
    - Gitea → `gitea` / `issue`
