@@ -1,0 +1,62 @@
+# Tracing skills - docs-only (no example projects)
+type: skill
+template: description.md
+description: PostHog distributed tracing for {display_name}
+tags: [tracing]
+shared_docs:
+  - https://posthog.com/docs/distributed-tracing/start-here.md
+  - https://posthog.com/docs/distributed-tracing/basics.md
+variants:
+  - id: nodejs
+    display_name: Node.js
+    tags: [javascript]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/nodejs.md
+
+  - id: nextjs
+    display_name: Next.js
+    tags: [nextjs, javascript]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/nextjs.md
+
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/python.md
+
+  - id: go
+    display_name: Go
+    tags: [go]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/go.md
+
+  - id: java
+    display_name: Java
+    tags: [java]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/java.md
+
+  - id: dotnet
+    display_name: .NET
+    tags: [dotnet, csharp]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/dotnet.md
+
+  - id: php
+    display_name: PHP
+    tags: [php]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/php.md
+
+  - id: ruby
+    display_name: Ruby
+    tags: [ruby]
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/ruby.md
+
+  - id: other
+    display_name: Other Languages
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation.md
