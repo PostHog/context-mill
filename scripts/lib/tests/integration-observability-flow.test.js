@@ -49,9 +49,11 @@ describe('default integration observability flow', () => {
     });
 
     it('serializes the new writers after existing instrumentation and before review', () => {
-        for (const type of ['install', 'init', 'identify', 'capture', 'error-tracking']) {
+        for (const type of ['install', 'init', 'identify', 'capture']) {
             expect(ancestors('ai-observability').has(type)).toBe(true);
         }
+        // error-tracking runs parallel to AIO; review still waits on both.
+        expect(ancestors('ai-observability').has('error-tracking')).toBe(false);
         expect(ancestors('logs').has('ai-observability')).toBe(true);
         const reviewed = ancestors('review');
         for (const prompt of prompts.filter((p) => p.type !== 'review' && p.allowedTools?.some((t) => ['Write', 'Edit'].includes(t)))) {

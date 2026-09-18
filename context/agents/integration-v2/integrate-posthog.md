@@ -23,9 +23,9 @@ Plan a PostHog integration and seed the task queue with this graph:
   the SDK installed and initialized, not the events.
 - `capture`, after `identify` — it decides the events and instruments them, and it
   reads how identity is already established before it instruments anything.
-- `ai-observability`, after `capture` and `error-tracking` — it instruments existing
-  LLM calls, or reports that none apply. Queue it on every default run; the task
-  checks applicability rather than the planner guessing from a package name.
+- `ai-observability`, after `capture`, parallel to `error-tracking` — it instruments
+  existing LLM calls, or reports that none apply. Queue it on every default run; the
+  task checks applicability rather than the planner guessing from a package name.
 - `logs`, after `ai-observability` — it configures log capture on supported
   platforms, or reports why it does not apply. Queue it even when AIO will be
   skipped. These tasks run sequentially because they can edit the same dependency

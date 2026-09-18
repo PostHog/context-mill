@@ -9,7 +9,7 @@ effort_sdk: high
 skills: []
 allowedTools: [Read, Write, Edit, Glob, Grep, load_skill_menu, install_skill]
 disallowedTools: [enqueue_task]
-dependsOn: [capture, error-tracking]
+dependsOn: [capture]
 ---
 
 ## Goal
