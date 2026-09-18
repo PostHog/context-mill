@@ -10,6 +10,11 @@ npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poet
 poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle). Add the
 client library, plus the server library if the app sends events server-side.
 
+If the repo has manifests for more than one ecosystem (a JS frontend alongside a
+Python/PHP/Ruby backend, say), match the manifest for the language this task's
+framework reference targets, not whichever manifest an automatic detector defaults
+to for the whole repo.
+
 Read the manifest first. If the SDK is already installed, leave it and say so.
 
 Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
