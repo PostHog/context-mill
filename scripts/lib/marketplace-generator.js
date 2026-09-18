@@ -96,8 +96,13 @@ function writeSkillReminderHook(pluginDir) {
                 {
                     hooks: [
                         {
+                            // Invoked through bash so the hook survives losing
+                            // its executable bit: the plugin trees reach
+                            // PostHog/skills as GitHub-API-signed commits
+                            // (createCommitOnBranch), and that API has no file
+                            // mode support — everything lands as 100644.
                             type: 'command',
-                            command: '${CLAUDE_PLUGIN_ROOT}/hooks/skill-reminder.sh',
+                            command: 'bash ${CLAUDE_PLUGIN_ROOT}/hooks/skill-reminder.sh',
                         },
                     ],
                 },
