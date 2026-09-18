@@ -4,7 +4,7 @@ next_step: null
 
 # Step 6 — Generate the audit report
 
-The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth. Every check the wizard seeded for this skill ends up in the report, even passes; nothing is invented.
+The audit report is rendered **directly from `.posthog-audit-checks.json`** — that file is the source of truth. Every check Step 1 seeded ends up in the report, even passes; nothing is invented.
 
 ## Status
 
