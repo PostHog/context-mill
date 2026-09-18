@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.1](https://github.com/PostHog/context-mill/compare/v1.54.0...v1.54.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **audit:** seed the ledger in each narrow audit skill ([#400](https://github.com/PostHog/context-mill/issues/400)) ([5da51c3](https://github.com/PostHog/context-mill/commit/5da51c32531ecd87f12caf91b082319da0eed41b))
+
 ## [1.54.0](https://github.com/PostHog/context-mill/compare/v1.53.0...v1.54.0) (2026-09-17)
 
 
