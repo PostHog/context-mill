@@ -11,7 +11,7 @@ Consult the documentation for API details and platform-specific patterns.
 ## Choose the capture path
 
 - **Node.js with `posthog-node` >= 5.52.0**: `posthog-node` creates and exports spans itself, with no OpenTelemetry dependency. Set the `traces` option on the existing client and wrap operations in `withSpan` (or `startSpan` for work that can't wrap a callback).
-- **Python with `posthog` >= 7.57.0**: the `posthog` package creates and exports spans itself, with no OpenTelemetry dependency. Set the `traces` option on the existing synchronous `Posthog` client (or `posthog.traces` for the module-level API) and wrap operations in `with posthog.start_span(...)`. `AsyncPosthog` has no span API, so use OpenTelemetry there.
+- **Python with `posthog` >= 7.58.0**: the `posthog` package creates and exports spans itself, with no OpenTelemetry dependency. Set the `traces` option on the existing synchronous `Posthog` client (or `posthog.traces` for the module-level API) and wrap operations in `with posthog.start_span(...)`. `AsyncPosthog` has no span API, so use OpenTelemetry there.
 - **OpenTelemetry already in the project**: point its OTLP trace exporter at `/i/v1/traces` on the PostHog host, with the project token as an `Authorization: Bearer` header. Don't add `posthog-node` or `posthog` spans alongside it.
 - **Everything else**: use the OpenTelemetry SDK for the language, as the platform reference describes. It is also the only route to auto-instrumentation of HTTP servers, frameworks, and database drivers.
 
