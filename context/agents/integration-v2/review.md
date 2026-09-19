@@ -22,7 +22,15 @@ reading of the same changeset.
 install now, then verify the project builds, typechecks, and lints, whichever
 of those it defines. Install what the manifest declares plus every package the
 upstream handoffs name, adding the named ones by bare name with the project's
-package manager so it resolves real versions. An optional upstream task
+package manager so it resolves real versions. The app's existing dependencies
+are not yours to touch: never upgrade, downgrade, or re-add a package this
+integration did not introduce. If an instrumentation package's peer range
+conflicts with a dependency the app already has, install an older
+instrumentation version that fits the app's existing versions — find it with
+the package manager, stepping down major versions (`pkg@^7`, then `@^6`,
+…) for a few attempts rather than looking for documentation of one. If none
+fits, revert that piece of instrumentation, leave the app's dependency alone,
+and record the incompatibility so the report can say what was skipped and why. An optional upstream task
 (AI Observability, Logs) may have failed and left partial edits no handoff
 describes — install and build either way, and let the build surface stray
 imports; fix or revert them like any other defect. Do not run the test suite; the

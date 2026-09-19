@@ -18,15 +18,23 @@ optional: true
 Configure PostHog log capture for this project's supported runtimes. Load the
 `logs` skill menu, install its matching skill, and read the platform reference
 before editing. Inspect the runtime and existing logging setup; use the
-documented OTLP exporter or SDK-native log capture for that platform. A
+documented OTLP exporter or SDK-native log capture for that platform. If the
+app already uses OpenTelemetry, write against its existing OTel version and
+name exporter packages compatible with it — never require, or write code that
+assumes, an upgrade of a package this integration did not introduce. A
 browser-only app must not receive a server exporter. If no documented setup
 applies, complete as `not needed` and explain why.
 
-Reuse any existing PostHog log export and leave its handlers and outputs
-intact. If capture is already configured, report that without adding a second
-exporter. Preserve any tracing provider AIO configured in the previous step.
-Keep changes to log setup and existing logging paths; do not scatter new logs
-through unrelated code or export secrets, request bodies, or user data.
+Export only log lines this integration adds. Create a dedicated logger for the
+PostHog exporter and emit a few purpose-written lines at meaningful points the
+app already passes through. Even where the platform reference attaches the
+exporter to the application's root or existing loggers, do not — the app's
+existing logs are data this run has no mandate to export, and every line that
+leaves must be visible in this run's diff. Reuse any existing PostHog log
+export and leave all existing handlers and outputs intact; if capture is
+already configured, report that without adding a second exporter. Preserve any
+tracing provider AIO configured in the previous step. Do not export secrets,
+request bodies, or user data, and do not scatter logs through unrelated code.
 
 This is the instrumentation part of a larger integration. Instead of the
 standalone skill's install command, name the required packages in your handoff
@@ -45,5 +53,8 @@ guessing a region.
 Log capture is configured once for the supported runtime, was already present,
 or has a clear skip reason. The handoff names the changed files, packages, env
 variable names (never values), and any dependency work for review. Give a
-specific existing log path the user can trigger and find in PostHog Logs;
-delivery remains unverified until observed. Do not publish a separate report.
+specific code path the user can trigger to produce one of the added log lines
+and find it in PostHog Logs; delivery remains unverified until observed. Note
+for the report that only lines added by this run are exported, and the one-line
+change that routes the app's existing loggers into the same exporter if the
+user wants more. Do not publish a separate report.
