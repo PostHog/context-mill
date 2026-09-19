@@ -29,10 +29,11 @@ Keep changes to log setup and existing logging paths; do not scatter new logs
 through unrelated code or export secrets, request bodies, or user data.
 
 This is the instrumentation part of a larger integration. Instead of the
-standalone skill's install command, declare required packages in the manifest
-and leave installation, lockfile updates, builds, and lint to review. For
-manifests managed by tooling (such as Go), pass the required packages to review
-instead of editing them by hand. Use `detect_package_manager` if needed. Use
+standalone skill's install command, name the required packages in your handoff
+and leave installation, manifest and lockfile updates, builds, and lint to
+review. Do not edit dependency manifests or write a version number you
+invented — the package manager resolves real versions when review installs by
+name. Use `detect_package_manager` if needed. Use
 the wizard's supplied project and region and the env names from upstream
 handoffs; inspect and write environment files only through `check_env_keys`
 and `set_env_values`. Do not request credentials or select a different project.

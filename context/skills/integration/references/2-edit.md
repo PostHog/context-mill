@@ -46,7 +46,9 @@ For both skills, use the project credentials and region supplied by the wizard.
 Inspect and change environment files only through `check_env_keys` and
 `set_env_values`, reusing existing variable names. Do not ask for credentials or
 guess a region. Follow this runtime's tool restrictions; defer any dependency
-installation or verification still needed to the revise step. Do not make paid
+installation or verification still needed to the revise step, recording the
+package names — never write a version number you invented into a manifest; the
+package manager resolves real versions at install. Do not make paid
 LLM calls or claim delivery based on code changes. Keep each result (configured,
 already present, or skipped with a reason) for the final report, including a
 concrete path the user can trigger to check delivery.

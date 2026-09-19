@@ -8,8 +8,9 @@ Check the project for errors. Read the package.json file for any type checking o
 
 Ensure that any components created were actually used.
 
-Install any dependencies declared by the AI Observability and Logs steps before
-verification, using the project's package manager. Include their changed files
+Install any dependencies the AI Observability and Logs steps recorded before
+verification, adding each by bare package name with the project's package
+manager so it resolves real versions — do not guess version pins. Include their changed files
 in this review and check that Logs preserved any AIO tracing setup. Verification
 of delivery belongs to the user's checklist; do not make paid LLM calls.
 

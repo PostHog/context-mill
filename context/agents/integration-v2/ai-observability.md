@@ -29,11 +29,12 @@ Reuse the PostHog client and identity established earlier in this run. If a
 variant cannot be chosen from the code, report the ambiguity as `not needed`;
 this default run does not ask the user to choose a provider.
 
-This is the instrumentation part of a larger integration. Declare dependencies
-in the manifest; the following review task installs them and checks imports,
-builds, and lint. Defer the skill's package-manager and import-check commands
-to that task. For Go, leave the required modules in the handoff for review to
-add with `go get` and `go mod tidy`; do not hand-edit `go.mod` or `go.sum`.
+This is the instrumentation part of a larger integration. Name the packages
+this task needs in your handoff for review to install; do not edit dependency
+manifests, and never write a version number you invented — the package manager
+resolves real versions when review installs by name. Defer the skill's
+package-manager and import-check commands to that task. For Go, review adds the
+modules with `go get` and `go mod tidy`; do not hand-edit `go.mod` or `go.sum`.
 Do not run the app or make paid LLM calls. Use `check_env_keys` and
 `set_env_values` for environment files, using the project credentials supplied
 by the wizard.

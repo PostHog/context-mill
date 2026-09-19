@@ -18,17 +18,19 @@ You are the last hands on the code. First make the integration run, then review 
 then leave it building to the best of your ability. Do both in one pass, verifying and reviewing are the same
 reading of the same changeset.
 
-**Install and verify.** The earlier steps edited code and declared the SDK in the
-manifest but did not install it — install now, then verify the project builds,
-typechecks, and lints, whichever of those it defines. An optional upstream task
+**Install and verify.** The earlier steps edited code but did not install —
+install now, then verify the project builds, typechecks, and lints, whichever
+of those it defines. Install what the manifest declares plus every package the
+upstream handoffs name, adding the named ones by bare name with the project's
+package manager so it resolves real versions. An optional upstream task
 (AI Observability, Logs) may have failed and left partial edits no handoff
-describes — install whatever the manifest declares either way, and let the build
-surface stray imports; fix or revert them like any other defect. Do not run the test suite; the
+describes — install and build either way, and let the build surface stray
+imports; fix or revert them like any other defect. Do not run the test suite; the
 runtime does not allow it, and a green build is the bar. A bad version only surfaces
 here: if the install fails because a declared version does not exist (npm `ETARGET`,
-"no matching version", a yanked release), fix the manifest to a real published
-version — match the framework reference example's spec, or a caret range that
-resolves — and install again. If the failure is the environment, not the
+"no matching version", a yanked release), do not guess pins — reinstall the
+package by bare name and let the package manager pick, matching the framework
+reference example's spec only if that also fails. If the failure is the environment, not the
 integration's own change (a pre-existing broken dependency, a package manager that
 cannot provision), note it and move on; do not spiral.
 
