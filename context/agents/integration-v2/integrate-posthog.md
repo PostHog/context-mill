@@ -23,11 +23,19 @@ Plan a PostHog integration and seed the task queue with this graph:
   the SDK installed and initialized, not the events.
 - `capture`, after `identify` — it decides the events and instruments them, and it
   reads how identity is already established before it instruments anything.
-- `review`, after `install`, `init`, `identify`, `capture`, and `error-tracking` —
+- `ai-observability`, after `capture`, parallel to `error-tracking` — it instruments
+  existing LLM calls, or reports that none apply. Queue it on every default run; the
+  task checks applicability rather than the planner guessing from a package name.
+- `logs`, after `ai-observability` — it configures log capture on supported
+  platforms, or reports why it does not apply. Queue it even when AIO will be
+  skipped. These tasks run sequentially because they can edit the same dependency
+  manifests and initialization files as the earlier instrumentation tasks.
+- `review`, after `install`, `init`, `identify`, `capture`, `error-tracking`,
+  `ai-observability`, and `logs` —
   it installs the dependencies, verifies the project builds/typechecks/lints, and
   reviews every change the run made, fixing what fails. There is no separate build
   step: verifying and reviewing are one pass over the same changeset.
-- `dashboard`, after `capture`, parallel to `review` — it builds insights from the
+- `dashboard`, after `capture`, independent of AIO, Logs, and `review` — it builds insights from the
   instrumented events, which `capture` has already defined; it needs no code review.
 - `report`, after `dashboard` **and** `review` — it writes the setup report last, so
   it describes the integration as reviewed rather than as first written.

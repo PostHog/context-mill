@@ -78,6 +78,16 @@ Do not spawn subagents.
 
 Compose the setup report as markdown — do NOT write it to a file in the project. It should include a summary of the integration edits, a table with the event names, event descriptions, and files where events were added, a list of links for the dashboard and insights created, and a "Verify before merging" checklist (see below). Follow this format:
 
+Include separate AI Observability and Logs results: what was configured, what was
+already present, or why each was skipped. Name the changed files and distinguish
+code verification from observed delivery. A skipped product is not a successful
+setup. When AI Observability was configured, say that privacy mode is on —
+prompts and completions are not captured, while model, token, latency, and cost
+metadata are — and give the one-line change to enable content capture. When
+Logs was configured, say that only log lines added by this run are exported,
+and give the one-line change that routes the app's existing loggers into the
+same exporter if the user wants more.
+
 <wizard-report>
 # PostHog post-wizard report
 
@@ -108,6 +118,9 @@ For the "Verify before merging" checklist, write GitHub-style checkboxes (`- [ ]
 - If you added environment variables: "Add the exact PostHog env var names you added to `.env.example` and any monorepo/bootstrap scripts so collaborators know what to set."
 - If this integration ships a minified production browser bundle (most SPA/SSR web frameworks — e.g. Next.js, Nuxt, SvelteKit, Astro, Vite-based apps): "Wire source-map upload (`posthog-cli sourcemap` or your bundler's upload step) into CI so production stack traces de-minify."
 - If LLM analytics was set up in this run: "Trigger the LLM call path(s) you instrumented and confirm `$ai_generation` events appear in PostHog AI Observability."
+- If Logs was set up in this run: trigger the code path that emits one of the
+  added log lines and confirm the entry appears in PostHog Logs with the
+  expected service and severity.
 - If the app has user auth and an `identify` call was added: "Confirm the returning-visitor path also calls `identify` — a handler that only identifies on fresh login can leave returning sessions on anonymous distinct IDs."
 
 Do not invent items beyond what applies. If only the two "Always" items apply, the checklist is just those two.
