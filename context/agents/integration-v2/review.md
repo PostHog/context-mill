@@ -20,7 +20,10 @@ reading of the same changeset.
 
 **Install and verify.** The earlier steps edited code and declared the SDK in the
 manifest but did not install it — install now, then verify the project builds,
-typechecks, and lints, whichever of those it defines. Do not run the test suite; the
+typechecks, and lints, whichever of those it defines. An optional upstream task
+(AI Observability, Logs) may have failed and left partial edits no handoff
+describes — install whatever the manifest declares either way, and let the build
+surface stray imports; fix or revert them like any other defect. Do not run the test suite; the
 runtime does not allow it, and a green build is the bar. A bad version only surfaces
 here: if the install fails because a declared version does not exist (npm `ETARGET`,
 "no matching version", a yanked release), fix the manifest to a real published

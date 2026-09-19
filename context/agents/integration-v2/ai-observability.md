@@ -10,6 +10,7 @@ skills: []
 allowedTools: [Read, Write, Edit, Glob, Grep, load_skill_menu, install_skill]
 disallowedTools: [enqueue_task]
 dependsOn: [capture]
+optional: true
 ---
 
 ## Goal

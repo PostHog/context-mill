@@ -27,8 +27,9 @@ Draw on two sources only:
 - Whether user identification was wired or skipped, and why.
 - The error tracking added.
 - AI Observability and Logs: what was configured or already present, or why each
-  was skipped. Use the task handoffs, including changed files and outstanding
-  verification; do not treat a skipped task as a successful setup.
+  was skipped or failed. Use the task handoffs, including changed files and
+  outstanding verification; do not treat a skipped or failed task as a
+  successful setup.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.

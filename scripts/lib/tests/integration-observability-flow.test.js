@@ -44,6 +44,8 @@ describe('default integration observability flow', () => {
             expect(data.allowedTools).not.toContain('Bash');
             expect(data.seed).not.toBe(true);
             expect(data.runnerSeeded).not.toBe(true);
+            // Optionality lives in the task definition; the planner has no say.
+            expect(data.optional).toBe(true);
             expect(skills.some((skill) => skill._category === type)).toBe(true);
         }
     });
