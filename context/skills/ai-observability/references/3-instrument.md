@@ -20,6 +20,14 @@ Route the token and host through env vars with `set_env_values`. Reuse the names
 
 Agent frameworks use their own tracing hook in place of a wrapper. Take it from the install doc. Do not substitute an OTel instrumentor.
 
+### Privacy mode
+
+For a new PostHog client, set `privacy_mode=False` in Python or `privacyMode: false` in Node where supported. This matches the SDK default and captures prompt and completion content. Do not enable privacy mode by default or add per-request privacy overrides to otherwise unrestricted calls.
+
+Preserve existing privacy settings, redaction, and explicit user or project requirements to exclude content. If those requirements apply, use the variant's documented privacy control and explain the choice in the handoff. The false default is for new setup, not permission to weaken an existing privacy decision. Framework hooks, OpenTelemetry, and manual capture must follow their own documented controls; do not invent SDK options for them or assume the SDK setting filters manually captured content.
+
+Read the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode) for SDK-wide and per-request controls. The handoff in `4-verify.md` tells the user when and where to change this after setup.
+
 ### The OpenTelemetry path
 
 On the `opentelemetry-*` variants, which is where Go call sites land, there is no wrapper to swap and no PostHog client to build. Register the PostHog span processor from the install doc on the tracer provider the app already owns. Flush before exit with `ForceFlush` or `Shutdown`, or the buffered spans are lost.

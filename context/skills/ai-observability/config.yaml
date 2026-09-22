@@ -15,6 +15,7 @@ shared_docs:
   - https://posthog.com/docs/ai-observability/traces.md
   - https://posthog.com/docs/ai-observability/sessions.md
   - https://posthog.com/docs/ai-observability/spans.md
+  - https://posthog.com/docs/ai-observability/privacy-mode.md
 variants:
   - id: openai-python
     framework: openai
