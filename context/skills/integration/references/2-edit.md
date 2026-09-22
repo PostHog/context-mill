@@ -32,12 +32,15 @@ then Logs, so edits to manifests and initialization files do not conflict.
    the matching variant with `install_skill`, and follow its references. Choose
    the provider/framework and language from the actual calling code. Use manual
    capture only for existing calls without a supported wrapper. Reuse the client
-   and identity already established. Enable privacy mode by default so prompt and
-   completion content stays out of PostHog until the user opts in: set the
-   privacy-mode option on the client the instrumentation uses, or the variant's
-   documented handler/per-request option where capture is configured there; for
-   manual capture, omit `$ai_input` and `$ai_output_choices`. Metadata (model,
-   tokens, latency, cost) still flows. If the provider remains ambiguous, skip
+   and identity already established. Follow the skill's privacy-mode instructions:
+   default new SDK clients to `privacy_mode=False` (Python) or `privacyMode: false`
+   (Node), so prompt and completion content is captured. Preserve existing privacy
+   settings, redaction, and explicit user or project requirements. Use the variant's
+   documented controls where capture is configured elsewhere; do not strip
+   manual-capture content by default. Keep the skill's **Privacy mode** handoff for
+   the final report, including the effective setting, where and when to change it,
+   and the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
+   If the provider remains ambiguous, skip
    with that reason instead of asking a question during the default run.
 2. **Logs:** call `load_skill_menu` with `category: "logs"`, install the matching
    skill, and follow the documented setup for this runtime. Use SDK-native log
