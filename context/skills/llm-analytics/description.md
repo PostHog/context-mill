@@ -1,6 +1,6 @@
-# PostHog AIO
+# PostHog AI Observability
 
-This skill helps you add PostHog AIO to any application using AI/LLM providers.
+This skill helps you add PostHog AI Observability to any application using AI/LLM providers.
 
 ## Reference files
 

@@ -100,7 +100,7 @@ Use the **full PostHog product name** with hyphens, not abbreviations.
 | Session replay audit | `wizard audit session-replay` | `wizard audit replay` |
 | Revenue analytics | `wizard revenue-analytics` | `wizard revenue` |
 | Web analytics | `wizard web-analytics` | `wizard web` |
-| AIO | `wizard llm-analytics` | `wizard llms` |
+| AI Observability | `wizard llm-analytics` | `wizard llms` |
 
 The kebab-case / length / reserved-word checks in `parseCliBlock`
 enforce the mechanics; this rule is the naming taste layer on top of

@@ -1,6 +1,6 @@
-# Add PostHog AIO
+# Add PostHog AI Observability
 
-Use this skill to add PostHog AIO that traces AI model usage in new or changed code. Use it after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any provider or framework.
+Use this skill to add PostHog AI Observability that traces AI model usage in new or changed code. Use it after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any provider or framework.
 
 Supported providers: OpenAI, Azure OpenAI, Anthropic, Google, Cohere, Mistral, Perplexity, DeepSeek, Groq, Together AI, Fireworks AI, xAI, Cerebras, Hugging Face, Ollama, OpenRouter.
 
