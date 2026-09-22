@@ -1,6 +1,6 @@
-# Add PostHog LLM analytics
+# Add PostHog AIO
 
-Use this skill to add PostHog LLM analytics that trace AI model usage in new or changed code. Use it after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any provider or framework.
+Use this skill to add PostHog AIO that traces AI model usage in new or changed code. Use it after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any provider or framework.
 
 Supported providers: OpenAI, Azure OpenAI, Anthropic, Google, Cohere, Mistral, Perplexity, DeepSeek, Groq, Together AI, Fireworks AI, xAI, Cerebras, Hugging Face, Ollama, OpenRouter.
 
@@ -52,7 +52,7 @@ If the user's provider isn't listed, use `manual-capture.md` as a fallback — i
 ## Key principles
 
 - **Environment variables**: Always use environment variables for PostHog and LLM provider keys. Never hardcode them.
-- **Minimal changes**: Add LLM analytics alongside existing LLM calls. Don't replace or restructure existing code.
+- **Minimal changes**: Add AIO alongside existing LLM calls. Don't replace or restructure existing code.
 - **Trace all generations**: Capture input tokens, output tokens, model name, latency, and costs for every LLM call.
 - **Link to users**: Associate LLM generations with identified users via distinct IDs when possible.
 - **One provider at a time**: Only instrument the provider(s) the user is actually using. Don't add instrumentation for providers not present in the codebase.

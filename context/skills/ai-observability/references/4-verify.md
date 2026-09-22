@@ -28,7 +28,7 @@ Name the smallest path in the project that runs one turn. Prefer one that calls 
 
 If no path exists, write one in the report as suggested code. Do not add it to the project unless the user asks.
 
-Then open **LLM Analytics > Traces** in PostHog and open the newest trace. Check it against the list above. A second turn in the same conversation proves the session id groups the turns instead of splitting them.
+Then open **AIO > Traces** in PostHog and open the newest trace. Check it against the list above. A second turn in the same conversation proves the session id groups the turns instead of splitting them.
 
 Before you hand over, run the import the code depends on, such as `python3 -c "from posthog.ai.openai import OpenAI"`. If it fails, go back to `1-begin.md` and pick another variant.
 

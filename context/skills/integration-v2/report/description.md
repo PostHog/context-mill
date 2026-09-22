@@ -44,7 +44,7 @@ code changed this run and drop the ones that don't fit:
   production stack traces de-minify — call it out with the docs link.
 - If the app ships a Content-Security-Policy: load the app and check the console
   for CSP violations — a blocked SDK queues events silently and never sends.
-- If LLM analytics was set up: trigger the instrumented call path and confirm
+- If AIO was set up: trigger the instrumented call path and confirm
   `$ai_generation` events appear in PostHog.
 - If auth exists and identify was wired: the returning-visitor path also calls
   identify, so returning sessions don't fragment onto anonymous distinct IDs.

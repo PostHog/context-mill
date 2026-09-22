@@ -34,7 +34,7 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
 4. **Light scan for what the report, profile, and server state won't cover.** Targeted lookups only — package manifests, config files, a grep or two. You are answering these questions:
    - **Revenue**: is there a payment SDK (Stripe, Paddle, LemonSqueezy, RevenueCat…) or revenue events?
    - **Surveys**: does the code or profile show PostHog surveys in use?
-   - **AI/LLM**: are there `$ai_*` events, an LLM SDK, or LLM analytics in the profile?
+   - **AI/LLM**: are there `$ai_*` events, an LLM SDK, or AIO in the profile?
    - **Logs**: is the PostHog logs product in use (per the profile)?
    - **CSP**: is a Content-Security-Policy with PostHog CSP reporting configured?
    - **Support**: does the team use PostHog support/conversations (per the profile)?

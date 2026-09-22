@@ -1,7 +1,7 @@
-# LLM analytics - single consolidated skill with all provider references
+# AIO - single consolidated skill with all provider references
 type: skill
 template: description.md
-description: PostHog LLM analytics for {display_name}
+description: PostHog AIO for {display_name}
 tags: [llm-analytics]
 shared_docs:
   - https://posthog.com/docs/ai-observability/basics.md
@@ -55,7 +55,7 @@ variants:
 
   - id: dotnet-openai
     display_name: .NET OpenAI / Azure OpenAI (PostHog.AI)
-    description: PostHog LLM analytics for .NET applications using PostHog.AI with OpenAI or Azure OpenAI
+    description: PostHog AIO for .NET applications using PostHog.AI with OpenAI or Azure OpenAI
     tags: [dotnet, aspnetcore, csharp, openai, azure-openai]
     docs_urls:
       - https://raw.githubusercontent.com/PostHog/posthog-dotnet/main/src/PostHog.AI/README.md
