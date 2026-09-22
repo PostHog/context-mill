@@ -40,6 +40,9 @@ Plan a PostHog integration and seed the task queue with this graph:
 - `report`, after `dashboard` **and** `review` — it writes the setup report last, so
   it describes the integration as reviewed rather than as first written.
 
+If `enqueue_task` does not offer a task's type, this run excludes that product
+— skip it rather than retrying, and hang nothing off it.
+
 ## How you know you succeeded
 
 Every task in the graph is queued with that dependency shape, the report last,

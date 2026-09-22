@@ -36,12 +36,16 @@ claim survive into the report.
   was skipped or failed. Use the task handoffs, including changed files and
   outstanding verification; do not treat a skipped or failed task as a
   successful setup. When AI Observability was configured, include its **Privacy
-  mode** handoff section: the effective setting, the file and line to edit,
-  when to enable it, and the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
+  mode** handoff section, opening with the plain disclaimer that prompt and
+  completion content is captured and stored in PostHog, then the effective
+  setting, the file and line to edit, when to enable privacy mode, and the
+  [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
   Preserve any existing privacy decision; do not infer the setting from the
   default. When Logs was configured, say that only log lines added by this run
   are exported, and include the handoff's one-line pointer for routing the
-  app's existing loggers into the same exporter if the user wants more.
+  app's existing loggers into the same exporter if the user wants more. A
+  product whose task was never queued because the run excluded it is not
+  skipped work — leave it out of the report entirely.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.

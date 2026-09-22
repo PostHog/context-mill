@@ -82,8 +82,10 @@ Include separate AI Observability and Logs results: what was configured, what wa
 already present, or why each was skipped. Name the changed files and distinguish
 code verification from observed delivery. A skipped product is not a successful
 setup. When AI Observability was configured, include its **Privacy mode** handoff
-section: the effective setting, the file and line to edit, when to enable it,
-and the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
+section, opening with the plain disclaimer that prompt and completion content is
+captured and stored in PostHog, then the effective setting, the file and line to
+edit, when to enable privacy mode, and the
+[privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
 Preserve any existing privacy decision; do not infer the setting from the default.
 When Logs was configured, say that only log lines added by this run are exported,
 and give the one-line change that routes the app's existing loggers into the
