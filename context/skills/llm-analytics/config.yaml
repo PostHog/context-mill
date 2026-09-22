@@ -1,4 +1,4 @@
-# AIO - single consolidated skill with all provider references
+# LLM analytics - single consolidated skill with all provider references
 type: skill
 template: description.md
 description: PostHog AIO for {display_name}

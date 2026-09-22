@@ -1,4 +1,4 @@
-# Aggregated AIO skill - all providers in one skill
+# Aggregated LLM analytics skill - all providers in one skill
 type: skill
 template: description.md
 category: llm-analytics
