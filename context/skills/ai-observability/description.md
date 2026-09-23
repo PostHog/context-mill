@@ -1,6 +1,6 @@
 # PostHog AI Observability for {display_name}
 
-Wire up PostHog's AI Observability so calls made through {display_name} land in LLM Analytics as a full **session → trace → span → generation** tree — not just isolated `$ai_generation` events.
+Wire up PostHog's AI Observability so calls made through {display_name} land in AI Observability as a full **session → trace → span → generation** tree — not just isolated `$ai_generation` events.
 
 ## Prerequisite — vendor LLM SDK
 

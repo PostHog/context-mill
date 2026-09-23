@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.54.1](https://github.com/PostHog/context-mill/compare/v1.54.0...v1.54.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **audit:** seed the ledger in each narrow audit skill ([#400](https://github.com/PostHog/context-mill/issues/400)) ([5da51c3](https://github.com/PostHog/context-mill/commit/5da51c32531ecd87f12caf91b082319da0eed41b))
+
+## [1.54.0](https://github.com/PostHog/context-mill/compare/v1.53.0...v1.54.0) (2026-09-17)
+
+
+### Features
+
+* **skills:** add tracing skill family ([#391](https://github.com/PostHog/context-mill/issues/391)) ([aa2d54a](https://github.com/PostHog/context-mill/commit/aa2d54a1fd06f8bb0ec2c135a2adebd18be6c607))
+
+## [1.53.0](https://github.com/PostHog/context-mill/compare/v1.52.0...v1.53.0) (2026-09-15)
+
+
+### Features
+
+* **agents:** add the error-tracking orchestrator flow ([#393](https://github.com/PostHog/context-mill/issues/393)) ([3859545](https://github.com/PostHog/context-mill/commit/38595456f68a95bdb810a7b269005d36b2ac69f7))
+
+
+### Bug Fixes
+
+* **ci:** auth warlock triage with the CI gateway token file ([#395](https://github.com/PostHog/context-mill/issues/395)) ([fc795b5](https://github.com/PostHog/context-mill/commit/fc795b5144dca960a18b29bfec190a76267e7da3))
+
 ## [1.52.0](https://github.com/PostHog/context-mill/compare/v1.51.0...v1.52.0) (2026-09-09)
 
 

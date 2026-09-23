@@ -12,6 +12,7 @@ Emit:
 
 ```
 [STATUS] Detecting PostHog feature flag usage
+[STATUS] Seeding audit checklist
 ```
 
 ## Action
@@ -25,8 +26,28 @@ Run **two `Grep` calls in parallel**, both with `output_mode: "files_with_matche
 
 ## Decision
 
-- **Surface grep returns zero hits anywhere in the project:** emit `[ABORT] No PostHog feature flag usage found` and stop. The wizard catches `[ABORT]` and terminates the run.
+- **Surface grep returns zero hits anywhere in the project:** emit `[ABORT] No PostHog feature flag usage found` and stop. The wizard catches `[ABORT]` and terminates the run. Do not seed the ledger.
 - **Surface grep finds hits:** continue.
+
+## Seed the audit ledger
+
+The ledger lives at `.posthog-audit-checks.json` and renders live in the wizard sidebar / "Audit plan" tab. **The runtime does not pre-seed this skill's ledger**, so call `mcp__wizard-tools__audit_seed_checks` here with the exact payload below. Do not seed when this step aborts. The tool replaces the file atomically, so one call at the start of every run is safe.
+
+```json
+{
+  "checks": [
+    { "id": "ff-bootstrap-when-known-set", "area": "Feature Flags", "label": "Known initial flag sets use bootstrap", "status": "pending" },
+    { "id": "ff-await-readiness", "area": "Feature Flags", "label": "Flag evaluation waits for readiness", "status": "pending" },
+    { "id": "ff-default-values", "area": "Feature Flags", "label": "Flag evaluations have safe default values", "status": "pending" },
+    { "id": "ff-bootstrap-distinct-id-mismatch", "area": "Feature Flags", "label": "Bootstrap distinct ID matches stable identity", "status": "pending" },
+    { "id": "ff-identified-only-pre-auth-targeting", "area": "Feature Flags", "label": "Pre-auth flag targeting works for anonymous users", "status": "pending" },
+    { "id": "ff-active-but-unreferenced", "area": "Feature Flags — Optimize", "label": "Active flags have codebase references", "status": "pending" },
+    { "id": "ff-local-eval-polling-interval", "area": "Feature Flags — Optimize", "label": "Local evaluation uses an intentional polling interval", "status": "pending" },
+    { "id": "ff-local-eval-in-edge-handlers", "area": "Feature Flags — Optimize", "label": "Edge handlers avoid local flag evaluation", "status": "pending" },
+    { "id": "ff-test-ci-gating", "area": "Feature Flags — Optimize", "label": "Test and CI runs gate flag evaluation", "status": "pending" }
+  ]
+}
+```
 
 ## Record local-evaluation detection
 

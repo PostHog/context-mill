@@ -45,6 +45,8 @@ The bridge needs Go 1.25 or newer. An older toolchain fails with `module require
 
 Instrument the framework, not the provider below it. A provider instrumentor keeps the model calls and loses the agent, tool, and handoff structure.
 
+The framework wins only when it carries the app's generations. A package in the manifest is not enough. Some apps pull in `llama-index`, `langchain`, and the like for a side path only, such as a vector store or datastore provider, a retrieval helper, or an eval harness, while the real generations run through a direct provider SDK (`openai`, `anthropic`) at other call sites. Open the generation call sites before routing. If the framework wraps the generations, instrument it. If a direct provider SDK makes the primary generations and the framework is only a side path, route by that provider under rule 4 and instrument its call sites; add the framework only if it also generates. When both carry real generations, use `wizard_ask` with each as an option.
+
 ### 3. An `openai` client with a base URL override means a gateway
 
 Most OpenAI-compatible providers ship no SDK. Apps call them with the `openai` package aimed at another host. Check the client constructor and `OPENAI_BASE_URL`. Common hosts are `api.groq.com`, `openrouter.ai`, `api.together.xyz`, and `localhost:11434`.
