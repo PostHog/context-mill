@@ -18,6 +18,12 @@ Draw on two sources only:
   table: grep the changed files for `capture(` calls and read the capture step's
   handoff in `queue.json`.
 
+Handoffs are written mid-run, in task order, so a later handoff supersedes an
+earlier one's forward-looking claims. Something an early task deferred — a
+dependency to install, a check to run — was either done by a later task or
+never done at all: report the final state, and let no "deferred" or "pending"
+claim survive into the report.
+
 ## What to include
 
 - A one-line summary of what was set up.
@@ -26,6 +32,20 @@ Draw on two sources only:
   (from `.posthog-wizard-cache/.posthog-events.json`).
 - Whether user identification was wired or skipped, and why.
 - The error tracking added.
+- AI Observability and Logs: what was configured or already present, or why each
+  was skipped or failed. Use the task handoffs, including changed files and
+  outstanding verification; do not treat a skipped or failed task as a
+  successful setup. When AI Observability was configured, include its **Privacy
+  mode** handoff section, opening with the plain disclaimer that prompt and
+  completion content is captured and stored in PostHog, then the effective
+  setting, the file and line to edit, when to enable privacy mode, and the
+  [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode).
+  Preserve any existing privacy decision; do not infer the setting from the
+  default. When Logs was configured, say that only log lines added by this run
+  are exported, and include the handoff's one-line pointer for routing the
+  app's existing loggers into the same exporter if the user wants more. A
+  product whose task was never queued because the run excluded it is not
+  skipped work — leave it out of the report entirely.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.
@@ -46,6 +66,9 @@ code changed this run and drop the ones that don't fit:
   for CSP violations — a blocked SDK queues events silently and never sends.
 - If AI Observability was set up: trigger the instrumented call path and confirm
   `$ai_generation` events appear in PostHog.
+- If Logs was set up: trigger the code path that emits one of the added log
+  lines and confirm the entry appears in PostHog Logs with the expected service
+  and severity.
 - If auth exists and identify was wired: the returning-visitor path also calls
   identify, so returning sessions don't fragment onto anonymous distinct IDs.
 

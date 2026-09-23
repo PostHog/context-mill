@@ -1,7 +1,8 @@
 # PostHog AI Observability integration.
 # Single skill group, one variant per (LLM provider × language).
-# Reachable via `wizard skill ai-observability`; also spawned as a single node
-# by integration-v2 when an LLM SDK is detected in the project.
+# Reachable via `wizard skill ai-observability`; also queued on every
+# integration-v2 run — the task inspects the project's LLM calls and decides
+# applicability itself.
 type: skill
 template: description.md
 description: PostHog AI Observability integration for {display_name}
@@ -14,6 +15,7 @@ shared_docs:
   - https://posthog.com/docs/ai-observability/traces.md
   - https://posthog.com/docs/ai-observability/sessions.md
   - https://posthog.com/docs/ai-observability/spans.md
+  - https://posthog.com/docs/ai-observability/privacy-mode.md
 variants:
   - id: openai-python
     framework: openai

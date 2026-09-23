@@ -32,6 +32,16 @@ Then open **AI Observability > Traces** in PostHog and open the newest trace. Ch
 
 Before you hand over, run the import the code depends on, such as `python3 -c "from posthog.ai.openai import OpenAI"`. If it fails, go back to `1-begin.md` and pick another variant.
 
+## Privacy-mode handoff
+
+Include a **Privacy mode** section in the standalone AIO report. When this skill runs inside the main wizard, put the same section in the task handoff so the setup report carries it through. State:
+
+- The effective setting and the file and line that control it, including any request overrides. With the default off, prompt and completion content is captured. If privacy mode was kept or enabled because of an existing choice or explicit requirement, say why.
+- When to change it: enable privacy mode before sending prompts or responses whose sensitive content must not be stored in PostHog. This is a choice the user can make in their application after setup; the wizard leaves it off unless the project's privacy context requires otherwise.
+- How to change it for this variant: SDK-wide `privacy_mode=True` (Python) or `privacyMode: true` (Node), or the supported per-request `posthog_privacy_mode=True` / `posthogPrivacyMode: true`. Name the actual location to edit. For other mechanisms, describe their documented control rather than suggesting an unsupported SDK option.
+- What it changes: privacy mode excludes `$ai_input` and `$ai_output_choices` from SDK-captured events. Do not promise that it removes arbitrary custom properties, manually captured payloads, or previously stored events.
+- A direct link to [AI Observability privacy mode](https://posthog.com/docs/ai-observability/privacy-mode).
+
 ## When it looks wrong
 
 | Symptom | Cause |
