@@ -67,15 +67,26 @@ Language follows the manifest. A `package.json` means Node. A `pyproject.toml` o
 
 Report the variant and the reason in a `[STATUS]` line, then call `install_skill` with the full id.
 
-## Read four facts from the code
+## Read the call paths
 
-The install doc holds the code. It cannot know this app. Step 3 uses these answers and nothing else.
+The install doc holds the code. It cannot know this app. Step 3 uses these answers.
 
 1. **Conversation.** The field that groups turns, such as `thread_id` or `conversation_id`. If the app has none, the process run is the conversation.
 2. **User.** The user id in scope at the call sites. If the app has none, the events stay anonymous. Do not invent one.
 3. **Turn.** The function that takes one question and returns one answer. It may call the model several times.
 4. **Tools.** Does the app register tools with its calls? Look for a `tools=` argument or a tool decorator. Find the loop that runs them.
 
-Note the module that builds the vendor client. Step 3 replaces that constructor. If the project already calls `posthog.init(...)` or `PostHog(...)`, reuse its env-var names and its client.
+Note the module that builds the vendor client. Step 3 replaces that constructor
+for wrapper variants. If the project already calls `posthog.init(...)` or
+`PostHog(...)`, reuse its env-var names and its client.
+
+For `manual-capture`, also build an **inference coverage ledger** before
+editing. Find every entry point that can make an outbound model request, then
+follow each one to its transport. Search route handlers, WebSocket handlers,
+background jobs, and direct provider calls. Record the provider and endpoint,
+JSON, SSE, NDJSON, or WebSocket response format, streaming modes, shared
+transport, user and turn scope, and tool dispatch loop. Mark any existing
+capture. A shared transport covers an entry only when that entry reaches it.
+Keep the ledger for the integration handoff and step 4 verification.
 
 Go to `2-install.md`.

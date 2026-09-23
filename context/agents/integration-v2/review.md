@@ -45,12 +45,16 @@ cannot provision), note it and move on; do not spiral.
 **Review, as a strict reviewer who did none of the writing.** The changeset is
 already handed to you: `read_handoffs` returns every upstream task's handoff, and
 each one names the files it touched and what it changed in them. That union of
-touched files IS the changeset. Read each changeset file once and judge it — after
-your own edit you already know its contents, so do not re-read it. Read beyond the
-changeset only where a dimension sends you: one neighboring example per pattern you
-are checking, and the callers of code that changed. Nothing else — not the SDK's
-installed internals, not other tasks' instructions, not a diff of the whole tree;
-the handoffs are the signal.
+touched files is the edited changeset. Read each changeset file once and judge it.
+After your own edit you already know its contents, so do not re-read it. Read
+beyond the changeset for one neighboring example per pattern and the callers
+of changed code. Also reconcile the AI task's **inference coverage ledger**
+against a bounded search of inference entry points and outbound provider calls,
+including unmodified call sites. Check that each listed path reaches capture or
+has a concrete exclusion. Reconcile the identify handoff's **auth method
+inventory** against the auth helpers and handlers it names. Do not inspect
+unrelated SDK internals, other tasks' instructions, or a diff of the whole tree.
+The handoffs define the audit, and targeted searches can expose omissions.
 The handoffs also carry what no file shows — env values written through
 `set_env_values`, manifest edits. Judge each change against these dimensions, in
 order:
@@ -70,9 +74,14 @@ order:
    codebase. Codebase idiom beats the example when they conflict; the PostHog
    correctness rules you were given beat both.
 
-You never change what is captured — event names, properties, and where events fire
-are a contract the dashboard and report are built on. Refactor how, and kill bad
-changes; never alter the what.
+Keep the chosen event names, properties, and product actions intact. Do not
+redesign analytics or add speculative events. You may correct a **false success**
+capture that fires before the authoritative action succeeds: move it after the
+confirmed result or guard it on that result. Check the result and failure
+branches, then record the correction in the handoff. If the AI ledger shows an
+existing inference path without capture, fix it within the established
+instrumentation pattern when possible. Otherwise name the uncovered path and
+reason in the handoff for the report. Never silently mark it covered.
 
 Events reaching PostHog in production is the point of this code, so a capture wired
 to a place it will never fire, an uninitialized SDK, or a call the runtime silently
@@ -86,7 +95,8 @@ Stay inside verify-and-review. These are not your job:
 - Product or analytics design — which events are worth tracking, identity strategy,
   framework-version tradeoffs. The changeset is the decision; review whether the code
   implements it correctly, not whether it was the right decision.
-- Anything the integration did not touch. Do not widen scope to pre-existing issues.
+- Pre-existing behavior outside the inference and auth paths named in the
+  handoffs. Do not widen the audit to unrelated issues.
 
 If you notice something real but out of scope, leave it — a one-line mention in your
 handoff, no more. Only flag what you can pin to a specific line and dimension — no
@@ -101,4 +111,6 @@ run; you can name each review dimension and say it passes; and your fixes are in
 files. If the build or lint fails only on pre-existing errors you did not introduce,
 that still counts — put a one-line summary in the `conflict` field and the detail in
 what you did. Reserve a failed status for when your own changes break the build. Put
-the number of fixes and the dimension each addressed in your handoff.
+the number of fixes and the dimension each addressed in your handoff. State
+whether every AI ledger entry and auth method was reconciled, and list any
+uncovered path or false success you could not fix.

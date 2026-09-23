@@ -18,6 +18,14 @@ Derive the expectation from the four facts in `1-begin.md`:
 - The person matches the app's user id, if the app has one.
 - `$ai_provider` names the real provider on a gateway app.
 
+For manual capture, reconcile the inference coverage ledger with the code.
+Every existing model entry point must reach one capture or have an explicit
+exclusion. Inspect one success and one failure path for each response protocol,
+plus stream cancellation where supported. Check provider-specific usage
+fields, tool dispatches, identity, and shared trace ids. This is a code-path
+check until the user runs the app and sees events arrive. Do not claim delivery
+from the ledger or a passing build.
+
 ## Tell the user how to trigger it
 
 Name the smallest path in the project that runs one turn. Prefer one that calls the model twice or uses a tool, so the tree has depth.

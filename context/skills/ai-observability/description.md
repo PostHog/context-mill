@@ -14,10 +14,10 @@ Everything else this skill needs — PostHog credentials, instrumentation packag
 
 Read every referenced file **before editing**. Then work through them in order:
 
-1. **Begin** — see `references/1-begin.md`. Pick the variant with the ordered rules (framework before provider, gateway base URL before the SDK it borrows), then read four facts from the code: the conversation, the user, the turn, and whether the app registers tools.
+1. **Begin** — see `references/1-begin.md`. Pick the variant with the ordered rules (framework before provider, gateway base URL before the SDK it borrows), then read four facts from the code: the conversation, the user, the turn, and whether the app registers tools. Manual capture also inventories every inference entry point and transport.
 2. **Install** — see `references/2-install.md`. Declare the variant's packages in the manifest — and only those. For providers and gateways that's the PostHog SDK alongside the vendor SDK, with no OpenTelemetry packages.
-3. **Instrument** — see `references/3-instrument.md`. Swap the vendor client for PostHog's wrapper, attach `$ai_session_id`, a per-turn `posthog_trace_id`, and the distinct id to every call, and capture tool runs as `$ai_span` events. This step is what turns isolated generations into a session tree.
-4. **Verify** — see `references/4-verify.md`. Describe a request the user can trigger, and grade what lands in PostHog — one session, grouped traces, right attribution — rather than what the diff contains.
+3. **Instrument** — see `references/3-instrument.md`. Use the wrapper for a supported provider or the manual transport contract for existing calls without one. Attach `$ai_session_id`, a per-turn trace id, and the distinct id to each call. Capture tool runs as `$ai_span` events.
+4. **Verify** — see `references/4-verify.md`. Describe a request the user can trigger and grade what lands in PostHog. For manual capture, also reconcile every inference entry point with the coverage ledger.
 
 ## Reference files
 

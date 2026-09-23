@@ -29,6 +29,15 @@ once, up front, and follow it:
 2. Where the handoff says it is not — no middleware, or a call path that runs
    outside the request — tag that call with the distinct id and the session id.
 
+If the identify handoff contains an auth method inventory, use it when a
+chosen event means login or signup success. Cover each method that performs
+that same action, or list excluded methods and the reason in your handoff.
+Do not emit success at request entry or after a response object is merely
+constructed. For every chosen success event, capture only after authoritative
+success: check the write or provider result that proves the action completed.
+A database method returning no record, a failed transaction, or a provider
+error is not success even if the handler still returns a response.
+
 Where the project has no identity to begin with — the identify step found nothing to
 wire, because the app has no accounts or login — personless events are the right
 answer. Capture plainly, with no id and no placeholder, and say so in your handoff.
@@ -47,5 +56,7 @@ user the way the identify docs describe, not the event.
 The meaningful user actions across the app have capture calls that fire on the
 real action, not on page load, each one attributable to the user who took it, and
 `.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented.
+The handoff names any auth methods excluded from a chosen auth event and the
+result that proves each success event fired after the action committed.
 
 You do not run builds, linters, or tests — the review task verifies the whole integration after you; your edits just need to be right by reading.
