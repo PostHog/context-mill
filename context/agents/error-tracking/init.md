@@ -60,9 +60,16 @@ reads `process.env` on one of those, wire the loading too, either way:
 
 - install `dotenv` with the project's own package manager (detect it from the
   lockfile) and import it above the PostHog init — `require('dotenv').config()`,
-  or `import 'dotenv/config'` for ESM; or
-- add `--env-file=.env` to the `start` and `dev` scripts, when the project is on
-  Node 20.6+ and would rather not take a new dependency.
+  or `import 'dotenv/config'` for ESM. Prefer this one. `config()` does nothing
+  when `.env` is missing, so the variables a host injects still apply; or
+- add `--env-file-if-exists=.env` to the `start` script, when the project would
+  rather not take a new dependency and pins Node 22.9 or later (`engines`,
+  `.nvmrc`, `.node-version`, or a Dockerfile base image). A hard
+  `--env-file=.env` is fine on `dev`, where `.env` exists.
+
+Never put a hard `--env-file=.env` on `start`. The file is gitignored, so it is
+usually missing where the app is deployed, and Node exits before any app code
+runs when the file it names is missing.
 
 You cannot run the app, so this has to be right by construction. Writing the
 guard without the loader is what produces

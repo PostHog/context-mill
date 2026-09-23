@@ -58,7 +58,10 @@ file, and a compiled binary or a bare interpreter loads nothing on its own.
 
 So open the init point, note the variables it reads, and make the run script
 provide exactly those — export the env file ahead of the command, pass the
-runtime's own flag for it, whatever that platform offers. Skip it and the
+runtime's own flag for it, whatever that platform offers. The loader must still
+start when the file is missing, since production supplies these as real
+environment variables. On Node that is `dotenv` or `--env-file-if-exists=.env`
+(Node 22.9+), never a hard `--env-file=.env` on `start`. Skip it and the
 artifact starts, prints its own "variable missing" guard, and reports nothing:
 the build is green, the symbols are uploaded, and the single command you hand
 the user to verify with is the one command that cannot capture.

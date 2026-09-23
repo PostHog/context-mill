@@ -38,8 +38,13 @@ Then cover, briefly and concretely:
   that carry it.
 - If the run also installed and initialized the SDK, say so — the user
   started this command without PostHog and now has it.
-- When source-map upload was wired: the files changed (paths only), the exact
-  production build command, and that every production build now uploads.
+- When source-map upload was wired and neither the credentials nor the wire-ci
+  handoff reports a skip: the files changed (paths only), the exact production
+  build command, and that every production build now uploads.
+- When the build was wired but the credentials or wire-ci handoff reports a
+  skip: the same files and command, and that the build is set up to upload.
+  Say that uploads start, and the build command succeeds, only once the
+  `POSTHOG_CLI_*` values are present where the build runs.
 - When it was skipped: one line saying why — readable stack traces on this
   platform, or that Astro is not supported by the uploader. An outcome, not an
   apology. Say plainly that the build command was left untouched.
