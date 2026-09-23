@@ -120,7 +120,7 @@ For the "Verify before merging" checklist, write GitHub-style checkboxes (`- [ ]
 - Always: "Run the test suite — call sites that were rewritten or instrumented may need updated mocks or fixtures."
 - If you added environment variables: "Add the exact PostHog env var names you added to `.env.example` and any monorepo/bootstrap scripts so collaborators know what to set."
 - If this integration ships a minified production browser bundle (most SPA/SSR web frameworks — e.g. Next.js, Nuxt, SvelteKit, Astro, Vite-based apps): "Wire source-map upload (`posthog-cli sourcemap` or your bundler's upload step) into CI so production stack traces de-minify."
-- If LLM analytics was set up in this run: "Trigger the LLM call path(s) you instrumented and confirm `$ai_generation` events appear in PostHog AI Observability."
+- If AI Observability was set up in this run: "Trigger the LLM call path(s) you instrumented and confirm `$ai_generation` events appear in PostHog AI Observability."
 - If Logs was set up in this run: trigger the code path that emits one of the
   added log lines and confirm the entry appears in PostHog Logs with the
   expected service and severity.

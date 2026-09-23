@@ -28,8 +28,10 @@ Plan a PostHog integration and seed the task queue with this graph:
   task checks applicability rather than the planner guessing from a package name.
 - `logs`, after `ai-observability` — it configures log capture on supported
   platforms, or reports why it does not apply. Queue it even when AIO will be
-  skipped. These tasks run sequentially because they can edit the same dependency
-  manifests and initialization files as the earlier instrumentation tasks.
+  skipped. These tasks run sequentially because both instrument the same entry
+  and initialization files, and Logs preserves any tracing provider AIO
+  configures — an ordering-dependent instruction. (Their dependency installs
+  are deferred to review, so manifests are not the conflict.)
 - `review`, after `install`, `init`, `identify`, `capture`, `error-tracking`,
   `ai-observability`, and `logs` —
   it installs the dependencies, verifies the project builds/typechecks/lints, and
