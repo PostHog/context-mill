@@ -80,6 +80,6 @@ Note the module that builds the vendor client. Step 3 replaces that constructor
 for wrapper variants. If the project already calls `posthog.init(...)` or
 `PostHog(...)`, reuse its env-var names and its client.
 
-For `manual-capture`, use the [route discovery guide](https://posthog.com/docs/ai-observability/installation/manual-capture#find-every-inference-path) to list every inference entry point, its transport, and capture status. Keep this ledger for verification and the handoff.
+For `manual-capture`, use the [route discovery guide](https://posthog.com/docs/ai-observability/installation/manual-capture#tracing-proxied-inference-paths) to list every inference entry point, its transport, and capture status. Keep this ledger for verification and the handoff.
 
 Go to `2-install.md`.

@@ -7,7 +7,7 @@ const agent = (name) => readFileSync(join(context, 'agents', 'integration-v2', `
 const aiReference = (name) =>
     readFileSync(join(context, 'skills', 'ai-observability', 'references', `${name}.md`), 'utf8');
 const plain = (value) => value.replaceAll('**', '').replace(/\s+/g, ' ');
-const routeGuide = /manual-capture#find-every-inference-path/;
+const routeGuide = /manual-capture#tracing-proxied-inference-paths/;
 
 describe('integration coverage contract', () => {
     it('links route discovery and keeps a ledger through verification', () => {

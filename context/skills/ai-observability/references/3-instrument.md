@@ -33,7 +33,7 @@ Read the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-m
 
 ## Capture manual proxy calls
 
-For `manual-capture`, follow the [route discovery and capture guide](https://posthog.com/docs/ai-observability/installation/manual-capture#find-every-inference-path). Capture each provider request once after its outcome is known. Preserve responses and streams, mark errors and interruptions, and connect sessions, traces, users, and tool spans. Record unverified paths in the ledger.
+For `manual-capture`, follow the [route discovery and capture guide](https://posthog.com/docs/ai-observability/installation/manual-capture#tracing-proxied-inference-paths). Capture each provider request once after its outcome is known. Preserve responses and streams, mark errors and interruptions, and connect sessions, traces, users, and tool spans. Record unverified paths in the ledger.
 
 ### The OpenTelemetry path
 
