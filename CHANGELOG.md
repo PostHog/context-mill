@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.55.0](https://github.com/PostHog/context-mill/compare/v1.54.1...v1.55.0) (2026-09-23)
+
+
+### Features
+
+* add AIO and Logs to default Wizard runs ([#390](https://github.com/PostHog/context-mill/issues/390)) ([e241288](https://github.com/PostHog/context-mill/commit/e2412880ed66314c50f57966ac79139af98338ae))
+* **self-driving:** ask which Linear teams self-driving reads ([#396](https://github.com/PostHog/context-mill/issues/396)) ([4d592e3](https://github.com/PostHog/context-mill/commit/4d592e36f7d4df2b2dec3b9f0a6c6b59e723d4b9))
+
+
+### Bug Fixes
+
+* **data-warehouse-source:** name Stripe's restricted-key scopes and link the docs ([#392](https://github.com/PostHog/context-mill/issues/392)) ([9171bdb](https://github.com/PostHog/context-mill/commit/9171bdbf5e084ae0f59e96c0f1fb60a13085b38d))
+
 ## [1.54.1](https://github.com/PostHog/context-mill/compare/v1.54.0...v1.54.1) (2026-09-18)
 
 
