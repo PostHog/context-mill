@@ -45,16 +45,12 @@ cannot provision), note it and move on; do not spiral.
 **Review, as a strict reviewer who did none of the writing.** The changeset is
 already handed to you: `read_handoffs` returns every upstream task's handoff, and
 each one names the files it touched and what it changed in them. That union of
-touched files is the edited changeset. Read each changeset file once and judge it.
-After your own edit you already know its contents, so do not re-read it. Read
-beyond the changeset for one neighboring example per pattern and the callers
-of changed code. Also reconcile the AI task's **inference coverage ledger**
-against a bounded search of inference entry points and outbound provider calls,
-including unmodified call sites. Check that each listed path reaches capture or
-has a concrete exclusion. Reconcile the identify handoff's **auth method
-inventory** against the auth helpers and handlers it names. Do not inspect
-unrelated SDK internals, other tasks' instructions, or a diff of the whole tree.
-The handoffs define the audit, and targeted searches can expose omissions.
+touched files is the edited changeset. Read each once, plus one neighboring example
+per pattern and callers of changed code. Reconcile the AI **inference coverage
+ledger** with a bounded search of model call sites, including unmodified ones;
+reconcile the identify **auth method inventory** with its named handlers. Each
+path must reach capture or have an explicit exclusion. Do not inspect unrelated
+SDK internals, task instructions, or the whole tree.
 The handoffs also carry what no file shows — env values written through
 `set_env_values`, manifest edits. Judge each change against these dimensions, in
 order:
@@ -74,14 +70,10 @@ order:
    codebase. Codebase idiom beats the example when they conflict; the PostHog
    correctness rules you were given beat both.
 
-Keep the chosen event names, properties, and product actions intact. Do not
-redesign analytics or add speculative events. You may correct a **false success**
-capture that fires before the authoritative action succeeds: move it after the
-confirmed result or guard it on that result. Check the result and failure
-branches, then record the correction in the handoff. If the AI ledger shows an
-existing inference path without capture, fix it within the established
-instrumentation pattern when possible. Otherwise name the uncovered path and
-reason in the handoff for the report. Never silently mark it covered.
+Keep chosen event names, properties, and product actions intact. Correct a
+**false success** capture by moving it after the confirmed result or guarding
+on that result. Fix an uncovered inference path within the established pattern
+when possible; otherwise name the path and reason in the handoff.
 
 Events reaching PostHog in production is the point of this code, so a capture wired
 to a place it will never fire, an uninitialized SDK, or a call the runtime silently
@@ -95,8 +87,7 @@ Stay inside verify-and-review. These are not your job:
 - Product or analytics design — which events are worth tracking, identity strategy,
   framework-version tradeoffs. The changeset is the decision; review whether the code
   implements it correctly, not whether it was the right decision.
-- Pre-existing behavior outside the inference and auth paths named in the
-  handoffs. Do not widen the audit to unrelated issues.
+- Pre-existing behavior outside the inference and auth paths in the handoffs.
 
 If you notice something real but out of scope, leave it — a one-line mention in your
 handoff, no more. Only flag what you can pin to a specific line and dimension — no

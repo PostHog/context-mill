@@ -80,13 +80,6 @@ Note the module that builds the vendor client. Step 3 replaces that constructor
 for wrapper variants. If the project already calls `posthog.init(...)` or
 `PostHog(...)`, reuse its env-var names and its client.
 
-For `manual-capture`, also build an **inference coverage ledger** before
-editing. Find every entry point that can make an outbound model request, then
-follow each one to its transport. Search route handlers, WebSocket handlers,
-background jobs, and direct provider calls. Record the provider and endpoint,
-JSON, SSE, NDJSON, or WebSocket response format, streaming modes, shared
-transport, user and turn scope, and tool dispatch loop. Mark any existing
-capture. A shared transport covers an entry only when that entry reaches it.
-Keep the ledger for the integration handoff and step 4 verification.
+For `manual-capture`, use the [route discovery guide](https://posthog.com/docs/ai-observability/installation/manual-capture#find-every-inference-path) to list every inference entry point, its transport, and capture status. Keep this ledger for verification and the handoff.
 
 Go to `2-install.md`.

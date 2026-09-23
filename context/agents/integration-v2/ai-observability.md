@@ -21,16 +21,7 @@ If there are no LLM calls, complete as `not needed` with the reason and make no
 changes. Do not install a vendor SDK, add a demo call, or use manual capture to
 invent an AI feature in an app that has none.
 
-Before editing, trace every entry point that can start an existing model request
-through its provider call. Include HTTP routes, WebSocket handlers, background
-jobs, and direct provider calls where present. Build an **inference coverage
-ledger** with each entry point, outbound call or shared transport, provider,
-response protocol, streaming and non-streaming modes, user and turn scope,
-tool dispatch loop, and capture status. A shared transport can cover several
-entries, but check that each entry really reaches it. Mark an entry covered by
-existing instrumentation, newly instrumented, or excluded with a concrete
-reason. Do not count a route as covered merely because another route calls the
-same provider. Keep the scan bounded to inference routes and their callers.
+Before editing, follow the [route discovery guide](https://posthog.com/docs/ai-observability/installation/manual-capture#find-every-inference-path). Record each existing inference path and its capture status in a brief **inference coverage ledger**. Check shared transports against their callers; list any uncovered path and why.
 
 For existing LLM calls, load the `ai-observability` skill menu and install the
 variant matching each real calling path's language and provider or agent
@@ -65,10 +56,8 @@ by the wizard.
 
 Existing LLM calls are wired using the selected skills, or the handoff clearly
 explains each unresolved path. List the variants, changed files, declared
-dependencies, and a concrete call path the user can trigger to verify the
-session/trace/generation tree. Include the inference coverage ledger in the
-handoff as a report section, with every excluded or unverified path visible.
-Do not call the task complete with a silent gap. Include the skill's
+dependencies, a call path the user can trigger, and the inference coverage ledger
+with exclusions and unverified paths. Include the skill's
 **Privacy mode** handoff:
 the effective setting, the file and line to edit, when to enable it, and the
 [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode). Pass any

@@ -23,14 +23,7 @@ send them as person properties instead. Fall back to email only when the app tru
 no other stable key, and say so in your handoff — do not invent one by altering the
 app's schema.
 
-If the app has accounts, make a bounded **auth method inventory** from its
-login handlers and request authentication helpers. Include session or cookie
-auth, API keys, OAuth, LDAP, and other methods the code actually supports.
-For each method, record where the stable user id becomes available and whether
-the proposed identify boundary sees it. A pre-auth middleware cannot identify
-a user resolved later in the same request. Bind identity after resolution on
-those paths, or mark the method as a gap in the handoff. Do not trust a
-client-supplied id in place of the authenticated user's id.
+If the app has accounts, list its actual auth methods and where each resolves a stable user id. Check that each identify boundary runs after resolution, including API key and external auth paths. Fix or report gaps; never substitute a client-supplied id.
 
 Work out first what you are in: a client-only app, a fullstack or SSR app, or a
 backend or API. Identification takes a different shape in each, and the shape

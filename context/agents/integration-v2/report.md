@@ -34,11 +34,7 @@ Where a handoff carries a report section, that step already wrote the part of
 the report it owns. Include it as its own section instead of rewriting or
 summarizing it, and do not restate its contents elsewhere.
 
-Keep the AI handoff's inference coverage ledger and the review result visible
-in that section. Label each path as wired, already covered, excluded, or
-unverified according to the handoffs. A covered code path is not proof that
-PostHog received an event. Surface any auth method or success-event gap from
-the identify, capture, or review handoffs as a follow-up issue.
+Show the AI coverage ledger and review result in the report. Keep excluded or unverified paths, auth gaps, and success-event gaps visible as follow-up issues. Code coverage alone does not prove delivery.
 
 Where a handoff reports something a step could not resolve — attribution it could not
 establish, a question the step before it left open — that is not a caveat to bury in

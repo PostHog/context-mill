@@ -7,32 +7,36 @@ const agent = (name) => readFileSync(join(context, 'agents', 'integration-v2', `
 const aiReference = (name) =>
     readFileSync(join(context, 'skills', 'ai-observability', 'references', `${name}.md`), 'utf8');
 const plain = (value) => value.replaceAll('**', '').replace(/\s+/g, ' ');
+const routeGuide = /manual-capture#find-every-inference-path/;
 
 describe('integration coverage contract', () => {
-    it('requires an inference coverage ledger before manual capture is complete', () => {
+    it('links route discovery and keeps a ledger through verification', () => {
         const task = agent('ai-observability');
         const begin = aiReference('1-begin');
         const instrument = aiReference('3-instrument');
+        const verify = aiReference('4-verify');
 
         expect(task).toMatch(/inference coverage ledger/i);
         expect(task).toMatch(/ambiguous paths as unresolved/i);
-        expect(begin).toMatch(/inference coverage ledger/i);
-        expect(instrument).toMatch(/JSON,\s+SSE, NDJSON, and WebSocket/i);
-        expect(instrument).toMatch(/HTTP error and cancellation/i);
-        expect(instrument).toMatch(/every tool dispatch/i);
+        expect(task).toMatch(routeGuide);
+        expect(plain(begin)).toMatch(/list every inference entry point, its transport, and capture status/i);
+        expect(begin).toMatch(routeGuide);
+        expect(instrument).toMatch(routeGuide);
+        expect(instrument).toMatch(/provider request once after its outcome is known/i);
+        expect(verify).toMatch(/reconcile the inference coverage ledger/i);
     });
 
     it('makes review reconcile coverage and fix false success captures', () => {
         const review = agent('review');
 
-        expect(review).toMatch(/inference coverage ledger/i);
-        expect(review).toMatch(/unmodified call sites/i);
+        expect(plain(review)).toMatch(/inference coverage ledger/i);
+        expect(review).toMatch(/including unmodified ones/i);
         expect(review).toMatch(/false success/i);
     });
 
     it('checks user resolution across auth methods and captures after confirmed success', () => {
         expect(agent('identify')).toMatch(/auth method inventory/i);
-        expect(agent('capture')).toMatch(/authoritative\s+success/i);
+        expect(agent('capture')).toMatch(/provider result confirms success/i);
         expect(plain(agent('review'))).toMatch(/auth method inventory/i);
     });
 });

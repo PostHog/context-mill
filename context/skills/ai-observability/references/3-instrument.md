@@ -33,34 +33,7 @@ Read the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-m
 
 ## Capture manual proxy calls
 
-Use this contract for `manual-capture`. Instrument every existing outbound
-model call named in the inference coverage ledger, at the shared transport
-when it truly covers the entries. Emit one `$ai_generation` for each outbound
-model request, not one for each network chunk or each route layer. Keep the
-original response and streaming behavior intact.
-
-Read the provider's actual response contract for every supported mode. JSON,
-SSE, NDJSON, and WebSocket carry different chunk envelopes and terminal
-signals. Parse each protocol at its boundary rather than feeding them to one
-generic `choices` parser. Collect prompt and completion usage from fields
-the provider actually returns. For example, native Ollama reports
-`prompt_eval_count` and `eval_count` at the top level. Do not write zero
-tokens when usage is unknown, and do not infer a complete output from a partial
-stream. Keep non-streaming requests in the ledger too.
-
-Handle HTTP error and cancellation as outcomes of the same model request.
-Provider non-success responses, transport exceptions, and streams interrupted
-before their terminal event must not appear as successful generations. Use the
-manual capture guide's documented error properties. Capture once after the
-outcome is known, including cleanup paths, without consuming or changing the
-response the caller sees. If the app cannot observe an outcome, mark that
-entry unverified in the ledger rather than claiming success.
-
-Carry one conversation session id and one turn trace id through every
-generation and every tool dispatch in that turn. Use the authenticated user
-id when available. Follow every tool dispatch path, including retry and
-fallback loops, and capture each execution as a span with that trace id. Avoid
-duplicate spans when a framework already records them.
+For `manual-capture`, follow the [route discovery and capture guide](https://posthog.com/docs/ai-observability/installation/manual-capture#find-every-inference-path). Capture each provider request once after its outcome is known. Preserve responses and streams, mark errors and interruptions, and connect sessions, traces, users, and tool spans. Record unverified paths in the ledger.
 
 ### The OpenTelemetry path
 
