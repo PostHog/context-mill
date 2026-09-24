@@ -5,17 +5,18 @@ import { loadSkillsConfig } from '../skill-generator.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
 
-// error-tracking-step declares its variants literally (its docs differ from
-// integration's), but the orchestrator resolves it per framework with no
+// Step skills declare their variants literally (their docs differ from
+// integration's), but the orchestrator resolves them per framework with no
 // fallback. A variant added to integration and not copied here makes the
-// default orchestrator flow abort for that framework.
-describe('integration-v2/error-tracking-step', () => {
-    it('declares every integration variant, with the same framework', () => {
-        const config = loadSkillsConfig(CONFIG_DIR);
-        const keys = (group) => config[group].variants.map((v) => `${v.id}:${v.framework}`);
+// orchestrator flow abort for that framework.
+describe.each(['integration-v2/error-tracking-step', 'integration-v2/feature-flags-step'])(
+    '%s',
+    (stepSkillGroup) => {
+        it('declares every integration variant, with the same framework', () => {
+            const config = loadSkillsConfig(CONFIG_DIR);
+            const keys = (group) => config[group].variants.map((v) => `${v.id}:${v.framework}`);
 
-        expect(keys('integration-v2/error-tracking-step')).toEqual(
-            expect.arrayContaining(keys('integration')),
-        );
-    });
-});
+            expect(keys(stepSkillGroup)).toEqual(expect.arrayContaining(keys('integration')));
+        });
+    },
+);
