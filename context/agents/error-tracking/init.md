@@ -55,19 +55,20 @@ Most frameworks do it for you: Next, Nuxt, Astro and SvelteKit auto-load `.env`,
 and Vite auto-loads it for client code. Nothing to do there.
 
 A plain Node backend does not — Express, Fastify, Hono, Koa, a raw `node:http`
-server — and neither does a bare Rollup or webpack config. When your init point
-reads `process.env` on one of those, wire the loading too, either way:
+server — and neither does a bare Rollup or webpack config. When the project
+already loads `.env` there (a `dotenv` import, an env-file flag in its scripts),
+leave it alone.
 
-- install `dotenv` with the project's own package manager (detect it from the
-  lockfile) and import it above the PostHog init — `require('dotenv').config()`,
-  or `import 'dotenv/config'` for ESM; or
-- add `--env-file=.env` to the `start` and `dev` scripts, when the project is on
-  Node 20.6+ and would rather not take a new dependency.
-
-You cannot run the app, so this has to be right by construction. Writing the
-guard without the loader is what produces
-`POSTHOG_… variable required by PostHog is missing or un-configured` at module
-load: the guard you wrote firing against an env file nothing reads.
+When nothing loads it, do not wire a loader. Don't install a package for it and
+don't edit `start` or `dev`. Every way in is a guess about where the app runs: a
+hard `--env-file=.env` stops the app wherever the gitignored file is missing,
+`--env-file-if-exists` needs Node 22.9, and putting the variables in front of
+the command commits the key. Name it in your handoff as a manual follow-up
+instead, with the variable names and the user's two options: load `.env` with
+`dotenv`, or set the variables in the app's environment. Say that until then,
+the guard stops the app at boot in development with
+`POSTHOG_… variable required by PostHog is missing or un-configured`. That loud
+failure is the guard doing its job.
 
 Some platforms have no environment to read at all, and there the answer is not
 a loader. Angular on the stock `@angular/build` builder is the common one:
@@ -108,7 +109,7 @@ no bundle, and uploads no source maps. When the existing code already passes
 An init point exists with the PostHog env keys present — whether it already
 did or you just created it — keys in the env file and confirmed there with
 `check_env_keys`, never hardcoded. On a platform that does not auto-load
-`.env`, the loading is wired; on a platform with no environment at all, the
+`.env` and has no loader, your handoff names it as a manual follow-up; on a platform with no environment at all, the
 token is a literal rather than a lookup into something that never defines it.
 In a type-checked project, the value you pass to the SDK is narrowed to a
 `string`.

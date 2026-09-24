@@ -21,16 +21,26 @@ variable names, the CI secret to create, and any deploy path that could not be
 traced. Do not re-derive any of it from the project.
 
 Write the hand-off to `posthog-error-tracking-report.md` at the top level of
-this project's directory. When the run wired source-map upload, START it with
-a **"What you still need to do"** section — numbered, copy-pasteable:
+this project's directory. When any handoff carries a manual follow-up, START
+the report, right under its H1, with this warning block, one short bullet per
+item. The wizard shows these bullets again when it exits.
+
+```markdown
+> ⚠️ **Needs your attention**
+> - Load `.env` in the app, or set `POSTHOG_API_KEY` in its environment.
+```
+
+Then, when the run wired source-map upload or any follow-up has steps, add a
+**"What you still need to do"** section — numbered, copy-pasteable:
 
 1. Create a personal API key with the 'Source map upload' preset at
    `<UI_HOST>/settings/user-api-keys` (skip when the credentials handoff says
    the key is already written).
 2. Add it as the CI secret the wire-ci step referenced, named exactly as in
    the pipeline config.
-3. Any other manual follow-up the handoffs carry (an untraceable deploy path,
-   provider-side settings, installing a missing `posthog-cli`).
+3. Any other manual follow-up the handoffs carry (an env file nothing loads,
+   an untraceable deploy path, provider-side settings, installing a missing
+   `posthog-cli`).
 
 Then cover, briefly and concretely:
 
@@ -38,8 +48,13 @@ Then cover, briefly and concretely:
   that carry it.
 - If the run also installed and initialized the SDK, say so — the user
   started this command without PostHog and now has it.
-- When source-map upload was wired: the files changed (paths only), the exact
-  production build command, and that every production build now uploads.
+- When source-map upload was wired and neither the credentials nor the wire-ci
+  handoff reports a skip: the files changed (paths only), the exact production
+  build command, and that every production build now uploads.
+- When the build was wired but the credentials or wire-ci handoff reports a
+  skip: the same files and command, and that the build is set up to upload.
+  Say that uploads start, and the build command succeeds, only once the
+  `POSTHOG_CLI_*` values are present where the build runs.
 - When it was skipped: one line saying why — readable stack traces on this
   platform, or that Astro is not supported by the uploader. An outcome, not an
   apology. Say plainly that the build command was left untouched.
@@ -49,7 +64,7 @@ Then cover, briefly and concretely:
 
 Never write a secret value into the report — only variable names. Replace
 `<UI_HOST>` and `<PROJECT_ID>` from your project context. Give the same
-summary in chat.
+summary in chat, warning block first.
 
 ## How you know you succeeded
 
