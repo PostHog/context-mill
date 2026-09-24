@@ -56,15 +56,15 @@ separate question is the variables **the application reads when it starts**: the
 project token and host its init looks up. Those live in the same gitignored env
 file, and a compiled binary or a bare interpreter loads nothing on its own.
 
-So open the init point, note the variables it reads, and make the run script
-provide exactly those — export the env file ahead of the command, pass the
-runtime's own flag for it, whatever that platform offers. The loader must still
-start when the file is missing, since production supplies these as real
-environment variables. On Node that is `dotenv` or `--env-file-if-exists=.env`
-(Node 22.9+), never a hard `--env-file=.env` on `start`. Skip it and the
-artifact starts, prints its own "variable missing" guard, and reports nothing:
-the build is green, the symbols are uploaded, and the single command you hand
-the user to verify with is the one command that cannot capture.
+So open the init point and note the variables it reads. When the project
+already loads the env file for them, you're done. When it doesn't, do not wire
+a loader into the run script: production supplies these as real environment
+variables, and a script that loads the gitignored file breaks wherever it is
+missing. Never put a hard `--env-file=.env` on `start`. Leave the script as it
+is and name the gap in your handoff as a manual follow-up, with the variable
+names. Leave it out of the handoff and the build is green, the symbols are
+uploaded, and the single command you hand the user to verify with is the one
+command that cannot capture.
 
 Put a multi-step build somewhere the tool actually runs it — a script file, a
 make target, the manifest's own scripts — never an alias mechanism you are

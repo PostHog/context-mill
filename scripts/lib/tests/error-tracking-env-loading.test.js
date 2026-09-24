@@ -20,9 +20,11 @@ describe('error-tracking env loading', () => {
         }
     });
 
-    it('names a loader that tolerates a missing .env for the run script', () => {
+    it('hands a missing loader off as a follow-up instead of wiring one', () => {
         for (const file of ['init.md', 'configure.md']) {
-            expect(sentences(file).join(' ')).toContain('--env-file-if-exists=.env');
+            const text = sentences(file).join(' ');
+            expect(text).toMatch(/do not wire a loader/i);
+            expect(text).toMatch(/manual follow-up/);
         }
     });
 
@@ -30,5 +32,9 @@ describe('error-tracking env loading', () => {
         const promise = sentences('report.md').filter((s) => /every production build/.test(s));
         expect(promise.length).toBeGreaterThan(0);
         for (const sentence of promise) expect(sentence).toMatch(/wire-ci/);
+    });
+
+    it('opens the report with the warning block the wizard reads back', () => {
+        expect(sentences('report.md').join(' ')).toContain('> ⚠️ **Needs your attention**');
     });
 });
