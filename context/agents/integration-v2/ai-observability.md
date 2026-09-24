@@ -21,14 +21,18 @@ If there are no LLM calls, complete as `not needed` with the reason and make no
 changes. Do not install a vendor SDK, add a demo call, or use manual capture to
 invent an AI feature in an app that has none.
 
-Before editing, follow the [route discovery guide](https://posthog.com/docs/ai-observability/installation/manual-capture#tracing-proxied-inference-paths). Record each existing inference path and its capture status in a brief **inference coverage ledger**. Check shared transports against their callers; list any uncovered path and why.
-
 For existing LLM calls, load the `ai-observability` skill menu and install the
 variant matching each real calling path's language and provider or agent
 framework. More than one variant may be needed when distinct paths use
 different providers. Follow each skill's selection rules and instrumentation
 references. Manual capture is appropriate only for existing calls without a
 supported wrapper.
+
+Before editing, read the bundled `references/manual-capture.md` in an installed
+variant. Record each existing inference path and its capture status in a brief
+**inference coverage ledger**. Check shared transports against their callers;
+list any uncovered path and why.
+
 Instrument against the provider SDK version the app already uses; never
 require, assume, or request an upgrade of the app's own dependencies — if the
 wrapper cannot support the app's version, fall back to manual capture or

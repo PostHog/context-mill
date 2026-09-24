@@ -2,15 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+import { loadSkillsConfig } from '../skill-generator.js';
+
 const context = join(process.cwd(), 'context');
+const routeGuideUrl = 'https://posthog.com/docs/ai-observability/installation/manual-capture.md';
 const agent = (name) => readFileSync(join(context, 'agents', 'integration-v2', `${name}.md`), 'utf8');
 const aiReference = (name) =>
     readFileSync(join(context, 'skills', 'ai-observability', 'references', `${name}.md`), 'utf8');
 const plain = (value) => value.replaceAll('**', '').replace(/\s+/g, ' ');
-const routeGuide = /manual-capture#tracing-proxied-inference-paths/;
+const routeGuide = /references\/manual-capture\.md/;
 
 describe('integration coverage contract', () => {
-    it('links route discovery and keeps a ledger through verification', () => {
+    it('registers the route guide for every AI variant without duplicate variant entries', () => {
+        const config = loadSkillsConfig(context)['ai-observability'];
+
+        expect(config.shared_docs).toContain(routeGuideUrl);
+        expect(config.variants.filter((variant) => variant.docs_urls?.includes(routeGuideUrl))).toHaveLength(0);
+    });
+
+    it('reads the bundled route guide before editing and keeps a ledger through verification', () => {
         const task = agent('ai-observability');
         const begin = aiReference('1-begin');
         const instrument = aiReference('3-instrument');
@@ -19,6 +29,7 @@ describe('integration coverage contract', () => {
         expect(task).toMatch(/inference coverage ledger/i);
         expect(task).toMatch(/ambiguous paths as unresolved/i);
         expect(task).toMatch(routeGuide);
+        expect(task).not.toContain(routeGuideUrl);
         expect(plain(begin)).toMatch(/list every inference entry point, its transport, and capture status/i);
         expect(begin).toMatch(routeGuide);
         expect(instrument).toMatch(routeGuide);
