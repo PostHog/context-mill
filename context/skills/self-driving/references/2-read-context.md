@@ -18,7 +18,7 @@ Emit:
 
 {{> mcp-tool-calling}}
 
-Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `scout-project-profile-get`, `query-session-recordings-list`, `surveys-get-all`, and `query-error-tracking-issues-list`.
+Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog tools through the `exec` tool — run `info <tool>` before the first `call` for `scout-project-profile-get`, `query-session-recordings-list`, `surveys-get-all`, `query-error-tracking-issues-list`, and `endpoints-get-all`.
 
 ## Do
 
@@ -30,12 +30,13 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
    - `query-session-recordings-list` — any recording → replay in use
    - `surveys-get-all` — any survey → surveys in use
    - `query-error-tracking-issues-list` — any issue → error tracking in use, even when this repo doesn't instrument it
+   - `endpoints-get-all` — any endpoint → Endpoints in use. Neither the repo nor the profile reports this product, so the probe is the only evidence. Step 4 needs the answer
 
 4. **Light scan for what the report, profile, and server state won't cover.** Targeted lookups only — package manifests, config files, a grep or two. You are answering these questions:
    - **Revenue**: is there a payment SDK (Stripe, Paddle, LemonSqueezy, RevenueCat…) or revenue events?
    - **Surveys**: does the code or profile show PostHog surveys in use?
    - **AI/LLM**: are there `$ai_*` events, an LLM SDK, or LLM analytics in the profile?
-   - **Logs**: is the PostHog logs product in use (per the profile)?
+   - **Logs**: is the PostHog logs product in use (per the profile)? Step 4 needs the answer.
    - **CSP**: is a Content-Security-Policy with PostHog CSP reporting configured?
    - **Support**: does the team use PostHog support/conversations (per the profile)?
    - **Connected tools**: any hints of an issue tracker (Linear, Jira, GitLab, Gitea, Shortcut), error tracker (Sentry, Rollbar, Bugsnag, Honeybadger, Raygun), support desk (Zendesk, Freshdesk, Front, Gorgias, Kustomer, Dixa, Plain), database performance (pganalyze), security scanner (Snyk, SonarQube, Semgrep, Rapid7), product-feedback / review tool (Featurebase, Frill, Aha, UserVoice, Productboard, Canny, AskNicely, Retently, Appfigures, AppFollow, Judge.me), or search analytics (Google Search Console) — you will still ask in step 5; hints only shape the question, they never authorize enabling.
