@@ -30,7 +30,7 @@ Load the local tools via `ToolSearch select:Read,Glob,Grep`. Reach the PostHog t
    - `query-session-recordings-list` — any recording → replay in use
    - `surveys-get-all` — any survey → surveys in use
    - `query-error-tracking-issues-list` — any issue → error tracking in use, even when this repo doesn't instrument it
-   - `endpoints-get-all` — any endpoint → Endpoints in use. Neither the repo nor the profile reports this product, so the probe is the only evidence. Step 4 needs the answer
+   - `endpoints-get-all` — any endpoint → Endpoints in use. Neither the repo nor the profile reports this product, so the probe is the only evidence step 4 can gate on
 
 4. **Light scan for what the report, profile, and server state won't cover.** Targeted lookups only — package manifests, config files, a grep or two. You are answering these questions:
    - **Revenue**: is there a payment SDK (Stripe, Paddle, LemonSqueezy, RevenueCat…) or revenue events?
