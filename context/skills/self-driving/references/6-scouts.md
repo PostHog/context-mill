@@ -36,9 +36,11 @@ Reach the scout-config tools through the PostHog `exec` tool — `info` then `ca
 
    **(a) `general` — always enabled.** `signals-scout-general` watches cross-product correlations and the surfaces no specialist covers; it self-closes cheaply when there's nothing to say. Keep it on for every project.
 
-   **(b) Two surfaces are routed elsewhere, so their scouts stay off.** Error tracking reaches the inbox as step 4's native **source**; session replay reaches it through the Replay Vision **scanners** of step 6c. One surface, one route — so `signals-scout-error-tracking` and `signals-scout-session-replay` are already covered, and a scout on top of either produces the same finding twice. They end this step disabled whatever the evidence says, and the report records them as covered by their route — error tracking by the native source, session replay by the scanners — which is what they are, rather than as a re-enable follow-up.
+   **(b) Error tracking is routed elsewhere, so its scout stays off.** Error tracking reaches the inbox as step 4's native **source**. One surface, one route — so `signals-scout-error-tracking` is already covered, and a scout on top of it produces the same finding twice. It ends this step disabled whatever the evidence says, and the report records it as covered by the native source, rather than as a re-enable follow-up.
 
-   **(c) Up to five specialists — for the products this project uses MOST.** This is a judgment call, not a checklist: weigh ALL the step-2 evidence together — the profile's `top_events` (volume + distinct users), recent activity, the active counts for feature flags / experiments / surveys / dashboards, plus any repo signals — and pick the product surfaces that are most actually used, then enable each one's scout. **Three to five is the normal case on a project with that many genuinely-used surfaces; it is a ceiling, not a quota.** A project that only really uses one or two eligible surfaces gets one or two — never pad the list to reach three (see the rules below, which still bind). The candidate pool is the entire troop **except** `general`, the two routed elsewhere in (b), and the operational scouts (see above); it includes both the surface-specific scouts and the remaining cross-product ones:
+   **Session replay is not routed elsewhere as a whole.** The route map splits it into two seams. The Replay Vision **scanners** of step 6c own on-screen defects inside a recording. `signals-scout-session-replay` owns capture integrity: recording volume that falls off a cliff while site traffic holds. A scanner reads only recordings that exist, so it cannot see a recording that was never captured, and a lost recording does not come back. The scanners do not cover the scout, so the scout stays a specialist candidate in (c).
+
+   **(c) Up to five specialists — for the products this project uses MOST.** This is a judgment call, not a checklist: weigh ALL the step-2 evidence together — the profile's `top_events` (volume + distinct users), recent activity, the active counts for feature flags / experiments / surveys / dashboards, plus any repo signals — and pick the product surfaces that are most actually used, then enable each one's scout. **Three to five is the normal case on a project with that many genuinely-used surfaces; it is a ceiling, not a quota.** A project that only really uses one or two eligible surfaces gets one or two — never pad the list to reach three (see the rules below, which still bind). The candidate pool is the entire troop **except** `general`, `signals-scout-error-tracking` (routed elsewhere in (b)), and the operational scouts (see above); it includes both the surface-specific scouts and the remaining cross-product ones:
 
    | Scout | Specialist for |
    |---|---|
@@ -46,6 +48,7 @@ Reach the scout-config tools through the PostHog `exec` tool — `info` then `ca
    | `signals-scout-web-analytics` | web traffic / pageviews with referrer or UTM tracking |
    | `signals-scout-feature-flags` | feature flags in active use (frontend or backend) |
    | `signals-scout-surveys` | surveys in use |
+   | `signals-scout-session-replay` | Session Replay in use: step 2 found recordings. It watches capture integrity, which the step 6c scanners cannot see |
    | `signals-scout-revenue-analytics` | a payment SDK / revenue data |
    | `signals-scout-ai-observability` | `$ai_*` events / LLM usage |
    | `signals-scout-logs` | the PostHog logs product in use |
@@ -60,12 +63,12 @@ Reach the scout-config tools through the PostHog `exec` tool — `info` then `ca
 
    Rules for the pick:
    - **At most five, and only as many as make sense.** Three or four is the norm; add a fifth only when a fifth surface is clearly, actively used. Even if six or more surfaces look used, keep only the five most-used — and remember step 6b needs room under the ten-scout ceiling, so taking all five here leaves it four. Padding the list with surfaces that are barely used is what drops findings per run.
-   - **At least one.** Always end with a specialist enabled. If no product surface clearly stands out — e.g. the only products in use are error tracking / session replay (excluded in (b)), or the profile was unavailable and nothing is rankable — **fall back to one universal cross-product scout** (`signals-scout-anomaly-detection` or `signals-scout-health-checks`) as the stand-in.
+   - **At least one.** Always end with a specialist enabled. If no product surface clearly stands out — e.g. the only product in use is error tracking (excluded in (b)), or the profile was unavailable and nothing is rankable — **fall back to one universal cross-product scout** (`signals-scout-anomaly-detection` or `signals-scout-health-checks`) as the stand-in.
    - **A scout the table doesn't name** (posthog keeps adding them): treat it as a specialist candidate — read its description, judge whether its surface is among this project's most-used, and enable it only if it earns one of the ≤5 slots.
 
 3. **Disable every scout you did NOT enable** in (a)–(c) — this is now most of the troop. Skip the operational scouts: they are not yours to turn off here, and they stay enabled whatever (a)–(c) picked. If an operational scout comes back with `enabled: false`, update it to `{ enabled: true }` instead, and note in the report that setup turned it back on. Disable via `scout-config-update` with the config `id` and `{ enabled: false }` — that one field is the whole update, since `emit` (dry-run posture) and `run_interval_minutes` keep the server's defaults, which are the intended posture. A failed update is a follow-up, not an abort.
 
-   For each **surface-specific** scout you disabled, record a re-enable follow-up so the user can switch it on if they do use that surface later (e.g. "enable `signals-scout-logs` in PostHog if you use the logs product"). The error-tracking / session-replay disables come from the route map (see (b)) — those two are reported as covered by the native source and the Replay Vision scanners.
+   For each **surface-specific** scout you disabled, record a re-enable follow-up so the user can switch it on if they do use that surface later (e.g. "enable `signals-scout-logs` in PostHog if you use the logs product"). This includes `signals-scout-session-replay`: if you disabled it, the follow-up says it watches for recording-capture cliffs, which the Replay Vision scanners cannot detect. The error-tracking disable comes from the route map (see (b)) — the report records it as covered by the native source.
 
 4. **Show the result.** This step asks the user nothing, so the only in-run visibility is the status line — after tuning, emit one naming the enabled set (short names, no `signals-scout-` prefix):
 
@@ -73,6 +76,6 @@ Reach the scout-config tools through the PostHog `exec` tool — `info` then `ca
 [STATUS] Scout troop: 4 active (general, product-analytics, feature-flags, surveys), plus 1 operational (inbox-validation); 14 disabled
 ```
 
-(Adjust counts and names to the actual troop and your decisions — the enabled set is always `general` + the 3–5 specialists, so "4 active" through "6 active" is expected; the operational scouts are listed apart because they sit outside that count; error-tracking and session-replay sit among the disabled, routed elsewhere.)
+(Adjust counts and names to the actual troop and your decisions — the enabled set is always `general` + the 3–5 specialists, so "4 active" through "6 active" is expected; the operational scouts are listed apart because they sit outside that count; error-tracking sits among the disabled, routed elsewhere; session-replay is active only when it earned a specialist slot.)
 
 Fresh configs have never run, so they're due immediately — the first scans fire on the next coordinator tick, within ~30 minutes, and each run draws from the project's daily budget (step 1b). Record per-scout decisions (enabled / disabled + why) and the budget numbers for the report.

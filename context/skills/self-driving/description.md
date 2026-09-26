@@ -33,11 +33,12 @@ Each surface reaches the inbox through exactly one pipeline. This route map is w
 | Error tracking | native signal source | step 4 |
 | Support tickets | native signal source | step 4 |
 | Setup health | native signal source | step 4 |
-| Session replay | Replay Vision scanners | step 6c |
+| Session replay: on-screen defects inside a recording | Replay Vision scanners | step 6c |
+| Session replay: recording capture (capture cliffs) | `signals-scout-session-replay`, when step 6 picks it | step 6 |
 | A connected tool (issues, tickets, DB performance, reviews, search) | its warehouse source, then its responder | step 5 |
 | Everything else worth watching | the scout troop, through step 4's scout gate | steps 6 and 6b |
 
-A surface's coverage comes from its own row and nowhere else. That is what settles the error-tracking and session-replay **scouts** in step 6 — their surfaces are routed already — and what makes step 6b's gap analysis count those two as covered. A second pipeline on one surface produces the same finding twice, not more coverage.
+A surface's coverage comes from its own row and nowhere else. That is what settles the error-tracking **scout** in step 6 — its surface is routed already — and what makes step 6b's gap analysis count it as covered. Session replay has two rows because the two seams are different. A scanner reads only recordings that exist, so it cannot see a recording that was never captured. The session-replay scout is therefore a normal specialist candidate in step 6, and the scanners do not replace it. A second pipeline on one surface produces the same finding twice, not more coverage.
 
 ## Live activity — `[STATUS]`
 
