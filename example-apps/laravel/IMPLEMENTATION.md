@@ -102,7 +102,7 @@ This document summarizes the implementation of the Laravel PostHog example appli
 ## 📁 File Structure
 
 ```
-basics/laravel/
+example-apps/laravel/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
