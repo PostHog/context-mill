@@ -105,6 +105,21 @@ except Exception as e:
 
 The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capture=true` to capture in PostHog, or `?capture=false` to skip tracking.
 
+## Tests
+
+The tests cover what this example exists to demonstrate: PostHog is configured
+on startup and flushed on shutdown, the page and API routes capture their
+events with the right properties, and the error endpoints hand the exception to
+`capture_exception` and surface the returned event id.
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+They use a temporary SQLite file and record PostHog calls rather than sending
+them, so no project token or network access is needed.
+
 ## Project Structure
 
 ```
@@ -121,9 +136,16 @@ basics/fastapi/
 │   │   ├── main.py              # Page routes (HTML)
 │   │   └── api.py               # API endpoints (JSON)
 │   └── templates/               # Jinja2 templates
+├── tests/
+│   ├── conftest.py              # Fixtures: app client, login, recorded PostHog calls
+│   ├── test_posthog_setup.py    # Lifespan init, flush on shutdown, seeded user
+│   ├── test_events.py           # Login, signup and burrito event capture
+│   └── test_error_tracking.py   # Exception capture and returned event id
 ├── .env.example
 ├── .gitignore
+├── pytest.ini
 ├── requirements.txt
+├── requirements-dev.txt
 ├── README.md
 └── run.py                       # Entry point (uvicorn)
 ```
