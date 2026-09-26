@@ -34,6 +34,8 @@ Where a handoff carries a report section, that step already wrote the part of
 the report it owns. Include it as its own section instead of rewriting or
 summarizing it, and do not restate its contents elsewhere.
 
+Show the AI coverage ledger and review result in the report. Keep excluded or unverified paths, auth gaps, and success-event gaps visible as follow-up issues. Code coverage alone does not prove delivery.
+
 Where a handoff reports something a step could not resolve — attribution it could not
 establish, a question the step before it left open — that is not a caveat to bury in
 prose. Raise it as its own issue to follow up, saying what is unresolved and what it
