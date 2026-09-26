@@ -6,6 +6,8 @@ next_step: 7-report.md
 
 Scouts pull; scanners push. A **scanner** is the sensor layer of Replay Vision: an LLM that watches **one session recording at a time** on a schedule, writes an observation, and — when `emits_signals` is on — pushes what it found straight into the Self-driving inbox. It sees what no event can: a blank screen, a broken layout, a button that visibly does nothing, a form that swallowed the submit. That is the whole reason this step exists.
 
+A scanner reads only recordings that exist. It cannot detect a capture cliff, where an SDK or configuration failure stops new recordings. That seam belongs to `signals-scout-session-replay`, which step 6 decides on. The scanners cover visual defects, the scout covers capture, and neither replaces the other.
+
 This step creates the two **monitors** the `wizard replay-vision` command creates — the shared **briefs** — with one difference: here they are created with `"emits_signals": true`, so their findings feed the inbox. The summarizer brief is deliberately not part of this step: its unscoped 10% sample overlaps both monitors, and a signal-emitting overlap would let one defect corroborate itself into a promoted report (see below) — summaries belong to the `replay-vision` command. Each brief is a locked prompt scaffold plus the blanks you fill from the product code (the `name`, the `query` where the brief has one, and the prompt blanks), so the scanners are written for *this* product rather than generic. Don't reword the scaffolds, don't invent extra scanners, don't drop one because it feels redundant.
 
 **This step never aborts.** No recordings yet, an org near its Replay Vision quota, a deploy without the scanner API, a single scanner that fails to create — all of them are a recorded follow-up and a move to step 7.
@@ -68,6 +70,7 @@ Core also owns loading the in-product `creating-replay-vision-scanners` skill (`
 The generic gotchas live in `replay-vision-scanners-core` and the in-product skill. The self-driving-specific ones:
 
 - **No `SignalSourceConfig` row.** Replay Vision scanners are self-authorizing: `emits_signals` on the scanner **is** the per-source config. Do not create a `replay_vision` source in step 4 or here.
+- **Don't touch the `signals-scout-session-replay` scout.** Step 6 owns it. It watches recording capture, which these scanners cannot see.
 - **Don't touch the `signals-scout-replay-vision` scout.** That's the analyst layer reading *across* observations for trends; step 6 owns the troop and it stays off by default. Different layer, same inbox.
 
 Record everything you created, updated, skipped, or deferred — the report needs it. Then continue to the next step.
