@@ -1,6 +1,6 @@
 # Add PostHog MCP analytics
 
-Use this skill to instrument a user's own **MCP server** with PostHog MCP analytics. Once instrumented, every tool call, agent intent, and failure the server handles is captured as a `$mcp_*` event in PostHog. Supported TypeScript instrumentation paths can also capture the agent's self-reported model, so the user can compare quality, errors, and latency by model.
+Use this skill to instrument a user's own **MCP server** with PostHog MCP analytics. Once instrumented, every tool call, agent intent, and failure the server handles is captured as a `$mcp_*` event in PostHog. Every SDK also captures the calling model by default, so the user can compare quality, errors, and latency by model.
 
 There are three SDKs and this skill handles all of them:
 - **TypeScript / JavaScript** — the [`@posthog/mcp`](https://posthog.com/docs/mcp-analytics) Node package.
@@ -256,7 +256,7 @@ class AppModule {}
 
 `instrumentMutator` returns the server (not `instrument()`'s handle), so it slots straight into the hook. Compose with an existing `serverMutator` if there is one, and handlers nest registers after the mutator runs are still captured. For [custom events](https://posthog.com/docs/mcp-analytics/custom-events), call `instrument()` directly inside your own mutator and keep its handle, returning the server yourself.
 
-If mcp-nest keeps one persistent server instance, also set `captureModel: true`. Don't enable it when `statelessMode: true` creates a fresh low-level server per request: that path advertises `llm_model` but can't confirm ownership before the call, so the model property stays empty.
+Model capture is on by default. When `statelessMode: true` creates a fresh low-level server per request, that path advertises `llm_model` but can't confirm ownership before the call, so the self-reported model can stay empty. Leave the default; don't add options to work around it.
 
 ##### For @modelcontextprotocol/server (v2), any path — sessions and protocol revisions
 
@@ -329,7 +329,7 @@ posthog.capture_tool_call(
 )
 ```
 
-Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocol_version` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't call `capture_initialize` on `2026-07-28`. Python doesn't support self-reported model capture yet, so don't add an `llm_model` field. These calls are fire-and-forget and never throw, so they can't take down a tool.
+Resolve `distinct_id` / `session_id` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocol_version` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't call `capture_initialize` on `2026-07-28`. `prepare_tool_list` advertises `llm_model` and `prepare_tool_call` reads it by default; pass the prepared `llm_model` and `llm_model_source` to `capture_tool_call`. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
 #### Go
 
@@ -363,7 +363,7 @@ posthogmcpsdk.Instrument(server, posthogmcp.New(client),
 
 Reuse the name and version the server already passes to `mcp.NewServer` for `WithServerInfo`. Match the existing error-handling style instead of `log.Fatal` if the project has one. On a stdio transport, never log to stdout.
 
-The Go SDK captures `$mcp_tool_call` and `$exception` only. It has no model capture, conversation IDs, intent fallback, or `$mcp_initialize` / `$mcp_tools_list` events, so don't add options for them. `WithIdentity` is optional; add it only if the server already authenticates callers (the Go installation page shows how).
+Intent, model capture, and conversation IDs are on by default, like the other SDKs, so don't add options for them. The Go SDK has no intent fallback, missing-capability tool, or feedback tool, and doesn't emit `$mcp_initialize` / `$mcp_tools_list`, so don't try to add those. `WithIdentity` is optional; add it only if the server already authenticates callers (the Go installation page shows how).
 
 ### STEP 5: Wire up credentials
 
@@ -406,9 +406,9 @@ The PostHog client batches events; the user owns the client's lifecycle.
 - **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
 - **Python:** run the project's type-check / tests if present (`mypy`, `pytest`) and fix any errors your changes introduced. Run any formatter the project uses (`ruff`, `black`) on the files you touched.
 - **Go:** run `go build ./... && go vet ./...` and fix any errors your changes introduced. Run `gofmt` on the files you touched.
-- For any supported TypeScript path with model capture, verify `tools/list` advertises a required `llm_model` string, the tool handler doesn't receive it, and a non-`unknown` answer lands on `$mcp_tool_call` as `$mcp_llm_model` with `$mcp_llm_model_source = "self_reported"`.
+- For any path with model capture (on by default), verify `tools/list` advertises a required `llm_model` string, the tool handler doesn't receive it, and a non-`unknown` answer lands on `$mcp_tool_call` as `$mcp_llm_model` with `$mcp_llm_model_source = "self_reported"`.
 - For a `2026-07-28` wrapping path, verify the first tool call captures without an initialize request. When conversation IDs are enabled, verify the returned handle is echoed on the next call and produces the same `$session_id`.
-- Don't expect automatic `$mcp_resources_list`, `$mcp_resource_read`, `$mcp_prompts_list`, or `$mcp_prompt_get` events. Those names are reserved, but the wrappers don't emit them yet.
+- The TypeScript and Python wrappers emit `$mcp_resources_list` and `$mcp_resource_read`, never the resource body. Don't expect `$mcp_prompts_list` or `$mcp_prompt_get`. Go emits no resource events.
 - Check every event name in the final report against `events.md`. Failed tools remain `$mcp_tool_call` events with `$mcp_is_error = true` and can emit a sibling `$exception`; there is no `$mcp_tool_failed` event.
 - Summarize for the user: which path you used, the files you changed, the env vars to set, and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference.
 
@@ -416,7 +416,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 {references}
 
-The per-language `installation/typescript.md`, `installation/python.md`, and `installation/go.md` pages are the source of truth for the wrapping paths (A/B, Python P1, Go G1), the custom-dispatcher paths (C and P2), and the full `instrument()` options tables (`identify`, `context`/intent, TypeScript-only `captureModel`, `enableConversationId`/`enable_conversation_id`, `reportMissing`/`report_missing`, `beforeSend`/`before_send`, `eventProperties`/`event_properties`; Go's `With...` options), including the `2026-07-28` rule that no initialize event exists. `sdk-v2.md` is the source of truth for both SDK-major splits, sessions on `2026-07-28`, MCP Apps compatibility, and current instrumentation gaps. `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured.
+The per-language `installation/typescript.md`, `installation/python.md`, and `installation/go.md` pages are the source of truth for the wrapping paths (A/B, Python P1, Go G1), the custom-dispatcher paths (C and P2), and the full `instrument()` options tables (`identify`, `context`/intent, `captureModel`/`capture_model`, `enableConversationId`/`enable_conversation_id`, `reportMissing`/`report_missing`, `beforeSend`/`before_send`, `eventProperties`/`event_properties`; Go's `With...` options), including the `2026-07-28` rule that no initialize event exists. `sdk-v2.md` is the source of truth for both SDK-major splits, sessions on `2026-07-28`, MCP Apps compatibility, and current instrumentation gaps. `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured.
 
 ## Key principles
 
