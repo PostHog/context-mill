@@ -18,6 +18,10 @@ Derive the expectation from the four facts in `1-begin.md`:
 - The person matches the app's user id, if the app has one.
 - `$ai_provider` names the real provider on a gateway app.
 
+For manual capture, reconcile the inference coverage ledger with the code.
+Check success and failure paths, stream interruption, and shared trace ids.
+Report unverified paths; code inspection does not prove delivery to PostHog.
+
 ## Tell the user how to trigger it
 
 Name the smallest path in the project that runs one turn. Prefer one that calls the model twice or uses a tool, so the tree has depth.
