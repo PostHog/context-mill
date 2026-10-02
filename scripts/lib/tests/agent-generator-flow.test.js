@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, mkdtempSync, rmSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 
 import { buildAgents } from '../agent-generator.js';
+import { REPO_URL } from '../constants.js';
 
 const prompt = (frontmatter) => `---\n${frontmatter}\n---\n\n## Goal\n\nDo the thing.\n`;
 
@@ -98,5 +100,42 @@ describe('buildAgents flow frontmatter', () => {
         const { count } = buildAgents({ configDir, distDir, baseUrl: 'http://x' });
         expect(count).toBe(1);
         expect(existsSync(join(distDir, 'agents', 'my-flow', 'README.md'))).toBe(false);
+    });
+});
+
+describe('buildAgents download URLs', () => {
+    let tmpDir;
+    let configDir;
+    let distDir;
+
+    beforeEach(() => {
+        tmpDir = mkdtempSync(join(tmpdir(), 'agents-url-test-'));
+        configDir = join(tmpDir, 'context');
+        distDir = join(tmpDir, 'dist');
+        mkdirSync(join(configDir, 'agents', 'my-flow'), { recursive: true });
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'task.md'),
+            prompt('type: task\nflow: my-flow'),
+        );
+    });
+
+    afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
+
+    const menuOf = () =>
+        JSON.parse(readFileSync(join(distDir, 'agents', 'agent-menu.json'), 'utf8'));
+
+    it('pins a versioned build to its own release', () => {
+        buildAgents({ configDir, distDir, version: '1.47.0' });
+        expect(menuOf().agents[0].downloadUrl).toBe(
+            `${REPO_URL}/releases/download/v1.47.0/agents-my-flow-task.md`,
+        );
+    });
+
+    it('points an unversioned build at the files it just wrote', () => {
+        const { baseUrl } = buildAgents({ configDir, distDir });
+        const url = menuOf().agents[0].downloadUrl;
+        expect(baseUrl).toBe(pathToFileURL(join(distDir, 'agents')).href);
+        expect(url).toBe(pathToFileURL(join(distDir, 'agents', 'agents-my-flow-task.md')).href);
+        expect(existsSync(fileURLToPath(url))).toBe(true);
     });
 });
