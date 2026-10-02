@@ -1,13 +1,12 @@
 # PostHog Android example
 
-This is an Android example demonstrating PostHog integration with product analytics, session replay, and error tracking using Kotlin and Jetpack Compose.
+This is an Android example demonstrating PostHog integration with product analytics and error tracking using Kotlin and Jetpack Compose.
 
-This example uses the PostHog Android SDK (`posthog-android`) to provide automatic PostHog integration with built-in error tracking, session replay, and simplified configuration.
+This example uses the PostHog Android SDK (`posthog-android`) to provide automatic PostHog integration with built-in error tracking and simplified configuration.
 
 ## Features
 
 - **Product Analytics**: Track user events and behaviors
-- **Session Replay**: Record and replay user sessions
 - **Error Tracking**: Automatic error capture and crash reporting
 - **User Authentication**: Demo login system with PostHog user identification
 - **Event Tracking**: Examples of custom event tracking throughout the app
@@ -58,16 +57,16 @@ Get your PostHog project token from your [PostHog project settings](https://app.
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/example/posthog/
-│   │   │   │   ├── BurritoApplication.kt      # Application class with PostHog initialization
-│   │   │   │   ├── MainActivity.kt           # Main activity
+│   │   │   │   ├── BurritoApp.kt              # Application class with PostHog initialization
+│   │   │   │   ├── MainActivity.kt            # Main activity
+│   │   │   │   ├── data/                      # User model + repository
+│   │   │   │   ├── navigation/                # Compose navigation graph
 │   │   │   │   ├── ui/
-│   │   │   │   │   ├── screens/
-│   │   │   │   │   │   ├── LoginScreen.kt     # Login screen with user identification
-│   │   │   │   │   │   ├── BurritoScreen.kt   # Demo feature screen with event tracking
-│   │   │   │   │   │   └── ProfileScreen.kt   # User profile with error tracking demo
-│   │   │   │   │   └── components/            # Reusable UI components
-│   │   │   │   └── utils/
-│   │   │   │       └── PostHogHelper.kt       # PostHog utility functions
+│   │   │   │   │   ├── screens/               # Home, Burrito, Profile screens
+│   │   │   │   │   ├── components/            # Reusable UI components
+│   │   │   │   │   └── theme/                 # Compose theme
+│   │   │   │   └── viewmodel/
+│   │   │   │       └── AuthViewModel.kt       # Login/logout with PostHog identify + events
 │   │   │   ├── res/                           # Resources (layouts, strings, etc.)
 │   │   │   └── AndroidManifest.xml            # App manifest
 │   │   └── test/                              # Unit tests
@@ -79,177 +78,119 @@ Get your PostHog project token from your [PostHog project settings](https://app.
 
 ## Key Integration Points
 
-### Application Initialization (BurritoApplication.kt)
+### Application Initialization (BurritoApp.kt)
 
 PostHog is initialized in the `Application` class to ensure it's available throughout the app lifecycle:
 
 ```kotlin
+import com.posthog.android.PostHogAndroid
+import com.posthog.android.PostHogAndroidConfig
+
 class BurritoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        
-        val posthogConfig = PostHogConfig(
+
+        // Initialize PostHog early in Application lifecycle
+        val config = PostHogAndroidConfig(
             apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
-            host = BuildConfig.POSTHOG_HOST
+            host = BuildConfig.POSTHOG_HOST,
         ).apply {
-            // Enable session replay
-            sessionReplay = true
-            
-            // Enable automatic exception capture
-            captureApplicationLifecycleEvents = true
-            captureDeepLinks = true
-            captureScreenViews = true
+            debug = true
+            errorTrackingConfig.autoCapture = true
         }
-        
-        PostHog.setup(this, posthogConfig)
+
+        PostHogAndroid.setup(this, config)
     }
 }
 ```
 
 **Key Points:**
-- PostHog is initialized in `onCreate()` to ensure it's initialized as early as possible
+- `PostHogAndroid.setup()` is called once in `onCreate()` so PostHog is initialized as early as possible
 - Configuration is loaded from `BuildConfig` (set in `build.gradle`)
-- Session replay, lifecycle events, and screen views are enabled
+- `errorTrackingConfig.autoCapture` captures uncaught exceptions automatically
 - The Application class must be registered in `AndroidManifest.xml`
 
-### User Identification (LoginScreen.kt)
+### User Identification (AuthViewModel.kt)
 
-Users are identified when they log in:
+After setup, PostHog is used through the static `PostHog` object (`import com.posthog.PostHog`). Users are identified when they log in:
 
 ```kotlin
-val posthog = PostHog.getInstance()
+fun login(username: String) {
+    viewModelScope.launch {
+        val existingUser = repository.getUser(username)
+        val user = existingUser ?: User(username = username, burritoConsiderations = 0)
+        repository.saveUser(user)
 
-fun handleLogin(username: String, password: String) {
-    // Authenticate user
-    val success = authenticateUser(username, password)
-    
-    if (success) {
-        // Identify the user once on login/sign up
-        posthog.identify(
-            distinctId = username,
-            properties = mapOf(
-                "username" to username,
-                "login_method" to "password"
-            )
-        )
-        
-        // Capture login event
-        posthog.capture("user_logged_in", mapOf(
-            "username" to username
-        ))
+        PostHog.identify(username)
+        PostHog.capture(event = "user_logged_in")
+    }
+}
+
+fun logout() {
+    viewModelScope.launch {
+        PostHog.capture("user_logged_out")
+        PostHog.reset()
+        repository.clearCurrentUser()
     }
 }
 ```
 
 **Key Points:**
-- `identify()` is called once when the user logs in or signs up
-- User properties can be set during identification
-- Events are captured using `capture()` with event names and properties
-- The `distinctId` should be a unique identifier for the user
+- `PostHog.identify()` is called once when the user logs in or signs up
+- The distinct id should be a unique identifier for the user
+- `PostHog.reset()` on logout unlinks the device from the user
 
-### Event Tracking (BurritoScreen.kt)
+### Event Tracking (AuthViewModel.kt)
 
 Custom events are tracked throughout the app:
 
 ```kotlin
-val posthog = PostHog.getInstance()
+fun incrementBurritoCount() {
+    viewModelScope.launch {
+        val user = _currentUser.value ?: return@launch
+        val updatedUser = user.copy(burritoConsiderations = user.burritoConsiderations + 1)
+        repository.saveUser(updatedUser)
 
-fun handleBurritoConsideration() {
-    // Track custom event
-    posthog.capture("burrito_considered", mapOf(
-        "total_considerations" to considerationCount,
-        "username" to currentUser.username,
-        "timestamp" to System.currentTimeMillis()
-    ))
-    
-    // Update user properties
-    posthog.setUserProperties(mapOf(
-        "last_burrito_consideration" to System.currentTimeMillis(),
-        "total_burrito_considerations" to considerationCount
-    ))
+        PostHog.capture(
+            event = "burrito_considered",
+            properties = mapOf(
+                "total_considerations" to updatedUser.burritoConsiderations,
+                "username" to updatedUser.username
+            )
+        )
+    }
 }
 ```
 
 **Key Points:**
-- Events are captured with `capture()` method
+- Events are captured with `PostHog.capture()`
 - Event properties provide context about the event
-- User properties can be updated with `setUserProperties()`
+- Person properties can be set alongside an event via the `userProperties` parameter of `capture()`
 - Properties can be strings, numbers, booleans, or dates
 
 ### Error Tracking
 
-Errors are captured automatically and can also be tracked manually:
-
-**Automatic Error Capture:**
-PostHog automatically captures uncaught exceptions when configured:
+Uncaught exceptions are captured automatically via `errorTrackingConfig.autoCapture = true` in the configuration above. Exceptions can also be captured manually:
 
 ```kotlin
-val posthogConfig = PostHogConfig(
-    apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
-    host = BuildConfig.POSTHOG_HOST
-).apply {
-    // Automatic exception capture is enabled by default
-    captureApplicationLifecycleEvents = true
-}
-```
-
-**Manual Error Capture:**
-```kotlin
-val posthog = PostHog.getInstance()
-
 try {
-    // Risky operation
     performRiskyOperation()
 } catch (e: Exception) {
-    // Capture exception manually
-    posthog.captureException(e, mapOf(
-        "context" to "burrito_consideration",
-        "user_id" to currentUser.id
+    PostHog.captureException(e, mapOf(
+        "context" to "burrito_consideration"
     ))
-}
-```
-
-### Screen View Tracking
-
-Screen views are automatically tracked when `captureScreenViews` is enabled. You can also manually track screen views:
-
-```kotlin
-val posthog = PostHog.getInstance()
-
-// Manual screen view tracking
-posthog.screen("BurritoScreen", mapOf(
-    "screen_category" to "features",
-    "user_type" to "premium"
-))
-```
-
-### Session Replay
-
-Session replay is enabled in the PostHog configuration:
-
-```kotlin
-val posthogConfig = PostHogConfig(
-    apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
-    host = BuildConfig.POSTHOG_HOST
-).apply {
-    sessionReplay = true
-    sessionReplayConfig = SessionReplayConfig(
-        maskAllInputs = false, // Set to true to mask all input fields
-        maskAllText = false    // Set to true to mask all text
-    )
 }
 ```
 
 ### Accessing PostHog in Components
 
-PostHog is accessed via the singleton instance:
+After `PostHogAndroid.setup()`, PostHog is used anywhere through the static `PostHog` object:
 
 ```kotlin
-val posthog = PostHog.getInstance()
-posthog.capture("event_name", mapOf("property" to "value"))
-```
+import com.posthog.PostHog
 
-The instance is available throughout your application after initialization.
+PostHog.capture(event = "event_name", properties = mapOf("property" to "value"))
+```
 
 ## Gradle Configuration
 
