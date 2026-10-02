@@ -4,17 +4,18 @@ next_step: 3-identify-lifecycle.md
 
 # Step 2 — Identify (fix)
 
-This step resolves five correctness checks **in parallel**, one subagent per check. The first four ids are reused by the broader PostHog audit so a fix once made here is observable from either entry point. The fifth (`identify-sequential-calls`) is audit-identify-specific.
+This step resolves six correctness checks **in parallel**, one subagent per check. The first five ids are reused by the broader PostHog audit so a fix once made here is observable from either entry point. The sixth (`identify-sequential-calls`) is audit-identify-specific.
 
 - `identify-stable-distinct-id`
 - `identify-not-late`
 - `cross-runtime-distinct-id`
+- `cross-runtime-session-id`
 - `identify-reset-on-logout`
 - `identify-sequential-calls`
 
-## Skip case — no `posthog.identify` calls found
+## Reduced case — no `posthog.identify` calls found
 
-If Step 1's identify grep returned **zero** hits, resolve all five checks in a single `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.identify call sites detected"`. Then continue to **`3-identify-optimize.md`**. Do not dispatch subagents.
+If Step 1's identify grep returned **zero** hits, resolve these five identify-dependent checks in one `audit_resolve_checks` call with `status: "pass"` and `details: "skip: no posthog.identify call sites detected"`: `identify-stable-distinct-id`, `identify-not-late`, `cross-runtime-distinct-id`, `identify-reset-on-logout`, and `identify-sequential-calls`. Then dispatch **only Task D** (`cross-runtime-session-id`), because anonymous browser and server events still need the same session correlation. When Task D returns, continue to **`3-identify-lifecycle.md`**.
 
 ## Status
 
@@ -24,9 +25,9 @@ Emit before dispatching:
 [STATUS] Auditing identify correctness
 ```
 
-## Action — dispatch five subagents in one message
+## Action — dispatch six subagents in one message
 
-Make **five `Agent` tool calls in a single message** so they run concurrently. Wait for all five to return, then continue to `3-identify-optimize.md`. Do not run any other tools between dispatch and the next step.
+Make **six `Agent` tool calls in a single message** so they run concurrently. Wait for all six to return, then continue to `3-identify-lifecycle.md`. Do not run any other tools between dispatch and the next step.
 
 The bundled `identify-users.md` reference holds PostHog's authoritative guidance on `distinct_id`, `identify()` ordering, and cross-runtime identity. It's typically at `.claude/skills/audit-identify/references/identify-users.md`; if that path doesn't exist, discover it with `Glob` `**/skills/audit-identify/references/identify-users.md`. Each subagent reads it once before judging.
 
@@ -96,7 +97,33 @@ Rule:
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-distinct-id`, including `file` (path:line of the most relevant init or capture site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
 
-### Task D — `identify-reset-on-logout`
+### Task D — `cross-runtime-session-id`
+
+`description`: `Audit cross-runtime-session-id`
+
+`prompt`:
+```
+You are an audit subagent. Resolve exactly one rule and return: cross-runtime-session-id.
+
+Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-identify/references/best-practices.md`; otherwise discover it with `Glob` `**/skills/audit-identify/references/best-practices.md`). Focus on the browser-and-server runtime guidance. Do not treat tracing headers as authentication.
+
+Run **two** Greps in parallel:
+- `posthog\.init\(|new PostHog\(|posthog\.Posthog\(|Posthog\(` — locate PostHog initialization across runtimes.
+- `tracing_headers|setupExpressRequestContext|PosthogContextMiddleware|X-POSTHOG-SESSION-ID|x-posthog-session-id|withContext\(` — locate the client-to-server correlation wiring.
+
+Read each file that contains a hit, once. Determine whether the project initializes both a browser SDK and a server SDK. If it does, verify both halves of the hand-off: the browser sends the PostHog tracing headers to the actual backend hostname, and the server binds the incoming session id to request-scoped PostHog context.
+
+Rule:
+- pass: `posthog-js` configures `tracing_headers` for the backend hostname and the server consumes the incoming session id through supported middleware (for example `setupExpressRequestContext` or `PosthogContextMiddleware`) or passes it as `sessionId` to request-scoped context.
+- error: both browser and server runtimes initialize PostHog, but either the browser does not send tracing headers or the server does not bind `X-POSTHOG-SESSION-ID` to PostHog context.
+- warning: both halves appear present, but the configured hostname or request-context flow cannot be matched to the backend from source.
+- Skip (`pass` with details: "single runtime"): only a browser or only a server runtime initializes PostHog.
+- Never accept a hand-written constant session id. The value must come from the browser SDK's current session through the request header.
+
+Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `cross-runtime-session-id`, including `file` (path:line of the missing or most relevant wiring) and `details` (one-line explanation of both the client and server evidence). Return when the call completes. Do not write the audit report.
+```
+
+### Task E — `identify-reset-on-logout`
 
 `description`: `Audit identify-reset-on-logout`
 
@@ -118,7 +145,7 @@ Rule:
 Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for id `identify-reset-on-logout`, including `file` (path:line of the most relevant logout or reset site) and `details` (one-line explanation). Return when the call completes. Do not write the audit report.
 ```
 
-### Task E — `identify-sequential-calls`
+### Task F — `identify-sequential-calls`
 
 `description`: `Audit identify-sequential-calls`
 
@@ -156,6 +183,6 @@ Emit one `mcp__wizard-tools__audit_resolve_checks` call with a single update for
 Return when the call completes. Do not write the audit report.
 ````
 
-## After all five return
+## After all six return
 
-Continue to **`3-identify-lifecycle.md`**. Do not write the report yet — that's Step 4's job after Step 3 finishes.
+Continue to **`3-identify-lifecycle.md`**. Do not write the report yet — Step 6 writes it after the remaining checks finish.
