@@ -1,0 +1,25 @@
+# Link releases skill — docs-only, one variant per server language that ships readable source
+type: skill
+template: description.md
+description: Link each production deploy to a PostHog Error Tracking release for {display_name}
+tags: [error-tracking, releases]
+shared_docs:
+  - https://posthog.com/docs/error-tracking/releases.md
+variants:
+  - id: python
+    display_name: Python
+    tags: [python]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/link-releases/python.md
+
+  - id: ruby
+    display_name: Ruby
+    tags: [ruby]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/link-releases/ruby.md
+
+  - id: php
+    display_name: PHP
+    tags: [php]
+    docs_urls:
+      - https://posthog.com/docs/error-tracking/link-releases/php.md

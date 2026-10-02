@@ -132,6 +132,7 @@ review to their owning team instead.
 | `*` (everything else, including all other skills) | `@PostHog/team-wizard-docs` |
 | `context/skills/integration/` | `@PostHog/team-wizard-docs` |
 | `context/skills/error-tracking-upload-source-maps/` | `@PostHog/team-error-tracking` |
+| `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
 | `context/skills/mcp-analytics/` | `@PostHog/team-mcp-analytics` |
 | `context/skills/revenue-analytics/` | `@PostHog/team-web-analytics` |
 | `context/skills/self-driving/` | `@PostHog/team-self-driving` |
