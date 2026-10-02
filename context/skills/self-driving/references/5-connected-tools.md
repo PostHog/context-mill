@@ -16,7 +16,7 @@ The brackets carry the per-tool detail, which is what keeps the **prompt one lin
 
 The run can connect **every** one of them, each with at most one click from the user, and it never asks anyone to paste a credential into this chat:
 
-- **GitHub Issues** — reuses the GitHub App the wizard connected before this run started (connector: `5a-github.md`).
+- **GitHub Issues** — reuses the GitHub App the wizard connected before this run started (connector: `5a-github.md`). When the run prompt says the user skipped GitHub, leave GitHub Issues out of the ask — it can't connect without the App.
 - **Linear** — a one-click OAuth link, then one multi-select for which Linear teams Self-driving reads (connector: `5b-linear.md`).
 - **Zendesk, pganalyze, Jira** (and any other API-credential source) — a secure PostHog **connect link**. The user enters their credentials on a PostHog page in their own browser, PostHog stores them, and the run creates the live source from that stored credential — no secret ever passes through this chat (connector: `5c-credentials.md`).
 - **Google Search Console** — a PostHog **connect link** that runs the Google OAuth grant and property pick in the browser and creates the source there; the run verifies it afterwards (connector: `5d-google-search-console.md`).
@@ -40,7 +40,7 @@ Load `wizard_ask` via `ToolSearch select:mcp__wizard-tools__wizard_ask`. Reach `
 1. **Build a short list from the codebase scan, then ask once.** The full catalog is ~36 tools — too many to show at once. The run prompt carries a **"Tools detected in this codebase"** block (a deterministic dependency + env-key scan the wizard ran on this project). Use it to keep the first ask short:
 
    - **Detected tools first.** From that block, take every tool whose `source_type` matches an entry in the connected-tools catalog (the `source_type` list in step 2 — e.g. detected `Sentry` → Sentry, `Github` → GitHub Issues). Ignore detected sources that are **not** in the catalog (Postgres, Stripe, …) — those belong to step 4, not this ask. List these first, right after "None of these". If the run prompt carries no detected block (older wizard), fall back to any step-2 evidence for ordering.
-   - **Then the SaaS basics** — always offer GitHub Issues, Linear, Jira, Sentry, and Zendesk even when the scan didn't flag them; skip any already added above.
+   - **Then the SaaS basics** — always offer GitHub Issues, Linear, Jira, Sentry, and Zendesk even when the scan didn't flag them; skip any already added above. The one exception: drop GitHub Issues when the run prompt says GitHub was skipped.
    - **Then "Show more (N more hidden)"** — a final `show-more` option that opens the full catalog. Set `N` to the number of catalog tools you did **not** list above (36 minus the detected-plus-basics rows), so the label says how many are behind it instead of leaving the user to guess.
 
    If the detected block found nothing, the list is just the SaaS basics + "Show more (31 more hidden)" — 36 catalog tools minus the 5 basics. **"None of these" stays the first option** (an accidental `enter` declines). Example shape (detected tools spliced in between "None of these" and the basics):

@@ -2,6 +2,8 @@
 
 Creates the GitHub Issues warehouse source directly — no browser trips. Reuses the GitHub App integration the wizard verified before this run started; the only thing to establish is **which repository**, and the project you're sitting in already answers that.
 
+**No GitHub App:** the user can skip GitHub in the wizard, and the run prompt then says so. Step 5 leaves GitHub Issues out of the ask, so this connector shouldn't run. If you reach it anyway and the project has no `github` integration, create nothing: take the dormant fallback (below) with a follow-up to connect the PostHog GitHub App at the integrations settings URL from the run prompt.
+
 **Dependency on the App install:** this can only auto-connect a repo the App install actually granted. If the repo isn't visible to the App (the validation in step 2 fails), that grant didn't cover it — leave GitHub Issues as a dormant source and record a follow-up telling the user to grant this repo to the PostHog GitHub App. No browser trip — same dormant posture as Zendesk.
 
 ## Status
