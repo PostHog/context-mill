@@ -7,10 +7,16 @@ the report reaches the user.
 
 Use the exact report markdown you composed — the same content you pass to
 `publish_handoff`, verbatim, not a summary of it. Create the notebook in a
-single `notebooks-create-markdown` call through `posthog_exec` — that exact
-tool name, no tool search — passing a `title` and the report as `markdown`.
-The title becomes the notebook's leading `# heading`, so start the `markdown`
-at the first section below it rather than repeating the title as an H1.
+single `notebooks-create-markdown` call through `posthog_exec`, passing a
+`title` and the report as `markdown`. The title becomes the notebook's leading
+`# heading`, so start the `markdown` at the first section below it rather than
+repeating the title as an H1.
+
+Some deployments expose `notebooks-create` (rich-text `content`) instead of
+`notebooks-create-markdown`. If the create call comes back `Unknown tool`, use
+`notebooks-create` and pass the same report as one markdown code block in
+`content` — don't translate it to ProseMirror, and don't spend turns searching
+for another tool. Everything below applies to whichever one you land on.
 
 The exec command is `call notebooks-create-markdown` followed by the bare JSON
 argument — no quotes around it, and the whole argument on one line with the
