@@ -75,6 +75,14 @@ function mergeSkipPatterns(globalPatterns, examplePatterns = {}) {
 }
 
 /**
+ * Global patterns plus any override for this example. The `examples:` block in
+ * skip-patterns.yaml is keyed by directory name, not skill id.
+ */
+function skipPatternsForExample(skipPatterns, dirName) {
+    return mergeSkipPatterns(skipPatterns.global, skipPatterns.examples?.[dirName]);
+}
+
+/**
  * Recursively collect all files in a directory
  */
 function collectFiles(dirPath, baseDir, skipPatterns) {
@@ -199,6 +207,7 @@ const defaultPlugins = [ignoreFilePlugin, ignoreBlockPlugin, ignoreLinePlugin];
 export {
     loadSkipPatterns,
     mergeSkipPatterns,
+    skipPatternsForExample,
     shouldSkip,
     processExample,
     defaultPlugins,
