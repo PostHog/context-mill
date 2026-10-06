@@ -114,7 +114,7 @@ Read `ruby.md` before editing.
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.17.0`, the first release with model capture and conversation IDs on by default. Upgrade an older installed version.
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 
@@ -203,7 +203,7 @@ const handler = createMcpHandler((server) => {
 
 **Always read request headers through `getRequestHeaders(extra)`** — in `identify`, `intentFallback`, `eventProperties` and `beforeSend` alike, on either major. The callbacks receive the MCP SDK's `extra` unchanged, and the two majors shape its headers differently — a hand-rolled read that works on one silently returns `undefined` on the other, so `identify()` returns `null` and every event goes out anonymous with no error anywhere. The helper handles both majors and returns a plain lowercase-keyed object. `sdk-v2.md` documents the per-major shapes.
 
-**Path C — custom dispatcher:** swap the existing PostHog client for `PostHogMCP` (a drop-in `posthog-node` subclass) and call the capture helpers at the dispatch points. Read the custom-dispatcher section of `typescript.md` for the full field reference before editing.
+**Path C — custom dispatcher:** swap the existing PostHog client for `PostHogMCP` (a drop-in `posthog-node` subclass) and call the helpers at the dispatch points. Read the custom-dispatcher section of `typescript.md` for the full field reference before editing.
 
 ```ts
 import { PostHogMCP } from "@posthog/mcp"
@@ -212,41 +212,43 @@ const posthog = new PostHogMCP(process.env.POSTHOG_PROJECT_TOKEN, {
   host: process.env.POSTHOG_HOST,
 })
 
-// when building the tools/list response:
+// when answering tools/list:
 const serverTools = getServerTools()
 const advertisedTools = posthog.prepareToolList(serverTools)
 
 // only on a 2025-11-25 initialize handshake:
 posthog.captureInitialize({ clientName, clientVersion, distinctId, protocolVersion: "2025-11-25" })
 
-// after each tools/call resolves (wrap the existing handler, time it):
-const start = Date.now()
+// for each tools/call:
 const originalTool = serverTools.find((tool) => tool.name === request.params.name)
-const { args, intent, intentSource, llmModel, llmModelSource } = posthog.prepareToolCall(
-  request.params.name,
-  request.params.arguments,
-  { originalTool },
-)
-const result = await runTool(request.params.name, args)
+const prepared = posthog.prepareToolCall(request.params.name, request.params.arguments, {
+  originalTool,
+  sessionId, // your transport/session id, if you have one
+})
+const start = Date.now()
+const result = await runTool(request.params.name, prepared.args)
+const final = posthog.prepareToolResult(result, prepared) // adds the conversation handle
 posthog.captureToolCall({
   toolName: request.params.name,
-  parameters: args,
-  response: result,
+  intent: prepared.intent,
+  intentSource: prepared.intentSource,
+  llmModel: prepared.llmModel,
+  llmModelSource: prepared.llmModelSource,
+  parameters: prepared.args,
+  response: final.result,
   durationMs: Date.now() - start,
   isError: false,
-  intent,
-  intentSource,
-  llmModel,
-  llmModelSource,
+  sessionId: final.sessionId,
+  conversationId: final.conversationId,
   distinctId, // who the request is from, if known
-  sessionId,  // your transport/session id, if you have one
   protocolVersion, // read this from the current request
 })
+return final.result
 ```
 
-Return `advertisedTools` from `tools/list`. Always dispatch the cleaned `args`, not the raw request arguments. Pass the raw `originalTool` descriptor on every call so model ownership remains correct when `tools/list` and `tools/call` reach different replicas. The helper preserves an application-owned `llm_model` field and declines to capture it.
+Return `advertisedTools` from `tools/list` and `final.result` from `tools/call`. Always dispatch `prepared.args`, not the raw request arguments. Pass the raw `originalTool` descriptor on every call so argument ownership remains correct when `tools/list` and `tools/call` reach different replicas. Capture with `final.sessionId` and `final.conversationId`: a conversation handle the agent echoes overrides the transport session.
 
-Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocolVersion` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't fabricate `$mcp_initialize` on `2026-07-28`. Conversation-id injection isn't available on the custom-dispatcher path. Model capture is self-reported and unverified. These calls are fire-and-forget and never throw, so they can't take down a tool.
+Resolve `distinctId` / `sessionId` from whatever auth/session the dispatcher already has; omit them rather than inventing values. Pass `protocolVersion` on every capture. On `2025-11-25`, use the revision the dispatcher's existing session state negotiated during initialize. On `2026-07-28`, read `MCP-Protocol-Version` from the current request because there is no initialize handshake or protocol session. If the dispatcher exposes neither source, omit the property rather than hardcoding a revision. Don't fabricate `$mcp_initialize` on `2026-07-28`. Model capture is self-reported and unverified. These calls are fire-and-forget and never throw, so they can't take down a tool.
 
 **Path D — `@rekog/mcp-nest` (NestJS):** the framework builds the server, so pass a `serverMutator` to `McpModule.forRoot(...)`. Prefer the `instrumentMutator` helper — it instruments the server and returns it, so it drops straight into the hook:
 

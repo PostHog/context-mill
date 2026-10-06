@@ -105,12 +105,19 @@ describe('mcp-analytics instructions', () => {
 
     // Each SDK's minimum version, read wherever the package name is followed by a version.
     it.each([
-        ['@posthog/mcp', /@posthog\/mcp[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '0.17.0'],
+        ['@posthog/mcp', /@posthog\/mcp[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '0.18.0'],
         ['posthog (Python)', /(?<![\w/@-])posthog(?![\w/-])[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '7.62.0'],
         ['posthogmcpsdk', /posthogmcpsdk[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '1.33.0'],
         ['posthog-ruby', /posthog-ruby[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '3.26.2'],
     ])('states one floor for %s', (_sdk, pattern, floor) => {
         expect([...new Set([...text.matchAll(pattern)].map(([, version]) => version))]).toEqual([floor]);
+    });
+
+    it('TypeScript Path C delivers conversation handles', () => {
+        const start = text.indexOf('**Path C — custom dispatcher:**');
+        const pathC = text.slice(start, text.indexOf('**Path D', start));
+        expect(pathC).toContain('posthog.prepareToolResult(result, prepared)');
+        expect(pathC).not.toMatch(/[Cc]onversation[- ]id[^.]*(isn't|not) available/);
     });
 
     it.each([
