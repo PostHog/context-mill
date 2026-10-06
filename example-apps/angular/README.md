@@ -24,8 +24,8 @@ pnpm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
-VITE_POSTHOG_HOST=https://us.posthog.com
+NG_APP_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+NG_APP_POSTHOG_HOST=https://us.posthog.com
 ```
 
 Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
@@ -59,6 +59,7 @@ src/
 │   └── app.config.ts          # App configuration
 ├── environments/
 │   ├── environment.ts         # Dev environment config
+│   ├── environment.prod.ts
 │   └── environment.production.ts
 └── main.ts                    # App entry point
 ```
@@ -158,15 +159,15 @@ This example uses Angular 21 with modern features:
 3. **SSR support**: Uses `isPlatformBrowser()` checks for SSR safety
 4. **Dependency injection**: PostHog wrapped in an injectable service
 5. **Proxy configuration**: Uses `proxy.conf.json` for PostHog API calls
-6. **Environment files**: Generated from `.env` at build time via prebuild script
+6. **Environment files**: Read `.env` at build time via `@ngx-env/builder`
 
 ## Environment variable handling
 
-Angular CLI doesn't natively support `.env` files. This project uses a prebuild script:
+Angular CLI doesn't natively support `.env` files. This project uses `@ngx-env/builder`:
 
-1. `scripts/generate-env.js` reads `.env` and generates `environment.generated.ts`
-2. The script runs automatically before `pnpm start` and `pnpm build`
-3. Environment files import from the generated file
+1. `angular.json` runs the `@ngx-env/builder` builders for `serve`, `build`, and `test`
+2. The builder loads `.env` and exposes `NG_APP_*` variables on `import.meta.env`
+3. Environment files read `import.meta.env['NG_APP_POSTHOG_PROJECT_TOKEN']` and `import.meta.env['NG_APP_POSTHOG_HOST']`
 
 ## Learn more
 

@@ -32,13 +32,13 @@ posthog.apiKey=your_posthog_project_token
 posthog.host=https://us.i.posthog.com
 ```
 
-Alternatively, you can configure PostHog in your `build.gradle` file:
+Alternatively, you can configure PostHog in your `app/build.gradle.kts` file:
 
-```gradle
+```kotlin
 android {
     defaultConfig {
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"your_posthog_project_token\""
-        buildConfigField "String", "POSTHOG_HOST", "\"https://us.i.posthog.com\""
+        buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"your_posthog_project_token\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"https://us.i.posthog.com\"")
     }
 }
 ```
@@ -58,28 +58,37 @@ Get your PostHog project token from your [PostHog project settings](https://app.
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/example/posthog/
-│   │   │   │   ├── BurritoApplication.kt      # Application class with PostHog initialization
-│   │   │   │   ├── MainActivity.kt           # Main activity
+│   │   │   │   ├── BurritoApp.kt              # Application class with PostHog initialization
+│   │   │   │   ├── MainActivity.kt            # Main activity
+│   │   │   │   ├── data/
+│   │   │   │   │   ├── User.kt                # User model
+│   │   │   │   │   └── UserRepository.kt      # User storage in SharedPreferences
+│   │   │   │   ├── navigation/
+│   │   │   │   │   └── NavGraph.kt            # Navigation routes
 │   │   │   │   ├── ui/
 │   │   │   │   │   ├── screens/
-│   │   │   │   │   │   ├── LoginScreen.kt     # Login screen with user identification
+│   │   │   │   │   │   ├── HomeScreen.kt      # Home screen with login form
 │   │   │   │   │   │   ├── BurritoScreen.kt   # Demo feature screen with event tracking
 │   │   │   │   │   │   └── ProfileScreen.kt   # User profile with error tracking demo
-│   │   │   │   │   └── components/            # Reusable UI components
-│   │   │   │   └── utils/
-│   │   │   │       └── PostHogHelper.kt       # PostHog utility functions
+│   │   │   │   │   ├── components/            # Reusable UI components
+│   │   │   │   │   └── theme/                 # Compose theme
+│   │   │   │   └── viewmodel/
+│   │   │   │       └── AuthViewModel.kt       # Login, logout, and user identification
 │   │   │   ├── res/                           # Resources (layouts, strings, etc.)
 │   │   │   └── AndroidManifest.xml            # App manifest
-│   │   └── test/                              # Unit tests
-│   └── build.gradle                           # App-level Gradle configuration
-├── build.gradle                               # Project-level Gradle configuration
-├── settings.gradle                            # Gradle settings
-└── local.properties                           # Local configuration (gitignored)
+│   │   ├── test/                              # Unit tests
+│   │   └── androidTest/                       # Instrumented tests
+│   └── build.gradle.kts                       # App-level Gradle configuration
+├── gradle/
+│   └── libs.versions.toml                     # Dependency versions
+├── build.gradle.kts                           # Project-level Gradle configuration
+├── settings.gradle.kts                        # Gradle settings
+└── local.properties.example                   # Template for local.properties (gitignored)
 ```
 
 ## Key Integration Points
 
-### Application Initialization (BurritoApplication.kt)
+### Application Initialization (BurritoApp.kt)
 
 PostHog is initialized in the `Application` class to ensure it's available throughout the app lifecycle:
 
@@ -87,56 +96,42 @@ PostHog is initialized in the `Application` class to ensure it's available throu
 class BurritoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        
-        val posthogConfig = PostHogConfig(
+
+        // Initialize PostHog early in Application lifecycle
+        val config = PostHogAndroidConfig(
             apiKey = BuildConfig.POSTHOG_PROJECT_TOKEN,
-            host = BuildConfig.POSTHOG_HOST
+            host = BuildConfig.POSTHOG_HOST,
         ).apply {
-            // Enable session replay
-            sessionReplay = true
-            
-            // Enable automatic exception capture
-            captureApplicationLifecycleEvents = true
-            captureDeepLinks = true
-            captureScreenViews = true
+            debug = true
+            errorTrackingConfig.autoCapture = true
         }
-        
-        PostHog.setup(this, posthogConfig)
+
+        PostHogAndroid.setup(this, config)
     }
 }
 ```
 
 **Key Points:**
 - PostHog is initialized in `onCreate()` to ensure it's initialized as early as possible
-- Configuration is loaded from `BuildConfig` (set in `build.gradle`)
-- Session replay, lifecycle events, and screen views are enabled
+- Configuration is loaded from `BuildConfig` (set in `app/build.gradle.kts`)
+- Debug logging and automatic error capture are enabled
 - The Application class must be registered in `AndroidManifest.xml`
 
-### User Identification (LoginScreen.kt)
+### User Identification (AuthViewModel.kt)
 
 Users are identified when they log in:
 
 ```kotlin
-val posthog = PostHog.getInstance()
+fun login(username: String) {
+    viewModelScope.launch {
+        val existingUser = repository.getUser(username)
+        val user = existingUser ?: User(username = username, burritoConsiderations = 0)
+        repository.saveUser(user)
+        _currentUser.value = user
+        _isAuthenticated.value = true
 
-fun handleLogin(username: String, password: String) {
-    // Authenticate user
-    val success = authenticateUser(username, password)
-    
-    if (success) {
-        // Identify the user once on login/sign up
-        posthog.identify(
-            distinctId = username,
-            properties = mapOf(
-                "username" to username,
-                "login_method" to "password"
-            )
-        )
-        
-        // Capture login event
-        posthog.capture("user_logged_in", mapOf(
-            "username" to username
-        ))
+        PostHog.identify(username)
+        PostHog.capture(event = "user_logged_in")
     }
 }
 ```
@@ -253,37 +248,42 @@ The instance is available throughout your application after initialization.
 
 ## Gradle Configuration
 
-### App-level build.gradle
+### App-level build.gradle.kts
 
-```gradle
+```kotlin
 android {
     defaultConfig {
         // PostHog configuration
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${project.findProperty("posthog.apiKey") ?: ""}\""
-        buildConfigField "String", "POSTHOG_HOST", "\"${project.findProperty("posthog.host") ?: "https://us.i.posthog.com"}\""
+        buildConfigField(
+            "String",
+            "POSTHOG_PROJECT_TOKEN",
+            "\"${localProperties.getProperty("posthog.apiKey", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "POSTHOG_HOST",
+            "\"${localProperties.getProperty("posthog.host", "https://us.i.posthog.com")}\""
+        )
     }
 }
 
 dependencies {
-    // PostHog Android SDK
-    implementation 'com.posthog:posthog-android:3.+'
-    
+    // PostHog Android SDK, version set in gradle/libs.versions.toml
+    implementation(libs.posthog.android)
+
     // Other dependencies...
 }
 ```
 
 ### Reading from local.properties
 
-The `local.properties` file is automatically read by Gradle:
+`app/build.gradle.kts` loads `local.properties` when the file exists. Copy `local.properties.example` to `local.properties` to create it:
 
-```gradle
-def localProperties = new Properties()
-localProperties.load(new FileInputStream(rootProject.file("local.properties")))
-
-android {
-    defaultConfig {
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${localProperties.getProperty("posthog.apiKey", "")}\""
-        buildConfigField "String", "POSTHOG_HOST", "\"${localProperties.getProperty("posthog.host", "https://us.i.posthog.com")}\""
+```kotlin
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
     }
 }
 ```

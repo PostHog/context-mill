@@ -22,7 +22,7 @@ description: Audit captured events
 cli:
   role: command          # command | skill | internal
   parentCommand: audit   # the command this skill nests under (optional)
-  command: events        # the user-typed word; required when role is command
+  command: events        # the user-typed word, defaults to the variant id
   default: true          # optional — the leaf `wizard <family>` runs by default
 ```
 
@@ -32,10 +32,11 @@ Three values for `role`:
 |---|---|
 | `command` | Registered as `wizard <parentCommand> <command>` (or `wizard <command>` if no parent). The user-facing CLI. |
 | `skill` | Reachable only via `wizard skill <id>`. The full discoverable set. |
-| `internal` | Hidden everywhere. Only reachable via `wizard --skill=<id>` (a dev escape hatch). Useful for in-progress skills that aren't ready to expose. |
+| `internal` | Hidden from `wizard skill list`. Still runs via `wizard skill <id>`. Useful for in-progress skills that aren't ready to expose. |
 
-Skills with **no** `cli:` block default to the `skill` role — they're
-discoverable via `wizard skill list` but don't get a top-level command.
+Skills with **no** `cli:` block get no entry in `cliEntries`. They never
+appear in `wizard skill list` and don't get a top-level command. They still
+run via `wizard skill <id>`.
 
 The same skill can be either surface: `audit-events` sets `role: command` so it's
 `wizard audit events`; a `role: skill` skill is only `wizard skill <id>`. One
@@ -100,7 +101,7 @@ Use the **full PostHog product name** with hyphens, not abbreviations.
 | Session replay audit | `wizard audit session-replay` | `wizard audit replay` |
 | Revenue analytics | `wizard revenue-analytics` | `wizard revenue` |
 | Web analytics | `wizard web-analytics` | `wizard web` |
-| AI Observability | `wizard llm-analytics` | `wizard llms` |
+| AI Observability | `wizard ai-observability` | `wizard llms` |
 
 The kebab-case / length / reserved-word checks in `parseCliBlock`
 enforce the mechanics; this rule is the naming taste layer on top of
@@ -194,8 +195,11 @@ The base path is the same regardless of the skill's CLI role:
 3. Add a `description.md` template and any `references/*.md` files.
 4. If the skill should be a wizard command, add a `cli:` block per the
    schema above.
-5. Run `npm test && npm run build`. The build emits the new skill into
-   `dist/skills/<your-skill>.zip` and lists it in the manifest.
+5. Run `pnpm test && pnpm run build`. The build emits one ZIP per variant,
+   `dist/skills/<your-skill>-<variant>.zip`, and lists it in the manifest.
+   An `id: all` variant emits `dist/skills/<your-skill>.zip` instead. A
+   bundled group (`packaging: bundle`) emits one `dist/skills/<group>.json`
+   with every variant inside, and those variants get no manifest entry.
 
 ## Adding a new command
 
@@ -204,7 +208,7 @@ When you've decided your skill meets the `role: command` criterion:
 1. Add the `cli:` block to the skill's `config.yaml` with `role:
    command`, the right `parentCommand` (if it nests under an existing
    family), and `command`.
-2. Confirm `npm run build` emits the entry under `cliEntries` inside
+2. Confirm `pnpm run build` emits the entry under `cliEntries` inside
    `dist/skills/skill-menu.json` with the right `parentCommand` /
    `command` values. The wizard picks it up on its next invocation
    (no wizard release needed).
@@ -234,7 +238,7 @@ manifest is published before the wizard tries to consume it.
   (`parseCliBlock`, `expandSkillGroups`, JSDoc typedef for the `cli:` block)
 - CLI entries emit: `scripts/lib/build-phases.js` (`generateCliEntries`)
 - Tests for the cli block parser: `scripts/lib/tests/cli-block.test.js`
-- The wizard's side of the contract: [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md)
+- The wizard's side of the contract: [PostHog/wizard AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md)
 
 Questions: drop a note in
 [#team-docs-and-wizard](https://posthog.slack.com/archives/C09GTQY5RLZ) or

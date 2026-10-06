@@ -16,7 +16,7 @@ A React Native Expo app demonstrating PostHog product analytics integration with
 ## Project Structure
 
 ```
-basics/expo/
+example-apps/expo/
 ├── app/                          # Expo Router screens (file-based routing)
 │   ├── _layout.tsx               # Root layout with PostHogProvider + AuthProvider
 │   ├── index.tsx                 # Home screen (login/welcome)
@@ -31,7 +31,7 @@ basics/expo/
 │   │   └── storage.ts            # AsyncStorage wrapper
 │   └── styles/
 │       └── theme.ts              # Shared style constants
-├── app.json                      # Expo configuration
+├── app.config.js                 # Expo configuration
 ├── babel.config.js               # Babel config with React Compiler
 ├── eslint.config.js              # ESLint flat config
 ├── package.json                  # Dependencies
@@ -68,7 +68,7 @@ Then run `source ~/.zshrc` to apply.
 
 1. Install dependencies:
    ```bash
-   cd basics/expo
+   cd example-apps/expo
    npm install
    ```
 
@@ -100,7 +100,7 @@ npx expo run:android
 
 ### Configuration
 
-PostHog is configured in `src/config/posthog.ts` using environment variables from `app.json`:
+PostHog is configured in `src/config/posthog.ts` using environment variables passed through `app.config.js`:
 
 ```typescript
 import Constants from 'expo-constants'
@@ -172,13 +172,13 @@ export function useAuth() {
 
 ### New Architecture
 
-Enabled in `app.json` for better performance:
+Enabled in `app.config.js` for better performance:
 
-```json
-{
-  "expo": {
-    "newArchEnabled": true
-  }
+```js
+export default {
+  expo: {
+    newArchEnabled: true,
+  },
 }
 ```
 
