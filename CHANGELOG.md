@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.56.0](https://github.com/PostHog/context-mill/compare/v1.55.0...v1.56.0) (2026-10-06)
+
+
+### Features
+
+* **error-tracking:** link Python, Ruby and PHP deploys to releases ([#416](https://github.com/PostHog/context-mill/issues/416)) ([79c2dc5](https://github.com/PostHog/context-mill/commit/79c2dc57db2c748733178c48ebee3b2240fdc25b))
+* **feature-flags:** add the feature-flags step skill for the wizard ([#405](https://github.com/PostHog/context-mill/issues/405)) ([d82893d](https://github.com/PostHog/context-mill/commit/d82893da8ae603be0da103482133b253e6e1fb01))
+
+
+### Bug Fixes
+
+* **error-tracking:** hand off a missing .env loader instead of wiring one ([#408](https://github.com/PostHog/context-mill/issues/408)) ([63b95aa](https://github.com/PostHog/context-mill/commit/63b95aaf8329560f760f3de9b6ec3c73405cfbbd))
+* **self-driving:** create custom scouts with scout-create, not skill-create ([#411](https://github.com/PostHog/context-mill/issues/411)) ([88504eb](https://github.com/PostHog/context-mill/commit/88504eb41858e092a35a59608ed3ddf84e512579))
+* **self-driving:** enable Logs and Endpoints signal sources in setup ([#412](https://github.com/PostHog/context-mill/issues/412)) ([cef60c1](https://github.com/PostHog/context-mill/commit/cef60c11a35cd4df4e14c4715128fdfdce3d04a1))
+* **self-driving:** honor the enabled-scout cap when sizing the troop ([#414](https://github.com/PostHog/context-mill/issues/414)) ([001831b](https://github.com/PostHog/context-mill/commit/001831b89e0558e7de334f690591878e429ad6d7))
+* **self-driving:** keep a paused operational scout paused on rerun ([#415](https://github.com/PostHog/context-mill/issues/415)) ([679c57b](https://github.com/PostHog/context-mill/commit/679c57b6163b60eadb1fc82fb2a29db5a9fc0d55))
+* **self-driving:** keep operational scouts enabled during troop tuning ([#410](https://github.com/PostHog/context-mill/issues/410)) ([b162850](https://github.com/PostHog/context-mill/commit/b1628502db9df9336b47d23797ac8d7e4186bb0d))
+
 ## [1.55.0](https://github.com/PostHog/context-mill/compare/v1.54.1...v1.55.0) (2026-09-23)
 
 
