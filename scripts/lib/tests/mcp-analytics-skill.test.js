@@ -6,6 +6,8 @@ import { expandSkillGroups, loadSkillsConfig } from '../skill-generator.js';
 const CONFIG_DIR = join(process.cwd(), 'context');
 const DOCS = 'https://posthog.com/docs/mcp-analytics';
 const LANGUAGES = ['TypeScript', 'JavaScript', 'Python', 'Go', 'Ruby'];
+const REDIRECTED = ['custom-servers.md', 'installation.md'];
+const REPORT_FILE = 'posthog-mcp-analytics-report.md';
 
 const urlOf = (entry) => (typeof entry === 'string' ? entry : entry.url);
 
@@ -32,10 +34,8 @@ describe('mcp-analytics skill family', () => {
         );
     });
 
-    it.each(variants.map((s) => [s.id]))('%s links no page that now redirects', (id) => {
-        const urls = urlsOf(id);
-        expect(urls).not.toContain(`${DOCS}/custom-servers.md`);
-        expect(urls).not.toContain(`${DOCS}/installation.md`);
+    it.each(variants.flatMap((s) => REDIRECTED.map((page) => [s.id, page])))('%s links no redirected page %s', (id, page) => {
+        expect(urlsOf(id)).not.toContain(`${DOCS}/${page}`);
     });
 
     // The generator names each reference after the last URL path segment, so
@@ -59,6 +59,7 @@ describe('mcp-analytics instructions', () => {
     const text = skill._template;
     const steps = text.split(/^### (?=STEP \d)/m).slice(1);
     const abortSection = text.slice(text.indexOf('### Abort cases'), text.indexOf('## Instructions'));
+    const bundled = [...skill.docs_urls, ...skill._sharedDocs].map((entry) => urlOf(entry).split('/').pop());
 
     it('has seven steps', () => {
         expect(steps.map((step) => step.slice(0, 6))).toEqual([1, 2, 3, 4, 5, 6, 7].map((n) => `STEP ${n}`));
@@ -79,26 +80,52 @@ describe('mcp-analytics instructions', () => {
         expect(listed).toEqual(expect.arrayContaining(emitted));
     });
 
-    it('supports Ruby and keeps Rust unsupported', () => {
-        const unsupported = abortSection.match(/^- `\[ABORT\] unsupported language for mcp analytics`.*$/m)[0];
-        for (const language of LANGUAGES) expect(unsupported).toContain(language);
-        const examples = text.match(/written in anything else \(([^)]*)\)/)[1];
+    it('points only at reference files the skill bundles', () => {
+        const named = [...text.matchAll(/`([\w./-]+\.md)`/g)].map(([, file]) => file).filter((f) => f !== REPORT_FILE);
+        expect(named.length).toBeGreaterThan(0);
+        expect(bundled).toEqual(expect.arrayContaining(named));
+    });
+
+    it.each(REDIRECTED)('never names the redirected page %s', (page) => {
+        expect(text).not.toContain(page);
+    });
+
+    it.each(LANGUAGES)('the unsupported-language abort lists %s as supported', (language) => {
+        const line = abortSection.split('\n').find((l) => l.startsWith('- `[ABORT] unsupported language for mcp analytics`'));
+        expect(line, 'abort cases list `[ABORT] unsupported language for mcp analytics`').toBeDefined();
+        expect(line).toContain(language);
+    });
+
+    it('names Rust, not Ruby, as an unsupported language', () => {
+        const examples = text.match(/written in anything else \(([^)]*)\)/)?.[1];
+        expect(examples, 'guardrail lists examples as "written in anything else (...)"').toBeDefined();
         expect(examples).toContain('Rust');
         expect(examples).not.toContain('Ruby');
     });
 
-    it('makes the agent report the Ruby SDK as experimental and keep its warning', () => {
-        expect(text).toContain('experimental and not officially supported');
-        expect(text).toContain('posthog-mcp-analytics-report.md');
-        expect(text).toContain('production-ready');
-        expect(text).toMatch(/[Nn]ever suppress the gem's experimental warning/);
+    // Each SDK's minimum version, read wherever the package name is followed by a version.
+    it.each([
+        ['@posthog/mcp', /@posthog\/mcp[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '0.17.0'],
+        ['posthog (Python)', /(?<![\w/@-])posthog(?![\w/-])[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '7.62.0'],
+        ['posthogmcpsdk', /posthogmcpsdk[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '1.33.0'],
+        ['posthog-ruby', /posthog-ruby[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '3.26.2'],
+    ])('states one floor for %s', (_sdk, pattern, floor) => {
+        expect([...new Set([...text.matchAll(pattern)].map(([, version]) => version))]).toEqual([floor]);
     });
 
-    it('describes the current Go SDK', () => {
-        expect(text).toContain('WithMissingCapabilityTool');
-        expect(text).toContain('`$mcp_unknown_tool`');
-        expect(text).toContain('`$mcp_input_required`');
-        expect(text).toContain('v1.33.0');
-        expect(text).not.toMatch(/Go SDK has no[^.]*missing-capability/);
+    it.each([
+        ['Ruby is reported as experimental', 'experimental and not officially supported'],
+        ['the notice goes in the wizard report', REPORT_FILE],
+        ['Ruby is never called production-ready', 'never describe the Ruby setup as production-ready'],
+        ['the Ruby warning stays on', "Never suppress the gem's experimental warning"],
+        ['Ruby reads the token without raising', 'ENV["POSTHOG_PROJECT_TOKEN"]'],
+        ['Python P2 prepares each call', 'posthog.prepare_tool_call(name, arguments)'],
+        ['Python P2 delivers the conversation handle', 'posthog.prepare_tool_result(result, prepared)'],
+        ['Go offers the opt-in missing-capability tool', 'WithMissingCapabilityTool'],
+        ['Go reports unknown tools', '`$mcp_unknown_tool`'],
+        ['Go reports input_required rounds', '`$mcp_input_required`'],
+        ['Go tidies go.mod', '`go mod tidy`'],
+    ])('%s', (_claim, needle) => {
+        expect(text).toContain(needle);
     });
 });

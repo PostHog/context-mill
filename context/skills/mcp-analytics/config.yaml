@@ -1,4 +1,4 @@
-# MCP analytics — instrument a user's own MCP server with the @posthog/mcp SDK.
+# MCP analytics — instrument a user's own MCP server with the PostHog MCP SDK for its language.
 type: skill
 template: description.md
 category: mcp-analytics
@@ -12,7 +12,7 @@ shared_docs:
 variants:
   - id: all
     display_name: any TypeScript, JavaScript, Python, Go, or Ruby MCP server
-    tags: [javascript_node, mcp]
+    tags: [mcp]
     docs_urls:
       - https://posthog.com/docs/mcp-analytics/installation/typescript.md
       - https://posthog.com/docs/mcp-analytics/installation/python.md
