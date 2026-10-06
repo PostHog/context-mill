@@ -10,7 +10,7 @@ We'd love your pull request!
 
 The context mill gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into a versioned manifest which can be shipped anywhere as a zip file. 
 
-The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) currently fetches the examples repo manifest and exposes it to any MCP-compatible client as resources and slash commands. This is what currently powers the PostHog [wizard](https://github.com/PostHog/wizard). 
+The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) currently fetches the examples repo manifest and exposes it to any MCP-compatible client as resources and slash commands. The PostHog [wizard](https://github.com/PostHog/wizard) fetches `skill-menu.json` and skill ZIPs from the context mill's GitHub releases itself. It falls back to the AWS mirror at `context-mill.posthog.com` when GitHub fails.
 
 ## Context engine 
 
@@ -37,38 +37,54 @@ These are more like model airplanes. They're dramatically simplified to make it 
 But the leanness makes these useful for agent-driven development. Use these as context to help your agent make better integration decisions about PostHog.
 
 ```
-examples/
-├── basics/
-│   ├── next-app-router/         # Next.js 15 with App Router
-│   ├── next-pages-router/       # Next.js 15 with Pages Router
-│   ├── react-react-router/      # React with React Router
+context-mill/
+├── context/                     # Skill sources, agent prompts, and build config
+├── example-apps/                # One flat folder per example app
+│   ├── next-app-router/         # Next.js with App Router
+│   ├── next-pages-router/       # Next.js with Pages Router
+│   ├── react-react-router-7-framework/     # React with React Router 7 (framework mode)
 │   ├── react-tanstack-router-file-based/   # React with TanStack Router (file-based)
 │   ├── react-tanstack-router-code-based/   # React with TanStack Router (code-based)
 │   ├── tanstack-start/          # TanStack Start
-│   └── django/                  # Django
-├── mcp-commands/                # MCP command prompts (`/command` in agents)
+│   ├── django/                  # Django
+│   └── ...                      # Every other example app
 └── scripts/                     # Build scripts
 ```
 
 ## Build outputs
 
-Run `npm run build` to generate the release artifacts:
+Run `pnpm run build` to generate the release artifacts:
 
 | Output | Description |
 |--------|-------------|
 | `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
 | `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL |
 | `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table |
+| `dist/skills/<group>.json` | One file per bundled group (`packaging: bundle`), holding every variant |
+| `dist/skills-mcp-resources.zip` | `manifest.json` plus every skill ZIP and bundle JSON in one archive |
 
-Releases are cut as GitHub releases. Consumers (the wizard, the MCP server,
-anything else) fetch `manifest.json` / `skill-menu.json` from the latest
-release and download the per-skill ZIPs on demand.
+Releases are cut as GitHub releases and mirrored to `context-mill.posthog.com`.
+Each release carries these assets:
+
+- `skills-mcp-resources.zip`, which holds `manifest.json`, the skill ZIPs, and the bundle JSONs
+- one ZIP per skill
+- `skill-menu.json`
+- one `<group>.json` per bundled group
+- `agent-menu.json` and the `agents-*.md` orchestrator prompts
+- any reference docs (`*.md`) in `dist/skills/`
+
+`manifest.json` is not a standalone release asset. It only ships inside
+`skills-mcp-resources.zip`. The wizard fetches `skill-menu.json` from the
+latest release and downloads skill ZIPs or bundle JSONs on demand.
 
 ### Manifest structure
 
 The manifest describes the built skills — one resource per skill, with `id`,
 `name`, `description`, `tags`, `uri`, and a `downloadUrl` pointing at the
-GitHub release asset. Each bundled skill contains a `SKILL.md`, `references/`
+GitHub release asset. Bundled variants (`packaging: bundle`) ship inside their
+group's JSON, so they have no manifest entry. The manifest also has one
+resource per doc in `context/docs.yaml`, with the doc's Markdown inline
+instead of a `downloadUrl`. Each bundled skill contains a `SKILL.md`, `references/`
 step files, and any shared docs pulled from posthog.com at build time.
 
 ### Adding a new skill
@@ -102,8 +118,9 @@ surface. If you (or your agent) knew an older command, here's where it went:
 
 | Subcommand | Backing skill |
 |---|---|
-| `wizard audit events` | `audit-events` (the default leaf) |
-| `wizard audit all` | `audit` |
+| `wizard audit events` | `audit-events` |
+| `wizard audit all` | `audit` (the default leaf) |
+| `wizard audit attribution` | `audit-attribution` |
 | `wizard audit autocapture` | `audit-autocapture` |
 | `wizard audit feature-flags` | `audit-feature-flags` |
 | `wizard audit identify` | `audit-identify` |
@@ -130,19 +147,24 @@ review to their owning team instead.
 | Path | Owning team |
 |---|---|
 | `*` (everything else, including all other skills) | `@PostHog/team-wizard-docs` |
-| `context/skills/integration/` | `@PostHog/team-wizard-docs` |
 | `context/skills/error-tracking-upload-source-maps/` | `@PostHog/team-error-tracking` |
 | `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
-| `context/skills/mcp-analytics/` | `@PostHog/team-mcp-analytics` |
-| `context/skills/revenue-analytics/` | `@PostHog/team-web-analytics` |
 | `context/skills/self-driving/` | `@PostHog/team-self-driving` |
 | `context/skills/data-warehouse-source/` | `@PostHog/team-warehouse-sources` |
+| `context/skills/mcp-analytics/` | `@PostHog/team-mcp-analytics` |
+| `context/skills/metrics/` | `@PostHog/apm` |
+| `context/agents/metrics/` | `@PostHog/apm` |
+| `context/skills/revenue-analytics/` | `@PostHog/team-web-analytics` |
 | `context/skills/web-analytics/` | `@PostHog/team-web-analytics` |
+| `context/skills/integration/` | `@PostHog/team-wizard-docs` |
+| `context/skills/replay-vision*/` | `@PostHog/team-replay` |
+| `context/skills/ai-observability/` | `@PostHog/team-ai-observability` |
+| `context/skills/llm-analytics/` | `@PostHog/team-ai-observability` |
 
 Ownership is by directory. Skills not listed above (`audit`, `audit-*`,
-`cost-cutting`, `creating-product-tours`, `error-tracking`, `events-audit`,
-`feature-flags`, `llm-analytics`, `logs`, `migrate`, `omnibus`,
-`posthog-best-practices`, `quack`, `tools-and-features`) fall through the
+`creating-product-tours`, `error-tracking`, `events-audit`, `feature-flags`,
+`integration-v2`, `logs`, `migrate`, `omnibus`, `posthog-best-practices`,
+`quack`, `tools-and-features`, `tracing`) fall through the
 default and are owned by `team-wizard-docs`. Today CODEOWNERS only
 auto-requests review — approval is not a merge gate.
 

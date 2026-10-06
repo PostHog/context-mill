@@ -38,12 +38,12 @@ promotion criterion live in
 cli:
   role: command          # command | skill | internal
   parentCommand: audit   # optional — nests this command under another
-  command: events        # the user-typed word; required when role is command
+  command: events        # the user-typed word, defaults to the variant id
 ```
 
 The parser is `parseCliBlock` in `scripts/lib/skill-generator.js`. It enforces:
 
-- `role` is one of `command`, `skill`, `internal` (default: `skill` if no `cli:` block is set at all)
+- `role` is required and is one of `command`, `skill`, `internal`. A skill with no `cli:` block gets no `cliEntries` entry.
 - `command` and `parentCommand` are kebab-case, 2–20 characters
 - Neither field is a yargs reserved word (`help`, `version`, `completion`) or a wizard internal flag (`playground`, `benchmark`, `yara-report`, `local-mcp`, `ci`, `skill`)
 - `default` (optional, boolean) marks the leaf `wizard <family>` runs by default (and pre-highlights it in the picker once a family has several)
@@ -58,8 +58,8 @@ lands. See [CONTRIBUTING.md § Flat vs. family](CONTRIBUTING.md#flat-vs-family--
 ### When you're about to change a `cli:` block
 
 1. Read [CONTRIBUTING.md § Promotion criterion for `role: command`](CONTRIBUTING.md#promotion-criterion-for-role-command).
-2. Run `npm test` — the parser's suite (`scripts/lib/tests/cli-block.test.js`) covers every naming-convention case.
-3. Run `npm run build` — confirm the entry appears (or disappears) under `cliEntries` in `dist/skills/skill-menu.json` with the values you expect.
+2. Run `pnpm test` — the parser's suite (`scripts/lib/tests/cli-block.test.js`) covers every naming-convention case.
+3. Run `pnpm run build` — confirm the entry appears (or disappears) under `cliEntries` in `dist/skills/skill-menu.json` with the values you expect.
 4. The wizard resolves new entries at runtime, so no wizard release is required unless the change needs wizard-side hooks (custom outro, content blocks, abort cases).
 
 ## Wizard CLI command mapping (old → new)
@@ -80,8 +80,9 @@ longer exist — only some keep an alias.
 
 | Subcommand | Backing skill |
 |---|---|
-| `wizard audit events` | `audit-events` (default leaf) |
-| `wizard audit all` | `audit` |
+| `wizard audit events` | `audit-events` |
+| `wizard audit all` | `audit` (default leaf) |
+| `wizard audit attribution` | `audit-attribution` |
 | `wizard audit autocapture` | `audit-autocapture` |
 | `wizard audit feature-flags` | `audit-feature-flags` |
 | `wizard audit identify` | `audit-identify` |
@@ -105,19 +106,19 @@ caller instead.
 ## Commands
 
 ```bash
-npm install        # Install dependencies
-npm test           # vitest run (parsers, expander, plugins, cli block)
-npm run build      # Full build: emits dist/skills/<id>.zip + manifests
-npm run dev        # Partial-rebuild dev server with watch
+pnpm install       # Install dependencies
+pnpm test          # vitest run (parsers, expander, plugins, cli block)
+pnpm run build     # Full build: emits dist/skills/<id>.zip + manifests
+pnpm run dev       # Partial-rebuild dev server with watch
 ```
 
 ## Repository conventions
 
 - Skill content lives in markdown, never in JS/TS. The build pipeline reads YAML configs and stitches markdown together; it doesn't generate prose.
 - The `cli:` block is the **single source of truth** for the wizard's command surface for any skill. Don't duplicate command names in the wizard repo; they're derived from the manifest.
-- `additionalProperties: false` is set on the JSON Schema — adding a new field to the manifest shape is a coordinated change (bump the schema, bump consumer types in the wizard). See [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md) for the wizard-side contract.
+- Changing the `skill-menu.json` shape is a coordinated change. Update the consumer types in the wizard too. See [PostHog/wizard AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md) for the wizard-side contract.
 
 ## Companion projects
 
-- **[wizard](https://github.com/PostHog/wizard)** — the CLI that consumes the manifest at build time and turns each `role: command` entry into a registered command.
-- **[warlock](https://github.com/PostHog/warlock)** — the security scanner used by the wizard. Unrelated to skill content but lives alongside in the same engineering scope.
+- **[wizard](https://github.com/PostHog/wizard)** — the CLI that fetches `skill-menu.json` at runtime and turns each `role: command` entry into a registered command.
+- **[warlock](https://github.com/PostHog/warlock)** — PostHog's security scanner for agentic flows. context-mill depends on `@posthog/warlock`, and CI scans the built skill bundles with it (`scripts/scan-warlock.js`).

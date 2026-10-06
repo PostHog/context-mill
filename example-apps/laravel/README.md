@@ -186,7 +186,7 @@ The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capt
 ## Project Structure
 
 ```
-basics/laravel/
+example-apps/laravel/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
