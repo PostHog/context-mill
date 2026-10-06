@@ -16,7 +16,7 @@ A React Native Expo app demonstrating PostHog product analytics integration with
 ## Project Structure
 
 ```
-basics/expo/
+example-apps/expo/
 ├── app/                          # Expo Router screens (file-based routing)
 │   ├── _layout.tsx               # Root layout with PostHogProvider + AuthProvider
 │   ├── index.tsx                 # Home screen (login/welcome)
@@ -68,7 +68,7 @@ Then run `source ~/.zshrc` to apply.
 
 1. Install dependencies:
    ```bash
-   cd basics/expo
+   cd example-apps/expo
    npm install
    ```
 
