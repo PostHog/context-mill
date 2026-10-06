@@ -2,7 +2,7 @@
 type: skill
 template: description.md
 category: mcp-analytics
-description: Add PostHog MCP analytics to a TypeScript, JavaScript, Python, or Go MCP server. Captures tool calls, agent intent, failures, protocol revision, the calling model, and conversation IDs, with the same defaults in every SDK. Each SDK supports legacy sessions and the handshake-free 2026-07-28 revision. Detects the server style and wires in compatible instrumentation, credentials, conversation correlation, and graceful shutdown.
+description: Add PostHog MCP analytics to a TypeScript, JavaScript, Python, Go, or Ruby (experimental) MCP server. Captures tool calls, agent intent, failures, protocol revision, the calling model, and conversation IDs, with the same defaults in every SDK. Each SDK supports legacy sessions and the handshake-free 2026-07-28 revision. Detects the server style and wires in compatible instrumentation, credentials, conversation correlation, and graceful shutdown.
 tags: [mcp-analytics, mcp]
 cli:
   role: command
@@ -11,12 +11,13 @@ shared_docs:
   - https://posthog.com/docs/mcp-analytics/start-here.md
 variants:
   - id: all
-    display_name: any TypeScript, JavaScript, Python, or Go MCP server
+    display_name: any TypeScript, JavaScript, Python, Go, or Ruby MCP server
     tags: [javascript_node, mcp]
     docs_urls:
       - https://posthog.com/docs/mcp-analytics/installation/typescript.md
       - https://posthog.com/docs/mcp-analytics/installation/python.md
       - https://posthog.com/docs/mcp-analytics/installation/go.md
+      - https://posthog.com/docs/mcp-analytics/installation/ruby.md
       - url: https://posthog.com/docs/mcp-analytics/sdk-v2.md
         title: MCP TypeScript SDK v1 vs v2 — read when the project uses @modelcontextprotocol/server
       - https://posthog.com/docs/mcp-analytics/intent.md
@@ -29,6 +30,18 @@ variants:
     tags: [python, mcp]
     docs_urls:
       - https://posthog.com/docs/mcp-analytics/installation/python.md
+      - url: https://posthog.com/docs/mcp-analytics/sdk-v2.md
+        title: MCP SDK v2 and the 2026-07-28 revision
+      - https://posthog.com/docs/mcp-analytics/intent.md
+      - https://posthog.com/docs/mcp-analytics/identifying-users.md
+      - https://posthog.com/docs/mcp-analytics/conversation-id.md
+      - https://posthog.com/docs/mcp-analytics/events.md
+      - https://posthog.com/docs/mcp-analytics/custom-events.md
+  - id: ruby
+    display_name: any Ruby MCP server
+    tags: [ruby, mcp]
+    docs_urls:
+      - https://posthog.com/docs/mcp-analytics/installation/ruby.md
       - url: https://posthog.com/docs/mcp-analytics/sdk-v2.md
         title: MCP SDK v2 and the 2026-07-28 revision
       - https://posthog.com/docs/mcp-analytics/intent.md
