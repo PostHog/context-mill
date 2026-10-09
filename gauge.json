@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "org": "posthog",
+  "inputs": {
+    "product-analytics": {
+      "type": "skill",
+      "source": {
+        "type": "github-actions",
+        "workflow": ".github/workflows/build.yml",
+        "artifact": "integration-skills"
+      },
+      "path": "omnibus-instrument-product-analytics.zip"
+    }
+  }
+}

@@ -92,6 +92,13 @@ jobs:
           echo "::warning::dist/skills directory not found; skipping per-skill size checks"
         fi
 
+    - name: Upload integration skill for Gauge
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: integration-skills
+        path: dist/skills/omnibus-instrument-product-analytics.zip
+        if-no-files-found: error
+
     - name: Archive Artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
