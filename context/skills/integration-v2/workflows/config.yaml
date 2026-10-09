@@ -1,0 +1,12 @@
+type: docs-only
+template: description.md
+description: Design PostHog workflows on the events this run instrumented
+tags: [orchestrator, workflows, messaging]
+shared_docs:
+  - https://posthog.com/docs/workflows.md
+variants:
+  - id: all
+    display_name: PostHog workflows step
+    tags: [orchestrator, workflows]
+cli:
+  role: internal
