@@ -1,0 +1,107 @@
+name: "Mirror plugins to the skills repo"
+description: >-
+  Sync the built marketplace plugins into PostHog/skills on a branch, then
+  open an auto-merging PR.
+
+# Called by build-release.yml after the GitHub release is published.
+#
+# The target repo requires signed commits and changes via PR, so this mirrors
+# what PostHog/ai-plugin's own sync does: push a branch, have the GitHub API
+# create the commit on it (the API signs what it creates), open a PR, and let
+# auto-merge land it.
+#
+# The caller is responsible for checkout, Node/pnpm setup, `pnpm install`, and
+# `pnpm run build` — this action assumes dist/ already exists.
+
+inputs:
+  token:
+    description: "App token with write access to the target repo"
+    required: true
+  message:
+    description: "Commit message"
+    required: true
+
+outputs:
+  repo:
+    description: "The target repo, from push-manifest.json"
+    value: ${{ steps.sync.outputs.repo }}
+  branch:
+    description: "The sync branch that was pushed, empty when nothing changed"
+    value: ${{ steps.sync.outputs.branch }}
+  base:
+    description: "The branch the PR targets"
+    value: ${{ steps.sync.outputs.base }}
+
+runs:
+  using: composite
+  steps:
+    - id: sync
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        MESSAGE: ${{ inputs.message }}
+      run: |
+        MANIFEST="dist/push-manifest.json"
+        TARGET_REPO=$(jq -r '.target_repo' "$MANIFEST")
+        # ghcommit-action resolves its `repository` input under $GITHUB_WORKSPACE.
+        WORK_DIR="$GITHUB_WORKSPACE/.skills-mirror"
+        rm -rf "$WORK_DIR"
+
+        echo "Cloning $TARGET_REPO..."
+        git clone --quiet "https://x-access-token:${TOKEN}@github.com/${TARGET_REPO}.git" "$WORK_DIR"
+
+        jq -c '.plugins[]' "$MANIFEST" | while read -r entry; do
+          NAME=$(echo "$entry" | jq -r '.name')
+          SOURCE="$PWD/dist/$(echo "$entry" | jq -r '.source')"
+          DEST="$WORK_DIR/$(echo "$entry" | jq -r '.destination')"
+          echo "  $NAME -> $(echo "$entry" | jq -r '.destination')"
+          if [ -d "$DEST" ]; then
+            find "$DEST" -mindepth 1 -not -name 'README.md' -exec rm -rf {} + 2>/dev/null || true
+          fi
+          mkdir -p "$DEST"
+          cp -r "$SOURCE"/. "$DEST"/
+        done
+
+        cd "$WORK_DIR"
+        git add -A
+        if git diff --cached --quiet; then
+          echo "Already up to date."
+          exit 0
+        fi
+
+        # The branch tip is the base commit, so this push creates no new
+        # (unsigned) commits; ghcommit-action lays the signed one on top.
+        BASE=$(git rev-parse --abbrev-ref HEAD)
+        BRANCH="chore/sync-plugins-$(date +%Y%m%d-%H%M%S)"
+        git push --quiet origin "HEAD:refs/heads/$BRANCH"
+        {
+          echo "repo=$TARGET_REPO"
+          echo "base=$BASE"
+          echo "branch=$BRANCH"
+        } >> "$GITHUB_OUTPUT"
+
+    - if: steps.sync.outputs.branch != ''
+      uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+      with:
+        commit_message: ${{ inputs.message }}
+        repo: ${{ steps.sync.outputs.repo }}
+        branch: ${{ steps.sync.outputs.branch }}
+        repository: .skills-mirror
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+
+    - if: steps.sync.outputs.branch != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        TARGET_REPO: ${{ steps.sync.outputs.repo }}
+        BASE: ${{ steps.sync.outputs.base }}
+        BRANCH: ${{ steps.sync.outputs.branch }}
+        MESSAGE: ${{ inputs.message }}
+      run: |
+        PR_URL=$(gh pr create --repo "$TARGET_REPO" \
+          --base "$BASE" --head "$BRANCH" \
+          --title "$MESSAGE" \
+          --body "Automated plugin sync from context-mill.")
+        echo "Opened $PR_URL"
+        gh pr merge --repo "$TARGET_REPO" "$PR_URL" --auto --squash
