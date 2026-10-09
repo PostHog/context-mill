@@ -102,15 +102,24 @@ proposals, in the format below. Write it even when you have no proposals.
   "proposals": [
     {
       "title": "Welcome new users",
-      "reason": "Greets each user after user_signed_up and points them at their first project.",
+      "goal": "activation",
+      "reason": "Welcomes each new user and points them at their first project.",
       "workflow": { "name": "...", "description": "...", "actions": [], "edges": [] }
     }
   ]
 }
 ```
 
-- `title` — a short label the user reads in the terminal, under 50 characters.
-- `reason` — one line on why it helps, naming the trigger event.
+- `title` — a short name, under 50 characters.
+- `goal` — what the workflow helps with, one of `activation`, `engagement`,
+  `retention`, `conversion`, `feedback`.
+- `reason` — one plain sentence, under 90 characters, on how it helps. Write it
+  for the person who owns the product, not for an engineer: no event names,
+  no steps, no delays.
+
+The user sees only the title, the goal, and the reason, as a checklist they
+tick. They never see the workflow body before it is created, so the three
+fields must be enough to decide.
 - `workflow` — the workflow body, as `references/graph-schema.md` describes.
 
 When you have no proposals, write `{ "proposals": [] }`.
@@ -120,6 +129,8 @@ When you have no proposals, write `{ "proposals": [] }`.
 For each proposal, confirm all of these. The wizard checks them too, and drops
 a proposal that fails any one.
 
+- [ ] `goal` is one of the five values, and `reason` is under 90 characters
+      with no event names.
 - [ ] Exactly one `trigger` action, with `config.type: "event"`.
 - [ ] Every event name, in the trigger, a wait, or the goal, is in the event
       plan.

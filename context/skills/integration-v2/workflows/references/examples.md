@@ -18,7 +18,8 @@ days, they get one reminder. A user who creates a notebook leaves the workflow.
 ```json
 {
   "title": "Welcome and first notebook nudge",
-  "reason": "Welcomes each user after user_signed_up, and reminds anyone with no notebook_created after 3 days.",
+  "goal": "activation",
+  "reason": "Welcomes new users and nudges them to create their first notebook.",
   "workflow": {
     "name": "Welcome and first notebook nudge (wizard)",
     "description": "Welcome email on sign-up, then one reminder if no notebook is created within 3 days.",
@@ -108,7 +109,8 @@ masking makes sure a user who cancels twice in a month gets it once.
 ```json
 {
   "title": "Ask why after a cancellation",
-  "reason": "Sends one short question an hour after subscription_canceled, to learn why users leave.",
+  "goal": "feedback",
+  "reason": "Asks users who cancel what made them leave, so you can fix it.",
   "workflow": {
     "name": "Ask why after a cancellation (wizard)",
     "description": "One email an hour after a cancellation that asks what made the user leave.",

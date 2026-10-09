@@ -28,6 +28,7 @@ const ALLOWED_TYPES = new Set([
     'function_email',
     'exit',
 ]);
+const GOALS = new Set(['activation', 'engagement', 'retention', 'conversion', 'feedback']);
 const EXAMPLE_EVENTS = new Set(['user_signed_up', 'notebook_created', 'subscription_canceled']);
 
 function exampleProposals() {
@@ -71,6 +72,8 @@ describe('workflows step examples', () => {
 
     it.each(proposals.map((p) => [p.title, p]))('%s passes the wizard checks', (_title, proposal) => {
         const { workflow } = proposal;
+        expect(GOALS.has(proposal.goal)).toBe(true);
+        expect(proposal.reason.length).toBeLessThanOrEqual(90);
         const ids = new Set(workflow.actions.map((a) => a.id));
         const triggers = workflow.actions.filter((a) => a.type === 'trigger');
 
