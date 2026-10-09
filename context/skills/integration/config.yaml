@@ -297,6 +297,7 @@ variants:
       - https://posthog.com/docs/libraries/flutter.md
 
   - id: kmp
+    framework: kmp
     template: description-kmp-docs-only.md
     display_name: Kotlin Multiplatform
     description: PostHog integration for Kotlin Multiplatform (KMP) shared code targeting Android, iOS, and web using the posthog-kmp SDK

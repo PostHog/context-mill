@@ -358,6 +358,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/flutter.md
 - id: kmp
+  framework: kmp
   display_name: Kotlin Multiplatform
   tags:
   - kmp
