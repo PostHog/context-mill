@@ -23,6 +23,8 @@ send them as person properties instead. Fall back to email only when the app tru
 no other stable key, and say so in your handoff — do not invent one by altering the
 app's schema.
 
+If the app has accounts, list its actual auth methods and where each resolves a stable user id. Check that each identify boundary runs after resolution, including API key and external auth paths. Fix or report gaps; never substitute a client-supplied id.
+
 Work out first what you are in: a client-only app, a fullstack or SSR app, or a
 backend or API. Identification takes a different shape in each, and the shape
 follows from that answer:
@@ -57,6 +59,7 @@ user is mid-request, that boundary cannot know it yet, and establishing identity
 again there is the point, not a duplicate. Your handoff names the files you
 changed, how identity is established in them, and what a later step must do for its
 own calls to inherit it — whether that is nothing at all, or tagging each call
-itself. If the app has no auth or user concept, say so and stop.
+itself. Include the auth method inventory and any unresolved methods. If the
+app has no auth or user concept, say so and stop.
 
 You do not run builds, linters, or tests — the review task verifies the whole integration after you; your edits just need to be right by reading.
