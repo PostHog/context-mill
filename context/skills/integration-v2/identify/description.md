@@ -30,12 +30,17 @@ capture buys nothing.
 Find the auth flow first: login and signup handlers, session callbacks. If the
 app has no concept of a user, there is nothing to identify — report that and stop.
 
-If the app has both a client and a server, keep them on the same person. Set the
-client SDK's `tracing_headers` to the backend's hostname (hostnames only) and it
-adds the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` request headers on its
-own — do not hand-roll a fetch wrapper for it. The server reads those headers, but
-they are client-controlled: prefer the authenticated user id for anything
-security-sensitive.
+If the app has both a client and a server, keep them in the same person and
+session. Set the client SDK's `tracing_headers` to each backend hostname
+(hostnames only). It adds `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` to
+matching requests on its own, so do not hand-roll a fetch wrapper. Then bind both
+incoming values to request-scoped PostHog context on the server. Use the SDK's
+framework middleware where one exists (for example `setupExpressRequestContext`
+or `PosthogContextMiddleware`); otherwise read the headers and pass the session as
+`sessionId` to the server SDK's context API. Verify that the configured hostname
+is the one the browser actually calls. These headers are client-controlled
+analytics context: prefer the authenticated user id for security-sensitive
+identity and authorization decisions.
 
 ## Reference
 
