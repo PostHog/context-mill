@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.57.0](https://github.com/PostHog/context-mill/compare/v1.56.0...v1.57.0) (2026-10-14)
+
+
+### Features
+
+* **feature-flags:** add the feature-flags orchestrator agents ([#428](https://github.com/PostHog/context-mill/issues/428)) ([705c0c5](https://github.com/PostHog/context-mill/commit/705c0c5f79bd800dccb32911845dbfad68edbfe7))
+
+
+### Bug Fixes
+
+* **docs:** repoint example-app paths after the examples/basics move ([#311](https://github.com/PostHog/context-mill/issues/311)) ([85f1c48](https://github.com/PostHog/context-mill/commit/85f1c484aa9262ba2ad64e26bcf90698077655b4))
+
 ## [1.56.0](https://github.com/PostHog/context-mill/compare/v1.55.0...v1.56.0) (2026-10-12)
 
 
