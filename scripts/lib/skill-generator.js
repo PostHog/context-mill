@@ -339,6 +339,7 @@ function expandSkillGroups(config, configDir) {
                 _references: group.references || null,
                 _group: key,
                 _bundle: bundled,
+                _groupTags: baseTags,
                 _cli: cli,
             });
         }
@@ -821,6 +822,7 @@ function serializeSkill(s) {
     }
     if (s._bundle) {
         result.bundle = true;
+        result.groupTags = s._groupTags || [];
     }
     if (s._cli) {
         result.cli = s._cli;
