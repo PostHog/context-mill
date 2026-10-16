@@ -178,7 +178,7 @@ auto-requests review — approval is not a merge gate.
 
 ## Security scanning
 
-Before we ship any skills, we run them through [the warlock](https://github.com/PostHog/warlock), PostHog's security scanner for agentic flows. It reads the built skill bundles and looks for prompt-injection attempts and other risky content that could trick an agent downstream. An LLM triage pass then sorts the real threats from the false positives, so we're not chasing noise.
+Before we ship any skills, we run them through [the warlock](https://github.com/PostHog/warlock), PostHog's security scanner for agentic flows. It reads the built skill bundles and looks for prompt-injection attempts and other risky content that could trick an agent downstream. Then the PostHog AI gateway's decision model scores each flagged hit, so we're not chasing noise.
 
 CI runs this automatically on every build and release, so most of the time you don't have to think about it. But if you want to check something locally:
 
@@ -187,4 +187,4 @@ pnpm security-scan:skills            # scan all built skill ZIPs (this is what C
 pnpm security-scan path/to/file.md   # scan a specific file
 ```
 
-Heads up, the skills scan reads from `dist/`, so run `pnpm build` first. If a scan flags something, fix the flagged content before releasing :)
+Heads up, the skills scan reads from `dist/`, so run `pnpm build` first. Triage needs a gateway token in `WARLOCK_GATEWAY_TOKEN`; without one, every match counts as a threat. If a scan flags something, fix the flagged content before releasing :)
