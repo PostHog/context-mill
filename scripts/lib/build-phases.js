@@ -231,16 +231,20 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
         skillsByCategory[cat].push(entry);
     }
 
-    // The CLI entries are the lookup table the wizard's runtime resolver uses
-    // (parentCommand + command -> skillId). They live inside skill-menu.json
-    // so the wizard can reach them through the existing fetchSkillMenu path.
-    const cliEntries = generateCliEntries({ allSkills });
+    // The hat entries are the lookup table the wizard's runtime resolver uses
+    // (parentHat + hat -> skillId). They live inside skill-menu.json so the
+    // wizard can reach them through the existing fetchSkillMenu path.
+    const hatEntries = generateHatEntries({ allSkills });
 
     const skillMenu = {
         version: manifest.version,
         buildVersion: manifest.buildVersion,
         categories: skillsByCategory,
-        cliEntries,
+        hatEntries,
+        // Back-compat: the wizard still reads `cliEntries` with the pre-rename
+        // `role: command` shape. Mirror it until the wizard migrates to
+        // `hatEntries`, then drop this.
+        cliEntries: toLegacyCliEntries(hatEntries),
     };
     fs.writeFileSync(path.join(skillsDir, 'skill-menu.json'), JSON.stringify(skillMenu, null, 2));
 
@@ -248,9 +252,9 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
 }
 
 /**
- * Build the CLI entries array from the expanded skill list. Used by
+ * Build the hat entries array from the expanded skill list. Used by
  * `writeManifestAndMenu` (which embeds the result in `skill-menu.json`
- * under `cliEntries`) and exercised directly by tests. Throws on an
+ * under `hatEntries`) and exercised directly by tests. Throws on an
  * invalid `default:` arrangement (see `validateDefault`) so the
  * build fails before bad data reaches the wizard.
  *
@@ -259,14 +263,14 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
  * `manifest.json`) and are not emitted here.
  *
  * Entry shape:
- *   { skillId, role, command?, parentCommand?, default?, displayName, description }
+ *   { skillId, role, hat?, parentHat?, default?, displayName, description }
  *
- * Entries are sorted by role (command first, then skill, then internal),
- * then by `parentCommand`/`command` so diffs in `skill-menu.json` stay
+ * Entries are sorted by role (hat first, then skill, then internal),
+ * then by `parentHat`/`hat` so diffs in `skill-menu.json` stay
  * reviewable.
  */
-function generateCliEntries({ allSkills }) {
-    const roleOrder = { command: 0, skill: 1, internal: 2 };
+function generateHatEntries({ allSkills }) {
+    const roleOrder = { hat: 0, skill: 1, internal: 2 };
     const entries = allSkills
         .filter(s => s.cli)
         .map(s => {
@@ -274,8 +278,8 @@ function generateCliEntries({ allSkills }) {
                 skillId: s.id,
                 role: s.cli.role,
             };
-            if (s.cli.parentCommand) entry.parentCommand = s.cli.parentCommand;
-            if (s.cli.command) entry.command = s.cli.command;
+            if (s.cli.parentHat) entry.parentHat = s.cli.parentHat;
+            if (s.cli.hat) entry.hat = s.cli.hat;
             if (s.cli.default) entry.default = true;
             entry.displayName = s.displayName;
             entry.description = s.description;
@@ -284,17 +288,38 @@ function generateCliEntries({ allSkills }) {
         .sort((a, b) => {
             const roleDiff = roleOrder[a.role] - roleOrder[b.role];
             if (roleDiff !== 0) return roleDiff;
-            const parentDiff = (a.parentCommand || '').localeCompare(b.parentCommand || '');
+            const parentDiff = (a.parentHat || '').localeCompare(b.parentHat || '');
             if (parentDiff !== 0) return parentDiff;
-            return (a.command || '').localeCompare(b.command || '');
+            return (a.hat || '').localeCompare(b.hat || '');
         });
     validateDefault(entries);
     return entries;
 }
 
 /**
+ * Project the canonical hat entries back into the pre-rename `cliEntries`
+ * shape (`role: command`, `command`, `parentCommand`). Kept so the wizard,
+ * which still reads `cliEntries`, keeps resolving until it migrates to
+ * `hatEntries`. Drop this once the wizard reads `hatEntries` directly.
+ */
+function toLegacyCliEntries(hatEntries) {
+    return hatEntries.map(e => {
+        const legacy = {
+            skillId: e.skillId,
+            role: e.role === 'hat' ? 'command' : e.role,
+        };
+        if (e.parentHat) legacy.parentCommand = e.parentHat;
+        if (e.hat) legacy.command = e.hat;
+        if (e.default) legacy.default = true;
+        legacy.displayName = e.displayName;
+        legacy.description = e.description;
+        return legacy;
+    });
+}
+
+/**
  * Enforce the `default:` rules: at most one default leaf per family
- * (grouped by `parentCommand`), and no `default` without a `parentCommand`
+ * (grouped by `parentHat`), and no `default` without a `parentHat`
  * (nothing to highlight). Checked here because a family spans multiple skill
  * directories. Throws naming the offending `skillId`s.
  */
@@ -302,19 +327,19 @@ function validateDefault(entries) {
     const defaultByParent = new Map();
     for (const entry of entries) {
         if (!entry.default) continue;
-        if (!entry.parentCommand) {
+        if (!entry.parentHat) {
             throw new Error(
-                `cli.default is only valid on a leaf inside a family (a command with a parentCommand); "${entry.skillId}" sets default but has no parentCommand`,
+                `cli.default is only valid on a leaf inside a family (a hat with a parentHat); "${entry.skillId}" sets default but has no parentHat`,
             );
         }
-        const siblings = defaultByParent.get(entry.parentCommand) || [];
+        const siblings = defaultByParent.get(entry.parentHat) || [];
         siblings.push(entry.skillId);
-        defaultByParent.set(entry.parentCommand, siblings);
+        defaultByParent.set(entry.parentHat, siblings);
     }
-    for (const [parentCommand, skillIds] of defaultByParent) {
+    for (const [parentHat, skillIds] of defaultByParent) {
         if (skillIds.length > 1) {
             throw new Error(
-                `Family "${parentCommand}" has more than one cli.default leaf (${skillIds.join(', ')}); at most one is allowed`,
+                `Family "${parentHat}" has more than one cli.default leaf (${skillIds.join(', ')}); at most one is allowed`,
             );
         }
     }
@@ -464,7 +489,8 @@ export {
     createBundledArchive,
     writeBundles,
     generateManifest,
-    generateCliEntries,
+    generateHatEntries,
+    toLegacyCliEntries,
     writeManifestAndMenu,
     reconcileOrphans,
     partialRebuild,

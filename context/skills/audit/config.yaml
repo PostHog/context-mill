@@ -3,9 +3,9 @@ template: description.md
 description: Audit an existing PostHog integration for correctness and best practices
 tags: [best-practices]
 cli:
-  role: command
-  parentCommand: audit
-  command: all
+  role: hat
+  parentHat: audit
+  hat: all
   default: true
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."

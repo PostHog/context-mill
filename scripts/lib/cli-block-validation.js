@@ -6,7 +6,12 @@
  * the rationale. Failures throw at build time, before drift can ship.
  */
 
-export const CLI_ROLES = ['command', 'skill', 'internal'];
+export const CLI_ROLES = ['hat', 'skill', 'internal'];
+
+// Pre-"hats" role spellings still accepted on input and normalized to the
+// canonical value. Keeps older `config.yaml` blocks (and anything mid-migration)
+// building. See parseCliBlock in skill-generator.js.
+export const LEGACY_ROLE_ALIASES = { command: 'hat' };
 
 const KEBAB_CASE = /^[a-z][a-z0-9-]*$/;
 const NAME_MIN_LENGTH = 2;
@@ -28,14 +33,14 @@ const INTERNAL_FLAG_NAMES = new Set([
 ]);
 
 /**
- * Validate a `command` / `parentCommand` value: kebab-case, length 2–20, no
+ * Validate a `hat` / `parentHat` value: kebab-case, length 2–20, no
  * yargs reserved words, no wizard internal-flag collisions. Throws on failure.
  *
  * @param {string} name
  * @param {string} field  the cli-block field being checked (for error text)
  * @param {string} context  human-readable label for error messages
  */
-export function validateCommandName(name, field, context) {
+export function validateHatName(name, field, context) {
     if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
         throw new Error(
             `${context}: cli.${field} "${name}" must be ${NAME_MIN_LENGTH}–${NAME_MAX_LENGTH} characters`,

@@ -8,11 +8,19 @@ manifest, see the [README](README.md).
 
 Every skill ships with a `config.yaml`. An optional `cli:` block on that
 config tells the PostHog wizard whether and how this skill appears as a
-command. The block is parsed in `scripts/lib/skill-generator.js` and
-emitted as `cliEntries` inside `dist/skills/skill-menu.json`. The wizard
-fetches `skill-menu.json` at runtime and registers each entry as a
-command, so adding a new skill-backed command is a context-mill release
+**hat** — a typed wizard command (you wear a different hat to do a different
+thing). The block is parsed in `scripts/lib/skill-generator.js` and
+emitted as `hatEntries` inside `dist/skills/skill-menu.json`. The wizard
+fetches `skill-menu.json` at runtime and registers each hat as a
+command, so adding a new hat is a context-mill release
 — no wizard release needed.
+
+> **Legacy spellings:** the pre-rename keys `role: command`, `command:`, and
+> `parentCommand:` are still accepted on input and normalized to `hat` /
+> `hat:` / `parentHat:`. The build also emits a legacy `cliEntries` mirror
+> (old `role: command` shape) next to `hatEntries` so the current wizard keeps
+> resolving; both go away once the wizard reads `hatEntries`. Write new skills
+> with the `hat` vocabulary below.
 
 ### The `cli:` block schema
 
@@ -20,34 +28,34 @@ command, so adding a new skill-backed command is a context-mill release
 type: docs-only
 description: Audit captured events
 cli:
-  role: command          # command | skill | internal
-  parentCommand: audit   # the command this skill nests under (optional)
-  command: events        # the user-typed word; required when role is command
-  default: true          # optional — the leaf `wizard <family>` runs by default
+  role: hat          # hat | skill | internal
+  parentHat: audit   # the hat this skill nests under (optional)
+  hat: events        # the user-typed word; required when role is hat
+  default: true      # optional — the leaf `wizard <family>` runs by default
 ```
 
 Three values for `role`:
 
 | Role | Where it shows up |
 |---|---|
-| `command` | Registered as `wizard <parentCommand> <command>` (or `wizard <command>` if no parent). The user-facing CLI. |
+| `hat` | Registered as `wizard <parentHat> <hat>` (or `wizard <hat>` if no parent). The user-facing CLI command. |
 | `skill` | Reachable only via `wizard skill <id>`. The full discoverable set. |
 | `internal` | Hidden everywhere. Only reachable via `wizard --skill=<id>` (a dev escape hatch). Useful for in-progress skills that aren't ready to expose. |
 
 Skills with **no** `cli:` block default to the `skill` role — they're
 discoverable via `wizard skill list` but don't get a top-level command.
 
-The same skill can be either surface: `audit-events` sets `role: command` so it's
+The same skill can be either surface: `audit-events` sets `role: hat` so it's
 `wizard audit events`; a `role: skill` skill is only `wizard skill <id>`. One
 mechanism, two surfaces — so `wizard audit <subcommand>` chooses an audit area,
 it does **not** take a skill name.
 
 ### Flat vs. family — the convention
 
-> A command is **flat** when there's only one option today,
+> A hat is **flat** when there's only one option today,
 > **a family** when the user must pick among multiple distinct things.
 
-Don't pre-create a family form for a single-option command. If only one
+Don't pre-create a family form for a single-option hat. If only one
 migration vendor exists, the command is `wizard migrate` — not
 `wizard migrate statsig`. When a second vendor arrives, restructure to
 a family at that moment and document the UX change in the wizard's
@@ -55,23 +63,23 @@ release notes. Forced abstraction (`wizard migrate <vendor>` with one
 vendor) is worse than the breaking change you'd cause later — that
 change is real and worth notifying users about explicitly.
 
-### Migrating a flat command into a family
+### Migrating a flat hat into a family
 
-When a flat command needs to grow into a family (a second option arrived,
+When a flat hat needs to grow into a family (a second option arrived,
 the original is being renamed, etc.), the `cli:` block restructures like
 this:
 
 ```yaml
-# Before — flat command. Registers `wizard investigate`.
+# Before — flat hat. Registers `wizard investigate`.
 cli:
-  role: command
-  command: investigate
+  role: hat
+  hat: investigate
 
 # After — family with a subcommand. Registers `wizard investigate events`.
 cli:
-  role: command
-  parentCommand: investigate
-  command: events
+  role: hat
+  parentHat: investigate
+  hat: events
 ```
 
 **This is a breaking change for users.** Anyone scripting the old flat
@@ -87,7 +95,7 @@ family picker. Treat this exactly like any other breaking CLI change:
    family, mark that leaf `default: true` so `wizard investigate` →
    Enter still runs the intended action with one keystroke.
 
-Going the other way — collapsing a family back to a flat command — works
+Going the other way — collapsing a family back to a flat hat — works
 the same way and is also a breaking change. Don't do it casually.
 
 ### Naming rule — no shorthand for product names
@@ -110,22 +118,22 @@ to relearn an abbreviation we changed our mind on later is not.
 ### Mapping table — YAML on the left, registered command on the right
 
 ```yaml
-# 1. Flat command (single option today)
+# 1. Flat hat (single option today)
 cli:                                                   →  wizard revenue-analytics
-  role: command
-  command: revenue-analytics
+  role: hat
+  hat: revenue-analytics
 
-# 2. Nested command inside an existing family
+# 2. Nested hat inside an existing family
 cli:                                                   →  wizard audit feature-flags
-  role: command
-  parentCommand: audit
-  command: feature-flags
+  role: hat
+  parentHat: audit
+  hat: feature-flags
 
 # 3. Default leaf — what `wizard audit` runs with no subcommand
 cli:                                                   →  wizard audit all
-  role: command                                           `wizard audit` runs
-  parentCommand: audit                                    this leaf by default
-  command: all                                            (and pre-highlights it
+  role: hat                                               `wizard audit` runs
+  parentHat: audit                                        this leaf by default
+  hat: all                                                (and pre-highlights it
   default: true                                           in the picker later).
 
 # 4. Skill-only (reachable via `wizard skill <id>`)
@@ -135,9 +143,9 @@ cli:                                                   →  wizard skill <skill-
 
 The block can live at the **group level** (defaults for every variant) or
 inside a **single variant** (overrides the group-level defaults). When
-`role: command` and `command` is omitted, the variant id fills in as the
-command name — except for the magic `id: all` variant, which collapses to
-the group key and so requires an explicit `command` at the group level.
+`role: hat` and `hat` is omitted, the variant id fills in as the
+hat name — except for the magic `id: all` variant, which collapses to
+the group key and so requires an explicit `hat` at the group level.
 
 `cli:` only configures the **command shape** — the verbs the user types.
 Flags and positional arguments live on the wizard side
@@ -153,13 +161,13 @@ so a single Enter runs it while the others stay visible. Set `default` on the
 leaf a user typing `wizard <family>` should get by default. At most one leaf per
 family should be marked.
 
-## Promotion criterion for `role: command`
+## Promotion criterion for `role: hat`
 
-The wizard's command surface is **curated, not inclusive**. Every command
+The wizard's command surface is **curated, not inclusive**. Every hat
 is one we're willing to teach in our docs, announce, and support
 for end users — not just every skill we've authored.
 
-A skill should be promoted to `role: command` when **all** of these are
+A skill should be promoted to `role: hat` when **all** of these are
 true:
 
 1. **It's user-facing, not infrastructure.** The skill represents a setup,
@@ -173,16 +181,16 @@ true:
    users. If the skill is still iterating on what it does or how it
    prompts the agent, ship it as `role: skill` first. Promote when the shape
    has held for a release or two.
-4. **It plays well with the family it lives in.** If `parentCommand:
+4. **It plays well with the family it lives in.** If `parentHat:
    audit`, the skill should slot alongside the other audits at the same
    level of abstraction. Don't put a one-off in an existing family just
    because the words overlap.
 5. **A wizard maintainer has reviewed the role change.** Adding to the
    command surface is a permanent commitment to that name. Loop in the wizard
-   docs team / maintainers on PRs that change a skill to `role: command`.
+   docs team / maintainers on PRs that change a skill to `role: hat`.
 
-When in doubt, ship as `role: skill`. Promoting from skill to command is
-cheap; demoting from command to skill breaks user scripts.
+When in doubt, ship as `role: skill`. Promoting from skill to hat is
+cheap; demoting from hat to skill breaks user scripts.
 
 ## Adding a new skill
 
@@ -192,21 +200,21 @@ The base path is the same regardless of the skill's CLI role:
 2. Add a `config.yaml` declaring `type`, `description`, `variants`, etc.
    See an existing skill (e.g. `audit-events`, `migrate`) for the shape.
 3. Add a `description.md` template and any `references/*.md` files.
-4. If the skill should be a wizard command, add a `cli:` block per the
-   schema above.
+4. If the skill should be a wizard command, add a `cli:` block (a hat) per
+   the schema above.
 5. Run `npm test && npm run build`. The build emits the new skill into
    `dist/skills/<your-skill>.zip` and lists it in the manifest.
 
-## Adding a new command
+## Adding a new hat
 
-When you've decided your skill meets the `role: command` criterion:
+When you've decided your skill meets the `role: hat` criterion:
 
 1. Add the `cli:` block to the skill's `config.yaml` with `role:
-   command`, the right `parentCommand` (if it nests under an existing
-   family), and `command`.
-2. Confirm `npm run build` emits the entry under `cliEntries` inside
-   `dist/skills/skill-menu.json` with the right `parentCommand` /
-   `command` values. The wizard picks it up on its next invocation
+   hat`, the right `parentHat` (if it nests under an existing
+   family), and `hat`.
+2. Confirm `npm run build` emits the entry under `hatEntries` inside
+   `dist/skills/skill-menu.json` with the right `parentHat` /
+   `hat` values. The wizard picks it up on its next invocation
    (no wizard release needed).
 3. No wizard PR is needed for skill-backed public commands. If you also
    need wizard-side hooks (custom outro, content blocks, abort cases),
@@ -232,7 +240,8 @@ manifest is published before the wizard tries to consume it.
 
 - Skill schema details: `scripts/lib/skill-generator.js`
   (`parseCliBlock`, `expandSkillGroups`, JSDoc typedef for the `cli:` block)
-- CLI entries emit: `scripts/lib/build-phases.js` (`generateCliEntries`)
+- Hat entries emit: `scripts/lib/build-phases.js` (`generateHatEntries`, plus
+  `toLegacyCliEntries` for the back-compat `cliEntries` mirror)
 - Tests for the cli block parser: `scripts/lib/tests/cli-block.test.js`
 - The wizard's side of the contract: [PostHog/wizard CONTRIBUTING.md](https://github.com/PostHog/wizard/blob/main/CONTRIBUTING.md)
 

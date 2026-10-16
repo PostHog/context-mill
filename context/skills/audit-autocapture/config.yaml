@@ -3,9 +3,9 @@ template: description.md
 description: Audit a PostHog autocapture setup for correctness and cost-optimization opportunities
 tags: [best-practices]
 cli:
-  role: command
-  parentCommand: audit
-  command: autocapture
+  role: hat
+  parentHat: audit
+  hat: autocapture
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:

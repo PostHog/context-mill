@@ -9,26 +9,32 @@
 
 /**
  * Optional `cli:` block in a skill's `config.yaml` — declares whether and how
- * the skill appears in the wizard CLI. Parsed by `parseCliBlock`, propagated by
- * `expandSkillGroups`, emitted into `dist/skills/cli-manifest.json` (the wizard
- * snapshots that manifest to derive its skill-backed command surface).
+ * the skill appears in the wizard CLI. A skill is a **hat** (a typed wizard
+ * command — you wear a different hat to do a different thing), a plain `skill`,
+ * or `internal`. Parsed by `parseCliBlock`, propagated by `expandSkillGroups`,
+ * emitted into `dist/skills/skill-menu.json` (the wizard snapshots that manifest
+ * to derive its skill-backed command surface).
  *
- * Full schema, the YAML→command mapping, the flat-vs-family convention, and the
+ * Full schema, the YAML→hat mapping, the flat-vs-family convention, and the
  * naming rules live in CONTRIBUTING.md § "How skills get into the wizard CLI".
  *
+ * Legacy note: the pre-rename spellings `role: command`, `command:`, and
+ * `parentCommand:` are still accepted on input and normalized to `hat` /
+ * `hat:` / `parentHat:`.
+ *
  * @typedef {Object} CliRoleBlock
- * @property {'command' | 'skill' | 'internal'} role
- *   How the skill appears: a typed `command`, a `skill` reachable via
- *   `wizard skill <id>`, or `internal` (hidden). Skills with no `cli:` block
- *   default to `skill` and are not emitted into `cli-manifest.json`.
- * @property {string} [command]
+ * @property {'hat' | 'skill' | 'internal'} role
+ *   How the skill appears: a `hat` (typed wizard command), a `skill` reachable
+ *   via `wizard skill <id>`, or `internal` (hidden). Skills with no `cli:` block
+ *   default to `skill` and are not emitted as hats.
+ * @property {string} [hat]
  *   The user-typed word that registers this skill (e.g. `'feature-flags'` in
- *   `wizard audit feature-flags`). Required when `role` is `'command'`;
+ *   `wizard audit feature-flags`). Required when `role` is `'hat'`;
  *   defaults to the variant id when omitted, except the magic `id: all`
- *   variant, which requires an explicit `command`. Use the full PostHog
+ *   variant, which requires an explicit `hat`. Use the full PostHog
  *   product name, not a shorthand.
- * @property {string} [parentCommand]
- *   The command this skill nests under (e.g. `'audit'`). Omit for flat commands.
+ * @property {string} [parentHat]
+ *   The hat this skill nests under (e.g. `'audit'`). Omit for flat hats.
  * @property {boolean} [default]
  *   When true, this leaf is pre-highlighted in the family's interactive picker
  *   (`wizard <family>` → Enter runs it). The picker still opens (discovery +
@@ -42,7 +48,7 @@ import crypto from 'crypto';
 import yaml from 'js-yaml';
 import matter from 'gray-matter';
 import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
-import { CLI_ROLES, validateCommandName } from './cli-block-validation.js';
+import { CLI_ROLES, LEGACY_ROLE_ALIASES, validateHatName } from './cli-block-validation.js';
 
 /**
  * Load YAML config file
@@ -73,8 +79,11 @@ function expandPartials(body, configDir) {
  * Returns `null` when the block is absent, throws on malformed input.
  *
  * Naming-convention checks (kebab-case, length 2–20, no reserved words,
- * no internal-flag collisions) run on every `command` and `parentCommand`
- * value before the resolved block is returned.
+ * no internal-flag collisions) run on the `hat` and `parentHat` values
+ * before the resolved block is returned.
+ *
+ * The pre-rename spellings (`role: command`, `command:`, `parentCommand:`) are
+ * accepted as aliases and normalized to `hat` / `hat:` / `parentHat:`.
  *
  * `context` is a human-readable label used in error messages (e.g.
  * `'Skill group "audit-events"'` or
@@ -82,38 +91,49 @@ function expandPartials(body, configDir) {
  *
  * @param {unknown} raw
  * @param {string} context
- * @returns {{ role: 'command' | 'skill' | 'internal', command?: string, parentCommand?: string, default?: boolean } | null}
+ * @returns {{ role: 'hat' | 'skill' | 'internal', hat?: string, parentHat?: string, default?: boolean } | null}
  */
 function parseCliBlock(raw, context) {
     if (raw == null) return null;
     if (typeof raw !== 'object' || Array.isArray(raw)) {
         throw new Error(`${context}: cli block must be an object`);
     }
-    const { role, command, parentCommand, default: isDefault, ...rest } = raw;
+    const {
+        role: rawRole,
+        hat,
+        parentHat,
+        command, // legacy alias for `hat`
+        parentCommand, // legacy alias for `parentHat`
+        default: isDefault,
+        ...rest
+    } = raw;
     const unknownKeys = Object.keys(rest);
     if (unknownKeys.length > 0) {
         throw new Error(`${context}: cli block has unknown keys: ${unknownKeys.join(', ')}`);
     }
-    if (!role) {
+    if (!rawRole) {
         throw new Error(`${context}: cli.role is required`);
     }
+    const role = LEGACY_ROLE_ALIASES[rawRole] ?? rawRole;
     if (!CLI_ROLES.includes(role)) {
-        throw new Error(`${context}: cli.role must be one of ${CLI_ROLES.join(', ')} (got "${role}")`);
+        throw new Error(`${context}: cli.role must be one of ${CLI_ROLES.join(', ')} (got "${rawRole}")`);
     }
+    const hatName = hat ?? command;
+    const parentHatName = parentHat ?? parentCommand;
     const result = { role };
-    if (command != null) {
-        if (typeof command !== 'string' || command.length === 0) {
-            throw new Error(`${context}: cli.command must be a non-empty string when set`);
+    if (hatName != null) {
+        if (typeof hatName !== 'string' || hatName.length === 0) {
+            throw new Error(`${context}: cli.hat must be a non-empty string when set`);
         }
-        validateCommandName(command, 'command', context);
-        result.command = command;
+        validateHatName(hatName, 'hat', context);
+        result.hat = hatName;
     }
-    if (parentCommand != null) {
-        if (typeof parentCommand !== 'string' || parentCommand.length === 0) {
-            throw new Error(`${context}: cli.parentCommand must be a non-empty string when set`);
+    if (parentHatName != null) {
+        if (typeof parentHatName !== 'string' || parentHatName.length === 0) {
+            throw new Error(`${context}: cli.parentHat must be a non-empty string when set`);
         }
-        validateCommandName(parentCommand, 'parentCommand', context);
-        result.parentCommand = parentCommand;
+        validateHatName(parentHatName, 'parentHat', context);
+        result.parentHat = parentHatName;
     }
     if (isDefault != null) {
         if (typeof isDefault !== 'boolean') {
@@ -126,13 +146,13 @@ function parseCliBlock(raw, context) {
 
 /**
  * Merge a group-level cli block with a variant-level override and fill in
- * the implicit command name for the `command` role. Returns `null` when
+ * the implicit hat name for the `hat` role. Returns `null` when
  * neither level declared a block.
  *
- * For `role: 'command'`, the command name falls back to the variant's
- * short id (e.g. parentCommand `migrate` + variant `statsig` →
+ * For `role: 'hat'`, the hat name falls back to the variant's
+ * short id (e.g. parentHat `migrate` + variant `statsig` →
  * `wizard migrate statsig`). The `id: 'all'` variant is special — its
- * skill id collapses to the group key, so the command name has to be
+ * skill id collapses to the group key, so the hat name has to be
  * set explicitly at the group level.
  *
  * @param {ReturnType<typeof parseCliBlock>} groupCli
@@ -143,19 +163,19 @@ function parseCliBlock(raw, context) {
 function resolveVariantCli(groupCli, variantCli, variant, groupKey) {
     if (!groupCli && !variantCli) return null;
     const merged = { ...(groupCli ?? {}), ...(variantCli ?? {}) };
-    if (merged.role === 'command' && !merged.command) {
+    if (merged.role === 'hat' && !merged.hat) {
         if (variant.id === 'all') {
             throw new Error(
-                `Skill group "${groupKey}", variant "all": cli.command is required at the group level when role is command and the variant id is "all"`,
+                `Skill group "${groupKey}", variant "all": cli.hat is required at the group level when role is hat and the variant id is "all"`,
             );
         }
-        merged.command = variant.id;
+        merged.hat = variant.id;
         // The fallback value bypassed parseCliBlock's checks, so validate it
         // here too — a variant id like "help" or "CamelCase" must not slip
-        // through into the manifest just because it wasn't typed as a command.
-        validateCommandName(
-            merged.command,
-            'command',
+        // through into the manifest just because it wasn't typed as a hat.
+        validateHatName(
+            merged.hat,
+            'hat',
             `Skill group "${groupKey}", variant "${variant.id}"`,
         );
     }

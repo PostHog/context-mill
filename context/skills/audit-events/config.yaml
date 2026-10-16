@@ -3,9 +3,9 @@ template: description.md
 description: Audit a PostHog integration's event capture quality and cost-optimization opportunities
 tags: [best-practices]
 cli:
-  role: command
-  parentCommand: audit
-  command: events
+  role: hat
+  parentHat: audit
+  hat: events
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
