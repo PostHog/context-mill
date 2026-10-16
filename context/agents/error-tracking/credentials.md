@@ -44,7 +44,9 @@ write it in this one task (the key never survives across tasks):
    placeholder values — never a real value, and never the key itself. The
    example file is committed and is the only `.env*` you may write directly;
    it is how the next developer, and the next wizard run's `check_env_keys`,
-   learns the project expects these variables.
+   learns the project expects these variables. The `init` task may write the
+   same file beside you, so read it right before you change it and add your
+   lines with `edit`; never `write` over it once it exists.
 
 Replace `<SETTINGS_URL>`, `<PROJECT_ID>`, and `<UI_HOST>` from your project
 context. Do not touch the build config — the `configure` task owns that.

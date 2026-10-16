@@ -63,6 +63,11 @@ session, a service manager's environment, PHP-FPM's `clear_env`, and Laravel's
 cached config. So walk the path to its end, and pass the value on the same way
 the deploy already passes the app's other runtime variables.
 
+In a workspace package, the deploy path usually starts at the repository root,
+above this directory (`../.github/workflows`, a root `Dockerfile`): look there
+before you conclude there is none. When you cannot open those files, name them
+in your handoff.
+
 While you are at the start step, check the other names on it too. The app's
 PostHog init reads a token and a host, and the start step may predate PostHog.
 If it passes the app's variables by hand and leaves those out, add them by the
@@ -73,7 +78,10 @@ names the app's source reads, and name any secret the user must create.
 The project resolves an SDK version that reads `POSTHOG_RELEASE_ID`, or your
 handoff names the upgrade as a follow-up. The production deploy job resolves
 the release before it ships, without failing the deploy when PostHog cannot be
-reached. The ID reaches the app process as `POSTHOG_RELEASE_ID`, and no local,
-test, or pull-request path changed. Your handoff lists the files you changed,
-the SDK version before and after, the deploy path hop by hop, and every secret
-and variable the user must create, with its exact name and where it goes.
+reached or a PostHog secret does not exist yet. The user merges this change
+before creating the secrets, so never stop a deploy step on an empty PostHog
+variable (`${VAR:?…}`, an `exit 1`). The ID reaches the app process as
+`POSTHOG_RELEASE_ID`, and no local, test, or pull-request path changed. Your
+handoff lists the files you changed, the SDK version before and after, the
+deploy path hop by hop, and every secret and variable the user must create,
+with its exact name and where it goes.

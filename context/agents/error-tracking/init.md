@@ -18,12 +18,25 @@ Make sure PostHog is initialized. If the project already has a working
 `posthog.init(...)` (or the framework's equivalent) with its env keys wired,
 leave it alone and say so in your handoff. If it doesn't, create it following
 your skill — it owns the how: the framework's init point, the env-var wiring
-through the wizard tools, and `.env.example`.
+through the wizard tools, and `.env.example`. The `credentials` task may write
+`.env.example` beside you, so read it right before you change it and add your
+lines with `edit`; never `write` over it once it exists, or the upload
+variables it documented are lost.
 
 You exist in this flow because the user asked for error tracking on a repo
 whose PostHog init is missing or unproven. Initialize the SDK so exceptions can
 flow and stop — no instrumentation, no extras. Don't set up exception capture
 either way; the capture-exceptions task after you owns that.
+
+## Initialize the server the project ships
+
+A directory can hold more than one server: a workspace often keeps a small
+script beside a nested package with its own manifest (`index.js` next to
+`v2/package.json`). Initialize each server the project builds or deploys, the
+one with a `build` or `start` script, a Dockerfile, or a job in the pipeline. A
+script the project only runs in development, with nothing but a `dev` script,
+gets no client. Name the server and its entry file in your handoff, so the
+tasks after you cover the same one.
 
 ## An existing init still needs its variable defined
 
@@ -89,20 +102,12 @@ token as a literal in the committed `src/environments/*` files. This is the
 skill's "no valid environment to read from" case, and the public token is
 publishable — it ships inside the browser bundle either way.
 
-## The init has to type-check
+## Leave the build to later tasks
 
-You cannot run the build either. So in a project the compiler checks —
-TypeScript, or JavaScript under `checkJs` — the init has to compile by
-construction. `process.env.ANYTHING` is `string | undefined`, and the SDK
-constructor wants a `string`.
-
-Pass the variable that you checked. `if (!key) { … } else { new PostHog(key, …) }`
-narrows `key` to `string`. A check on a different variable does not: store the
-missing name in `missing`, test `missing`, then pass `key`, and the compiler
-still sees `string | undefined`. The build then stops with "Argument of type
-'string | undefined' is not assignable to parameter of type 'string'", emits
-no bundle, and uploads no source maps. When the existing code already passes
-`process.env.KEY ?? ''` or `process.env.KEY!`, keep that part as it is.
+The `install` task may still be adding the SDK beside you, so do not build
+here: the build would fail on a package that is about to arrive. The tasks
+after you build the project once every edit is in, and fix what does not
+compile.
 
 ## How you know you succeeded
 
@@ -111,8 +116,6 @@ did or you just created it — keys in the env file and confirmed there with
 `check_env_keys`, never hardcoded. On a platform that does not auto-load
 `.env` and has no loader, your handoff names it as a manual follow-up; on a platform with no environment at all, the
 token is a literal rather than a lookup into something that never defines it.
-In a type-checked project, the value you pass to the SDK is narrowed to a
-`string`.
 Your handoff names the files involved, how the client is constructed, and how
 `.env` reaches it, so the capture-exceptions task can find the init options
 without re-discovering them.

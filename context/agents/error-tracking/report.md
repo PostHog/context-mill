@@ -8,8 +8,8 @@ model_sdk: claude-sonnet-5
 effort_sdk: medium
 skills: []
 allowedTools: [Read, Glob, Grep, Write]
-disallowedTools: [enqueue_task]
-dependsOn: [capture-exceptions, wire-ci, link-releases]
+disallowedTools: [enqueue_task, publish_handoff]
+dependsOn: [capture-exceptions, wire-ci, link-releases, verify]
 ---
 
 ## Goal
@@ -20,8 +20,12 @@ each task's report — the capture mechanism, the files changed, the env
 variable names, the CI secrets and variables to create, and any deploy path
 that could not be traced. Do not re-derive any of it from the project.
 
-Write the hand-off to `posthog-error-tracking-report.md` at the top level of
-this project's directory. When any handoff carries a manual follow-up, START
+This flow keeps its report on disk. Write it once, with `write`, to
+`posthog-error-tracking-report.md` at the top level of this project's
+directory: the wizard's closing message sends the user to that file and reads
+its warning block, and `test-setup` appends to it. `publish_handoff` is
+blocked for this task; the file is the report. When any handoff carries a
+manual follow-up, START
 the report, right under its H1, with this warning block, one short bullet per
 item. The wizard shows these bullets again when it exits.
 
@@ -58,8 +62,15 @@ Then cover, briefly and concretely:
   build command, and that every production build now uploads.
 - When the build was wired but the credentials or wire-ci handoff reports a
   skip: the same files and command, and that the build is set up to upload.
-  Say that uploads start, and the build command succeeds, only once the
-  `POSTHOG_CLI_*` values are present where the build runs.
+  Say that uploads start only once the upload variables are present where the
+  build runs.
+- What the `verify` handoff found: the build command it ran and whether it
+  passed. When it uploaded, name the release and how many files went up, so
+  the user knows the first symbol set is already in PostHog. Anything still
+  failing is a follow-up in the warning block. When the build could not run in
+  the wizard's shell (an SDK it could not find, a blocked command), the
+  follow-up is to run that build command once themselves, not to set anything
+  up: their own shell has what the wizard's lacked.
 - When it was skipped: one line saying why — readable stack traces on this
   platform, or that Astro is not supported by the uploader. An outcome, not an
   apology. Say plainly that the build command was left untouched.
@@ -84,7 +95,9 @@ summary in chat, warning block first.
 
 ## How you know you succeeded
 
-`posthog-error-tracking-report.md` exists and a user who reads only it knows
-how errors reach PostHog, the follow-ups they still owe (the API key and the
+`posthog-error-tracking-report.md` exists on disk, written in one `write`
+call, and a user who reads only the file knows
+how errors reach PostHog, whether the build passed with the changes, the
+follow-ups they still owe (the API key and the
 CI secrets and variables named exactly, when upload or release linking was
 wired), and where in PostHog to see the first captured exception.

@@ -29,6 +29,19 @@ config that is not there. You cannot create the CI secret that holds the API
 key; reference it by name and carry that follow-up, plus any deploy path you
 could not trace, into your handoff for the report.
 
+A package inside a workspace rarely holds its own pipeline. The CI config and
+deploy files usually sit at the repository root, above this directory
+(`../.github/workflows`, `../../.gitlab-ci.yml`): look there before you
+conclude there is none, and wire the job that builds this package. When you
+cannot open them, name the file and the job in your handoff.
+
+The user merges this change before they create the secrets. A step that fails
+when a PostHog variable is empty (`${VAR:?…}`, an `exit 1`, a required input)
+breaks every deploy until they do. Pass the variables through and let the
+upload skip itself when they are empty: the build config's gate does that, and a
+`posthog-cli` step in the pipeline needs a condition on the key. Name the
+secrets in your handoff instead of enforcing them.
+
 ## Two things cross the boundary, not one
 
 Credentials are half of it. The uploader also needs a **release identity** — a
@@ -60,6 +73,13 @@ masked variable, a secret file. A secret in `ARG` or `ENV` is recorded in the
 build history, and the builder itself will warn you: *do not use ARG or ENV
 instructions for sensitive data*. Widening the git-variable pattern to cover the
 key is a downgrade, not consistency.
+
+A build cache between the pipeline and the build, such as Turborepo's, is one
+more boundary. List the upload credentials among the task's hashed inputs
+(Turborepo's `env`), so a build that has them never replays an entry made
+without them, and pass the git variables through without hashing them
+(`passThroughEnv`). Leave the cache on: a hit restores output whose chunks are
+already uploaded.
 
 ## The runtime boundary has names too
 
