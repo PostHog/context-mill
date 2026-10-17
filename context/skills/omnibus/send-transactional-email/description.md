@@ -46,7 +46,7 @@ STEP 5: Upload the template with the PostHog MCP.
     - `path`: the file's path from the repository root (`git rev-parse --show-toplevel`), such as `apps/web/emails/welcome.html` in a monorepo.
     - `ref`: the commit from `git rev-parse HEAD`.
     - Leave out a field that git can't give, such as `repository` when there is no `origin`.
-  - When the app sends with `templateFile()` (STEP 8), posthog-node fills the same three fields on the uploads it makes, from CI and hosting variables or the git checkout. A field it can't find keeps the value this upload stored.
+  - posthog-node fills the same three fields on its own uploads when the app sends with `templateFile()` (STEP 8). It reads them from CI and hosting variables or the git checkout. It always sends a `path`: without a checkout or CI workspace, the path is relative to the app's working directory. A `repository` or `ref` it can't find keeps the value this upload stored.
   - Expect `result: "created"` on the first upload, and `updated` or `unchanged` later. The template is now managed by code: changes go through its file (see "Change an email the app already sends").
   - On `sender_unavailable`, the project has no verified default sender:
     - When no sender is verified, go back to STEP 3.
@@ -118,13 +118,21 @@ STEP 9: Handle errors by their code.
 
 ## Change an email the app already sends
 
-A code-managed template changes in its file in the repository. You work in the repository, so edit the file yourself:
-  - Find the file from the template's `source.path`, or from the `templateFile()` call or upload that uses its key. When the person pastes a prompt from **Edit with your agent** on the template's page in PostHog, the prompt names the file and the key.
+A code-managed template changes in its file in the repository.
+
+When you can edit the repository, change the file yourself:
+  - Find the file by the template's key: the `templateFile()` call or the upload that uses it. The template's `source.path` points at it too, but posthog-node can store it relative to the app's directory. A prompt from **Edit with your agent** on the template's page in PostHog names the key, and the file when PostHog knows it.
   - Keep the format of STEP 4, and read only `{{ variables.* }}` values that the send passes.
-  - When the app sends with `templateFile()`, the change goes live with the first send after the person deploys it: posthog-node uploads the changed file then. Leave the upload to it, so the new version goes live with the code that is reviewed and deployed. Upload it yourself as in STEP 5 only when the person asks for the change to go live before that, and tell them that every running copy of the app sends the new version from then on.
-  - When the app sends by key, the upload step from STEP 8 uploads the file when the project deploys. When the project has no such step, upload the file again as in STEP 5, with a fresh `source`, once the person wants the change live.
-  - Change the template only through its file. PostHog's template update, patch, and design tools refuse a code-managed template with `403 immutable`. Never call `workflows-request-email-template-change` either: where the PostHog MCP has it, it starts a PostHog Code task for agents that can't reach the repository.
+  - Change the template only through its file. PostHog's template update, patch, and design tools refuse a code-managed template with `403 immutable`.
   - Leave the template managed by code. Releasing it in PostHog is the person's decision, and the next upload from the file claims it back.
+
+How the change goes live:
+  - **`templateFile()`:** the first send from code with the changed file uploads it. Usually that is the deployed app, after review. A local run or a test send against the same project publishes it too, so say so when you ask before a test send. Leave the upload to posthog-node.
+  - **Live before the deploy:** upload the file as in STEP 5 only when the person asks for that. Tell them that every running copy of the app sends the new version from then on.
+  - **Undo:** a change back to content PostHog sent before goes live only through an upload as in STEP 5. A send from the reverted file gets the newer content, and posthog-node doesn't upload it.
+  - **By key:** a send never uploads. Upload the file again as in STEP 5 after the change, or leave it to the project's deploy step from STEP 8 when it has one.
+
+Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead: it starts a PostHog Code task that changes the file and opens a pull request. An agent that can edit the file never calls it.
 
 ## Reference files
 
