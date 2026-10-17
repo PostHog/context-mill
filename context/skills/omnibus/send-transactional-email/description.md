@@ -88,7 +88,7 @@ STEP 8: Write the send.
   - `templateFile()` takes a `file:` URL or an absolute path. In CommonJS, use `path.join(__dirname, 'emails/welcome.html')`.
   - In Next.js and other bundled or serverless code, `import.meta.url` no longer points next to the file. Use `path.join(process.cwd(), 'emails/welcome.html')`, and make the deployment ship the file: in Next.js, add `{ '/api/signup': ['./emails/**/*.html'] }` (the route that sends) to `outputFileTracingIncludes` in `next.config.js` (under `experimental` in Next.js 14 and earlier). For Vercel and Netlify functions, see "Ship template files with serverless bundles" in the reference.
   - Edge runtimes have no file system, so they take a key string only: `template: 'welcome'`. Upload the file from a build step or a Node.js script there.
-  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed.
+  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed. A revert to an earlier version is the exception: see "Change an email the app already sends".
 
   **Other languages:** send by key over HTTP, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY`. The host is the app host, `https://us.posthog.com` or `https://eu.posthog.com`:
 
@@ -127,12 +127,12 @@ When you can edit the repository, change the file yourself:
   - Leave the template managed by code. Releasing it in PostHog is the person's decision, and the next upload from the file claims it back.
 
 How the change goes live:
-  - **`templateFile()`:** the first send from code with the changed file uploads it. Usually that is the deployed app, after review. A local run or a test send against the same project publishes it too, so say so when you ask before a test send. Leave the upload to posthog-node.
+  - **`templateFile()`:** the first send from code with the changed file uploads it. Usually that is the deployed app, after review. A local run of that code against the same project publishes it too. Say so when you ask before a test send from the code. Leave the upload to posthog-node.
   - **Live before the deploy:** upload the file as in STEP 5 only when the person asks for that. Tell them that every running copy of the app sends the new version from then on.
-  - **Undo:** a change back to content PostHog sent before goes live only through an upload as in STEP 5. A send from the reverted file gets the newer content, and posthog-node doesn't upload it.
-  - **By key:** a send never uploads. Upload the file again as in STEP 5 after the change, or leave it to the project's deploy step from STEP 8 when it has one.
+  - **Undo with `templateFile()`:** a revert to content PostHog published before goes live only through an upload as in STEP 5. A send from the reverted file gets the newer content, and posthog-node doesn't upload it.
+  - **By key:** a send never uploads. The project's deploy step from STEP 8 uploads the change. Without one, upload the file again as in STEP 5 after the change.
 
-Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead: it starts a PostHog Code task that changes the file and opens a pull request. An agent that can edit the file never calls it.
+Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead and share the task link: it starts a PostHog Code task that changes the file and opens a pull request. An agent that can edit the file never calls it.
 
 ## Reference files
 
