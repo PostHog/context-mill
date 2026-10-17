@@ -88,7 +88,7 @@ STEP 8: Write the send.
   - `templateFile()` takes a `file:` URL or an absolute path. In CommonJS, use `path.join(__dirname, 'emails/welcome.html')`.
   - In Next.js and other bundled or serverless code, `import.meta.url` no longer points next to the file. Use `path.join(process.cwd(), 'emails/welcome.html')`, and make the deployment ship the file: in Next.js, add `{ '/api/signup': ['./emails/**/*.html'] }` (the route that sends) to `outputFileTracingIncludes` in `next.config.js` (under `experimental` in Next.js 14 and earlier). For Vercel and Netlify functions, see "Ship template files with serverless bundles" in the reference.
   - Edge runtimes have no file system, so they take a key string only: `template: 'welcome'`. Upload the file from a build step or a Node.js script there.
-  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed. A revert to an earlier version is the exception: see "Change an email the app already sends".
+  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed. A revert to content PostHog published before is the exception: see "Change an email the app already sends".
 
   **Other languages:** send by key over HTTP, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY`. The host is the app host, `https://us.posthog.com` or `https://eu.posthog.com`:
 
@@ -132,7 +132,7 @@ How the change goes live:
   - **Undo with `templateFile()`:** a revert to content PostHog published before goes live only through an upload as in STEP 5. A send from the reverted file gets the newer content, and posthog-node doesn't upload it.
   - **By key:** a send never uploads. The project's deploy step from STEP 8 uploads the change. Without one, upload the file again as in STEP 5 after the change.
 
-Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead and share the task link: it starts a PostHog Code task that changes the file and opens a pull request. An agent that can edit the file never calls it.
+Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead. It starts a PostHog Code task that changes the file and opens a pull request. Share the task link with the person. An agent that can edit the file never calls it.
 
 ## Reference files
 
