@@ -17,7 +17,7 @@ STEP 1: Detect the platform and check the PostHog MCP.
   - When other PostHog tools exist but `workflows-upload-email-template` and `workflows-send-email` don't, the transactional email API is not enabled for this project. Go to STEP 6 before the person does any sender work.
 
 STEP 2: Check for a verified sender through the PostHog MCP.
-  - Call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, ask the person whether one is verified.
+  - Call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, call `integrations-email-verify-create` once on the sender for the address the person wants: `success` means it is verified (go to STEP 4), and `pending` or `failed` means STEP 3 from its records. When the sender tools are missing, ask the person whether a sender is verified, and let the upload in STEP 5 confirm it.
   - The first sender that verifies becomes the project's default sender, and the first upload uses the default sender.
   - When a verified sender exists, go to STEP 4.
 
@@ -34,7 +34,7 @@ STEP 3: Set up a sender when none is verified.
   - **When the sender tools are missing or refused**, the agent setup for sender domains is not available to this person yet. Do not try other integration tools. Ask the person to verify a sender in PostHog: Workflows, then Channels, then add an email sender on their domain and follow the DNS steps (https://posthog.com/docs/workflows/configure-channels). Wait until they confirm that the sender shows as verified, then continue.
 
 STEP 4: Write the template as an HTML file in the repository.
-  - Put it next to the server code, for example `emails/welcome.html`. The file name without `.html` is the key, so use letters, digits, `-`, and `_` only.
+  - Put it next to the server code, for example `emails/welcome.html`. In Next.js and other bundled code, put the `emails/` folder at the project root. The file name without `.html` is the key, so use letters, digits, `-`, and `_` only.
   - The `<title>` is the subject. `<meta name="preheader" content="...">` is the optional inbox preview text.
   - Use Liquid with `{{ variables.<name> }}` for every value the email shows, such as `{{ variables.first_name }}` or `{{ variables.reset_url }}`.
   - Never use `{{ person.* }}`. A send doesn't load person properties, so those placeholders render empty.
@@ -81,7 +81,7 @@ STEP 8: Write the send.
   - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
   - Pass the same `name` as the upload in STEP 5. Without it, the next automatic upload renames the template to its subject.
   - `templateFile()` takes a `file:` URL or an absolute path. In CommonJS, use `path.join(__dirname, 'emails/welcome.html')`.
-  - In Next.js and other bundled or serverless code, `import.meta.url` no longer points next to the file. Use `path.join(process.cwd(), 'emails/welcome.html')`, and make the deployment ship the file: in Next.js, add `{ '/api/signup': ['./emails/**/*.html'] }` (the route that sends) to `outputFileTracingIncludes` in `next.config.js`. For Vercel and Netlify functions, see "Ship template files with serverless bundles" in the reference.
+  - In Next.js and other bundled or serverless code, `import.meta.url` no longer points next to the file. Use `path.join(process.cwd(), 'emails/welcome.html')`, and make the deployment ship the file: in Next.js, add `{ '/api/signup': ['./emails/**/*.html'] }` (the route that sends) to `outputFileTracingIncludes` in `next.config.js` (under `experimental` in Next.js 14). For Vercel and Netlify functions, see "Ship template files with serverless bundles" in the reference.
   - Edge runtimes have no file system, so they take a key string only: `template: 'welcome'`. Upload the file from a build step or a Node.js script there.
   - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed.
 
