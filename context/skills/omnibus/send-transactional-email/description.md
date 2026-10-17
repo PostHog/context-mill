@@ -98,7 +98,7 @@ STEP 8: Write the send.
   - Pass every value the template reads in `data` (Node.js) or `message_data` (HTTP).
   - Pass the app's user ID as `distinctId` (Node.js) or `identifiers.distinct_id` (HTTP), so the send and its delivery events show on that person.
   - Sends are not idempotent: two calls send two emails. Do not retry a send after a timeout or a server error, and never call the send more than once for one event.
-  - Every test sends a real email. Ask the person before any test send, whether you run the code path or call `workflows-send-email`, and send only to an address they own.
+  - Every test sends a real email. Ask the person before any test send, whether you run the code path or call `workflows-send-email`, and send only to an address they own. Save the test run's full output to a file and read it from there: never run it again to see more output, because each run sends another email.
 
 STEP 9: Handle errors by their code.
   - `posthog-node` never throws on API errors. It returns `{ data, error }`. Branch on `error.code` and log `error.message`.
