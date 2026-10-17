@@ -17,3 +17,11 @@ docs:
     release_asset: true  # Also write as standalone .md for wizard to fetch directly
     urls:
       - https://posthog.com/docs/libraries/cloudflare-workers.md
+
+  - id: self-driving-templates
+    display_name: Self-driving scout templates
+    description: Machine-readable catalog of every self-driving scout template — each one's question, discriminator, prerequisites, and the scout itself
+    tags: [signals, self-driving, scouts]
+    release_asset: true  # Also write as standalone .md so other consumers can fetch it
+    urls:
+      - https://posthog.com/templates/self-driving-catalog.md
