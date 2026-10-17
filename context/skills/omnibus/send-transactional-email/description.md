@@ -41,8 +41,13 @@ STEP 4: Write the template as an HTML file in the repository.
 
 STEP 5: Upload the template with the PostHog MCP.
   - Call `workflows-upload-email-template` with the key, a `name` such as "Welcome", the `<title>` text as `subject`, the `<meta name="preheader">` content as `preheader` (if any), and the whole file as `html`.
-  - Pass `source` with `repository` (such as `github.com/example/app`), `path` (the file path in the repository), and `ref` (the current commit), so the person sees the file in PostHog next to the template.
-  - Expect `result: "created"` on the first upload, and `updated` or `unchanged` later. The template is now managed by code: edits happen in the file, not in PostHog.
+  - Pass `source`, so PostHog and the next agent can find the file:
+    - `repository`: the URL from `git remote get-url origin` as `host/owner/name`. Drop the scheme, any user name or token, and the `.git` ending: `git@github.com:example/app.git` and `https://user:token@github.com/example/app.git` both become `github.com/example/app`.
+    - `path`: the file's path from the repository root (`git rev-parse --show-toplevel`), such as `apps/web/emails/welcome.html` in a monorepo.
+    - `ref`: the commit from `git rev-parse HEAD`.
+    - Leave out a field that git can't give, such as `repository` when there is no `origin`.
+  - When the app sends with `templateFile()` (STEP 8), posthog-node fills the same three fields on the uploads it makes, from CI and hosting variables or the git checkout. A field it can't find keeps the value this upload stored.
+  - Expect `result: "created"` on the first upload, and `updated` or `unchanged` later. The template is now managed by code: changes go through its file (see "Change an email the app already sends").
   - On `sender_unavailable`, the project has no verified default sender:
     - When no sender is verified, go back to STEP 3.
     - When a sender is verified, call `integrations-email-verify-create` on it once: a successful verify makes it the default when the project has none. Then upload again.
@@ -92,7 +97,7 @@ STEP 8: Write the send.
   {"template": {"key": "welcome"}, "to": "jane@example.com", "identifiers": {"distinct_id": "user_42"}, "message_data": {"first_name": "Jane"}}
   ```
 
-  - Also add an upload by key wherever the project deploys, such as a CI step or a release script: `PUT <host>/api/projects/@current/messaging_templates/by_key/<key>/` with `name`, `subject`, `html`, `preheader`, and `source`. Otherwise an edited file never reaches PostHog.
+  - Also add an upload by key wherever the project deploys, such as a CI step or a release script: `PUT <host>/api/projects/@current/messaging_templates/by_key/<key>/` with `name`, `subject`, `html`, `preheader`, and `source` as in STEP 5. Otherwise an edited file never reaches PostHog.
 
   For both:
   - Pass every value the template reads in `data` (Node.js) or `message_data` (HTTP).
@@ -109,7 +114,17 @@ STEP 9: Handle errors by their code.
     - `template_not_found`: no template has this key. Upload it (STEP 5).
     - `template_file_unreadable`: the deployment doesn't include the HTML file.
     - `missing_secret_key`, `authentication_failed`, `permission_denied`: the `phs_` key is missing, or lacks `hog_flow:write`.
-    - `immutable`: the template is managed by code. Change the file and upload it, instead of editing the template in PostHog.
+    - `immutable`: the template is managed by code. Change its file, as "Change an email the app already sends" says.
+
+## Change an email the app already sends
+
+A code-managed template changes in its file in the repository. You work in the repository, so edit the file yourself:
+  - Find the file from the template's `source.path`, or from the `templateFile()` call or upload that uses its key. When the person pastes a prompt from **Edit with your agent** on the template's page in PostHog, the prompt names the file and the key.
+  - Keep the format of STEP 4, and read only `{{ variables.* }}` values that the send passes.
+  - When the app sends with `templateFile()`, the change goes live with the first send after the person deploys it: posthog-node uploads the changed file then. Leave the upload to it, so the new version goes live with the code that is reviewed and deployed. Upload it yourself as in STEP 5 only when the person asks for the change to go live before that, and tell them that every running copy of the app sends the new version from then on.
+  - When the app sends by key, the upload step from STEP 8 uploads the file when the project deploys. When the project has no such step, upload the file again as in STEP 5, with a fresh `source`, once the person wants the change live.
+  - Change the template only through its file. PostHog's template update, patch, and design tools refuse a code-managed template with `403 immutable`. Never call `workflows-request-email-template-change` either: where the PostHog MCP has it, it starts a PostHog Code task for agents that can't reach the repository.
+  - Leave the template managed by code. Releasing it in PostHog is the person's decision, and the next upload from the file claims it back.
 
 ## Reference files
 
