@@ -122,6 +122,12 @@ async function main() {
             version: BUILD_VERSION,
         });
         console.log(`  ✓ ${agentsResult.count} agent prompt(s) → dist/agents/ + agent-menu.json`);
+        if (agentsResult.baseUrl.startsWith('file:')) {
+            console.log(
+                '  ! Unversioned build: prompts point at the local files, not at a release.\n'
+                + '    Set AGENTS_BASE_URL, or run `npm run dev`, to serve them over HTTP.',
+            );
+        }
 
         const releaseAssetDocs = docEntries.filter(d => d.release_asset);
         if (releaseAssetDocs.length > 0) {
