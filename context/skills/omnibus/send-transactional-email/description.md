@@ -1,0 +1,116 @@
+# Send transactional email with PostHog
+
+Use this skill to send one email to one person from server code, such as a welcome email, a password reset, or a signup confirmation. The email lives in the repository as an HTML template file. PostHog stores it as a message template under a key, such as `welcome`, and sends it through Workflows.
+
+The transactional email API is in beta. PostHog enables it per project.
+
+## Instructions
+
+Follow these steps IN ORDER. Do not upload a template before STEP 3 is done: the first upload needs a verified default sender.
+
+STEP 1: Detect the platform.
+  - Find the server code that should send the email, such as the signup handler for a welcome email.
+  - Node.js (including Next.js route handlers and server actions) uses `posthog-node`. Any other server language uses the HTTP API.
+  - Never send from browser or mobile code. The send needs a secret key, and the key stays on the server.
+  - Look for lockfiles (pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lockb) to pick the package manager.
+
+STEP 2: Check for a verified sender through the PostHog MCP.
+  - Call `integrations-list` with `kind=email`. A sender with `config.verified: true` can send. When the list shows senders without `config`, ask the person whether one is verified, or let the upload in STEP 5 tell you: `sender_unavailable` means there is no verified default sender.
+  - The first sender that verifies becomes the project's default sender, and the first upload uses the default sender.
+  - When a verified sender exists, go to STEP 4.
+
+STEP 3: Set up a sender when none is verified.
+  - First check that the PostHog MCP has the sender tools: `integrations-email-create`, `integrations-email-verify-create`, `integrations-domain-connect-check-retrieve`, and `integrations-domain-connect-apply-url-create`. When they are missing, go to the last bullet of this step.
+  - When the `setting-up-an-email-domain` skill is available, follow it. It covers the details.
+  - Ask which domain to send from. Recommend a subdomain such as `mail.example.com`. Use the person's own domain, never a free mailbox domain such as gmail.com.
+  - Create the sender, then get its DNS records with `integrations-email-verify-create`.
+  - PostHog never writes DNS. When the domain supports Domain Connect, give the person the URL from `integrations-domain-connect-apply-url-create`: they approve the records at their DNS host. Otherwise, give them the records as a table with type, name, value, and priority.
+  - Call `integrations-email-verify-create` again after the records are published, at least a minute apart, until `status` is `success`.
+  - **When the sender tools are missing or refused**, the agent setup for sender domains is not available to this person yet. Do not try other integration tools. Ask the person to verify a sender in PostHog: Workflows, then Channels, then add an email sender on their domain and follow the DNS steps (https://posthog.com/docs/workflows/configure-channels). Wait until they confirm that the sender shows as verified, then continue.
+
+STEP 4: Write the template as an HTML file in the repository.
+  - Put it next to the server code, for example `emails/welcome.html`. The file name without `.html` is the key, so use letters, digits, `-`, and `_` only.
+  - The `<title>` is the subject. `<meta name="preheader" content="...">` is the optional inbox preview text.
+  - Use Liquid with `{{ variables.<name> }}` for every value the email shows, such as `{{ variables.first_name }}` or `{{ variables.reset_url }}`.
+  - Never use `{{ person.* }}`. A send doesn't load person properties, so those placeholders render empty.
+
+STEP 5: Upload the template with the PostHog MCP.
+  - Call `workflows-upload-email-template` with the key, a `name` such as "Welcome", the `<title>` text as `subject`, the `<meta name="preheader">` content as `preheader` (if any), and the whole file as `html`.
+  - Pass `source` with `repository` (such as `github.com/acme/app`), `path` (the file path in the repository), and `ref` (the current commit), so the person sees the file in PostHog next to the template.
+  - Expect `result: "created"` on the first upload, and `updated` or `unchanged` later. The template is now managed by code: edits happen in the file, not in PostHog.
+  - On `sender_unavailable`, the project has no verified default sender. Ask the person to click **Make default** next to their verified sender in the email channel settings, then upload again.
+
+STEP 6: Stop when the API is not enabled for the project.
+  - When the PostHog MCP has no `workflows-upload-email-template` or `workflows-send-email` tool, or an upload or send answers a plain `404` with the code `not_found`, the transactional email API is not enabled for this project.
+  - Stop and tell the person: the API is in beta, and they can ask PostHog in-app to enable it for their project. Do not retry, and do not work around it with other tools.
+
+STEP 7: Have the person create a project secret API key.
+  - Ask the person to create a project secret API key (it starts with `phs_`) with the `hog_flow:write` scope in their PostHog project settings.
+  - Read it from the `POSTHOG_PROJECT_SECRET_API_KEY` environment variable. Add the variable name to the project's env example file. Never hardcode the key, never commit it, and never ask the person to paste it into the chat.
+
+STEP 8: Write the send.
+  **Node.js:** install or upgrade `posthog-node` to a version that has `posthog.emails`. Reference the file once when the module loads, then send it:
+
+  ```js
+  import { PostHog } from 'posthog-node'
+
+  const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
+      host: process.env.POSTHOG_HOST,
+      secretKey: process.env.POSTHOG_PROJECT_SECRET_API_KEY,
+      enableLocalEvaluation: false,
+  })
+  const welcomeEmail = posthog.emails.templateFile(new URL('./emails/welcome.html', import.meta.url))
+
+  const { data, error } = await posthog.emails.send({
+      template: welcomeEmail,
+      to: user.email,
+      data: { first_name: user.firstName },
+      distinctId: user.id,
+  })
+  ```
+
+  - Reuse the app's existing `posthog-node` client when it has one, and add `secretKey`. Keep `enableLocalEvaluation: false` unless the key also has `feature_flag:read` and the app uses local evaluation.
+  - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
+  - `templateFile()` takes a `file:` URL or an absolute path. In CommonJS, use `path.join(__dirname, 'emails/welcome.html')`.
+  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed.
+  - Serverless bundles must ship the HTML file. See "Ship template files with serverless bundles" in the reference.
+
+  **Other languages:** send by key over HTTP, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY`. The host is the app host, `https://us.posthog.com` or `https://eu.posthog.com`:
+
+  ```
+  POST <host>/api/projects/@current/messaging/send/email/
+  {"template": {"key": "welcome"}, "to": "jane@example.com", "identifiers": {"distinct_id": "user_42"}, "message_data": {"first_name": "Jane"}}
+  ```
+
+  - Also add an upload by key wherever the project deploys, such as a CI step or a release script: `PUT <host>/api/projects/@current/messaging_templates/by_key/<key>/` with `name`, `subject`, `html`, `preheader`, and `source`. Otherwise an edited file never reaches PostHog.
+
+  For both:
+  - Pass every value the template reads in `data` (Node.js) or `message_data` (HTTP).
+  - Pass the app's user ID as `distinctId` (Node.js) or `identifiers.distinct_id` (HTTP), so the send and its delivery events show on that person.
+  - Sends are not idempotent: two calls send two emails. Do not retry a send after a timeout or a server error, and never call the send more than once for one event.
+  - To try it, run the code path once, or ask the person before you send a test email with `workflows-send-email` to an address they own.
+
+STEP 9: Handle errors by their code.
+  - `posthog-node` never throws on API errors. It returns `{ data, error }`. Branch on `error.code` and log `error.message`.
+  - Over HTTP, read `code` from the error body. New codes also carry `fix` and `docs_url`.
+  - Each code has a section with its fix in the reference. The common ones:
+    - `sender_unavailable`: no verified default sender. Go back to STEP 3.
+    - `not_found`: the API is not enabled for the project. See STEP 6.
+    - `template_not_found`: no template has this key. Upload it (STEP 5).
+    - `template_file_unreadable`: the deployment doesn't include the HTML file.
+    - `missing_secret_key`, `authentication_failed`, `permission_denied`: the `phs_` key is missing, or lacks `hog_flow:write`.
+    - `immutable`: the template is managed by code. Change the file and upload it, instead of editing the template in PostHog.
+
+## Reference files
+
+{references}
+
+The reference is the transactional email API page. It covers the template format, `posthog-node`, both routes, the content hash, and every error code.
+
+## Key principles
+
+- **Sender first**: verify a sender before the first upload.
+- **The file is the source**: the HTML file in the repository is the template. Change the file, never the copy in PostHog.
+- **Values from the send**: templates read `{{ variables.* }}` only.
+- **Server only**: the `phs_` key comes from an environment variable on the server.
+- **No retries**: sends are not idempotent.
