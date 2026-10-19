@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.58.0](https://github.com/PostHog/context-mill/compare/v1.57.0...v1.58.0) (2026-10-19)
+
+
+### Features
+
+* **error-tracking:** build during the run and verify before the report ([#424](https://github.com/PostHog/context-mill/issues/424)) ([480834b](https://github.com/PostHog/context-mill/commit/480834bd7a09eaa10dddf45207311f52655448ef))
+
 ## [1.57.0](https://github.com/PostHog/context-mill/compare/v1.56.0...v1.57.0) (2026-10-14)
 
 
