@@ -4,7 +4,7 @@ This skill audits an existing PostHog integration's **$identify implementation**
 
 The audit covers three lenses:
 
-- **Fix** — correctness checks on `posthog.identify()` placement, distinct_id stability, cross-runtime identity, and `reset()` on logout. These are the existing data-integrity checks already in the broader PostHog audit, scoped to identification.
+- **Fix** — correctness checks on `posthog.identify()` placement, distinct_id stability, cross-runtime person and session correlation, and `reset()` on logout. These are the existing data-integrity checks already in the broader PostHog audit, scoped to identification.
 - **Lifecycle quality** — how `$set` / `$set_once`, `alias()`, and `groupIdentify()` are used over time. Code-only checks.
 - **Optimize** — cost-side checks on `person_profiles` mode, identified-vs-anonymous traffic ratio, `_isIdentified()` guarding, and duplicate `$identify` / `$groupidentify` events. These use PostHog MCP to read the operator's tenant; they gracefully skip if MCP is unavailable.
 
