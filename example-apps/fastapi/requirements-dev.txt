@@ -1,0 +1,3 @@
+-r requirements.txt
+pytest>=8.0.0
+httpx2>=2.0.0

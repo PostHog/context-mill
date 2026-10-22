@@ -20,6 +20,18 @@ describe('shouldSkip', () => {
         expect(shouldSkip('.env.example', patterns)).toBe(false);
     });
 
+    it('skips a root-level test dir, not only nested ones', () => {
+        const patterns = mergeSkipPatterns({
+            includes: ['/test/'],
+            regex: [new RegExp('^tests?[/\\\\]')],
+            allow: [],
+        });
+        expect(shouldSkip('app/test/helpers.py', patterns)).toBe(true);
+        expect(shouldSkip('test/test_api.py', patterns)).toBe(true);
+        expect(shouldSkip('tests/example.spec.ts', patterns)).toBe(true);
+        expect(shouldSkip('testing/settings.py', patterns)).toBe(false);
+    });
+
     it('keeps files matching no pattern', () => {
         const patterns = mergeSkipPatterns(globalPatterns);
         expect(shouldSkip('Sources/App.swift', patterns)).toBe(false);
