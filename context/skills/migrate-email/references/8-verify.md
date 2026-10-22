@@ -17,7 +17,7 @@ Check that the app still builds, its tests still pass, and one moved email reach
 ## Build and tests
 
 - Run the project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. Fix each error in a line you changed. An error in a file you didn't change was there before: note it, and leave it.
-- Run the tests that cover the files you changed. A test that mocks the provider's client for a moved site now mocks `posthog.emails.send` with the same assertions. Never delete or skip a test.
+- Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks `posthog.emails.send` and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
 - Search the changed files for the provider's calls: a moved site has none left, and each moved site has one `posthog.emails.send`.
 
 ## One email on one person
