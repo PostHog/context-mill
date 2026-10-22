@@ -86,7 +86,7 @@ describe('migrate-email skill', () => {
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
-    it('moves the supported sites and checks them before it writes the report', async () => {
+    it('runs the rewrite and verify steps between the key and the report', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
         const skillDir = await buildSkill('migrate-email-resend', outputDir);
