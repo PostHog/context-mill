@@ -595,6 +595,31 @@ function generateFrontmatter(skill, version) {
 }
 
 /**
+ * Copy the markdown files of a variant's own folder, `references/<variant-id>/`,
+ * into the bundle. A group keeps what differs per vendor or platform there, so
+ * each bundle ships only its own variant's files. Returns their listing entries.
+ */
+function copyVariantReferences({ sourceDir, targetDir, variantId, configDir }) {
+    if (!fs.existsSync(sourceDir)) return [];
+
+    const files = fs.readdirSync(sourceDir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    return files.map(file => {
+        const parsed = matter(fs.readFileSync(path.join(sourceDir, file.name), 'utf8'));
+        const body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
+        fs.writeFileSync(path.join(targetDir, file.name), body, 'utf8');
+        const heading = body.match(/^#\s+(.+)$/m)?.[1];
+        return {
+            filename: `${variantId}/${file.name}`,
+            description: parsed.data.description || heading || file.name,
+        };
+    });
+}
+
+/**
  * Generate a complete skill package
  *
  * @param {Object} options
@@ -717,6 +742,13 @@ async function generateSkill({
                 });
             }
         }
+
+        references.push(...copyVariantReferences({
+            sourceDir: path.join(sourceReferencesDir, skill._shortId),
+            targetDir: path.join(referencesDir, skill._shortId),
+            variantId: skill._shortId,
+            configDir,
+        }));
     }
 
     // Helper to process a doc entry (string URL or {url, title} object).
