@@ -41,7 +41,7 @@ import path from 'path';
 import crypto from 'crypto';
 import yaml from 'js-yaml';
 import matter from 'gray-matter';
-import { processExample, loadSkipPatterns, mergeSkipPatterns, defaultPlugins } from './example-processor.js';
+import { processExample, loadSkipPatterns, skipPatternsForExample, defaultPlugins } from './example-processor.js';
 import { CLI_ROLES, validateCommandName } from './cli-block-validation.js';
 
 /**
@@ -645,7 +645,7 @@ async function generateSkill({
                 displayName: isSingle ? skill.display_name : dirName,
                 id: skill.id,
                 repoRoot,
-                skipPatterns: mergeSkipPatterns(skipPatterns.global, skipPatterns.examples[isSingle ? skill.id : dirName]),
+                skipPatterns: skipPatternsForExample(skipPatterns, dirName),
                 plugins: defaultPlugins,
             });
 
