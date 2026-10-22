@@ -18,7 +18,10 @@ List every place the code sends email through the provider, and decide for each 
 
 Read the provider's `sdk-reference.md` for the call shapes, and its `mapping.md` for the fields.
 
-A **site** is one place in the code that calls the provider to send, such as one `emails.send(...)` call or one HTTP request to the send endpoint. A helper that wraps the call is one site, however many places call the helper. Read the callers of a helper anyway: they decide values such as how many recipients a send has.
+A **site** is one place in the code that decides what a send contains: its content and its fields. Usually that is the `emails.send(...)` call or the HTTP request itself.
+
+- When a helper builds the send from a few parameters, such as a subject and a template name, the helper is one site, however many places call it. Read its callers anyway: they decide values such as how many recipients a send has.
+- When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not.
 
 For each site, read the surrounding code and record:
 

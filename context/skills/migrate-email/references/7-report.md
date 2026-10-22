@@ -56,18 +56,25 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 ## Summary
 ```
 
-End the report with the summary block, as the last thing in the file. The Wizard reads it, so keep the keys and their order:
+End the report with the summary block, as the last thing in the file. The Wizard parses it, so keep the keys, their order, and bare values: a whole number, `true`, `false`, or the provider folder name. Never add a comment or a reason to a value. The reasons are in the tables above. For example:
 
 ```yaml
-from: <provider folder name>
-sites_found: <every send site in the table>
-sites_rewritten: <sites this run changed to send with PostHog>
-sites_left: <sites that stay on the provider, each with a reason>
-dns_ready: <true when every sending domain has a verified sender, else false>
-suppressions_ready: <true when the list was imported or was empty, else false>
+from: resend
+sites_found: 3
+sites_rewritten: 0
+sites_left: 1
+dns_ready: false
+suppressions_ready: true
 ```
 
-This version changes no site, so `sites_rewritten` is `0`. Sites that are ready to move count in `sites_found` only.
+- `from`: the provider folder name.
+- `sites_found`: every row of the sites table.
+- `sites_rewritten`: the sites this run changed to send with PostHog. This version changes none, so it is `0`.
+- `sites_left`: the sites that stay on the provider.
+- `dns_ready`: `true` when every sending domain has a verified sender.
+- `suppressions_ready`: `true` when the suppression list was imported or was empty.
+
+Sites that are ready to move count in `sites_found` only.
 
 After the report is written, print its path:
 
