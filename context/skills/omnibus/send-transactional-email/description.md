@@ -1,12 +1,12 @@
 # Send transactional email with PostHog
 
-Use this skill to send one email to one person from server code, such as a welcome email, a password reset, or a signup confirmation. The email lives in the repository as an HTML template file. PostHog stores it as a message template under a key, such as `welcome`, and sends it through Workflows.
+Use this skill to send one email to one person from server code, such as a welcome email, a password reset, or a signup confirmation. The email lives in the app's code as a local template: a subject and an HTML string, named by a key such as `welcome`. The first send uploads it to PostHog, and PostHog sends it through Workflows.
 
 The transactional email API is in beta. PostHog enables it per project.
 
 ## Instructions
 
-Follow these steps IN ORDER. Do not upload a template before a sender is verified: the first upload needs a verified default sender.
+Follow these steps IN ORDER. Do not send before a sender is verified: the first send of a local template uploads it, and that upload needs a verified default sender.
 
 STEP 1: Detect the platform and check the PostHog MCP.
   - Find the server code that should send the email, such as the signup handler for a welcome email.
@@ -17,8 +17,8 @@ STEP 1: Detect the platform and check the PostHog MCP.
   - When other PostHog tools exist but `workflows-upload-email-template` and `workflows-send-email` don't, the transactional email API is not enabled for this project. Go to STEP 6 before the person does any sender work.
 
 STEP 2: Check for a verified sender through the PostHog MCP.
-  - Call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, call `integrations-email-verify-create` once on the sender for the address the person wants: `success` means it is verified (go to STEP 4), and `pending` or `failed` means STEP 3 from its records. When the sender tools are missing, or the verify answers 403, ask the person whether a sender is verified, and let the upload in STEP 5 confirm it.
-  - The first sender that verifies becomes the project's default sender, and the first upload uses the default sender.
+  - Call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, call `integrations-email-verify-create` once on the sender for the address the person wants: `success` means it is verified (go to STEP 4), and `pending` or `failed` means STEP 3 from its records. When the sender tools are missing, or the verify answers 403, ask the person whether a sender is verified, and let the first send in STEP 8 confirm it.
+  - The first sender that verifies becomes the project's default sender. A send without `from` uses the default sender.
   - When a verified sender exists, go to STEP 4.
 
 STEP 3: Set up a sender when none is verified.
@@ -33,28 +33,20 @@ STEP 3: Set up a sender when none is verified.
   - A 403 that says the person lacks permissions in the project means a project admin must verify the sender. Do not retry.
   - **When the sender tools are missing or refused**, the agent setup for sender domains is not available to this person yet. Do not try other integration tools. Ask the person to verify a sender in PostHog: Workflows, then Channels, then add an email sender on their domain and follow the DNS steps (https://posthog.com/docs/workflows/configure-channels). Wait until they confirm that the sender shows as verified, then continue.
 
-STEP 4: Write the template as an HTML file in the repository.
-  - Put it next to the server code, for example `emails/welcome.html`. In Next.js and other bundled code, put the `emails/` folder at the app root, next to `next.config.js` or `package.json`. The file name without `.html` is the key, so use letters, digits, `-`, and `_` only.
-  - The `<title>` is the subject. `<meta name="preheader" content="...">` is the optional inbox preview text.
-  - Use Liquid with `{{ variables.<name> }}` for every value the email shows, such as `{{ variables.first_name }}` or `{{ variables.reset_url }}`.
-  - Never use `{{ person.* }}`. A send doesn't load person properties, so those placeholders render empty.
+STEP 4: Pick the form of the send.
+  - **Local template**, the default for a new email: the code holds the subject and the HTML with `{{ variables.* }}` placeholders, and each send passes the values in `templateData`. Write it as STEP 5 says.
+  - **Rendered content**: the app already renders the whole email for one person, for example a React Email component rendered with `render()` from `@react-email/render`. Send the rendered `html` without `templateData`. PostHog sends it as it is and never stores it. Skip STEP 5.
+  - **A template made in PostHog**: only when the person names one. Send it by its `templateId` with `templateData`. Skip STEP 5.
 
-STEP 5: Upload the template with the PostHog MCP.
-  - Call `workflows-upload-email-template` with the key, a `name` such as "Welcome", the `<title>` text as `subject`, the `<meta name="preheader">` content as `preheader` (if any), and the whole file as `html`.
-  - Pass `source`, so PostHog and the next agent can find the file:
-    - `repository`: the URL from `git remote get-url origin` as `host/owner/name`. Drop the scheme, any user name or token, and the `.git` ending: `git@github.com:example/app.git` and `https://user:token@github.com/example/app.git` both become `github.com/example/app`.
-    - `path`: the file's path from the repository root (`git rev-parse --show-toplevel`), such as `apps/web/emails/welcome.html` in a monorepo.
-    - `ref`: the commit from `git rev-parse HEAD`.
-    - Leave out a field that git can't give, such as `repository` when there is no `origin`.
-  - posthog-node fills the same three fields on its own uploads when the app sends with `templateFile()` (STEP 8). It reads them from CI and hosting variables or the git checkout. It always sends a `path`: without a checkout or CI workspace, the path is relative to the app's working directory. A `repository` or `ref` it can't find keeps the value this upload stored.
-  - Expect `result: "created"` on the first upload, and `updated` or `unchanged` later. The template is now managed by code: changes go through its file (see "Change an email the app already sends").
-  - On `sender_unavailable`, the project has no verified default sender:
-    - When no sender is verified, go back to STEP 3.
-    - When a sender is verified, call `integrations-email-verify-create` on it once: a successful verify makes it the default when the project has none. Then upload again.
-    - When that is not possible or the upload still answers `sender_unavailable`, ask the person to click **Make default** next to their verified sender in the email channel settings, then upload again.
+STEP 5: Write the local template in the code.
+  - Put it in a module next to the server code, for example `emails/welcome.ts`, that exports a `subject` and an `html` string. Add a `text` string only when the person wants their own plain-text part: without it, PostHog derives one from the HTML.
+  - Pick the key that names the email, such as `welcome` or `password-reset`. Use letters, digits, `-`, and `_` only. PostHog groups the email's logs, metrics, and status under it.
+  - Use Liquid with `{{ variables.<name> }}` for every value the email shows, in the subject too, such as `{{ variables.first_name }}` or `{{ variables.reset_url }}`.
+  - Never use `{{ person.* }}`. A send doesn't load person properties, so those placeholders render empty.
+  - Never upload the template, and never create it in PostHog. The first send uploads it, and a send after a change uploads the new content. The template is then managed by code: changes go through the code (see "Change an email the app already sends").
 
 STEP 6: Stop when the API is not enabled for the project.
-  - The transactional email API is not enabled for this project when other PostHog tools exist but the upload and send tools don't, or when an upload or send answers `404` without a code or with the code `not_found`. A `404` with `template_not_found` is different: see STEP 9.
+  - The transactional email API is not enabled for this project when other PostHog tools exist but the upload and send tools don't, or when a send by `templateKey` answers `404` with the code `not_found` or without a code. A send by `templateId` answers the same `404` when no template has that id: check the id with the person first.
   - Stop and tell the person: the API is in beta, and they can ask PostHog in-app to enable it for their project. Do not retry, and do not work around it with other tools.
 
 STEP 7: Have the person create a project secret API key.
@@ -62,88 +54,98 @@ STEP 7: Have the person create a project secret API key.
   - Read it from the `POSTHOG_PROJECT_SECRET_API_KEY` environment variable. Add the variable name to the project's env example file. Never hardcode the key, never commit it, and never ask the person to paste it into the chat.
 
 STEP 8: Write the send.
-  **Node.js:** install or upgrade `posthog-node` to a version that has `posthog.emails`. Reference the file once when the module loads, then send it:
+  **Node.js:** install or upgrade `posthog-node` to a version that has `posthog.emails`. Send the local template from STEP 5:
 
   ```js
   import { PostHog } from 'posthog-node'
+  import * as welcomeEmail from './emails/welcome'
 
   const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
       host: process.env.POSTHOG_HOST,
       secretKey: process.env.POSTHOG_PROJECT_SECRET_API_KEY,
       enableLocalEvaluation: false,
   })
-  const welcomeEmail = posthog.emails.templateFile(new URL('./emails/welcome.html', import.meta.url), { name: 'Welcome' })
 
   const { data, error } = await posthog.emails.send({
-      template: welcomeEmail,
       to: user.email,
-      data: { first_name: user.firstName },
       distinctId: user.id,
+      templateKey: 'welcome',
+      subject: welcomeEmail.subject,
+      html: welcomeEmail.html,
+      templateData: { first_name: user.firstName },
   })
   ```
 
+  - Rendered content sends `templateKey`, `subject`, and the rendered `html` without `templateData`: `html: await render(<PasswordReset url={url} />)`.
+  - A template made in PostHog sends `templateId` and `templateData`, and no `templateKey`, `subject`, or `html`.
   - Reuse the app's existing `posthog-node` client when it has one, and add `secretKey`. Keep `enableLocalEvaluation: false` unless the key also has `feature_flag:read` and the app uses local evaluation.
   - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
-  - Pass the same `name` as the upload in STEP 5. Without it, the next automatic upload renames the template to its subject.
-  - `templateFile()` takes a `file:` URL or an absolute path. In CommonJS, use `path.join(__dirname, 'emails/welcome.html')`.
-  - In Next.js and other bundled or serverless code, `import.meta.url` no longer points next to the file. Use `path.join(process.cwd(), 'emails/welcome.html')`, and make the deployment ship the file: in Next.js, add `{ '/api/signup': ['./emails/**/*.html'] }` (the route that sends) to `outputFileTracingIncludes` in `next.config.js` (under `experimental` in Next.js 14 and earlier). For Vercel and Netlify functions, see "Ship template files with serverless bundles" in the reference.
-  - Edge runtimes have no file system, so they take a key string only: `template: 'welcome'`. Upload the file from a build step or a Node.js script there.
-  - The file reference keeps PostHog in step with the file: each send carries the file's content hash, and after an edit the next send uploads the file on its own. No deploy step is needed. A revert to content PostHog published before is the exception: see "Change an email the app already sends".
+  - When `host` is a reverse proxy or a self-hosted instance, also set `appHost` to the PostHog app URL, such as `https://us.posthog.com`. posthog-node never sends the secret key to a proxy, and without `appHost` the send fails with `missing_app_host`.
+  - Leave out `from` to send from the default sender. Pass `from`, and `replyTo` if the person wants one, only with an address on a verified sender, such as `'Example <hello@mail.example.com>'`.
 
-  **Other languages:** send by key over HTTP, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY`. The host is the app host, `https://us.posthog.com` or `https://eu.posthog.com`:
+  **Other languages:** send over HTTP to the app host, `https://us.posthog.com` or `https://eu.posthog.com`, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY` and an `Idempotency-Key` header:
 
   ```
   POST <host>/api/projects/@current/messaging/send/email/
-  {"template": {"key": "welcome"}, "to": "jane@example.com", "identifiers": {"distinct_id": "user_42"}, "message_data": {"first_name": "Jane"}}
+  Idempotency-Key: welcome:user_42
+  {"to": "jane@example.com", "identifiers": {"distinct_id": "user_42"}, "template_key": "welcome", "subject": "Welcome to Example", "html": "<p>Hi Jane</p>"}
   ```
 
-  - Also add an upload by key wherever the project deploys, such as a CI step or a release script: `PUT <host>/api/projects/@current/messaging_templates/by_key/<key>/` with `name`, `subject`, `html`, `preheader`, and `source` as in STEP 5. Otherwise an edited file never reaches PostHog.
+  - That body sends rendered content. A local template sends `"template": {"key": "welcome", "hash": "<content hash>"}` and `message_data` instead, with the hash computed as the reference says.
+  - A local template answers `409 template_outdated` when PostHog doesn't hold its content yet, on its first send too. Upload it with `PUT <host>/api/projects/@current/messaging_templates/by_key/<key>/` and `if_code_managed: true`, then send again with the same `Idempotency-Key`.
+  - A template made in PostHog sends `"template": {"id": "<template id>"}` and `message_data`.
 
   For both:
-  - Pass every value the template reads in `data` (Node.js) or `message_data` (HTTP).
-  - Pass the app's user ID as `distinctId` (Node.js) or `identifiers.distinct_id` (HTTP), so the send and its delivery events show on that person.
-  - Sends are not idempotent: two calls send two emails. Do not retry a send after a timeout or a server error, and never call the send more than once for one event.
+  - Pass every value the template reads in `templateData` (Node.js) or `message_data` (HTTP).
+  - Pass the app's user ID as `distinctId` (Node.js) or `identifiers.distinct_id` (HTTP), so the send and its delivery events show on that person. The email's engagement events count as analytics events.
+  - Every send has an idempotency key, and a retry with the same key never sends a second email. posthog-node makes a key when you pass none, and retries network errors, throttling, and server outages with it.
+  - When a job runner or a queue retries the code that sends, a generated key doesn't survive the retry. Pass `maxRetries: 0` and an `idempotencyKey` derived from the email's purpose, such as `` `welcome:${user.id}` ``. Over HTTP, derive the `Idempotency-Key` the same way.
   - Every test sends a real email. Ask the person before any test send, whether you run the code path or call `workflows-send-email`, and send only to an address they own. Save the test run's full output to a file and read it from there: never run it again to see more output, because each run sends another email.
 
 STEP 9: Handle errors by their code.
-  - `posthog-node` never throws on API errors. It returns `{ data, error }`. Branch on `error.code` and log `error.message`.
-  - Over HTTP, read `code` from the error body. New codes also carry `fix` and `docs_url`.
+  - `posthog-node` never throws on API errors. It returns `{ data, error }`. Branch on `error.code`, and log `error.message`, `error.why`, and `error.fix`. `error.name` follows Resend's error names.
+  - Over HTTP, read `code`, `why`, `fix`, and `docs_url` from the error body.
+  - A send with warnings still sent. posthog-node logs each warning once and returns them in `data.warnings`.
   - Each code has a section with its fix in the reference. The common ones:
-    - `sender_unavailable`: no verified default sender. Follow STEP 5.
-    - `not_found`, or a `404` without a code: the API is not enabled for the project. See STEP 6.
-    - `template_not_found`: no template has this key. Upload it (STEP 5).
-    - `template_file_unreadable`: the deployment doesn't include the HTML file.
-    - `missing_secret_key`, `authentication_failed`, `permission_denied`: the `phs_` key is missing, or lacks `hog_flow:write`.
-    - `immutable`: the template is managed by code. Change its file, as "Change an email the app already sends" says.
+    - `sender_unavailable`: the first send of a local template found no verified default sender. Verify one as in STEP 2, or ask the person to click **Make default** next to their verified sender in the email channel settings.
+    - `sender_not_verified`, `sender_not_allowed`: `from` is not a verified sender. Leave `from` out, or verify its domain (STEP 3).
+    - `invalid_recipient`, `recipient_suppressed`: PostHog won't send to this address. Do not retry.
+    - `sending_suspended`, `template_paused`: sending is stopped for the project or the template. Tell the person, and do not retry.
+    - `not_found`: see STEP 6.
+    - `template_outdated`: posthog-node uploads the template and sends again on its own. Over HTTP, follow STEP 8.
+    - A `409` that says the template was edited in PostHog: nothing was sent. Ask the person whether to keep the code's version or PostHog's, and never switch to another key to get around it.
+    - `invalid_idempotent_request`: the key was already used for another email. Make the key name the email's whole purpose.
+    - `quota_limited`: the project is over its email quota. Do not retry.
+    - `missing_secret_key`, a `401`, or a `403`: the `phs_` key is missing, or lacks `hog_flow:write`.
+    - `missing_app_host`: set `appHost` (STEP 8).
+    - `immutable`: the template is managed by code. Change it in the code, as "Change an email the app already sends" says.
 
 ## Change an email the app already sends
 
-A code-managed template changes in its file in the repository.
+A local template changes in the code.
 
-When you can edit the repository, change the file yourself:
-  - Find the file by the template's key: the `templateFile()` call or the upload that uses it. The template's `source.path` points at it too, but posthog-node can store it relative to the app's directory. A prompt from **Edit with your agent** on the template's page in PostHog names the key, and the file when PostHog knows it.
-  - Keep the format of STEP 4, and read only `{{ variables.* }}` values that the send passes.
-  - Change the template only through its file. PostHog's template update, patch, and design tools refuse a code-managed template with `403 immutable`.
-  - Leave the template managed by code. Releasing it in PostHog is the person's decision, and the next upload from the file claims it back.
+When you can edit the repository, change the code yourself:
+  - Find the template by its key: the `templateKey` of the send.
+  - Keep the format of STEP 5, and read only `{{ variables.* }}` values that the send passes.
+  - Change the template only in the code. PostHog's template update, patch, and design tools refuse a code-managed template with `403 immutable`.
 
 How the change goes live:
-  - **`templateFile()`:** the first send from code with the changed file uploads it. Usually that is the deployed app, after review. A local run of that code against the same project publishes it too. Say so when you ask before a test send from the code. Leave the upload to posthog-node.
-  - **Live before the deploy:** upload the file as in STEP 5 only when the person asks for that. Tell them that every running copy of the app sends the new version from then on.
-  - **Undo with `templateFile()`:** a revert to content PostHog published before goes live only through an upload as in STEP 5. A send from the reverted file gets the newer content, and posthog-node doesn't upload it.
-  - **By key:** a send never uploads. The project's deploy step from STEP 8 uploads the change. Without one, upload the file again as in STEP 5 after the change.
+  - The first send with the changed content uploads it. Usually that is the deployed app, after review.
+  - A local run of that code against the same project publishes it too. Say so when you ask before a test send.
+  - A send can come back with the warning `template_superseded`, for example after a revert to content PostHog sent before. PostHog sent its newer content: follow the warning's `fix`.
 
-Without access to the repository, tell the person which file to change. Where the PostHog MCP has `workflows-request-email-template-change`, call it instead. It starts a PostHog Code task that changes the file and opens a pull request. Share the task link with the person. An agent that can edit the file never calls it.
+Without access to the repository, tell the person which code to change.
 
 ## Reference files
 
 {references}
 
-The reference is the transactional email API page. It covers the template format, `posthog-node`, both routes, the content hash, and every error code.
+The reference is the transactional email API page. It covers the send forms, `posthog-node`, the content hash, idempotency, and every error code.
 
 ## Key principles
 
-- **Sender first**: verify a sender before the first upload.
-- **The file is the source**: the HTML file in the repository is the template. Change the file, never the copy in PostHog.
+- **Sender first**: verify a sender before the first send.
+- **The code is the source**: the local template in the code is the email. Change the code, never the copy in PostHog.
 - **Values from the send**: templates read `{{ variables.* }}` only.
 - **Server only**: the `phs_` key comes from an environment variable on the server.
-- **No retries**: sends are not idempotent.
+- **One email per key**: retries reuse the idempotency key, so a retry never sends twice.
