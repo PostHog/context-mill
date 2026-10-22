@@ -23,7 +23,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with `posthog-node`
 
 Install or upgrade `posthog-node` with the project's package manager, to a version that has `posthog.emails`.
 
-Configure one server-side client for email. Set `migratedFrom` to the provider folder name, once on the client, so PostHog knows which sends a migration moved:
+Configure one server-side client for email. Set `migratedFrom` to the provider folder name, such as `resend`, once on the client, so PostHog knows which sends a migration moved:
 
 ```js
 import { PostHog } from 'posthog-node'
@@ -31,7 +31,7 @@ import { PostHog } from 'posthog-node'
 export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
     host: process.env.POSTHOG_HOST,
     secretKey: process.env.POSTHOG_PROJECT_SECRET_API_KEY,
-    migratedFrom: 'resend',
+    migratedFrom: '<provider folder name>',
     enableLocalEvaluation: false,
 })
 ```
@@ -59,10 +59,11 @@ For each site that moves, in plan order:
 - A template stored at the provider becomes a module that exports `subject` and `html`, and `text` when it has one, in an `emails/` folder next to the server code. The site imports it and passes `templateData`.
 - Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
-- Never add a field that the old call didn't set, apart from `templateKey` and `distinctId`.
+- `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
+- Never add a field that the old call didn't set, apart from `templateKey`, `distinctId`, and the template defaults `mapping.md` names.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each new dependency, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each new dependency, and each new env variable name.
