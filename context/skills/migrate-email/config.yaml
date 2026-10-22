@@ -2,7 +2,7 @@
 type: skill
 template: description.md
 category: migrate
-description: Migrate transactional email from {display_name} to PostHog. Use when asked to migrate from {display_name}, replace {display_name} with PostHog, or switch email providers. It finds every {display_name} send in the code, sets up the sender and DNS next to {display_name}'s records, imports {display_name}'s suppression list, hands over the PostHog secret key, and writes a migration report. It changes no send call site yet.
+description: Migrate transactional email from {display_name} to PostHog. Use when asked to migrate from {display_name}, replace {display_name} with PostHog, or switch email providers. It finds every {display_name} send in the code, sets up the sender and DNS next to {display_name}'s records, imports {display_name}'s suppression list, moves each send PostHog can take to posthog-node, and writes a migration report that lists the sends that stay.
 tags: [migration, workflows]
 cli:
   role: command

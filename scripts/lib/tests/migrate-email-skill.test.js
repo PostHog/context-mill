@@ -86,6 +86,25 @@ describe('migrate-email skill', () => {
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
+    it('moves the supported sites and checks them before it writes the report', async () => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill('migrate-email-resend', outputDir);
+        const workflow = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/^\d+\. `references\/[^`]+`/gm);
+
+        expect(workflow.map((step) => step.replace(/^\d+\. /, ''))).toEqual([
+            '`references/1-detect.md`',
+            '`references/2-preflight.md`',
+            '`references/3-inventory.md`',
+            '`references/4-sender.md`',
+            '`references/5-suppressions.md`',
+            '`references/6-key.md`',
+            '`references/7-rewrite.md`',
+            '`references/8-verify.md`',
+            '`references/9-report.md`',
+        ]);
+    });
+
     it('publishes Resend and Statsig as wizard migrate subcommands', async () => {
         const { skills } = await loadSkills();
         const cliOf = (id) => skills.find((skill) => skill.id === id)?._cli;

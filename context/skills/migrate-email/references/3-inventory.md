@@ -39,6 +39,8 @@ Go through `mapping.md` field by field. A site **moves** when PostHog can send e
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
+A `template` site needs the template's content to be classified. Read the provider's `account.md`, and ask the person once for every template the sites send: copy from the dashboard, or read through the API. Keep the content for Step 7, and never write it into the plan. When the person can't give the content, the site stays.
+
 ## Write the plan file
 
 Write `.posthog-email-migration-plan.md` at the project root with three sections. Never write an email address of a recipient into it. A `from` address is fine.
@@ -51,6 +53,8 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 - [ ] sender
 - [ ] suppressions
 - [ ] key
+- [ ] rewrite
+- [ ] verify
 ```
 
 A sites table, one row per site, in source tree order:

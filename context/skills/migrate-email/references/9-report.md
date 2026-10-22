@@ -3,7 +3,7 @@ title: Write the migration report
 next_step: null
 ---
 
-# Step 7, write the migration report
+# Step 9, write the migration report
 
 The report comes from the plan file. Invent nothing.
 
@@ -20,14 +20,16 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 ```markdown
 # Email migration report: <provider name> to PostHog
 
-<One or two sentences: how many sites were found, how many can move, how many stay, and whether the sender and the suppression list are ready.>
+<One or two sentences: how many sites were found, how many moved, how many stay, and whether the sender and the suppression list are ready.>
 
 ## Send call sites
 
-| File | Line | Content | Status |
-|------|------|---------|--------|
+| File | Line | Content | Key | Status |
+|------|------|---------|-----|--------|
 
-<One row per site. Status is "Ready to move" or "Stays on <provider name>: <reason>".>
+<One row per site. Key is the `templateKey` of a moved site. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>".>
+
+<Each template that moved into the code, with its module path, and each fallback that an empty string now replaces.>
 
 ## Other <provider name> calls
 
@@ -45,13 +47,23 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 <Where POSTHOG_PROJECT_SECRET_API_KEY is set, and each other place the provider key lives that needs the PostHog key too.>
 
+## Checks
+
+<The typecheck, the tests, and the test email: what passed, what failed, and what was not checked and why. Say which of the send, the engagement event, and the product event showed on one person.>
+
 ## Sending tier
 
 <What the person found, or that it was not checked.>
 
 ## Before cutover
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+The moved sites send through PostHog as soon as this code is deployed. Everything in this list has to be done before that deploy.
+
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+
+## After cutover
+
+<What the person removes once the moved emails arrive from PostHog: when no site stays and no other provider call is left, the provider's package and its key in every place listed above. Otherwise, write that the provider stays for the sites and calls listed above.>
 
 ## Summary
 ```
@@ -61,7 +73,7 @@ End the report with the summary block, as the last thing in the file. The Wizard
 ```yaml
 from: resend
 sites_found: 3
-sites_rewritten: 0
+sites_rewritten: 2
 sites_left: 1
 dns_ready: false
 suppressions_ready: true
@@ -69,12 +81,10 @@ suppressions_ready: true
 
 - `from`: the provider folder name.
 - `sites_found`: every row of the sites table.
-- `sites_rewritten`: the sites this run changed to send with PostHog. This version changes none, so it is `0`.
+- `sites_rewritten`: the sites this run moved to send with PostHog.
 - `sites_left`: the sites that stay on the provider.
 - `dns_ready`: `true` when every sending domain has a verified sender.
 - `suppressions_ready`: `true` when the suppression list was imported or was empty.
-
-Sites that are ready to move count in `sites_found` only.
 
 After the report is written, print its path:
 

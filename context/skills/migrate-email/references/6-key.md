@@ -1,6 +1,6 @@
 ---
 title: Hand over the PostHog secret key
-next_step: 7-report.md
+next_step: 7-rewrite.md
 ---
 
 # Step 6, hand over the PostHog secret key

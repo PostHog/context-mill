@@ -2,7 +2,7 @@
 
 Use this skill to move an app's transactional email, such as welcome emails, password resets, and receipts, from {display_name} to PostHog.
 
-This version prepares the move and changes no send call site. It finds every {display_name} send, sets up the PostHog sender and its DNS records next to {display_name}'s, imports {display_name}'s suppression list, hands over the PostHog secret key, and writes a report. Both providers can send during the cutover.
+It finds every {display_name} send, sets up the PostHog sender and its DNS records next to {display_name}'s, imports {display_name}'s suppression list, and hands over the PostHog secret key. Then it moves every send PostHog can take to `posthog-node`, checks one email on one person, and writes a report. Sends PostHog can't take stay on {display_name} with a reason, so both providers send during the cutover.
 
 The transactional email API is in beta. PostHog enables it per project.
 
@@ -17,8 +17,8 @@ Read the step files in order, one at a time. Each step names the next one. Do no
 The folder `references/<provider>/` holds everything specific to {display_name}. The steps tell you when to read each file:
 
 - `sdk-reference.md`: how {display_name} looks in code, so you can find every send.
-- `mapping.md`: how each send field maps to PostHog, and what keeps a call site on {display_name}.
-- `account.md`: {display_name}'s DNS records and how to export its suppression list.
+- `mapping.md`: how each send field maps to PostHog, what keeps a call site on {display_name}, and how to rewrite a site that moves.
+- `account.md`: {display_name}'s DNS records, and how to get its templates and its suppression list.
 
 Everything you need is on disk. Do not fetch {display_name}'s docs.
 
@@ -28,10 +28,10 @@ The plan file `.posthog-email-migration-plan.md` lives at the project root. Step
 
 ## Rules
 
-- Change no send call site. This version only prepares the move.
+- Change only the call sites that move, and only in Step 7. Leave every site that stays as it is.
 - Never touch DNS or the {display_name} account. Give the person the records and the links, and let them make the change.
-- Never remove the {display_name} package, its client, or its API key.
-- Never create, upload, or edit a template in PostHog.
+- Never remove the {display_name} package or its API key. The report tells the person when to remove them.
+- Never create, upload, or edit a template in PostHog. A moved local template uploads on its first send.
 - Never write a recipient's email address into a file in the repository, the plan, or the report. Count addresses instead.
 - Keep keys in environment variables. Never hardcode a key, and never ask the person to paste one into the chat.
 - Do not commit. The person reviews the diff and commits.
