@@ -70,7 +70,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 - `{{{NAME}}}` becomes `{{ variables.NAME }}`. The name keeps its case.
 - `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`. A variable with a `fallback_value` in the template's definition gets the same `default`. Quote a fallback that holds a `'` with `"` instead. Liquid has no escape character in a quoted value.
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
-- The site sends `templateKey`, `subject`, `html`, `text` when there is one, and `templateData` with the site's `variables` object unchanged.
+- The site sends `templateKey`, `subject`, `html`, `text` when there is one, and `templateData` with the site's `variables` object, plus the subject values below.
 - The site's own `subject`, `from`, and `replyTo` win over the template's. When the site has none, use the template's: put its `from` and `replyTo` on the send, and its subject in the module.
 - The module's subject is fixed text with placeholders. When the site builds its subject from values, such as `` `Order #${order.id}` ``, write the subject in the module as `Order #{{ variables.ORDER_ID }}` and add each value to `templateData`. Never send a subject that changes per email with `templateData`: PostHog hashes the subject with the template, so each email would upload a new version of the template.
 - The template's alias, or its name in lowercase with `-` between words, becomes the `templateKey` and the module's file name.
@@ -79,6 +79,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 
 - `data.id` is PostHog's message id. Code that logs it or stores it for the app's own use keeps working.
 - `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working. `error.message` and `error.statusCode` keep their names.
-- Resend takes a send to a suppressed address and drops it later. PostHog refuses it with `error.code` `recipient_suppressed` (name `validation_error`), and refuses the whole send when a `cc` or `bcc` address is suppressed. When the site throws, retries, or reports a failure on any error, add `if (error?.code === 'recipient_suppressed')` before that branch and handle it the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
+- Resend takes a send to a suppressed address and drops it later. PostHog refuses it with `error.code` `recipient_suppressed` (name `validation_error`). When the site sets no `cc` or `bcc`, and it throws, retries, or reports a failure on any error, add `if (error?.code === 'recipient_suppressed')` before that branch and handle it the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
+- PostHog also refuses the whole send when a `cc` or `bcc` address is suppressed, where Resend still delivered to `to`. Give a site with `cc` or `bcc` no such branch: the error keeps failing the site, and the report says that a suppressed copy address now stops the email.
 
 **The Resend client.** Keep `new Resend(...)` and its import while any site or other call still uses it. When nothing uses it, remove the import and the client, and keep the `resend` package and its key: the person removes them after the cutover.
