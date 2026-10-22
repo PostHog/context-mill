@@ -81,7 +81,8 @@ STEP 8: Write the send.
   - Reuse the app's existing `posthog-node` client when it has one, and add `secretKey`. Keep `enableLocalEvaluation: false` unless the key also has `feature_flag:read` and the app uses local evaluation.
   - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
   - When `host` is a reverse proxy or a self-hosted instance, also set `appHost` to the PostHog app URL, such as `https://us.posthog.com`. posthog-node never sends the secret key to a proxy, and without `appHost` the send fails with `missing_app_host`.
-  - Leave out `from` to send from the default sender. Pass `from`, and `replyTo` if the person wants one, only with an address on a verified sender, such as `'Example <hello@mail.example.com>'`.
+  - Leave out `from` to send from the default sender. Pass `from` only with an address on a verified sender, such as `'Example <hello@mail.example.com>'`.
+  - Pass `replyTo` when replies should go to another address, such as a support mailbox. It takes one address or a list, and needs no verified sender.
 
   **Other languages:** send over HTTP to the app host, `https://us.posthog.com` or `https://eu.posthog.com`, with `Authorization: Bearer $POSTHOG_PROJECT_SECRET_API_KEY` and an `Idempotency-Key` header:
 
@@ -138,13 +139,14 @@ Without access to the repository, tell the person which code to change.
 
 ## Inside the PostHog Wizard
 
-Read this section only when the `mcp__wizard-tools__wizard_ask` tool exists. The Wizard has no chat, so the person answers through its tools.
+Read this section only when the Wizard's `wizard_ask` tool exists. Some runtimes name its tools `mcp__wizard-tools__wizard_ask` and `mcp__wizard-tools__set_env_values`: use the names the runtime shows. The Wizard has no chat, so the person answers through its tools.
 
-- The PostHog tools of this skill run through `posthog_exec`. Check that a tool exists with `search <name>` before you decide it is missing.
+- The PostHog tools of this skill run through `posthog_exec`. Check that a tool exists with `search <name>`.
+- The Wizard's login may not carry the scopes of the `workflows-*` and `integrations-*` tools, so a missing tool does not mean the API is off. Skip the last bullet of STEP 1. When the sender tools are missing, take the last bullet of STEP 3.
 - Ask every question of this skill with `wizard_ask`, never in plain text. Batch the questions of one step into one call.
 - When the person did not say which email to send, ask them. Offer a welcome email after signup as the first choice.
-- STEP 7: ask for the project secret API key with `wizard_ask` and `sensitive: true`, then write the answer with `mcp__wizard-tools__set_env_values` as `POSTHOG_PROJECT_SECRET_API_KEY`. The answer is a reference that only `set_env_values` can read, so the key never shows in the run.
-- When STEP 6 stops the run, emit `[ABORT] transactional email api not enabled` and stop.
+- STEP 7: ask for the project secret API key with `wizard_ask` and `sensitive: true`, then pass the answer to `set_env_values` as `POSTHOG_PROJECT_SECRET_API_KEY`. The answer is a reference that only `set_env_values` can read, so the key never shows in the run.
+- When a send answers the `404` of STEP 6, emit `[ABORT] transactional email api not enabled` and stop.
 - When the project has no server code that can send, emit `[ABORT] no server code found` and stop.
 - Ask before a test send as STEP 8 says. When the person says no, skip it.
 
