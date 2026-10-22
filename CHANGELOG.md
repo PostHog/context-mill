@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.58.1](https://github.com/PostHog/context-mill/compare/v1.58.0...v1.58.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **python:** use the framework integrations for exception capture ([#437](https://github.com/PostHog/context-mill/issues/437)) ([e141fc6](https://github.com/PostHog/context-mill/commit/e141fc6c8d2a6279bbdd93a01ed90d92357ef9d0))
+
 ## [1.58.0](https://github.com/PostHog/context-mill/compare/v1.57.0...v1.58.0) (2026-10-19)
 
 
