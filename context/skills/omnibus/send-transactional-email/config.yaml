@@ -1,0 +1,12 @@
+# Transactional email skill - one email to one person, from a template in the app's code
+type: skill
+template: description.md
+category: workflows
+description: Send transactional email from code with PostHog, such as a welcome email, a password reset, a signup confirmation, or a receipt. Use when asked to send an email from a Node.js app or other server code. It verifies a sender through the PostHog MCP, writes the email as a local template in the app's code, and writes the send with posthog-node's emails.send or the HTTP API. The first send uploads the template.
+tags: [workflows]
+shared_docs:
+  - https://posthog.com/docs/workflows/transactional-email-api.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []

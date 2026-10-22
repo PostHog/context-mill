@@ -55,16 +55,18 @@ function loadYaml(configPath) {
 // A line that is exactly `{{> name}}` is replaced at build time with the body
 // of `<configDir>/shared/name.md` (frontmatter stripped), so shared prose like
 // the MCP tool-calling grammar lives in one canonical file and every skill that
-// includes it stays in sync.
-const PARTIAL_DIRECTIVE = /^[ \t]*\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
+// includes it stays in sync. The directive's indentation applies to every line
+// of the partial, so a partial can nest under a step.
+const PARTIAL_DIRECTIVE = /^([ \t]*)\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
 
 function expandPartials(body, configDir) {
-    return body.replace(PARTIAL_DIRECTIVE, (_match, name) => {
+    return body.replace(PARTIAL_DIRECTIVE, (_match, indent, name) => {
         const partialPath = path.join(configDir, 'shared', `${name}.md`);
         if (!fs.existsSync(partialPath)) {
             throw new Error(`Partial include {{> ${name}}} references missing file ${partialPath}`);
         }
-        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
+        const partial = matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
+        return partial.replace(/^(?=.)/gm, indent);
     });
 }
 
@@ -595,6 +597,31 @@ function generateFrontmatter(skill, version) {
 }
 
 /**
+ * Copy the markdown files of a variant's own folder, `references/<variant-id>/`,
+ * into the bundle. A group keeps what differs per vendor or platform there, so
+ * each bundle ships only its own variant's files. Returns their listing entries.
+ */
+function copyVariantReferences({ sourceDir, targetDir, variantId, configDir }) {
+    if (!fs.existsSync(sourceDir)) return [];
+
+    const files = fs.readdirSync(sourceDir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    return files.map(file => {
+        const parsed = matter(fs.readFileSync(path.join(sourceDir, file.name), 'utf8'));
+        const body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
+        fs.writeFileSync(path.join(targetDir, file.name), body, 'utf8');
+        const heading = body.match(/^#\s+(.+)$/m)?.[1];
+        return {
+            filename: `${variantId}/${file.name}`,
+            description: parsed.data.description || heading || file.name,
+        };
+    });
+}
+
+/**
  * Generate a complete skill package
  *
  * @param {Object} options
@@ -717,6 +744,13 @@ async function generateSkill({
                 });
             }
         }
+
+        references.push(...copyVariantReferences({
+            sourceDir: path.join(sourceReferencesDir, skill._shortId),
+            targetDir: path.join(referencesDir, skill._shortId),
+            variantId: skill._shortId,
+            configDir,
+        }));
     }
 
     // Helper to process a doc entry (string URL or {url, title} object).
