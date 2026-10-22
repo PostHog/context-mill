@@ -56,6 +56,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 **The fields.**
 
 - `to: ['jane@example.com']` becomes `to: 'jane@example.com'`. A value that is a list with one entry becomes that entry.
+- When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers, so the type keeps a second address out. Never send one email per address in a loop, and never drop the addresses after the first.
 - `from`, `subject`, `html`, `text`, `replyTo`, `cc`, `bcc`, `headers`, and `tags` keep their names and values.
 - `attachments` keep `filename`, `content`, `contentType`, and `contentId`.
 - Each send gets a `templateKey`, as Step 7 says.
