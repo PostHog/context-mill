@@ -42,6 +42,14 @@ describe('expandPartials', () => {
         expect(out).toContain('After.');
     });
 
+    it("indents every line of the partial as far as the directive, so it nests in a step's list", () => {
+        writeFileSync(join(tmpDir, 'shared', 'sender.md'), '---\ntitle: Sender\n---\n\n- First bullet.\n- Second bullet.\n');
+
+        const out = expandPartials('STEP 3: Set up a sender.\n  {{> sender}}\n\nSTEP 4: Send.', tmpDir);
+
+        expect(out).toBe('STEP 3: Set up a sender.\n  - First bullet.\n  - Second bullet.\n\nSTEP 4: Send.');
+    });
+
     it('throws when the referenced partial does not exist', () => {
         expect(() => expandPartials('{{> missing-partial}}', tmpDir)).toThrow(/missing-partial/);
     });

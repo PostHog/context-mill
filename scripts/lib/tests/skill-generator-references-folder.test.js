@@ -69,4 +69,51 @@ describe('generateSkill local references', () => {
         expect(readFileSync(generatedRef, 'utf8')).toBe('# Product analytics best practices\n\nDetails');
         expect(readFileSync(generatedSkill, 'utf8')).toContain('references/product-analytics.md');
     });
+
+    it("ships a variant's own reference folder and no other variant's", async () => {
+        createFixture({
+            skills: {
+                migrate: {
+                    'description.md': '# Migrate\n\n{references}\n',
+                    references: {
+                        '1-presence.md': '---\nnext_step: null\n---\n\n# Presence\n\nRead `references/<variant-id>/mapping.md`.',
+                        statsig: { 'mapping.md': '# Statsig mapping' },
+                        amplitude: { 'mapping.md': '# Amplitude mapping' },
+                    },
+                },
+            },
+        }, tmpDir);
+
+        const config = {
+            migrate: {
+                type: 'skill',
+                template: 'description.md',
+                variants: [
+                    { id: 'statsig', display_name: 'Statsig' },
+                    { id: 'amplitude', display_name: 'Amplitude' },
+                ],
+            },
+        };
+
+        const statsig = expandSkillGroups(config, tmpDir).find((skill) => skill.id === 'migrate-statsig');
+        const outputDir = join(tmpDir, 'out');
+
+        await generateSkill({
+            skill: statsig,
+            version: 'test',
+            repoRoot: tmpDir,
+            configDir: tmpDir,
+            outputDir,
+            skipPatterns: { global: [], examples: {} },
+            commandmentsConfig: { commandments: {} },
+            skillTemplate: statsig._template,
+            sharedDocs: [],
+        });
+
+        const references = join(outputDir, 'migrate-statsig', 'references');
+        expect(readFileSync(join(references, 'statsig', 'mapping.md'), 'utf8')).toBe('# Statsig mapping');
+        expect(existsSync(join(references, 'amplitude'))).toBe(false);
+        expect(readFileSync(join(outputDir, 'migrate-statsig', 'SKILL.md'), 'utf8'))
+            .toContain('`references/statsig/mapping.md`');
+    });
 });
