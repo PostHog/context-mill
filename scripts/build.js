@@ -58,6 +58,11 @@ async function main() {
             version: BUILD_VERSION,
         });
 
+        // Non-blocking: the wizard selects skills by tag, so an untagged skill is only reachable by id.
+        for (const skill of skills) {
+            if (!skill.tags?.length) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
+        }
+
         const docEntries = loadDocsConfig(configDir);
 
         console.log('\nCreating skill ZIPs...');

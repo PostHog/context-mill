@@ -9,6 +9,18 @@ on:
     branches: [ main ]
 
 jobs:
+  agents-frozen:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      with:
+        fetch-depth: 0
+
+    - name: Block edits to frozen agent prompts
+      run: bash scripts/check-agents-frozen.sh "origin/${{ github.base_ref }}"
+
   build:
     runs-on: ubuntu-latest
     
