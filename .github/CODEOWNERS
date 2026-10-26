@@ -16,6 +16,7 @@
 /context/skills/mcp-analytics/                          @PostHog/mcp-analytics
 /context/skills/metrics/                                @PostHog/team-apm
 /context/agents/metrics/                                @PostHog/team-apm
+/context/skills/omnibus/instrument-tracing/             @PostHog/team-apm
 /context/skills/revenue-analytics/                      @PostHog/team-web-analytics
 /context/skills/web-analytics/                          @PostHog/team-web-analytics
 /context/skills/integration/                            @PostHog/team-growth
