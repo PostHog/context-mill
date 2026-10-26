@@ -113,6 +113,17 @@ describe('integration-v2 warehouse step skill', () => {
         expect(STEP_SKILL).toMatch(/Stop asking only after two cancellations/);
     });
 
+    it('keeps every credential out of the agent and its tool arguments', () => {
+        // The gateway operator prompt forbids secrets in tool arguments, so an
+        // agent that collects typed credentials reports itself blocked.
+        expect(STEP_SKILL).toMatch(/No secret passes through you/);
+        expect(STEP_SKILL).toMatch(/`data-warehouse-source-connect-link`/);
+        expect(STEP_SKILL).toMatch(/`data-warehouse-stored-credentials-list`/);
+        expect(STEP_SKILL).toMatch(/payload: \{ "credential_id": "<id>" \}/);
+        expect(STEP_SKILL).not.toMatch(/plain `text` answers/);
+        expect(STEP_SKILL).not.toMatch(/`external-data-sources-create`/);
+    });
+
     it('requires a connected-count line and a matching complete_task status', () => {
         expect(STEP_SKILL).toMatch(/Connected N of M detected sources/);
         expect(STEP_SKILL).toMatch(/A deep link is a handoff, not a\s+connection/);
