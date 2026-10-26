@@ -8,7 +8,8 @@ often not a valid source type: the kind `HuggingFace` has the label `Hugging
 Face`. The steps below say `source_type` = the kind — copy that token verbatim,
 and use the `label` only in text you show the user. The modes are:
 
-- **`in-cli`** — create the source from here (databases and API-key SaaS).
+- **`in-cli`** — connect the source from here. The user enters the credentials
+  on a secure PostHog connect page, and you create the source.
 - **`deep-link`** — hand the user a pre-filled URL to finish in the PostHog app
   (OAuth sources have no safe terminal credential path).
 
@@ -25,85 +26,84 @@ behavior.
 
 ## Tools
 
-- **`external-data-sources-wizard`** — the required fields for a source type.
-  **Always call it for a kind before you create that kind**, and always pass
-  `source_type` (e.g. `source_type: "Postgres"`, or `"Postgres,Stripe"`). The
-  unfiltered response describes every source and runs to hundreds of KB.
-- **`data-warehouse-source-setup`** — the **default** way to create a source. It
-  validates the credentials, discovers the tables, applies sensible sync
-  defaults, and creates the source in one call — **no `schemas` array**. Use it
-  for every SaaS source (Stripe, Resend, Sentry, …): those have small fixed
-  schemas, and the low-level create tool rejects them when no `schemas` array is
-  supplied. For a webhook-capable source it also registers the webhook — read
-  the `webhook` key in the response, and if `webhook.pending_inputs` is
-  non-empty, ask for those values and submit them.
-- **`external-data-sources-db-schema`** — validates credentials and lists the
-  tables available to sync. Use it for a database source when the user wants
-  only some of its tables, so you can build a `schemas` array.
-- **`external-data-sources-create`** — the **advanced** create, for hand-picking
-  tables or per-table sync types on a database source. The `schemas` array goes
-  **inside** `payload`, not as a top-level argument; its input schema is the
-  source of truth. Don't reach for it on a SaaS source — `data-warehouse-source-setup`
-  is the one-step path there.
+- **`data-warehouse-source-connect-link`** — returns a `connect_url` for a
+  source type. The page renders that source's full connection form. The user
+  enters the credentials there, PostHog checks them against a live connection,
+  and then stores them encrypted for 24 hours. The page does not create the
+  source. Always pass `source_type`.
+- **`data-warehouse-stored-credentials-list`** — lists the credentials the user
+  stored on the connect page, newest first. Pass `source_type`. It returns a
+  `credential_id` and timestamps, never a secret.
+- **`data-warehouse-source-setup`** — creates the source in one call. Pass
+  `source_type` = the kind and `payload: { "credential_id": "<id>" }`. It
+  resolves the stored credentials, discovers the tables, applies sensible sync
+  defaults, and creates the source. Pass no `schemas` array. For a
+  webhook-capable source it also registers the webhook — read the `webhook` key
+  in the response, and if `webhook.pending_inputs` is non-empty, ask for those
+  values and submit them.
+- **`external-data-sources-wizard`** — the fields a source type needs. Call it
+  only when you need a field's caption to word a pre-flight hint, and always
+  pass `source_type`. The unfiltered response describes every source and runs to
+  hundreds of KB.
 - **`check_env_keys`** — tells you which `.env` keys exist, and in which file.
   Call it with `keys` and **no `filePath`**. It then scans every `.env` file in
   the project, including `.env.local` and nested files such as `apps/api/.env`.
   Pass `filePath` only to limit the check to one file. It answers
   `{ "status": "present" | "missing", "foundIn": [file paths] }` for each key.
   It never returns values.
-- **`wizard_ask`** — the only way to obtain a credential value from the user.
+- **`wizard_ask`** — the only way to talk to the user and wait for an answer.
   It takes up to 8 `questions` and an optional `subject` tag. Always set
-  `subject` to the source kind you are collecting for.
+  `subject` to the source kind the call is about.
 
 ## Guiding tenets
 
-1. **Never read or guess a secret.** Every credential value comes from
-   `wizard_ask`. Never invent a host, password, or API key.
+1. **No secret passes through you.** The user enters every credential on the
+   connect page. Never ask for a credential value in `wizard_ask`, never read
+   one from a file, and never put one in a tool argument. A tool argument
+   carries a `credential_id`, never the secret it stands for. Never invent a
+   host, password, or API key.
 
-2. **One `wizard_ask` call per source, tagged with `subject`.** Ask for all of
-   that source's fields in a single call. The schema takes up to 8 questions
-   per call. Set `subject` to the source kind — for example
-   `subject: "Postgres"`. The runtime counts its batching guard per subject, so
-   one call per source is never interrupted, whatever the number of sources.
-   Never put two different sources in one call: five sources need 15 to 25
-   fields, and no single call can hold them.
+2. **One `wizard_ask` call per source, tagged with `subject`.** Send the user
+   to that source's connect page in a single call, and wait for the answer.
+   Set `subject` to the source kind — for example `subject: "Postgres"`. The
+   runtime counts its batching guard per subject, so one call per source is
+   never interrupted, whatever the number of sources.
+   Never put two different sources in one call: each source has its own page
+   and its own answer.
 
-   Reuse a `subject` only for the same source, such as re-asking a field after
-   a validation failure. Three calls in a row on one subject earn a one-time
-   nudge. That nudge is not a refusal and not a reason to stop: send the call
-   again and it goes through. A cancelled or timed-out `wizard_ask` does not
-   count against the per-run cap.
+   Reuse a `subject` only for the same source, such as a second confirmation
+   when no stored credential appears. Three calls in a row on one subject earn
+   a one-time nudge. That nudge is not a refusal and not a reason to stop: send
+   the call again and it goes through. A cancelled or timed-out `wizard_ask`
+   does not count against the per-run cap.
 
-3. **Collect these as plain `text` answers.** Marking a field `sensitive`
-   returns a `{ secretRef }` that only `set_env_values` can resolve, and the
-   PostHog tools reject it. Anything you hand straight to a PostHog tool must
-   be a normal answer.
+3. **The connect page defines the fields, not you.** The page renders the form
+   for the kind and validates what the user enters. Do not collect fields
+   yourself, and do not add a field the page does not ask for.
 
-4. **The MCP defines the fields, not you.** Ask for exactly what
-   `external-data-sources-wizard` lists for that kind, respecting `required`.
-   Add nothing, omit nothing.
-
-5. **Respect the mode.** Collect credentials only for `in-cli` sources. For a
+4. **Respect the mode.** Send only `in-cli` sources to the connect page. For a
    `deep-link` source, give the URL and stop.
 
-6. **Change no project code.** This step connects external data. It edits
+5. **Change no project code.** This step connects external data. It edits
    nothing in the app.
 
-7. **A decline answers one source, not the run.** If the user cancels, times
-   out, or says no, that source falls back to the deep-link URL. Do not re-ask
-   for it. Do ask for the next source: one cancellation says nothing about the
-   sources you have not reached yet. Stop asking only after two cancellations
-   in a row, and give the rest their links.
+6. **A decline answers one source, not the run.** If the user cancels, times
+   out, or skips a source, that source falls back to the deep-link URL. Do not
+   re-ask for it. Do ask for the next source: one cancellation says nothing
+   about the sources you have not reached yet.
+   Stop asking only after two cancellations in a row, and give the rest their
+   links.
 
-8. **Report what you created, not what you attempted.** A deep link is a
+7. **Report what you created, not what you attempted.** A deep link is a
    handoff, not a connected source. When you created no source, say so plainly
    in your report section and in your task status. The wording for each case is
    in **Your report section** and **Task status** below.
 
 ## Pre-flight: the gotchas that cause most failures
 
-Raise these **before** you collect credentials — they are the top reasons a
-first attempt fails, and a failed attempt wastes the user's time.
+Put the hints that apply to the kind into the `wizard_ask` question, **before**
+the user opens the page. They are the top reasons a first attempt fails, and a
+failed attempt wastes the user's time.
 
 - **The host must be reachable from PostHog's network.** `localhost`,
   `127.0.0.1`, and private hosts (`10.x`, `192.168.x`, `172.16–31.x`) are
@@ -112,21 +112,19 @@ first attempt fails, and a failed attempt wastes the user's time.
   PostHog's egress IPs allowlisted first. If the database is not publicly
   reachable, go straight to the deep-link path.
 - **Supabase has its own source type — use `Supabase`, not `Postgres`.**
-  PostHog lists `Supabase` as a source type of its own. Call
-  `external-data-sources-wizard` with `source_type: "Supabase"` and ask for the
-  fields it returns. Its `host` field carries the Session-pooler guidance in
-  its own caption. Pass that caption on to the user rather than writing your
-  own. The password is the database password from Settings → Database. It is
-  neither the `anon` or `service_role` key nor the account password. When
-  `SUPABASE_URL` exists in the env, read the project ref from
-  `db.<ref>.supabase.co` and pre-fill the host and username in your question.
-- **Scope a database source to one schema, and never sync auth tables.** Set the
-  `schema` field (default `public`) so discovery and sync cover only that schema.
-  A managed database exposes internal schemas alongside your data — Supabase adds
-  `auth`, `storage`, and more — so an unscoped discovery both returns hundreds of
-  tables (the response truncates before you can review them) and walks the
-  customer's auth schema. Keep discovery on the user's own schema, and never
-  select an `auth` or other internal-schema table into the `schemas` array.
+  PostHog lists `Supabase` as a source type of its own, so request the connect
+  link with `source_type: "Supabase"`. The page shows the Session-pooler
+  guidance in the caption of its `host` field. The password is the database
+  password from Settings → Database. It is neither the `anon` or `service_role`
+  key nor the account password. When `SUPABASE_URL` exists in the env, read the
+  project ref from `db.<ref>.supabase.co` and name the expected host and
+  username in your question. They are not secrets.
+- **Scope a database source to one schema, and never sync auth tables.** Tell
+  the user to set the `schema` field on the page (default `public`). Setup
+  discovers and syncs every table in that schema. A managed database exposes
+  internal schemas alongside your data — Supabase adds `auth`, `storage`, and
+  more — so the schema must be the user's own, never `auth` or another
+  internal schema.
 - **Many SaaS sources need a specific key type or plan.** Name the right one in
   your question so the user does not paste the wrong thing: **Stripe** wants a
   restricted key (`rk_live_…`), not `sk_live_…`; **Sentry** an
@@ -139,9 +137,10 @@ first attempt fails, and a failed attempt wastes the user's time.
 ## Workflow
 
 Take the `in-cli` sources one at a time, in the order your task input lists
-them. For each one: read its field list, ask for its fields in a single
-`wizard_ask` call tagged with its kind, then create it. Finish a source before
-you start the next one, so a later cancellation cannot lose an earlier source.
+them. For each one: get its connect link, send the user to it in a single
+`wizard_ask` call tagged with its kind, then create it from the stored
+credential. Finish a source before you start the next one, so a later
+cancellation cannot lose an earlier source.
 
 A run often carries 5 to 8 `in-cli` sources. That is normal, and the
 per-subject guard is built for it. Never drop a source because you think you
@@ -150,34 +149,32 @@ have asked too many questions.
 ### An `in-cli` source
 
 1. `[STATUS] Configuring <label>`
-2. Call `external-data-sources-wizard` with `source_type` set to this kind and
-   read the field list. Check the pre-flight gotchas for the kind.
+2. Call `data-warehouse-source-connect-link` with `source_type` set to this
+   kind. Check the pre-flight gotchas for the kind. If the call fails, give
+   this source the deep-link path and continue with the next source.
 3. Optionally call `check_env_keys` with the key names and no `filePath`. It
    scans the whole project, so its answer agrees with the signal in your task
    input. Use the answer only to word your question — "we noticed
-   `DATABASE_URL` is set in `apps/api/.env`, please paste the connection
-   details". You still cannot read the value. A `missing` answer is not a
-   reason to stop — go on to step 4 and ask the user.
-4. Ask for this source's required fields in ONE `wizard_ask` call, with
-   `subject` set to this kind. On a decline, give this source the deep-link
-   path, then continue with the next source.
-5. Create the source, choosing the tool by kind:
-   - **A SaaS source** (an API key or token — Stripe, Resend, Sentry, …): call
-     `data-warehouse-source-setup` with `source_type` = the kind and the
-     credential `payload`. It discovers the tables and applies sync defaults —
-     pass no `schemas`. Check the `webhook` key on the response for a
-     webhook-capable source.
-   - **A database source** (Postgres, MySQL, …): first call
-     `external-data-sources-db-schema` to validate the credentials and list
-     tables. On a validation failure, report the error and let the user correct
-     it once, or fall back to deep-link. Then create with
-     `external-data-sources-create`, putting the credential fields, a `schemas`
-     array selecting the tables to sync (`incremental` with the detected
-     incremental field where one exists, otherwise `full_refresh`), and
-     `access_method` = `warehouse` together in `payload`.
-6. On success: `[STATUS] Connected <label>`. On failure, record the error
+   `STRIPE_SECRET_KEY` is set in `apps/api/.env`, copy a restricted key with
+   read access into the page". You still cannot read the value.
+4. Make ONE `wizard_ask` call with `subject` set to this kind. Its single
+   question carries the `connect_url`, the pre-flight hints for the kind, and
+   two options: `I connected <label>` and `Skip <label>`. On a skip, cancel or
+   timeout, give this source the deep-link path, then continue with the next
+   source.
+5. Call `data-warehouse-stored-credentials-list` with `source_type` set to this
+   kind, and take the newest `credential_id`. If the list is empty, the user
+   did not finish the page, or filled it in a browser signed in to a different
+   PostHog account. Say which account to use and ask once more with the same
+   `subject`. If the list is still empty, give this source the deep-link path.
+6. Call `data-warehouse-source-setup` with `source_type` = the kind and
+   `payload: { "credential_id": "<id>" }`. Pass no `schemas` and no other
+   credential fields. Check the `webhook` key on the response for a
+   webhook-capable source.
+7. On success: `[STATUS] Connected <label>`. On failure, record the error
    against that source and move on to the next one — one source that will not
-   connect is not a reason to abandon the rest.
+   connect is not a reason to abandon the rest. A stored credential is
+   single-use, so a retry needs a new visit to the connect page.
 
 ### A `deep-link` source
 
@@ -213,19 +210,20 @@ created:
 
 Then write one line per source saying which of three ends it reached:
 
-- **connected** — name the tables that sync and how.
+- **connected** — name the tables that sync and how. For a database source,
+  say that every table in the chosen schema syncs, and that the user can turn
+  tables off in the app.
 - **needs the browser** — give the full URL.
 - **skipped** — say why, in one line.
 
-Claim nothing you did not observe. A source is connected when the create tool
-(`data-warehouse-source-setup` or `external-data-sources-create`) returned
-success, not when the credentials looked right. A deep link is a handoff, not a
-connection.
+Claim nothing you did not observe. A source is connected when
+`data-warehouse-source-setup` returned success, not when the user said they
+finished the page. A deep link is a handoff, not a connection.
 
 When you connected no source, say so in that first line and give the reason.
-For example: `Connected 0 of 5 detected sources. The user cancelled the
-credential prompts, so all 5 need browser setup.` Do not call the step
-complete, successful, or set up.
+For example: `Connected 0 of 5 detected sources. The user skipped the connect
+pages, so all 5 need browser setup.` Do not call the step complete, successful,
+or set up.
 
 ## Task status
 
