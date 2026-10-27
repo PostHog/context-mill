@@ -24,7 +24,7 @@ mint one — never call the PostHog API or any tool to create it. Get it and
 write it in this one task (the key never survives across tasks):
 
 1. Ask with `wizard_ask`, exactly:
-   `{ id: "api-key", prompt: "Paste your PostHog personal API key below.\n\nDon't have one yet? Create one here:\n<SETTINGS_URL>\n\nWhen creating the key, choose the 'Source map upload' preset, then come back and paste it here.", kind: "text", sensitive: true }`
+   `{ id: "api-key", prompt: "Uploading source maps needs a PostHog personal API key. Source maps let PostHog show your original code in error stack traces, not minified code.\n\nCreate a key with the right permissions here:\n<UI_HOST>/source-maps-key\n\nThen paste it below.", kind: "text", sensitive: true }`
    You receive `{ secretRef: "secret:..." }` — a vaulted reference, never the raw
    value. If `wizard_ask` is unavailable (non-interactive run), report this task
    with status `not needed` and say in your handoff that the user must create
@@ -48,8 +48,7 @@ write it in this one task (the key never survives across tasks):
    same file beside you, so read it right before you change it and add your
    lines with `edit`; never `write` over it once it exists.
 
-Replace `<SETTINGS_URL>`, `<PROJECT_ID>`, and `<UI_HOST>` from your project
-context. Do not touch the build config — the `configure` task owns that.
+Replace `<PROJECT_ID>` and `<UI_HOST>` from your project context. Do not touch the build config — the `configure` task owns that.
 
 ## The names are a contract
 
