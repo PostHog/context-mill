@@ -38,11 +38,11 @@ Then, when the run wired source-map upload or release linking, or any
 follow-up has steps, add a **"What you still need to do"** section — numbered,
 copy-pasteable:
 
-1. Create a personal API key with the 'Source map upload' preset at
-   `<UI_HOST>/settings/user-api-keys` (skip when the credentials handoff says
-   the key is already written and no release linking was wired). The preset
-   carries the error tracking write scope that both uploads and release
-   linking need.
+1. Create a personal API key at `<UI_HOST>/source-maps-key` (skip when the
+   credentials handoff says the key is already written and no release linking
+   was wired). The link opens the key form with the 'Source map upload' preset
+   selected; the preset carries the error tracking write scope that both
+   uploads and release linking need.
 2. Add it as the CI secret the wire-ci or link-releases step referenced, named
    exactly as in the pipeline config. When link-releases also reads a project
    ID variable (such as `POSTHOG_PROJECT_ID`), add it with the value
