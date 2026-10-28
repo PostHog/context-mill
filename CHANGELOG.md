@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.59.0](https://github.com/PostHog/context-mill/compare/v1.58.0...v1.59.0) (2026-10-27)
+
+
+### Features
+
+* **skills:** add instrument-tracing skill ([#439](https://github.com/PostHog/context-mill/issues/439)) ([535aac8](https://github.com/PostHog/context-mill/commit/535aac808c70477ce107146e171ebbcd7423abf0))
+
+
+### Bug Fixes
+
+* **error-tracking:** explain the source maps key prompt and link the key page ([#442](https://github.com/PostHog/context-mill/issues/442)) ([c88b09c](https://github.com/PostHog/context-mill/commit/c88b09c4ef5ae20d36441a495066fd1cdcc59df8))
+* **integration-v2-warehouse:** connect sources through the secure connect link ([#441](https://github.com/PostHog/context-mill/issues/441)) ([016bf47](https://github.com/PostHog/context-mill/commit/016bf4713d12457dc9edfeecda39c3b041c4ff67))
+* **python:** use the framework integrations for exception capture ([#437](https://github.com/PostHog/context-mill/issues/437)) ([e141fc6](https://github.com/PostHog/context-mill/commit/e141fc6c8d2a6279bbdd93a01ed90d92357ef9d0))
+
 ## [1.58.0](https://github.com/PostHog/context-mill/compare/v1.57.0...v1.58.0) (2026-10-19)
 
 
