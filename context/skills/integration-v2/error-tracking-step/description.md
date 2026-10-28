@@ -6,7 +6,9 @@ reach PostHog — one handler, not hand-wrapped across files.
 Follow the framework's own mechanism for a global error handler, using the
 reference example and the docs for the exact pattern. Find the init or app entry,
 add the handler there. Do not read through the whole app or wrap individual
-components or routes by hand.
+components or routes by hand. Error boundaries the app already has (a Next.js
+`error.tsx`, a custom `global-error.tsx`) swallow what they catch: add capture
+to each of them.
 
 If the app already has natural exception boundaries — a server-side API error
 handler, a critical flow with its own try/catch — capturing there too is worth a
