@@ -29,6 +29,7 @@ commandments:
   nextjs:
     # Initialization
     - For Next.js 15.3+, initialize PostHog in instrumentation-client.ts for the simplest setup
+    - Call posthog.init at the top level of instrumentation-client.ts. Next.js runs that file once for its side effects and reads only its onRouterTransitionStart export, so an init inside an exported register() or any other function never runs. Write the missing-configuration guard as a top-level if/else around the init
 
   nextjs-feature-flags:
     # Client-side feature flags
