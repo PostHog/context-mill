@@ -6,11 +6,11 @@ This skill helps you upload source maps (or platform debug symbols) so PostHog E
 
 {references}
 
-The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap process`, which injects chunk IDs and uploads maps in one step. Native binaries (Go, Rust) instead use `posthog-cli symbol-sets upload` — it uploads debug symbols discovered in a build directory, with no inject step; the platform reference covers it.
+The overview lists every supported framework and build tool. The CLI reference covers `posthog-cli sourcemap process`, which injects chunk IDs and uploads maps in one step. Native binaries and Flutter Dart AOT builds instead use `posthog-cli symbol-sets upload` to upload debug symbols, with no inject step.
 
 ## Steps
 
-The stages of wiring up source map upload, in order. Each step has a short overview, gotchas under **Tips**, and per-technology notes under **Examples**. The reference files above are the source of truth for the exact, per-framework API — when this page and a reference disagree, follow the reference for {display_name}.
+The stages of wiring up source map upload, in order. Each step has a short overview, gotchas under **Tips**, and per-technology notes under **Examples**. The reference files cover the platform integrations. For Flutter Dart AOT symbols, use the build and upload steps below.
 
 ### Get a personal API key
 
@@ -23,7 +23,7 @@ Source map upload authenticates with a **personal API key**, not the public proj
 
 ### Apply build-config changes
 
-Wire source map generation, chunk-ID injection, and upload into your **production build** so every deploy ships matching maps. Depending on the platform this is either a build/bundler plugin, or a `posthog-cli sourcemap process` step run after the build (it injects chunk IDs and uploads in one pass). Follow the {display_name} reference for the exact wiring.
+Wire source map or debug-symbol generation and upload into your **production build** so every deploy ships matching artifacts. Web builds use a bundler plugin or `posthog-cli sourcemap process` after the build (it injects chunk IDs and uploads maps). Native and Flutter Dart AOT builds upload the build's debug symbols with `posthog-cli symbol-sets upload`. Follow the {display_name} reference for platform-native integrations.
 
 #### Tips
 - If you wire `posthog-cli` directly (no framework or bundler plugin), generating the maps is **your** responsibility — the CLI only injects chunk IDs into, and uploads, maps your build already produced. Two things must be true before `posthog-cli sourcemap process` works:
@@ -67,12 +67,14 @@ Wire source map generation, chunk-ID injection, and upload into your **productio
   Gotchas:
   1. The PostHog wizard installs `posthog-cli` for you — do not run `npm install -g` yourself.
   2. You **must** also enable native crash autocapture (`errorTracking.autocapture.nativeCrashes`) in the SDK setup and install the `@posthog/react-native-plugin` package it depends on — per the reference.
-- **Flutter** One upload path per platform directory present (`web/`, `android/`, `ios/`) — wire every one that exists. There is no Dart-level upload.
-  - **Web** `flutter build web --source-maps`, then `posthog-cli sourcemap process --directory build/web` as a post-build step.
-  - **Android** Follow the **Android (Gradle)** bullet above, but on `android/app/build.gradle.kts` (never `android/build.gradle.kts`). Flutter's `android/settings.gradle.kts` owns plugin versions: declare `id("com.posthog.android") version "<latest>" apply false` there, then apply it versionless in the app module. Skip that bullet's `isMinifyEnabled` step — Flutter always shrinks release builds.
-  - **iOS** Follow the **iOS (Xcode)** bullet above, on the **Runner** target in `ios/Runner.xcworkspace`. Flutter is always CocoaPods: `${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh`.
+- **Flutter** Wire the upload path for each platform the app ships (`web/`, `android/`, `ios/`). Dart AOT symbols and Android/iOS native crash symbols are separate uploads.
+  - **Web** Run `flutter build web --source-maps`, then `posthog-cli sourcemap process --directory build/web` as a post-build step.
+  - **Android and iOS Dart AOT** Use `posthog_flutter` 5.58.0 or later and `posthog-cli` 0.19.0 or later. Build release artifacts with `--split-debug-info`: `flutter build apk --release --split-debug-info=build/posthog-symbols/android` and `flutter build ipa --release --split-debug-info=build/posthog-symbols/ios` (on macOS). Add `--obfuscate` to the build command if the app uses obfuscation. From the Flutter project root, upload the matching `.symbols` files after each build with `posthog-cli --dotenv-file .env symbol-sets upload --directory build/posthog-symbols/android` or `--directory build/posthog-symbols/ios`. Use separate or cleaned symbol directories for each deployed build. Run this on the build machine and never rebuild the app between the upload and deployment.
+  - **Optional Dart source context** To show source lines as well as function names and line numbers, add `--include-source --source-root ./lib` to the Dart symbol upload command. The source root limits **uploaded source files**, not the `.symbols` files discovered in the symbol directory. Review the app's source before opting in. Without these flags, only symbols are uploaded.
+  - **Android Java/Kotlin crashes** Follow the **Android (Gradle)** bullet above, on `android/app/build.gradle.kts` (never `android/build.gradle.kts`). Flutter's `android/settings.gradle.kts` owns plugin versions: declare `id("com.posthog.android") version "<latest>" apply false` there, then apply it versionless in the app module. Skip that bullet's `isMinifyEnabled` step — Flutter always shrinks release builds.
+  - **iOS native crashes** Follow the **iOS (Xcode)** bullet above, on the **Runner** target in `ios/Runner.xcworkspace`. Flutter is always CocoaPods: `${PODS_ROOT}/PostHog/build-tools/upload-symbols.sh`.
 
-  Set `captureNativeExceptions = true` in `PostHogConfig.errorTrackingConfig` — it defaults to `false`, and while it's off the native SDKs capture nothing to symbolicate.
+  Dart exceptions do not need `captureNativeExceptions`. Set `captureNativeExceptions = true` in `PostHogConfig.errorTrackingConfig` to capture native Android and iOS exceptions; it defaults to `false`. Dart AOT symbols resolve Dart frames from the same release build, but they do not restore obfuscated exception class names or add source context to ordinary Dart traces without matching AOT metadata.
 
 ### Make credentials available at build time
 
@@ -87,10 +89,10 @@ The upload credentials must be readable **by the build pipeline at build time**,
 - **iOS / Xcode** No loader — the Run Script phase's `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/.env"` prefix points posthog-cli at the gitignored `.env`. `POSTHOG_CLI_HOST` is the API host (`https://us.posthog.com`), never the `*.i.posthog.com` ingestion host.
 - **Android / Gradle** Gradle does not read `.env` — bridge it in the app module's build script (see the Android example). Unset properties fall back to real `POSTHOG_CLI_*` environment variables, so the same wiring works in CI. The host var follows the same API-host rule as iOS above.
 - **React Native (Expo)** Add `"dotenvFile": ".env"` to the `posthog-react-native/expo` plugin entry's options in `app.json` (needs posthog-react-native >= 4.60.0 — bump the package if older). No Xcode or Gradle wiring needed — the plugin handles the native hooks. In CI, set the `POSTHOG_CLI_*` values as job secrets instead. The host var follows the same API-host rule as iOS above.
-- **Flutter** One gitignored `.env` at the Flutter project root. Both native sub-projects sit one level down, so they reach *up* for it:
+- **Flutter** Keep one gitignored `.env` at the Flutter project root. Run Dart AOT uploads from that root with `posthog-cli --dotenv-file .env symbol-sets upload --directory <platform symbol dir>`; in CI, pass `POSTHOG_CLI_API_KEY` and `POSTHOG_CLI_PROJECT_ID` as secrets to the upload step instead. Do not pass upload credentials to the app or require them for builds without an upload. The native sub-projects sit one level down, so their separate upload steps reach *up* for the file:
   - Web: `posthog-cli --dotenv-file .env sourcemap process --directory build/web` (flag goes **before** the subcommand).
-  - Android: `rootProject.file("../.env")` — Gradle's root project is `android/`, not the Flutter root.
-  - iOS: `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/../.env"` — `SRCROOT` is `ios/`.
+  - Android native mappings: `rootProject.file("../.env")` — Gradle's root project is `android/`, not the Flutter root.
+  - iOS native dSYMs: `POSTHOG_CLI_DOTENV_FILE="${SRCROOT}/../.env"` — `SRCROOT` is `ios/`.
 - **Go / Rust** The upload is always a standalone `posthog-cli` step after the compiler runs, so the separate-process rule applies — pass the dotenv file explicitly (flag before the subcommand): `posthog-cli --dotenv-file .env symbol-sets upload --directory <output dir>`. The host var follows the same API-host rule as iOS above.
 
 #### Examples
@@ -163,10 +165,10 @@ Resolve two concrete commands for this project: the production **build** command
 - **React Native (Expo)** Build + run are one step per platform: `npx expo run:ios --configuration Release` / `npx expo run:android --variant release`.
 - **Go** Build: `go build -ldflags="-B gobuildid" -o bin/<app> . && posthog-cli --dotenv-file .env symbol-sets upload --directory ./bin` (macOS: `-ldflags="-compressdwarf=false"` instead) — the upload is a separate CLI step, so the resolved build command must include it (use the project's Makefile/script target instead when you wired the upload into one). Run: `./bin/<app>`.
 - **Rust** Build: `cargo build --release && posthog-cli --dotenv-file .env symbol-sets upload --directory target/release` — the upload is a separate CLI step, so the resolved build command must include it (use the project's build script/Makefile target instead when you wired the upload into one). Run: `./target/release/<binary>` — read the binary name from `Cargo.toml` (the `[package]` name, or a `[[bin]]` entry).
-- **Flutter** One pair per platform you wired:
-  - Web — Build: `flutter build web --source-maps`. Run: `python3 -m http.server 8000 --directory build/web`. Not `flutter run -d chrome` — the dev server skips the upload.
-  - Android — Build: `flutter build apk --release`. Run: `flutter run --release`.
-  - iOS — Build: `flutter build ipa`. Run: `flutter run --release`.
+- **Flutter** Build and upload from the same release artifact for each platform you wired:
+  - Web: `flutter build web --source-maps && posthog-cli --dotenv-file .env sourcemap process --directory build/web`. Serve `build/web` with `python3 -m http.server 8000 --directory build/web`; `flutter run -d chrome` skips the upload.
+  - Android Dart AOT: `flutter build apk --release --split-debug-info=build/posthog-symbols/android && posthog-cli --dotenv-file .env symbol-sets upload --directory build/posthog-symbols/android`. Install the built `build/app/outputs/flutter-apk/app-release.apk` on a device or emulator without rebuilding it.
+  - iOS Dart AOT: `flutter build ipa --release --split-debug-info=build/posthog-symbols/ios && posthog-cli --dotenv-file .env symbol-sets upload --directory build/posthog-symbols/ios`. Install the resulting IPA on a physical device without rebuilding it; Flutter release builds do not run on iOS simulators. Use the corresponding `--include-source --source-root ./lib` flags only if source upload is intended.
 
 ### Set up CI for automatic uploads
 
@@ -359,7 +361,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   }
   ```
   (`capture()` takes an event-name String, not an Error.) Test flow — give the user these steps verbatim, everything happens in Xcode (no `xcodebuild`): 1) In Xcode: Edit Scheme ▸ Run ▸ Build Configuration ▸ Release, then Run — the Release build uploads dSYMs automatically. 2) Tap the "<your test button label>" button in the app. It's an event, not a crash — no debugger-detach or relaunch steps.
-- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(error: Exception("PostHog source maps test"), stackTrace: StackTrace.current)` — arguments are **named**, and `stackTrace` is what the trace resolves against. Give the user a test flow for **every** platform wired, using that platform's build/run pair.
+- **Flutter** Add an `ElevatedButton` on the home widget whose onPressed calls `Posthog().captureException(error: Exception("PostHog symbol upload test"), stackTrace: StackTrace.current)` — arguments are **named**, and `stackTrace` is what the trace resolves against. Give the user a test flow for **every** platform wired. On Android and iOS, install the same release artifact whose `.symbols` files were uploaded; `flutter run --release` rebuilds the app and can change the build identity.
 - **Go** Add a temporary route (e.g. `GET /__posthog-test-error`) on the existing server that captures one error and returns 200; with no HTTP layer, add the capture where the client is initialised. The capture is:
   ```go
   client.Enqueue(posthog.NewDefaultException(
@@ -386,7 +388,7 @@ Confirm the upload landed and report what changed.
 - If you wired CI, list the pipeline files you changed (`Dockerfile`, workflow, pipeline config) and spell out every manual follow-up — e.g. the secrets the user must add in their CI provider's settings before their next deploy, or the note that their build path couldn't be traced.
 
 ## General tips
-- The reference files for {display_name} are authoritative — if this page and a reference disagree on an API, follow the reference.
+- The reference files cover {display_name} platform integrations. Flutter Dart AOT symbol upload follows the `--split-debug-info` and `symbol-sets upload` steps here.
 - Two different keys, two different jobs: a **personal API key** uploads maps at build time; the **public project key** powers the SDK at runtime. Don't swap them.
 - Keep build artifacts and uploaded maps in sync — every deploy should inject + upload within the same build so stack traces always resolve.
 - Uploaded maps live in PostHog and never need to be served publicly.

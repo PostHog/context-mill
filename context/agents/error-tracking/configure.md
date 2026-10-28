@@ -14,16 +14,17 @@ dependsOn: [capture-exceptions]
 
 ## Goal
 
-Make this project's production build emit and upload source maps (or, for Go
-and Rust, native debug symbols). Install the skill your task input names
+Make this project's production build emit and upload source maps or debug
+symbols. Flutter Android/iOS release builds upload Dart AOT symbols separately
+from platform-native symbols. Install the skill your task input names
 (`install_skill` with the `skillId`) and read it — it is the source of truth
 for the per-framework build-config and the uploader wiring.
 
 Two of the skill's steps are yours:
 
 - **"Apply build-config changes"** — make the bundler / build-config edits the
-  skill instructs for this platform, so the build produces and injects the
-  chunk IDs PostHog needs and runs the uploader.
+  skill instructs for this platform, so the build produces matching maps or
+  debug symbols and runs the uploader. Only web source maps need chunk IDs.
 - **"Make credentials available at build time"** — do the skill's step so the
   build can read the upload credentials from the environment. If it calls for a
   loader (e.g. `dotenv`), install it SILENTLY with the project's package
@@ -44,14 +45,16 @@ the project already has (`productionBrowserSourceMaps`, Vite's
 `build.sourcemap`, webpack's `devtool`): a build without the upload credentials
 must still emit what it emitted before. Do not upgrade a package the project
 already depends on to quiet a peer-dependency warning, because a warning is not
-a failure. Upgrade one only when the install or the build fails on it, and keep
-the project's version style: an exact pin stays exact.
+a failure. Upgrade one only when the install or build fails on it, or when the
+skill requires a newer version for the feature you are wiring. Keep the
+project's version style: an exact pin stays exact.
 
 Wire the upload into a build the project already has, in this directory or in
 a package nested below it. Code that no build compiles or bundles runs as
 written, and its stack traces are already readable: do not add a bundler, a
-compiler, or a new `build` or `start` script to create one. When no package
-here has a build, report this task as `not needed` and say why in your handoff.
+compiler, or a new `build` or `start` script to create one. When this project
+has no production build to attach an upload to, report this task as
+`not needed` and say why in your handoff.
 
 When the upload step you wire runs a machine-global `posthog-cli` rather than
 one from the project's own dependencies, do not try to install it or check for
