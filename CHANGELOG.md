@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.1](https://github.com/PostHog/context-mill/compare/v1.59.0...v1.59.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **error-tracking:** init the Next.js browser SDK at the top level of instrumentation-client.ts ([#443](https://github.com/PostHog/context-mill/issues/443)) ([148f9b8](https://github.com/PostHog/context-mill/commit/148f9b831ff753bf9bd07cb1139c97ef29c8a8ed))
+
 ## [1.59.0](https://github.com/PostHog/context-mill/compare/v1.58.0...v1.59.0) (2026-10-27)
 
 
