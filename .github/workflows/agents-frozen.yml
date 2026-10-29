@@ -1,0 +1,23 @@
+name: PostHog Context Mill - Agents frozen
+permissions:
+  contents: read
+
+# Its own workflow so adding or removing the override label re-runs only this check.
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+
+jobs:
+  agents-frozen:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      with:
+        fetch-depth: 0
+
+    - name: Block edits to frozen agent prompts
+      env:
+        AGENTS_FREEZE_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'agents-freeze-override') }}
+      run: bash scripts/check-agents-frozen.sh "origin/${{ github.base_ref }}"
