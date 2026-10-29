@@ -1,12 +1,8 @@
 # Agent prompts
 
-> **Frozen.** The wizard bundles its agent prompts in its own repo, at
-> `src/programs/<id>/agent/`; make prompt changes there. This copy is
-> published for wizard versions that fetch their prompts, and CI
-> (`scripts/check-agents-frozen.sh`) rejects pull requests that change it.
-> An urgent fix for those versions lands here with the
-> `agents-freeze-override` label, and the same fix goes into the wizard's
-> copy.
+> **The wizard has its own copy.** It bundles these prompts in its own repo,
+> at `src/programs/<id>/agent/`. This copy is published for wizard versions
+> that fetch their prompts. Make a prompt change in both places.
 
 One `<flow>/<type>.md` per orchestrator task — the WHAT of the task. The folder
 is the flow: the wizard's registry is scoped per flow, so audit or migration
