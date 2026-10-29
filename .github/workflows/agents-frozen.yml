@@ -19,5 +19,6 @@ jobs:
 
     - name: Block edits to frozen agent prompts
       env:
+        BASE_REF: origin/${{ github.base_ref }}
         AGENTS_FREEZE_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'agents-freeze-override') }}
-      run: bash scripts/check-agents-frozen.sh "origin/${{ github.base_ref }}"
+      run: bash scripts/check-agents-frozen.sh "$BASE_REF"
