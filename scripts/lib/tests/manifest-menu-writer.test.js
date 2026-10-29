@@ -67,4 +67,29 @@ describe('writeManifestAndMenu', () => {
         expect(entry.downloadUrl).toMatch(/\/integration-v2-capture-nextjs\.zip$/);
     });
 
+    it('publishes title, description and tags, adding the served framework, group and default without touching the skill', () => {
+        const rails = skill('rails', { displayName: 'Ruby on Rails', framework: 'rails', default: true, tags: ['ruby-on-rails'] });
+        write([rails]);
+
+        const [entry] = menuEntries();
+        expect(entry).toMatchObject({ title: 'Ruby on Rails', description: 'rails description', framework: 'rails', default: true });
+        expect(entry.tags).toEqual(['ruby-on-rails', 'framework:rails', 'integration-v2-capture', 'default']);
+        expect(rails.tags).toEqual(['ruby-on-rails']);
+    });
+
+    it('publishes metadata on a bundle entry and on each of its variants', () => {
+        write([
+            skill('django', { bundle: true, groupTags: ['capture'], framework: 'django', tags: ['capture', 'python'] }),
+            skill('nextjs', { bundle: true, groupTags: ['capture'], framework: 'nextjs', default: true, tags: ['capture'] }),
+        ]);
+
+        const [entry] = menuEntries();
+        expect(entry.tags).toEqual(['capture', 'integration-v2-capture']);
+        expect(entry.title).toBe('django');
+        expect(entry.variants).toEqual([
+            { id: 'integration-v2-capture-django', framework: 'django', title: 'django', description: 'django description', tags: ['capture', 'python', 'framework:django', 'integration-v2-capture'] },
+            { id: 'integration-v2-capture-nextjs', framework: 'nextjs', default: true, title: 'nextjs', description: 'nextjs description', tags: ['capture', 'framework:nextjs', 'integration-v2-capture', 'default'] },
+        ]);
+    });
+
 });

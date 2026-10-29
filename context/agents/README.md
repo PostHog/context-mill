@@ -1,5 +1,10 @@
 # Agent prompts
 
+> **Frozen.** The wizard bundles its agent prompts in its own repo, at
+> `src/programs/<id>/agent/`; make prompt changes there. This copy is
+> published only for wizard versions already in the field, and CI
+> (`scripts/check-agents-frozen.sh`) rejects pull requests that change it.
+
 One `<flow>/<type>.md` per orchestrator task — the WHAT of the task. The folder
 is the flow: the wizard's registry is scoped per flow, so audit or migration
 agent sets get sibling folders. The frontmatter carries the artifacts the
