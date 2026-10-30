@@ -64,8 +64,8 @@ Install each skill, fill the blanks its brief names from the repo, and create wi
 
 Per-scanner notes:
 
-- **Pick the volume tier first**, as `replay-vision-scanners-core` says. With no recordings or low volume, every scanner watches all sessions with no filters; with no recordings it is also `free_only`. With high volume, each brief's targeted query applies, written as the pages appear in real recordings and checked against real sessions before you create it.
-- **No identifiable completion flow**: scanner 1 falls back to the handful of highest-traffic paths on high volume, and scanner 2 is skipped. Record why.
+- **Pick the volume tier first**, as `replay-vision-scanners-core` says. With no recordings or low volume, every scanner watches all sessions with no filters and is `free_only`, sized to the free credits still left. With high volume, each brief's targeted query applies, written as the pages appear in real recordings and checked against real sessions before you create it.
+- **No identifiable completion flow, or the flow's pages match no real session**: scanner 1 falls back to the handful of highest-traffic paths on high volume, and scanner 2 is skipped, never widened. Record why.
 - **Not a web app**: keep the scanners only if the product has any recorded web sessions at all. Skipping all three on a pure backend project is a correct outcome - record why.
 - Any failure on one scanner: handle it as `replay-vision-scanners-core` says, record the follow-up, and continue with the next. One failure never stops the step.
 

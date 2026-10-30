@@ -41,8 +41,10 @@ like *here*, under the same content rules as `{{PRODUCT_CONTEXT}}`.
 
 **The page scope** follows the page scope rules in
 `replay-vision-scanners-core`: real paths from recordings when the project
-has any, the repo's routes when it has none. Check the final query per that
-skill before you create.
+has any, the repo's routes when it has none. If no real page belongs to the
+flow, or the scope matches no session, fall back to the busiest real product
+paths and say so in your handoff. Check the final query per that skill
+before you create.
 
 This monitor owns the *where* axis of the disjointness rule in
 `replay-vision-scanners-core` — a page-scoped query, never an event gate. In

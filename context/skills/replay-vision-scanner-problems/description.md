@@ -36,9 +36,10 @@ credit share: **0.4**.
 - **High volume**: a `visited_page` scope on this product's key completion
   flow and its immediate predecessors, at `sampling_rate` 0.5. Write the
   pages as they appear in real recordings, per the page scope rules in
-  `replay-vision-scanners-core`. Never gate it on an event, in
-  particular not `$exception`: that hides the silent breakage vision is good
-  at finding.
+  `replay-vision-scanners-core`. If no real page belongs to the flow, or the
+  scope matches no session, fall back to the busiest real product paths and
+  say so in your handoff. Never gate it on an event, in particular not
+  `$exception`: that hides the silent breakage vision is good at finding.
 
 **Earlier runs of this command** created a separate breakage monitor and a
 frustration monitor (`emits_signals: false`). A breakage monitor from an

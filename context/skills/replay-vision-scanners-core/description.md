@@ -75,12 +75,18 @@ handoff's count when it gives one.
   that the volume was unknown.
 - **Low volume** (under 250 sessions a month, about what the free credits
   can watch): your brief's low-volume query, with no filters, so nothing
-  worth seeing is filtered away. Set
-  `sampling_rate` to `min(1, share × free_monthly_credits /
-  (sessions_per_month × credits_per_observation))`, rounded down to two
-  decimals. `share` is in your brief, `free_monthly_credits` comes from
-  `vision-quota-get`, and `credits_per_observation` from the estimate. The
-  three scanners' shares add up to 1, so together they fit the free credits.
+  worth seeing is filtered away. Add `"free_only": true`: with no filters,
+  spend grows with traffic, and this keeps the scanner off the paid limit
+  that the organization's own scanners need. Set `sampling_rate` to
+  `min(1, share × free_left / (sessions_per_month ×
+  credits_per_observation))`, rounded down to two decimals. `share` is in
+  your brief. `free_left` is `free_only_monthly_credits_left` and
+  `credits_per_observation` comes from the same estimate of this scanner's
+  query: the free credits still left after what the organization already
+  used and its other free-only scanners. The three scanners' shares add up
+  to 1, so together they fit what is left. When `free_left` is 0, create the
+  scanner at `sampling_rate` 0.1 and say in your handoff that it waits until
+  the free credits reset.
 - **High volume** (250 sessions a month or more): your brief's targeted
   query and sampling rate, checked against real sessions as below.
 
@@ -119,7 +125,7 @@ LIMIT 100
 Map the flow you found in the repo onto these real paths — a mount prefix, a
 locale segment, or a public route that differs from the file name is common
 — and write the real form. If no real path belongs to the flow, it is not
-live yet: fall back to the busiest real product paths and say so in your
+live yet: do what your brief says for that case, and say so in your
 handoff. With no recordings yet, write the regexes from the repo's routes.
 
 ## Check the query against real sessions before you create

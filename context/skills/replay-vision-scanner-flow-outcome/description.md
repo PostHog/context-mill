@@ -42,4 +42,9 @@ credit share: **0.4**.
   the page as it appears in real recordings, per the page scope rules in
   `replay-vision-scanners-core`.
 
+**No fallback.** On high volume, if no real page belongs to the flow, or the
+scope matches no session in a project that records sessions, skip this
+scanner and say why in your handoff. Never widen it to other pages: it would
+then classify a flow those sessions do not contain.
+
 Re-run match phrase: `Classify how this session went for that flow`.
