@@ -73,14 +73,15 @@ handoff's count when it gives one.
   1.0, and add `"free_only": true`: the scanner then never adds to the bill,
   and pauses if the organization's free credits run out. Say in your handoff
   that the volume was unknown.
-- **Low volume** (under 1,000 sessions a month): your brief's low-volume
-  query, with no filters, so nothing worth seeing is filtered away. Set
+- **Low volume** (under 250 sessions a month, about what the free credits
+  can watch): your brief's low-volume query, with no filters, so nothing
+  worth seeing is filtered away. Set
   `sampling_rate` to `min(1, share × free_monthly_credits /
   (sessions_per_month × credits_per_observation))`, rounded down to two
   decimals. `share` is in your brief, `free_monthly_credits` comes from
   `vision-quota-get`, and `credits_per_observation` from the estimate. The
   three scanners' shares add up to 1, so together they fit the free credits.
-- **High volume** (1,000 sessions a month or more): your brief's targeted
+- **High volume** (250 sessions a month or more): your brief's targeted
   query and sampling rate, checked against real sessions as below.
 
 These rates are the brief's locked rates for each tier. The
