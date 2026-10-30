@@ -64,6 +64,7 @@ Install each skill, fill the blanks its brief names from the repo, and create wi
 
 Per-scanner notes:
 
+- **Check every query against real sessions** before you create it, as `replay-vision-scanners-core` says. Scanner 1 writes its pages as they appear in real recordings; scanner 2 uses its brief's fallback when the project records sessions but has no rage clicks, excluding scanner 1's pages.
 - **No identifiable completion flow** for scanner 1: don't invent one - fall back to the handful of highest-traffic paths, and record that you couldn't identify a completion flow.
 - **Not a web app**: skip scanner 1; keep scanners 2 and 3 only if the product has any recorded web sessions at all. Skipping all three on a pure backend project is a correct outcome - record why.
 - Any failure on one scanner: handle it as `replay-vision-scanners-core` says, record the follow-up, and continue with the next. One failure never stops the step.

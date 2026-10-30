@@ -20,10 +20,12 @@ locked scaffold, and the create/re-run mechanics are in your skills — you
 fill the blanks from the repo:
 
 - **`name`** — what it watches, in this product's own words.
-- **`query`** — this product's key completion flow plus its immediate
-  predecessors. Checkout, signup, booking, publish — whatever this product's
-  "done" is. Read router files and page/route directories to find the real
-  paths; never guess at `/checkout` if this app calls it `/booking`.
+- **`query`** — a `visited_page` scope on this product's key completion flow
+  plus its immediate predecessors. Checkout, signup, booking, publish —
+  whatever this product's "done" is. Read router files and page/route
+  directories to find the flow; never guess at `/checkout` if this app calls
+  it `/booking`. When the project records sessions, write the paths as they
+  appear in real recordings, per the brief.
 - **`{{WATCH_FOR}}`** — the concrete failure modes of this flow, on screen,
   in the product's vocabulary.
 - **`{{PRODUCT_CONTEXT}}`** — one plain factual sentence.
@@ -37,4 +39,6 @@ correct outcome.
 ## How you know you succeeded
 
 The scanner exists in PostHog scoped to this product's real completion flow,
-or your handoff says exactly why it was skipped or deferred.
+with a query that matches real sessions when the project records any — or
+your handoff says exactly why it was skipped or deferred. Your handoff names
+the `visited_page` regexes, because the frustration monitor excludes them.
