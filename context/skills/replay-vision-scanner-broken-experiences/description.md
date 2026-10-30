@@ -15,11 +15,16 @@ locked.
     "prompt": "Watch this session for moments where the product visibly broke for the user: an error message or toast, a blank/white screen, content that failed to load, obviously broken layout, a spinner that never resolves, or a button/form/action that clearly did nothing or failed. In this product that especially means: {{WATCH_FOR}}. Only flag issues that are unambiguous on screen and would actually matter to the user – ignore cosmetic nits and anything you're unsure about. For each: what the user was trying to do, what broke, and the URL.\n\n{{PRODUCT_CONTEXT}}"
   },
   "query": {
-    // AGENT FILLS: this product's key completion flow + its immediate
-    // predecessors, read out of the repo.
+    // AGENT FILLS: up to five regexes for this product's key completion
+    // flow + its immediate predecessors, as real paths (see below).
     "kind": "RecordingsQuery",
     "properties": [
-      { "key": "$current_url", "value": "/checkout", "operator": "icontains", "type": "event" }
+      {
+        "type": "recording",
+        "key": "visited_page",
+        "operator": "regex",
+        "value": ["^https?://[^/]+/checkout(/|\\?|#|$)", "^https?://[^/]+/cart(/|\\?|#|$)"]
+      }
     ]
   },
   "sampling_rate": 0.5,
@@ -34,8 +39,15 @@ courts", "the payment step rejecting a valid card", "a booking confirmation
 that never appears". Facts about what failure looks
 like *here*, under the same content rules as `{{PRODUCT_CONTEXT}}`.
 
+**The page scope** follows the page scope rules in
+`replay-vision-scanners-core`: real paths from recordings when the project
+has any, the repo's routes when it has none. If no real page belongs to the
+flow, or the scope matches no session, fall back to the busiest real product
+paths and say so in your handoff. Check the final query per that skill
+before you create.
+
 This monitor owns the *where* axis of the disjointness rule in
-`replay-vision-scanners-core` — a URL-scoped query, never an event gate. In
+`replay-vision-scanners-core` — a page-scoped query, never an event gate. In
 particular never gate it on `$exception`: that blinds it to silent breakage,
 the thing vision is uniquely good at.
 
