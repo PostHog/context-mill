@@ -77,7 +77,8 @@ Emit `[STATUS] Wrapping up`.
 Write the report to `./posthog-replay-vision-report.md` (the wizard shows this file at the end of the run), then summarize it for the user. Open with what still blocks the first observation, before anything else:
 
 - **Session replay is off**: lead with it as an error, not a follow-up - no scanner runs until a project admin turns on "Record user sessions" under Settings → Session replay.
-- **This run changed code, or the project has no recordings yet**: lead with "Deploy this change: session replay only records from code your users run, so your scanners start when the first recording arrives." Name the changed files, and say the scanners cost nothing until then.
+- **This run changed code**: lead with "Deploy this change: session replay only records from code your users run, so your scanners start when the first recording arrives." Name the changed files, and say the scanners cost nothing until then.
+- **Nothing changed, but the project has no recordings yet**: don't ask for a deploy. Say the scanners start with the first recording and cost nothing until then, and that if people already use the app, the version they run may not include the PostHog SDK yet.
 
 Say session replay is recording only when the project already has recordings. Then cover, briefly and concretely:
 

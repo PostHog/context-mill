@@ -24,10 +24,14 @@ observation, from the enable-replay handoff, before anything else:
 - **Session replay is off**: lead with it as an error, not a follow-up —
   session replay is off in this project, and no scanner runs until a project
   admin turns on "Record user sessions" under Settings → Session replay.
-- **This run changed code, or the project has no recordings yet**: lead with
-  "Deploy this change: session replay only records from code your users run,
-  so your scanners start when the first recording arrives." Name the files
-  the run changed. Say the scanners cost nothing until then.
+- **This run changed code**: lead with "Deploy this change: session replay
+  only records from code your users run, so your scanners start when the
+  first recording arrives." Name the files the run changed. Say the scanners
+  cost nothing until then.
+- **Nothing changed, but the project has no recordings yet**: don't ask for a
+  deploy. Say the scanners start with the first recording and cost nothing
+  until then. Add that if people already use the app, the version they run
+  may not include the PostHog SDK yet.
 
 Say session replay is recording only when the project already has
 recordings. Then, briefly and concretely:

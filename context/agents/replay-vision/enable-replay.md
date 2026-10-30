@@ -55,6 +55,8 @@ trust it:
   the SDK (upstream handoffs) or you edited the init. Name the files.
 - **Recordings so far**: the count, or "unknown" if the estimate call failed.
 
-When code changed or the count is zero, the handoff says the user must deploy
-(merge and release) this change before any recording, and so any scanner
-observation, arrives.
+When code changed, the handoff says the user must deploy (merge and release)
+this change before any recording, and so any scanner observation, arrives.
+A zero count with no code change is not a reason to ask for a deploy: the
+setup may be complete and the app may have no traffic yet. Say that scanners
+start with the first recording.
