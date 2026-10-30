@@ -30,11 +30,9 @@ Then seed one of two graphs:
 **PostHog is already integrated** — the common case:
 
 - `enable-replay`, with no dependencies.
-- The three scanner tasks, each after `enable-replay`:
-  `scanner-broken-experiences` and `scanner-session-summaries` independent
-  of each other, so they run in parallel, and `scanner-user-frustration`
-  also after `scanner-broken-experiences`, because its fallback query
-  excludes the breakage monitor's pages.
+- The three scanner tasks — `scanner-problems`, `scanner-flow-outcome`,
+  `scanner-session-summaries` — each after `enable-replay`, independent of
+  one another, so they run in parallel.
 - `report`, after all three scanner tasks. It writes the handoff last, so it
   describes what actually shipped.
 

@@ -39,33 +39,10 @@ courts", "the payment step rejecting a valid card", "a booking confirmation
 that never appears". Facts about what failure looks
 like *here*, under the same content rules as `{{PRODUCT_CONTEXT}}`.
 
-**The page scope.** `visited_page` matches every URL the recording itself
-saw, so it works whatever events the project captures. Each value is one
-regex over the full URL, and the values OR. Use five or fewer, anchor each on
-the path (`^https?://[^/]+/booking(/|\?|#|$)`), write a dynamic segment as
-`[^/]+`, and escape regex characters in literal path parts.
-
-Ground the paths in real sessions when the project records any. Read the
-pages people actually visit with `execute-sql`:
-
-```sql
-SELECT path(url) AS page, uniq(session_id) AS sessions
-FROM session_replay_events
-ARRAY JOIN all_urls AS url
-WHERE start_time >= now() - INTERVAL 7 DAY
-GROUP BY page
-HAVING sessions >= 5
-ORDER BY sessions DESC
-LIMIT 100
-```
-
-Map the flow you found in the repo onto these real paths — a mount prefix, a
-locale segment, or a public route that differs from the file name is common
-— and write the real form. If no real path belongs to the flow, it is not
-live yet: fall back to the busiest real product paths and say so in your
-handoff. With no recordings yet, write the regexes from the repo's routes.
-Either way, check the final query per `replay-vision-scanners-core` before
-you create.
+**The page scope** follows the page scope rules in
+`replay-vision-scanners-core`: real paths from recordings when the project
+has any, the repo's routes when it has none. Check the final query per that
+skill before you create.
 
 This monitor owns the *where* axis of the disjointness rule in
 `replay-vision-scanners-core` — a page-scoped query, never an event gate. In
