@@ -21,11 +21,11 @@ Server half: call `products-enable` (via `exec`: `info products-enable`, then
 `call products-enable {"products": ["session_replay"]}`). It is idempotent and
 server-owned; `"enabled"` and `"already_enabled"` are both success.
 
-- **Tool missing on this deploy**: don't fail the task — record a follow-up in
-  your handoff telling the user to turn on "Record user sessions" under
-  Settings → Session replay, and finish.
-- **Permission rejection**: record a follow-up to enable it from a
-  project-admin account, and finish — scanners created later sit idle until
+- **Tool missing on this deploy**: don't fail the task — your handoff says
+  session replay is **off** and the user must turn on "Record user sessions"
+  under Settings → Session replay. Then finish.
+- **Permission rejection**: same, from a project-admin account. Replay being
+  off is a blocker, not a note: scanners created later sit idle until
   recording is on, then start working with no re-setup.
 
 Client half, web apps only: check the `posthog.init(...)` options.
@@ -39,8 +39,22 @@ Pure backend or mobile app with no web surface: nothing records browser
 sessions here. Say so in your handoff and finish — scanner tasks read your
 handoff and skip what doesn't apply.
 
+Then read what actually records: call `vision-scanners-estimate` once with no
+`query` and read `matched_sessions_in_window` — the sessions this project
+recorded in the last `window_days`. Turning the setting on does not make
+recordings arrive: code changed on this machine records nothing until it
+runs where real users reach it.
+
 ## How you know you succeeded
 
-Recording is on server-side and nothing in the client init cancels it — or
-your handoff names exactly which half needs the user and why. Later tasks
-trust your handoff, so state plainly whether recordings will flow.
+Your handoff states three facts plainly, because later tasks and the report
+trust it:
+
+- **Replay setting**: on, or off and why.
+- **Code changed**: yes or no — yes when this run installed or initialized
+  the SDK (upstream handoffs) or you edited the init. Name the files.
+- **Recordings so far**: the count, or "unknown" if the estimate call failed.
+
+When code changed or the count is zero, the handoff says the user must deploy
+(merge and release) this change before any recording, and so any scanner
+observation, arrives.

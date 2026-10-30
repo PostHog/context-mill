@@ -16,9 +16,22 @@ dependsOn: [scanner-broken-experiences, scanner-user-frustration, scanner-sessio
 ## Goal
 
 Tell the user what Replay vision is now doing for them, from the handoffs of
-every task in the run. Briefly and concretely:
+every task in the run.
 
-- What is now recording (or the follow-up needed to make it record).
+Open the report with whatever still stands between the user and their first
+observation, from the enable-replay handoff, before anything else:
+
+- **Session replay is off**: lead with it as an error, not a follow-up —
+  session replay is off in this project, and no scanner runs until a project
+  admin turns on "Record user sessions" under Settings → Session replay.
+- **This run changed code, or the project has no recordings yet**: lead with
+  "Deploy this change: session replay only records from code your users run,
+  so your scanners start when the first recording arrives." Name the files
+  the run changed. Say the scanners cost nothing until then.
+
+Say session replay is recording only when the project already has
+recordings. Then, briefly and concretely:
+
 - Each scanner created or updated: its name, what it watches, its query
   scope, and its estimated monthly credit spend.
 - Anything skipped or deferred, with the reason — a skipped scanner on a

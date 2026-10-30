@@ -44,6 +44,8 @@ Emit `[STATUS] Enabling session replay`.
 
 Install and follow `replay-vision-enable-replay`. Pure backend or mobile app with no web surface: nothing records browser sessions here. Say so, record it as a follow-up, and continue - scanner creation may still be skipped in STEP 4 for the same reason.
 
+Then note three facts for STEP 5: whether the replay setting is on, whether this run changed code (and which files), and how many sessions the project recorded recently (`vision-scanners-estimate` with no `query`, read `matched_sessions_in_window`). Changed code records nothing until the user deploys it.
+
 ### STEP 3: Load the scanner mechanics and size before you ship
 
 Emit `[STATUS] Preparing scanners`.
@@ -72,9 +74,13 @@ Per-scanner notes:
 
 Emit `[STATUS] Wrapping up`.
 
-Write the report to `./posthog-replay-vision-report.md` (the wizard shows this file at the end of the run), then summarize it for the user. Cover, briefly and concretely:
+Write the report to `./posthog-replay-vision-report.md` (the wizard shows this file at the end of the run), then summarize it for the user. Open with what still blocks the first observation, before anything else:
 
-- What is now recording (or the follow-up needed to make it record).
+- **Session replay is off**: lead with it as an error, not a follow-up - no scanner runs until a project admin turns on "Record user sessions" under Settings → Session replay.
+- **This run changed code, or the project has no recordings yet**: lead with "Deploy this change: session replay only records from code your users run, so your scanners start when the first recording arrives." Name the changed files, and say the scanners cost nothing until then.
+
+Say session replay is recording only when the project already has recordings. Then cover, briefly and concretely:
+
 - Each scanner created or updated: its name, what it watches, its query scope, and its estimated monthly credit spend.
 - Anything skipped or deferred, with the reason.
 - Where results appear: the Replay vision page in PostHog, with the first observations arriving as new recordings complete.
