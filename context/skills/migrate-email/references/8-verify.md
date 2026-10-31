@@ -28,7 +28,7 @@ Skip this part and record `not checked` with the reason when the API is not conf
 
 1. Ask the person whether to send one test email. Say that it sends a real email, and that the first send of a local template uploads it to the PostHog project. When they say no, record `not checked: declined`.
 2. Ask them to trigger one moved email in their local app while they are signed in as themselves, such as a signup or a password reset, so the email goes to an address they own. Ask them to tell you when it is sent and to open the email.
-3. When the send fails, find its code in `transactional-email-api.md`, tell the person the fix, and record it. Never retry a send yourself.
+3. When the send fails, find its code in `transactional-emails.md` or `api.md`, tell the person the fix, and record it. Never retry a send yourself.
 4. Find the person's distinct ID: the value the moved site passed as `distinctId`. Run a SQL query through the PostHog MCP `execute-sql` tool for that distinct ID over the last hour:
 
    ```sql

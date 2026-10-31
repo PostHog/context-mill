@@ -23,7 +23,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with `posthog-node`
 
 Install or upgrade `posthog-node` with the project's package manager, to a version that has `posthog.emails`.
 
-Configure one server-side client for email. Set `migratedFrom` to the provider folder name, such as `resend`, once on the client, so PostHog knows which sends a migration moved:
+Configure one server-side client for email:
 
 ```js
 import { PostHog } from 'posthog-node'
@@ -31,13 +31,11 @@ import { PostHog } from 'posthog-node'
 export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
     host: process.env.POSTHOG_HOST,
     secretKey: process.env.POSTHOG_PROJECT_SECRET_API_KEY,
-    migratedFrom: '<provider folder name>',
     enableLocalEvaluation: false,
 })
 ```
 
 {{> email-node-client}}
-- A reused client gets `migratedFrom` too.
 - Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 
