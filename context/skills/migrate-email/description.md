@@ -52,4 +52,6 @@ Outside the Wizard, skip the `[STATUS]` lines, and tell the person why you stopp
 
 {references}
 
-`transactional-email-api.md` is the transactional email API page. It covers senders, the send forms, `posthog-node`, idempotency, and every error code.
+`transactional-emails.md` is the transactional email overview. It covers how to create a transactional email and its API key, idempotency, and the error codes. `api.md` covers the send route, including content from your code, and the checks of a send.
+
+When the `sending-transactional-emails` skill is available, read it too. Its `moving-from-other-providers.md` moves any provider's sends to a PostHog template. This skill adds what is specific to {display_name}: it finds every send, sets up the sender next to {display_name}'s DNS records, imports {display_name}'s suppression list, and hands over the key.

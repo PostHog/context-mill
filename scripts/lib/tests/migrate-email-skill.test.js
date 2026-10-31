@@ -4,16 +4,18 @@ import { join, relative } from 'path';
 import { tmpdir } from 'os';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
-const DOCS_URL = 'https://posthog.com/docs/workflows/transactional-email-api.md';
-const DOCS_PAGE = '# Transactional email API\n\nSend one email to one person from your server code.\n';
+const DOCS_PAGES = {
+    'https://posthog.com/docs/workflows/transactional-emails.md': '# Transactional emails\n\nSend one email to one person.\n',
+    'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
+};
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
 
 async function loadSkills() {
     vi.resetModules();
     vi.stubEnv('DOCS_CACHE_TTL_MS', '0');
     vi.stubGlobal('fetch', async (url) => {
-        if (url !== DOCS_URL) return new Response('not found', { status: 404, statusText: 'Not Found' });
-        return new Response(DOCS_PAGE, { status: 200 });
+        if (!(url in DOCS_PAGES)) return new Response('not found', { status: 404, statusText: 'Not Found' });
+        return new Response(DOCS_PAGES[url], { status: 200 });
     });
     const generator = await import('../skill-generator.js');
     const skills = generator.expandSkillGroups(generator.loadSkillsConfig(CONFIG_DIR), CONFIG_DIR);
@@ -76,12 +78,17 @@ describe('migrate-email skill', () => {
         },
     );
 
-    it('bundles the send API reference and the Resend files without the send skill', async () => {
+    it('bundles the transactional email docs and the Resend files', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
         const skillDir = await buildSkill('migrate-email-resend', outputDir);
 
-        expect(readFileSync(join(skillDir, 'references', 'transactional-email-api.md'), 'utf8')).toBe(DOCS_PAGE);
+        expect(readFileSync(join(skillDir, 'references', 'transactional-emails.md'), 'utf8')).toBe(
+            DOCS_PAGES['https://posthog.com/docs/workflows/transactional-emails.md'],
+        );
+        expect(readFileSync(join(skillDir, 'references', 'api.md'), 'utf8')).toBe(
+            DOCS_PAGES['https://posthog.com/docs/workflows/transactional-emails/api.md'],
+        );
         expect(existsSync(join(skillDir, 'references', 'resend', 'sdk-reference.md'))).toBe(true);
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });

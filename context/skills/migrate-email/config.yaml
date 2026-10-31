@@ -10,7 +10,8 @@ cli:
 references:
   preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
 shared_docs:
-  - https://posthog.com/docs/workflows/transactional-email-api.md
+  - https://posthog.com/docs/workflows/transactional-emails.md
+  - https://posthog.com/docs/workflows/transactional-emails/api.md
 variants:
   - id: resend
     display_name: Resend

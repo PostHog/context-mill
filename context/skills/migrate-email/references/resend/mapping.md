@@ -1,6 +1,6 @@
 # Resend to PostHog mapping
 
-This file decides, field by field, whether PostHog can send a Resend call site. A site moves only when every field it sets moves. Otherwise it stays on Resend, and the reason names the first field or feature that keeps it there. `transactional-email-api.md` has the PostHog side in full.
+This file decides, field by field, whether PostHog can send a Resend call site. A site moves only when every field it sets moves. Otherwise it stays on Resend, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full.
 
 ## Fields
 
