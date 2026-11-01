@@ -15,7 +15,7 @@ The report comes from the plan file. Invent nothing.
 
 ## Write the report
 
-Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>-report.md` at the project root, where `<provider>` is the name of the provider folder under `references/`. Use the structure below, then delete the plan file. Never write a recipient's email address into the report.
+Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>-report.md` at the project root, where `<provider>` is the name of the provider folder under `references/`. Use the structure below. Then delete every template file the plan lists, and the plan file. Never write a recipient's email address into the report.
 
 ```markdown
 # Email migration report: <provider name> to PostHog
@@ -49,7 +49,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Checks
 
-<The typecheck, the tests, and the test email: what passed, what failed, and what was not checked and why. Say which of the send, the engagement event, and the product event showed on one person.>
+<The typecheck, the tests, and the test email: what passed, what failed, and what was not checked and why. Each file Step 8 fixed outside the moved sites. Say which of the send, the engagement event, and the product event showed on one person.>
 
 ## Sending tier
 

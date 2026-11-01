@@ -28,7 +28,7 @@ The plan file `.posthog-email-migration-plan.md` lives at the project root. Step
 
 ## Rules
 
-- Change send code only in Step 7, and fix it only in Step 8: the sites that move, and the helpers, callers, and tests they need. Leave every site that stays as it is.
+- Change send code only in Step 7, and fix it only in Step 8: the sites that move, the helpers, callers, and tests they need, and other `posthog-node` code that the upgrade breaks. Leave every site that stays as it is.
 - Never touch DNS or the {display_name} account. Give the person the records and the links, and let them make the change.
 - Never remove the {display_name} package or its API key. The report tells the person when to remove them.
 - Never create, upload, or edit a template in PostHog. A moved local template uploads on its first send.

@@ -73,7 +73,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 - The site sends `templateKey`, `subject`, `html`, `text` when there is one, and `templateData` with the site's `variables` object, plus the subject values below.
 - The site's own `subject`, `from`, and `replyTo` win over the template's. When the site has none, use the template's: put its `from` and `replyTo` on the send, and its subject in the module.
 - The module's subject is fixed text with placeholders. When the site builds its subject from values, such as `` `Order #${order.id}` ``, write the subject in the module as `Order #{{ variables.ORDER_ID }}` and add each value to `templateData`. Never send a subject that changes per email with `templateData`: posthog-node hashes a local template's subject and content, so each email would upload a new version of the template. A send without `templateData` sends rendered content and uploads nothing.
-- The template's alias, or its name when it has no alias, becomes the `templateKey` and the module's file name: in lowercase, with each run of characters other than letters, digits, `-`, and `_` replaced by one `-`, and no `-` at either end. When two templates get the same key, add `-2`, `-3`, and so on to the later ones.
+- The template's alias, or its name when it has no alias, becomes the `templateKey` and the module's file name: in lowercase, with each run of characters other than letters, digits, `-`, and `_` replaced by one `-`, and no `-` at either end. When that leaves nothing, use the template's id the same way. When the key is already taken by another email of this run, add `-2`, `-3`, and so on.
 
 **The answer.** posthog-node answers `{ data, error }` like Resend and never throws on an API error.
 

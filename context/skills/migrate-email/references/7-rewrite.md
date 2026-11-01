@@ -63,7 +63,7 @@ For each site that moves, in plan order:
 
 - Rewrite the call as the provider's `mapping.md` says, for the site's content form: `html` and `text` content, a component the app renders, or a template stored at the provider.
 - Give each send a `templateKey` that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key. A template stored at the provider keeps the key `mapping.md` gives it.
-- A template stored at the provider becomes a module that exports `subject` and `html`, and `text` when it has one, in an `emails/` folder next to the server code. Write it from the file Step 3 saved, never from memory, and delete that file once the module is written. The site imports the module and passes `templateData`.
+- A template stored at the provider becomes a module that exports `subject` and `html`, and `text` when it has one, in an `emails/` folder next to the server code. Write it from the file the plan lists for the site, never from memory. The site imports the module and passes `templateData`.
 - Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
