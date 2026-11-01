@@ -29,7 +29,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 <One row per site. Key is the `templateKey` of a moved site. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>".>
 
-<Each template that moved into the code, with its module path, and each fallback that an empty string now replaces.>
+<Each template that moved into the code, with its module path, and each note under the plan's sites table: each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site with `cc` or `bcc` that a suppressed copy address now stops, and each idempotency key a retry across the deploy could send twice.>
 
 ## Other <provider name> calls
 
@@ -59,11 +59,11 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 The moved sites send through PostHog as soon as this code is deployed. Everything in this list has to be done before that deploy.
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, each idempotency key a retry across the deploy could send twice, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
 
 ## After cutover
 
-<What the person removes once the moved emails arrive from PostHog: when no site stays and no other provider call is left, the provider's package and its key in every place listed above. Otherwise, write that the provider stays for the sites and calls listed above.>
+<What the person removes once the moved emails arrive from PostHog: when no site stays and no other provider call is left, the provider's package and its key in every place listed above. Otherwise, write that the provider stays for the sites and calls listed above. When the plan says the run created a full-access provider key, the person deletes that key at the provider and removes its variable from the env file.>
 
 ## Summary
 ```

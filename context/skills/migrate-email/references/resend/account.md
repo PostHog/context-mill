@@ -20,7 +20,7 @@ A domain verified at Resend carries these records. Keep all of them until the cu
 
 ## Full-access key
 
-The app's own Resend key is usually a sending-only key, and it can't read templates or the suppression list. When the person chooses the API over the dashboard, ask them to create a full-access key in Resend, store it in `RESEND_FULL_ACCESS_API_KEY` in the git-ignored env file, and delete the key in Resend after the migration. Never print the key, and never write it into another file.
+The app's own Resend key is usually a sending-only key, and it can't read templates or the suppression list. When the person chooses the API over the dashboard, ask them to create a full-access key in Resend, store it in `RESEND_FULL_ACCESS_API_KEY` in the git-ignored env file, and note in the plan that the run created it. The report tells the person to delete it. Never print the key, and never write it into another file.
 
 ## Template content
 
@@ -30,7 +30,7 @@ A site that sends a template stored at Resend needs the template's content.
 
 **Read from the API.** `GET https://api.resend.com/templates/{id or alias}` with `Authorization: Bearer $RESEND_FULL_ACCESS_API_KEY`. The answer holds `alias`, `name`, `subject`, `from`, `reply_to`, `html`, `text`, and `variables`, a list of `{ key, type, fallback_value }`.
 
-The content goes only into the template module the rewrite writes. Never write it into the plan or the report.
+The content goes only into the temporary file Step 3 saves and the template module the rewrite writes. Never write it into the plan or the report.
 
 ## Suppression list
 
@@ -43,7 +43,7 @@ Resend suppresses an address after a hard bounce or a spam complaint, and keeps 
 - The answer is `{ "object": "list", "has_more": <bool>, "data": [{ "id", "email", "origin", "source_id", "created_at" }] }`.
 - Page with `after=<id of the last entry>` until `has_more` is `false`.
 - Resend allows 10 requests per second per team. Wait and retry on `429`.
-- A sending-only key can't read the list. Use the full-access key below.
+- A sending-only key can't read the list. Use the full-access key above.
 
 **Map each entry.**
 

@@ -54,4 +54,4 @@ Outside the Wizard, skip the `[STATUS]` lines, and tell the person why you stopp
 
 `transactional-emails.md` is the transactional email overview. It covers how to create a transactional email and its API key, idempotency, and the error codes. `api.md` covers the send route, including content from your code, and the checks of a send.
 
-When the `sending-transactional-emails` skill is available, read it too. Its `moving-from-other-providers.md` moves any provider's sends to a PostHog template. This skill adds what is specific to {display_name}: it finds every send, sets up the sender next to {display_name}'s DNS records, imports {display_name}'s suppression list, and hands over the key.
+When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves {display_name}'s sends to `posthog-node` with the content in the app's code instead. Where the two disagree, this skill's steps win.

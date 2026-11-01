@@ -45,7 +45,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 - `html`, `text`, and `react` content is rendered for one recipient before the send. PostHog sends it as it is.
 - A `template` site needs the template's content, because the code has only its id. `account.md` says how to get it.
 - Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
-- A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds both `'` and `"`.
+- A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds both `'` and `"`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
 
 ## Rewrite
 
@@ -72,8 +72,8 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
 - The site sends `templateKey`, `subject`, `html`, `text` when there is one, and `templateData` with the site's `variables` object, plus the subject values below.
 - The site's own `subject`, `from`, and `replyTo` win over the template's. When the site has none, use the template's: put its `from` and `replyTo` on the send, and its subject in the module.
-- The module's subject is fixed text with placeholders. When the site builds its subject from values, such as `` `Order #${order.id}` ``, write the subject in the module as `Order #{{ variables.ORDER_ID }}` and add each value to `templateData`. Never send a subject that changes per email with `templateData`: PostHog hashes the subject with the template, so each email would upload a new version of the template.
-- The template's alias, or its name in lowercase with `-` between words, becomes the `templateKey` and the module's file name.
+- The module's subject is fixed text with placeholders. When the site builds its subject from values, such as `` `Order #${order.id}` ``, write the subject in the module as `Order #{{ variables.ORDER_ID }}` and add each value to `templateData`. Never send a subject that changes per email with `templateData`: posthog-node hashes a local template's subject and content, so each email would upload a new version of the template. A send without `templateData` sends rendered content and uploads nothing.
+- The template's alias, or its name when it has no alias, becomes the `templateKey` and the module's file name: in lowercase, with each run of characters other than letters, digits, `-`, and `_` replaced by one `-`, and no `-` at either end. When two templates get the same key, add `-2`, `-3`, and so on to the later ones.
 
 **The answer.** posthog-node answers `{ data, error }` like Resend and never throws on an API error.
 
