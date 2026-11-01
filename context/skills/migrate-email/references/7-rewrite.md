@@ -21,7 +21,13 @@ Rewrite each site whose `moves` is `yes` in the plan to send with `posthog-node`
 
 ## Set up the client
 
-Install or upgrade `posthog-node` with the project's package manager, to a version that has `posthog.emails`.
+Install or upgrade `posthog-node` to its latest release with the project's package manager. `posthog.emails` alone is not enough: early releases send only a template stored in PostHog, by `templateId`. Check the installed package's types for what the moving sites need:
+
+- every site: `posthog.emails.send` takes `templateKey` with `subject` and `html` or `text`;
+- a template stored at the provider: `templateData` takes the local template's content;
+- a site that sets `cc`, `bcc`, `replyTo`, `headers`, `tags`, or `attachments`: the send takes that field.
+
+When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — posthog-node has no <capability> yet`, tell the person, and go on with the rest. When no site is left, tick the phase with `none moved` and go to the next step.
 
 Configure one server-side client for email:
 
