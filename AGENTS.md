@@ -89,7 +89,7 @@ longer exist — only some keep an alias.
 | `wizard audit session-replay` | `audit-session-replay` |
 | `wizard audit web-analytics` | *(wizard-native, not a skill here)* |
 
-**Migrate subcommands**, published as `cliEntries` with `parentCommand: migrate`. Until the wizard runs `migrate` as a family, bare `wizard migrate` keeps running `migrate-statsig`:
+**Migrate subcommands**, published as `cliEntries` with `parentCommand: migrate`. They run once the wizard runs `migrate` as a family. Until then, `wizard migrate` stays a flat command that runs `migrate-statsig`, and the wizard rejects a vendor after it:
 
 | Subcommand | Backing skill |
 |---|---|

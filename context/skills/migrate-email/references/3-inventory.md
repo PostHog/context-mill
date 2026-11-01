@@ -33,11 +33,19 @@ For each site, read the surrounding code and record:
 
 Also list every other call to the provider that is not a send, such as reading an email's status, contacts, or domains. These calls stay on the provider. Note what each one does, because a site whose code reads the status back stays on the provider too.
 
+When you find no site, stop before you write the plan file:
+
+```
+[ABORT] no email provider sends found
+```
+
 ## Classify each site
 
 Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field.
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
+
+A `template` site needs the template's content to be classified. Ask the person once for a copy of every template the sites send, from the provider's dashboard, and never write it into the plan. When the person can't give the content, the site stays, and the reason is `template content not checked`.
 
 ## Write the plan file
 

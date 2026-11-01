@@ -51,7 +51,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Before cutover
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
 
 ## Summary
 ```
@@ -72,7 +72,7 @@ suppressions_ready: true
 - `sites_rewritten`: the sites this run changed to send with PostHog. This version changes none, so it is `0`.
 - `sites_left`: the sites that stay on the provider.
 - `dns_ready`: `true` when every sending domain has a verified sender.
-- `suppressions_ready`: `true` when the suppression list was imported or was empty.
+- `suppressions_ready`: `true` when every entry of the suppression list was imported, or the list was empty.
 
 Sites that are ready to move count in `sites_found` only.
 

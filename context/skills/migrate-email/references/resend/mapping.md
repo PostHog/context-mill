@@ -12,7 +12,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `html` | `html` | Never |
 | `text` | `text` | Never |
 | `react` | `html`, rendered in the app | Never. The app renders the component |
-| `template` | a local template in the app's code | The template uses syntax beyond variables and fallbacks |
+| `template` | a local template in the app's code | Its content can't be read, it uses syntax beyond variables and fallbacks, or the app fills a variable with HTML |
 | `cc`, `bcc` | `cc`, `bcc` | An entry carries a name, such as `Jane <jane@example.com>`, or there are more than 10 |
 | `replyTo` / `reply_to` | `replyTo` / `reply_to`, as a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A single address moves as a list of one |
 | `headers` | `headers` | A header is one PostHog sets itself (`From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Sender`, `Return-Path`, `Auto-Submitted`, `DKIM-Signature`, `Received`, any `Content-*`, `X-PostHog-*`, `X-SES-*`), a name is longer than 126 characters, a value is longer than 870 characters or has a line break or a non-ASCII character, or there are more than 10 |
