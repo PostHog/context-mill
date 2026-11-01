@@ -14,9 +14,9 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `react` | `html`, rendered in the app | Never. The app renders the component |
 | `template` | a local template in the app's code | The template uses syntax beyond variables and fallbacks |
 | `cc`, `bcc` | `cc`, `bcc` | An entry carries a name, such as `Jane <jane@example.com>`, or there are more than 10 |
-| `replyTo` / `reply_to` | `replyTo` / `reply_to` | Never |
-| `headers` | `headers` | A header is one PostHog sets itself (`From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Sender`, `Return-Path`, `Auto-Submitted`, any `Content-*`, `X-PostHog-*`, `X-SES-*`), a value has a line break or a non-ASCII character, or there are more than 10 |
-| `tags` | `tags` | A name or value has characters other than ASCII letters, digits, `_`, and `-`, a name starts with `ph_`, or there are more than 10 |
+| `replyTo` / `reply_to` | `replyTo` / `reply_to`, as a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A single address moves as a list of one |
+| `headers` | `headers` | A header is one PostHog sets itself (`From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Sender`, `Return-Path`, `Auto-Submitted`, `DKIM-Signature`, `Received`, any `Content-*`, `X-PostHog-*`, `X-SES-*`), a name is longer than 126 characters, a value is longer than 870 characters or has a line break or a non-ASCII character, or there are more than 10 |
+| `tags` | `tags` | A name or value has characters other than ASCII letters, digits, `_`, and `-` or is longer than 256 characters, a name starts with `ph_`, or there are more than 10 |
 | `attachments` | `attachments` | An attachment uses `path` (a URL Resend fetches), the files can be more than 10 or more than 512 KB in total, or a file type is one mailbox providers block, such as `.exe` |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | Never. The key keeps its value |
 | `scheduledAt` / `scheduled_at` | none | Always |

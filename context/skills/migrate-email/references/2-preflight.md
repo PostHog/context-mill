@@ -18,15 +18,10 @@ Do not change any file.
 Check which PostHog MCP tools exist.
 
 - When there are no PostHog tools at all, the PostHog MCP is not connected or not signed in. Ask the person to connect it, and wait.
-- When other PostHog tools exist but `workflows-upload-email-template` and `workflows-send-email` don't, the transactional email API is not enabled for this project. Stop and tell the person: the API is in beta, and they can ask PostHog in-app to enable it for their project. Then emit:
+- When `workflows-make-email-template-transactional-prepare` and `workflows-make-email-template-transactional-execute` exist, the API is on. Record `api: on`.
+- When other PostHog tools exist but that pair doesn't, either the login lacks the `hog_flow:write` scope, or transactional email is not on for the project yet. A missing tool cannot tell these apart. Tell the person both causes, record `api: not confirmed`, and continue. The report asks them to confirm it before cutover.
 
-```
-[ABORT] transactional email api not enabled
-```
-
-- When both tools exist, the API is on. Record `api: on`.
-
-Inside the Wizard, a missing tool can mean that the login lacks its scope, so missing tools do not stop the run. Record `api: not confirmed` and continue. The report asks the person to confirm it.
+Do not call a tool that changes anything to find out.
 
 ## The sending tier
 
