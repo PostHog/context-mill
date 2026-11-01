@@ -36,4 +36,4 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 
 ## Write down
 
-Tick the phase in the plan file: `- [x] suppressions — <imported>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
+Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.

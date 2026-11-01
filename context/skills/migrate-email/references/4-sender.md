@@ -31,7 +31,15 @@ Read the provider's `account.md` first. It lists the records the provider keeps 
 
 Send from the domain of the existing `from` address, so the emails keep their sender. Ask for another domain only when the person wants one.
 
-{{> email-sender-setup}}
+- First check that the PostHog MCP has the sender tools: `integrations-email-create`, `integrations-email-verify-create`, `integrations-domain-connect-check-retrieve`, and `integrations-domain-connect-apply-url-create`. When they are missing, go to the last bullet.
+- When the `setting-up-an-email-domain` skill is available, read it for the details of the records. Where it differs from this step, this step wins.
+- Never create a sender for an address that already has one: creating it again marks it unverified. For an existing unverified sender, skip to its records.
+- Create the sender with `integrations-email-create`, then get its DNS records with `integrations-email-verify-create`.
+- PostHog never writes DNS. Call `integrations-domain-connect-check-retrieve` with the domain. When `supported` is true, give the person the URL from `integrations-domain-connect-apply-url-create`: they approve the records at their DNS host. Otherwise, give them the records that are not `success` as a table with type, name, value, and priority.
+- Always include both SPF records, merged into an existing `v=spf1` record when there is one. Never add a second `_dmarc` record when the domain already has one.
+- Call `integrations-email-verify-create` again after the records are published, at least a minute apart. `success` means verified. `failed` means fix the records, then verify again. After about 15 minutes of `pending` with every record published, tell the person that DNS is still propagating and that they can ask you to check again later, record the domain as not verified, and continue.
+- A 403 that says the person lacks permissions in the project means a project admin must verify the sender. Do not retry: record the domain as not verified, and continue.
+- When the sender tools are missing or refused, do not try other integration tools. Ask the person to add a sender on the domain in PostHog: Workflows, then Channels, then add an email sender, and follow the DNS steps (https://posthog.com/docs/workflows/configure-channels). Record the domain as not verified unless they confirm it shows as verified, and continue.
 
 ## Write down
 

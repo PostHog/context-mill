@@ -59,7 +59,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 The moved sites send through PostHog as soon as this code is deployed. Everything in this list has to be done before that deploy.
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
 
 ## After cutover
 
@@ -84,7 +84,7 @@ suppressions_ready: true
 - `sites_rewritten`: the sites this run moved to send with PostHog.
 - `sites_left`: the sites that stay on the provider.
 - `dns_ready`: `true` when every sending domain has a verified sender.
-- `suppressions_ready`: `true` when the suppression list was imported or was empty.
+- `suppressions_ready`: `true` when every entry of the suppression list was imported, or the list was empty.
 
 After the report is written, print its path:
 
