@@ -5,7 +5,7 @@ next_step: 4-sender.md
 
 # Step 3, list and classify every send
 
-List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only file you write is the plan file.
+List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only files you write are the plan file and the template files below.
 
 ## Status
 

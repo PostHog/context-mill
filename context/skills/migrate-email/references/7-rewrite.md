@@ -73,4 +73,4 @@ When a site turns out to need something `mapping.md` keeps on the provider, undo
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site with `cc` or `bcc` that a suppressed copy address now stops, each idempotency key a retry across the deploy could send twice, each new dependency, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site with `cc` or `bcc` that a suppressed copy address now stops, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.
