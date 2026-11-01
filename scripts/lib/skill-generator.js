@@ -55,18 +55,16 @@ function loadYaml(configPath) {
 // A line that is exactly `{{> name}}` is replaced at build time with the body
 // of `<configDir>/shared/name.md` (frontmatter stripped), so shared prose like
 // the MCP tool-calling grammar lives in one canonical file and every skill that
-// includes it stays in sync. The directive's indentation applies to every line
-// of the partial, so a partial can nest under a step.
-const PARTIAL_DIRECTIVE = /^([ \t]*)\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
+// includes it stays in sync.
+const PARTIAL_DIRECTIVE = /^[ \t]*\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
 
 function expandPartials(body, configDir) {
-    return body.replace(PARTIAL_DIRECTIVE, (_match, indent, name) => {
+    return body.replace(PARTIAL_DIRECTIVE, (_match, name) => {
         const partialPath = path.join(configDir, 'shared', `${name}.md`);
         if (!fs.existsSync(partialPath)) {
             throw new Error(`Partial include {{> ${name}}} references missing file ${partialPath}`);
         }
-        const partial = matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
-        return partial.replace(/^(?=.)/gm, indent);
+        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
     });
 }
 
@@ -596,29 +594,12 @@ function generateFrontmatter(skill, version) {
     return '---\n' + yaml.dump(frontmatter) + '---\n\n';
 }
 
-/**
- * Copy the markdown files of a variant's own folder, `references/<variant-id>/`,
- * into the bundle. A group keeps what differs per vendor or platform there, so
- * each bundle ships only its own variant's files. Returns their listing entries.
- */
-function copyVariantReferences({ sourceDir, targetDir, variantId, configDir }) {
-    if (!fs.existsSync(sourceDir)) return [];
-
-    const files = fs.readdirSync(sourceDir, { withFileTypes: true })
+function markdownReferenceNames(dir, prefix) {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir, { withFileTypes: true })
         .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
-        .sort((a, b) => a.name.localeCompare(b.name));
-    fs.mkdirSync(targetDir, { recursive: true });
-
-    return files.map(file => {
-        const parsed = matter(fs.readFileSync(path.join(sourceDir, file.name), 'utf8'));
-        const body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
-        fs.writeFileSync(path.join(targetDir, file.name), body, 'utf8');
-        const heading = body.match(/^#\s+(.+)$/m)?.[1];
-        return {
-            filename: `${variantId}/${file.name}`,
-            description: parsed.data.description || heading || file.name,
-        };
-    });
+        .map(entry => path.posix.join(prefix, entry.name))
+        .sort((a, b) => a.localeCompare(b));
 }
 
 /**
@@ -694,21 +675,22 @@ async function generateSkill({
     // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
-        const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
-            .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
-            .sort((a, b) => a.name.localeCompare(b.name));
+        const localReferences = [
+            ...markdownReferenceNames(sourceReferencesDir, ''),
+            ...markdownReferenceNames(path.join(sourceReferencesDir, skill._shortId), skill._shortId),
+        ];
 
         const refsConfig = skill._references || {};
 
         for (const reference of localReferences) {
-            const sourcePath = path.join(sourceReferencesDir, reference.name);
+            const sourcePath = path.join(sourceReferencesDir, reference);
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
             let body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
             const headingMatch = body.match(/^#\s+(.+)$/m);
-            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
-            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
@@ -726,31 +708,22 @@ async function generateSkill({
                 ? `---\n${yaml.dump(emittedFrontmatter, { lineWidth: -1 })}---\n\n${body}`
                 : body;
 
-            fs.writeFileSync(
-                path.join(referencesDir, reference.name),
-                fileContent,
-                'utf8'
-            );
+            const targetPath = path.join(referencesDir, reference);
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.writeFileSync(targetPath, fileContent, 'utf8');
 
             references.push({
-                filename: reference.name,
+                filename: reference,
                 description: displayDescription,
             });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
-                    filename: reference.name,
+                    filename: reference,
                     title: displayTitle,
                 });
             }
         }
-
-        references.push(...copyVariantReferences({
-            sourceDir: path.join(sourceReferencesDir, skill._shortId),
-            targetDir: path.join(referencesDir, skill._shortId),
-            variantId: skill._shortId,
-            configDir,
-        }));
     }
 
     // Helper to process a doc entry (string URL or {url, title} object).

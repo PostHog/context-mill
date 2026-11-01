@@ -66,17 +66,14 @@ describe('migrate-email skill', () => {
         if (outputDir) rmSync(outputDir, { recursive: true, force: true });
     });
 
-    it.each(['migrate-email-resend', 'migrate-statsig'])(
-        'builds %s as a bundle whose every reference path resolves',
-        async (skillId) => {
-            outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+    it('builds migrate-email-resend as a bundle whose every reference path resolves', async () => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
-            const skillDir = await buildSkill(skillId, outputDir);
+        const skillDir = await buildSkill('migrate-email-resend', outputDir);
 
-            expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toMatch(new RegExp(`^---\\nname: ${skillId}\\n`));
-            expect(unresolvedReferences(skillDir)).toEqual([]);
-        },
-    );
+        expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toMatch(/^---\nname: migrate-email-resend\n/);
+        expect(unresolvedReferences(skillDir)).toEqual([]);
+    });
 
     it('bundles the transactional email docs and the Resend files', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
