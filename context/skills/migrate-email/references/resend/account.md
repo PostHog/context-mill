@@ -30,7 +30,7 @@ A site whose template the person moves to PostHog needs the template's content, 
 
 **Read from the API.** `GET https://api.resend.com/templates/{id or alias}` with `Authorization: Bearer $RESEND_FULL_ACCESS_API_KEY`. The answer holds `alias`, `name`, `subject`, `from`, `reply_to`, `html`, `text`, and `variables`, a list of `{ key, type, fallback_value }`.
 
-The content goes only into the temporary file Step 3 saves. Never write it into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
 ## Suppression list
 
