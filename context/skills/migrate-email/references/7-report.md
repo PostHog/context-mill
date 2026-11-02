@@ -51,7 +51,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Before cutover
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, each `template` site that moves with the template the person makes in PostHog and makes transactional, and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
 
 ## Summary
 ```

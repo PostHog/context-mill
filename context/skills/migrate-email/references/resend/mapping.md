@@ -12,12 +12,12 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `html` | `html` | Never |
 | `text` | `text` | Never |
 | `react` | `html`, rendered in the app | Never. The app renders the component |
-| `template` | a local template in the app's code | Its content can't be read, it uses syntax beyond variables and fallbacks, or the app fills a variable with HTML |
-| `cc`, `bcc` | `cc`, `bcc` | An entry carries a name, such as `Jane <jane@example.com>`, or there are more than 10 |
+| `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
+| `cc`, `bcc` | none | Always |
 | `replyTo` / `reply_to` | `replyTo` / `reply_to`, as a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A single address moves as a list of one |
-| `headers` | `headers` | A header is one PostHog sets itself (`From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Sender`, `Return-Path`, `Auto-Submitted`, `DKIM-Signature`, `Received`, any `Content-*`, `X-PostHog-*`, `X-SES-*`), a name is longer than 126 characters, a value is longer than 870 characters or has a line break or a non-ASCII character, or there are more than 10 |
-| `tags` | `tags` | A name or value has characters other than ASCII letters, digits, `_`, and `-` or is longer than 256 characters, a name starts with `ph_`, or there are more than 10 |
-| `attachments` | `attachments` | An attachment uses `path` (a URL Resend fetches), the files can be more than 10 or more than 512 KB in total, or a file type is one mailbox providers block, such as `.exe` |
+| `headers` | none | Always |
+| `tags` | none | Always |
+| `attachments` | none | Always |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | Never. The key keeps its value |
 | `scheduledAt` / `scheduled_at` | none | Always |
 | `topicId` / `topic_id` | none | Always |
@@ -43,4 +43,6 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 ## Content
 
 - `html`, `text`, and `react` content is rendered for one recipient before the send. PostHog sends it as it is.
-- A `template` site needs the template's content from the Resend dashboard, because the code has only its id. PostHog's Liquid escapes HTML in a variable's value. A variable the app fills with HTML keeps the site on Resend.
+- A `template` site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
+- The check needs the template's content from the Resend dashboard, because the code has only its id. In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`. PostHog's Liquid escapes HTML in a variable's value, so a variable the app fills with HTML keeps the site on Resend.
+- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `template` stays on Resend.

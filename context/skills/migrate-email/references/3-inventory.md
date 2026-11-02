@@ -45,7 +45,7 @@ Go through `mapping.md` field by field. A site **moves** when PostHog can send e
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
-A `template` site needs the template's content to be classified. Ask the person once to copy every template the sites send from the provider's dashboard into files outside the repository, and to tell you where they saved them. Read those files, and never write the content into the plan. When the person can't give the content, the site stays, and the reason is `template content not checked`.
+A `template` site moves only to a template made in PostHog, and the person makes that template. Ask the person once, for every template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`. For each template they move, ask them to copy it from the provider's dashboard into a file outside the repository, and to tell you where they saved it. Read those files to classify the site, and never write the content into the plan. When the person can't give the content, the site stays, and the reason is `template content not checked`.
 
 ## Write the plan file
 
