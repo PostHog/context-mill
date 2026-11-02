@@ -20,7 +20,7 @@ A domain verified at Resend carries these records. Keep all of them until the cu
 
 ## Full-access key
 
-The app's own Resend key is usually a sending-only key, and it can't read templates or the suppression list. When the person chooses the API over the dashboard, ask them to create a full-access key in Resend, store it in `RESEND_FULL_ACCESS_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, ask the person to delete the key in Resend and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own Resend key is usually a sending-only key, and it can't read templates or the suppression list. When the person chooses the API over the dashboard, ask them to create a full-access key in Resend, store it in `RESEND_FULL_ACCESS_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Resend and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 ## Template content
 

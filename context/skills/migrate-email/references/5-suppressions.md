@@ -17,7 +17,7 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
 
-When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) before cutover.
+When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, ask about the full-access key as the last section says, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) before cutover.
 
 ## Get the list
 
@@ -38,4 +38,6 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 
 Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
 
-When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. Note in the plan whether they did.
+## The full-access key
+
+Every way out of this step ends here. When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. When the import stopped partway, ask only once the person decides not to repeat it. Note in the plan whether they did.
