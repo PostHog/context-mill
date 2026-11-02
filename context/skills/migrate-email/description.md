@@ -31,7 +31,7 @@ The plan file `.posthog-email-migration-plan.md` lives at the project root. Step
 - Change send code only in Step 7, and fix it only in Step 8: the sites that move, the helpers, callers, and tests they need, and other `posthog-node` code that the upgrade breaks. Leave every site that stays as it is.
 - Never touch DNS or the {display_name} account. Give the person the records and the links, and let them make the change.
 - Never remove the {display_name} package or its API key. The report tells the person when to remove them.
-- Never create, upload, or edit a template in PostHog. A moved local template uploads on its first send.
+- Never create, upload, or edit a template in PostHog. The person makes each template that moves to PostHog.
 - Never write a recipient's email address into a file in the repository, the plan, or the report. Count addresses instead.
 - Keep keys in environment variables. Never hardcode a key, and never ask the person to paste one into the chat.
 - Do not commit. The person reviews the diff and commits.
@@ -54,4 +54,4 @@ Outside the Wizard, skip the `[STATUS]` lines, and tell the person why you stopp
 
 `transactional-emails.md` is the transactional email overview. It covers how to create a transactional email and its API key, idempotency, and the error codes. `api.md` covers the send route, including content from your code, and the checks of a send.
 
-When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves {display_name}'s sends to `posthog-node` with the content in the app's code instead. Where the two disagree, this skill's steps win.
+When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves {display_name}'s sends to `posthog-node`, with the content in the app's code, or to a template the person makes in PostHog. Where the two disagree, this skill's steps win.

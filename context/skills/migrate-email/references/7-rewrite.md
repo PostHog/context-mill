@@ -22,11 +22,10 @@ Rewrite each site whose `moves` is `yes` in the plan to send with `posthog-node`
 
 ## Set up the client
 
-Install or upgrade `posthog-node` to its latest release with the project's package manager. `posthog.emails` alone is not enough: early releases send only a template stored in PostHog, by `templateId`. Check the installed package's types for what the moving sites need:
+Install or upgrade `posthog-node` to its latest release with the project's package manager. `posthog.emails` alone is not enough: early releases send only a template made in PostHog, by `templateId`. Check the installed package's types for what the moving sites need:
 
-- every site: `posthog.emails.send` takes `templateKey` with `subject` and `html` or `text`;
-- a template stored at the provider: `templateData` takes the local template's content;
-- a site that sets `cc`, `bcc`, `replyTo`, `headers`, `tags`, or `attachments`: the send takes that field.
+- a site with `html`, `text`, or a component: `posthog.emails.send` takes `templateKey` with `subject` and `html` or `text`;
+- a site that sets `replyTo`: the send takes `replyTo`.
 
 When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — posthog-node has no <capability> yet`, tell the person, and go on with the rest. When no site is left, tick the phase with `none moved` and go to the next step.
 
@@ -61,16 +60,16 @@ PostHog shows each email on the person the send names with `distinctId`. Use the
 
 For each site that moves, in plan order:
 
-- Rewrite the call as the provider's `mapping.md` says, for the site's content form: `html` and `text` content, a component the app renders, or a template stored at the provider.
-- Give each send a `templateKey` that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key. A template stored at the provider keeps the key `mapping.md` gives it.
-- A template stored at the provider becomes a module that exports `subject` and `html`, and `text` when it has one, in an `emails/` folder next to the server code. Write it from the file the plan lists for the site, never from memory. The site imports the module and passes `templateData`.
+- Rewrite the call as the provider's `mapping.md` says, for the site's content form: `html` and `text` content, a component the app renders, or a template made in PostHog.
+- Give each send with rendered content a `templateKey` that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key.
+- A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
-- Never add a field that the old call didn't set, apart from `templateKey`, `distinctId`, and the template defaults `mapping.md` names.
+- Never add a field that the old call didn't set, apart from `templateKey`, `templateId`, and `distinctId`. `templateData` takes the place of the provider's template variables.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site with `cc` or `bcc` that a suppressed copy address now stops, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`, or its `templateId` for a template made in PostHog. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.
