@@ -14,7 +14,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `react` | `html`, rendered in the app | Never. The app renders the component |
 | `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
 | `cc`, `bcc` | none | Always |
-| `replyTo` / `reply_to` | `replyTo` / `reply_to`, as a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A single address moves as a list of one |
+| `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always |
 | `tags` | none | Always |
 | `attachments` | none | Always |

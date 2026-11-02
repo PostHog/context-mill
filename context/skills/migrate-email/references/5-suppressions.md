@@ -37,3 +37,5 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 ## Write down
 
 Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
+
+When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. Note in the plan whether they did.
