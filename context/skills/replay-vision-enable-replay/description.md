@@ -10,8 +10,10 @@ Enable recording with the `products-enable` tool (via `exec`:
 It is idempotent and server-owned; `"enabled"` and `"already_enabled"` are both
 success. Never try to flip recording through any other endpoint.
 
-A missing tool means the setting is **unknown**: you cannot see it. A
-permission rejection means it stays **off** until a project admin turns it on.
+A missing tool or a permission rejection means this token cannot turn replay
+on, not that it is off. Read the real setting with `project-get`
+(`session_recording_opt_in`): `true` is **on**, `false` is **off** until a
+project admin turns it on, and a failed read is **unknown**.
 
 ## Client half
 
@@ -39,7 +41,8 @@ A code change made here — this step's edit, or an SDK install earlier in the
 run — records nothing until the user deploys it. When the init reads the
 project key or host from environment variables, name them (never their
 values): a deploy records nothing until they are set in production. Hand off
-the setting (on, off, or unknown), whether code changed (and which files),
+the setting (on, off, or unknown), whether code changed (and which files to
+deploy, without env files or anything gitignored),
 the env vars, and both counts with `window_days`.
 
 The framework docs below show what this framework's init looks like, so you

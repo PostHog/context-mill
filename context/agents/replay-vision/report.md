@@ -28,8 +28,9 @@ observation, from the enable-replay handoff, before anything else:
   "Record user sessions" under Settings → Session replay.
 - **This run changed code**: lead with "Deploy this change: session replay
   only records from code your users run, so your scanners start when the
-  first recording arrives." Name the files the run changed, and the env vars
-  that must be set in production. When replay is also off, list this second,
+  first recording arrives." Name the files to deploy from the handoff (never
+  an env file or anything gitignored), and the env vars that must be set in
+  production. When replay is also off, list this second,
   after the error.
 - **Nothing changed, but the project has no recordings yet**: don't ask for a
   deploy. Say the scanners start with the first recording. Add that if people

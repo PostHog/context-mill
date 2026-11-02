@@ -22,15 +22,14 @@ Server half: call `products-enable` (via `exec`: `info products-enable`, then
 `call products-enable {"products": ["session_replay"]}`). It is idempotent and
 server-owned; `"enabled"` and `"already_enabled"` are both success.
 
-- **Tool missing on this deploy**: you cannot tell whether replay is on. Hand
-  off the replay setting as **unknown**, with a follow-up to check "Record
-  user sessions" under Settings → Session replay. Continue with the client
-  half.
-- **Permission rejection**: the setting stays as it is, and this token cannot
-  turn it on. Hand off the replay setting as **off**, with a follow-up for a
-  project admin to turn on "Record user sessions". Scanners created later sit
-  idle until recording is on, then start working with no re-setup. Continue
-  with the client half.
+- **Tool missing or permission rejection**: this token cannot turn replay on,
+  but it may already be on. Read the real setting: call `project-get` and read
+  `session_recording_opt_in`. `true` hands off the setting as **on**, `false`
+  as **off** (with a follow-up for a project admin to turn on "Record user
+  sessions" under Settings → Session replay), and a failed read as
+  **unknown**. Never hand off **off** without reading `false`. Scanners
+  created while replay is off sit idle until recording is on, then start
+  working with no re-setup. Continue with the client half.
 
 Client half, web apps only: check the `posthog.init(...)` options.
 `disable_session_recording: true` cancels the server flip — remove it (or set
@@ -62,7 +61,9 @@ trust it:
 
 - **Replay setting**: on, off, or unknown, and why.
 - **Code changed**: yes or no — yes when this run installed or initialized
-  the SDK (upstream handoffs) or you edited the init. Name the files.
+  the SDK (upstream handoffs) or you edited the init. Name the files to
+  deploy. Leave out env files and anything gitignored: they are not deployed,
+  and their variables go under env vars.
 - **Env vars**: when this run wrote the init and it reads the project key or
   host from environment variables, name those variables, never their values.
   They are usually in a gitignored env file, so a deploy records nothing until
