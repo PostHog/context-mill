@@ -32,7 +32,7 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 - Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
 - Repeating an import is safe: an address already on the list stays on it.
 - Never print the addresses, and never write them into the plan or the report. Count them.
-- When a call fails, read its error and fix the call. When it fails again, stop the import and record how many entries you imported.
+- When a call fails, read its error and fix the call. When it fails again, stop the import, record how many entries you imported, and ask the person once whether to repeat it now. Repeat it when they say yes.
 
 ## Write down
 
@@ -40,4 +40,4 @@ Tick the phase in the plan file only when every entry is imported: `- [x] suppre
 
 ## The full-access key
 
-Every way out of this step ends here. When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. When the import stopped partway, ask only once the person decides not to repeat it. Note in the plan whether they did.
+Every way out of this step ends here. When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. After a partial import, ask once the person said no to a repeat, or the repeat ended. Note in the plan whether they did.

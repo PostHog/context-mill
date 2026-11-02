@@ -39,7 +39,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
     host: process.env.POSTHOG_HOST,
     secretKey: process.env.POSTHOG_PROJECT_SECRET_API_KEY,
     enableLocalEvaluation: false,
-    migratedFrom: '<provider>',
+    migratedFrom: '<provider>', // only when the client options take it
 })
 ```
 
