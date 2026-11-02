@@ -12,12 +12,12 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `html` | `html` | Never |
 | `text` | `text` | Never |
 | `react` | `html`, rendered in the app | Never. The app renders the component |
-| `template` | a local template in the app's code | Its content can't be read, it uses syntax beyond variables and fallbacks, or the app fills a variable with HTML |
-| `cc`, `bcc` | `cc`, `bcc` | An entry carries a name, such as `Jane <jane@example.com>`, or there are more than 10 |
+| `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
+| `cc`, `bcc` | none | Always |
 | `replyTo` / `reply_to` | `replyTo` / `reply_to`, as a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A single address moves as a list of one |
-| `headers` | `headers` | A header is one PostHog sets itself (`From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Sender`, `Return-Path`, `Auto-Submitted`, `DKIM-Signature`, `Received`, any `Content-*`, `X-PostHog-*`, `X-SES-*`), a name is longer than 126 characters, a value is longer than 870 characters or has a line break or a non-ASCII character, or there are more than 10 |
-| `tags` | `tags` | A name or value has characters other than ASCII letters, digits, `_`, and `-` or is longer than 256 characters, a name starts with `ph_`, or there are more than 10 |
-| `attachments` | `attachments` | An attachment uses `path` (a URL Resend fetches), the files can be more than 10 or more than 512 KB in total, or a file type is one mailbox providers block, such as `.exe` |
+| `headers` | none | Always |
+| `tags` | none | Always |
+| `attachments` | none | Always |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold a space or a non-ASCII character, or be longer than 255 characters. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
 | `scheduledAt` / `scheduled_at` | none | Always |
 | `topicId` / `topic_id` | none | Always |
@@ -43,9 +43,13 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 ## Content
 
 - `html`, `text`, and `react` content is rendered for one recipient before the send. PostHog sends it as it is.
-- A `template` site needs the template's content, because the code has only its id. `account.md` says how to get it.
-- Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
+- A `template` site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
+- The check needs the template's content, because the code has only its id. `account.md` says how to get it.
+- In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and the name keeps its case. `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`, and a variable with a `fallback_value` in the template's definition gets the same `default`. Quote a fallback that holds a `'` with `"` instead. Liquid has no escape character in a quoted value.
+- Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
+- Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output, and such a variable keeps the site on Resend. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
 - A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds both `'` and `"`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
+- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `template` stays on Resend.
 
 ## Rewrite
 
@@ -57,29 +61,19 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 
 - `to: ['jane@example.com']` becomes `to: 'jane@example.com'`. A value that is a list with one entry becomes that entry.
 - When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers, so the type keeps a second address out. Never send one email per address in a loop, and never drop the addresses after the first.
-- `from`, `subject`, `html`, `text`, `replyTo`, `cc`, `bcc`, `headers`, and `tags` keep their names and values.
-- `attachments` keep `filename`, `content`, `contentType`, and `contentId`.
-- Each send gets a `templateKey`, as Step 7 says.
+- `from`, `subject`, `html`, `text`, and `replyTo` keep their names and values.
+- A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **React.** `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
 
 **HTTP.** A `fetch` or `axios` call to `https://api.resend.com/emails` becomes `posthog.emails.send` with the camelCase fields: `reply_to` becomes `replyTo`, and the `Idempotency-Key` header becomes `idempotencyKey`. Code that read the response status reads `error` instead.
 
-**Templates stored at Resend.** The template becomes a module in the app's code, in the format of the send skill's local template: a `subject` and an `html` string, and a `text` string when the template has one.
-
-- `{{{NAME}}}` becomes `{{ variables.NAME }}`. The name keeps its case.
-- `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`. A variable with a `fallback_value` in the template's definition gets the same `default`. Quote a fallback that holds a `'` with `"` instead. Liquid has no escape character in a quoted value.
-- Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
-- The site sends `templateKey`, `subject`, `html`, `text` when there is one, and `templateData` with the site's `variables` object, plus the subject values below.
-- The site's own `subject`, `from`, and `replyTo` win over the template's. When the site has none, use the template's: put its `from` and `replyTo` on the send, and its subject in the module.
-- The module's subject is fixed text with placeholders. When the site builds its subject from values, such as `` `Order #${order.id}` ``, write the subject in the module as `Order #{{ variables.ORDER_ID }}` and add each value to `templateData`. Never send a subject that changes per email with `templateData`: posthog-node hashes a local template's subject and content, so each email would upload a new version of the template. A send without `templateData` sends rendered content and uploads nothing.
-- The template's alias, or its name when it has no alias, becomes the `templateKey` and the module's file name: in lowercase, with each run of characters other than letters, digits, `-`, and `_` replaced by one `-`, and no `-` at either end. When that leaves nothing, use the template's id the same way. When the key is already taken by another email of this run, add `-2`, `-3`, and so on.
+**Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `variables` object. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
 **The answer.** posthog-node answers `{ data, error }` like Resend and never throws on an API error.
 
 - `data.id` is PostHog's message id. Code that logs it or stores it for the app's own use keeps working.
 - `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working. `error.message` and `error.statusCode` keep their names.
-- Resend takes a send to a suppressed address and drops it later. PostHog refuses it with `error.code` `recipient_suppressed` (name `validation_error`). When the site sets no `cc` or `bcc`, and it throws, retries, or reports a failure on any error, add `if (error?.code === 'recipient_suppressed')` before that branch and handle it the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
-- PostHog also refuses the whole send when a `cc` or `bcc` address is suppressed, where Resend still delivered to `to`. Give a site with `cc` or `bcc` no such branch: the error keeps failing the site, and the report says that a suppressed copy address now stops the email, and that a job runner that retries the site repeats the refusal, each attempt using the project's sending cap.
+- Resend takes a send to a suppressed address and drops it later. PostHog refuses it with `error.code` `recipient_suppressed` (name `validation_error`). When the site throws, retries, or reports a failure on any error, add `if (error?.code === 'recipient_suppressed')` before that branch and handle it the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
 **The Resend client.** Keep `new Resend(...)` and its import while any site or other call still uses it. When nothing uses it, remove the import and the client, and keep the `resend` package and its key: the person removes them after the cutover.
