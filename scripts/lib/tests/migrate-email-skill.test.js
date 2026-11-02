@@ -44,7 +44,7 @@ async function buildSkill(skillId, outputDir) {
 function markdownFiles(dir) {
     return readdirSync(dir, { withFileTypes: true, recursive: true })
         .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-        .map((entry) => join(entry.parentPath, entry.name));
+        .map((entry) => join(entry.parentPath ?? entry.path, entry.name));
 }
 
 function unresolvedReferences(skillDir) {
