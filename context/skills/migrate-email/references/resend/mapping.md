@@ -55,6 +55,8 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 
 How a site that moves is written with `posthog-node`. Step 7 says when to use each part.
 
+**The PostHog client.** Set `migratedFrom: 'resend'` on the `posthog-node` client that Step 7 configures.
+
 **The call.** `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload.
 
 **The fields.**
