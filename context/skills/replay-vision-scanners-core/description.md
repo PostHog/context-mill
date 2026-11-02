@@ -38,7 +38,8 @@ Each scanner task carries a brief: a locked prompt scaffold with named blanks,
 a locked `scanner_type`, `sampling_rate`, and `model`, plus the blanks you
 write from the repo — the `name`, the `query` where the brief has one, and
 the prompt blanks. Fill only the named blanks. Don't reword the scaffold,
-don't invent extra scanners, don't change sampling rates or the model. The
+don't invent extra scanners, don't change the model, and set sampling rates
+only as the brief and the volume tiers below say. The
 scaffold carries the quality bar ("unambiguous on screen", what to report);
 your blanks carry everything product-specific.
 
@@ -63,32 +64,45 @@ prompt beats a specific-but-fabricated one.
 ## Pick the tier from the project's volume
 
 Filters exist to keep a busy project's spend down. On a small project they
-only hide sessions, so how much the project records decides the query. Read
-it once: `vision-scanners-estimate` with no `query`, then sessions per month
-= `matched_sessions_in_window` / `window_days` × 30. Reuse the enable-replay
-handoff's count when it gives one.
+only hide sessions, so how much the project records decides the query. Take
+two numbers from the enable-replay handoff, and read them yourself when it
+does not give them:
 
-- **No recordings yet**: the volume is unknown, and most such projects stay
-  small. Use your brief's low-volume query (no filters) at `sampling_rate`
-  1.0, and add `"free_only": true`: the scanner then never adds to the bill,
-  and pauses if the organization's free credits run out. Say in your handoff
-  that the volume was unknown.
+- **Recordings**: every recording in the last 30 days, with `execute-sql`:
+  `SELECT uniq(session_id) AS recordings FROM session_replay_events WHERE start_time >= now() - INTERVAL 30 DAY`.
+- **Sessions per month**: `vision-scanners-estimate` with no `query`, then
+  `matched_sessions_in_window` / `window_days` × 30. It counts only sessions
+  long enough to scan, which is what a scanner can watch.
+
+Then pick the tier:
+
+- **No recordings yet** (recordings is 0): the volume is unknown, and most
+  such projects stay small. Use your brief's low-volume query (no filters)
+  at `sampling_rate` 1.0, with `"free_only": true`. Say in your handoff that
+  the volume was unknown.
 - **Low volume** (under 250 sessions a month, about what the free credits
   can watch): your brief's low-volume query, with no filters, so nothing
-  worth seeing is filtered away. Add `"free_only": true`: with no filters,
+  worth seeing is filtered away, and `"free_only": true`: with no filters,
   spend grows with traffic, and this keeps the scanner off the paid limit
   that the organization's own scanners need. Set `sampling_rate` to
-  `min(1, share × free_left / (sessions_per_month ×
-  credits_per_observation))`, rounded down to two decimals. `share` is in
-  your brief. `free_left` is `free_only_monthly_credits_left` and
-  `credits_per_observation` comes from the same estimate of this scanner's
-  query: the free credits still left after what the organization already
-  used and its other free-only scanners. The three scanners' shares add up
-  to 1, so together they fit what is left. When `free_left` is 0, create the
-  scanner at `sampling_rate` 0.1 and say in your handoff that it waits until
-  the free credits reset.
+  `min(1, share × free_pool / (sessions_per_month ×
+  credits_per_observation))`, rounded down to two decimals, and never below
+  0.01. `share` is in your brief, and `credits_per_observation` comes from
+  the estimate of this scanner's query. `free_pool` is the monthly free
+  credits (`free_monthly_credits` from `vision-quota-get`) minus the
+  `estimated_monthly_credits` of the organization's other enabled
+  `free_only` scanners. Leave out scanners this setup made on an earlier run
+  (they match a brief's re-run test), so a re-run does not shrink its own
+  rates. When `free_pool` is 0 or less, use 0.01 and say in your handoff that
+  other free-only scanners already claim the free credits. The three
+  scanners' shares add up to 1, so together they fit the pool.
 - **High volume** (250 sessions a month or more): your brief's targeted
-  query and sampling rate, checked against real sessions as below.
+  query and sampling rate, checked against real sessions as below, with
+  `"free_only": false`.
+
+For a `free_only` scanner, say in your handoff that it pauses when the
+organization's free credits run out, and that turning off "Free credits
+only" on the scanner page keeps it scanning.
 
 These rates are the brief's locked rates for each tier. The
 size-before-you-ship check above still applies to all of them. A brief that
@@ -112,15 +126,21 @@ Ground the paths in real sessions when the project records any. Read the
 pages people actually visit with `execute-sql`:
 
 ```sql
-SELECT path(url) AS page, uniq(session_id) AS sessions
+SELECT
+    concat(path(url), if(startsWith(fragment(url), '/'), concat('#', fragment(url)), '')) AS page,
+    uniq(session_id) AS sessions
 FROM session_replay_events
 ARRAY JOIN all_urls AS url
-WHERE start_time >= now() - INTERVAL 7 DAY
+WHERE start_time >= now() - INTERVAL 30 DAY
 GROUP BY page
-HAVING sessions >= 5
 ORDER BY sessions DESC
 LIMIT 100
 ```
+
+A hash-routed app shows its pages after `#` (`/#/booking`), so anchor those
+regexes on the fragment: `^https?://[^/]+/#/booking(/|\?|$)`. If the query
+returns no rows, treat the project as having no recordings and write the
+regexes from the repo's routes.
 
 Map the flow you found in the repo onto these real paths — a mount prefix, a
 locale segment, or a public route that differs from the file name is common
@@ -181,6 +201,17 @@ in place with `vision-scanners-update` — fresh blanks **including the
 `name`** (this is how legacy fixed-name scanners upgrade to the customized
 form) — instead of creating a duplicate. Leave `enabled` as it is: a paused
 scanner was paused by a person, and setup must not re-arm it.
+
+On an update, keep what a person may have tuned:
+
+- **`credit_limit`**: never change it. Setup never sets one, so it is always
+  the user's.
+- **Same tier as before**: keep its `sampling_rate` and `free_only`. Read the
+  earlier tier from the scanner itself: `free_only` with no filters is a low
+  tier; any filter is the high tier.
+- **The tier changed** (the project grew past 250 sessions a month, or
+  shrank under it): write the new tier's query, `sampling_rate`, and
+  `free_only`, and say so in your handoff.
 
 **Never blind-overwrite a user's scanner.** A scanner that fails the
 three-part test is theirs, whatever it is named — leave it untouched. If it
