@@ -44,7 +44,16 @@ Emit `[STATUS] Enabling session replay`.
 
 Install and follow `replay-vision-enable-replay`. Pure backend or mobile app with no web surface: nothing records browser sessions here. Say so, record it as a follow-up, and continue - scanner creation may still be skipped in STEP 4 for the same reason.
 
-Then note three facts for STEP 5: whether the replay setting is on, whether this run changed code (and which files), and how many sessions the project recorded recently (`vision-scanners-estimate` with no `query`, read `matched_sessions_in_window`). Changed code records nothing until the user deploys it.
+The replay setting is **on** when `products-enable` succeeds, **off** when it is rejected for permission (only a project admin can turn it on), and **unknown** when the tool is missing. Continue to the client half in every case.
+
+Then note these facts for STEP 5:
+
+- The replay setting: on, off, or unknown.
+- Whether this run changed code, and which files. When the init reads the project key or host from environment variables, name them, never their values: a deploy records nothing until they are set in production.
+- **Recordings**: every recording in the last 30 days, with `execute-sql`: `SELECT uniq(session_id) AS recordings FROM session_replay_events WHERE start_time >= now() - INTERVAL 30 DAY`. "Unknown" if it fails.
+- **Scannable sessions**: `vision-scanners-estimate` with no `query`, read `matched_sessions_in_window` and `window_days`. It counts only sessions long enough to scan, so it can read 0 on a site with short visits. "Unknown" if it fails.
+
+Changed code records nothing until the user deploys it.
 
 ### STEP 3: Load the scanner mechanics and size before you ship
 
@@ -77,10 +86,11 @@ Emit `[STATUS] Wrapping up`.
 Write the report to `./posthog-replay-vision-report.md` (the wizard shows this file at the end of the run), then summarize it for the user. Open with what still blocks the first observation, before anything else:
 
 - **Session replay is off**: lead with it as an error, not a follow-up - no scanner runs until a project admin turns on "Record user sessions" under Settings → Session replay.
-- **This run changed code**: lead with "Deploy this change: session replay only records from code your users run, so your scanners start when the first recording arrives." Name the changed files, and say the scanners cost nothing until then.
-- **Nothing changed, but the project has no recordings yet**: don't ask for a deploy. Say the scanners start with the first recording and cost nothing until then, and that if people already use the app, the version they run may not include the PostHog SDK yet.
+- **The replay setting is unknown**: don't call it off. Ask the user to check "Record user sessions" under Settings → Session replay.
+- **This run changed code**: lead with "Deploy this change: session replay only records from code your users run, so your scanners start when the first recording arrives." Name the changed files and the env vars to set in production. When replay is also off, list this second, after the error.
+- **Nothing changed, but the project has no recordings yet**: don't ask for a deploy. Say the scanners start with the first recording, and that if people already use the app, the version they run may not include the PostHog SDK yet.
 
-Say session replay is recording only when the project already has recordings. Then cover, briefly and concretely:
+Say the scanners cost nothing until recordings arrive only when the recordings count is 0 or unknown; when recordings exist, they start scanning, and spending, right away. Say session replay is recording only when the project already has recordings. Then cover, briefly and concretely:
 
 - Each scanner created or updated: its name, what it watches, its query scope, and its estimated monthly credit spend.
 - Anything skipped or deferred, with the reason.

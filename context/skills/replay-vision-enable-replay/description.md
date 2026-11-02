@@ -10,6 +10,9 @@ Enable recording with the `products-enable` tool (via `exec`:
 It is idempotent and server-owned; `"enabled"` and `"already_enabled"` are both
 success. Never try to flip recording through any other endpoint.
 
+A missing tool means the setting is **unknown**: you cannot see it. A
+permission rejection means it stays **off** until a project admin turns it on.
+
 ## Client half
 
 Only web apps record browser sessions. In the `posthog.init(...)` options,
@@ -22,14 +25,22 @@ init, never add new instrumentation, never touch anything else.
 
 ## What actually records
 
-Both halves on does not mean recordings arrive. Read the project's recent
-recording count once with `vision-scanners-estimate` and no `query`
-(`matched_sessions_in_window`, measured over `window_days`). A code change
-made here — this step's edit, or an SDK install earlier in the run — records
-nothing until the user deploys it. Hand off whether the setting is on,
-whether code changed (and which files), and the count, so the report can tell
-the user to deploy when that is what stands between them and their first
-recording.
+Both halves on does not mean recordings arrive. Read two counts:
+
+- **Recordings**: every recording in the last 30 days, however short, with
+  `execute-sql`:
+  `SELECT uniq(session_id) AS recordings FROM session_replay_events WHERE start_time >= now() - INTERVAL 30 DAY`.
+- **Scannable sessions**: `vision-scanners-estimate` with no `query`, read
+  `matched_sessions_in_window` and `window_days`. It counts only sessions long
+  enough to scan, so a site with short visits can read 0 here and still
+  record.
+
+A code change made here — this step's edit, or an SDK install earlier in the
+run — records nothing until the user deploys it. When the init reads the
+project key or host from environment variables, name them (never their
+values): a deploy records nothing until they are set in production. Hand off
+the setting (on, off, or unknown), whether code changed (and which files),
+the env vars, and both counts with `window_days`.
 
 The framework docs below show what this framework's init looks like, so you
 can find it and read its options confidently.
