@@ -228,7 +228,7 @@ function normalizeExamplePaths(value) {
 /**
  * Resolve `variants_from` references: a group may borrow another group's
  * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls, framework, default — never
+ * across — id, display_name, tags, docs_urls, framework, default, capture_mode — never
  * example paths, templates, cli blocks, or shared docs, which stay the
  * borrowing group's own concern. One level only; a source group must declare
  * its variants literally. Pure — returns a new config, never mutates the input.
@@ -256,6 +256,7 @@ function resolveVariantsFrom(config) {
             if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
             if (v.framework) variant.framework = v.framework;
             if (v.default) variant.default = v.default;
+            if (v.capture_mode) variant.capture_mode = v.capture_mode;
             return variant;
         });
         // Drop the reference key — the resolved copy declares variants literally.
@@ -270,6 +271,9 @@ function resolveVariantsFrom(config) {
  * Each top-level key (except shared_docs) is a skill group with
  * base properties and a variants array (literal or via variants_from).
  */
+/** The SDK capture modes a variant may declare; the wizard filters the menu by the mode a run resolved. */
+const CAPTURE_MODES = new Set(['legacy', 'v1']);
+
 function expandSkillGroups(config, configDir) {
     const skills = [];
     const resolvedConfig = resolveVariantsFrom(config);
@@ -324,6 +328,13 @@ function expandSkillGroups(config, configDir) {
                 `Skill group "${key}", variant "${variation.id}"`,
             );
             const cli = resolveVariantCli(baseCli, variantCli, variation, key);
+
+            // The wizard picks variants by the SDK capture mode it resolved; a typo here would hide the variant from every run.
+            if (variation.capture_mode !== undefined && !CAPTURE_MODES.has(variation.capture_mode)) {
+                throw new Error(
+                    `Skill group "${key}", variant "${variation.id}": capture_mode must be "legacy" or "v1" when set`,
+                );
+            }
 
             skills.push({
                 ...variation,
@@ -818,6 +829,9 @@ function serializeSkill(s) {
     }
     if (s.default) {
         result.default = true;
+    }
+    if (s.capture_mode) {
+        result.captureMode = s.capture_mode;
     }
     if (s._bundle) {
         result.bundle = true;

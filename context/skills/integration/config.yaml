@@ -1,5 +1,7 @@
 # Integration skills - example-based (code + docs)
 # `framework` = the detection id a variant serves; `default: true` marks the family default. Both are emitted into skill-menu.json.
+# `capture_mode: legacy | v1` (optional) = the SDK capture mode a variant is written for; emitted as `captureMode`. The wizard hides
+# a variant tagged for the other mode and prefers a tagged one over an untagged one. Untagged variants serve either mode.
 type: skill
 template: description.md
 description: PostHog integration for {display_name} applications

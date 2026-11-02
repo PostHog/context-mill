@@ -79,6 +79,27 @@ describe('variants_from', () => {
         expect(step._examplePaths).toEqual([]);
     });
 
+    it('borrows capture_mode so a mode-specific variant step resolves like the source', () => {
+        const integration = integrationGroup();
+        integration.variants.push({
+            id: 'django-v1',
+            display_name: 'Django (capture v1)',
+            framework: 'django',
+            capture_mode: 'v1',
+            tags: ['django', 'python'],
+        });
+        const config = { integration, 'flow-x/install': borrowingGroup() };
+        const skills = expandSkillGroups(config, tmpDir);
+        expect(skills.find(s => s.id === 'flow-x-install-django-v1').capture_mode).toBe('v1');
+        expect(skills.find(s => s.id === 'flow-x-install-django').capture_mode).toBeUndefined();
+    });
+
+    it('rejects a capture_mode outside legacy and v1', () => {
+        const integration = integrationGroup();
+        integration.variants[0].capture_mode = 'v2';
+        expect(() => expandSkillGroups({ integration }, tmpDir)).toThrow(/capture_mode must be "legacy" or "v1"/);
+    });
+
     it('borrows framework and default so variant steps resolve like the source', () => {
         const config = { integration: integrationGroup(), 'flow-x/install': borrowingGroup() };
         const skills = expandSkillGroups(config, tmpDir);
