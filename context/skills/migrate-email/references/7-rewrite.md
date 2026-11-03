@@ -57,7 +57,7 @@ PostHog records each send, and its sent, opened and clicked events when engageme
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the `distinctId` of its `posthog-node` captures.
 - At each site, pass the same ID for the recipient, such as `distinctId: user.id`. Follow the recipient back through the callers when the site only has the address.
 - Without `distinctId`, PostHog records the email against a person whose distinct ID is the recipient's address. Unless the app identifies people by their address, that is a separate person from the user.
-- When the recipient isn't a user yet, such as an invite or a check during signup, isn't a user at all, such as a team inbox, or the site has no way to know the user, leave `distinctId` out and note it in the plan row.
+- When the recipient isn't a user yet, such as an invite or an address check before the account exists, isn't a user at all, such as a team inbox, or the site has no way to know the user, leave `distinctId` out and note it in the plan row.
 - When the app identifies no one in PostHog, use the app's own user ID, and note it for the report.
 
 ## Rewrite each site
