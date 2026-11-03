@@ -16,9 +16,32 @@ dependsOn: [scanner-broken-experiences, scanner-user-frustration, scanner-sessio
 ## Goal
 
 Tell the user what Replay vision is now doing for them, from the handoffs of
-every task in the run. Briefly and concretely:
+every task in the run.
 
-- What is now recording (or the follow-up needed to make it record).
+Open the report with whatever still stands between the user and their first
+observation, from the enable-replay handoff, before anything else:
+
+- **Session replay is off**: lead with it as an error, not a follow-up —
+  session replay is off in this project, and no scanner runs until a project
+  admin turns on "Record user sessions" under Settings → Session replay.
+- **The replay setting is unknown**: don't call it off. Ask the user to check
+  "Record user sessions" under Settings → Session replay.
+- **This run changed code**: lead with "Deploy this change: session replay
+  only records from code your users run, so your scanners start when the
+  first recording arrives." Name the files to deploy from the handoff (never
+  an env file or anything gitignored), and the env vars that must be set in
+  production. When replay is also off, list this second,
+  after the error.
+- **Nothing changed, but the project has no recordings yet**: don't ask for a
+  deploy. Say the scanners start with the first recording. Add that if people
+  already use the app, the version they run may not include the PostHog SDK
+  yet.
+
+Say the scanners cost nothing until recordings arrive only when the
+recordings count is 0 or unknown. When recordings already exist, they start
+scanning, and spending, right away. Say session replay is recording only when
+the project already has recordings. Then, briefly and concretely:
+
 - Each scanner created or updated: its name, what it watches, its query
   scope, and its estimated monthly credit spend.
 - Anything skipped or deferred, with the reason — a skipped scanner on a
