@@ -1,5 +1,7 @@
 # Integration skills - example-based (code + docs)
 # `framework` = the detection id a variant serves; `default: true` marks the family default. Both are emitted into skill-menu.json.
+# Legacy SDK variants read `context/docs-snapshots/legacy/*.md` (copies of the library pages) instead of the live pages,
+# which move to the capture v1 majors on each SDK's release day; see context/docs-snapshots/legacy/README.md.
 type: skill
 template: description.md
 description: PostHog integration for {display_name} applications
@@ -98,7 +100,7 @@ variants:
     display_name: Django
     tags: [django, python]
     docs_urls:
-      - https://posthog.com/docs/libraries/django.md
+      - context/docs-snapshots/legacy/django.md
 
   - id: flask
     framework: flask
@@ -106,7 +108,7 @@ variants:
     display_name: Flask
     tags: [flask, python]
     docs_urls:
-      - https://posthog.com/docs/libraries/flask.md
+      - context/docs-snapshots/legacy/flask.md
 
   - id: fastapi
     framework: fastapi
@@ -115,7 +117,7 @@ variants:
     description: PostHog integration for FastAPI applications
     tags: [fastapi, python]
     docs_urls:
-      - https://posthog.com/docs/libraries/python.md
+      - context/docs-snapshots/legacy/python.md
 
   - id: react-tanstack-router-file-based
     framework: tanstack-router
@@ -187,7 +189,7 @@ variants:
     description: PostHog integration for Android applications
     tags: [android, java, kotlin]
     docs_urls:
-      - https://posthog.com/docs/libraries/android.md
+      - context/docs-snapshots/legacy/android.md
       
   - id: sveltekit
     framework: sveltekit
@@ -206,8 +208,8 @@ variants:
     description: PostHog integration for any Python application using the Python SDK
     tags: [python]
     docs_urls:
-      - https://posthog.com/docs/libraries/python.md
-      - https://posthog.com/docs/references/posthog-python.md
+      - context/docs-snapshots/legacy/python.md
+      - context/docs-snapshots/legacy/posthog-python.md
 
   - id: javascript_node
     framework: javascript_node
@@ -216,8 +218,8 @@ variants:
     description: PostHog integration for server-side Node.js applications using posthog-node
     tags: [javascript_node, javascript]
     docs_urls:
-      - https://posthog.com/docs/libraries/node.md
-      - https://posthog.com/docs/references/posthog-node.md
+      - context/docs-snapshots/legacy/node.md
+      - context/docs-snapshots/legacy/posthog-node.md
  
   - id: javascript_web
     framework: javascript_web
@@ -263,7 +265,7 @@ variants:
     description: PostHog integration for Go applications using the posthog-go SDK
     tags: [go]
     docs_urls:
-      - https://posthog.com/docs/libraries/go.md
+      - context/docs-snapshots/legacy/go.md
 
   - id: rust
     framework: rust
@@ -272,7 +274,7 @@ variants:
     description: PostHog integration for Rust applications using the posthog-rs SDK
     tags: [rust]
     docs_urls:
-      - https://posthog.com/docs/libraries/rust.md
+      - context/docs-snapshots/legacy/rust.md
 
   - id: swift
     framework: swift
@@ -283,9 +285,9 @@ variants:
     description: PostHog integration for Swift iOS and macOS applications
     tags: [swift, ios, macos, swiftui, xcodegen]
     docs_urls:
-      - https://posthog.com/docs/libraries/ios.md
-      - https://posthog.com/docs/libraries/ios/usage.md
-      - https://posthog.com/docs/libraries/ios/configuration.md
+      - context/docs-snapshots/legacy/ios.md
+      - context/docs-snapshots/legacy/usage.md
+      - context/docs-snapshots/legacy/configuration.md
 
   - id: flutter
     framework: flutter
@@ -294,7 +296,7 @@ variants:
     description: PostHog integration for Flutter applications using the posthog_flutter SDK
     tags: [flutter, dart, mobile]
     docs_urls:
-      - https://posthog.com/docs/libraries/flutter.md
+      - context/docs-snapshots/legacy/flutter.md
 
   - id: kmp
     framework: kmp
