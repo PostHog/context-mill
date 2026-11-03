@@ -81,4 +81,13 @@ describe('generateSkill doc filename', () => {
             ]),
         ).rejects.toThrow('upstream-skill.md');
     });
+
+    it('refuses a doc whose name from its URL another reference already uses', async () => {
+        await expect(
+            generate([
+                { url: UPSTREAM_SKILL_URL, filename: 'upstream.md' },
+                'https://docs.example.test/other/upstream.md',
+            ]),
+        ).rejects.toThrow('upstream.md');
+    });
 });

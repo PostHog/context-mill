@@ -720,14 +720,19 @@ async function generateSkill({
     }
 
     // A doc entry's `filename` must be a plain `.md` name that no other
-    // reference uses, or the fetched doc would overwrite it.
-    function checkDocFilename(filename, url) {
-        const taken = filename === 'COMMANDMENTS.md' || references.some((ref) => ref.filename === filename);
-        if (path.basename(filename) !== filename || !filename.endsWith('.md') || taken) {
+    // reference uses, and no later doc may take a name an entry chose, or
+    // one doc would overwrite the other.
+    const chosenFilenames = new Set();
+    function checkDocFilename(filename, url, chosen) {
+        const taken = references.some((ref) => ref.filename === filename);
+        const clash = chosen ? taken || filename === 'COMMANDMENTS.md' : chosenFilenames.has(filename);
+        const malformed = chosen && (path.basename(filename) !== filename || !filename.endsWith('.md'));
+        if (clash || malformed) {
             throw new Error(
-                `${skill.id}: doc ${url} names filename "${filename}"; use a plain .md name no other reference uses`
+                `${skill.id}: doc ${url} uses filename "${filename}"; a filename must be a plain .md name no other reference uses`
             );
         }
+        if (chosen) chosenFilenames.add(filename);
     }
 
     // Helper to process a doc entry (string URL or {url, title, filename} object).
@@ -738,11 +743,11 @@ async function generateSkill({
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
         const filenameOverride = typeof docEntry === 'object' ? docEntry.filename : null;
 
-        if (filenameOverride) checkDocFilename(filenameOverride, url);
+        const filename = filenameOverride || urlToFilename(url);
+        checkDocFilename(filename, url, Boolean(filenameOverride));
 
         const result = await fetchDoc(url);
         if (result) {
-            const filename = filenameOverride || urlToFilename(url);
             fs.writeFileSync(
                 path.join(referencesDir, filename),
                 result.content,
