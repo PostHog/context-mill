@@ -5,7 +5,8 @@ import { expandSkillGroups, loadSkillsConfig } from '../skill-generator.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
 const DOCS = 'https://posthog.com/docs/mcp-analytics';
-const LANGUAGES = ['TypeScript', 'JavaScript', 'Python', 'Go', 'Ruby'];
+const LANGUAGES = ['TypeScript', 'JavaScript', 'Python', 'Go', 'Ruby', 'Rust'];
+const INSTALL_PAGES = ['typescript', 'python', 'go', 'ruby', 'rust'];
 const REDIRECTED = ['custom-servers.md', 'installation.md'];
 const REPORT_FILE = 'posthog-mcp-analytics-report.md';
 
@@ -21,16 +22,14 @@ describe('mcp-analytics skill family', () => {
             'mcp-analytics',
             'mcp-analytics-python',
             'mcp-analytics-ruby',
+            'mcp-analytics-rust',
         ]);
     });
 
-    it.each([
-        ['mcp-analytics', ['typescript', 'python', 'go', 'ruby']],
-        ['mcp-analytics-python', ['python']],
-        ['mcp-analytics-ruby', ['ruby']],
-    ])('%s bundles the per-language installation pages %j', (id, languages) => {
+    // Every variant shares one template, which routes to every language's installation page.
+    it.each(variants.map((s) => [s.id]))('%s bundles every installation page', (id) => {
         expect(urlsOf(id)).toEqual(
-            expect.arrayContaining(languages.map((language) => `${DOCS}/installation/${language}.md`)),
+            expect.arrayContaining(INSTALL_PAGES.map((language) => `${DOCS}/installation/${language}.md`)),
         );
     });
 
@@ -66,7 +65,7 @@ describe('mcp-analytics instructions', () => {
     });
 
     // A language part opens with a `#### Go` heading or a bold `**Go` lead.
-    it.each(steps.flatMap((step) => ['Go', 'Ruby'].map((language) => [step.slice(0, 6), language, step])))(
+    it.each(steps.flatMap((step) => ['Go', 'Ruby', 'Rust'].map((language) => [step.slice(0, 6), language, step])))(
         '%s has a %s part',
         (_step, language, step) => {
             expect(step).toMatch(new RegExp(`^(#### ${language}$|\\s*(- )?\\*\\*${language}\\b)`, 'm'));
@@ -86,6 +85,20 @@ describe('mcp-analytics instructions', () => {
         expect(bundled).toEqual(expect.arrayContaining(named));
     });
 
+    // The wizard's bash fence (wizard src/agent/bash-fence.ts) denies these, so the agent can't run them.
+    it.each([
+        ['a version constraint, read as a redirect', /`[^`\n]*\b(add|install)\b[^`\n]*[<>][^`\n]*`/],
+        ['chained commands', /`[^`\n]*&&[^`\n]*`/],
+        ['pytest', /`(python -m )?pytest/],
+        ['ruby itself', /`ruby -/],
+        ['bundle exec beyond lint tools', /`bundle exec (ruby|rspec|rake)/],
+        ['rustc', /`rustc/],
+        ['cargo test', /`cargo test/],
+        ['bare gofmt', /`gofmt/],
+    ])('never tells the agent to run %s', (_command, pattern) => {
+        expect(text).not.toMatch(pattern);
+    });
+
     it.each(REDIRECTED)('never names the redirected page %s', (page) => {
         expect(text).not.toContain(page);
     });
@@ -96,11 +109,10 @@ describe('mcp-analytics instructions', () => {
         expect(line).toContain(language);
     });
 
-    it('names Rust, not Ruby, as an unsupported language', () => {
+    it('names no supported language as an unsupported example', () => {
         const examples = text.match(/written in anything else \(([^)]*)\)/)?.[1];
         expect(examples, 'guardrail lists examples as "written in anything else (...)"').toBeDefined();
-        expect(examples).toContain('Rust');
-        expect(examples).not.toContain('Ruby');
+        for (const language of LANGUAGES) expect(examples).not.toMatch(new RegExp(`\\b${language}\\b`));
     });
 
     // Each SDK's minimum version, read wherever the package name is followed by a version.
@@ -109,6 +121,7 @@ describe('mcp-analytics instructions', () => {
         ['posthog (Python)', /(?<![\w/@-])posthog(?![\w/-])[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '7.62.0'],
         ['posthogmcpsdk', /posthogmcpsdk[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '1.34.0'],
         ['posthog-ruby', /posthog-ruby[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '3.29.0'],
+        ['posthog-rs', /posthog-rs[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '0.29.0'],
     ])('states one floor for %s', (_sdk, pattern, floor) => {
         expect([...new Set([...text.matchAll(pattern)].map(([, version]) => version))]).toEqual([floor]);
     });
@@ -133,6 +146,10 @@ describe('mcp-analytics instructions', () => {
         ['Go reports unknown tools', '`$mcp_unknown_tool`'],
         ['Go reports input_required rounds', '`$mcp_input_required`'],
         ['Go tidies go.mod', '`go mod tidy`'],
+        ['Rust is reported as experimental', 'The Rust SDK is experimental'],
+        ['Rust reads the token without exiting', 'std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default()'],
+        ['Rust drains events on shutdown', 'posthog.shutdown().await'],
+        ['Ruby 3.4+ gets the gems posthog-ruby requires but does not declare', 'bundle add logger base64'],
     ])('%s', (_claim, needle) => {
         expect(text).toContain(needle);
     });

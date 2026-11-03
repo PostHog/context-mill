@@ -2,20 +2,22 @@
 
 Use this skill to instrument a user's own **MCP server** with PostHog MCP analytics. Once instrumented, every tool call, agent intent, and failure the server handles is captured as a `$mcp_*` event in PostHog. Every SDK also captures the calling model by default, so the user can compare quality, errors, and latency by model.
 
-There are four SDKs and this skill handles all of them:
+There are five SDKs and this skill handles all of them:
 - **TypeScript / JavaScript** — the [`@posthog/mcp`](https://posthog.com/docs/mcp-analytics) Node package.
 - **Python** — `posthog.mcp`, which ships inside the [`posthog`](https://posthog.com/docs/libraries/python) package (like `posthog.ai`).
 - **Go** — `posthogmcpsdk`, a module in the [`posthog-go`](https://posthog.com/docs/libraries/go) repository, for servers built on the official `github.com/modelcontextprotocol/go-sdk`.
 - **Ruby** — `PostHog::MCP`, which ships inside the [`posthog-ruby`](https://posthog.com/docs/libraries/ruby) gem, for servers built on the official `mcp` gem. Experimental (see the guardrail below).
+- **Rust** — `posthog_rs::mcp`, which ships inside the [`posthog-rs`](https://posthog.com/docs/libraries/rust) crate behind its `mcp` feature, for servers built on `rmcp`, the official Rust MCP SDK. Experimental (see the guardrail below).
 
 This is **not** about adding the PostHog MCP *server* to a coding agent (that's `wizard mcp add`). This skill instruments the user's *own* MCP server code so it reports analytics about itself.
 
 ## Scope and guardrails
 
-- **TypeScript / JavaScript, Python, Go, and Ruby are supported.** Detect the language in STEP 1 and follow the matching part of every step. If the MCP server is written in anything else (Rust, Java, C#, …), **stop**: emit `[ABORT] unsupported language for mcp analytics` on its own line and do nothing else.
+- **TypeScript / JavaScript, Python, Go, Ruby, and Rust are supported.** Detect the language in STEP 1 and follow the matching part of every step. If the MCP server is written in anything else (Java, C#, Kotlin, …), **stop**: emit `[ABORT] unsupported language for mcp analytics` on its own line and do nothing else.
 - **This must be an MCP server.** Search thoroughly before concluding there isn't one: check dependency manifests *and* source for the STEP 1 signals across the whole project, including monorepo workspace packages and subdirectories — a server is often under `packages/*`, `apps/*`, `server/`, or `src/`, not the repo root. Only after an exhaustive search finds nothing, **stop**: emit `[ABORT] no mcp server found` on its own line, and in the same message tell the user where you looked and to re-run the command from inside the package or directory that actually defines their MCP server. Do nothing else.
 - **Beta SDKs.** The TypeScript, Python, and Go SDKs are in beta and may ship breaking changes in minor releases. Pin a version (see STEP 3).
 - **The Ruby SDK is experimental and not officially supported.** The MCP Analytics team doesn't maintain `PostHog::MCP`, and its API and `$mcp_*` events may change in a minor `posthog-ruby` release. Still instrument Ruby servers. Say so plainly in `posthog-mcp-analytics-report.md` and in your closing summary, and never describe the Ruby setup as production-ready.
+- **The Rust SDK is experimental and not officially supported.** `posthog_rs::mcp` may change its API, options, and `$mcp_*` events in any `posthog-rs` release. Still instrument Rust servers. Say so plainly in `posthog-mcp-analytics-report.md` and in your closing summary, and never describe the Rust setup as production-ready.
 - **Minimal, additive changes only.** Add instrumentation alongside the existing server; do not restructure tool handlers or change their behavior. The wrapper is designed to be one line.
 
 ### Abort cases
@@ -23,18 +25,21 @@ This is **not** about adding the PostHog MCP *server* to a coding agent (that's 
 If anything blocks instrumentation, **always** emit exactly one `[ABORT] <reason>` line and stop — never halt, finish, or error out silently. The wizard catches `[ABORT]` and terminates the run for you; don't try to exit yourself. A silent stop is recorded as a failed run with no reason, which can't be acted on, so every dead end must carry a reason. Use one of:
 
 - `[ABORT] no mcp server found` — an exhaustive search (see the guardrail above) found no MCP server in the project.
-- `[ABORT] unsupported language for mcp analytics` — the server is not TypeScript/JavaScript, Python, Go, or Ruby.
+- `[ABORT] unsupported language for mcp analytics` — the server is not TypeScript/JavaScript, Python, Go, Ruby, or Rust.
 - `[ABORT] could not locate the server entry point` — MCP signals are present, but the place the server is constructed or where requests are dispatched couldn't be found to instrument.
 - `[ABORT] go mcp server is not built on the official go-sdk` — a Go server on another MCP library (STEP 1).
 - `[ABORT] go toolchain older than 1.25` — `posthogmcpsdk` can't build (STEP 3).
 - `[ABORT] ruby mcp server is not built on the official mcp gem` — a Ruby server on another MCP library (STEP 1).
 - `[ABORT] ruby older than 3.0` — the project's Ruby is older than `posthog-ruby` supports (STEP 3).
 - `[ABORT] ruby mcp gem older than 1.4` — `PostHog::MCP.instrument` needs `mcp` 1.4 or later (STEP 3).
+- `[ABORT] rust mcp server is not built on rmcp` — a Rust server on another MCP library, or with no `rmcp` `ServerHandler` to wrap (STEP 1).
+- `[ABORT] rmcp older than 3.7` — `posthog_rs::mcp` needs `rmcp` 3.7 or later (STEP 3).
+- `[ABORT] rust toolchain older than 1.88` — `posthog-rs` with the `mcp` feature can't build (STEP 3).
 - `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or no PostHog credentials and no MCP server connected to fetch them). Keep it short and specific so it's useful when aggregated across runs.
 
 ## Instructions
 
-Follow these steps IN ORDER. Each step has a **TypeScript / JavaScript** part, a **Python** part, a **Go** part, and a **Ruby** part — use the one for the language you detect in STEP 1.
+Follow these steps IN ORDER. Each step has a **TypeScript / JavaScript** part, a **Python** part, a **Go** part, a **Ruby** part, and a **Rust** part — use the one for the language you detect in STEP 1.
 
 ### STEP 1: Identify the language and the MCP server entry point
 
@@ -67,15 +72,17 @@ Determine the language first, then route to the matching instructions throughout
   - the official `mcp` gem in the `Gemfile`, `Gemfile.lock`, or gemspec, with code that builds `MCP::Server.new(...)` (tools as `MCP::Tool` classes or `define_tool`). The server runs over `MCP::Server::Transports::StdioTransport`, `MCP::Server::Transports::StreamableHTTPTransport`, or a Rails / Rack endpoint that hands the request body to `server.handle_json(...)`.
   - a Rails / Rack endpoint that parses MCP JSON-RPC itself and routes `tools/list` and `tools/call` with no `MCP::Server`.
 
-  Record the locked `mcp` version from `Gemfile.lock` and the project's Ruby version (`.ruby-version`, the `Gemfile`'s `ruby` line, or `ruby -v`). A Ruby server on another MCP library (for example `fast-mcp`) isn't supported: emit `[ABORT] ruby mcp server is not built on the official mcp gem`.
+  Record the locked `mcp` version from `Gemfile.lock` and the project's Ruby version (`.ruby-version`, the `Gemfile`'s `ruby` line, or the `RUBY VERSION` section of `Gemfile.lock`). A Ruby server on another MCP library (for example `fast-mcp`) isn't supported: emit `[ABORT] ruby mcp server is not built on the official mcp gem`.
 
-- If it's none of TS/JS, Python, Go, or Ruby, apply the guardrail above and stop.
+- **Rust** — there's a `Cargo.toml`. The supported server is built on `rmcp`: `Cargo.toml` depends on `rmcp` with its `server` feature, and the code implements `ServerHandler` (usually a `#[tool_router]` struct with a `#[tool_handler]` impl) and serves it with `.serve(...)` or through `StreamableHttpService`. Record the locked `rmcp` version from `Cargo.lock` and the pinned toolchain, if any, from `rust-toolchain.toml` or `rust-version` in `Cargo.toml`. A Rust server on another library, or a hand-rolled JSON-RPC router with no `ServerHandler`, isn't supported by this command: emit `[ABORT] rust mcp server is not built on rmcp`.
 
-Then identify the file and the exact place where the server is constructed or where MCP requests are dispatched, and read it before editing. If PostHog MCP analytics is already wired in (an `instrument(` call, or a `PostHogMCP` client in TypeScript or Python, `posthogmcpsdk.Instrument(` in Go, or `PostHog::MCP.instrument(` or a `PostHog::MCP::Client` in Ruby), don't duplicate it. Verify the existing setup against STEP 4, add supported modern options that are missing, then continue through STEP 7.
+- If it's none of TS/JS, Python, Go, Ruby, or Rust, apply the guardrail above and stop.
+
+Then identify the file and the exact place where the server is constructed or where MCP requests are dispatched, and read it before editing. If PostHog MCP analytics is already wired in (an `instrument(` call, or a `PostHogMCP` client in TypeScript or Python, `posthogmcpsdk.Instrument(` in Go, or `PostHog::MCP.instrument(` or a `PostHog::MCP::Client` in Ruby, `posthog_rs::mcp::instrument(` or `McpAnalytics` in Rust), don't duplicate it. Verify the existing setup against STEP 4, add supported modern options that are missing, then continue through STEP 7.
 
 ### STEP 2: Choose the instrumentation path
 
-Pick exactly one based on what STEP 1 found. When in doubt, read the bundled installation page for the language (`typescript.md`, `python.md`, `go.md`, `ruby.md`); each covers its wrapping and custom-dispatcher paths. `sdk-v2.md` covers what differs on MCP SDK v2.
+Pick exactly one based on what STEP 1 found. When in doubt, read the bundled installation page for the language (`typescript.md`, `python.md`, `go.md`, `ruby.md`, `rust.md`). This command wraps the official SDK server in Go and Rust, and also supports custom dispatchers in TypeScript, Python, and Ruby; ignore the Go and Rust pages' custom-dispatcher sections. `sdk-v2.md` covers what differs on MCP SDK v2.
 
 #### TypeScript / JavaScript
 
@@ -110,11 +117,15 @@ The server object comes from `@modelcontextprotocol/server`. Follow the **v2** s
 
 Read `ruby.md` before editing.
 
+#### Rust
+
+- **Path RS1 — `rmcp` server** (a `ServerHandler` served over stdio or `StreamableHttpService`): wrap it with `posthog_rs::mcp::instrument(server, posthog.clone())` and serve the wrapped server in place of yours. One call. Read `rust.md` before editing.
+
 ### STEP 3: Install the SDK
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add @posthog/mcp@<latest> posthog-node`. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add -E @posthog/mcp posthog-node` (`-E` / `--save-exact` pins the current release). Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 
@@ -128,7 +139,7 @@ No extra constraint beyond the floor above. Upgrading an old install matters mos
 
 #### Python
 
-The SDK ships inside `posthog`, so install (or require) `posthog>=7.62.0` with the project's installer — e.g. `pip install "posthog>=7.62.0"`, `uv add "posthog>=7.62.0"`, `poetry add "posthog>=7.62.0"`. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
+The SDK ships inside `posthog`, so install the latest `posthog` with the project's installer (`pip install -U posthog`, `uv add posthog`, or `poetry add posthog`), or write `posthog>=7.62.0` into `requirements.txt` and install from it. Read the installed version back: it must be `posthog>=7.62.0`. Never put a version constraint in a shell command; the wizard reads `>` as a redirect and refuses it. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
 
 #### Go
 
@@ -136,9 +147,13 @@ Run `go get github.com/posthog/posthog-go/posthogmcpsdk@latest` in the module th
 
 #### Ruby
 
-The SDK ships inside `posthog-ruby`, which must be `posthog-ruby >= 3.29.0`. Older releases break servers on `mcp` 1.8 or later with internal errors, need `rack` even on stdio, and don't pass request headers to callbacks. If the project doesn't depend on it, run `bundle add posthog-ruby --version ">= 3.29.0"` in an app, or, if the server ships as a gem, add `spec.add_dependency "posthog-ruby", ">= 3.29.0"` to its gemspec and run `bundle install`. If it already depends on an older one (directly or through `posthog-rails`), raise the constraint where it's declared and run `bundle update posthog-ruby`.
+The SDK ships inside `posthog-ruby`, which must be `posthog-ruby >= 3.29.0`. Older releases break servers on `mcp` 1.8 or later with internal errors, need `rack` even on stdio, and don't pass request headers to callbacks. If the project doesn't depend on it, run `bundle add posthog-ruby` in an app (it adds the latest release with a `~>` constraint; read the locked version back from `Gemfile.lock`), or, if the server ships as a gem, add `spec.add_dependency "posthog-ruby", ">= 3.29.0"` to its gemspec and run `bundle install`. If it already depends on an older one (directly or through `posthog-rails`), raise the constraint where it's declared and run `bundle update posthog-ruby`.
 
-The gem needs Ruby 3.0 or later; on an older Ruby, emit `[ABORT] ruby older than 3.0`. Path R1 also needs the `mcp` gem at 1.4 or later; if `Gemfile.lock` locks an older one, emit `[ABORT] ruby mcp gem older than 1.4`. Never add, upgrade, or pin the `mcp` gem yourself. Path R2 needs nothing beyond `posthog-ruby`.
+The gem needs Ruby 3.0 or later; on an older Ruby, emit `[ABORT] ruby older than 3.0`. Path R1 also needs the `mcp` gem at 1.4 or later; if `Gemfile.lock` locks an older one, emit `[ABORT] ruby mcp gem older than 1.4`. Never add, upgrade, or pin the `mcp` gem yourself. On Ruby 3.4 or later, if `Gemfile.lock` lacks `logger` or `base64`, run `bundle add logger base64` (or add both to the gemspec): `posthog-ruby` requires them without declaring them, and newer Rubies no longer ship them by default, so `require "posthog/mcp"` raises `LoadError`. Path R2 needs nothing beyond `posthog-ruby`.
+
+#### Rust
+
+Run `cargo add posthog-rs --features mcp` in the crate that contains the server, then read the version back from `Cargo.lock`: `posthog-rs` must be `0.29.0` or later. The `mcp` feature turns on the async client and pulls in `rmcp` with its `server` feature. `posthog_rs::mcp` needs `rmcp` 3.7 or later; if `Cargo.lock` locks an older one, emit `[ABORT] rmcp older than 3.7`. Never add, upgrade, or pin `rmcp` yourself. It also needs Rust 1.88 or later; if the pinned toolchain is older, or `cargo build` fails because the compiler is too old, emit `[ABORT] rust toolchain older than 1.88`. The server already runs on `tokio`; never change its features or the `rmcp` transport features.
 
 ### STEP 4: Instrument the server
 
@@ -429,6 +444,28 @@ posthog.capture_tool_call(
 
 Return the prepared list from `tools/list` and always dispatch `prepared.args`, not the raw arguments. On failure, call `capture_tool_call` with `is_error: true, error: e` and re-raise. For `session_id`, add `use PostHog::MCP::RackMiddleware` and follow the mint hook in `ruby.md`; omit identity and session values rather than inventing them. Conversation IDs aren't available on this path.
 
+#### Rust
+
+Create the client once where the process starts, read the token from the environment, and serve the wrapped server in place of yours:
+
+```rust
+use std::sync::Arc;
+
+use rmcp::ServiceExt;
+
+let token = std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default();
+let posthog = Arc::new(
+    posthog_rs::client((token.as_str(), "https://us.i.posthog.com")).await, // or https://eu.i.posthog.com
+);
+
+let server = posthog_rs::mcp::instrument(MyServer, posthog.clone());
+server.serve(rmcp::transport::stdio()).await?.waiting().await?;
+
+posthog.shutdown().await;
+```
+
+Read the token with `unwrap_or_default()`, never `?` or `expect`: a blank token makes a disabled client that sends nothing, while a missing variable must never stop the server. Keep the server's existing transport. For Streamable HTTP, hand the wrapped server to `StreamableHttpService::new(move || Ok(server.clone()), ...)` in place of yours; the server must implement `Clone`. Use the default options. Build `McpOptions` with `McpOptionsBuilder` and `McpAnalytics::new(...).instrument(...)` only if the user asks for an option (`rust.md` lists them). `identify` is optional; add it only if the server already authenticates callers on HTTP.
+
 ### STEP 5: Wire up credentials
 
 - Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project token. If a valid `phc_…` token and host are already set, reference those and skip the rest of this step.
@@ -437,6 +474,7 @@ Return the prepared list from `tools/list` and always dispatch `prepared.args`, 
 - Write `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ[...]` in Python) — never hardcode the token.
 - **Go:** write only `POSTHOG_PROJECT_TOKEN` and read it with `os.Getenv`; the host goes in `posthog.Config.Endpoint` as in STEP 4. Go doesn't load `.env` files on its own, so tell the user to export the variable (or load it the way the project already loads config).
 - **Ruby:** write only `POSTHOG_PROJECT_TOKEN` and read it with `ENV["POSTHOG_PROJECT_TOKEN"]` (a missing token disables the client instead of raising); the host goes in the client's `host:` option as in STEP 4. Ruby loads `.env` only through a gem such as `dotenv`, so if the project has none, tell the user to export the variable.
+- **Rust:** write only `POSTHOG_PROJECT_TOKEN` and read it with `std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default()`; the host goes in the `posthog_rs::client` call as in STEP 4. Rust loads `.env` only through a crate such as `dotenvy`, so if the project has none, tell the user to export the variable.
 
 ### STEP 6: Ensure events get flushed
 
@@ -472,29 +510,35 @@ The PostHog client batches events; the user owns the client's lifecycle.
 - **Short-lived request handlers (path R2, serverless):** call `posthog.flush` at the end of each request.
 - **STDIO transports specifically:** stdout is the protocol channel — never `puts`, `p`, or `print` to it. Never suppress the gem's experimental warning: it goes to stderr, so it can't corrupt the stream. Don't set `$VERBOSE = nil`, override `Warning` or `Kernel.warn`, or redirect stderr.
 
+**Rust:**
+
+- `posthog.shutdown().await` sends queued events, so it must run before the process exits, after the server stops serving, as in STEP 4. On a server stopped by a signal, call it from the shutdown handler.
+- **STDIO transports specifically:** stdout is the protocol channel — never `println!` to it. The SDK logs through `tracing`; if the project installs a `tracing` subscriber, make sure it writes to stderr.
+
 ### STEP 7: Verify
 
-- **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
-- **Python:** run the project's type-check / tests if present (`mypy`, `pytest`) and fix any errors your changes introduced. Run any formatter the project uses (`ruff`, `black`) on the files you touched.
-- **Go:** run `go build ./... && go vet ./...` and fix any errors your changes introduced. Run `gofmt` on the files you touched.
-- **Ruby:** run `ruby -c` on each file you touched and, on path R1, `bundle exec ruby -e 'require "posthog/mcp"; PostHog::MCP.instrument(MCP::Server.new(name: "check"), nil)'` to confirm the gems load and instrument a throwaway server (the experimental and no-client warnings on stderr are expected; a `LoadError` means a missing gem). Run the linter and tests the project already uses (`bundle exec rubocop` on the files you touched, `bundle exec rspec` or `bundle exec rake test`). Don't start the server.
+- **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `npx tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
+- **Python:** run the project's type-check if present (`python -m mypy .`) and fix any errors your changes introduced. Run any formatter the project uses (`python -m ruff format`, `python -m black`) on the files you touched.
+- **Go:** run `go build ./...`, then `go vet ./...`, and fix any errors your changes introduced. Run `go fmt ./...`.
+- **Ruby:** confirm `bundle install` succeeds and `Gemfile.lock` has the gems from STEP 3. If the project uses RuboCop, run `bundle exec rubocop` on the files you touched. Don't start the server or run Ruby code.
+- **Rust:** run `cargo build` (and `cargo clippy` if the project uses it) and fix any errors your changes introduced. Match the file's existing formatting by hand; `cargo fmt` reformats the whole crate, so don't run it. Don't start the server.
 - Check statically that nothing you added passes options that turn model capture or conversation IDs off, and that custom dispatchers hand handlers the prepared arguments, never the raw ones.
 - Only if you can exercise the server without starting it for real (an existing test suite or in-memory client): check that `tools/list` advertises `llm_model`, the handler doesn't receive it, and the call lands on `$mcp_tool_call` with a `$mcp_llm_model` (its `$mcp_llm_model_source` is `self_reported` or `client_metadata`). On a `2026-07-28` path, check the first tool call captures without an initialize request.
-- The TypeScript, Python, and Ruby wrappers emit `$mcp_resources_list` and `$mcp_resource_read`, never the resource body. Only Ruby emits `$mcp_prompts_list` and `$mcp_prompt_get`. Go emits no resource events; instead of `$mcp_tool_call`, it sends `$mcp_unknown_tool` for a call to an unregistered tool and `$mcp_input_required` for each `2026-07-28` `input_required` round.
+- The TypeScript, Python, and Ruby wrappers emit `$mcp_resources_list` and `$mcp_resource_read`, never the resource body. Only Ruby emits `$mcp_prompts_list` and `$mcp_prompt_get`. Go emits no resource events; instead of `$mcp_tool_call`, it sends `$mcp_unknown_tool` for a call to an unregistered tool and `$mcp_input_required` for each `2026-07-28` `input_required` round. Rust emits no resource events either; it sends `$mcp_tools_list`, `$mcp_initialize`, `$mcp_unknown_tool`, and `$mcp_input_required`.
 - Check every event name in the final report against `events.md`. Failed tools remain `$mcp_tool_call` events with `$mcp_is_error = true` and can emit a sibling `$exception`; there is no `$mcp_tool_failed` event.
-- Summarize for the user: which path you used, the files you changed, the env vars to set, and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference. For Ruby, include the experimental notice from the guardrails.
+- Summarize for the user: which path you used, the files you changed, the env vars to set, and that they'll see `$mcp_*` events in PostHog once the server handles its next request. Link them to https://posthog.com/docs/mcp-analytics for the dashboard and event reference. For Ruby and Rust, include the experimental notice from the guardrails.
 
 ## Reference files
 
 {references}
 
-`typescript.md`, `python.md`, `go.md`, and `ruby.md` are the installation pages, the source of truth for every path and its options. `sdk-v2.md` covers the SDK-major splits and sessions on `2026-07-28`; `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured.
+`typescript.md`, `python.md`, `go.md`, `ruby.md`, and `rust.md` are the installation pages, the source of truth for every path and its options. `sdk-v2.md` covers the SDK-major splits and sessions on `2026-07-28`; `intent.md`, `identifying-users.md`, and `conversation-id.md` cover optional enrichment; `events.md` and `custom-events.md` describe what gets captured.
 
 ## Key principles
 
 - **One server, one wrapper.** `instrument()` is idempotent; don't call it twice on the same server.
-- **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` / `PostHog::Client` client once, not per request.
-- **Env, never hardcode.** The project token comes from an environment variable; so does the host, except in Go and Ruby, where it's set in code.
+- **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` / `PostHog::Client` / `posthog_rs` client once, not per request.
+- **Env, never hardcode.** The project token comes from an environment variable; so does the host, except in Go, Ruby, and Rust, where it's set in code.
 - **Additive only.** Don't change tool behavior or restructure the server — just wrap/capture.
-- **Don't break STDIO.** No `console.*` (JS), `print()` (Python), stdout writes (Go), or `puts` (Ruby) on STDIO transports; use a `logger` (or stderr in Go and Ruby) instead.
-- **Pin the SDK at or above the STEP 3 floor** and tell the user the TypeScript, Python, and Go SDKs are in beta (Ruby: see the guardrails).
+- **Don't break STDIO.** No `console.*` (JS), `print()` (Python), stdout writes (Go), `puts` (Ruby), or `println!` (Rust) on STDIO transports; use a `logger` (or stderr in Go, Ruby, and Rust) instead.
+- **Pin the SDK at or above the STEP 3 floor** and tell the user the TypeScript, Python, and Go SDKs are in beta (Ruby and Rust: see the guardrails).
