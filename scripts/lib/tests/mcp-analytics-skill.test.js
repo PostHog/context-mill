@@ -21,8 +21,6 @@ describe('mcp-analytics skill family', () => {
         expect(variants.map((s) => s.id).sort()).toEqual([
             'mcp-analytics',
             'mcp-analytics-python',
-            'mcp-analytics-ruby',
-            'mcp-analytics-rust',
         ]);
     });
 
