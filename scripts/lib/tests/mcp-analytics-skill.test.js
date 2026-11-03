@@ -97,6 +97,10 @@ describe('mcp-analytics instructions', () => {
         expect(text).not.toMatch(pattern);
     });
 
+    it('never has go build write a binary into the project', () => {
+        expect(text).not.toMatch(/`go build (?!-o \/dev\/null )/);
+    });
+
     it.each(REDIRECTED)('never names the redirected page %s', (page) => {
         expect(text).not.toContain(page);
     });
