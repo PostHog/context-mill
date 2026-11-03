@@ -50,13 +50,14 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 - Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 
-## Find the user ID
+## Link emails to your users
 
-PostHog shows each email on the person the send names with `distinctId`. Use the ID the app already identifies people with in PostHog:
+PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with `distinctId`. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the `distinctId` of its `posthog-node` captures.
 - At each site, pass the same ID for the recipient, such as `distinctId: user.id`. Follow the recipient back through the callers when the site only has the address.
-- When the recipient is not a user of the app, such as a team inbox, or the site has no way to know the user, leave `distinctId` out and note it in the plan row.
+- Without `distinctId`, PostHog records the email against a person whose distinct ID is the recipient's address. Unless the app identifies people by their address, that is a separate person from the user.
+- When the recipient isn't a user yet, such as an invite or a check during signup, isn't a user at all, such as a team inbox, or the site has no way to know the user, leave `distinctId` out and note it in the plan row.
 - When the app identifies no one in PostHog, use the app's own user ID, and note it for the report.
 
 ## Rewrite each site
