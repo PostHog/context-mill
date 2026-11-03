@@ -34,7 +34,7 @@ classifier about an invented flow misleads.
 **Query and sampling, per the tiers in `replay-vision-scanners-core`.** Free
 credit share: **0.4**.
 
-- **No recordings yet, or low volume**: no filters — `{"kind":
+- **No scannable sessions yet, or low volume**: no filters — `{"kind":
   "RecordingsQuery"}`. `not-attempted` then tells the user how many sessions
   never reach the flow.
 - **High volume**: a `visited_page` scope on the flow's first page, at

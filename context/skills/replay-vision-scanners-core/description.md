@@ -76,29 +76,35 @@ does not give them:
 
 Then pick the tier:
 
-- **No recordings yet** (recordings is 0): the volume is unknown, and most
-  such projects stay small. Use your brief's low-volume query (no filters)
-  at `sampling_rate` 1.0, with `"free_only": true`. Say in your handoff that
-  the volume was unknown.
-- **Low volume** (under 250 sessions a month, about what the free credits
+- **No scannable sessions yet** (recordings is 0, or sessions per month is
+  0 because every recording is too short to scan): the volume is unknown,
+  and most such projects stay small. Use your brief's low-volume query (no
+  filters) and `"free_only": true`, and size `sampling_rate` as below with
+  `sessions_per_month` set to 250, the most this tier expects. Say in your
+  handoff that the volume was unknown, and that running setup again after
+  recordings arrive sizes the scanners to real traffic.
+- **Low volume** (1 to 249 sessions a month, about what the free credits
   can watch): your brief's low-volume query, with no filters, so nothing
   worth seeing is filtered away, and `"free_only": true`: with no filters,
   spend grows with traffic, and this keeps the scanner off the paid limit
-  that the organization's own scanners need. Set `sampling_rate` to
-  `min(1, share × free_pool / (sessions_per_month ×
-  credits_per_observation))`, rounded down to two decimals, and never below
-  0.01. `share` is in your brief, and `credits_per_observation` comes from
-  the estimate of this scanner's query. `free_pool` is the monthly free
-  credits (`free_monthly_credits` from `vision-quota-get`) minus the
-  `estimated_monthly_credits` of the organization's other enabled
-  `free_only` scanners. Leave out scanners this setup made on an earlier run
-  (they match a brief's re-run test), so a re-run does not shrink its own
-  rates. When `free_pool` is 0 or less, use 0.01 and say in your handoff that
-  other free-only scanners already claim the free credits. The three
-  scanners' shares add up to 1, so together they fit the pool.
+  that the organization's own scanners need. Size `sampling_rate` as below.
 - **High volume** (250 sessions a month or more): your brief's targeted
   query and sampling rate, checked against real sessions as below, with
   `"free_only": false`.
+
+**Sizing a `free_only` scanner.** Set `sampling_rate` to `min(1, share ×
+free_pool / (sessions_per_month × credits_per_observation))`, rounded down
+to two decimals, and never below 0.01. `share` is in your brief; the three
+scanners' shares add up to 1, so together they fit the pool.
+`credits_per_observation` comes from the estimate of this scanner's query.
+`free_pool` is that same estimate's `free_only_monthly_credits_left`: the
+monthly rate the organization's free credits still cover, after its other
+free-only scanners and backfills in every project. When you update a
+scanner from an earlier run, pass its id as `scanner_id` to the estimate,
+and add back the `estimated_monthly_credits` of this setup's other earlier
+`free_only` scanners (they match a brief's re-run test), so a re-run does
+not shrink its own rates. When `free_pool` is 0, use 0.01 and say in your
+handoff that other free-only scanners already claim the free credits.
 
 For a `free_only` scanner, say in your handoff that it pauses when the
 organization's free credits run out, and that turning off "Free credits
@@ -137,10 +143,11 @@ ORDER BY sessions DESC
 LIMIT 100
 ```
 
-A hash-routed app shows its pages after `#` (`/#/booking`), so anchor those
-regexes on the fragment: `^https?://[^/]+/#/booking(/|\?|$)`. If the query
-returns no rows, treat the project as having no recordings and write the
-regexes from the repo's routes.
+A hash-routed app shows its pages after `#` (`/#/booking`, or `/app/#/booking`
+under a path), so anchor those regexes on the fragment:
+`^https?://[^/]+(/[^#]*)?#/booking(/|\?|$)`. If the query returns no rows,
+treat the project as having no recordings and write the regexes from the
+repo's routes.
 
 Map the flow you found in the repo onto these real paths — a mount prefix, a
 locale segment, or a public route that differs from the file name is common
@@ -160,8 +167,9 @@ Compare it with what the project records:
   wrong for this project. Follow your brief's fallback, estimate again, and
   create only once it matches. Never create a query that matches nothing in
   a project that records.
-- **The project has no recordings yet**: nothing can be checked. Create as
-  the tiers above say; the scanner starts with the first recording.
+- **The project has no scannable sessions yet** (its tier above): nothing can
+  be checked, so this rule does not block it. Create as that tier says; the
+  scanner starts with the first scannable recording.
 
 Say in your handoff which tier you used, whether the query was checked
 against real sessions, and how many it matched.
@@ -206,12 +214,17 @@ On an update, keep what a person may have tuned:
 
 - **`credit_limit`**: never change it. Setup never sets one, so it is always
   the user's.
-- **Same tier as before**: keep its `sampling_rate` and `free_only`. Read the
-  earlier tier from the scanner itself: `free_only` with no filters is a low
-  tier; any filter is the high tier.
-- **The tier changed** (the project grew past 250 sessions a month, or
-  shrank under it): write the new tier's query, `sampling_rate`, and
-  `free_only`, and say so in your handoff.
+- **Read the earlier tier from `free_only` alone**: `true` is a low tier (no
+  scannable sessions, or low volume); `false` is the high tier. Filters do
+  not tell you, because the summarizer has none on every tier.
+- **Same tier as before**: keep its query, `sampling_rate`, and `free_only`.
+- **Low tier before, high volume now**: write the high tier's query,
+  `sampling_rate`, and `"free_only": false`, and say so in your handoff.
+- **High tier before, low tier now**: change nothing. `free_only` is `false`
+  either because the project was busy or because a person turned off "Free
+  credits only", and setup cannot tell which. Never change `free_only` from
+  `false` to `true`. Say in your handoff that the project now fits the low
+  tier, and that turning on "Free credits only" is the user's choice.
 
 **Never blind-overwrite a user's scanner.** A scanner that fails the
 three-part test is theirs, whatever it is named — leave it untouched. If it

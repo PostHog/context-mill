@@ -24,8 +24,10 @@ locked, and the query stays unscoped on every tier.
 ```
 
 **Sampling, per the tiers in `replay-vision-scanners-core`.** Free credit
-share: **0.2**. With no recordings yet or low volume, it can summarize every
-session. With high volume it keeps a 0.1 sample.
+share: **0.2**. With no scannable sessions yet or low volume, it is
+`free_only` and sized to its share of the free credits. With high volume it
+keeps a 0.1 sample and `"free_only": false`. On a re-run, the core rules keep
+its rate and `free_only` unless its tier changed.
 
 **`{{VOCABULARY}}`** is a short list of the nouns and verbs this product's
 own UI uses for its key flows, read out of the repo — "courts, slots,

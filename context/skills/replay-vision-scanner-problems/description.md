@@ -31,7 +31,7 @@ silent validation error". Facts, under the same content rules as
 **Query and sampling, per the tiers in `replay-vision-scanners-core`.** Free
 credit share: **0.4**.
 
-- **No recordings yet, or low volume**: no filters — `{"kind":
+- **No scannable sessions yet, or low volume**: no filters — `{"kind":
   "RecordingsQuery"}` — so every session can be watched.
 - **High volume**: a `visited_page` scope on this product's key completion
   flow and its immediate predecessors, at `sampling_rate` 0.5. Write the
@@ -45,9 +45,12 @@ credit share: **0.4**.
 frustration monitor (`emits_signals: false`). A breakage monitor from an
 earlier run (match phrase `moments where the product visibly broke for the
 user`) is this brief's predecessor: update it in place into this brief, per
-the core re-run rules. Those rules keep its `credit_limit`. It had a page
-filter, so its earlier tier is high: on a high-volume project it keeps its
-`sampling_rate`, and on a smaller one it moves to the low tier. Leave a frustration monitor from an earlier run
+the core re-run rules. Those rules keep its `credit_limit`. Its `free_only`
+is `false`, so the core rules read it as the high tier: on a high-volume
+project it keeps its `sampling_rate`. Earlier setups never set `free_only`,
+so on a smaller project its `false` is not a person's choice: move it to the
+low tier, with no filters and `"free_only": true`, and say so in your
+handoff. Leave a frustration monitor from an earlier run
 (match phrase `clear signs the user got stuck or frustrated`) untouched, and
 say in your handoff that it now overlaps this monitor, so the user can turn
 it off.
