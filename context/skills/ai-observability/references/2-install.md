@@ -21,7 +21,7 @@ Every provider and every OpenAI-compatible gateway needs the PostHog SDK next to
 
 The vendor SDK is already in the manifest. Do not add or upgrade it.
 
-**Watch the pinned major version.** The openai wrapper and every `opentelemetry-instrumentation-*` bridge target the modern client API (`openai>=1.x`, `client.chat.completions.create`). A project pinned to a pre-1.0 `openai` (the flat `openai.ChatCompletion` / `openai.Embedding` module API) gives them nothing to patch, and you must not upgrade it — so the instrumentation silently emits no events. Use `manual-capture` and wrap the real calls with `posthog.capture()` instead. The same holds for any provider pinned below its current client interface.
+**Watch the pinned major version.** The openai wrapper and every `opentelemetry-instrumentation-*` bridge target the modern client API (`openai>=1.x`, `client.chat.completions.create`). A project pinned to a pre-1.0 `openai` (the flat `openai.ChatCompletion` / `openai.Embedding` module API) gives them nothing to patch, and you must not upgrade it — so the instrumentation silently emits no events. Use `manual-capture` and wrap the real calls and send each `$ai_*` event with the SDK's AI capture method on posthog 8, posthog-node 6, posthog-go v2 and posthog-rs 1 (`capture_ai`, `captureAi`, `EnqueueAI`), or with `posthog.capture()` on the older majors; `capture` never reroutes by event name on the new majors. The same holds for any provider pinned below its current client interface.
 
 Portkey also needs `portkey-ai`.
 
