@@ -983,6 +983,7 @@ export {
     serializeSkill,
     fetchDoc,
     loadDoc,
+    urlToFilename,
     parseCliBlock,
     resolveVariantCli,
     expandPartials,

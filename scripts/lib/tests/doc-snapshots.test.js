@@ -39,18 +39,60 @@ describe('docs snapshots referenced by the skill configs', () => {
             .filter(name => String(name).endsWith('config.yaml'))
             .map(name => path.join(repoRoot, 'context', 'skills', String(name)));
         const local = [];
+        const collect = (entries) => {
+            for (const entry of entries ?? []) {
+                const url = typeof entry === 'string' ? entry : entry.url;
+                if (!/^https?:\/\//.test(url)) local.push(url);
+            }
+        };
         for (const file of configs) {
             const config = yaml.load(fs.readFileSync(file, 'utf8'));
+            collect(config?.shared_docs);
             for (const variant of config?.variants ?? []) {
-                for (const entry of variant.docs_urls ?? []) {
-                    const url = typeof entry === 'string' ? entry : entry.url;
-                    if (!/^https?:\/\//.test(url)) local.push(url);
-                }
+                collect(variant.docs_urls);
+                collect(variant.shared_docs);
             }
         }
         expect(local.length).toBeGreaterThan(0);
         for (const entry of local) {
             expect(fs.existsSync(path.join(repoRoot, entry)), entry).toBe(true);
         }
+    });
+});
+
+describe('the legacy SDK pages are read from the snapshots everywhere', () => {
+    const LIVE = [
+        'https://posthog.com/docs/libraries/python.md',
+        'https://posthog.com/docs/references/posthog-python.md',
+        'https://posthog.com/docs/libraries/node.md',
+        'https://posthog.com/docs/references/posthog-node.md',
+        'https://posthog.com/docs/libraries/go.md',
+        'https://posthog.com/docs/libraries/rust.md',
+        'https://posthog.com/docs/libraries/ios.md',
+        'https://posthog.com/docs/libraries/ios/usage.md',
+        'https://posthog.com/docs/libraries/ios/configuration.md',
+        'https://posthog.com/docs/libraries/android.md',
+        'https://posthog.com/docs/libraries/flutter.md',
+        'https://posthog.com/docs/libraries/django.md',
+        'https://posthog.com/docs/libraries/flask.md',
+    ];
+
+    // Those pages move to the capture v1 majors on release day; a skill fetching one live would flip with them.
+    it('no skill config fetches one of the snapshotted pages live', () => {
+        const configs = fs.readdirSync(path.join(repoRoot, 'context', 'skills'), { recursive: true })
+            .filter(name => String(name).endsWith('config.yaml'))
+            .map(name => fs.readFileSync(path.join(repoRoot, 'context', 'skills', String(name)), 'utf8'));
+        for (const url of LIVE) {
+            const offenders = configs.filter(text => text.includes(`- ${url}`));
+            expect(offenders, url).toEqual([]);
+        }
+    });
+});
+
+describe('a snapshot keeps its own file name', async () => {
+    const { urlToFilename } = await import('../skill-generator.js');
+    it('uses the basename for a repo path and the last URL segment for a page', () => {
+        expect(urlToFilename('context/docs-snapshots/legacy/usage.md')).toBe('usage.md');
+        expect(urlToFilename('https://posthog.com/docs/libraries/ios/usage.md')).toBe('usage.md');
     });
 });

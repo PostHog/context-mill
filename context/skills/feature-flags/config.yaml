@@ -49,15 +49,13 @@ variants:
     tags: [django, python]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/python.md
-      - https://posthog.com/docs/libraries/django.md
-
+      - context/docs-snapshots/legacy/django.md
   - id: flask
     display_name: Flask
     tags: [flask, python]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/python.md
-      - https://posthog.com/docs/libraries/flask.md
-
+      - context/docs-snapshots/legacy/flask.md
   - id: php
     display_name: PHP
     tags: [php]
@@ -141,8 +139,7 @@ variants:
     tags: [ios, swift]
     docs_urls:
       - https://posthog.com/docs/feature-flags/installation/ios.md
-      - https://posthog.com/docs/libraries/ios/usage.md
-
+      - context/docs-snapshots/legacy/usage.md
   - id: flutter
     display_name: Flutter
     tags: [flutter, dart]

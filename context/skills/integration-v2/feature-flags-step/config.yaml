@@ -156,7 +156,7 @@ variants:
   - python
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/python.md
-  - https://posthog.com/docs/libraries/django.md
+  - context/docs-snapshots/legacy/django.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: flask
   framework: flask
@@ -166,7 +166,7 @@ variants:
   - python
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/python.md
-  - https://posthog.com/docs/libraries/flask.md
+  - context/docs-snapshots/legacy/flask.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: fastapi
   framework: fastapi
@@ -347,7 +347,7 @@ variants:
   - xcodegen
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/ios.md
-  - https://posthog.com/docs/libraries/ios/usage.md
+  - context/docs-snapshots/legacy/usage.md
 - id: flutter
   framework: flutter
   display_name: Flutter

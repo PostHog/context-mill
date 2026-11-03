@@ -54,6 +54,7 @@ const skillsSourceDir = path.join(configDir, 'skills');
 const agentsSourceDir = path.join(configDir, 'agents');
 const agentsDir = path.join(distDir, 'agents');
 const exampleAppsDir = path.join(repoRoot, 'example-apps');
+const docsSnapshotsDir = path.join(configDir, 'docs-snapshots');
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
 const localAgentsUrl = `http://localhost:${PORT}`;
@@ -66,7 +67,7 @@ process.env.AGENTS_BASE_URL = localAgentsUrl;
 
 // --- state ---
 
-let indexes = { groupRoots: [], examplePathIndex: new Map() };
+let indexes = { groupRoots: [], examplePathIndex: new Map(), docSnapshotIndex: new Map() };
 let knownSkills = [];
 let docContents = {};
 
@@ -213,7 +214,7 @@ function handleEvent(event, absPath) {
         event,
         absPath,
         indexes,
-        paths: { repoRoot, skillsDir: skillsSourceDir, exampleAppsDir },
+        paths: { repoRoot, skillsDir: skillsSourceDir, exampleAppsDir, docsSnapshotsDir },
     });
 
     const relPath = path.relative(repoRoot, absPath);
@@ -234,7 +235,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, exampleAppsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, exampleAppsDir, docsSnapshotsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
