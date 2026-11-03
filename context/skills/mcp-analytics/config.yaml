@@ -36,4 +36,4 @@ variants:
       - https://posthog.com/docs/mcp-analytics/conversation-id.md
       - https://posthog.com/docs/mcp-analytics/events.md
       - https://posthog.com/docs/mcp-analytics/custom-events.md
-      - https://posthog.com/docs/libraries/python.md
+      - context/docs-snapshots/legacy/python.md

@@ -21,12 +21,16 @@ function isUnder(absPath, parent) {
  *   - groupRoots: one entry per unique `skill._group`, with the absolute path
  *     to the group's source directory and the variant IDs that live under it.
  *     Sorted by `absPath.length` DESC so the deepest matching group wins.
+ *   - docSnapshotIndex: reverse index { repo-relative doc path → skillId[] } for
+ *     the snapshots under context/docs-snapshots.
  *   - examplePathIndex: reverse index { examplePath → skillId[] } keyed by the
  *     POSIX paths that appear in `skill._examplePaths` (e.g. "example-apps/django").
  */
 function buildIndexes({ skills, configDir }) {
     const groupsByKey = new Map();
     const examplePathIndex = new Map();
+    // Repo-relative doc snapshots (`docs_urls` entries without a scheme) → the skills that read them.
+    const docSnapshotIndex = new Map();
 
     for (const skill of skills) {
         const compositeKey = skill._group;
@@ -47,13 +51,21 @@ function buildIndexes({ skills, configDir }) {
             const arr = examplePathIndex.get(examplePath);
             if (!arr.includes(skill.id)) arr.push(skill.id);
         }
+
+        for (const entry of [...(skill.docs_urls || []), ...(skill.shared_docs || [])]) {
+            const ref = typeof entry === 'string' ? entry : entry?.url;
+            if (!ref || /^https?:\/\//.test(ref)) continue;
+            if (!docSnapshotIndex.has(ref)) docSnapshotIndex.set(ref, []);
+            const arr = docSnapshotIndex.get(ref);
+            if (!arr.includes(skill.id)) arr.push(skill.id);
+        }
     }
 
     const groupRoots = [...groupsByKey.values()].sort(
         (a, b) => b.absPath.length - a.absPath.length,
     );
 
-    return { groupRoots, examplePathIndex };
+    return { groupRoots, examplePathIndex, docSnapshotIndex };
 }
 
 /**
@@ -93,7 +105,7 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
  */
 function routeChange({ event, absPath, indexes, paths }) {
     const { groupRoots, examplePathIndex } = indexes;
-    const { repoRoot, skillsDir, exampleAppsDir } = paths;
+    const { repoRoot, skillsDir, exampleAppsDir, docsSnapshotsDir } = paths;
 
     if (isUnder(absPath, skillsDir)) {
         const isDirEvent = event === 'addDir' || event === 'unlinkDir';
@@ -115,6 +127,13 @@ function routeChange({ event, absPath, indexes, paths }) {
     if (isUnder(absPath, exampleAppsDir)) {
         const relPosix = path.relative(repoRoot, absPath).split(path.sep).join('/');
         const ids = findExamplesMatching(relPosix, examplePathIndex);
+        if (ids.length === 0) return null;
+        return { ids };
+    }
+
+    if (docsSnapshotsDir && isUnder(absPath, docsSnapshotsDir)) {
+        const relPosix = path.relative(repoRoot, absPath).split(path.sep).join('/');
+        const ids = (indexes.docSnapshotIndex ?? new Map()).get(relPosix) ?? [];
         if (ids.length === 0) return null;
         return { ids };
     }

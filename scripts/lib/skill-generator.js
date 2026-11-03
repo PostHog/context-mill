@@ -352,6 +352,8 @@ function expandSkillGroups(config, configDir) {
  * e.g., https://posthog.com/docs/libraries/next-js.md → next-js.md
  */
 function urlToFilename(url) {
+    // A snapshot path keeps its own file name.
+    if (isLocalDoc(url)) return path.basename(url);
     try {
         const parsed = new URL(url);
         const pathParts = parsed.pathname.split('/').filter(Boolean);
@@ -514,6 +516,29 @@ async function fetchDoc(url) {
         return { content: cached.content, title: cached.title };
     }
     throw lastError;
+}
+
+/** A `docs_urls` entry without a scheme is a file in this repo (a snapshot), not a page to fetch. */
+function isLocalDoc(entry) {
+    return !/^https?:\/\//.test(entry);
+}
+
+/**
+ * Read a doc from the repo (`context/docs-snapshots/...`) or fetch it; both
+ * return `{ content, title }`. A missing snapshot fails the build, since a
+ * variant that silently loses a reference is worse than no build.
+ */
+async function loadDoc(entry, repoRoot) {
+    if (!isLocalDoc(entry)) return fetchDoc(entry);
+    const file = path.resolve(repoRoot, entry);
+    if (!file.startsWith(path.resolve(repoRoot) + path.sep)) {
+        throw new Error(`Doc snapshot path escapes the repo: ${entry}`);
+    }
+    if (!fs.existsSync(file)) {
+        throw new Error(`Doc snapshot not found: ${entry}`);
+    }
+    const content = fs.readFileSync(file, 'utf8');
+    return { content, title: extractTitle(content) || inferDescription(entry) };
 }
 
 /**
@@ -726,7 +751,7 @@ async function generateSkill({
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
 
-        const result = await fetchDoc(url);
+        const result = await loadDoc(url, repoRoot);
         if (result) {
             const filename = urlToFilename(url);
             fs.writeFileSync(
@@ -957,6 +982,8 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    loadDoc,
+    urlToFilename,
     parseCliBlock,
     resolveVariantCli,
     expandPartials,

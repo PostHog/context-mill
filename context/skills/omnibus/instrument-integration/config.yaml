@@ -67,19 +67,19 @@ variants:
       # JavaScript / Server + Client
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
-      - https://posthog.com/docs/libraries/node.md
-      - https://posthog.com/docs/references/posthog-node.md
+      - context/docs-snapshots/legacy/node.md
+      - context/docs-snapshots/legacy/posthog-node.md
       # Python
-      - https://posthog.com/docs/libraries/django.md
-      - https://posthog.com/docs/libraries/flask.md
-      - https://posthog.com/docs/libraries/python.md
-      - https://posthog.com/docs/references/posthog-python.md
+      - context/docs-snapshots/legacy/django.md
+      - context/docs-snapshots/legacy/flask.md
+      - context/docs-snapshots/legacy/python.md
+      - context/docs-snapshots/legacy/posthog-python.md
       # .NET
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir
       - https://posthog.com/docs/libraries/elixir.md
       # Go
-      - https://posthog.com/docs/libraries/go.md
+      - context/docs-snapshots/legacy/go.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/libraries/php.md
@@ -87,9 +87,9 @@ variants:
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
       # Mobile
-      - https://posthog.com/docs/libraries/android.md
-      - https://posthog.com/docs/libraries/ios.md
-      - https://posthog.com/docs/libraries/ios/usage.md
-      - https://posthog.com/docs/libraries/ios/configuration.md
-      - https://posthog.com/docs/libraries/flutter.md
+      - context/docs-snapshots/legacy/android.md
+      - context/docs-snapshots/legacy/ios.md
+      - context/docs-snapshots/legacy/usage.md
+      - context/docs-snapshots/legacy/configuration.md
+      - context/docs-snapshots/legacy/flutter.md
       - https://posthog.com/docs/libraries/react-native.md

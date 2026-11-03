@@ -144,7 +144,7 @@ variants:
   - python
   docs_urls:
   - https://posthog.com/docs/error-tracking/installation/python.md
-  - https://posthog.com/docs/libraries/django.md
+  - context/docs-snapshots/legacy/django.md
 - id: flask
   framework: flask
   display_name: Flask
@@ -153,7 +153,7 @@ variants:
   - python
   docs_urls:
   - https://posthog.com/docs/error-tracking/installation/python.md
-  - https://posthog.com/docs/libraries/flask.md
+  - context/docs-snapshots/legacy/flask.md
 - id: fastapi
   framework: fastapi
   display_name: FastAPI
@@ -162,7 +162,7 @@ variants:
   - python
   docs_urls:
   - https://posthog.com/docs/error-tracking/installation/python.md
-  - https://posthog.com/docs/libraries/python.md
+  - context/docs-snapshots/legacy/python.md
 - id: react-tanstack-router-file-based
   framework: tanstack-router
   display_name: React with TanStack Router (file-based)
@@ -328,9 +328,9 @@ variants:
   - xcodegen
   docs_urls:
   - https://posthog.com/docs/error-tracking/installation/ios.md
-  - https://posthog.com/docs/libraries/ios.md
-  - https://posthog.com/docs/libraries/ios/usage.md
-  - https://posthog.com/docs/libraries/ios/configuration.md
+  - context/docs-snapshots/legacy/ios.md
+  - context/docs-snapshots/legacy/usage.md
+  - context/docs-snapshots/legacy/configuration.md
 - id: flutter
   framework: flutter
   display_name: Flutter
