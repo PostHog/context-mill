@@ -719,6 +719,17 @@ async function generateSkill({
         }
     }
 
+    // A doc entry's `filename` must be a plain `.md` name that no other
+    // reference uses, or the fetched doc would overwrite it.
+    function checkDocFilename(filename, url) {
+        const taken = filename === 'COMMANDMENTS.md' || references.some((ref) => ref.filename === filename);
+        if (path.basename(filename) !== filename || !filename.endsWith('.md') || taken) {
+            throw new Error(
+                `${skill.id}: doc ${url} names filename "${filename}"; use a plain .md name no other reference uses`
+            );
+        }
+    }
+
     // Helper to process a doc entry (string URL or {url, title, filename} object).
     // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
     // are silent.
@@ -726,6 +737,8 @@ async function generateSkill({
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
         const filenameOverride = typeof docEntry === 'object' ? docEntry.filename : null;
+
+        if (filenameOverride) checkDocFilename(filenameOverride, url);
 
         const result = await fetchDoc(url);
         if (result) {

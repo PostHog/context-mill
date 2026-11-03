@@ -26,12 +26,16 @@ describe('sending-transactional-emails skill', () => {
         expect(skill().map((s) => s.id)).toEqual(['sending-transactional-emails']);
     });
 
-    it('fetches the PostHog skill under its own name, so it is not taken for this SKILL.md', () => {
-        expect(skill()[0].docs_urls[0]).toMatchObject({
-            url: 'https://raw.githubusercontent.com/PostHog/posthog/master/products/messaging/skills/sending-transactional-emails/SKILL.md',
-            filename: 'sending-transactional-emails.md',
-        });
+    it('reads the PostHog skill under the name its description points to', () => {
+        expect(skill()[0].docs_urls[0].filename).toBe('sending-transactional-emails.md');
         expect(DESCRIPTION).toContain('Read `references/sending-transactional-emails.md` first');
+    });
+
+    it('checks for server code before it asks anything', () => {
+        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
+        const firstRule = wizardSection.split('\n- ')[1];
+        expect(firstRule).toContain('emit `[ABORT] no server code found` and stop');
+        expect(firstRule).not.toContain('wizard_ask');
     });
 
     it.each(['transactional email api not enabled', 'no server code found'])(

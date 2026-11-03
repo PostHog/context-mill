@@ -29,21 +29,16 @@ describe('generateSkill doc filename', () => {
         rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it('writes a fetched doc under the filename its entry names', async () => {
+    async function generate(docsUrls) {
         const config = {
             'sending-email': {
                 type: 'skill',
                 template: 'description.md',
-                variants: [{
-                    id: 'all',
-                    display_name: 'Sending email',
-                    docs_urls: [{ url: UPSTREAM_SKILL_URL, filename: 'upstream-skill.md', title: 'The upstream skill' }],
-                }],
+                variants: [{ id: 'all', display_name: 'Sending email', docs_urls: docsUrls }],
             },
         };
         const skill = expandSkillGroups(config, tmpDir)[0];
         const outputDir = join(tmpDir, 'out');
-
         await generateSkill({
             skill,
             version: 'test',
@@ -55,12 +50,35 @@ describe('generateSkill doc filename', () => {
             skillTemplate: skill._template,
             sharedDocs: skill._sharedDocs || [],
         });
+        return join(outputDir, 'sending-email');
+    }
 
-        const references = join(outputDir, 'sending-email', 'references');
+    it('writes a fetched doc under the filename its entry names', async () => {
+        const skillDir = await generate([
+            { url: UPSTREAM_SKILL_URL, filename: 'upstream-skill.md', title: 'The upstream skill' },
+        ]);
+
+        const references = join(skillDir, 'references');
         expect(readFileSync(join(references, 'upstream-skill.md'), 'utf8')).toBe('# Upstream skill\n\nSteps');
         expect(existsSync(join(references, 'SKILL.md'))).toBe(false);
-        expect(readFileSync(join(outputDir, 'sending-email', 'SKILL.md'), 'utf8')).toContain(
+        expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toContain(
             '- `references/upstream-skill.md` - The upstream skill',
         );
+    });
+
+    it.each(['nested/upstream-skill.md', '../upstream-skill.md', 'upstream-skill.txt', 'COMMANDMENTS.md'])(
+        'refuses the filename %s',
+        async (filename) => {
+            await expect(generate([{ url: UPSTREAM_SKILL_URL, filename }])).rejects.toThrow(filename);
+        },
+    );
+
+    it('refuses a filename another reference already uses', async () => {
+        await expect(
+            generate([
+                { url: UPSTREAM_SKILL_URL, filename: 'upstream-skill.md' },
+                { url: 'https://docs.example.test/other.md', filename: 'upstream-skill.md' },
+            ]),
+        ).rejects.toThrow('upstream-skill.md');
     });
 });
