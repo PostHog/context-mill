@@ -719,16 +719,17 @@ async function generateSkill({
         }
     }
 
-    // Helper to process a doc entry (string URL or {url, title} object).
+    // Helper to process a doc entry (string URL or {url, title, filename} object).
     // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
     // are silent.
     async function processDoc(docEntry) {
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
+        const filenameOverride = typeof docEntry === 'object' ? docEntry.filename : null;
 
         const result = await fetchDoc(url);
         if (result) {
-            const filename = urlToFilename(url);
+            const filename = filenameOverride || urlToFilename(url);
             fs.writeFileSync(
                 path.join(referencesDir, filename),
                 result.content,
