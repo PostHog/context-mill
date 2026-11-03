@@ -530,16 +530,24 @@ async function fetchDoc(url) {
 /**
  * Collect commandments for a set of tags
  */
-function collectCommandments(tags, commandmentsConfig) {
+function collectCommandments(tags, commandmentsConfig, captureMode) {
     const commandments = commandmentsConfig.commandments || {};
     // `all` is language-agnostic and ships with every skill, whatever its tags.
     const rules = [...(commandments.all || [])];
+    // A `<tag>@v1` key holds the rules for the capture v1 majors. Only a
+    // variant that declares its capture_mode gets them; an untagged variant
+    // serves either mode and carries the base rules alone, so a mode-neutral
+    // skill (AI observability, error tracking) never contradicts the
+    // integration skill beside it.
+    const modeSuffix = captureMode ? `@${captureMode}` : null;
 
     // Deduped: variants inherit group-level tags and may re-declare them, which
     // would otherwise collect that tag's rules twice.
     for (const tag of new Set(tags)) {
-        if (tag !== 'all' && commandments[tag]) {
-            rules.push(...commandments[tag]);
+        if (tag === 'all') continue;
+        if (commandments[tag]) rules.push(...commandments[tag]);
+        if (modeSuffix && commandments[tag + modeSuffix]) {
+            rules.push(...commandments[tag + modeSuffix]);
         }
     }
 
@@ -764,7 +772,7 @@ async function generateSkill({
     }
 
     // Collect commandments for this skill's tags.
-    const rules = collectCommandments(skill.tags || [], commandmentsConfig);
+    const rules = collectCommandments(skill.tags || [], commandmentsConfig, skill.capture_mode);
     const commandmentsText = formatCommandments(rules);
 
     // Also emit them as a reference file. The orchestrator installs this skill
