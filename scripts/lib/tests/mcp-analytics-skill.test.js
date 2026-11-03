@@ -107,8 +107,8 @@ describe('mcp-analytics instructions', () => {
     it.each([
         ['@posthog/mcp', /@posthog\/mcp[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '0.18.0'],
         ['posthog (Python)', /(?<![\w/@-])posthog(?![\w/-])[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '7.62.0'],
-        ['posthogmcpsdk', /posthogmcpsdk[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '1.33.0'],
-        ['posthog-ruby', /posthog-ruby[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '3.26.2'],
+        ['posthogmcpsdk', /posthogmcpsdk[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '1.34.0'],
+        ['posthog-ruby', /posthog-ruby[^\d\n]{0,12}(\d+\.\d+\.\d+)/g, '3.29.0'],
     ])('states one floor for %s', (_sdk, pattern, floor) => {
         expect([...new Set([...text.matchAll(pattern)].map(([, version]) => version))]).toEqual([floor]);
     });
@@ -128,6 +128,7 @@ describe('mcp-analytics instructions', () => {
         ['Ruby reads the token without raising', 'ENV["POSTHOG_PROJECT_TOKEN"]'],
         ['Python P2 prepares each call', 'posthog.prepare_tool_call(name, arguments)'],
         ['Python P2 delivers the conversation handle', 'posthog.prepare_tool_result(result, prepared)'],
+        ['Go offers the intent fallback', 'WithIntentFallback'],
         ['Go offers the opt-in missing-capability tool', 'WithMissingCapabilityTool'],
         ['Go reports unknown tools', '`$mcp_unknown_tool`'],
         ['Go reports input_required rounds', '`$mcp_input_required`'],
