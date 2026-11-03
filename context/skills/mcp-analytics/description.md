@@ -519,7 +519,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
 - **TypeScript / JavaScript:** run the project's type-check and/or build script (e.g. `npx tsc --noEmit`, `pnpm build`) and fix any errors your changes introduced. Run any linter/formatter the project uses on the files you touched.
 - **Python:** run the project's type-check if present (`python -m mypy .`) and fix any errors your changes introduced. Run any formatter the project uses (`python -m ruff format`, `python -m black`) on the files you touched.
-- **Go:** run `go build ./...`, then `go vet ./...`, and fix any errors your changes introduced. Run `go fmt ./...`.
+- **Go:** run `go build -o /dev/null ./...` (plain `go build` drops a binary in the project when the module root is a `main` package), then `go vet ./...`, and fix any errors your changes introduced. Run `go fmt ./...`.
 - **Ruby:** confirm `bundle install` succeeds and `Gemfile.lock` has the gems from STEP 3. If the project uses RuboCop, run `bundle exec rubocop` on the files you touched. Don't start the server or run Ruby code.
 - **Rust:** run `cargo build` (and `cargo clippy` if the project uses it) and fix any errors your changes introduced. Match the file's existing formatting by hand; `cargo fmt` reformats the whole crate, so don't run it. Don't start the server.
 - Check statically that nothing you added passes options that turn model capture or conversation IDs off, and that custom dispatchers hand handlers the prepared arguments, never the raw ones.
