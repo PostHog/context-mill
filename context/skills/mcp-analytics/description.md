@@ -125,7 +125,7 @@ Read `ruby.md` before editing.
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add -E @posthog/mcp posthog-node` (`-E` / `--save-exact` pins the current release). Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add -E @posthog/mcp@latest posthog-node` (`-E` / `--save-exact` pins the current release; keep `@latest`, because a bare name leaves an already-declared older version in place). Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 
@@ -139,7 +139,7 @@ No extra constraint beyond the floor above. Upgrading an old install matters mos
 
 #### Python
 
-The SDK ships inside `posthog`, so install the latest `posthog` with the project's installer (`pip install -U posthog`, `uv add posthog`, or `poetry add posthog`), or write `posthog>=7.62.0` into `requirements.txt` and install from it. Read the installed version back: it must be `posthog>=7.62.0`. Never put a version constraint in a shell command; the wizard reads `>` as a redirect and refuses it. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
+The SDK ships inside `posthog`, so first look for an existing `posthog` declaration (`requirements*.txt`, `pyproject.toml`, `setup.py`). If one pins or caps it below 7.62.0, raise that declaration to `posthog>=7.62.0` by editing the file, then install the way the project does (`pip install -r requirements.txt`, `uv sync`, or `poetry add posthog@latest`). If there is none, add it with the project's installer (`uv add posthog@latest`, `poetry add posthog@latest`), or write `posthog>=7.62.0` into `requirements.txt` and run `pip install -r requirements.txt`. Read the resolved version back from the lockfile or environment: it must be `posthog>=7.62.0`. Never put a version constraint in a shell command; the wizard reads `>` as a redirect and refuses it. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
 
 #### Go
 
@@ -153,7 +153,7 @@ The gem needs Ruby 3.0 or later; on an older Ruby, emit `[ABORT] ruby older than
 
 #### Rust
 
-Run `cargo add posthog-rs --features mcp` in the crate that contains the server, then read the version back from `Cargo.lock`: `posthog-rs` must be `0.29.0` or later. The `mcp` feature turns on the async client and pulls in `rmcp` with its `server` feature. `posthog_rs::mcp` needs `rmcp` 3.7 or later; if `Cargo.lock` locks an older one, emit `[ABORT] rmcp older than 3.7`. Never add, upgrade, or pin `rmcp` yourself. It also needs Rust 1.88 or later; if the pinned toolchain is older, or `cargo build` fails because the compiler is too old, emit `[ABORT] rust toolchain older than 1.88`. The server already runs on `tokio`; never change its features or the `rmcp` transport features.
+Run `cargo add posthog-rs --features mcp` in the crate that contains the server, then read the version back from `Cargo.lock`: `posthog-rs` must be `0.29.0` or later. The `mcp` feature turns on the async client and pulls in `rmcp` with its `server` feature. `posthog_rs::mcp` needs `rmcp` 3.7 or later. If the project's `Cargo.toml` allows it (for example `"3.6"`), `cargo add` moves the lock forward on its own; say in the report that `cargo add` raised `rmcp`, from the version you recorded in STEP 1. If the project pins an older one exactly (`"=3.6.0"`) so `cargo add` fails, emit `[ABORT] rmcp older than 3.7`. Never edit the `rmcp` requirement yourself. It also needs Rust 1.88 or later; if the pinned toolchain is older, or `cargo build` fails because the compiler is too old, emit `[ABORT] rust toolchain older than 1.88`. The server already runs on `tokio`; never change its features or the `rmcp` transport features.
 
 ### STEP 4: Instrument the server
 
@@ -464,7 +464,7 @@ server.serve(rmcp::transport::stdio()).await?.waiting().await?;
 posthog.shutdown().await;
 ```
 
-Read the token with `unwrap_or_default()`, never `?` or `expect`: a blank token makes a disabled client that sends nothing, while a missing variable must never stop the server. Keep the server's existing transport. For Streamable HTTP, hand the wrapped server to `StreamableHttpService::new(move || Ok(server.clone()), ...)` in place of yours; the server must implement `Clone`. Use the default options. Build `McpOptions` with `McpOptionsBuilder` and `McpAnalytics::new(...).instrument(...)` only if the user asks for an option (`rust.md` lists them). `identify` is optional; add it only if the server already authenticates callers on HTTP.
+Keep the server's existing error handling: if `main` doesn't return a `Result`, handle the `serve` errors the way it already does instead of using `?`. Read the token with `unwrap_or_default()`, never `?` or `expect`: a blank token makes a disabled client that sends nothing, while a missing variable must never stop the server. Keep the server's existing transport. For Streamable HTTP, hand the wrapped server to `StreamableHttpService::new(move || Ok(server.clone()), ...)` in place of yours; the server must implement `Clone`. Use the default options. Build `McpOptions` with `McpOptionsBuilder` and `McpAnalytics::new(...).instrument(...)` only if the user asks for an option (`rust.md` lists them). `identify` is optional; add it only if the server already authenticates callers on HTTP.
 
 ### STEP 5: Wire up credentials
 
