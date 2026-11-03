@@ -21,7 +21,7 @@ Every provider and every OpenAI-compatible gateway needs the PostHog SDK next to
 
 The vendor SDK is already in the manifest. Do not add or upgrade it.
 
-**Watch the pinned major version.** The openai wrapper and every `opentelemetry-instrumentation-*` bridge target the modern client API (`openai>=1.x`, `client.chat.completions.create`). A project pinned to a pre-1.0 `openai` (the flat `openai.ChatCompletion` / `openai.Embedding` module API) gives them nothing to patch, and you must not upgrade it — so the instrumentation silently emits no events. Use `manual-capture` and wrap the real calls with `posthog.capture()` instead. The same holds for any provider pinned below its current client interface.
+**Watch the pinned major version.** The openai wrapper and every `opentelemetry-instrumentation-*` bridge target the modern client API (`openai>=1.x`, `client.chat.completions.create`). A project pinned to a pre-1.0 `openai` (the flat `openai.ChatCompletion` / `openai.Embedding` module API) gives them nothing to patch, and you must not upgrade it — so the instrumentation silently emits no events. Use `manual-capture` and wrap the real calls and send each `$ai_*` event with the SDK's AI capture method on posthog 8, posthog-node 6, posthog-go v2 and posthog-rs 1 (`capture_ai`, `captureAi`, `EnqueueAI`), or with `posthog.capture()` on the older majors; `capture` never reroutes by event name on the new majors. The same holds for any provider pinned below its current client interface.
 
 Portkey also needs `portkey-ai`.
 
@@ -35,7 +35,7 @@ Portkey also needs `portkey-ai`.
 
 AWS Bedrock has no wrapper client. It instruments the AWS SDK through OpenTelemetry, so its package list differs from every other provider.
 
-`opentelemetry-go` declares `github.com/posthog/posthog-go/otel` and the OpenTelemetry SDK modules in `go.mod`. There are no Go instrumentation libraries for provider SDKs; step 3 hand-authors the `gen_ai.*` spans instead.
+`opentelemetry-go` declares the OTel bridge that matches the installed core SDK's major in `go.mod`: `github.com/posthog/posthog-go/otel` beside posthog-go 1.x, `github.com/posthog/posthog-go/otel/v2` beside `github.com/posthog/posthog-go/v2` (the bridge moves in lockstep with the core; never mix the two generations), plus the OpenTelemetry SDK modules. There are no Go instrumentation libraries for provider SDKs; step 3 hand-authors the `gen_ai.*` spans instead.
 
 Go is the exception to the no-package-manager and no-lockfile rules on this page. A `go.mod` require line with no matching `go.sum` entry fails the build with `missing go.sum entry for module`, so let the tool write both files: `go get github.com/posthog/posthog-go/otel go.opentelemetry.io/otel go.opentelemetry.io/otel/sdk`, then `go mod tidy`. Do not hand-edit `go.mod` or `go.sum`.
 

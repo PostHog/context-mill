@@ -62,26 +62,40 @@ commandments:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
-    - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
+    - "Add posthog.captureException in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error')): on posthog-node 5 pass the distinct id positionally, `captureException(err, distinctId)`; on posthog-node 6 pass it in the options object, `captureException(err, { distinctId })`, the only form 6 accepts"
     - The SDK batches events and flushes asynchronously. await flush() or await shutdown() before letting that process exit. If unsure, set flushAt 1 and flushInterval 0.
     - '`posthog.capture()` enqueues synchronously and returns; the batched HTTP send happens afterwards. Treat every per-request handler as short-lived even when the framework feels like a server: Next.js / Nuxt / SvelteKit / Remix route handlers, serverless and edge functions, and Lambda are torn down per invocation before the send runs. Create the client with flushAt 1 and flushInterval 0, then await the send before returning. Always use `await posthog.flush()` for a shared/singleton client, `await posthog.shutdown()` for a per-request client. Never skip the awaited flush or risk the enqueued event being silently dropped.'
     - Reverse proxy is NOT needed for server-side Node.js – only client-side JavaScript needs a proxy to avoid ad blockers
 
+  javascript_node@v1:
+    - "posthog-node 6 sends every event to the capture v1 API; `capture`, `captureAi`, `identify`, `alias`, `groupIdentify`, `setPersonProperties`, `unsetPersonProperties`, `captureException` and their `Immediate` variants take an `options` object for per-event controls such as `process_person_profile` (snake_case key), never a `$process_person_profile` property"
+    - "Send LLM analytics events (`$ai_generation`, `$ai_span`, `$ai_trace`, `$ai_embedding` and the other `$ai_*` names) with `captureAi`; `capture` never reroutes by event name"
+    - "`captureException` takes `(error, { distinctId, ... })`; the positional distinct id form of 5.x is gone"
+    - "Install `@posthog/ai` only in a release whose peer range admits posthog-node 6"
+    - "A personless option set globally, in a context or in a `before_send` hook (process_person_profile false) also drops `$identify`, `$create_alias` and `$groupidentify` with an ingestion warning; capture still answers ok and the error surface never reports it. Set it per event, never globally, unless the app really has no person-backed events"
+    - "On 6 a value set on the call beats `register()`, `registerOptions()` and context values, and a `before_send` hook must pass the event's `options` through unchanged"
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
-    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
+    - "Install posthog with the major line this project is on: when the wizard's detect_package_manager tool lists posthog under sdkInstalls, run exactly that command; otherwise install a bounded specifier for the installed major (never a bare `pip install posthog`), and quote specifiers in shell commands"
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
-    - PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later - when you add one, require at least that version
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
+    - "PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later; every 8.x release has them"
 
+  python@v1:
+    - "posthog 8 sends every event to the capture v1 API; constructor arguments after `host` are keyword-only"
+    - "Per-event controls such as `process_person_profile` and `cookieless_mode` go in the `options` argument of `capture`, `capture_ai`, `set`, `set_once`, `alias`, `group_identify` and `capture_exception`, never as a `$process_person_profile` property; the key is snake_case"
+    - "Send LLM analytics events (`$ai_generation`, `$ai_span`, `$ai_trace`, `$ai_embedding` and the other `$ai_*` names) with `capture_ai`; `capture` never reroutes by event name, and the `$ai_` prefix is reserved for them"
+    - "`alias()` needs an explicit `distinct_id`; it no longer falls back to the context distinct ID"
+    - "A personless option set globally, in a context or in a `before_send` hook (process_person_profile false) also drops `$identify`, `$create_alias` and `$groupidentify` with an ingestion warning; capture still answers ok and the error surface never reports it. Set it per event, never globally, unless the app really has no person-backed events"
+    - "On v1 a value set on the call beats a global, super or context value, and a `before_send` hook must pass the event's `options` through unchanged"
   go:
-    - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
+    - "posthog-go is the Go SDK package. The module path is the major: `github.com/posthog/posthog-go` is the 1.x line and `github.com/posthog/posthog-go/v2` is the 2.x line; import exactly the path the installed major uses and never mix them. When the wizard's detect_package_manager tool lists posthog-go under sdkInstalls, run exactly that `go get` command"
     - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
     - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
     - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
@@ -92,17 +106,31 @@ commandments:
     - Avoid deprecated feature flag helpers such as `IsFeatureEnabled`, `GetFeatureFlag`, `GetFeatureFlagPayload`, and `Capture.SendFeatureFlags` in new code
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
+  go@v1:
+    - "posthog-go v2 lives at `github.com/posthog/posthog-go/v2`; import that path everywhere, and its subpackages with it (`github.com/posthog/posthog-go/v2/posthogmcp`, `github.com/posthog/posthog-go/otel/v2`, `github.com/posthog/posthog-go/posthogmcpsdk/v2`); never import the 1.x path beside it"
+    - "Per-event controls such as `process_person_profile` go in the message's `Options` map, not in `$process_person_profile` properties; `Alias` and `Identify` carry `EventProperties` and `Options` like `Capture`"
+    - "Send `$ai_*` events with the AI capture method (`EnqueueAI` and the AI message types), never with `Enqueue` of a `Capture`; `Capture` never reroutes by event name"
+    - "v2 names the server-side key `SecretKey` in the config (the 1.x `PersonalApiKey` field is gone); read it from the environment, never hardcode it"
+    - "A personless option set globally, in a context or in a `before_send` hook (process_person_profile false) also drops `$identify`, `$create_alias` and `$groupidentify` with an ingestion warning; capture still answers ok and the error surface never reports it. Set it per event, never globally, unless the app really has no person-backed events"
+    - "On v2 a value set on the message beats a global or context value, and a `BeforeSend` hook must pass the message's `Options` through unchanged"
   rust:
-    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
+    - "posthog-rs is the Rust SDK crate; when the wizard's detect_package_manager tool lists it under sdkInstalls, run exactly that `cargo add` command (it pins the major and carries the feature flags the client needs); otherwise add a bounded requirement for the installed major. Construct the client with `posthog_rs::client(options).await`"
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
     - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
     - Server-side captures must set a stable `distinct_id` on `Event::new(event, distinct_id)` that matches frontend identify calls; avoid anonymous or literal IDs for business events
-    - The SDK has no `identify` or `alias` helper; set person properties by inserting a `$set` property on an event
     - For feature flags, call `client.evaluate_flags(distinct_id, EvaluateFlagsOptions::default()).await` once per user/request, then read values from the returned snapshot with `is_enabled(...)`
     - For error tracking, use `client.capture_exception_with(&err, CaptureExceptionOptions::new()...)`; the `error-tracking` feature is enabled by default in recent versions
     - The Rust SDK has no surveys or session replay support; do not promise or scaffold those features
+    - "posthog-rs 0.x has no `identify` or `alias` helper (set person properties with a `$set` property on an event); 1.0 adds `alias`"
 
+  rust@v1:
+    - "posthog-rs 1 keeps TLS behind a feature: the blocking client needs `default-features = false, features = [\"tls\"]` (`tls-no-provider` only when the app installs its own rustls provider); the async client keeps the defaults"
+    - "Per-event controls such as `process_person_profile` go in the event's options, set with `Event::insert_option` (or `CaptureExceptionOptions::option` for exceptions), never as a `$process_person_profile` property"
+    - "Send `$ai_*` events with the `capture_ai` family; `capture` never reroutes by event name, and the `$ai_` prefix is reserved for them"
+    - "1.0 has an `alias` helper; use it instead of a `$create_alias` event"
+    - "A personless option set globally, in a context or in a `before_send` hook (process_person_profile false) also drops `$identify`, `$create_alias` and `$groupidentify` with an ingestion warning; capture still answers ok and the error surface never reports it. Set it per event, never globally, unless the app really has no person-backed events"
+    - "On 1.0 a value set on the event beats a global or `RequestContext` value; a `before_send` hook must keep the event's options and it cannot see groups"
   dotnet:
     - posthog-dotnet package names are `PostHog` for general .NET apps and `PostHog.AspNetCore` for ASP.NET Core apps
     - Use environment variables, user secrets, or configuration providers for `ProjectToken`, `HostUrl`, and `PersonalApiKey`; never hardcode PostHog secrets
@@ -247,11 +275,11 @@ commandments:
     - 'Do NOT depend on Xcode scheme environment variables (`ProcessInfo.processInfo.environment`) as the only source of the token: they are injected only when launching from Xcode (debug/simulator), NOT in Archive/Release builds (TestFlight, App Store). Reading them is fine as an optional override, but never force-unwrap or `fatalError` on their absence — that crashes production builds on launch. Ensure a value always ships in the binary'
     - 'Before editing any Xcode project file, check for a project generator spec. If a `project.yml` with XcodeGen-shaped content (top-level `targets:` and/or `packages:` keys — do not trust the filename alone) exists at the repo root, the `.xcodeproj` is generated and MUST NOT be edited directly: the next `xcodegen generate` silently wipes any edit to `project.pbxproj`. Instead declare the package in `project.yml` under `packages:` as `PostHog: { url: https://github.com/PostHog/posthog-ios, from: <latest release> }`, add `- package: PostHog` to the app target''s `dependencies:` list, then tell the user to re-run `xcodegen generate` to apply it'
     - When adding SPM dependencies to project.pbxproj (only when no XcodeGen `project.yml` generator spec exists — see the rule above), create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
-    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
+    - "Set the SPM package reference's `minimumVersion` to the major line this project is on: the exact value the wizard's detect_package_manager tool returns under sdkInstalls when it lists posthog-ios, otherwise the installed major's `x.0.0`. Do not look up the latest release and do not hardcode another version"
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
-    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager or CocoaPods, using `https://github.com/PostHog/posthog-ios.git` for SPM
+    - "Install the PostHog iOS SDK as `PostHog` from `https://github.com/PostHog/posthog-ios.git`: 3.x through Swift Package Manager or CocoaPods, 4.x through Swift Package Manager only (there is no 4.x podspec). When the wizard's detect_package_manager tool lists posthog-ios under sdkInstalls, use exactly the requirement it returns"
     - Initialize `PostHogSDK.shared.setup(config)` exactly once and as early as possible, either in `UIApplicationDelegate.application(_:didFinishLaunchingWithOptions:)` or in the SwiftUI `App` initializer
     - For SwiftUI apps, prefer meaningful `.postHogScreenView(...)` modifiers for screen tracking because automatic SwiftUI screen names can be internal view identifiers
     - Call `PostHogSDK.shared.identify(...)` after login and `PostHogSDK.shared.reset()` on logout; keep PII in user properties, not event properties
@@ -261,6 +289,11 @@ commandments:
     - For iOS logs, use posthog-ios 3.58.0 or later, set `config.logs` fields before `setup`, and capture logs manually with `PostHogSDK.shared.logger` or `captureLog`
     - For widgets, app clips, share extensions, and other app extensions, configure `config.appGroupIdentifier` so the main app and extensions share analytics identity
 
+  ios@v1:
+    - "posthog-ios 4 installs through Swift Package Manager only; there is no podspec, so never add a `pod 'PostHog'` line, and the project must build with Xcode 26 and target at least iOS 15, macOS 11, tvOS 15 and watchOS 10"
+    - "`capture`, `screen`, `identify`, `setPersonProperties`, `alias`, `group`, `captureException` and `captureAi` take an `options` argument as their last parameter for per-event controls such as `process_person_profile` (snake_case key). There are no global options: to turn person processing off for every event, `register([\"$process_person_profile\": false])`, which becomes the option at send time"
+    - "Send `$ai_*` events with `captureAi`, never with `capture`; the `$ai_` prefix is reserved for them"
+    - "On 4.0 a value set on the call beats a registered value, and a `setBeforeSend` hook must pass the event's options through unchanged"
   react-native:
     - posthog-react-native is the React Native SDK package name
     - Use react-native-config to load POSTHOG_PROJECT_TOKEN and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
@@ -274,16 +307,20 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`
+    - "posthog_flutter is the Flutter SDK package name; when the wizard's detect_package_manager tool lists it under sdkInstalls, run exactly that `flutter pub add` command (it pins the major); otherwise add a caret on the installed major"
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
-    - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
     - For Session Replay or Surveys, disable auto-init with `com.posthog.posthog.AUTO_INIT=false` and initialize manually so the required options can be enabled
     - For Flutter Web, add the posthog-js web snippet to `web/index.html`. If you are instructed to ever embed the HTML snippet into the user's code, write the real token directly into the snippet. It is not a secret, and when used as an HTML snippet, it should be written in literally. The example token phc_your_project_token_here is a placeholder for readers. It is not the shape to copy. Flutter Web session replay also requires Canvas capture in project settings
     - Capture screen views by adding `PosthogObserver()` to the app's `navigatorObservers`, whatever routing package the app uses; where its routes are unnamed, name them so `$screen` is readable
     - Call `Posthog().identify(...)` after login and `Posthog().reset()` on logout; keep PII in user properties, not event properties
     - Use `beforeSend` to redact or drop Dart-captured events, but remember it does not intercept native session replay, lifecycle, or system properties
+    - "For iOS, ensure the minimum deployment target is at least the floor the installed major needs: iOS `13.0` on posthog_flutter 5.x, iOS `15.0` (and macOS `11.0`) on 6.x. If the current `platform :ios` value is lower than that floor or missing, update or add it; if it is already at or above it, leave it unchanged"
 
+  flutter@v1:
+    - "For iOS, ensure the minimum deployment target is at least iOS `15.0` (`platform :ios, '15.0'`) and macOS `11.0`; posthog_flutter 6 installs its iOS and macOS dependency through Swift Package Manager only, so never add a `pod 'PostHog'` line"
+    - "`capture`, `screen`, `identify`, `setPersonProperties`, `alias`, `group`, `captureException` and `captureAi` take an optional `options` map for per-event controls such as `process_person_profile` (snake_case key); send `$ai_*` events with `captureAi`, never with `capture`"
+    - "On 6 a value set on the call beats a registered value, and a `beforeSend` hook must pass the event's options through unchanged"
   astro:
     - Always use the is:inline directive on PostHog script tags to prevent Astro from processing them and causing TypeScript errors
     - Use PUBLIC_ prefix for client-side environment variables in Astro (e.g., PUBLIC_POSTHOG_PROJECT_TOKEN)
@@ -322,6 +359,10 @@ commandments:
     - Initialize PostHog in the Application class's `onCreate()` method
     - Ensure every activity has a `android:label` to accurately track screen views.
 
+  android@v1:
+    - "`capture`, `screen`, `identify`, `setPersonProperties`, `alias`, `group`, `captureException` and `captureAi` take an options argument as their last parameter for per-event controls such as `process_person_profile` (snake_case key). There are no global options: to turn person processing off for every event, `register(\"$process_person_profile\", false)`, which becomes the option at send time"
+    - "Send `$ai_*` events with `captureAi`, never with `capture`; the `$ai_` prefix is reserved for them"
+    - "On 4.0 a value set on the call beats a registered value, and a `beforeSend` hook must pass the event's options through unchanged"
   kmp:
     - com.posthog:posthog-kmp is the Kotlin Multiplatform SDK package name; add it to the shared module's commonMain.dependencies in build.gradle.kts, not to androidMain, iosMain, or any platform-specific source set
     - All PostHog APIs live in the com.posthog.kmp package — import com.posthog.kmp.PostHog, com.posthog.kmp.PostHogConfig, and com.posthog.kmp.PostHogContext

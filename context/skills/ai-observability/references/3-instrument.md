@@ -71,7 +71,7 @@ posthog_properties={"$ai_session_id": session_id, "$ai_provider": "groq"}
 
 The wrapper records the model call. It never sees the tool dispatch loop, so nothing else records a tool run.
 
-If the app registers tools, capture each run as an `$ai_span` event with `posthog.capture()`. Give it the turn's `$ai_trace_id` so the span joins the trace. The install doc lists the span properties.
+If the app registers tools, capture each run as an `$ai_span` event. On posthog 8, posthog-node 6, posthog-go v2 and posthog-rs 1 use the AI capture method (`capture_ai`, `captureAi`, `EnqueueAI`, `capture_ai`): `capture` never reroutes by event name there and `$ai_*` events sent through it are dropped. On the older majors use `posthog.capture()`. Give it the turn's `$ai_trace_id` so the span joins the trace. The install doc lists the span properties.
 
 On the OpenTelemetry path there is no PostHog client to call. Record the tool run as a child span of the turn span instead, with `gen_ai.*` attributes so it passes the AI span filter. A plain span named after the tool is dropped.
 
