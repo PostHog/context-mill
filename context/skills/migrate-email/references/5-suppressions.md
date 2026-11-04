@@ -21,10 +21,10 @@ When it is missing, the import is not available to this person yet. Do not try o
 
 ## Get the list
 
-Read the provider's `account.md`. It says how to export the list, which entries to take, and how each entry maps to PostHog.
+Read the provider's `account.md`. It says how to export the list, which entries to take, and how each entry maps to PostHog. When the provider has no export or no API that lists it, `account.md` says where else the list comes from.
 
 - Prefer the export the person downloads from the provider's dashboard. Ask them where they saved the file.
-- Read the list from the provider's API only when the person gives you a key that can read it, through an environment variable that `account.md` names. The app's own sending key usually can't.
+- Read the list from the provider's API only when the person gives you a key that can read it, through an environment variable that `account.md` names. The app's own sending key usually can't, unless `account.md` says it can.
 - Keep the list out of the repository. Read the file where the person saved it, or write the API's answer to a file in the system's temporary folder, and delete that file when the import is done.
 
 ## Import it
