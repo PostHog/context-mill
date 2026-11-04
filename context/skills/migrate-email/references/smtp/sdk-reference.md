@@ -205,6 +205,7 @@ Look for the host in transport options, `host` and `service` settings, connectio
 | `smtp.mailgun.org` | Mailgun |
 | `smtp.postmarkapp.com` | Postmark |
 | `smtp.resend.com` | Resend |
+| `smtp.loops.so` | Loops. Its SMTP body is the JSON of a Loops template send, not the email: such a site stays here, and the reason is `Loops SMTP send: run wizard migrate loops` |
 | `smtp-relay.brevo.com` | Brevo |
 | `in-v3.mailjet.com`, `in.mailjet.com` | Mailjet |
 | `smtp.sparkpostmail.com` | SparkPost |
