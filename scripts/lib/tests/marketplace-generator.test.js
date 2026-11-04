@@ -31,7 +31,7 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-/** A built skill folder as generateSkills leaves it in tempDir, plus its skill entry. */
+/** Create a minimal synthetic skill directory and metadata for marketplace tests. */
 const addSkill = (category, shortId) => {
     const id = `${category}-${shortId}`;
     const skillDir = path.join(dir, 'temp', id);
