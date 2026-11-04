@@ -52,6 +52,6 @@ Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and 
 
 **Leave out the other entries.**
 
-- **Soft bounces** are temporary refusals by a receiving server, and expire after a day. PostHog retries those addresses too.
+- **Soft bounces** are temporary refusals by a receiving server. Mailchimp Transactional lets them expire after a day and sends to the address again.
 - **Expired entries** are addresses Mailchimp Transactional sends to again.
 - **Unsubscribes** come from an unsubscribe link or the recipient's mail program, and block only the one sender address they unsubscribed from. PostHog's opt-outs apply to marketing messages only, so once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
