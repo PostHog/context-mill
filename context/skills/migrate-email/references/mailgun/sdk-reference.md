@@ -137,7 +137,7 @@ resp, err := mg.Send(ctx, m)
 - Go: `mg.SetAPIBase(mailgun.APIBaseEU)`.
 - Any env variable or config value that holds `api.eu.mailgun.net` and is passed to one of these.
 
-**HTTP.** `POST https://api.mailgun.net/v3/<domain>/messages`, or `api.eu.mailgun.net` for a domain in the EU region, with HTTP basic auth: the user `api` and the API key as the password. The body is `multipart/form-data` or form-encoded, one field per value, so a field such as `to` or `attachment` can repeat. A success answers `200` with `{ "id": "<...>", "message": "Queued. Thank you." }`. An error answers its status, usually with `{ "message": "..." }`. Look for `api.mailgun.net` and `api.eu.mailgun.net` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
+**HTTP.** `POST https://api.mailgun.net/v3/<domain>/messages`, or `api.eu.mailgun.net` for a domain in the EU region, with HTTP basic auth: the user `api` and the API key as the password. The body is `multipart/form-data` or form-encoded, one field per value, so a field such as `to` or `attachment` can repeat. A success answers `200` with `{ "id": "<...>", "message": "Queued. Thank you." }`. An error answers its status, usually with `{ "message": "..." }`. Look for `api.mailgun.net` and `api.eu.mailgun.net` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, Ruby `RestClient` and `Net::HTTP`, PHP `curl_init` and Guzzle, .NET `HttpClient` and `RestSharp`, and `curl` calls. A request built from a base URL and a path, such as `{domain}/messages`, is a send too.
 
 ```
 from=Example <hello@mail.example.com>
