@@ -10,7 +10,7 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 
 | Mailjet | PostHog | A site stays on Mailjet when | v3 name |
 |---|---|---|---|
-| `From` | `from` | Never. `{ Email, Name }` becomes `'Name <email>'`. It needs a verified sender (Step 4) | `FromEmail`, `FromName` |
+| `From` | `from` | Never. `{ Email, Name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) | `FromEmail`, `FromName` |
 | `Sender` | none | Always | `Sender` |
 | `To` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ Email, Name }` moves as the bare address: note in the plan row that the To line loses the name | `To`, or `Recipients` |
 | `Subject` | `subject` | Never | `Subject` |
@@ -20,18 +20,19 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `Variables` | `templateData` | It is set without `TemplateID` | `Vars`, or `Recipients[].Vars` |
 | `TemplateErrorReporting`, `TemplateErrorDeliver` | none | Always | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
 | `Cc`, `Bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ Email, Name }` moves as the bare address, as for `To` | `Cc`, `Bcc`, one string |
-| `ReplyTo` | `replyTo` | It carries a `Name`, or the code builds the value at run time and you cannot tell that it holds a bare address only | `Headers['Reply-To']` |
+| `ReplyTo` | `replyTo` | It carries a `Name`, or the code builds the value at run time and you cannot tell that it holds a bare address only | none: v3 sets it in `Headers`, which keeps the site |
 | `Attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, counting `InlinedAttachments`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all | `Attachments` |
 | `InlinedAttachments` | `attachments`, each with a `contentId` | The same as `Attachments`, counted together with them | `Inline_attachments` |
-| `Headers` | `headers` | The installed SDK has no `headers`, or there are more than 10 | `Headers` |
-| `CustomID` | `tags`, `{ name: 'CustomID', value: <id> }` | The installed SDK has no `tags`, a webhook handler reads it back (see "Webhooks"), or code reads the message back by it with the message API | `Mj-CustomID` |
-| `EventPayload` | `tags`, `{ name: 'EventPayload', value: <payload> }` | The installed SDK has no `tags`, or a webhook handler reads it back | `Mj-EventPayload` |
-| `CustomCampaign` | `tags`, `{ name: 'campaign', value: <campaign> }` | The installed SDK has no `tags` | `Mj-campaign` |
+| `Headers` | none | Always: no PostHog SDK takes headers yet | `Headers` |
+| `CustomID` | none | Always: no PostHog SDK takes tags yet. A webhook handler or the message API may also read it back (see "Webhooks") | `Mj-CustomID` |
+| `EventPayload` | none | Always: no PostHog SDK takes tags yet | `Mj-EventPayload` |
+| `CustomCampaign` | none | Always: no PostHog SDK takes tags yet | `Mj-campaign` |
 | `DeduplicateCampaign` | none | Always | `Mj-deduplicatecampaign` |
 | `MonitoringCategory` | none | Always | none |
 | `Priority` | none | Always | `Mj-prio` |
-| `TrackOpens`, `TrackClicks` set to `disabled` | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or one of them is `enabled` or `anon`. `false` turns off both open and click capture: note it in the plan row when the site turned off only one | `Mj-trackopen`, `Mj-trackclick` set to `0` |
-| `TrackOpens`, `TrackClicks` set to `account_default` | none | Never: it is the default, and the moved site sends nothing for it | |
+| `TrackOpens` or `TrackClicks` set to `disabled` | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or the other one is `enabled` or `anon`. `false` turns off both open and click capture: note it in the plan row when the site turned off only one | `Mj-trackopen`, `Mj-trackclick` set to `0` |
+| `TrackOpens`, `TrackClicks` set to `enabled` or `account_default` | none | Never: PostHog captures opens and clicks unless the send sets `captureEngagement: false`, so the moved site sends nothing for them | `Mj-trackopen`, `Mj-trackclick` set to `1` |
+| `TrackOpens`, `TrackClicks` set to `anon` | none | Always | none |
 | `URLTags` | none | Always | none |
 
 The fields next to `Messages`:
@@ -81,19 +82,21 @@ With `TemplateLanguage: true`, Mailjet's template language becomes Liquid in the
 | `{{var:name}}`, `[[var:name]]` | `{{ variables.name }}` |
 | `{{var:user.first_name}}` | `{{ variables.user.first_name }}` |
 | `{{var:name:"there"}}`, `{{var:name:there}}` | `{{ variables.name \| default: 'there' }}` |
-| `{% if var:paid %}…{% elseif var:due %}…{% else %}…{% endif %}` | `{% if variables.paid %}…{% elsif variables.due %}…{% else %}…{% endif %}` |
-| `{% for item in var:items %}{{ item.name }}{% endfor %}` | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
+| `{% if var:paid %}…{% elseif var:due %}…{% else %}…{% endif %}`, when `paid` and `due` are booleans | `{% if variables.paid %}…{% elsif variables.due %}…{% else %}…{% endif %}` |
+| `{% for item in var:items %}{{ item.name }}{% endfor %}`, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
 | `==`, `!=`, `>`, `<`, `>=`, `<=`, `and`, `or` in a condition | The same |
 | The template's `Subject` header, or the site's `Subject` | The PostHog template's subject, with the same conversions |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
+- Liquid treats `0`, an empty string, and an empty list as true. Read what the site sends for each value an `if` or `elseif` tests alone. A value that is not always a boolean, `null`, or missing keeps the template on Mailjet. A comparison, such as `var:count > 0`, converts as it is.
+- Mailjet's `for` also walks the values of an object, and Liquid's `for` doesn't. A loop over a value that is not always a list keeps the template on Mailjet.
 - PostHog's Liquid escapes HTML in every value. When the code passes a value that holds HTML, such as a rendered block or a link tag, the template stays on Mailjet.
 - `{{data:...}}`, `{{mj:...}}`, and `{{segment:...}}` read data stored at Mailjet, so a template that uses them stays on Mailjet.
 - Any function, such as `Upper`, `Lower`, `Capitalize`, `Round`, `Int`, `FormatNumber`, `FormatNumberLocale`, `UrlEncode`, `Escape`, `HasOpenedSince`, or `HasClickedSince`, keeps the template on Mailjet. So do `{% set %}`, the operators `=`, `===`, `<>`, `xor`, `not`, `div`, `mod`, and arithmetic.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `From`, `ReplyTo`, or `Subject` next to `TemplateID` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `Cc`, `Bcc`, `Attachments`, `InlinedAttachments`, `Headers`, `CustomID`, `EventPayload`, or `CustomCampaign` next to `TemplateID` stays: a template made in PostHog sends with its own settings.
+- A site that sets `Cc`, `Bcc`, `Attachments`, `InlinedAttachments`, or `TrackOpens` or `TrackClicks` set to `disabled` next to `TemplateID` stays: a template made in PostHog sends with its own settings, and the template form takes none of them.
 
 ## Webhooks
 
@@ -128,24 +131,23 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The fields.**
 
-- `From: { Email: 'hello@mail.example.com', Name: 'Example' }` becomes `'Example <hello@mail.example.com>'`. A `From` without a `Name` becomes the bare address.
+- `From: { Email: 'hello@mail.example.com', Name: 'Example' }` becomes `'Example <hello@mail.example.com>'`. A name that holds a comma, a quote, or another special character goes in double quotes, such as `'"Acme, Inc." <hello@mail.example.com>'`, with each quote inside it escaped. A `From` without a `Name` becomes the bare address.
 - `To`, `Cc`, and `Bcc` become bare addresses. A list with one entry in `To` becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `TextPart` becomes `text`, and `HTMLPart` becomes `html`.
 - `ReplyTo: { Email }` becomes `replyTo` with the bare address.
-- An attachment `{ ContentType, Filename, Base64Content }` becomes `{ filename: Filename, content: Base64Content, contentType: ContentType }`. `content` stays the same base64 string in Node.js and Python. Go and Elixir take the raw bytes: decode it, or pass the bytes the code encoded.
-- An inlined attachment becomes the same, with `contentId: ContentID`. Without a `ContentID`, the HTML refers to it as `cid:<Filename>`, so `contentId` takes the `Filename`.
-- `CustomID: 'order-123'` becomes `tags: [{ name: 'CustomID', value: 'order-123' }]`, `EventPayload` becomes a tag named `EventPayload`, and `CustomCampaign` a tag named `campaign`.
+- An attachment `{ ContentType, Filename, Base64Content }` becomes `{ filename: Filename, content: Base64Content, contentType: ContentType }`. In Node.js and Python, `content` stays the same base64 string. In Go and Elixir, the SDK takes the raw file: decode the base64 string first, or pass the bytes the code encoded, as `posthog-sdks.md` says. Otherwise the recipient gets the file encoded twice.
+- An inlined attachment becomes the same, with `contentId: ContentID`, a bare name without `cid:`. Without a `ContentID`, the HTML refers to it as `cid:<Filename>`, so `contentId` takes the `Filename`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `Variables`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
-**Errors.** Keep the site failing the same way it did:
+**Errors.** Keep the site failing the same way it did, and never widen a catch: a catch of one error class or one status becomes a catch of PostHog's error that checks its `code` or status code for that case, and raises or returns every other error as before. A network error that is left after PostHog's retries comes back as PostHog's error with the code `network_error`. Where Mailjet's network error went past the old branch, let PostHog's go past the new one.
 
-- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `.request()` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { statusCode: error.statusCode })`. `err.statusCode` keeps holding the HTTP status. A read of `err.ErrorMessage`, `err.originalMessage`, or `err.response` becomes a read of `err.message`.
-- **Ruby.** PostHog's SDK raises too. Replace `rescue Mailjet::CommunicationError` and its subclasses with the PostHog error `posthog-sdks.md` names, and `e.code` with its status code. Where the site also checked the answer's `Status` for a refused address, that check becomes the same `rescue`.
-- **Python, PHP, and .NET.** The code read Mailjet's status: `result.status_code`, `$response->success()`, `getStatus()`, `IsSuccessStatusCode`, or `StatusCode`. PostHog's SDK raises or throws instead. Put the send in a `try`, and take the branch the status check took for a failure in the `except` or `catch`, with the PostHog error `posthog-sdks.md` names. A status of 400 or more becomes "there is an error", and a branch on one status, such as 429, reads PostHog's status code. A read of `result.json()`, `getBody()`, or `GetErrorMessage()` for the error becomes the error's message.
-- **.NET `SendTransactionalEmailAsync`.** A `catch (MailjetServerException)` becomes a `catch` of PostHog's exception, and `HttpCode` its status code. A check of `response.Messages[0].Status` moves into that `catch` too.
-- **Go.** PostHog's `Send` answers an error value too, always a `*posthog.EmailError`. Keep `if err != nil`. A type switch or `errors.As` on `*mailjet.APIFeedbackErrorsV31` or `*mailjet.ErrorInfoV31` reads `*posthog.EmailError` with `errors.As`, and their `StatusCode` becomes its `StatusCode`.
+- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `.request()` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { statusCode: error.statusCode })`. `err.statusCode` keeps holding the HTTP status, so a branch on one status, such as `err.statusCode === 429`, still takes only that status. A read of `err.ErrorMessage`, `err.originalMessage`, or `err.response` becomes a read of `err.message`.
+- **Ruby.** PostHog's SDK raises too. A `rescue Mailjet::CommunicationError` becomes a `rescue` of the PostHog error `posthog-sdks.md` names, and a read of Mailjet's `e.code` becomes `e.status_code`: PostHog's `e.code` is its own error code, not the HTTP status. A `rescue` of one subclass, `Mailjet::BadRequest` or `Mailjet::Unauthorized`, becomes a `rescue` of the PostHog error that checks the status code, 400 or 401, and raises every other error again. Where the site also checked the answer's `Status` for a refused address, that check becomes the same `rescue`.
+- **Python, PHP, and .NET `PostAsync`.** The code read Mailjet's status: `result.status_code`, `$response->success()`, `getStatus()`, `IsSuccessStatusCode`, or `StatusCode`. PostHog's SDK raises or throws instead. Put the send in a `try`, and catch the PostHog error `posthog-sdks.md` names. A failed status, such as `status_code != 200` or `!$response->success()`, becomes that catch, and it takes the branch the status check took. A branch on one status, such as 429, checks PostHog's status code in the catch and handles every other error the way the old code handled a status it didn't branch on. Mailjet's SDK raised its network errors past the status check, so the catch raises PostHog's error again when its code is `network_error`. A read of `result.json()`, `result.text`, `getBody()`, or `GetErrorMessage()` for the error becomes the error's message.
+- **.NET `SendTransactionalEmailAsync`.** A `catch (MailjetServerException)` becomes a `catch` of PostHog's exception, and `HttpCode` its status code. A check of `response.Messages[0].Status` moves into that `catch` too. A network error went past both before, so the `catch` throws again when the code is `network_error`.
+- **Go.** PostHog's `Send` answers an error value too, always a `*posthog.EmailError`. Keep `if err != nil`: it took Mailjet's network errors too. A type switch or `errors.As` on one of `*mailjet.APIFeedbackErrorsV31` (a 400 or 403) or `*mailjet.ErrorInfoV31` (any other status) reads `*posthog.EmailError` with `errors.As` and checks its `StatusCode` for the same statuses. Every other error goes on as before.
 - **Any language.** A check of `Messages[0].Status` for `error` becomes "there is an error", in the language's form above.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Mailjet took it and blocked it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 

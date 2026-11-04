@@ -2,6 +2,8 @@
 
 What the migration needs from the person's Mailjet account. The agent never changes the account: it reads what the person exports or allows.
 
+An account on Mailjet's US setup, whose app sends through `api.us.mailjet.com`, uses that host in every request of this file instead of `api.mailjet.com`: the DNS, template, message, and contact requests alike.
+
 ## DNS records
 
 A domain set up at Mailjet carries these records. Keep all of them until the cutover is done. The Mailjet dashboard shows the exact values in the account settings, under the domain's sender setup, and `GET https://api.mailjet.com/v3/REST/dns/{domain}` answers them too.
@@ -30,7 +32,7 @@ A site whose template the person moves to PostHog needs the template's content, 
 
 **Copy from the dashboard.** In the Mailjet dashboard, open the template. Ask the person for the template's number, its subject, its sender and reply-to address, its HTML, and its plain text when it has one. For a template built in the drag-and-drop or MJML editor, ask for the HTML it exports, not the editor's source.
 
-**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent`, or `api.us.mailjet.com` for an account on Mailjet's US setup, with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, and `Reply-to`. Use `Html-part`, not `MJMLContent`.
+**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, and `Reply-to`. Use `Html-part`, not `MJMLContent`.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
