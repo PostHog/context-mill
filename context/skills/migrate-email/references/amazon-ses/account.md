@@ -56,7 +56,7 @@ Read the person's copies where they saved them. Never write the content into the
 
 ## Configuration sets
 
-A configuration set decides whether Amazon SES tracks opens and clicks, where a send's events go, and which suppression reasons apply. `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
+A configuration set decides, with the account's VDM settings, whether Amazon SES tracks opens and clicks, and it decides where a send's events go and which suppression reasons apply. `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
 
 **Read with the AWS CLI (preferred).** Ask the person to run, in each Region, for each domain or address the sites send from:
 
@@ -68,16 +68,24 @@ The answer is the identity's default configuration set, or `null` when it has no
 
 ```bash
 aws sesv2 get-configuration-set-event-destinations --configuration-set-name <name> --region <region>
-aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query SuppressionOptions
+aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query '{Suppression: SuppressionOptions, Vdm: VdmOptions}'
 ```
 
-The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. The second answer is the set's own suppression settings, or `null` when it uses the account's. Ask the person to paste the answers, or where they saved them.
+The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. In the second, `Suppression` is the set's own suppression settings, or `null` when it uses the account's, and `Vdm` is the set's own VDM settings, or `null` when it uses the account's. Its `DashboardOptions.EngagementMetrics`, when set, turns VDM engagement tracking on or off for the set's sends.
+
+Then read the account's VDM settings, in each Region:
+
+```bash
+aws sesv2 get-account --region <region> --query VdmAttributes
+```
+
+The answer holds `VdmEnabled` and `DashboardAttributes.EngagementMetrics`, or is `null` when the account never turned VDM on. VDM engagement tracking tracks the opens and clicks of every send whose set doesn't override it, and of every send with no set. Ask the person to paste the answers, or where they saved them.
 
 **Read from the API.** With the key above, run the same commands yourself.
 
 ## Suppression list
 
-Amazon SES keeps an account-level suppression list in each Region, with a reason of `BOUNCE` or `COMPLAINT` for each address. The account's settings name the reasons it suppresses. Amazon SES accepts a send to an address on the list and doesn't send it only when the entry's reason is one of those. An entry with another reason is still sent to. A configuration set can override the account's reasons with its own, or with none. An account that never turned the list on has an empty one.
+Amazon SES keeps an account-level suppression list in each Region, with a reason of `BOUNCE` or `COMPLAINT` for each address. The account's settings name the reasons it suppresses. A configuration set can override them, for the sends that use it, with its own reasons or with none. Amazon SES accepts a send to an address on the list and doesn't send it only when the entry's reason applies to the send: its set's reasons when the set overrides the account's, and the account's otherwise. An entry with another reason is still sent to. An account that never turned the list on has an empty one.
 
 Read the account's reasons first, in each Region:
 
@@ -95,7 +103,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 
 **Read from the API.** With the key above, run the same commands yourself, page by page.
 
-**Map each entry.** Import only the entries whose reason the account suppresses, and skip the rest. When a set a moved site uses has its own `SuppressedReasons` that leave out a reason the account suppresses, PostHog now refuses that site's sends to those addresses where Amazon SES sent them: note it in the site's plan row.
+**Map each entry.** Work out the reasons that apply to each moved site: the `SuppressedReasons` of its configuration set, the one it names or its identity's default one, when the set's `SuppressionOptions` holds that list, even an empty one, and the account's reasons otherwise. Import the entries whose reason applies to at least one moved site that sends in that Region, and skip the rest. PostHog keeps one suppression list per project and checks it on every moved send. A moved site whose own reasons leave out a reason that another moved site imports, such as a site whose set suppresses only `BOUNCE` next to one whose set suppresses `COMPLAINT` too, or a set that turns suppression off, now has its sends to those addresses refused where Amazon SES sent them: note it in the site's plan row.
 
 | Amazon SES reason | PostHog source | Reason |
 |---|---|---|
