@@ -20,8 +20,11 @@ that applies to this project against the diff you are about to verify. A rule
 naming a file or a wiring this project has, with nothing in the diff answering
 it, is unfinished work — do it now. This is the last step that can catch it.
 
-Run the project's build (or typecheck) and lint scripts if they exist
-(check the manifest's scripts). Where the toolchain ships its own analyzer rather
+Run one compile check: the project's build if the manifest defines one,
+otherwise its typecheck — not both, since most framework builds already
+typecheck. In a monorepo, run the changed package's scripts, not the root's.
+Then run the lint script, passing it only the files this integration changed
+when the linter accepts paths. Where the toolchain ships its own analyzer rather
 than manifest scripts, run that instead — it is the only thing that will catch a
 lint the project itself enforces. Do not run the test suite — the runtime only
 permits install, build, typecheck, lint, and format commands, so a test command

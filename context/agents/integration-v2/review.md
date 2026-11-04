@@ -19,8 +19,13 @@ then leave it building to the best of your ability. Do both in one pass, verifyi
 reading of the same changeset.
 
 **Install and verify.** The earlier steps edited code but did not install —
-install now, then verify the project builds, typechecks, and lints, whichever
-of those it defines. Install what the manifest declares plus every package the
+install now, then verify with as few slow commands as you can. In a monorepo,
+run the scripts of the package the integration changed, never the root's.
+Run one compile check: the build if the package defines one, otherwise its
+typecheck. Most framework builds already typecheck, so do not also run a
+separate typecheck or `tsc`. Then lint only the files this integration changed,
+by passing their paths to the project's linter; run the whole lint script only
+when the linter cannot take paths. Install what the manifest declares plus every package the
 upstream handoffs name, adding the named ones by bare name with the project's
 package manager so it resolves real versions. The app's existing dependencies
 are not yours to touch: never upgrade, downgrade, or re-add a package this
@@ -92,7 +97,10 @@ If you notice something real but out of scope, leave it — a one-line mention i
 handoff, no more. Only flag what you can pin to a specific line and dimension — no
 taste-based rewrites, and never expand the integration. For each fix, ask what would
 behave differently if it were wrong, and check by reading the callers. After any
-change, re-run the build or lint and confirm it still passes.
+change, re-run only the check that failed, and only once you have fixed
+everything it reported. When a check fails on pre-existing errors or because the
+tool itself is broken (a config or CLI mismatch), record it once and do not run
+it again.
 
 ## How you know you succeeded
 
