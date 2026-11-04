@@ -27,7 +27,7 @@ The app's own Mailgun key is often a domain sending key, which can only send, an
 
 The steps call this key the full-access provider key.
 
-Mailgun's regions are separate. Every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. The examples below use the US host.
+Mailgun's regions are separate. Every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. The app's client shows the region: an EU client sets `api.eu.mailgun.net` as its URL or host, as `sdk-reference.md` shows. Each request below names both hosts.
 
 ## Template content
 
@@ -37,9 +37,9 @@ A site whose template the person moves to PostHog needs the content of the versi
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
-- `GET https://api.mailgun.net/v3/<domain>/templates/<name>?active=yes` reads a template of the sending domain with its active version.
-- `GET https://api.mailgun.net/v3/<domain>/templates/<name>/versions/<tag>` reads the version a site names with `t:version`.
-- When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes` reads an account template.
+- `GET https://api.mailgun.net/v3/<domain>/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an EU domain, reads a template of the sending domain with its active version.
+- `GET https://api.mailgun.net/v3/<domain>/templates/<name>/versions/<tag>`, or `https://api.eu.mailgun.net` for an EU domain, reads the version a site names with `t:version`.
+- When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an account in the EU region, reads an account template.
 
 The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`.
 
@@ -53,8 +53,8 @@ Mailgun keeps suppression lists per sending domain. It drops a send to an addres
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
-- `GET https://api.mailgun.net/v3/<domain>/bounces?limit=1000`
-- `GET https://api.mailgun.net/v3/<domain>/complaints?limit=1000`
+- `GET https://api.mailgun.net/v3/<domain>/bounces?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
+- `GET https://api.mailgun.net/v3/<domain>/complaints?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
 
 Each answers `{ items, paging }`. A bounce is `{ address, code, error, created_at }`, and a complaint `{ address, created_at }`. Read the next page from the URL in `paging.next`, until a page has no items. Wait and retry on `429`.
 
