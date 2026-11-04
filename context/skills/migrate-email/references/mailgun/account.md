@@ -56,7 +56,7 @@ A site that sets no open or click tracking field sends with its domain's setting
 
 ## Suppression list
 
-Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the app sends from.
+Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out.
 
 **Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces, Complaints, and Unsubscribes. Ask the person to download each of them where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
 
