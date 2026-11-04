@@ -62,7 +62,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 
 ## Domains
 
-Mailgun keeps its suppression lists per sending domain, and a send uses the lists of the domain it sends from. PostHog keeps one suppression list per project. When the sites that move send from more than one Mailgun domain, Step 5 imports the lists of each of them into that one list. PostHog then refuses a moved send to an address that any of those domains suppressed, even when the site's own domain never did. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one domain's sites move. The sites of every other domain stay, and the reason is `domain <name> keeps its own suppression list`.
+Mailgun keeps its suppression lists per sending domain, and a send uses the lists of the domain it sends from. PostHog keeps one suppression list per project. When the sites that move send from more than one Mailgun domain, Step 5 imports the lists of each of them into that one list. PostHog then refuses a moved send to an address that any of those domains suppressed, even when the site's own domain never did. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one domain's sites move. The sites of every other domain stay, and the reason is `domain <name> keeps its own suppression list`. Step 5 then imports the lists of the chosen domain only.
 
 ## Code around the send
 
