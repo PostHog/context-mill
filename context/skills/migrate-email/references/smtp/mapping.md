@@ -38,6 +38,15 @@ PostHog's `from` takes `'Name <address>'`, with the name in double quotes when i
 
 A send through SMTP has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
+**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`. An SMTP server tracks neither on its own, but the provider behind the host may, by an account, domain or server setting. Ask the person once, for each host the moved sites use, whether it tracked opens and clicks of these sends:
+
+- Both tracked: the site moves as it is.
+- Neither tracked, including a host with no tracking provider behind it, such as the company's own mail server: the site moves with `captureEngagement: false`.
+- One tracked and the other not: the site stays, and the reason is `<host> tracks only opens` or `<host> tracks only clicks`. `captureEngagement: false` turns off both.
+- The person can't say: the site stays, and the reason is `<host> tracking not checked`.
+
+A site that needs `captureEngagement: false` stays when the installed SDK has no `captureEngagement`.
+
 ### Attachments by path
 
 PostHog takes an attachment's content, not a path. An attachment by `path`, or PHPMailer's `addAttachment($path)`, gomail's `Attach(path)`, go-mail's `AttachFile(path)`, or the `mail` gem's `add_file '/path'`, moves when the path names a file on the app's own disk: the moved code reads the file into `content` before the send. It stays when the path is a URL or a `data:` URI, or when you cannot tell that the files stay at 512 KB or less in all, such as a file the user uploaded. A file in the repository has a size you can check. A file the app writes just before the send, such as a rendered PDF, has the size the code gives it: follow the code that writes it.

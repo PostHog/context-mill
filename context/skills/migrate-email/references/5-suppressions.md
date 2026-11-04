@@ -34,6 +34,10 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 - Never print the addresses, and never write them into the plan or the report. Count them.
 - When a call fails, read its error and fix the call. When it fails again, stop the import, record how many entries you imported, and ask the person once whether to repeat it now. Repeat it when they say yes.
 
+## Calls that change the provider's list
+
+The import copies the list once. After it, a call in the app that adds an address to the provider's suppression list, or removes one from it, such as an unsubscribe handler or a reactivation, changes only the provider's list: an address it adds still gets the moved sends, and an address it removes stays blocked in PostHog. For each such call in Step 3's list of other calls, add to the report's "Before cutover" that the person makes the call change PostHog's suppression list too, before the deploy, for the entries the import would take: an address it adds goes on PostHog's list, and an address it removes comes off it. The call keeps its provider write while any send still goes through the provider. The provider's `mapping.md` names its calls, and says which entries count when the import takes only some.
+
 ## Write down
 
 Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
