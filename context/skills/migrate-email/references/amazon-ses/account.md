@@ -24,9 +24,9 @@ A domain verified at Amazon SES carries these records. Keep all of them until th
 
 ## Read-only key
 
-The app's AWS credentials, or the role it runs with, often reach other AWS services, and may not be allowed to read templates or the suppression list. Ask the person to run the AWS CLI commands below with their own credentials and save the output, which needs no key from them.
+The app's AWS credentials, or the role it runs with, often reach other AWS services, and may not be allowed to read templates, configuration sets, or the suppression list. Ask the person to run the AWS CLI commands below with their own credentials and save the output, which needs no key from them.
 
-When the person chooses that you run them, ask them to create an IAM user whose policy allows only `ses:GetEmailTemplate`, `ses:GetTemplate`, and `ses:ListSuppressedDestinations`, and an access key for it. Ask them to store its key ID in `SES_READ_ACCESS_KEY_ID` and its secret in `SES_READ_SECRET_ACCESS_KEY` in the git-ignored env file, and note in the plan that the run created it. Run the commands with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` set from those two variables for that command only, and `--region` set. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the access key and the IAM user in AWS and remove the two variables from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+When the person chooses that you run them, ask them to create an IAM user whose policy allows only `ses:GetEmailTemplate`, `ses:GetTemplate`, `ses:GetEmailIdentity`, `ses:GetConfigurationSet`, `ses:GetConfigurationSetEventDestinations`, `ses:GetAccount`, and `ses:ListSuppressedDestinations`, and an access key for it. Ask them to store its key ID in `SES_READ_ACCESS_KEY_ID` and its secret in `SES_READ_SECRET_ACCESS_KEY` in the git-ignored env file, and note in the plan that the run created it. Run the commands with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` set from those two variables for that command only, `AWS_SESSION_TOKEN` and `AWS_SECURITY_TOKEN` unset for it, and `--region` set. The AWS CLI reads a session token from either of those next to the key pair, and AWS refuses a key sent with another key's token. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the access key and the IAM user in AWS and remove the two variables from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -54,9 +54,36 @@ Ask the person where they saved each file.
 
 Read the person's copies where they saved them. Never write the content into the plan or the report.
 
+## Configuration sets
+
+A configuration set decides whether Amazon SES tracks opens and clicks, where a send's events go, and which suppression reasons apply. `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
+
+**Read with the AWS CLI (preferred).** Ask the person to run, in each Region, for each domain or address the sites send from:
+
+```bash
+aws sesv2 get-email-identity --email-identity <domain> --region <region> --query ConfigurationSetName
+```
+
+The answer is the identity's default configuration set, or `null` when it has none. Then, for each set the sites name and each default set:
+
+```bash
+aws sesv2 get-configuration-set-event-destinations --configuration-set-name <name> --region <region>
+aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query SuppressionOptions
+```
+
+The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. The second answer is the set's own suppression settings, or `null` when it uses the account's. Ask the person to paste the answers, or where they saved them.
+
+**Read from the API.** With the key above, run the same commands yourself.
+
 ## Suppression list
 
-Amazon SES keeps an account-level suppression list in each Region, with a reason of `BOUNCE` or `COMPLAINT` for each address. It accepts a send to an address on the list and doesn't send it. An account that never turned the list on has an empty one.
+Amazon SES keeps an account-level suppression list in each Region, with a reason of `BOUNCE` or `COMPLAINT` for each address. The account's settings name the reasons it suppresses. Amazon SES accepts a send to an address on the list and doesn't send it only when the entry's reason is one of those. An entry with another reason is still sent to. A configuration set can override the account's reasons with its own, or with none. An account that never turned the list on has an empty one.
+
+Read the account's reasons first, in each Region:
+
+```bash
+aws sesv2 get-account --region <region> --query SuppressionAttributes.SuppressedReasons
+```
 
 **Read with the AWS CLI (preferred).** Ask the person to run, for each Region:
 
@@ -68,7 +95,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 
 **Read from the API.** With the key above, run the same commands yourself, page by page.
 
-**Map each entry.**
+**Map each entry.** Import only the entries whose reason the account suppresses, and skip the rest. When a set a moved site uses has its own `SuppressedReasons` that leave out a reason the account suppresses, PostHog now refuses that site's sends to those addresses where Amazon SES sent them: note it in the site's plan row.
 
 | Amazon SES reason | PostHog source | Reason |
 |---|---|---|

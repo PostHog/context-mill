@@ -33,23 +33,32 @@ The steps call this key the full-access provider key.
 
 A site whose template the person moves to PostHog needs the content of the version it sends: the active version, or the one the site names with `t:version`.
 
-**Copy from the dashboard.** In the Mailgun dashboard, open the template and the version the site sends. Ask the person for the template's name, the version's engine, its subject when the version sets one, and its HTML content.
+**Copy from the dashboard.** In the Mailgun dashboard, open the template and the version the site sends. Ask the person for the template's name, the version's engine, its HTML content, and its `From`, `Reply-To`, and `Subject` headers when the version sets them.
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
 - `GET https://api.mailgun.net/v3/<domain>/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an EU domain, reads a template of the sending domain with its active version.
 - `GET https://api.mailgun.net/v3/<domain>/templates/<name>/versions/<tag>`, or `https://api.eu.mailgun.net` for an EU domain, reads the version a site names with `t:version`.
-- When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an account in the EU region, reads an account template.
+- When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an account in the EU region, reads an account template with its active version.
+- `GET https://api.mailgun.net/v4/templates/<name>/versions/<tag>`, or `https://api.eu.mailgun.net` for an account in the EU region, reads the account template's version a site names with `t:version`.
 
 The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
+## Tracking settings
+
+A site that sets no open or click tracking field sends with its domain's setting, as `mapping.md` says under "Tracking".
+
+**Ask the person.** In the Mailgun dashboard, the sending domain's settings show whether open tracking and click tracking are on, and whether click tracking is HTML only.
+
+**Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active` and `tracking.click.active`.
+
 ## Suppression list
 
 Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the app sends from.
 
-**Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces and Complaints. Ask the person to download each list where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
+**Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces, Complaints, and Unsubscribes. Ask the person to download each of them where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
@@ -67,5 +76,5 @@ Each answers `{ items, paging }`. A bounce is `{ address, code, error, created_a
 
 **Leave out the other lists.**
 
-- **Unsubscribes** are recipients who clicked a Mailgun unsubscribe link, for the whole domain or for some tags. PostHog's opt-outs apply to marketing messages only. At Mailgun an unsubscribe also stopped transactional mail from that domain, or with that tag. Once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
+- **Unsubscribes** are recipients who clicked a Mailgun unsubscribe link, for the whole domain or for some tags. PostHog's opt-outs apply to marketing messages only. At Mailgun an unsubscribe also stopped transactional mail from that domain, or with that tag. Once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report. Count the rows of the person's Unsubscribes download, or read `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain, page by page as above. When neither is given, the report says the count was not checked.
 - **Allowlists** are addresses and domains that Mailgun never adds to its bounce list. They are not suppressions.
