@@ -36,9 +36,9 @@ Configure one server-side client per language, as `posthog-sdks.md` shows:
 
 - Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`.
 - When the client options take `migratedFrom`, set it to the value that the provider's `mapping.md` names under "The PostHog client". The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
-- Reuse the app's existing PostHog client in that language when it has one, and add the secret key, and `migratedFrom` when the client options take it. Where `posthog-sdks.md` says the secret key turns on local feature flag evaluation, keep it off unless the key also has `feature_flag:read` and the app uses local evaluation.
+- Reuse the app's existing PostHog client in that language when it has one, and add the secret key, and `migratedFrom` when the client options take it. Where `posthog-sdks.md` says the secret key turns on local feature flag evaluation or flag loading, turn it off as it shows, unless the key also has `feature_flag:read` and the app uses local evaluation.
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
-- When the host is a reverse proxy or a self-hosted instance, also set the app host to the PostHog app URL, such as `https://us.posthog.com`. The SDK never sends the secret key to a proxy, and without the app host the send fails with `missing_app_host`.
+- When the host is a reverse proxy or a self-hosted instance, also set the app host to the PostHog app URL, such as `https://us.posthog.com`. The email send never sends the secret key to a proxy, and without the app host it fails with `missing_app_host`. Flag loading does send it to the host, which is one more reason to keep it off.
 - Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 
@@ -62,6 +62,8 @@ For each site that moves, in plan order:
 - Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - Keep the site failing the same way it did. `posthog-sdks.md` says how the SDK reports an error in each language: Node.js answers `{ data, error }` and never throws on an API error, and the other languages raise or return an error value. When the old call threw on an error, or the code checked a status, check PostHog's error so the site fails the same way, as the provider's `mapping.md` says under "Rewrite".
+- When the old code caught only some errors, such as one error class or one status, catch PostHog's error and branch on its `code` or status code for those, and raise or return every other error as before. Never widen a catch.
+- When the old code handled the provider's answer to a bad value that the app passes at run time, such as an empty recipient, also catch the argument error that `posthog-sdks.md` names for the language, or check the value before the send.
 - Never add a field that the old call didn't set, apart from `templateKey`, `templateId`, and `distinctId`. `templateData` takes the place of the provider's template variables.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
