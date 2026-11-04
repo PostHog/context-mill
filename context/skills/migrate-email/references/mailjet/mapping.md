@@ -11,14 +11,14 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | Mailjet | PostHog | A site stays on Mailjet when | v3 name |
 |---|---|---|---|
 | `From` | `from` | Never. `{ Email, Name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) | `FromEmail`, `FromName` |
-| `Sender` | none | Always | `Sender` |
+| `Sender` | none | Always. PostHog's send doesn't take it yet | `Sender` |
 | `To` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ Email, Name }` moves as the bare address: note in the plan row that the To line loses the name | `To`, or `Recipients` |
 | `Subject` | `subject` | Never | `Subject` |
 | `TextPart`, `HTMLPart` | `text`, `html` | Never | `Text-part`, `Html-part` |
 | `TemplateID` with `Variables` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" | `Mj-TemplateID`, `Vars` |
 | `TemplateLanguage` | none | It is `true` without `TemplateID`: Mailjet fills the template language in `TextPart` and `HTMLPart`, and PostHog's code form sends the content as it is. With `TemplateID`, see "Templates" | `Mj-TemplateLanguage` |
 | `Variables` | `templateData` | It is set without `TemplateID` | `Vars`, or `Recipients[].Vars` |
-| `TemplateErrorReporting`, `TemplateErrorDeliver` | none | Always | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
+| `TemplateErrorReporting`, `TemplateErrorDeliver` | none | Always. PostHog's send doesn't take it yet | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
 | `Cc`, `Bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ Email, Name }` moves as the bare address, as for `To` | `Cc`, `Bcc`, one string |
 | `ReplyTo` | `replyTo` | It carries a `Name`, or the code builds the value at run time and you cannot tell that it holds a bare address only | none: v3 sets it in `Headers`, which keeps the site |
 | `Attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, counting `InlinedAttachments`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all | `Attachments` |
@@ -27,13 +27,13 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `CustomID` | none | Always: no PostHog SDK takes tags yet. A webhook handler or the message API may also read it back (see "Webhooks") | `Mj-CustomID` |
 | `EventPayload` | none | Always: no PostHog SDK takes tags yet | `Mj-EventPayload` |
 | `CustomCampaign` | none | Always: no PostHog SDK takes tags yet | `Mj-campaign` |
-| `DeduplicateCampaign` | none | Always | `Mj-deduplicatecampaign` |
-| `MonitoringCategory` | none | Always | none |
-| `Priority` | none | Always | `Mj-prio` |
+| `DeduplicateCampaign` | none | Always. PostHog's send doesn't take it yet | `Mj-deduplicatecampaign` |
+| `MonitoringCategory` | none | Always. PostHog's send doesn't take it yet | none |
+| `Priority` | none | Always. PostHog's send doesn't take it yet | `Mj-prio` |
 | `TrackOpens` or `TrackClicks` set to `disabled` | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or the other one is `enabled` or `anon`. `false` turns off both open and click capture: note it in the plan row when the site turned off only one | `Mj-trackopen`, `Mj-trackclick` set to `0` |
 | `TrackOpens`, `TrackClicks` set to `enabled` or `account_default` | none | Never: PostHog captures opens and clicks unless the send sets `captureEngagement: false`, so the moved site sends nothing for them | `Mj-trackopen`, `Mj-trackclick` set to `1` |
-| `TrackOpens`, `TrackClicks` set to `anon` | none | Always | none |
-| `URLTags` | none | Always | none |
+| `TrackOpens`, `TrackClicks` set to `anon` | none | Always. PostHog's send doesn't take it yet | none |
+| `URLTags` | none | Always. PostHog's send doesn't take it yet | none |
 
 The fields next to `Messages`:
 
