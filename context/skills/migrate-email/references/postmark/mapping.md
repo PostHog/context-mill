@@ -34,7 +34,7 @@ Count only the fields the code sets.
 - The installed SDK has no `captureEngagement`, and Postmark tracked neither: the site stays.
 - A template site that Postmark sent with one of them untracked stays, as "Templates" says.
 
-When a site leaves out `TrackOpens`, or leaves out `TrackLinks`, or sets it to `null`, outside a `postmarker` send and a .NET SDK message that never sets it, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
+Opens follow the server's setting whenever a site leaves out `TrackOpens` or sets it to `null`, in every SDK, `postmarker` and .NET included. Links follow it when a site leaves out `TrackLinks` or sets it to `null`, except in a `postmarker` send and a .NET SDK message that never sets it, whose links were not tracked. When either one follows the server, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
 
 A Postmark send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
