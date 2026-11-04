@@ -189,7 +189,7 @@ var sent = await posthog.Emails.SendAsync(new SendCodeEmailOptions
 
 - The template form is `new SendTemplateEmailOptions { To, TemplateId, TemplateData }`.
 - Apps that use dependency injection register the client with `AddPostHog` and take `IPostHogEmails`.
-- Errors: `SendAsync` throws `PostHog.Emails.EmailException` on an API error, and on a network error left after the retries, with the code `network_error`. It has `Code`, `Name`, `StatusCode`, and `Message`. A bad argument throws `ArgumentException`. `sent.Id` is the message id. There is no sync send.
+- Errors: `SendAsync` throws `PostHog.Emails.EmailException` on an API error, and on a network error left after the retries, with the code `network_error`. It has `Code`, `Name`, `StatusCode`, and `Message`. A bad argument throws `ArgumentException`. `sent.Id` is the message id. There is no sync send: a site in a method that is not `async` stays, and the reason is `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
 
 ## Elixir: `posthog`
 
