@@ -148,6 +148,8 @@ var response = await client.SendTransactionalEmailAsync(email);
 
 The builder also takes `WithReplyTo`, `WithCc`, `WithBcc`, `WithAttachment`, `WithInlinedAttachment`, `WithTemplateId`, `WithTemplateLanguage`, `WithVariable`, `WithVariables`, `WithTemplateErrorReporting`, `WithTemplateErrorDeliver`, `WithCustomId`, `WithEventPayload`, `WithCustomCampaign`, `WithDeduplicateCampaign`, `WithPriority`, `WithTrackOpens`, `WithTrackClicks`, `WithUrlTags`, `WithHeader`, and `WithSender`. Apps that use dependency injection register `IMailjetClient` with `AddHttpClient<IMailjetClient, MailjetClient>`.
 
+**US setup.** An app on Mailjet's US setup either names `api.us.mailjet.com` in a URL, or sets the host on its Mailjet client: `host` in `config` on the Node.js client or in the options of one `.post(...)`, `api_url` on Python's `Client`, `end_point` in Ruby's `Mailjet.configure`, the `'url'` option of PHP's `Client`, the third argument of Go's `NewMailjetClient`, or `SetBaseURL` and `SetURL` on its client, `BaseAdress` on .NET's `MailjetClient` (or the `BaseAddress` of the `HttpClient` it takes), and `baseUrl` in Java's `ClientOptions`. When the setting reads an env variable or a config file, read its value there. Either one means every API request in `account.md` goes to `api.us.mailjet.com`.
+
 **HTTP.** `POST https://api.mailjet.com/v3.1/send`, or `api.us.mailjet.com` for an account on Mailjet's US setup, with HTTP Basic auth: the API key as the user and the secret key as the password. An error answer of 400 carries the same `Messages` list with `Status: "error"`. Look for `api.mailjet.com` and `api.us.mailjet.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
 ```json

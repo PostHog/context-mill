@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Mailjet account. The agent never changes the account: it reads what the person exports or allows.
 
-An account on Mailjet's US setup, whose app sends through `api.us.mailjet.com`, uses that host in every request of this file instead of `api.mailjet.com`: the DNS, template, message, and contact requests alike.
+**US setup.** An account on Mailjet's US setup, whose app sends through `api.us.mailjet.com` or sets its Mailjet client's host to it, as `sdk-reference.md` says, uses that host in every request of this file instead of `api.mailjet.com`: the DNS, template, message, and contact requests alike.
 
 ## DNS records
 
