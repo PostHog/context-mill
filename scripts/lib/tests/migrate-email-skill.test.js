@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
 
@@ -111,12 +112,48 @@ describe('migrate-email skill', () => {
         ]);
     });
 
-    it('ticks the key phase only after a check finds the key, never on a promise to add it', () => {
+    describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
+        const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];
+        let envDir;
 
-        expect(keyStep).toContain("grep -cE '^\\s*(export\\s+)?POSTHOG_PROJECT_SECRET_API_KEY\\s*=\\s*.?phs_'");
-        expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
-        expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
+        afterEach(() => {
+            if (envDir) rmSync(envDir, { recursive: true, force: true });
+            envDir = undefined;
+        });
+
+        function check(envFile) {
+            envDir = mkdtempSync(join(tmpdir(), 'migrate-key-'));
+            writeFileSync(join(envDir, '.env'), envFile);
+            return spawnSync('bash', ['-c', command], { cwd: envDir, encoding: 'utf8' });
+        }
+
+        it.each([
+            ['a plain key', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '1'],
+            ['an exported, spaced and double-quoted key', '  export POSTHOG_PROJECT_SECRET_API_KEY = "phs_abc"\n', '1'],
+            ['a single-quoted key', "POSTHOG_PROJECT_SECRET_API_KEY='phs_abc'\n", '1'],
+            ['a key after an empty line for it', 'POSTHOG_PROJECT_SECRET_API_KEY=\nPOSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '1'],
+            ['no line for the key', 'RESEND_API_KEY=re_abc\n', '0'],
+            ['an empty key', 'POSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
+            ['an empty quoted key', 'POSTHOG_PROJECT_SECRET_API_KEY=""\n', '0'],
+            ['a commented-out line', '# POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+            ['a value that is only a comment', 'POSTHOG_PROJECT_SECRET_API_KEY= #phs_abc\n', '0'],
+            ['a key overridden by a later empty line', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\nPOSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
+            ['another variable ending in the name', 'OTHER_POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+        ])('finds the key in %s only when it is set, and never prints it', (_name, envFile, count) => {
+            const result = check(envFile);
+
+            expect(result.stdout.trim()).toBe(count);
+            expect(result.stdout).not.toContain('phs_');
+            expect(result.stderr).toBe('');
+        });
+
+        it('ticks the phase only when the check found the key', () => {
+            expect(command).toBeDefined();
+            expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
+            expect(keyStep).toMatch(/Tick the phase in the plan file only when the check above found the key/);
+            expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
+        });
     });
 
     it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the SDK file, and no other provider', async (provider) => {
