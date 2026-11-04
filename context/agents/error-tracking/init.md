@@ -55,6 +55,10 @@ file and look for the exact name the init reads. It returns names, never values.
   in `.env.example`. Do not rename the code to match a name you would rather
   have written; the code is the half that already exists.
 
+Either way the existing init stays where it is, even with a placeholder fallback
+(`?? "phc_placeholder"`): the init point your skill shows (Next.js
+`instrumentation-client.ts`) is for an app with no init.
+
 An empty key is the quiet failure here. A client constructed from `''` throws
 nothing and logs nothing. The build is clean, the app starts, every capture call
 returns — and no event ever arrives.
