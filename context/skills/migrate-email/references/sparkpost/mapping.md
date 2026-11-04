@@ -35,8 +35,8 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `options.skip_suppression` | none | Always. PostHog's send doesn't take it yet |
 | `options.ip_pool`, `options.dkim_key`, `tracking_domain` | none | Always. PostHog's send doesn't take it yet |
 | `options.inline_css` | none | It is `true`: no PostHog field inlines CSS |
-| `options.perform_substitutions` | none | Never. `false` means the content goes as it is |
-| `options.enable_minimized_event_passthrough` | none | Always. PostHog's send doesn't take it yet |
+| `options.perform_substitutions` | none | Never. `false` means `text` and `html` go as they are, and a `{{` in them is text. SparkPost still runs `from`, `subject`, and `reply_to` through its template language, so read those as "Content" says |
+| `options.enable_minimized_event_passthrough`, `recipients[].options.enable_minimized_event_passthrough` | none | Always. PostHog's send doesn't take it yet |
 | `override.list_id` | none | Always: it sets a `List-Id` header |
 | `return_path`, `recipients[].return_path` | none | The app reads bounces sent to that address, such as with VERP on an Enterprise account. Otherwise it moves: PostHog uses its own return path on the sender's domain (Step 4). Note it in the plan row |
 | `Idempotency-Key` header | `idempotencyKey` | Never. SparkPost takes only keys of 1 to 255 letters, digits, `.`, `_` and `-`, so every key it took fits PostHog's 1 to 255 visible ASCII characters |
@@ -96,7 +96,7 @@ SparkPost's SDKs report an error in two ways. The Node.js, Python, Ruby, PHP, an
 
 ## Content
 
-SparkPost runs inline content through its template language too, with values from `substitution_data` and `metadata`. Read the site's `subject`, `from`, `reply_to`, `text`, and `html` for `{{`:
+SparkPost runs inline content through its template language too, with values from `substitution_data` and `metadata`. Read the site's `subject`, `from`, `reply_to`, `text`, and `html` for `{{`. With `options.perform_substitutions: false`, read only `subject`, `from`, and `reply_to`: `text` and `html` go as they are:
 
 - No template language: the content moves as it is.
 - Plain expressions only, such as `{{name}}`, `{{user.first_name}}`, `{{address.name}}`, or `{{ name or 'there' }}`, whose values the site itself passes in `substitution_data` or `metadata`, or reads from the recipient: the site moves, and the rewrite fills each value in the code. See "Rewrite".

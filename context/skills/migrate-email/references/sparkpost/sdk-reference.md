@@ -197,11 +197,11 @@ The HTTP names, which the Node.js, PHP, and Elixir SDKs use too. Python renames 
 | `options.skip_suppression` | Sends to suppressed addresses (Enterprise) |
 | `options.ip_pool`, `options.dkim_key` | A dedicated IP pool, and a DKIM key |
 | `options.inline_css` | Moves `<style>` CSS into the HTML |
-| `options.perform_substitutions` | `false` turns the template language off for inline content |
+| `options.perform_substitutions` | `false` turns the template language off for inline `text`, `html`, and `amp_html`, but not for `from`, `subject`, `reply_to`, or `headers` |
 | `options.enable_minimized_event_passthrough` | Strips open events down |
 | `Idempotency-Key` header | Makes a retry safe for 24 hours |
 
-**Content is a template.** SparkPost runs `from`, `subject`, `text`, `html`, `amp_html`, `reply_to`, and `headers` through its template language, inline content too, with values from `substitution_data` and `metadata`, unless `options.perform_substitutions` is `false`. So `{{name}}` in inline `html` is a placeholder, not text.
+**Content is a template.** SparkPost runs `from`, `subject`, `text`, `html`, `amp_html`, `reply_to`, and `headers` through its template language, inline content too, with values from `substitution_data` and `metadata`. `options.perform_substitutions: false` turns it off for `text`, `html`, and `amp_html` only: `from`, `subject`, `reply_to`, and `headers` still go through it. So `{{name}}` in inline `html` is a placeholder, not text, unless that option is `false`.
 
 ## Templates stored at SparkPost
 
