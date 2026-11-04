@@ -26,9 +26,17 @@ A domain set up at SparkPost carries these records. Keep all of them until the c
 
 ## Read-only key
 
-The app's own SparkPost key usually has only the permissions to send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in SparkPost (Configuration, then API Keys) with only the permissions to read templates and the suppression list, store it in `SPARKPOST_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SparkPost and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own SparkPost key usually has only the permissions to send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in SparkPost (Configuration, then API Keys) with only the permissions to read the account, subaccounts, templates, and the suppression list, store it in `SPARKPOST_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SparkPost and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
+
+## Tracking settings
+
+A site that sets no open or click tracking, in its recipients' `options`, its own `options`, or its template's, sends with the account's settings, as `mapping.md` says under "Tracking". A subaccount can also turn off open tracking for every send of its own.
+
+**Ask the person.** In SparkPost's account settings: whether engagement tracking is on by default for API sends, whether click tracking is turned off, and whether sends are transactional by default. For each subaccount the moved sites send from: whether open tracking is turned off for it.
+
+**Read from the API.** `GET https://api.sparkpost.com/api/v1/account` with `Authorization: $SPARKPOST_READ_API_KEY`. The answer holds `results.options` with `rest_tracking_default`, `click_tracking`, and `transactional_default`. A missing `rest_tracking_default` means `true`, a missing `click_tracking` turns nothing off, and a missing `transactional_default` means `false`. A subaccount has no setting of its own for these. For a subaccount, `GET https://api.sparkpost.com/api/v1/subaccounts/{subaccount_id}` holds `results.options.open_tracking_disabled`, `false` when missing.
 
 ## Template content
 
@@ -54,7 +62,7 @@ GET https://api.sparkpost.com/api/v1/suppression-list?cursor=initial&per_page=10
 
 The request takes every source and every type, so the agent can import some entries and count the others. Without `types`, SparkPost leaves out `open_tracking` entries.
 
-The answer holds `results`, a list of `{ recipient, type, source, description, list_id, created, updated }`, `total_count`, and `links`. Follow the `href` of the link whose `rel` is `next` until no such link comes back or `results` is empty. Wait 1 to 5 seconds and retry on `429`. An account with subaccounts: ask the person which accounts the app sends from, and read each one on its own, with the header `X-MSYS-SUBACCOUNT: 0` for the primary account and the subaccount's ID for a subaccount. A search without the header covers every list at once, and SparkPost says such a search can be up to 20 minutes out of date. An account without subaccounts needs no header.
+The answer holds `results`, a list of `{ recipient, type, source, description, list_id, created, updated }`, `total_count`, and `links`. Follow the `href` of the link whose `rel` is `next` until no such link comes back or `results` is empty. Wait 1 to 5 seconds and retry on `429`. An account with subaccounts: read the list of each account the moved sites send from, as `mapping.md` says under "Subaccounts", on its own, with the header `X-MSYS-SUBACCOUNT: 0` for the primary account and the subaccount's ID for a subaccount. A search without the header covers every list at once, and SparkPost says such a search can be up to 20 minutes out of date. An account without subaccounts needs no header. When the moved sites send from more than one account, count the import as complete only when the list of every one is in.
 
 **Map each entry.**
 
