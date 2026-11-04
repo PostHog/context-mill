@@ -34,9 +34,9 @@ The steps call this key the full-access provider key.
 
 A site whose template the person moves to PostHog needs the content of its published version, to check it before they make the PostHog template.
 
-**Copy from the dashboard.** In SparkPost: Content, then Templates, then the template, then its published version. Ask the person for the template's id, its subject, its from address, its reply-to address when it has one, its HTML, and its plain text when it has one.
+**Copy from the dashboard.** In SparkPost: Content, then Templates, then the template, then its published version. Ask the person for the template's id, its subject, its from address, its reply-to address when it has one, its HTML, and its plain text when it has one. Also ask whether the version has an AMP part or custom headers, and how its open tracking, click tracking, and transactional settings are set: `mapping.md` keeps a template for each of them.
 
-**Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false` with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`. A template the site sends with `use_draft_template: true` stays, so its draft needs no read.
+**Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false` with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options` with `open_tracking`, `click_tracking`, and `transactional`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`. A template the site sends with `use_draft_template: true` stays, so its draft needs no read.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
@@ -49,10 +49,12 @@ SparkPost keeps one suppression list per account, and one per subaccount. Each e
 **Read from the API.** With `Authorization: $SPARKPOST_READ_API_KEY`, on `api.eu.sparkpost.com` for an EU account (see the top of this file):
 
 ```
-GET https://api.sparkpost.com/api/v1/suppression-list?cursor=initial&per_page=10000&sources=Bounce%20Rule,Spam%20Complaint,Manually%20Added,Compliance
+GET https://api.sparkpost.com/api/v1/suppression-list?cursor=initial&per_page=10000&types=transactional,non_transactional,open_tracking
 ```
 
-The answer holds `results`, a list of `{ recipient, type, source, description, list_id, created, updated }`, `total_count`, and `links`. Follow the `href` of the link whose `rel` is `next` until no such link comes back or `results` is empty. Wait 1 to 5 seconds and retry on `429`. An account with subaccounts: the search covers the primary account and every subaccount unless an `X-MSYS-SUBACCOUNT` header names one, and `subaccount_id` shows where an entry came from. Ask the person which accounts the app sends from, and take only those entries.
+The request takes every source and every type, so the agent can import some entries and count the others. Without `types`, SparkPost leaves out `open_tracking` entries.
+
+The answer holds `results`, a list of `{ recipient, type, source, description, list_id, created, updated }`, `total_count`, and `links`. Follow the `href` of the link whose `rel` is `next` until no such link comes back or `results` is empty. Wait 1 to 5 seconds and retry on `429`. An account with subaccounts: ask the person which accounts the app sends from, and read each one on its own, with the header `X-MSYS-SUBACCOUNT: 0` for the primary account and the subaccount's ID for a subaccount. A search without the header covers every list at once, and SparkPost says such a search can be up to 20 minutes out of date. An account without subaccounts needs no header.
 
 **Map each entry.**
 
