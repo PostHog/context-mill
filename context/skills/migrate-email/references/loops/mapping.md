@@ -15,7 +15,7 @@ Every Loops send renders a transactional email stored at Loops. So every Loops s
 | `dataVariables` | `templateData`, with the same keys and values | A value holds HTML that the email must render, such as a `<br>`-joined list the code builds: PostHog's Liquid escapes it |
 | `addToAudience: true` | none | Always. It adds the recipient to the Loops audience, which Loops' campaigns and workflows send to, so moving the send would stop new contacts reaching it. `false` or no value moves. It moves once the app adds the contact another way, such as a `createContact` call |
 | `attachments` | none | Always. A template made in PostHog sends in the template form, which takes no attachments |
-| `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits |
+| `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits. A key built from a value whose characters the code doesn't bound, such as text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | Any other request header in `headers` | none | Always: no PostHog SDK takes headers yet |
 
 The Loops email itself sets the rest, in its sending settings. The template check in Step 3 reads them:
