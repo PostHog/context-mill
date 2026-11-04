@@ -1,6 +1,6 @@
 # Install, build, and review
 
-Install the declared dependencies, run the chosen compile check, then review the
+Install the declared dependencies, run the chosen compile checks, then review the
 whole integration. This is the last check before the report — it is where the
 run either earns trust or loses it. Be quick and decisive; this step must not
 spiral.
@@ -20,10 +20,12 @@ that applies to this project against the diff you are about to verify. A rule
 naming a file or a wiring this project has, with nothing in the diff answering
 it, is unfinished work — do it now. This is the last step that can catch it.
 
-Run one compile check per changed package: use its build when that includes
-typechecking, otherwise prefer its typecheck/check script (such as svelte-check).
-Use the build when there is no typecheck. Inspect the script and framework
-behavior; do not assume a build typechecks and do not run both.
+Choose the compile checks once per changed package by inspecting its scripts and
+framework behavior. If the build includes typechecking, run the build only. If
+build and typecheck/check (such as svelte-check) cover different failures, run both
+once: a passing typecheck does not prove bundling, asset imports, or framework
+compilation work. If only one check exists, run it. Skip equivalent checks, not
+distinct coverage; do not add alternative checks after a failure.
 Use the narrowest package or workspace target covering the changed code. Run a
 root script only when required, filtered to that target where supported.
 Lint only changed files using the installed linter, replacing broad targets

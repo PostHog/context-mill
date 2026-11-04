@@ -17,7 +17,7 @@ dependsOn:
 ## Goal
 
 You are the last hands on the code. First make the integration run, then review it,
-then leave it passing the chosen compile check to the best of your ability. Do both in one pass, verifying and reviewing are the same
+then leave it passing the chosen compile checks to the best of your ability. Do both in one pass, verifying and reviewing are the same
 reading of the same changeset.
 
 **Install and verify.** The earlier steps edited code but did not install —
@@ -25,10 +25,12 @@ install now, then verify with as few slow commands as you can. Use the narrowest
 package or workspace target that covers the integration's changed code. Run a
 root script only when the workspace requires it, filtered to that target where
 supported; do not check unrelated packages.
-Run one compile check per changed package: use its build when that includes
-typechecking, otherwise prefer its typecheck/check script (such as svelte-check).
-Use the build when there is no typecheck. Inspect the script and framework
-behavior rather than assuming a build typechecks; do not run both.
+Choose the compile checks once per changed package by inspecting its scripts and
+framework behavior. If the build includes typechecking, run the build only. If
+build and typecheck/check (such as svelte-check) cover different failures, run both
+once: a passing typecheck does not prove bundling, asset imports, or framework
+compilation work. If only one check exists, run it. Skip equivalent checks, not
+distinct coverage; do not add alternative checks after a failure.
 Then lint only the files this integration changed. Invoke the installed linter
 with those paths, replacing broad targets such as `.` while preserving the
 project's config and options. Appending paths to a script that still targets
@@ -46,9 +48,9 @@ the package manager, stepping down major versions (`pkg@^7`, then `@^6`,
 fits, revert that piece of instrumentation, leave the app's dependency alone,
 and record the incompatibility so the report can say what was skipped and why. An optional upstream task
 (AI Observability, Logs) may have failed and left partial edits no handoff
-describes — install and run the chosen compile check either way, and let it surface stray
+describes — install and run the chosen compile checks either way, and let them surface stray
 imports; fix or revert them like any other defect. Do not run the test suite; the
-runtime does not allow it, and the chosen compile check is the bar. A bad version only surfaces
+runtime does not allow it, and the chosen compile checks are the bar. A bad version only surfaces
 here: if the install fails because a declared version does not exist (npm `ETARGET`,
 "no matching version", a yanked release), do not guess pins — reinstall the
 package by bare name and let the package manager pick, matching the framework
@@ -119,7 +121,7 @@ means verification is incomplete, not that the check passed.
 
 ## How you know you succeeded
 
-The project installed and the chosen compile check and lint passed, or you
+The project installed and the chosen compile checks and lint passed, or you
 recorded exactly what could not be verified; you can name each review dimension
 and say it passes; and your fixes are in the files. If the build or lint fails only on pre-existing errors you did not introduce,
 that still counts — put a one-line summary in the `conflict` field and the detail in
