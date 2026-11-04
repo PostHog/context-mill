@@ -8,7 +8,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 | SendGrid | PostHog | A site stays on SendGrid when |
 |---|---|---|
-| `from` | `from` | Never. `{ email, name }` becomes `'Name <email>'`. It needs a verified sender (Step 4) |
+| `from` | `from` | Never. `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `to` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name |
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
@@ -18,9 +18,9 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ email, name }` moves as the bare address, as for `to` |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, a `disposition` is `inline` without a `contentId`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
-| `headers` | `headers` | The installed SDK has no `headers`, or there are more than 10 |
-| `customArgs` | `tags`, one `{ name, value }` per entry | The installed SDK has no `tags`, there are more than 10, or a webhook handler reads them back (see "Webhooks") |
-| `categories` | `tags`, `{ name: 'category', value: <category> }` | The installed SDK has no `tags`, or the site sets more than one category: PostHog tags are name and value pairs, not a list of labels |
+| `headers` | none | Always: no PostHog SDK takes headers yet |
+| `customArgs` | none | Always: no PostHog SDK takes tags yet |
+| `categories` | none | Always: no PostHog SDK takes tags yet |
 | `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or the settings do anything else, such as `subscriptionTracking` or `ganalytics`. `false` turns off both open and click capture: note it in the plan row |
 | `sendAt` / `send_at` | none | Always |
 | `batchId` / `batch_id` | none | Always |
@@ -62,20 +62,22 @@ SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under 
 |---|---|
 | `{{name}}` | `{{ variables.name }}` |
 | `{{user.first_name}}` | `{{ variables.user.first_name }}` |
-| `{{#if paid}}…{{else}}…{{/if}}` | `{% if variables.paid %}…{% else %}…{% endif %}` |
-| `{{#unless paid}}…{{/unless}}` | `{% unless variables.paid %}…{% endunless %}` |
-| `{{#each items}}{{this.name}}{{/each}}` | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
+| `{{#if paid}}…{{else}}…{{/if}}`, when `paid` is a boolean | `{% if variables.paid %}…{% else %}…{% endif %}` |
+| `{{#unless paid}}…{{/unless}}`, when `paid` is a boolean | `{% unless variables.paid %}…{% endunless %}` |
+| `{{#each items}}{{this.name}}{{/each}}`, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
 | `{{insert name "default=there"}}` | `{{ variables.name \| default: 'there' }}` |
 | The version's `subject` | The PostHog template's subject, with the same conversions |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
 - Handlebars `{{name}}` escapes HTML, and so does PostHog's Liquid, so plain values render the same.
+- Handlebars treats `0`, an empty string, and an empty list as false, and Liquid treats them as true. Read what the site sends for each `if` and `unless` value. A value that is not always a boolean, `null`, or missing keeps the template on SendGrid.
+- Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on SendGrid.
 - `{{{name}}}` inserts HTML as it is. PostHog's Liquid escapes it, so a template that uses triple braces stays on SendGrid.
 - Any other helper, such as `{{#equals}}`, `{{formatDate}}`, `{{#greaterThan}}`, `{{length}}`, or `{{#and}}`, keeps the template on SendGrid. So does `{{@index}}`, a partial, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `cc`, `bcc`, `attachments`, `headers`, `customArgs`, or `categories` next to `templateId` stays: a template made in PostHog sends with its own settings.
+- A site that sets `cc`, `bcc`, `attachments`, or `trackingSettings` next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes none of them.
 
 ## Webhooks
 
@@ -115,8 +117,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `{ email: 'hello@mail.example.com', name: 'Example' }` in `from` becomes `'Example <hello@mail.example.com>'`. A `from` without a name becomes the bare address.
 - `to`, `cc`, and `bcc` become bare addresses. A list with one entry in `to` becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `content` entries become `text` and `html`.
-- An attachment `{ content, filename, type, contentId }` becomes `{ content, filename, contentType: type, contentId }`. `content` stays the same base64 string. Drop `disposition`: `contentId` makes a file inline.
-- `customArgs: { orderId: '123' }` becomes `tags: [{ name: 'orderId', value: '123' }]`. A value that isn't a string becomes its string.
+- An attachment `{ content, filename, type, contentId }` becomes `{ content, filename, contentType: type, contentId }`. Drop `disposition`: `contentId` makes a file inline. In Node.js and Python, `content` stays the same base64 string. In Go and Elixir, the SDK takes the raw file: decode the base64 string first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `dynamicTemplateData`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
@@ -124,7 +125,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **Errors.** Keep the site failing the same way it did:
 
 - **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode })`. `err.code` keeps holding the HTTP status. A read of `err.response.body` becomes a read of `err.message`.
-- **Python.** PostHog's SDK raises too. Replace `except HTTPError` and its subclasses with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code.
+- **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code. A catch of one subclass, such as `TooManyRequestsError` or `BadRequestsError`, becomes a catch of the PostHog exception that checks the status code, 429 or 400, and raises every other error again.
 - **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more becomes "there is an error", and a branch on one status, such as 429, reads PostHog's status code.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where SendGrid took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 

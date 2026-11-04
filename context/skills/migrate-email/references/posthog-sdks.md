@@ -9,7 +9,7 @@ How each PostHog server SDK sends an email. Step 7 reads the part for each langu
 
 Every SDK sends one email per call to one `to` address, in one of two forms:
 
-- **Code form:** `templateKey`, `subject`, and `html`, `text`, or both, with optional `from`, `replyTo`, `cc`, `bcc`, `attachments`, and `captureEngagement`.
+- **Code form:** `templateKey`, `subject`, and `html`, `text`, or both, with optional `from`, `replyTo`, `cc`, `bcc`, `attachments`, and `captureEngagement`, which is on unless the send sets it to `false`. PostHog makes the text part from `html` when the send has no `text`.
 - **Template form:** `templateId` with optional `templateData`, for a template made in PostHog. It takes none of the code form's fields.
 
 Both forms take `distinctId`, `idempotencyKey`, and `maxRetries`. No SDK takes `headers`, `tags`, a send time, several `to` addresses, or an attachment by path or URL: read a file into its content first.
@@ -37,15 +37,15 @@ A language with no row below has no PostHog email send yet, such as Java, Kotlin
 | `subject`, `html`, `text` | the same | the same | `Subject`, `HTML`, `Text` | `Subject`, `Html`, `Text` | `.html()`, `.text()` |
 | `from` | `from_` | `from` | `From` | `From` | `.from()` |
 | `replyTo` | `reply_to` | `reply_to` | `ReplyTo` (`[]string`) | `ReplyTo` (a list) | `.reply_to()`, once per address |
-| `cc`, `bcc` | `cc`, `bcc` | `cc`, `bcc` (Elixir only) | `Cc`, `Bcc` (`[]string`) | none | none |
+| `cc`, `bcc`: one address or a list | `cc`, `bcc`: one address or a list | `cc`, `bcc`, one address or a list (Elixir only) | `Cc`, `Bcc` (`[]string`) | none | none |
 | `attachments` | `attachments` | `attachments` (Elixir only) | `Attachments` | none | none |
 | `captureEngagement` | `capture_engagement` | `capture_engagement` | `CaptureEngagement` (`*bool`) | `CaptureEngagement` | `.capture_engagement()` |
 
-An attachment is `{ filename, content, contentType, contentId }`, in each language's case, and `contentId` shows the file inline as `<img src="cid:...">`:
+An attachment is `{ filename, content, contentType, contentId }`, in each language's case. `filename` and `content` are required, `contentType` and `contentId` are optional. `contentId` is a bare name, such as `logo`, without `cid:` or angle brackets, and the HTML shows the file inline with `<img src="cid:logo">`:
 
 - Node.js: `content` is a `Buffer`, a `Uint8Array`, or a base64 string.
 - Python: `content` is `bytes` or a base64 string.
-- Go: `Content` is `[]byte` of the raw file. Decode a base64 string first.
+- Go: a `posthog.EmailAttachment` whose `Content` is `[]byte` of the raw file. Decode a base64 string first: the SDK encodes it again.
 - Elixir: `content` is the raw binary. Decode a base64 string first: the SDK encodes it again.
 
 ## Node.js: `posthog-node`
@@ -96,7 +96,7 @@ result = posthog.emails.send(
 ```
 
 - Errors: `send` raises `posthog.emails.EmailError` on an API error, with `.code`, `.name`, `.status_code`, and `.message`. A bad argument raises `TypeError` or `ValueError`. It answers a result whose `.id` is the message id.
-- Async apps use `AsyncPosthog` from `posthog`, and `await posthog.emails.send(...)`.
+- Async apps use `AsyncPosthog` from `posthog`, and `await posthog.emails.send(...)`. Install `posthog[async]` for them: without its extra, the first async send fails before it reaches PostHog.
 
 ## Go: `github.com/posthog/posthog-go`
 
@@ -144,12 +144,12 @@ result = posthog.emails.send(
 ## PHP: `posthog/posthog-php`
 
 ```php
-PostHog::init(getenv('POSTHOG_PROJECT_TOKEN'), [
+$posthog = new \PostHog\Client(getenv('POSTHOG_PROJECT_TOKEN'), [
     'host' => getenv('POSTHOG_HOST'),
     'migrated_from' => '<provider>',
-], secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY'));
+], loadFeatureFlags: false, secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY'));
 
-$result = PostHog::emails()->send([
+$result = $posthog->emails()->send([
     'to' => 'jane@example.com',
     'distinct_id' => (string) $user->id,
     'template_key' => 'welcome',
@@ -158,7 +158,7 @@ $result = PostHog::emails()->send([
 ]);
 ```
 
-- An app that creates a client object uses `new \PostHog\Client($token, $options, secretKey: ...)` and `$client->emails()`.
+- `loadFeatureFlags: false`: with a secret key, the client loads feature flags at start and sends the secret key to `host` to do it. Keep it off unless the key has `feature_flag:read` and the app uses local evaluation. Give the email send its own client, as above, and leave the app's `PostHog::init` for captures as it is: never add the secret key to it.
 - Errors: `send` throws `PostHog\EmailError` on an API error and on a bad argument, with `getErrorCode()`, `getErrorName()`, `getStatusCode()`, and `getMessage()`. It answers a result whose `getId()` is the message id.
 
 ## .NET: `PostHog`
@@ -236,4 +236,5 @@ let sent = posthog
 - The message id is PostHog's. It is not the provider's id.
 - `name` follows Resend's error names, such as `validation_error` or `rate_limit_exceeded`. `code` is PostHog's own code, such as `recipient_suppressed`, `sender_not_verified`, or `quota_limited`. Branch on `code`.
 - PostHog refuses a send to a suppressed address with the code `recipient_suppressed` (name `validation_error`).
-- Every SDK retries network errors and rate limits on its own, with the same idempotency key, twice by default.
+- Every SDK retries network errors and rate limits on its own, with the same idempotency key, twice by default. A network error that is left after the retries comes back as the same error type, with the code `network_error`.
+- Python, Ruby, and .NET raise their language's argument error for a bad argument, before any request. Node.js, Go, PHP, Elixir, and Rust answer it as the email error, with a code that starts with `invalid_`.
