@@ -10,6 +10,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 |---|---|---|
 | `sender` `{ email, name }` | `from` | Never. It becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `sender` `{ id }` | none | Always: the code names a sender saved in Brevo, not an address |
+| `sender` with a `name` and no `email` or `id` | none | Always: the address comes from Brevo, not the code |
 | `to` | `to` | It holds more than one entry. A list with one entry moves as that entry's address: note in the plan row when the entry carries a name, because the To line loses it |
 | `subject` | `subject` | Never |
 | `htmlContent`, `textContent` | `html`, `text` | Never, unless `params` is set too (see below) |
@@ -37,8 +38,8 @@ A Brevo send without an idempotency key moves without one.
 | A send with `messageVersions`, or with more than one entry in `to` | Always |
 | A loop that sends one email per address | Never for the call itself: each call is one send. Keep the loop |
 | SMTP through `smtp-relay.brevo.com` | Always. PostHog has no SMTP relay |
-| A framework mailer (Django Anymail, Symfony Mailer, Swoosh) | Always. PostHog has no mailer driver |
-| .NET `SendTransacEmail`, the sync send, in a method that isn't async | The method can't become async in this change: PostHog's .NET send is async only. When it can, make the method and its callers async and note it in the plan row. Never block on `SendAsync` with `.Result` or `.Wait()` |
+| A framework mailer (Django Anymail, Symfony Mailer, Swoosh), or a delivery method the app registers with Rails ActionMailer that sends through Brevo | Always. PostHog has no mailer driver |
+| .NET `SendTransacEmail`, the sync send | As `posthog-sdks.md` says for a synchronous .NET send |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
 
 ## Code around the send

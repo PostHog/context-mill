@@ -20,7 +20,7 @@ The API key lives in `BREVO_API_KEY` by convention, and in `SENDINBLUE_API_KEY` 
 | PHP | `getbrevo/brevo-php` 4.x and later (namespace `Brevo\`) | `(new Brevo($key))->transactionalEmails->sendTransacEmail(new SendTransacEmailRequest([...]))` |
 | PHP | `getbrevo/brevo-php` 1.x and 2.x (namespace `Brevo\Client\`), `sendinblue/api-v3-sdk` (namespace `SendinBlue\Client\`) | `(new TransactionalEmailsApi($http, $config))->sendTransacEmail($sendSmtpEmail)` |
 | Ruby | `brevo` gem, and the older `sib-api-v3-sdk` gem (module `SibApiV3Sdk`) | `Brevo::TransactionalEmailsApi.new.send_transac_email(send_smtp_email)` |
-| Go | `github.com/getbrevo/brevo-go`, imported from `github.com/getbrevo/brevo-go/lib` | `client.TransactionalEmailsApi.SendTransacEmail(ctx, sendSmtpEmail)` |
+| Go | `github.com/getbrevo/brevo-go`, imported from `github.com/getbrevo/brevo-go/lib`, and the older `github.com/sendinblue/APIv3-go-library/v2`, imported from `.../v2/lib` | `client.TransactionalEmailsApi.SendTransacEmail(ctx, sendSmtpEmail)` |
 | .NET | `brevo_csharp` (NuGet), older `sib_api_v3_sdk` | `new TransactionalEmailsApi().SendTransacEmail(sendSmtpEmail)` |
 | Java | `com.brevo:brevo` | `TransactionalEmailsApi.sendTransacEmail(sendSmtpEmail)` |
 
@@ -90,7 +90,7 @@ $result = $brevo->transactionalEmails->sendTransacEmail(new SendTransacEmailRequ
 
 **Ruby.** `Brevo.configure { |config| config.api_key['api-key'] = key }` sets the key. `send_transac_email(Brevo::SendSmtpEmail.new(sender:, to:, subject:, html_content:, ...))` answers a `CreateSmtpEmail` whose `message_id` is the message id. It raises `Brevo::ApiError` on an API error, with `code` (the HTTP status) and `response_body`.
 
-**Go.** `SendTransacEmail` answers `(CreateSmtpEmail, *http.Response, error)`, and `result.MessageId` is the message id. `err` is set for a network error and for an API error: an answer of 300 or more comes back as a `brevo.GenericSwaggerError`, with `Error()` and `Body()`. Code may also read `resp.StatusCode`.
+**Go.** `SendTransacEmail` answers `(CreateSmtpEmail, *http.Response, error)`, and `result.MessageId` is the message id. `err` is set for a network error and for an API error: an answer of 300 or more comes back as a `brevo.GenericSwaggerError` (`sendinblue.GenericSwaggerError` in the older library), with `Error()` and `Body()`. Code may also read `resp.StatusCode`.
 
 ```go
 import brevo "github.com/getbrevo/brevo-go/lib"
@@ -126,7 +126,7 @@ The struct also takes `Cc`, `Bcc`, `ReplyTo`, `Attachment` (`[]SendSmtpEmailAtta
 
 **SMTP.** Brevo takes mail over SMTP at `smtp-relay.brevo.com`, on port 587 or 2525, or 465 with TLS, with an SMTP login and an SMTP key from the Brevo dashboard. Look for that host in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config.
 
-**Frameworks.** Mailers that send every framework mail through Brevo: `django-anymail` with `anymail.backends.brevo.EmailBackend` (or the older `anymail.backends.sendinblue.EmailBackend`) in Django, `symfony/brevo-mailer` (`MAILER_DSN=brevo+api://...` or `brevo+smtp://...`) in Symfony, and `Swoosh.Adapters.Brevo` (or `Swoosh.Adapters.Sendinblue`) in Elixir. Each mailable or mailer that sends is a site.
+**Frameworks.** Mailers that send every framework mail through Brevo: `django-anymail` with `anymail.backends.brevo.EmailBackend` (or the older `anymail.backends.sendinblue.EmailBackend`) in Django, `symfony/brevo-mailer` (`MAILER_DSN=brevo+api://...` or `brevo+smtp://...`) in Symfony, and `Swoosh.Adapters.Brevo` (or `Swoosh.Adapters.Sendinblue`) in Elixir. A Rails app can register its own ActionMailer delivery method, with `add_delivery_method`, whose `deliver!` calls a Brevo SDK: every mailer set to that method sends through Brevo. Each mailable or mailer that sends is a site.
 
 ## Send fields
 
