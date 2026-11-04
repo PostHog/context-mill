@@ -83,7 +83,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - A template in Brevo's old template language reads no `params`. When its placeholders are not `{{ … }}` and `{% … %}`, it stays.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - A Brevo template has no plain text part, so the PostHog template has HTML only.
-- The template's `tag` is not carried over. When a webhook handler reads `tags` back, the site stays. Otherwise note in the plan row that the tag is lost.
+- A template's `tag` is not carried over. When the template has a tag and a webhook handler reads `tags` back, the site stays. When it has a tag and no handler reads it, note in the plan row that the tag is lost.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `sender`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
 - A site that sets `cc`, `bcc`, `attachment`, `headers`, or `tags` next to `templateId` stays: a template made in PostHog sends with its own settings.
 

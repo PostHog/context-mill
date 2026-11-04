@@ -39,7 +39,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 Brevo keeps one list of blocked transactional contacts. It skips an address on it for every transactional send, or, for an unsubscribe, for sends from the sender it unsubscribed from. Each entry has a reason code.
 
-**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. When the person exports the list from there, ask where they saved the file, and read the header row to find the address and reason columns.
+**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. When they have no file, use the API below, or record the import as not done.
 
 **Read from the API.** `GET https://api.brevo.com/v3/smtp/blockedContacts` with the header `api-key: $BREVO_MIGRATION_API_KEY`. It answers `{ contacts, count }`, and each contact is `{ email, senderEmail, reason: { code, message }, blockedAt }`. Page with `limit=100` and `offset`, adding 100 each time, until a page has fewer than 100 entries or the offset reaches `count`. Wait and retry on `429`, after the seconds the `Retry-After` header names when it has one. Branch on `reason.code`, never on `reason.message`.
 
@@ -54,5 +54,5 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 **Leave out the other entries.**
 
 - **Unsubscribes** (`unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA`) are preferences, and PostHog's opt-outs apply to marketing messages only. At Brevo they stopped transactional mail from the sender the person unsubscribed from. Once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
-- **Blocked domains** (`GET /v3/smtp/blockedDomains`, in the dashboard next to the blocked contacts) block every address on a domain. PostHog's list takes addresses, not domains. Count the domains, and tell the person the count in the report.
+- **Blocked domains** (`GET /v3/smtp/blockedDomains`, in the dashboard next to the blocked contacts) block every address on a domain. PostHog's list takes addresses, not domains, so PostHog sends to those domains again. Count the domains, and tell the person the count in the report.
 - Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
