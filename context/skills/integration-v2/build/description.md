@@ -1,6 +1,6 @@
 # Install, build, and review
 
-Install the declared dependencies, verify the project builds, then review the
+Install the declared dependencies, run the chosen compile check, then review the
 whole integration. This is the last check before the report — it is where the
 run either earns trust or loses it. Be quick and decisive; this step must not
 spiral.
@@ -20,12 +20,17 @@ that applies to this project against the diff you are about to verify. A rule
 naming a file or a wiring this project has, with nothing in the diff answering
 it, is unfinished work — do it now. This is the last step that can catch it.
 
-Run one compile check: the project's build if the manifest defines one,
-otherwise its typecheck — not both, since most framework builds already
-typecheck. In a monorepo, run the changed package's scripts, not the root's.
-Then run the lint script, passing it only the files this integration changed
-when the linter accepts paths. Where the toolchain ships its own analyzer rather
-than manifest scripts, run that instead — it is the only thing that will catch a
+Run one compile check per changed package: use its build when that includes
+typechecking, otherwise prefer its typecheck/check script (such as svelte-check).
+Use the build when there is no typecheck. Inspect the script and framework
+behavior; do not assume a build typechecks and do not run both.
+Use the narrowest package or workspace target covering the changed code. Run a
+root script only when required, filtered to that target where supported.
+Lint only changed files using the installed linter, replacing broad targets
+such as `.` while preserving the project's config and options. Appending paths
+to `eslint .` still lints everything. Run full lint only when scoped lint is not
+supported, once; do not broaden or switch checks after a failure.
+Where the toolchain ships its own analyzer rather than manifest scripts, run that instead — it is the only thing that will catch a
 lint the project itself enforces. Do not run the test suite — the runtime only
 permits install, build, typecheck, lint, and format commands, so a test command
 is blocked; a build that compiles is sufficient verification. Only errors in the
@@ -33,6 +38,14 @@ files this integration changed are yours to fix — a missing import, a wrong ca
 An error in a file the integration never touched is pre-existing: note it and
 move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
 failure clears — it will not, and each re-run is slow.
+
+Batch review fixes before final verification where possible. Allow at most one
+rerun per affected check after fixes, including a previously passing compile
+check when review edits change code. If it still fails, record it and stop that
+check. Never retry a timed-out command, substitute other checks for it, or
+increase its timeout. Record the exact command and verification incomplete in
+`conflict`; a timeout is not a pass. The review task has a ten-minute total
+budget, and every bash command has a five-minute maximum.
 
 ## Review the integration
 
