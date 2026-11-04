@@ -29,7 +29,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
 | `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks` set to `no` or `false` | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or a tracking field is set to anything else, such as `yes` or `htmlonly`. `false` turns off both open and click capture: note it in the plan row |
-| An `Idempotency-Key` request header | `idempotencyKey` | Never |
+| An `Idempotency-Key` request header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
 | `recipient-variables` | none | Always. PostHog's send doesn't take it yet |
 | `o:testmode` | none | Always. Test mode is not a send |
