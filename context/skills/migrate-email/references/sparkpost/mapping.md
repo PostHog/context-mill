@@ -39,7 +39,7 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `options.enable_minimized_event_passthrough` | none | Always. PostHog's send doesn't take it yet |
 | `override.list_id` | none | Always: it sets a `List-Id` header |
 | `return_path`, `recipients[].return_path` | none | The app reads bounces sent to that address, such as with VERP on an Enterprise account. Otherwise it moves: PostHog uses its own return path on the sender's domain (Step 4). Note it in the plan row |
-| `Idempotency-Key` header | `idempotencyKey` | Never |
+| `Idempotency-Key` header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 
 A SparkPost send without an `Idempotency-Key` header sends no `idempotencyKey` after the move either.
 
