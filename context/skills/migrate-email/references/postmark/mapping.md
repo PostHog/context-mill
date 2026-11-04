@@ -30,8 +30,8 @@ Count only the fields the code sets.
 
 - Both tracked: the site moves with no field. When `TrackLinks` was `HtmlOnly` or `TextOnly`, note in the plan row that PostHog tracks links in both parts.
 - Neither tracked: the site moves with `captureEngagement: false`.
-- One tracked and one not: the site moves with `captureEngagement: false`. Note in the plan row that PostHog captures neither now.
-- The installed SDK has no `captureEngagement`, and Postmark left one of them untracked: the site stays.
+- One tracked and one not, such as a `postmarker` send on a server with open tracking on: the site stays, because `captureEngagement: false` turns off both.
+- The installed SDK has no `captureEngagement`, and Postmark tracked neither: the site stays.
 - A template site that Postmark sent with one of them untracked stays, as "Templates" says.
 
 When a site leaves out `TrackOpens`, or leaves out `TrackLinks` outside `postmarker`, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
