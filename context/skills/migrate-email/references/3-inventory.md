@@ -21,7 +21,10 @@ Read the provider's `sdk-reference.md` for the call shapes, and its `mapping.md`
 A **site** is one place in the code that decides what a send contains: its content and its fields. Usually that is the `emails.send(...)` call or the HTTP request itself.
 
 - When a helper builds the send from a few parameters, such as a subject and a template name, the helper is one site, however many places call it. Read its callers anyway: they decide values such as how many recipients a send has.
-- When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not.
+- When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not. The same holds for a queue job or a transport that posts a message built elsewhere, such as a JSON string: each place that builds the message is a site.
+- Find a helper's callers by searching the repository. When you can't find or read every caller, each send through the helper stays, and the reason names the caller or the value you could not read.
+- A helper that nothing in the repository calls is not a site, unless the repository is a library that exports it. List it with the other provider calls, and leave it as it is.
+- When one function chooses between this provider and others, by a setting or as a fallback when a send fails, the branch that sends through this provider is the site. Move only that branch, and leave the other branches as they are.
 
 For each site, read the surrounding code and record:
 
@@ -46,7 +49,11 @@ When you find no site, stop before you write the plan file:
 
 Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets, in a language that `mapping.md` moves. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
 
+A field set to an empty value, such as `""`, `[]`, `{}`, or `null`, or to its off value, such as `false` for a flag that is off unless set, counts as not set, even where `mapping.md` keeps every site that sets the field, unless its row names that empty or off value. A field that the code sets on some sends only, such as under a condition or from a caller's argument, counts as set.
+
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
+
+A site stays when no sender can be verified for its `from`: an address on a free mail domain, such as `gmail.com` or `outlook.com`, on the provider's shared or sandbox domain, or taken from a user, a customer, or a tenant at run time. The reason names the address or where it comes from. When a site sets no `from`, the provider sent from the account's default sender: ask the person for that address once, and the site stays when they can't name it.
 
 A `template` site moves only to a template made in PostHog, and the person makes that template. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template. Ask the person once, for every other template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`.
 
