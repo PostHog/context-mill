@@ -196,6 +196,8 @@ ExAws.SES.send_email_v2(
 - `send_email(%{to: [...], cc: [...], bcc: [...]}, ExAws.SES.build_message(html, text, subject), from, opts)` takes the v1 fields, and its options `:reply_to`, `:tags`, `:configuration_set_name`, `:return_path`, `:source_arn`, and `:return_path_arn`.
 - `send_templated_email`, `send_raw_email`, and `send_bulk_templated_email` are the v1 template, raw, and bulk sends.
 
+**Throttling.** The v2 API answers too many requests with `TooManyRequestsException` and status `429`. The v1 API answers a send over the sending rate or the daily quota with the code `Throttling` and status `400`, with the message `Maximum sending rate exceeded` or `Daily message quota exceeded`.
+
 **HTTP.** The v2 send is `POST https://email.<region>.amazonaws.com/v2/email/outbound-emails` with a JSON body of the v2 fields, and the v1 send is a `POST` to `https://email.<region>.amazonaws.com/` with `Action=SendEmail` and the v1 fields as form parameters. Both are signed with AWS Signature Version 4, for the service `ses`. A success answers the `MessageId`. Look for `email.` and `amazonaws.com` in `fetch`, `axios`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
 **Regions.** Each client sends to the host of one Region, `email.<region>.amazonaws.com`, and the code picks the Region by a setting, not by a URL. The signal is the client's Region setting: `region` in the Node.js clients, `region_name` in `boto3.client`, `region:` in `Aws::SESV2::Client.new`, `'region'` in the PHP client's options, `config.WithRegion` in Go's `config.LoadDefaultConfig`, a `RegionEndpoint` passed to the .NET client, `.region(...)` on Rust's `aws_config` loader, and `region:` in `ExAws.request` or in `config :ex_aws`. Without one, the SDKs read `AWS_REGION` or the shared config file. A client can also name its own host with an endpoint setting: `endpoint` in the Node.js clients, `endpoint_url` in `boto3.client`, `config.WithBaseEndpoint` in Go, and `.endpoint_url(...)` in Rust. `account.md` says which host its requests use for each.
@@ -219,13 +221,13 @@ The v2 names, with the v1 names where they differ. The SDKs use the same names i
 | `Content.Simple.Subject` | `Message.Subject` | `{ Data, Charset }` |
 | `Content.Simple.Body.Html`, `Body.Text` | `Message.Body.Html`, `Body.Text` | `{ Data, Charset }` |
 | `Content.Simple.Headers`, `Content.Template.Headers` | none | A list of `{ Name, Value }`, at most 15 |
-| `Content.Simple.Attachments`, `Content.Template.Attachments` | none | A list of `{ FileName, RawContent, ContentType, ContentId, ContentDisposition, ContentDescription, ContentTransferEncoding }`. `RawContent` is the bytes, and base64 over raw HTTP. `ContentDisposition` is `ATTACHMENT` or `INLINE` |
+| `Content.Simple.Attachments`, `Content.Template.Attachments` | none | A list of `{ FileName, RawContent, ContentType, ContentId, ContentDisposition, ContentDescription, ContentTransferEncoding }`. `RawContent` is the bytes, and base64 over raw HTTP and in Elixir's `ex_aws_ses`, which sends `Content` as JSON as it is. `ContentDisposition` is `ATTACHMENT` or `INLINE`, and `ContentId` names an `INLINE` file for the HTML |
 | `Content.Template.TemplateName`, `TemplateArn` | `Template`, `TemplateArn` (`SendTemplatedEmail`) | A template stored at Amazon SES |
 | `Content.Template.TemplateData` | `TemplateData` | A JSON string of the template's values |
 | `Content.Template.TemplateContent` | none | `{ Subject, Html, Text }`: an inline template in the code |
 | `Content.Raw.Data` | `RawMessage.Data` (`SendRawEmail`) | A whole MIME message |
 | `EmailTags` | `Tags` | A list of `{ Name, Value }`, sent with the send's events |
-| `ConfigurationSetName` | `ConfigurationSetName` | A configuration set: its event destinations, tracking, sending pool, and suppression settings |
+| `ConfigurationSetName` | `ConfigurationSetName` | A configuration set: its event destinations, tracking, sending pool, and suppression settings. A send that names none uses its identity's default set, when it has one |
 | `ConfigurationOverrides.Tracking` | none | `{ OpenTrackingEnabled, ClickTrackingEnabled }`, each `ENABLED` or `DISABLED`, for this send only |
 | `ListManagementOptions` | none | `{ ContactListName, TopicName }`: a contact list and topic for unsubscribes |
 | `FeedbackForwardingEmailAddress` | `ReturnPath` | The address that gets bounce and complaint mail when feedback forwarding is on |

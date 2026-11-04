@@ -45,7 +45,7 @@ const { messageId } = await brevo.transactionalEmails.sendTransacEmail({
 })
 ```
 
-**Node.js, `@getbrevo/brevo` 1.x to 3.x and `@sendinblue/client`.** The key is set with `api.setApiKey(TransactionalEmailsApiApiKeys.apiKey, key)` or `api.authentications.apiKey.apiKey = key`. A `new SendSmtpEmail()` takes the fields as properties. `sendTransacEmail` answers `{ response, body }`, and `body.messageId` is the message id. It rejects on an API error: in `@getbrevo/brevo` with an `HttpError` that has `statusCode`, `response`, and `body`, and in `@sendinblue/client` with a plain `{ response, body }` whose `response.statusCode` is the status.
+**Node.js, `@getbrevo/brevo` 1.x to 3.x, `sib-api-v3-typescript`, and `@sendinblue/client`.** The key is set with `api.setApiKey(TransactionalEmailsApiApiKeys.apiKey, key)` or `api.authentications.apiKey.apiKey = key`. A `new SendSmtpEmail()` takes the fields as properties. `sendTransacEmail` answers `{ response, body }`, and `body.messageId` is the message id. It rejects on an API error: in `@getbrevo/brevo` and `sib-api-v3-typescript` with an `HttpError` that has `statusCode`, `response`, and `body`, and in `@sendinblue/client` with a plain `{ response, body }` whose `response.statusCode` is the status.
 
 **Node.js, `sib-api-v3-sdk`.** `SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = key` sets the key. `new SibApiV3Sdk.TransactionalEmailsApi().sendTransacEmail(sendSmtpEmail)` answers `{ messageId }`. It rejects on an API error with an error whose `status` is the HTTP status and whose `response.body` is the answer.
 
@@ -135,8 +135,8 @@ Node.js and HTTP names. Python and Ruby use the same names in snake case, Go and
 | Field | Value |
 |---|---|
 | `sender` | `{ email, name }`, or `{ id }`: a sender saved in Brevo. Not needed with `templateId` |
-| `to` | A list of `{ email, name }` |
-| `cc`, `bcc` | Lists of `{ email, name }` |
+| `to` | A list of `{ email, name }`. An entry can also set `contactPixelTrackingConsent` and `removeTrackingPixel`, the recipient's open and click tracking |
+| `cc`, `bcc` | Lists of `{ email, name }`, with the same tracking settings |
 | `replyTo` | `{ email, name }` |
 | `subject` | String. Not needed with `templateId` |
 | `htmlContent`, `textContent` | Strings. Ignored with `templateId` |
@@ -151,7 +151,7 @@ Node.js and HTTP names. Python and Ruby use the same names in snake case, Go and
 
 ## Templates stored at Brevo
 
-A send with `templateId` renders a template from the Brevo dashboard. Its content is not in the code. The template holds its `subject`, `htmlContent`, `sender`, `replyTo`, `toField`, and `tag`, so the send may set no `sender` or `subject`.
+A send with `templateId` renders a template from the Brevo dashboard. Its content is not in the code. The template holds its `subject`, `htmlContent`, `sender`, `replyTo`, `toField`, and `tag`, so the send may set no `sender` or `subject`. It can also hold an attachment, added in the dashboard under its advanced options.
 
 - The template language reads the send's values as `{{ params.name }}`, `{{ params.user.first_name }}`, and `{{ params.items.0.name }}`.
 - It reads contact attributes as `{{ contact.FIRSTNAME }}`, data feeds as `{{ feed.alias.field }}`, the send time as `{{ time_now }}`, and links as `{{ mirror }}`, `{{ unsubscribe }}`, and `{{ update_profile }}`.
