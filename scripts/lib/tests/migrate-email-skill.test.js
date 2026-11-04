@@ -109,6 +109,14 @@ describe('migrate-email skill', () => {
         ]);
     });
 
+    it('ticks the key phase only after a check finds the key, never on a promise to add it', () => {
+        const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
+
+        expect(keyStep).toMatch(/grep -cE '\^\(export \+\)\?POSTHOG_PROJECT_SECRET_API_KEY=\.\?phs_'/);
+        expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
+        expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
+    });
+
     it('publishes Resend and Statsig as wizard migrate subcommands', async () => {
         const { skills } = await loadSkills();
         const cliOf = (id) => skills.find((skill) => skill.id === id)?._cli;
