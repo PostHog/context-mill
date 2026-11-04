@@ -54,8 +54,9 @@ The SDK is installed and initialized — either it already was, or the install
 and init tasks before you did it (see their handoffs); build on that, do not
 re-check it.
 
-Install nothing except the server library your server-side capture imports,
-when the manifest lacks it: add it with the project's package manager
+Install nothing except the server libraries your server-side capture imports
+(for Next.js, the docs use two), at the minimum versions the docs give,
+when the manifest lacks them: add them with the project's package manager
 (`detect_package_manager`). When it answers `No lockfile found. Default to
 npm`, look up the tree first: in a workspace package, use the manager whose
 lockfile sits at the workspace root above this directory, and npm only when no
@@ -96,13 +97,15 @@ A server error links to the person and the session replay only when its
 capture carries the browser's identity. Where the browser calls the app's own
 server (one app such as Next.js, or a separate API), send it: set
 `tracing_headers` in the browser init to the hostnames the browser calls
-(`window.location.hostname` for the app's own requests). On the server, take
-the identity from the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID`
+(`window.location.hostname` for the app's own requests). On the server, the
+identity comes from the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID`
 request headers first, then from the PostHog cookie: its distinct ID, and the
-session ID from `$sesid` while that session is fresh. Pass the distinct ID to
-the capture call and the session ID as `$session_id`, following the docs'
-pattern. These values are analytics context: never use them to authenticate
-anyone.
+session ID from `$sesid` while that session is fresh. When the docs give an SDK
+helper that does this (Next.js: `createOnRequestError` and `withPostHogProxy`
+from `@posthog/next`), use it and parse nothing yourself. Otherwise pass the
+distinct ID to the capture call and the session ID as `$session_id`, following
+the docs' pattern. These values are analytics context: never use them to
+authenticate anyone.
 
 ## Do not copy the SDK's own listeners
 
@@ -125,7 +128,13 @@ of it. The boundaries the app already has are such hooks too: add capture to
 every one that exists — each Next.js `error.tsx`, a custom `global-error.tsx`,
 a Pages Router `_error` or `_app` boundary — since each swallows what it
 catches. Creating new boundaries per route is the hand-wrapping to avoid;
-capturing in the ones the app has is not. NestJS is one more layer up: its exception filters answer every request
+capturing in the ones the app has is not. The same holds for a wrapper the
+docs give around a framework entry point the hook misses, such as
+`withPostHogProxy` around the app's existing `proxy.ts` or `middleware.ts`:
+wrap the one the app has, and create none. When the docs name a framework API
+whose errors skip the framework's hook (Next.js `after()`), search the project
+for its import once and add the capture the docs show at each use. That is a
+lookup, not reading through the app. NestJS is one more layer up: its exception filters answer every request
 error before Express error middleware runs, so capture goes in a global filter
 (the app's existing `@Catch()` filter when it has one), not in
 `setupExpressErrorHandler`. A platform with no autocapture at all, such as Go,
@@ -141,8 +150,9 @@ of your own sits beside the SDK's autocapture. The project builds as well as it
 did before your edits. You installed nothing but the server library your
 capture imports, and did not run tests, search outside the project, or read
 through the whole app or hand-wrap individual components or routes. Every
-error boundary the app already had now captures, and server captures carry the
-browser's distinct ID and session ID. Your handoff names the files you changed,
+error boundary the app already had now captures, every use of an API the docs
+say skips the hook captures, and server captures carry the browser's distinct
+ID and session ID. Your handoff names the files you changed,
 the capture mechanism, the server errors that stay uncaptured on the installed
 version (none, when every hook exists), and the build command you ran with its
 result, so the report can explain it to the user.
