@@ -10,7 +10,7 @@ Fields set in the transporter's `defaults`, the second argument of `createTransp
 
 | SMTP | PostHog | A site stays on SMTP when |
 |---|---|---|
-| `from` | `from` | Never. `{ name, address }` becomes `'Name <address>'`. It needs a verified sender (Step 4) |
+| `from` | `from` | Never. `{ name, address }` becomes `'Name <address>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `to` | `to` | It holds more than one address, including a comma-separated string. A list with one entry moves as that entry. `{ name, address }` or `'Name <address>'` moves as the bare address: note in the plan row that the To line loses the name |
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | The value is a stream, an `href`, or a `path` that is a URL. A string moves as it is, and a `Buffer` as its UTF-8 string. A `path` to a file in the repository moves as the file's content, read in the moved code |
@@ -18,22 +18,22 @@ Fields set in the transporter's `defaults`, the second argument of `createTransp
 | A recipient in the envelope only, such as an address in Python's `sendmail` `to_addrs` that no header names | `bcc` | As for `bcc` |
 | `replyTo` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length, or an entry has anything but a `filename`, a `content`, a `path` to a file, a `contentType`, a `cid`, and an `encoding` of its string content. An `href`, a `path` that is a URL or a `data:` URI, a stream `content`, `raw`, `headers`, and an `inline` disposition without a `cid` keep it. See "Attachments by path" below |
-| `headers` | `headers` | The installed SDK has no `headers`, or there are more than 10. This includes every header the code sets on a MIME message, such as `msg["X-Entity-Ref-ID"]` or `addCustomHeader` |
-| `list` | `headers` | As for `headers`. `List-Unsubscribe` is a header too |
+| `headers` | none | Always: no PostHog SDK takes headers yet. This includes every header the code sets on a MIME message, such as `msg["X-Entity-Ref-ID"]` or `addCustomHeader` |
+| `list` | none | Always: no PostHog SDK takes headers yet. `List-Unsubscribe` is a header too |
 | `priority` | none | Always |
 | `sender` | none | Always |
-| `inReplyTo`, `references`, `messageId`, `date`, `xMailer`, `otp` | `headers` | As for `headers` |
+| `inReplyTo`, `references`, `messageId`, `date`, `xMailer`, `otp` | none | Always: no PostHog SDK takes headers yet |
 | `watchHtml`, `amp`, `alternatives` | none | Always |
 | `icalEvent` | none | Always. An `.ics` file sent only as an attachment moves as an attachment |
-| `envelope` | none | Its `from` or recipients differ from the `from`, `to`, `cc`, and `bcc` of the message, such as a bounce address of its own. An `envelope` with the same addresses moves without it |
+| `envelope` | none | Its `from` or recipients differ from the `from`, `to`, `cc`, and `bcc` of the message, such as a bounce address of its own. An `envelope` with the same addresses moves without it: note it in the plan row |
 | `raw`, a message the code writes by hand, `net/smtp`, `Net::SMTP`, or a `gen_smtp` body that is not `:mimemail.encode` output | none | Always. The fields are in a string the code built, and PostHog takes fields |
 | `dsn` | none | Always |
-| `dkim` on the message or the transporter | none | Never. PostHog signs with its own DKIM records, which Step 4 sets up |
+| `dkim` on the message or the transporter | none | Never. The moved send is signed with the DKIM records of the PostHog sender that Step 4 sets up. Note in the plan row that the site moves without it |
 | `attachDataUrls` | none | The `html` holds a `data:` image |
-| `encoding`, `textEncoding`, `disableFileAccess`, `disableUrlAccess`, `pool`, `secure`, and other connection options | none | Never. They say how Nodemailer writes and sends the message, and PostHog's send carries no MIME and opens no connection |
+| `encoding`, `textEncoding`, `disableFileAccess`, `disableUrlAccess`, `pool`, `secure`, and other connection options | none | Never. They say how Nodemailer writes the message and reaches the server, and the moved site builds no message and opens no connection |
 | A `compile` or `stream` plugin on the transporter, `transporter.use(...)` | none | The plugin is not one of the template renderers under "Templates". The moved send would skip it |
 
-PostHog's `from` takes `'Name <address>'`. PHPMailer's `setFrom(address, name)`, MailKit's `MailboxAddress(name, address)`, and the other clients' name and address pairs become that form.
+PostHog's `from` takes `'Name <address>'`, with the name in double quotes when it holds a comma, a quote, or another special character, such as `'"Acme, Inc." <hello@mail.example.com>'`. PHPMailer's `setFrom(address, name)`, MailKit's `MailboxAddress(name, address)`, and the other clients' name and address pairs become that form.
 
 A send through SMTP has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -67,7 +67,8 @@ SMTP clients report an error in two ways. Node.js, Python, Ruby, PHPMailer with 
 | Code | A site stays on SMTP when |
 |---|---|
 | A `catch`, `except`, or `rescue` of the client's error, or a check of its error value | It branches on one SMTP code or error code, such as `err.responseCode === 550`, `err.code === 'EENVELOPE'`, `e.smtp_code`, or `SmtpStatusCode.MailboxUnavailable`. SMTP codes have no PostHog counterpart. A branch on any error moves |
-| A check of `info.rejected`, `info.accepted`, or Python's dict of refused recipients | Never, when the site sends to one recipient: a refused recipient becomes PostHog's error. Read PostHog's error instead |
+| A `catch`, `except`, or `rescue` of one error class of the client, such as `SMTPRecipientsRefused`, `SMTPAuthenticationError`, `Net::SMTPFatalError`, `SmtpFailedRecipientException`, or `SmtpCommandException` with a check of its `StatusCode` | Always. Each class stands for one kind of SMTP failure, which has no PostHog code to branch on, and a catch of every PostHog error would widen it |
+| A check of `info.rejected`, `info.accepted`, or Python's dict of refused recipients | Never, when the site sends to one recipient. The check becomes a check of PostHog's error, as the Rewrite section says |
 | `info.messageId`, `getLastMessageID()`, `message.MessageId`, or the Message-ID stored for a webhook handler of the provider behind the host, or a status read | Always |
 | The Message-ID logged or stored for the app's own use | Never. Use PostHog's message id |
 | The connection code: `createTransport`, `smtplib.SMTP(...)`, `starttls`, `login`, `ConnectAsync`, `AuthenticateAsync`, `Disconnect` | Never. A moved site needs no connection |
@@ -123,10 +124,10 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The fields.**
 
-- `{ name: 'Example', address: 'hello@mail.example.com' }` and every other name and address pair in `from` becomes `'Example <hello@mail.example.com>'`. A `from` without a name becomes the bare address.
+- `{ name: 'Example', address: 'hello@mail.example.com' }` and every other name and address pair in `from` becomes `'Example <hello@mail.example.com>'`. Put the name in double quotes when it holds a comma, a quote, or another special character: `'"Acme, Inc." <hello@mail.example.com>'`. A quoted name that is already in a `from` string, such as `'"Acme" <hello@mail.example.com>'`, keeps its quotes. A `from` without a name becomes the bare address.
 - `to`, `cc`, and `bcc` become bare addresses. A list with one entry in `to` becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - A `Buffer` in `text` or `html` becomes its string. A `path` to a file becomes the file's content, read with the same encoding.
-- An attachment `{ filename, content, contentType, cid }` becomes `{ filename, content, contentType, contentId: cid }`. A `Buffer` content stays a `Buffer`. A string content with `encoding: 'base64'` stays the same base64 string, and a string content without `encoding` becomes `Buffer.from(content)`. Drop `contentDisposition: 'attachment'`: `contentId` makes a file inline.
+- An attachment `{ filename, content, contentType, cid }` becomes `{ filename, content, contentType, contentId: cid }`. A `Buffer` content stays a `Buffer`. A string content with `encoding: 'base64'` stays the same base64 string in Node.js, and a string content without `encoding` becomes `Buffer.from(content)`. In Python, a base64 string stays the same string, and `bytes` stay `bytes`. In Go and Elixir, the SDK takes the raw file: decode a base64 string first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice. `cid` is already a bare name, such as `logo`, and moves as it is. Drop `contentDisposition: 'attachment'`: `contentId` makes a file inline.
 - An attachment by `path` becomes `{ filename, content: await readFile(path), contentType }`, with `readFile` from `node:fs/promises`, and `filename` the path's base name when the entry has none. In Python, `content` is the file's bytes, read with `open(path, "rb")`. In Go, `Content` is `os.ReadFile(path)`. In Python and Go, name the content type the client guessed from the file name, such as `application/pdf`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
@@ -148,11 +149,11 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **Errors.** Keep the site failing the same way it did:
 
 - **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where the awaited `sendMail` threw into a `catch`, or the promise rejected to its caller, throw from the error so the same path runs: `if (error) throw Object.assign(new Error(error.message), { code: error.code, responseCode: error.statusCode })`. A callback `(err, info) => { ... }` becomes the same code run with `err` from `error` and `info` from `data`. `info.messageId` becomes `data.id`.
-- **Python.** PostHog's SDK raises too. Replace `except smtplib.SMTPException` and its subclasses, and `except OSError` around the send, with the PostHog exception `posthog-sdks.md` names, and `e.smtp_code` with its status code. A check of the dict of refused recipients becomes the `except` branch.
-- **Ruby.** Replace `rescue` of a `Net::SMTP` error, or of `StandardError` around the send, with `PostHog::EmailError`.
-- **PHP.** With PHPMailer exceptions on, replace `catch (PHPMailer\PHPMailer\Exception $e)` with `catch (PostHog\EmailError $e)`. With exceptions off, the `if (!$mail->send())` branch runs in a `catch (PostHog\EmailError $e)`, and `$mail->ErrorInfo` becomes `$e->getMessage()`. For Symfony Mailer, replace `catch (TransportExceptionInterface $e)` with `catch (PostHog\EmailError $e)`.
-- **Go.** `if err := d.DialAndSend(m); err != nil` becomes `if _, err := client.Emails().Send(ctx, ...); err != nil`, with the same branch.
-- **.NET.** Replace `catch (SmtpCommandException)`, `catch (SmtpException)`, and the other client exceptions with `catch (PostHog.Emails.EmailException)`, and `StatusCode` with its `StatusCode`.
+- **Python.** PostHog's SDK raises too. Replace `except smtplib.SMTPException`, the base class of every SMTP error, with the PostHog exception `posthog-sdks.md` names, and a read of `e.smtp_code` or `e.smtp_error` in a log line with its status code or message. `except OSError` around the send also catches connection errors and other I/O in the same `try`: make it `except (EmailError, OSError)`, so it catches what it caught before. Leave a broader catch, such as `except Exception`, as it is. A check of the dict of refused recipients becomes the `except` branch.
+- **Ruby.** Replace `rescue` of the `Net::SMTP` errors as a group, such as `rescue Net::SMTPError` or a list of all of them, with `rescue PostHog::EmailError`. Leave a broader `rescue`, such as `rescue StandardError`, as it is: it catches PostHog's error too.
+- **PHP.** With PHPMailer exceptions on, replace `catch (PHPMailer\PHPMailer\Exception $e)` with `catch (PostHog\EmailError $e)`. With exceptions off, the `if (!$mail->send())` branch runs in a `catch (PostHog\EmailError $e)`, and `$mail->ErrorInfo` becomes `$e->getMessage()`. For Symfony Mailer, replace `catch (TransportExceptionInterface $e)` with `catch (PostHog\EmailError $e)`. Leave a broader catch, such as `catch (\Throwable $e)`, as it is.
+- **Go.** `if err := d.DialAndSend(m); err != nil` becomes `if _, err := client.Emails().Send(ctx, ...); err != nil`, with the same branch. A branch on one error with `errors.Is` or `errors.As` against a client error keeps the site, as the table above says.
+- **.NET.** Replace `catch (SmtpException)` or `catch (MailKit.Net.Smtp.SmtpCommandException)` with no `when` filter and no read of `StatusCode` beyond a log line, and the client's other exceptions caught together with it, with `catch (PostHog.Emails.EmailException)`. Leave a broader catch, such as `catch (Exception)`, as it is.
 - **Elixir.** A `case` on the receipt binary and `{:error, ...}` becomes a `case` on `{:ok, result}` and `{:error, error}`, with the same branches.
 - **Rust.** `mailer.send(&email)?` becomes `posthog.emails().send(...).await?` where the function's error type takes `EmailError`, or a `match` with the same branches.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where an SMTP server took it and the provider behind it dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
