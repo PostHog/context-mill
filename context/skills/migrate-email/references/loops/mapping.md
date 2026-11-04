@@ -16,7 +16,7 @@ Every Loops send renders a transactional email stored at Loops. So every Loops s
 | `addToAudience: true` | none | Always. It adds the recipient to the Loops audience, which Loops' campaigns and workflows send to, so moving the send would stop new contacts reaching it. `false` or no value moves. It moves once the app adds the contact another way, such as a `createContact` call |
 | `attachments` | none | Always. A template made in PostHog sends in the template form, which takes no attachments |
 | `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits |
-| Any other request header in `headers` | none | Always. It is a header of the request to Loops, and PostHog's send has no place for it |
+| Any other request header in `headers` | none | Always: no PostHog SDK takes headers yet |
 
 The Loops email itself sets the rest, in its sending settings. The template check in Step 3 reads them:
 
@@ -27,7 +27,7 @@ The Loops email itself sets the rest, in its sending settings. The template chec
 | Reply | the PostHog template's reply-to address | It holds a data variable |
 | CC, BCC | none | Either one is set. The template form takes no `cc` or `bcc` |
 
-A site with no idempotency key sends none in PostHog either. PostHog's SDK makes one for each call and reuses it on its own retries.
+A site with no idempotency key sends none in PostHog either.
 
 ## Calls
 
@@ -78,6 +78,9 @@ Loops' data variables become Liquid in the PostHog template. Values move under `
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
+- Loops reads every data variable as text, so a conditional section shows when the value is not an empty string, and Liquid treats `""`, `0`, and `[]` as true. The Liquid for `if` and `empty` above checks for `""` itself, so it converts when the code always sends a string or a number, or leaves the value out. A condition on an array variable keeps the template on Loops.
+- `equal`, `not_equal`, `contains`, and `not_contains` compare the value as text at Loops. Convert them only when the code always sends a string for that value. A number keeps the template on Loops.
+- An array block walks a list. Loops takes only a list of objects for it, so it always converts as the table says.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The design, theme, components, and images of the Loops email do not decide whether it moves. The person rebuilds them in PostHog.
 - Name, From, or Reply holding a data variable, or a CC or BCC set, keeps the template on Loops, as the settings table says. A fixed Name, From, and Reply move: the person puts them into the PostHog template.
@@ -120,12 +123,14 @@ By source:
 - PHP `$loops->transactional->send(transactional_id:, email:, data_variables:, headers:)` and Ruby `LoopsSdk::Transactional.send(transactional_id:, email:, data_variables:, headers:)`: `template_id`, `to`, `template_data`, and `idempotency_key`.
 - A raw HTTP body or a community package's call: the same fields of its body.
 
-**Errors.** Keep the site failing the same way it did:
+**Errors.** Keep the site failing the same way it did, and never widen a catch. Loops' SDKs raise three kinds of error apart: an answer from Loops (`APIError`), a rate limit (`RateLimitExceededError` in Node.js and PHP, `LoopsSdk::RateLimitError` in Ruby), and a network error, which is the HTTP client's own error. PostHog answers all three as its one email error, with the code `network_error` for a network error that is left after its retries. So a branch that handled one kind checks PostHog's `code` or status code, and every other error is thrown, raised, or returned as before:
 
-- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sendTransactionalEmail` threw into a `catch`, throw from the error so the same `catch` runs, and keep the property the `catch` reads: `if (error) throw Object.assign(new Error(error.message), { statusCode: error.statusCode })`. An `instanceof APIError` check becomes a check of `err.statusCode`, and a read of `err.json` becomes a read of `err.message`. An `instanceof RateLimitExceededError` branch becomes `err.statusCode === 429`.
-- **Go.** Loops' `SendTransactional` returned an `error`, and so does PostHog's `Send`. Keep `if err != nil`. Replace `errors.As(err, &apiErr)` on `*loops.APIError` with `*posthog.EmailError`, and `apiErr.StatusCode` and `apiErr.Message` with its `StatusCode` and `Message`.
-- **PHP and Ruby.** PostHog's SDK throws too. Replace `Loops\Exceptions\APIError` and `RateLimitExceededError` with `PostHog\EmailError`, and `LoopsSdk::APIError` and `LoopsSdk::RateLimitError` with `PostHog::EmailError`. Read the status code `posthog-sdks.md` names, and branch on `429` where the code caught the rate limit error.
-- **HTTP.** The code read Loops' answer. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status other than `200`, `ok` false, or `success` false becomes "there is an error", and a branch on one status, such as `429`, reads PostHog's status code. In Python, `raise_for_status()` and `except requests.HTTPError` become `except EmailError`, because PostHog's send raises.
+- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sendTransactionalEmail` threw into a `catch`, throw from the error so the same `catch` runs, and keep the property the `catch` reads: `if (error) throw Object.assign(new Error(error.message), { name: 'PostHogEmailError', code: error.code, statusCode: error.statusCode })`. An `instanceof APIError` check becomes `err.name === 'PostHogEmailError' && err.code !== 'network_error' && err.statusCode !== 429`, and a read of `err.json` becomes a read of `err.message`. An `instanceof RateLimitExceededError` check becomes `err.name === 'PostHogEmailError' && err.statusCode === 429`. A `catch` that handled every error the same way needs none of these checks.
+- **Python.** `except EmailError` takes the place of the Loops error, and a branch that handled one kind checks `e.code` or `e.status_code` first and raises every other error again, as the HTTP bullet shows.
+- **Go.** Loops' `SendTransactional` returned an `error`, and so does PostHog's `Send`. Keep `if err != nil`. Loops' Go SDK returned a network error as a plain error, not a `*loops.APIError`. Replace `errors.As(err, &apiErr)` on `*loops.APIError` with `errors.As(err, &emailErr) && emailErr.Code != "network_error"` on `*posthog.EmailError`, and `apiErr.StatusCode` and `apiErr.Message` with its `StatusCode` and `Message`. Every other error goes on as before, such as `return err`.
+- **PHP.** PostHog's SDK throws too. A `catch (APIError $e)` becomes `catch (\PostHog\EmailError $e)` that throws `$e` again first when `$e->getErrorCode()` is `network_error` or `$e->getStatusCode()` is `429`. A `catch (RateLimitExceededError $e)` becomes `catch (\PostHog\EmailError $e)` that throws `$e` again first unless the status code is `429`. When the site has both catches, keep one `catch` with both branches.
+- **Ruby.** A `rescue LoopsSdk::APIError => e` becomes `rescue PostHog::EmailError => e` that raises `e` again first when `e.code` is `network_error` or `e.status_code` is `429`. A `rescue LoopsSdk::RateLimitError` becomes `rescue PostHog::EmailError => e` that raises `e` again first unless `e.status_code` is `429`.
+- **HTTP.** The code read Loops' answer, and the HTTP client raised a network error on its own. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status other than `200`, `ok` false, or `success` false becomes "there is an error" whose code is not `network_error`, and a branch on one status, such as `429`, reads PostHog's status code. A `network_error` goes where the client's network error went before. In Python, a status check, `raise_for_status()`, and `except requests.HTTPError` become `except EmailError as e:` whose first line is `if e.code == "network_error": raise`, because those only handled Loops' answer. `except requests.RequestException` handled both, so it becomes a plain `except EmailError`.
 - **A branch on `409`.** Rewrite it to read PostHog's code `idempotency_key_reused`, as "Code around the send" says, and note the change in the plan row.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Loops took it and counted it as a hard bounce. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 

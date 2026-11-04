@@ -69,5 +69,5 @@ When the person has neither, the import is not done: write why in the plan.
 
 **Leave out the rest.**
 
-- **Soft bounces** (`email.softBounced`) are temporary. Loops retries them, and so does PostHog.
+- **Soft bounces** (`email.softBounced`) are temporary failures, which Loops retries. They are not suppressions.
 - **Unsubscribed contacts and mailing list unsubscribes** are marketing preferences. Loops sends transactional email to unsubscribed contacts, and so does PostHog, so nothing changes for them. A hard bounce also unsubscribes the contact at Loops, so `subscribed` false in the audience export does not tell a bounce from a choice: never import it.
