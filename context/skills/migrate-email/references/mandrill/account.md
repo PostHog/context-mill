@@ -33,7 +33,7 @@ A send that doesn't set a field takes the account's Sending Defaults. Ask the pe
 - the box that generates an HTML part for text emails, for `auto_html`;
 - **Add Unsubscribe Footer**. A moved send gets no such footer: when it is on, note it in the report.
 
-When the person can't tell, treat open and click tracking as on. Keep on Mailchimp Transactional a site that doesn't set `inline_css` and sends HTML with a `<style>` element, and a site that doesn't set `auto_html` and sends no `html`.
+The API has no read of these settings. Note the click tracking choice as the page names it, such as HTML emails only. When the person can't tell the tracking settings, a site that leaves out `track_opens` or `track_clicks` stays, and the reason is `account tracking not checked`, as `mapping.md` says under "Tracking". Keep on Mailchimp Transactional a site that doesn't set `inline_css` and sends HTML with a `<style>` element, and a site that doesn't set `auto_html` and sends no `html`.
 
 ## Template content
 

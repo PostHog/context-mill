@@ -27,6 +27,14 @@ Brevo can block API calls from IP addresses it doesn't know. It turns this on by
 
 The steps call this key the full-access provider key.
 
+## Tracking settings
+
+A send that sets no `contactPixelTrackingConsent` follows the account's tracking, as `mapping.md` says under "Tracking". The API doesn't show these settings. Ask the person once, and note the answers in the plan:
+
+- Whether anonymous email tracking is on for transactional emails: Settings, then Automations, then Transactional emails, then Tracking.
+- Whether per-contact pixel tracking consent is on: Settings, then Contacts, then Per-contact pixel tracking consent.
+- Whether Brevo turned off open tracking, click tracking, or both for the account.
+
 ## Template content
 
 A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
