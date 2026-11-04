@@ -30,7 +30,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `batch.send`, `Batch.send`, `POST /emails/batch` | Always |
 | SMTP through `smtp.resend.com` | Always. PostHog has no SMTP relay |
 | Laravel's or Rails' `resend` mailer | Always. PostHog has no mailer driver |
-| A send in a language other than JavaScript or TypeScript | Always, until the skill moves that language |
+| A send in a language other than JavaScript or TypeScript | Always: this skill moves Resend sends only with posthog-node, even where `posthog-sdks.md` lists the language |
 
 ## Code around the send
 
