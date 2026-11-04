@@ -20,12 +20,21 @@ Postmark fields are written in their HTTP names here, such as `HtmlBody`. Python
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `Metadata` | none | Always: no PostHog SDK takes tags yet |
 | `Tag` | none | Always: no PostHog SDK takes tags yet |
-| `TrackOpens: false`, or `TrackLinks: 'None'` | `captureEngagement: false` | The installed SDK has no `captureEngagement`. `false` turns off both open and click capture: note it in the plan row |
-| `TrackOpens: true`, or `TrackLinks` set to `HtmlAndText`, `HtmlOnly`, or `TextOnly` | none | Never. `captureEngagement` is on by default. Note in the plan row that `HtmlOnly` or `TextOnly` now tracks links in both parts |
+| Open and link tracking: `TrackOpens`, `TrackLinks`, or neither | `captureEngagement: false`, or no field | See "Tracking" below |
 | `MessageStream: 'outbound'` | none | Never. `outbound` is the default transactional stream |
 | `MessageStream` naming any other stream | none | Always: the stream has its own settings, suppressions, and webhooks at Postmark |
 
-Count only the fields the code sets. A send that sets no tracking field followed the server's tracking settings at Postmark, and PostHog captures opens and clicks by default. Note in the plan row of each such site that PostHog now captures opens and clicks, whatever the server's settings were. `postmarker`'s `emails.send` sends `TrackLinks: "None"` when the code doesn't pass it, so its links were never tracked: that default is not a field of the site, and it gets the same note.
+Count only the fields the code sets.
+
+**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Postmark tracks opens when the send's `TrackOpens` is `true`, or, when the send leaves it out or sets it to `null`, when its server's open tracking is on. It tracks links when the send's `TrackLinks` is anything but `None`, or, when the send leaves it out, when its server's link tracking is on. A new server tracks neither, until the person turns them on in its settings. `postmarker` sends `TrackLinks: "None"` when the code doesn't pass it, from `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)`: links of those sends were not tracked. Work out, for opens and for links, whether Postmark tracked them:
+
+- Both tracked: the site moves with no field. When `TrackLinks` was `HtmlOnly` or `TextOnly`, note in the plan row that PostHog tracks links in both parts.
+- Neither tracked: the site moves with `captureEngagement: false`.
+- One tracked and one not, such as a `postmarker` send on a server with open tracking on: the site stays, because `captureEngagement: false` turns off both.
+- The installed SDK has no `captureEngagement`, and Postmark tracked neither: the site stays.
+- A template site that Postmark sent with one of them untracked stays, as "Templates" says.
+
+When a site leaves out `TrackOpens`, or leaves out `TrackLinks` outside `postmarker`, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
 
 A Postmark send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -39,6 +48,12 @@ A Postmark send has no idempotency key, so the moved site sends none either. Pos
 | SMTP through `smtp.postmarkapp.com` or `smtp-broadcasts.postmarkapp.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them |
 | A framework mailer (`postmark-rails`, a Django backend, Laravel or Symfony `postmark`, Swoosh, Bamboo, `nodemailer-postmark-transport`) | Always. PostHog has no mailer driver |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
+
+## Servers
+
+Each Postmark server has its own tokens, templates, tracking settings, and suppression lists. A site sends from the server its token belongs to. When the app reads more than one Postmark token, ask the person once which server each one belongs to, and record each site's server under the sites table.
+
+PostHog keeps one suppression list per project. When the sites that move send from more than one server, Step 5 imports the `outbound` list of each of them into that one list. PostHog then refuses a moved send to an address that any of those servers suppressed, even when the site's own server never suppressed it or reactivated it. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one server's sites move. The sites of every other server stay, and the reason is `server <name> keeps its own suppression list`.
 
 ## Code around the send
 
@@ -83,7 +98,7 @@ Postmark's Mustachio becomes Liquid in the PostHog template. Values move under `
 - `{{{ pm:unsubscribe }}}` keeps the template on Postmark: it is Postmark's unsubscribe link.
 - An inverted section `{{^items}}` on a list or an object, a section `{{#items}}` on a list without `each`, a name inside `{{#person}}` that the site doesn't put on `person`, and `../` that reads anything but a top-level key all keep the template on Postmark. Inside `{{#each}}`, one `../` reaches the list, not the model: Postmark needs `../../` for a top-level key there.
 - The PostHog template carries its own sender, reply-to address, and subject. A Postmark template send always sets `From`: the site moves only when `From` is the same in every send, and the person makes the PostHog template send from it. The same holds for `ReplyTo` when the site sets it. Otherwise it stays.
-- A site that sets `Cc`, `Bcc`, `Attachments`, `TrackOpens: false`, `TrackLinks: 'None'`, or a `MessageStream` other than `outbound` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes none of them. `TrackOpens: true`, `TrackLinks` set to anything but `None`, and `MessageStream: 'outbound'` next to the template are dropped, as the Fields table says. `Headers`, `Metadata`, and `Tag` keep any site, as the Fields table says.
+- A site that sets `Cc`, `Bcc`, `Attachments`, or a `MessageStream` other than `outbound` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes none of them. So does a site that Postmark sent with opens or links untracked, by the site's own field, `postmarker`'s default, or its server's setting, as "Tracking" says: the template form takes no `captureEngagement`. When Postmark tracked both, the tracking fields are dropped, and so is `MessageStream: 'outbound'`. `Headers`, `Metadata`, and `Tag` keep any site, as the Fields table says.
 - With `InlineCss` on, its default, Postmark moved the template's `<style>` rules into each tag. Tell the person to check how the PostHog template looks in its test send.
 
 ## Webhooks
@@ -129,7 +144,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `Cc`, `Bcc`, and a `ReplyTo` with several addresses become lists of bare addresses: split a comma-separated string.
 - `HtmlBody` becomes `html`, and `TextBody` becomes `text`.
 - An attachment `{ Name, Content, ContentType, ContentID }` becomes `{ filename: Name, content: Content, contentType: ContentType, contentId }`. In Node.js and Python, `content` stays the same base64 string. In Go and Elixir, the SDK takes the raw file: decode the base64 string first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice. `contentId` is a bare name: the `ContentID` without its leading `cid:`, so `cid:logo.png` becomes `logo.png`, and the HTML keeps `<img src="cid:logo.png">`.
-- `MessageStream: 'outbound'`, `TrackOpens: true`, and `TrackLinks` other than `None` are dropped, as the Fields table says.
+- `MessageStream: 'outbound'` is dropped, as the Fields table says.
+- `TrackOpens` and `TrackLinks` are dropped. The send gets `captureEngagement: false` when Postmark left opens or links untracked, as "Tracking" says, whether the site's field, `postmarker`'s default, or the server's setting did. Note in the plan row each site that got it from the server's setting.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `TemplateModel`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
@@ -148,8 +164,8 @@ Never widen a catch. Where the code caught only one kind of Postmark error, catc
 
 **Checks of the answer.** A single send threw on any answer but `200` before the code read it: .NET's `SendMessageAsync` throws `PostmarkValidationException`, and PHP's `sendEmail` throws `PostmarkException`. A check after the call, such as `response.Status != PostmarkStatus.Success` or `getErrorCode() != 0`, only ever saw a sent email. Remove the check, keep the code it guarded on success, and let PostHog's error take the path Postmark's exception took, as the bullets above say.
 
-**A batch of one.** The batch route answers `200` even when it refuses the message, and puts the refusal in the message's `ErrorCode` in the answer's list. Only a refusal of the whole request, such as a bad token, or a network failure threw. Code that read the list's first entry reads PostHog's result instead: its `ErrorCode` check becomes a check for PostHog's error, and its `MessageID` becomes PostHog's message id. A site that never read the entry went on after a refused message: catch PostHog's error, log it, and go on, and raise or return it again when its code is `network_error` or its status code is `401`, or `500` or more.
+**A batch of one.** The batch route answers `200` even when it refuses the message, and puts the refusal in the message's `ErrorCode` in the answer's list: a refusal of that message, such as `300` (an invalid email request) or `406` (an inactive recipient). A failure of the whole request threw, or returned an error in Go, as a single send does: a bad token (`401`), a rate limit left after the retries (`429`), a request Postmark could not read, such as invalid JSON (`422` with code `402`), a server error (`500` or more), and a network failure. Code that read the list's first entry reads PostHog's result instead: its `ErrorCode` check becomes a check for PostHog's error, and its `MessageID` becomes PostHog's message id. A site that never read the entry went on after a refused message, and failed on every other error. Keep both: catch PostHog's error, log it and go on when its name is `validation_error`, which covers `recipient_suppressed`, and raise or return every other error the way the batch call did, as "Errors" says.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `MessageID` (`message_id`, `getMessageID()`), or stored it for the app's own use, takes PostHog's message id instead.
 
-**The Postmark client.** Postmark's packages serve Postmark only, but each one also calls Postmark's other APIs, such as templates, suppressions, bounces, and the account API (`sdk-reference.md` lists them under "Other APIs"), and `postmark-rails` needs the `postmark` gem. Keep the package for any such call or mailer. A call that adds addresses to the `outbound` suppressions, `POST /message-streams/outbound/suppressions` or the SDK's call for it, stops only Postmark's sends: an address it adds after the import still gets the moved sends. List it under other calls, and add to the report's "Before cutover" that the person moves that call to PostHog's suppression list before the deploy. Keep the Postmark client, its import, and its token while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package and its token: the person removes them after the cutover.
+**The Postmark client.** Postmark's packages serve Postmark only, but each one also calls Postmark's other APIs, such as templates, suppressions, bounces, and the account API (`sdk-reference.md` lists them under "Other APIs"), and `postmark-rails` needs the `postmark` gem. Keep the package for any such call or mailer. A call that adds addresses to the `outbound` suppressions, `POST /message-streams/outbound/suppressions` or the SDK's call for it, stops only Postmark's sends: an address it adds after the import still gets the moved sends. List it under other calls, and add to the report's "Before cutover" that the person makes that call write to both lists before the deploy: it keeps its Postmark write and also adds the address to PostHog's suppression list. The Postmark write stays while any send of that server still goes through Postmark, such as a site that stays or a mailer, and goes only once the last of them moves. Keep the Postmark client, its import, and its token while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package and its token: the person removes them after the cutover.
