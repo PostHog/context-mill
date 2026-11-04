@@ -59,6 +59,10 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 
 **Leave out the other lists.**
 
-- **Soft bounces** (`MessageStatus=9`) are temporary refusals by a receiving server. Mailjet retries those addresses, and so does PostHog.
+- **Soft bounces** (`MessageStatus=9`) are temporary refusals by a receiving server, not a sign that the address is bad.
 - **The campaign exclusion list** (`IsExcludedFromCampaigns`) blocks marketing campaigns only: Mailjet still sends Send API email to those addresses, and so will PostHog.
 - **Unsubscribes** from contact lists are marketing preferences, and PostHog's opt-outs apply to marketing messages only. Count them when the person has them, and tell the person the count in the report.
+
+## Tracking settings
+
+Mailjet tracks the opens and clicks of a send that sets `TrackOpens` or `TrackClicks` to `account_default`, or doesn't set them, as the account's settings say. PostHog captures opens and clicks unless the send sets `captureEngagement: false`. When such a site would move, ask the person once whether open tracking or click tracking is turned off in the Mailjet account settings. When one is off, `mapping.md` reads those sites as if they set it to `disabled`. When the person can't tell, the sites move as they are, and the plan notes that PostHog captures their opens and clicks.
