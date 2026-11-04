@@ -39,6 +39,8 @@ await sgMail.send({
 
 - `sgMail.send(msg)` with a list in `to` sends **one** email that every address sees.
 - `sgMail.send(msg, true)` and `sgMail.sendMultiple(msg)` send one email per address in `to`.
+- `sgMail.send(msg, callback)` sends like `sgMail.send(msg)` and passes `(error, result)` to the callback, and never throws.
+- The Node.js helper turns snake_case keys into camelCase, so `template_id` and `dynamic_template_data` are the same fields as `templateId` and `dynamicTemplateData`.
 - `sgMail.send([msg1, msg2])` sends several emails in one call.
 - `@sendgrid/client`: `client.request({ method: 'POST', url: '/v3/mail/send', body })` sends the HTTP body below.
 
