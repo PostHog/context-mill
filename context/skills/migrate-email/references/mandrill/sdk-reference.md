@@ -21,9 +21,9 @@ The API key lives in `MANDRILL_API_KEY` or `MAILCHIMP_TRANSACTIONAL_API_KEY` by 
 
 Each official package also has `messages.sendTemplate` (`send_template` in Python and Ruby, `sendTemplate` in PHP) for a stored template, and `messages.sendMcTemplate` (`send_mc_template`) for a template made in Mailchimp. Every send takes one body: `message`, and for a template also `template_name` and `template_content`, plus the top-level `async`, `ip_pool`, and `send_at`.
 
-Go, .NET, and Elixir have no official SDK. Sites in them call the HTTP API, or use a community client such as `github.com/keighl/mandrill` (Go), `Mandrill.net` (NuGet), or `mandrill` (Hex). Treat a send through a community client like an HTTP send, with the same fields.
+Go, .NET, and Elixir have no official SDK. Sites in them call the HTTP API, or use a community client such as `github.com/keighl/mandrill` (Go), `Mandrill.net` (NuGet), or `mandrill` (Hex). Treat a send through a community client like an HTTP send, with the same fields. The `mandrill` npm package is a third-party Node.js client of the Mailchimp Transactional API: treat it the same way.
 
-These are not Mailchimp Transactional, and alone they are not a migration: `@mailchimp/mailchimp_marketing`, `mailchimp-marketing`, `mailchimp3`, `mailchimp/marketing`, and `MailchimpMarketing` call Mailchimp's Marketing API, for campaigns and audiences. The `mandrill` npm package is a third-party wrapper of the same API: treat it like the HTTP API. `nodemailer` sends through any SMTP server.
+These are not Mailchimp Transactional, and alone they are not a migration: `@mailchimp/mailchimp_marketing`, `mailchimp-marketing`, `mailchimp3`, `mailchimp/marketing`, and `MailchimpMarketing` call Mailchimp's Marketing API, for campaigns and audiences. `nodemailer` sends through any SMTP server.
 
 ## Clients and sends
 
@@ -81,7 +81,7 @@ result = client.messages.send({ message: {
 } })
 ```
 
-**PHP.** The send never throws on an API error. It answers the Guzzle `GuzzleHttp\Exception\RequestException` instead of the list, with `getCode()` for the HTTP status and `getResponse()` for the body. A success answers the list as an array of objects, such as `$response[0]->status`.
+**PHP.** The send never throws on an API error. It answers the Guzzle `GuzzleHttp\Exception\RequestException` instead of the list, with `getCode()` for the HTTP status and `getResponse()` for the body. A success answers the list as an array of objects, such as `$response[0]->status`. The package takes Guzzle 6 or 7, and `composer.lock` says which one the app has. A connection error is a `RequestException` in Guzzle 6, so the send answers it like an API error. In Guzzle 7 it is not, so the send throws it.
 
 ```php
 $mailchimp = new MailchimpTransactional\ApiClient();
@@ -95,7 +95,7 @@ $response = $mailchimp->messages->send(['message' => [
 if ($response instanceof \GuzzleHttp\Exception\RequestException) { /* failed */ }
 ```
 
-**The older clients.** `mandrill-api` for Node.js takes callbacks: `messages.send(params, onSuccess, onError)`. `onError` gets the error body. Without `onError`, the client throws from inside its response handler, which an `await` or a `try` around the call does not catch. The Python `mandrill` package raises `mandrill.Error` and subclasses such as `mandrill.InvalidKeyError` and `mandrill.ValidationError`, and its send is `messages.send(message=..., send_async=False, ip_pool=None, send_at=None)`. Older releases name `send_async` `async`. The Ruby `mandrill-api` gem raises `Mandrill::Error` and its subclasses, and its send is `messages.send(message, async, ip_pool, send_at)`. Both answer the same list as the official SDKs.
+**The older clients.** `mandrill-api` for Node.js takes callbacks: `messages.send(params, onSuccess, onError)`. `onError` gets the error body. Without `onError`, the client throws from inside its response handler, which an `await` or a `try` around the call does not catch. The Python `mandrill` package raises `mandrill.Error` and subclasses such as `mandrill.InvalidKeyError` and `mandrill.ValidationError`, and its send is `messages.send(message=..., send_async=False, ip_pool=None, send_at=None)`. Older releases name `send_async` `async`. The Ruby `mandrill-api` gem raises `Mandrill::Error` and its subclasses, and its send is `messages.send(message, async, ip_pool, send_at)`. Both answer the same list as the official SDKs. The source of the PHP `mandrill/mandrill` client is no longer published, so how it reports an error can't be checked.
 
 **HTTP.** `POST https://mandrillapp.com/api/<version>/messages/send`, with a version such as `1.0`, `1.3`, or `1.4`, sometimes with a `.json` suffix. The key goes in the JSON body as `key`, not in a header. There is no regional host. `messages/send-template` and `messages/send-mc-template` send a stored template. A success answers `200` with the list above. Look for `mandrillapp.com/api` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
 
@@ -157,7 +157,7 @@ The fields of `message`, and the three top-level fields next to it. Every SDK an
 
 `messages.sendTemplate` renders a template from the Mailchimp Transactional dashboard. Its content is not in the code: the code sends the template's slug as `template_name`, `template_content`, and the `message` fields.
 
-- The template holds a subject, a sender address and name, HTML, and text. A `subject`, `from_email`, or `from_name` in `message` replaces the template's.
+- The template holds a subject, a sender address and name, HTML, and text. A `subject`, `from_email`, or `from_name` in `message` replaces the template's. An `html` in `message` is sent when the template has no HTML.
 - A template has a draft and a published version. Sends use the published version.
 - `template_content` is a list of `{ name, content }`. Each fills the template's region marked `mc:edit="<name>"` with `content`, usually HTML. Regions work only with the Mailchimp merge language.
 - With `merge_language: 'mailchimp'`, merge tags look like `*|NAME|*`, with `*|IF:NAME|*`, `*|IF:NAME=value|*`, `*|ELSEIF:...|*`, `*|ELSE:|*`, `*|IFNOT:NAME|*`, and `*|END:IF|*`, and modifiers such as `*|HTML:NAME|*` (raw HTML), `*|UPPER:NAME|*`, `*|LOWER:NAME|*`, `*|TITLE:NAME|*`, `*|URL:NAME|*`, `*|DATE:format|*`, and `*|UNSUB:url|*`. `*|FNAME|*`, `*|LNAME|*`, and `*|EMAIL|*` come from the recipient.

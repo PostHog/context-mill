@@ -24,6 +24,17 @@ The app's own Mailchimp Transactional key can usually call every API method, but
 
 The steps call this key the full-access provider key.
 
+## Sending defaults
+
+A send that doesn't set a field takes the account's Sending Defaults. Ask the person for these settings on the Sending Defaults page (Settings, then Sending Defaults), and note them in the plan:
+
+- open tracking and click tracking, for `track_opens` and `track_clicks`;
+- **Inline CSS Styles In HTML Emails**, for `inline_css`;
+- the box that generates an HTML part for text emails, for `auto_html`;
+- **Add Unsubscribe Footer**. A moved send gets no such footer: when it is on, note it in the report.
+
+When the person can't tell, treat open and click tracking as on. Keep on Mailchimp Transactional a site that doesn't set `inline_css` and sends HTML with a `<style>` element, and a site that doesn't set `auto_html` and sends no `html`.
+
 ## Template content
 
 A site whose template the person moves to PostHog needs the content of its published version, to check it before they make the PostHog template.
@@ -36,13 +47,13 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 ## Suppression list
 
-Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and a separate one for each subaccount. It rejects an address on the list on every send until the entry expires. A soft bounce expires after 24 hours, a hard bounce after seven days, a spam complaint and an unsubscribe after a year, and a custom entry, one the person added, never.
+Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and a separate one for each subaccount. It rejects an address on the list on every send until the entry expires. A subaccount's entries apply only to that subaccount's sends, and those sends stay on Mailchimp Transactional (see `mapping.md`). So import only the main account's entries: an entry with a subaccount would block a moved send that Mailchimp Transactional let through. A soft bounce expires after 24 hours, a hard bounce after seven days, a spam complaint and an unsubscribe after a year, and a custom entry, one the person added, never.
 
-**Export from the dashboard (preferred).** In Mailchimp Transactional: the Rejection Denylist page under Settings, then **Export Full Denylist**. The export is queued, and the account's contact address gets an email when it is ready. The person downloads it from that email or from the Exports page under Settings, within seven days. It is a zip file with one `rejects.csv`, with the subaccount entries in their own column. Ask the person where they saved the file. Read the header row to find the address, reason, and expiry columns.
+**Export from the dashboard (preferred).** In Mailchimp Transactional: the Rejection Denylist page under Settings, then **Export Full Denylist**. The export is queued, and the account's contact address gets an email when it is ready. The person downloads it from that email or from the Exports page under Settings, within seven days. It is a zip file with one `rejects.csv`, with the subaccount entries in their own column. Ask the person where they saved the file. Read the header row to find the address, reason, expiry, and subaccount columns.
 
-**Read from the API.** `POST https://mandrillapp.com/api/1.4/rejects/list` with the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "include_expired": false }`. It answers a list of `{ email, reason, detail, created_at, last_event_at, expires_at, expired, sender, subaccount }`, and leaves out entries that expired. It has no paging and answers at most 1,000 entries: when it answers 1,000, the list is longer, so stop and ask the person for the dashboard export instead. For each subaccount, call it again with `"subaccount": "<id>"`. Wait and retry on `429`.
+**Read from the API.** `POST https://mandrillapp.com/api/1.4/rejects/list` with the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "include_expired": false }`. It answers a list of `{ email, reason, detail, created_at, last_event_at, expires_at, expired, sender, subaccount }`, and leaves out entries that expired. It has no paging and answers at most 1,000 entries: when it answers 1,000, the list is longer, so stop and ask the person for the dashboard export instead. Wait and retry on `429`.
 
-**Map each entry.** Take only entries that have not expired.
+**Map each entry.** Take only entries that have not expired and have no subaccount.
 
 | Rejection reason | PostHog source | Reason |
 |---|---|---|
