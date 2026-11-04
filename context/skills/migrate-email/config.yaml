@@ -19,3 +19,6 @@ variants:
   - id: sendgrid
     display_name: SendGrid
     tags: [sendgrid]
+  - id: loops
+    display_name: Loops
+    tags: [loops]
