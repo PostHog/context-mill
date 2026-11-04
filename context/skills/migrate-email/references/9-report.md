@@ -67,7 +67,7 @@ The moved sites send through PostHog as soon as this code is deployed. Everythin
 
 ## After cutover
 
-<What the person removes once the moved emails arrive from PostHog: when no site stays and no other provider call is left, the provider's package and its key in every place listed above. Otherwise, write that the provider stays for the sites and calls listed above, and name each part of the app with its own dependency manifest, such as a worker in another language, where no site or call is left: its provider package can go. When the plan says the run created a full-access provider key and the person has not deleted it yet, the person deletes that key at the provider and removes its variable from the env file.>
+<What the person removes once the moved emails arrive from PostHog: when no site stays and no other provider call is left, the provider's package and its key in every place listed above. Otherwise, write that the provider stays for the sites and calls listed above, and name each part of the app with its own dependency manifest, such as a worker in another language, where no site or call is left, no code imports or re-exports the provider's package or client for another part, and `mapping.md` doesn't keep the package for other uses: its provider package can go. When the plan says the run created a full-access provider key and the person has not deleted it yet, the person deletes that key at the provider and removes its variable from the env file.>
 
 ## Summary
 ```
