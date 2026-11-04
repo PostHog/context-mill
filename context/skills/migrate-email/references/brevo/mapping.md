@@ -22,8 +22,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `headers` with `idempotencyKey` (or `IdempotencyKey`) only | `idempotencyKey` | Never |
 | `headers`, any other header | none | Always: no PostHog SDK takes headers yet |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
-| `scheduledAt` | none | Always |
-| `batchId` | none | Always |
+| `scheduledAt` | none | Always. PostHog's send doesn't take it yet |
+| `batchId` | none | Always. PostHog's send doesn't take it yet |
 | `messageVersions` | none | Always: it sends several emails in one call |
 
 A Brevo send without an idempotency key moves without one.
