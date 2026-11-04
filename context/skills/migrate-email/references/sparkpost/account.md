@@ -34,7 +34,9 @@ A site whose template the person moves to PostHog needs the content of its publi
 
 **Copy from the dashboard.** In SparkPost: Content, then Templates, then the template, then its published version. Ask the person for the template's id, its subject, its from address, its reply-to address when it has one, its HTML, and its plain text when it has one.
 
-**Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false` with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`. A template the site sends with `use_draft_template: true` stays, so its draft needs no read.
+**Read from the API.** For an EU account, whose app sends through `api.eu.sparkpost.com`, use that host in every request of this file instead of `api.sparkpost.com`.
+
+`GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false` with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`. A template the site sends with `use_draft_template: true` stays, so its draft needs no read.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
@@ -44,7 +46,7 @@ SparkPost keeps one suppression list per account, and one per subaccount. Each e
 
 **Export from the dashboard.** In SparkPost: Recipients, then Suppressions. SparkPost's docs describe no file export there, so ask the person whether they already have an export file, such as from their own tooling, and where they saved it. Read the header row to find the address, type, and source columns. Without a file, read the list from the API.
 
-**Read from the API.** With `Authorization: $SPARKPOST_READ_API_KEY`:
+**Read from the API.** With `Authorization: $SPARKPOST_READ_API_KEY`, on `api.eu.sparkpost.com` for an EU account:
 
 ```
 GET https://api.sparkpost.com/api/v1/suppression-list?cursor=initial&per_page=10000&sources=Bounce%20Rule,Spam%20Complaint,Manually%20Added,Compliance
