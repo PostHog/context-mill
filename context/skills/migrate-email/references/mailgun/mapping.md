@@ -62,7 +62,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 
 ## Code around the send
 
-Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs throw, raise, or return an error on a failed status and on a network failure. The Python SDK answers the response on a failed status, and raises only when the request can't be made. A plain HTTP request does what its client does:
+Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs throw, raise, or return an error on a failed status and on a network failure. The Python SDK answers the response on a failed status, and raises only when the request can't be made. A plain HTTP request does what its client does, with the options the code gives the client or the request. An option that turns the throw off, such as axios's `validateStatus` that accepts a failed status or got's `throwHttpErrors: false`, makes the client answer a failed status as a response:
 
 - These throw or raise on a failed status: `axios`, `got`, Ruby's `rest-client`, Guzzle unless `'http_errors' => false`, .NET `HttpClient` followed by `EnsureSuccessStatusCode()`, and RestSharp with `ThrowOnAnyError = true`, or from version 107 with `Post` or `PostAsync`, which throw on any failed status but `404`.
 - These answer a failed status as a response: `fetch`, `requests`, `httpx`, Ruby's `Net::HTTP` (unless the code calls `.value`), PHP's `curl_exec`, Guzzle with `'http_errors' => false`, .NET `HttpClient` without `EnsureSuccessStatusCode()`, RestSharp's `Execute`, `ExecuteAsync`, and `ExecutePostAsync`, and every RestSharp call before version 107, and Go's `net/http`.
