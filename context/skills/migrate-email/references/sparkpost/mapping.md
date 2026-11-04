@@ -15,13 +15,13 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `recipients` with `header_to`, a `CC` header, or the SDK's `cc` and `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. See "Cc and bcc" |
 | `content.subject` | `subject` | It holds a template expression that "Content" keeps |
 | `content.text`, `content.html` | `text`, `html` | They hold template language that "Content" keeps |
-| `content.amp_html` | none | Always |
+| `content.amp_html` | none | Always. PostHog's send doesn't take it yet |
 | `content.reply_to`, `override.reply_to` | `replyTo` | It carries a name, such as `Sales <sales@example.com>`, or a template expression |
 | `content.headers` | none | Always, when it holds any header other than the `CC` header that "Cc and bcc" consumes: no PostHog SDK takes headers yet |
 | `content.attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files together with `inline_images`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
 | `content.inline_images` | `attachments` with `contentId` | The same as `content.attachments` |
 | `content.template_id` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". `use_draft_template: true` always stays: it sends a draft that can still change |
-| `content.ab_test_id` | none | Always |
+| `content.ab_test_id` | none | Always. PostHog's send doesn't take it yet |
 | `content.email_rfc822` | none | Always: PostHog takes no raw MIME message |
 | `substitution_data`, `recipients[].substitution_data` | `templateData` for a template, or values the code fills in for inline content | See "Content" and "Templates" |
 | `metadata`, `recipients[].metadata` | none | Always: no PostHog SDK takes tags yet |
@@ -30,13 +30,13 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `description` | none | Never. It names the transmission in SparkPost's own reports only: note in the plan row that it no longer shows there |
 | `options.open_tracking`, `options.initial_open`, `options.click_tracking`, or `recipients[].options`, set to `false` | `captureEngagement: false` | The installed SDK has no `captureEngagement`. `false` turns off both open and click capture: note it in the plan row. Set to `true`, they move with nothing |
 | `options.transactional` | none | It is set to `false`. Set to `true`, it moves with nothing. Not set, it moves: note in the plan row that SparkPost sent it as non-transactional, with its unsubscribe handling |
-| `options.start_time` | none | Always |
+| `options.start_time` | none | Always. PostHog's send doesn't take it yet |
 | `options.sandbox` | none | Always. A sandbox send is not a real send |
-| `options.skip_suppression` | none | Always |
-| `options.ip_pool`, `options.dkim_key`, `tracking_domain` | none | Always |
+| `options.skip_suppression` | none | Always. PostHog's send doesn't take it yet |
+| `options.ip_pool`, `options.dkim_key`, `tracking_domain` | none | Always. PostHog's send doesn't take it yet |
 | `options.inline_css` | none | It is `true`: no PostHog field inlines CSS |
 | `options.perform_substitutions` | none | Never. `false` means the content goes as it is |
-| `options.enable_minimized_event_passthrough` | none | Always |
+| `options.enable_minimized_event_passthrough` | none | Always. PostHog's send doesn't take it yet |
 | `override.list_id` | none | Always: it sets a `List-Id` header |
 | `return_path`, `recipients[].return_path` | none | The app reads bounces sent to that address, such as with VERP on an Enterprise account. Otherwise it moves: PostHog uses its own return path on the sender's domain (Step 4). Note it in the plan row |
 | `Idempotency-Key` header | `idempotencyKey` | Never |
