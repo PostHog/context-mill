@@ -719,14 +719,11 @@ async function generateSkill({
         }
     }
 
-    // A doc entry's `filename` must be a plain `.md` name that no other
-    // reference uses, and no later doc may take a name an entry chose, or
-    // one doc would overwrite the other.
     const chosenFilenames = new Set();
     function checkDocFilename(filename, url, chosen) {
         const taken = references.some((ref) => ref.filename === filename);
         const clash = chosen ? taken || filename === 'COMMANDMENTS.md' : chosenFilenames.has(filename);
-        const malformed = chosen && (path.basename(filename) !== filename || !filename.endsWith('.md'));
+        const malformed = chosen && !/^[^/\\]+\.md$/.test(filename);
         if (clash || malformed) {
             throw new Error(
                 `${skill.id}: doc ${url} uses filename "${filename}"; a filename must be a plain .md name no other reference uses`

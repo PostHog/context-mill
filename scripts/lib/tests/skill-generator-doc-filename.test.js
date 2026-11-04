@@ -66,7 +66,7 @@ describe('generateSkill doc filename', () => {
         );
     });
 
-    it.each(['nested/upstream-skill.md', '../upstream-skill.md', 'upstream-skill.txt', 'COMMANDMENTS.md'])(
+    it.each(['nested/upstream-skill.md', '../upstream-skill.md', 'upstream-skill.txt', 'COMMANDMENTS.md', '.md'])(
         'refuses the filename %s',
         async (filename) => {
             await expect(generate([{ url: UPSTREAM_SKILL_URL, filename }])).rejects.toThrow(filename);
