@@ -44,4 +44,20 @@ describe('sending-transactional-emails skill', () => {
             expect(DESCRIPTION).toContain(`emit \`[ABORT] ${reason}\` and stop`);
         },
     );
+
+    it('asks once whether the email stays in code, with code recommended first', () => {
+        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
+        const question = '"Keep the email in your code (recommended) or design it in PostHog?"';
+        expect(wizardSection.split(question)).toHaveLength(2);
+        expect(wizardSection).toContain('with code as the first choice. Ask it once.');
+    });
+
+    it('moves a code send that answers not_found to a template instead of aborting', () => {
+        const fallback = DESCRIPTION.split('\n- ').find((rule) =>
+            rule.startsWith('**When code sends aren\'t on yet.**'),
+        );
+        expect(fallback).toContain('answers `404` with the code `not_found`');
+        expect(fallback).toContain('move the email into a PostHog template');
+        expect(fallback).not.toContain('[ABORT]');
+    });
 });
