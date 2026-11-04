@@ -25,9 +25,9 @@ The site's fields are the fields of `message`, plus the top-level `async`, `ip_p
 | `track_opens`, `track_clicks` set to `true` | none | Never. `captureEngagement` is on unless the send sets it to `false` |
 | `auto_text` set to `true` | none | Never. PostHog makes the text part from `html` when the send has no `text` |
 | `auto_html` set to `true` | none | The site sends no `html` |
-| `inline_css` set to `true` | none | Always |
-| `important` set to `true` | none | Always |
-| `view_content_link` set to `false` | none | Always |
+| `inline_css` set to `true` | none | Always. PostHog's send doesn't take it yet |
+| `important` set to `true` | none | Always. PostHog's send doesn't take it yet |
+| `view_content_link` set to `false` | none | Always. PostHog's send doesn't take it yet |
 | `url_strip_qs`, `preserve_recipients` | none | Never on their own. They change only Mailchimp Transactional's reports, or what several recipients see |
 | `async` | none | Never on its own. It changes only when Mailchimp Transactional answers |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
@@ -35,10 +35,10 @@ The site's fields are the fields of `message`, plus the top-level `async`, `ip_p
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files with `images`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
 | `images` | `attachments`, each with `contentId` | The same as `attachments`, counted together with them |
 | `subaccount` | none | Always. The subaccount has its own reports, quota, and denylist at Mailchimp Transactional |
-| `tracking_domain`, `signing_domain`, `return_path_domain` | none | Always |
-| `google_analytics_domains`, `google_analytics_campaign` | none | Always |
-| `ip_pool` | none | Always |
-| `send_at` | none | Always |
+| `tracking_domain`, `signing_domain`, `return_path_domain` | none | Always. PostHog's send doesn't take it yet |
+| `google_analytics_domains`, `google_analytics_campaign` | none | Always. PostHog's send doesn't take it yet |
+| `ip_pool` | none | Always. PostHog's send doesn't take it yet |
+| `send_at` | none | Always. PostHog's send doesn't take it yet |
 
 A Mailchimp Transactional send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
