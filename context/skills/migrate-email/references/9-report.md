@@ -35,6 +35,10 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 <Each call that is not a send, with its file, line, and what it does. These stay on <provider name>.>
 
+## Webhook handlers
+
+<Leave this section out when the plan lists no handler. For each handler: its file and line, the <provider name> events it handles, and the PostHog events that take their place for the moved sends, from `mapping.md` under "Webhooks". Say that the handler keeps getting events for the sites that stay, that moved sends no longer reach it, that PostHog records their events on the person only when engagement events are on for the project, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post those events to an endpoint, in PostHog's shape, not the provider's.>
+
 ## Sender and DNS
 
 <Each sending domain: verified, or what the person still has to do, with the records or the Domain Connect link.>
@@ -59,7 +63,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 The moved sites send through PostHog as soon as this code is deployed. Everything in this list has to be done before that deploy.
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, a dependency upgraded across a major version whose changelog the person should read, each idempotency key a retry across the deploy could send twice, each template made in PostHog with its ID (send a test of it from PostHog, and check that it is transactional, sends from a verified sender, and fills each variable the site sends), and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key and each new env variable, a tier that is too low or not checked, an API that is not confirmed, a failed check, a dependency upgraded across a major version whose changelog the person should read, each idempotency key a retry across the deploy could send twice, each template made in PostHog with its ID (send a test of it from PostHog, and check that it is transactional, sends from a verified sender, and fills each variable the site sends), and each webhook handler that the moved sends no longer reach, each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
 
 ## After cutover
 

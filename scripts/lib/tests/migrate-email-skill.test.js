@@ -9,6 +9,8 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
+const PROVIDERS = ['resend', 'sendgrid'];
+const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 
 async function loadSkills() {
     vi.resetModules();
@@ -109,11 +111,34 @@ describe('migrate-email skill', () => {
         ]);
     });
 
-    it('publishes Resend and Statsig as wizard migrate subcommands', async () => {
+    it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the SDK file, and no other provider', async (provider) => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill(`migrate-email-${provider}`, outputDir);
+
+        expect(unresolvedReferences(skillDir)).toEqual([]);
+        for (const file of PROVIDER_FILES) {
+            expect(existsSync(join(skillDir, 'references', provider, file))).toBe(true);
+        }
+        expect(existsSync(join(skillDir, 'references', 'posthog-sdks.md'))).toBe(true);
+        const otherProviders = PROVIDERS.filter((other) => other !== provider);
+        expect(otherProviders.filter((other) => existsSync(join(skillDir, 'references', other)))).toEqual([]);
+    });
+
+    it('names a migratedFrom value equal to the provider folder in each mapping', () => {
+        for (const provider of PROVIDERS) {
+            const mapping = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', provider, 'mapping.md'), 'utf8');
+            expect(mapping, provider).toContain(`migratedFrom: '${provider}'`);
+        }
+    });
+
+    it('publishes each provider and Statsig as wizard migrate subcommands', async () => {
         const { skills } = await loadSkills();
         const cliOf = (id) => skills.find((skill) => skill.id === id)?._cli;
 
-        expect(cliOf('migrate-email-resend')).toEqual({ role: 'command', parentCommand: 'migrate', command: 'resend' });
+        for (const provider of PROVIDERS) {
+            expect(cliOf(`migrate-email-${provider}`)).toEqual({ role: 'command', parentCommand: 'migrate', command: provider });
+        }
         expect(cliOf('migrate-statsig')).toEqual({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
     });
 });

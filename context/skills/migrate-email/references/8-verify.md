@@ -16,9 +16,9 @@ Check that the app still builds, its tests still pass, and one moved email reach
 
 ## Build and tests
 
-- Run the project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. Fix each error that is not in the list Step 7 kept, in any file: the rewrite or the posthog-node upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
-- Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks `posthog.emails.send` and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
-- Search the changed files for the provider's calls: a moved site has none left, and each moved site has one `posthog.emails.send`.
+- Run the typechecks Step 7 ran, or each build when there is no typecheck. Fix each error that is not in the list Step 7 kept, in any file: the rewrite or the PostHog SDK upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
+- Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks the PostHog email send and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
+- Search the changed files for the provider's calls: a moved site has none left, and each moved site has one PostHog email send.
 
 ## One email on one person
 

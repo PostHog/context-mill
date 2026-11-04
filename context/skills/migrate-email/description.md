@@ -2,7 +2,7 @@
 
 Use this skill to move an app's transactional email, such as welcome emails, password resets, and receipts, from {display_name} to PostHog.
 
-It finds every {display_name} send, sets up the PostHog sender and its DNS records next to {display_name}'s, imports {display_name}'s suppression list, and hands over the PostHog secret key. Then it moves every send PostHog can take to `posthog-node`, checks one email on one person, and writes a report. Sends PostHog can't take stay on {display_name} with a reason, so both providers send during the cutover.
+It finds every {display_name} send, sets up the PostHog sender and its DNS records next to {display_name}'s, imports {display_name}'s suppression list, and hands over the PostHog secret key. Then it moves every send PostHog can take to the PostHog SDK in the app's language, checks one email on one person, and writes a report. Sends PostHog can't take stay on {display_name} with a reason, so both providers send during the cutover.
 
 The transactional email API is in beta. PostHog enables it per project.
 
@@ -20,6 +20,8 @@ The folder `references/<provider>/` holds everything specific to {display_name}.
 - `mapping.md`: how each send field maps to PostHog, what keeps a call site on {display_name}, and how to rewrite a site that moves.
 - `account.md`: {display_name}'s DNS records, and how to get its templates and its suppression list.
 
+`posthog-sdks.md`, next to the step files, has PostHog's email send in each language the sites can move in.
+
 Everything you need is on disk. Do not fetch {display_name}'s docs.
 
 ## Plan file
@@ -28,7 +30,7 @@ The plan file `.posthog-email-migration-plan.md` lives at the project root. Step
 
 ## Rules
 
-- Change send code only in Step 7, and fix it only in Step 8: the sites that move, the helpers, callers, and tests they need, and other `posthog-node` code that the upgrade breaks. Leave every site that stays as it is.
+- Change send code only in Step 7, and fix it only in Step 8: the sites that move, the helpers, callers, and tests they need, and other PostHog SDK code that the upgrade breaks. Leave every site that stays as it is.
 - Never touch DNS or the {display_name} account. Give the person the records and the links, and let them make the change.
 - Never remove the {display_name} package or its API key. The report tells the person when to remove them.
 - Never create, upload, or edit a template in PostHog. The person makes each template that moves to PostHog.
@@ -54,4 +56,4 @@ Outside the Wizard, skip the `[STATUS]` lines, and tell the person why you stopp
 
 `transactional-emails.md` is the transactional email overview. It covers how to create a transactional email and its API key, idempotency, and the error codes. `api.md` covers the send route, including content from your code, and the checks of a send.
 
-When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves {display_name}'s sends to `posthog-node`, with the content in the app's code, or to a template the person makes in PostHog. Where the two disagree, this skill's steps win.
+When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves {display_name}'s sends to the PostHog SDK, with the content in the app's code, or to a template the person makes in PostHog. Where the two disagree, this skill's steps win.
