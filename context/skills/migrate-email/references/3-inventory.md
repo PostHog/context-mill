@@ -44,7 +44,7 @@ When you find no site, stop before you write the plan file:
 
 ## Classify each site
 
-Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
+Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets, in a language that `mapping.md` moves. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
