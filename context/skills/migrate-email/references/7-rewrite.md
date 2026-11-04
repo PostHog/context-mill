@@ -22,7 +22,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK 
 
 ## Set up the client
 
-Each site moves with the PostHog SDK of the language it is written in. Read the part of `posthog-sdks.md` for each such language. A site in a language that `posthog-sdks.md` doesn't list stays: mark its row `moves: no — PostHog has no email send in <language> yet`.
+Each site moves with the PostHog SDK of the language it is written in. Read the part of `posthog-sdks.md` for each such language. The provider's `mapping.md` decides which languages move: a site in a language it keeps on the provider stays, even when `posthog-sdks.md` lists that language. A site in a language that `posthog-sdks.md` doesn't list stays: mark its row `moves: no — PostHog has no email send in <language> yet`.
 
 Install or upgrade the language's PostHog SDK to its latest release with the project's package manager. `emails.send` alone is not enough: early releases send only a template made in PostHog. Check the installed package's types or source for what the moving sites need, as `posthog-sdks.md` says under "Check the installed release":
 
