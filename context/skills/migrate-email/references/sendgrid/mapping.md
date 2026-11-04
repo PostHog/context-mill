@@ -64,7 +64,8 @@ SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under 
 | `{{user.first_name}}` | `{{ variables.user.first_name }}` |
 | `{{#if paid}}…{{else}}…{{/if}}`, when `paid` is a boolean | `{% if variables.paid %}…{% else %}…{% endif %}` |
 | `{{#unless paid}}…{{/unless}}`, when `paid` is a boolean | `{% unless variables.paid %}…{% endunless %}` |
-| `{{#each items}}{{this.name}}{{/each}}`, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
+| `{{#each items}}{{this.name}}{{/each}}` or `{{#each items}}{{name}}{{/each}}`, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
+| `{{this}}` inside `{{#each items}}` | `{{ item }}` |
 | `{{insert name "default=there"}}` | `{{ variables.name \| default: 'there' }}` |
 | The version's `subject` | The PostHog template's subject, with the same conversions |
 
@@ -73,6 +74,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - Handlebars `{{name}}` escapes HTML, and so does PostHog's Liquid, so plain values render the same.
 - Handlebars treats `0`, an empty string, and an empty list as false, and Liquid treats them as true. Read what the site sends for each `if` and `unless` value. A value that is not always a boolean, `null`, or missing keeps the template on SendGrid.
 - Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on SendGrid.
+- Inside `{{#each}}`, a bare `{{name}}` reads the current item, as `{{this.name}}` does. It becomes `{{ item.name }}`, never `{{ variables.name }}`.
 - `{{{name}}}` inserts HTML as it is. PostHog's Liquid escapes it, so a template that uses triple braces stays on SendGrid.
 - Any other helper, such as `{{#equals}}`, `{{formatDate}}`, `{{#greaterThan}}`, `{{length}}`, or `{{#and}}`, keeps the template on SendGrid. So does `{{@index}}`, a partial, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
@@ -124,9 +126,9 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **Errors.** Keep the site failing the same way it did:
 
-- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode })`. `err.code` keeps holding the HTTP status. A read of `err.response.body` becomes a read of `err.message`.
-- **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code. A catch of one subclass, such as `TooManyRequestsError` or `BadRequestsError`, becomes a catch of the PostHog exception that checks the status code, 429 or 400, and raises every other error again.
-- **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more becomes "there is an error", and a branch on one status, such as 429, reads PostHog's status code.
+- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode, name: error.name })`. `err.code` keeps holding the HTTP status, and a check of `err.code === 400` becomes a check of `err.name === 'validation_error'`. A read of `err.response.body` becomes a read of `err.message`.
+- **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code. A catch of one subclass becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `TooManyRequestsError` checks the status code `429`, and `BadRequestsError` checks the name `validation_error`, as Step 7 says.
+- **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more becomes "there is an error", a branch on `400` reads PostHog's error name `validation_error`, and a branch on another status, such as 429, reads PostHog's status code.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where SendGrid took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `X-Message-Id`, or stored it for the app's own use, takes PostHog's message id instead.
