@@ -60,6 +60,10 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 | A framework mailer or transport (Laravel, Symfony, Rails, Django, Nodemailer, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
 
+## Domains
+
+Mailgun keeps its suppression lists per sending domain, and a send uses the lists of the domain it sends from. PostHog keeps one suppression list per project. When the sites that move send from more than one Mailgun domain, Step 5 imports the lists of each of them into that one list. PostHog then refuses a moved send to an address that any of those domains suppressed, even when the site's own domain never did. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one domain's sites move. The sites of every other domain stay, and the reason is `domain <name> keeps its own suppression list`.
+
 ## Code around the send
 
 Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs throw, raise, or return an error on a failed status and on a network failure. The Python SDK answers the response on a failed status, and raises only when the request can't be made. A plain HTTP request does what its client does, with the options the code gives the client or the request. An option that turns the throw off, such as axios's `validateStatus` that accepts a failed status or got's `throwHttpErrors: false`, makes the client answer a failed status as a response:
@@ -169,6 +173,8 @@ Drop the domain argument and the Mailgun client of the call.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Mailgun took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged the Mailgun `id`, or stored it for the app's own use, takes PostHog's message id instead.
+
+**Suppression writes.** A call that adds to or removes from a domain's bounce or complaint list, `POST` or `DELETE` on `/v3/<domain>/bounces` or `/v3/<domain>/complaints`, or the SDK's call for it, such as `mg.suppressions.create(domain, 'bounces', ...)` in Node.js, changes a list the import takes: Step 5 says what the report asks for it. A call on `/v3/<domain>/unsubscribes` changes a list the import leaves out, and stays a Mailgun write only.
 
 **The Mailgun client.** Keep the Mailgun client, its import, and its `FormData` while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package, `form-data`, and the key: the person removes them after the cutover.
 
