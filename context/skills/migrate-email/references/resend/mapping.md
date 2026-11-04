@@ -28,7 +28,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 |---|---|
 | `emails.send`, `emails.create`, `Emails.send`, `POST /emails` | A field above keeps it |
 | `batch.send`, `Batch.send`, `POST /emails/batch` | Always |
-| SMTP through `smtp.resend.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them |
+| SMTP through `smtp.resend.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | Laravel's or Rails' `resend` mailer | Always. PostHog has no mailer driver |
 | A send in a language other than JavaScript or TypeScript | Always: this skill moves Resend sends only with posthog-node, even where `posthog-sdks.md` lists the language |
 
