@@ -14,7 +14,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `text`, `html` | `text`, `html` | Never |
 | `content` | `text` for `text/plain`, `html` for `text/html` | It holds another type, or two entries of one type |
 | `templateId` with `dynamicTemplateData` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
-| `substitutions` | none | Always |
+| `substitutions` | none | Always. PostHog's send doesn't take it yet |
 | `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ email, name }` moves as the bare address, as for `to` |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, a `disposition` is `inline` without a `contentId`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
@@ -22,10 +22,10 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
 | `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or the settings do anything else, such as `subscriptionTracking` or `ganalytics`. `false` turns off both open and click capture: note it in the plan row |
-| `sendAt` / `send_at` | none | Always |
-| `batchId` / `batch_id` | none | Always |
+| `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
+| `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |
-| `ipPoolName` / `ip_pool_name` | none | Always |
+| `ipPoolName` / `ip_pool_name` | none | Always. PostHog's send doesn't take it yet |
 | `mailSettings` / `mail_settings` | none | Always. Sandbox mode is not a send |
 | `personalizations` | the fields of its one entry | It holds more than one entry. One entry moves when each field in it moves |
 

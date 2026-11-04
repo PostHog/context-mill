@@ -213,6 +213,7 @@ Look for the host in transport options, `host` and `service` settings, connectio
 | Another host on the person's own domain, such as `mail.example.com` | A server the person or their host runs |
 
 - A Nodemailer `service` name, such as `'SendGrid'`, `'Mailgun'`, or `'SES-EU-WEST-1'`, stands for that provider's host.
+- **Region.** The host, or the Nodemailer `service` name, sets the provider's region in code. Amazon SES has one host per region, `email-smtp.<region>.amazonaws.com`. Nodemailer's `service: 'SES-EU-WEST-1'` is `email-smtp.eu-west-1.amazonaws.com`, the other `SES-<REGION>` names follow the same pattern, and `service: 'SES'` is `us-east-1`. Name the region in the plan next to the host, such as `SMTP host: email-smtp.eu-west-1.amazonaws.com (Amazon SES, eu-west-1)`. When another provider's host has a region in its name, name that region too.
 - A host such as `localhost`, `127.0.0.1`, `mailhog`, or `mailpit` in an example env file is a local catcher for development. The deployed host comes from the deployed environment: ask the person which provider it is.
 - When the host comes from a variable with no value in the repository, ask the person which provider runs it.
 

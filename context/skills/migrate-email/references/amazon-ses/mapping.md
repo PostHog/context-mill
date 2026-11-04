@@ -26,8 +26,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
 | `FromEmailAddressIdentityArn`, `FeedbackForwardingEmailAddressIdentityArn` / `SourceArn`, `ReturnPathArn`, `FromArn` | none | Always: the site sends for an identity another AWS account owns |
-| `EndpointId` | none | Always |
-| `TenantName` | none | Always |
+| `EndpointId` | none | Always. PostHog's send doesn't take it yet |
+| `TenantName` | none | Always. PostHog's send doesn't take it yet |
 
 An Amazon SES send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -51,8 +51,8 @@ Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The
 | Code | A site stays on Amazon SES when |
 |---|---|
 | A `catch`, `except`, `rescue`, or error check that only logs the error, returns, or throws it again | Never. Log PostHog's error instead |
-| A branch on an Amazon SES error name, such as `err.name === 'MessageRejected'`, `e.response['Error']['Code']`, `e.code`, `getAwsErrorCode()`, `ErrorCode`, `errors.As(err, &mr)` with `*types.MessageRejected`, or a `SendEmailError` variant | The name is anything but `TooManyRequestsException`, or the site is in Rust. A branch on `TooManyRequestsException` in another language moves: it becomes a check of PostHog's status code for `429` |
-| A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, or `HTTPStatusCode()` | Never. Read PostHog's status code |
+| A branch on an Amazon SES error name, such as `err.name === 'MessageRejected'`, `e.response['Error']['Code']`, `e.code`, `getAwsErrorCode()`, `ErrorCode`, `errors.As(err, &mr)` with `*types.MessageRejected`, or a `SendEmailError` variant | The name is anything but `TooManyRequestsException` or `BadRequestException`, or the site is in Rust. In another language, a branch on `TooManyRequestsException` moves as a check of PostHog's status code for `429`, and a branch on `BadRequestException` moves as a check of PostHog's error name `validation_error` |
+| A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, or `HTTPStatusCode()` | Never. A branch on `400` reads PostHog's error name `validation_error`. A branch on another status, such as `429`, reads PostHog's status code |
 | The `MessageId` stored for a webhook handler or a `GetMessageInsights` read | Always, when a handler or the read uses it |
 | The `MessageId` logged or stored for the app's own use | Never. Use PostHog's message id |
 
@@ -72,11 +72,13 @@ Amazon SES's Handlebars becomes Liquid in the PostHog template. Values move unde
 | `{{#unless paid}}…{{/unless}}`, when `paid` is a boolean | `{% unless variables.paid %}…{% endunless %}` |
 | `{{#each items}}{{name}}{{/each}}`, or `{{this.name}}` in the loop, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
 | `{{#each tags}}{{this}}{{/each}}`, when `tags` is a list | `{% for tag in variables.tags %}{{ tag }}{% endfor %}` |
+| `{{this}}` inside `{{#each items}}` | `{{ item }}` |
 | The template's subject (`Subject` or `SubjectPart`) | The PostHog template's subject, with the same conversions |
 
 - Amazon SES does not escape HTML in values, and PostHog's Liquid does. A value with plain text shows the same text. A value that holds HTML, such as a link or a list the code builds as markup, shows as escaped text in PostHog, so its template stays on Amazon SES. So does a template that uses triple braces, `{{{name}}}`.
 - Handlebars treats `0`, an empty string, and an empty list as false, and Liquid treats them as true. Read what the site sends for each `if` and `unless` value. A value that is not always a boolean, `null`, or missing keeps the template on Amazon SES.
 - Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on Amazon SES.
+- Inside `{{#each}}`, a bare `{{name}}` reads the current item, as `{{this.name}}` does. It becomes `{{ item.name }}`, never `{{ variables.name }}`. `{{this}}` is the item itself and becomes `{{ item }}`.
 - Any other helper, such as `{{#with}}`, `{{lookup}}`, or `{{log}}`, keeps the template on Amazon SES. So does an inline partial (`{{#* inline}}` and `{{> name}}`), `{{@index}}`, `{{@key}}`, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - `TemplateData` is a JSON string. `templateData` takes the object it was built from, before `JSON.stringify` or `json.dumps`. When the code only has the string, parse it.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `FromEmailAddress` / `Source` or `ReplyToAddresses` next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
@@ -126,22 +128,23 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **Errors.** Keep the site failing the same way it did:
 
-- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where the Amazon SES send threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.code, statusCode: error.statusCode })`. In that `catch`, a read of `err.name` for logging becomes `err.code`, and a read of `err.$metadata.httpStatusCode` becomes `err.statusCode`.
-- **Python.** PostHog's SDK raises too. Replace `except ClientError` with the PostHog exception `posthog-sdks.md` names, `e.response['Error']['Code']` with its code, `e.response['Error']['Message']` with its message, and `e.response['ResponseMetadata']['HTTPStatusCode']` with its status code. When the same `try` also guards other AWS calls, keep their `except` as well.
-- **Ruby, PHP, and .NET.** PostHog's SDK throws too. Replace the rescued or caught Amazon SES exception (`Aws::SESV2::Errors::ServiceError`, `Aws\SesV2\Exception\SesV2Exception`, `AwsException`, `AmazonSimpleEmailServiceV2Exception`, and their v1 names) with the PostHog exception `posthog-sdks.md` names, and the error code and status code reads with its own.
-- **Go, Rust, and Elixir.** The site checked an error value. Check PostHog's error value the way `posthog-sdks.md` says for the language. A plain `if err != nil`, `?`, or `{:error, _}` branch stays as it is. A branch on the status, such as `{:error, {:http_error, 429, _}}` or `HTTPStatusCode()`, reads PostHog's status code.
+- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where the Amazon SES send threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.code, name: error.name, statusCode: error.statusCode })`. In that `catch`, a read of `err.name` for logging becomes `err.code`, and a read of `err.$metadata.httpStatusCode` becomes `err.statusCode`. A check of `err.name === 'BadRequestException'` or of the status `400` becomes a check of `err.name === 'validation_error'`.
+- **Python.** PostHog's SDK raises too. Replace `except ClientError` with the PostHog exception `posthog-sdks.md` names, `e.response['Error']['Code']` with its code, `e.response['Error']['Message']` with its message, and `e.response['ResponseMetadata']['HTTPStatusCode']` with its status code. A check of the code `BadRequestException` or the status `400` becomes a check of its name `validation_error`. When the same `try` also guards other AWS calls, keep their `except` as well.
+- **Ruby, PHP, and .NET.** PostHog's SDK throws too. Replace the rescued or caught Amazon SES exception (`Aws::SESV2::Errors::ServiceError`, `Aws\SesV2\Exception\SesV2Exception`, `AwsException`, `AmazonSimpleEmailServiceV2Exception`, and their v1 names) with the PostHog exception `posthog-sdks.md` names, and the error code and status code reads with its own. A check of the code `BadRequestException` or the status `400` becomes a check of PostHog's error name `validation_error`.
+- **Go, Rust, and Elixir.** The site checked an error value. Check PostHog's error value the way `posthog-sdks.md` says for the language. A plain `if err != nil`, `?`, or `{:error, _}` branch stays as it is. A branch on the status, such as `{:error, {:http_error, 429, _}}` or `HTTPStatusCode()`, reads PostHog's status code, except a branch on `400`, or Go's `*types.BadRequestException`, which reads PostHog's error name `validation_error`.
 - A branch on `TooManyRequestsException` becomes a check of PostHog's status code for `429`.
-- Never widen a catch. When the old code caught only `TooManyRequestsException`, catch PostHog's error, check its status code for `429`, and raise or return every other error as before:
+- A branch on Amazon SES's answer to an invalid send, `BadRequestException` or the status `400`, becomes a branch on PostHog's error name `validation_error`, never on a status code: PostHog's statuses for invalid sends differ from Amazon SES's, and `recipient_suppressed` is a `validation_error` with status `422`, handled first, as below.
+- Never widen a catch. When the old code caught only `TooManyRequestsException`, catch PostHog's error, check its status code for `429`, and raise or return every other error as before. When it caught only `BadRequestException`, check PostHog's error name for `validation_error` in the same way, with `e.name`, `#name`, `getErrorName()`, `Name`, or `:name` (`:validation_error` in Elixir):
   - **Node.js:** a `catch` that tested `err.name === 'TooManyRequestsException'` tests `err.statusCode === 429` on the error thrown above, and throws every other error again.
   - **Python:** `except client.exceptions.TooManyRequestsException` becomes `except EmailError as e:` with `if e.status_code != 429: raise` first.
   - **Ruby:** `rescue Aws::SESV2::Errors::TooManyRequestsException` becomes `rescue PostHog::EmailError => e` with `raise unless e.status_code == 429` first.
   - **PHP:** a catch that tested `getAwsErrorCode() === 'TooManyRequestsException'` catches `PostHog\EmailError`, tests `getStatusCode() === 429`, and throws every other error again.
   - **.NET:** `catch (TooManyRequestsException)` becomes `catch (EmailException e) when (e.StatusCode == 429)`.
   - **Go:** `errors.As(err, &throttled)` with `*types.TooManyRequestsException` becomes `errors.As(err, &emailErr) && emailErr.StatusCode == 429`. Every other error goes on to the site's next check as before.
-  - **Rust:** PostHog's Rust error has no status code, so a match on `SendEmailError::TooManyRequestsException` keeps the site on Amazon SES.
+  - **Rust:** `posthog-sdks.md` gives PostHog's Rust error no status code and no name, so a match on `SendEmailError::TooManyRequestsException` or `SendEmailError::BadRequestException` keeps the site on Amazon SES.
   - **Elixir:** `{:error, {:http_error, 429, _}}` becomes `{:error, %PostHog.Emails.Error{status_code: 429}}`. Every other `{:error, _}` goes on as before.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Amazon SES took it and didn't send it. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `MessageId`, or stored it for the app's own use, takes PostHog's message id instead.
 
-**The Amazon SES client.** Keep the Amazon SES client and its import while any site or other call still uses them. When nothing uses them, remove the import and the client. Keep the package and the AWS credentials: they often serve other AWS services, and the person removes the Amazon SES permissions after the cutover.
+**The Amazon SES client.** Keep the Amazon SES client and its import while any site or other call still uses them. When nothing uses them, remove the import and the client. Keep the package and the AWS credentials for other uses: the AWS SDK package, such as `@aws-sdk/client-sesv2`, `aws-sdk`, `boto3`, `aws-sdk-go-v2`, or `ex_aws`, and the credentials often serve other AWS services in the same app, and `boto3` and `aws-sdk` cover every AWS service in one package. Remove the package only when no code uses it for anything else. The person removes the Amazon SES permissions after the cutover.
