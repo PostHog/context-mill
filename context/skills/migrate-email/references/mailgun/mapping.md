@@ -12,7 +12,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 |---|---|---|
 | `from` | `from` | Never. `Name <address>` moves as it is. When the code builds it from a name and an address, put the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | The sending domain of the call | none | Never. Step 4 sets up the sender for the domain of `from`. When the two differ, note it in the plan row |
-| `to` | `to` | It holds more than one address, as a list or a comma-separated string. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name |
+| `to` | `to` | It holds more than one address, as a list or a comma-separated string. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name. A string from one stored address, such as a user's email, holds one address. A string the code joins from several, or takes from input or a mail object that can hold several, counts as several |
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
 | `%recipient.<name>%`, `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` | none | Always: Mailgun fills them at send time |
@@ -35,6 +35,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `o:testmode` | none | Always. Test mode is not a send |
 | `o:dkim`, `o:secondary-dkim`, `o:secondary-dkim-public`, `o:require-tls`, `o:skip-verification` | none | Always. PostHog's send doesn't take it yet |
 | `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always. PostHog's send doesn't take it yet |
+| Any field this table doesn't name, such as `sender` | none | Always. The reason names the field |
 
 **Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Mailgun tracks each one only when it is on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. Work out, for opens and for clicks, whether Mailgun tracked them:
 
@@ -70,6 +71,7 @@ Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs 
 | A Ruby client in test mode: `Mailgun.configure` with `test_mode = true`, or `enable_test_mode!` on the client. It keeps the message in `Mailgun::Client.deliveries` and sends nothing | Always, when the app turns it on outside its tests, such as from an env setting. When only the tests turn it on, the site moves: note in the report each place that turns it on and each test that reads `Mailgun::Client.deliveries`, since those tests now need the PostHog send stubbed |
 | The message `id` stored for a webhook handler or an Events API read | Always, when the handler or the read uses it |
 | The message `id` logged or stored for the app's own use | Never. Use PostHog's message id |
+| A read of the answer's headers, such as a rate-limit header | Always: PostHog's answer holds its message id, as `posthog-sdks.md` says, not Mailgun's headers |
 
 ## Templates
 
