@@ -119,6 +119,7 @@ result, err := client.Emails().Send(ctx, posthog.CodeEmail{
 - The template form is `posthog.TemplateEmail{To, TemplateID, TemplateData, ...}`.
 - Errors: `Send` answers `(*SendEmailResult, error)`, and `result.ID` is the message id. The error is always a `*posthog.EmailError`, with `Code`, `Name`, `Message`, and `StatusCode`. Read it with `errors.As`.
 - A site with no `context.Context` passes `context.Background()`.
+- With a secret key, the client starts polling feature flag definitions from `Endpoint` when it is built, and sends the secret key to do it. No option turns that off. When the app's host is a reverse proxy, give the email send its own client whose `Endpoint` is PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the secret key.
 
 ## Ruby: `posthog-ruby`
 
@@ -140,6 +141,7 @@ result = posthog.emails.send(
 ```
 
 - Errors: `send` raises `PostHog::EmailError` on an API error, with `#code`, `#name`, `#status_code`, and `#message`. A bad argument raises `ArgumentError`. It answers a result whose `id` is the message id.
+- With a secret key, the client loads feature flag definitions from `host` when it is built and keeps polling them, and sends the secret key to do it. No option turns that off. When the app's host is a reverse proxy, give the email send its own client whose `host` is PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the secret key.
 
 ## PHP: `posthog/posthog-php`
 
