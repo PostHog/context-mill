@@ -36,7 +36,7 @@ A site with no idempotency key sends none in PostHog either.
 |---|---|
 | `loops.sendTransactionalEmail`, `client.SendTransactional`, `$loops->transactional->send`, `LoopsSdk::Transactional.send`, a community package's send, `POST /api/v1/transactional` | A field above keeps it |
 | A send inside a loop over recipients | A field above keeps it. Each call already sends one email to one address, so the loop stays as it is |
-| SMTP through `smtp.loops.so`, from Nodemailer or a framework mailer (Django, Rails, Laravel) | Always. PostHog has no SMTP relay and no mailer driver |
+| SMTP through `smtp.loops.so`, from Nodemailer or a framework mailer (Django, Rails, Laravel) | Always here. A Nodemailer send through SMTP moves with `wizard migrate smtp`. PostHog has no mailer driver for a framework mailer |
 | Auth.js `next-auth/providers/loops` | Always. PostHog has no Auth.js provider |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
 | `sendEvent` and `POST /api/v1/events/send` | Not a send: it starts a Loops workflow. List it with the other Loops calls |
