@@ -11,10 +11,10 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `FromEmailAddress` / `Source` | `from` | Never. `Name <address>` stays as it is. When the code builds it from a name and an address, put the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `Destination.ToAddresses` | `to` | It holds more than one address, or none. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name |
 | `Destination.CcAddresses`, `BccAddresses` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `Name <address>` moves as the bare address, as for `to` |
-| `ReplyToAddresses` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
+| `ReplyToAddresses` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A value read from an environment variable or a config file counts as read when `.env.example`, the config file, or the person shows a bare address for it |
 | `Subject.Data` | `subject` | Never |
 | `Body.Html.Data`, `Body.Text.Data` | `html`, `text` | Never |
-| `Charset` on the subject or a body part | none | It is set to anything other than `UTF-8`, in any case |
+| `Charset` on the subject or a body part | none | It is set to anything other than UTF-8. Ignore case, `-`, and `_` when you compare: `utf-8`, `utf8`, and `UTF_8` are UTF-8 and move. Any other charset, such as `ISO-8859-1`, keeps the site |
 | `Content.Template` with `TemplateName` or `TemplateArn` / `SendTemplatedEmail` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
 | `Content.Template.TemplateContent` | a template made in PostHog | See "Templates". The content is in the code |
 | `Content.Raw` / `SendRawEmail` | none | Always: the code builds the MIME message itself |
