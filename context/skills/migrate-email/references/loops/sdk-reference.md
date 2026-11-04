@@ -158,7 +158,7 @@ Look for routes that read `eventName`, `contactIdentity`, `sourceType`, or `tran
 
 These are not transactional sends, and they stay on Loops:
 
-- Contacts: `createContact`, `updateContact`, `findContact`, `deleteContact`, and the suppression check (`/api/v1/contacts/*`).
+- Contacts: `createContact`, `updateContact`, `findContact`, `deleteContact`, the suppression check, and its removal: `removeContactSuppression` in Node.js, `RemoveContactSuppression` in Go, `removeSuppression` in PHP, `remove_suppression` in Ruby, and `DELETE /api/v1/contacts/suppression` (`/api/v1/contacts/*`).
 - Events: `sendEvent` (`POST /api/v1/events/send`) starts Loops workflows, which send Loops' own workflow emails.
 - Mailing lists (`/api/v1/lists`), contact properties, and the content API for campaigns, transactional emails, email messages, themes, components, workflows, and uploads (`/api/v1/campaigns`, `/api/v1/transactional-emails`, `/api/v1/email-messages`, `/api/v1/workflows`, and the others).
 - `GET /api/v1/api-key`, which tests a key.

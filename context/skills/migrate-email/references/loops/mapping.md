@@ -15,7 +15,7 @@ Every Loops send renders a transactional email stored at Loops. So every Loops s
 | `dataVariables` | `templateData`, with the same keys and values | A value holds HTML that the email must render, such as a `<br>`-joined list the code builds: PostHog's Liquid escapes it |
 | `addToAudience: true` | none | Always. It adds the recipient to the Loops audience, which Loops' campaigns and workflows send to, so moving the send would stop new contacts reaching it. `false` or no value moves. It moves only when the same code path already creates or updates that recipient as a Loops contact before the send, such as with `createContact` or `updateContact`. A contact call elsewhere in the app doesn't count. Otherwise the report tells the person that such a call would let the site move |
 | `attachments` | none | Always. A template made in PostHog sends in the template form, which takes no attachments |
-| `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits. A key built from a value whose characters the code doesn't bound, such as text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
+| `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits. A key built from a value whose characters the code doesn't bound, such as text a user or another service sends, counts as one that can. An ID the app makes, such as a database row ID or a UUID, is bounded, even when it reaches the site as a parameter and only its name, type, or a comment says what it is. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | Any other request header in `headers` | none | Always: no PostHog SDK takes headers yet |
 
 The Loops email itself sets the rest, in its sending settings. The template check in Step 3 reads them:
@@ -40,6 +40,7 @@ A site with no idempotency key sends none in PostHog either.
 | Auth.js `next-auth/providers/loops` | Always. PostHog has no Auth.js provider |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
 | `sendEvent` and `POST /api/v1/events/send` | Not a send: it starts a Loops workflow. List it with the other Loops calls |
+| A send that the code runs after it removes the recipient's Loops suppression: `removeContactSuppression` (Node.js), `RemoveContactSuppression` (Go), `removeSuppression` (PHP), `remove_suppression` (Ruby), or `DELETE /api/v1/contacts/suppression` | Always. The code wants the email to reach an address Loops suppressed, and PostHog refuses a suppressed address with `recipient_suppressed`. The removal call stays too |
 
 Loops has no batch send, no send time, and no send to several addresses, so no site uses them.
 
@@ -49,10 +50,11 @@ Loops' official SDKs throw or raise on an API error, and the Go SDK returns an e
 
 | Code | A site stays on Loops when |
 |---|---|
-| A `catch` or `rescue` that reads `err.statusCode`, `err.json`, `e.json`, `getStatusCode()`, or `getJson()`, or Go's `apiErr.StatusCode` and `apiErr.Message` | It branches on a Loops error text, such as `Missing required data variable(s)`. A branch on the HTTP status moves: a branch on `400`, Loops' answer to an invalid send, reads PostHog's error name `validation_error`, and a branch on another status reads PostHog's status code |
+| A `catch` or `rescue` that reads `err.statusCode`, `err.json`, `e.json`, `getStatusCode()`, or `getJson()`, or Go's `apiErr.StatusCode` and `apiErr.Message` | It branches on a Loops error text, such as `Missing required data variable(s)`, or on another field of Loops' error body, such as `error.path`: PostHog's error has neither. A branch on the HTTP status moves: a branch on `400`, Loops' answer to an invalid send, reads PostHog's error name `validation_error`, and a branch on another status reads PostHog's status code |
 | A branch on `RateLimitExceededError` or `LoopsSdk::RateLimitError` | Never. It becomes a branch on PostHog's status code `429`. PostHog's SDK retries rate limits on its own first |
 | A branch on status `409`, Loops' answer to a reused idempotency key | Never. Note it in the plan row: PostHog answers a repeat of the same send with the first send's answer and no error, so the branch no longer runs, and it answers a different send with the same key with the code `idempotency_key_reused`. Rewrite the branch to read that code |
-| A check of the HTTP answer: `response.status_code`, `response.ok`, `raise_for_status()`, or `success` in the body | Never. Read PostHog's error instead |
+| A check of the HTTP answer: `response.status_code`, `response.ok`, `response.success?`, `raise_for_status()`, or `success` in the body | Never. Read PostHog's error instead |
+| A loop around the send that tries again on `429`, such as one that waits for the `Retry-After` header | Never. Keep the loop and the code in it. It now tries again when PostHog's error has the status code `429` and a code other than `quota_limited`: a retry doesn't clear a quota. PostHog's error has no headers, so a wait read from `Retry-After` takes the loop's own fallback, or 1 second when the loop has none. Note both changes in the plan row, and that PostHog's SDK already retries a rate limit twice inside each send, so each pass of the loop can make 3 requests. A loop that tries again on a `5xx` keeps its check, which reads PostHog's status code |
 | A read of a message id in Loops' answer | Never happens: Loops answers `{ success: true }` only |
 
 An idempotency key that the code sent to Loops and now sends to PostHog can send the email twice when a retry crosses the deploy: the first try went to Loops, the retry goes to PostHog. Note each such key for the report.
@@ -60,6 +62,9 @@ An idempotency key that the code sent to Loops and now sends to PostHog can send
 ## Templates
 
 A Loops site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Loops email, makes it transactional, and gives you its template ID. Until then the site stays on Loops. The check needs the content of the published Loops email, because the code has only its `transactionalId`. `account.md` says how to get it.
+
+- A `transactionalId` that the code reads from an env variable or a config file names a Loops email the repository doesn't show. Ask the person which Loops email each such variable holds, with the template question of Step 3. When they can't tell, the site stays, and the reason names the variable.
+- A helper whose callers pass the `transactionalId` is one site that sends several Loops emails. It moves only when every email its callers pass moves. Otherwise it stays, and the reason names the email that keeps it.
 
 Loops' data variables become Liquid in the PostHog template. Values move under `variables`, and each name keeps its case. The editor, MJML, and LMX write a variable three ways:
 
@@ -117,6 +122,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - `email` becomes `to`.
 - `transactionalId` becomes `templateId`, with the template ID the person gave in Step 3. Never reuse the Loops ID.
+- In a helper whose callers pass the `transactionalId`, keep the callers as they are. Add one object in the helper that maps each Loops ID to its PostHog template ID, keyed by the Loops ID, and send the mapped ID. When an ID is missing from the map, fail the way the helper failed on a Loops error, with a message that names the ID. When the helper has only the address, find `distinctId` through its callers, as Step 7 says.
 - `dataVariables` becomes `templateData`, with the same object. When the code builds `dataVariables` in a variable, pass that variable.
 - An `Idempotency-Key` header becomes `idempotencyKey`, with the same value.
 - Add `distinctId`, as Step 7 says. The send has no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
