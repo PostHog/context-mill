@@ -25,6 +25,14 @@ from the framework reference example, and only in the environment fallback below
 Add the client library, plus the server library if the app has server-side code
 that sends events. If the SDK is already installed, leave it and say so.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), install for the app, in its own package. Review installs what a
+separately run server needs from the `mcp-analytics` handoff. If the MCP server is
+the whole project, install for it.
+
+Read the resolved version from the manifest or the package manager, not the lockfile:
+lockfiles are huge and full of hashes, so never read one whole.
+
 Some ecosystems pin an explicit version in a manifest no install command resolves
 (Swift SPM, Gradle). There, declare the dependency the way the framework reference
 shows and take the version from the SDK's latest release — do not invent one.

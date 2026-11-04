@@ -23,6 +23,10 @@ unnecessary changes, keep the change as lean as possible for an easy review, and
 follow the shape of the examples provided. How call sites reach the client is
 part of the shape: reach it the way the docs and the example project reach it.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target: create its init point there. The
+`mcp-analytics` task creates the client a separately run server needs. If the MCP server is the whole project, it is your target.
+
 ## How you know you succeeded
 
 The init file exists and the PostHog env keys are present. Keys live in the env

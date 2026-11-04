@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [posthog-best-practices, integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
-dependsOn: [install, init, identify, error-tracking, capture, ai-observability, logs]
+dependsOn: [install, init, identify, mcp-analytics, error-tracking, capture, ai-observability, logs]
 ---
 
 ## Goal
@@ -21,8 +21,9 @@ reading of the same changeset.
 **Install and verify.** The earlier steps edited code but did not install —
 install now, then verify the project builds, typechecks, and lints, whichever
 of those it defines. Install what the manifest declares plus every package the
-upstream handoffs name, adding the named ones by bare name with the project's
-package manager so it resolves real versions. The app's existing dependencies
+upstream handoffs name, in their `packages` field or their text, adding the
+named ones by bare name with the project's package manager so it resolves real
+versions. The app's existing dependencies
 are not yours to touch: never upgrade, downgrade, or re-add a package this
 integration did not introduce. If an instrumentation package's peer range
 conflicts with a dependency the app already has, install an older
@@ -30,8 +31,20 @@ instrumentation version that fits the app's existing versions — find it with
 the package manager, stepping down major versions (`pkg@^7`, then `@^6`,
 …) for a few attempts rather than looking for documentation of one. If none
 fits, revert that piece of instrumentation, leave the app's dependency alone,
-and record the incompatibility so the report can say what was skipped and why. An optional upstream task
-(AI Observability, Logs) may have failed and left partial edits no handoff
+and record the incompatibility so the report can say what was skipped and why.
+A handoff that names a package with a feature or an exact pin (`cargo add
+posthog-rs --features mcp`, `@posthog/mcp` pinned exact at its latest release)
+gets installed that way, and one that names a minimum version is never stepped
+below it. Install an exact-pinned package in its own command, so the pin doesn't
+spread to packages named without one. In a workspace, install each package into the
+workspace package that imports it, not the repository root. When the project already declares a package, or a dependency like
+`rmcp`, below a handoff's minimum, do not raise it: revert that task's
+instrumentation and record the pin the user would raise. A toolchain older than
+a handoff's minimum surfaces here as a failed install or build in that task's
+files; handle it the same way. Build Go with `go build -o /dev/null ./...` so no
+binary lands in the project, and never run `cargo fmt`, which reformats the
+whole crate. An optional upstream task
+(AI Observability, Logs, MCP analytics) may have failed and left partial edits no handoff
 describes — install and build either way, and let the build surface stray
 imports; fix or revert them like any other defect. Do not run the test suite; the
 runtime does not allow it, and a green build is the bar. A bad version only surfaces
@@ -40,12 +53,19 @@ here: if the install fails because a declared version does not exist (npm `ETARG
 package by bare name and let the package manager pick, matching the framework
 reference example's spec only if that also fails. If the failure is the environment, not the
 integration's own change (a pre-existing broken dependency, a package manager that
-cannot provision), note it and move on; do not spiral.
+cannot provision), note it and move on; do not spiral. When you revert a
+task's instrumentation because its packages could not be installed, record the
+failed command and its error as the reason, not a version minimum: the report
+should send the user to the install problem. A build that then fails against an
+older copy already in `node_modules` is part of that same install failure. When
+you revert a task, delete the files it created rather than leaving them empty.
 
 **Review, as a strict reviewer who did none of the writing.** The changeset is
 already handed to you: `read_handoffs` returns every upstream task's handoff, and
 each one names the files it touched and what it changed in them. That union of
-touched files IS the changeset. Read each changeset file once and judge it — after
+touched files IS the changeset, except lockfiles: they are huge and full of hashes,
+so ask the package manager or search for a package's name, and never read one whole.
+Read each changeset file once and judge it — after
 your own edit you already know its contents, so do not re-read it. Read beyond the
 changeset only where a dimension sends you: one neighboring example per pattern you
 are checking, and the callers of code that changed. Nothing else — not the SDK's

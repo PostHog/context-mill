@@ -37,6 +37,8 @@ If anything blocks instrumentation, **always** emit exactly one `[ABORT] <reason
 - `[ABORT] rust toolchain older than 1.88` — `posthog-rs` with the `mcp` feature can't build (STEP 3).
 - `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or no PostHog credentials and no MCP server connected to fetch them). Keep it short and specific so it's useful when aggregated across runs.
 
+Inside the main wizard run, the `mcp-analytics` task's instructions replace these stops: it completes as not needed with the same reason, and the rest of the run goes on.
+
 ## Instructions
 
 Follow these steps IN ORDER. Each step has a **TypeScript / JavaScript** part, a **Python** part, a **Go** part, a **Ruby** part, and a **Rust** part — use the one for the language you detect in STEP 1.
@@ -303,8 +305,8 @@ import os
 from posthog import Posthog
 
 posthog = Posthog(
-    os.environ["POSTHOG_PROJECT_TOKEN"],
-    host=os.environ["POSTHOG_HOST"],  # https://us.i.posthog.com or https://eu.i.posthog.com
+    os.environ.get("POSTHOG_PROJECT_TOKEN"),
+    host=os.environ.get("POSTHOG_HOST"),  # https://us.i.posthog.com or https://eu.i.posthog.com
 )
 ```
 
@@ -326,7 +328,7 @@ analytics = instrument(server, posthog)  # wrap right after constructing the ser
 import time
 from posthog.mcp import PostHogMCP
 
-posthog = PostHogMCP(os.environ["POSTHOG_PROJECT_TOKEN"], host=os.environ["POSTHOG_HOST"])
+posthog = PostHogMCP(os.environ.get("POSTHOG_PROJECT_TOKEN"), host=os.environ.get("POSTHOG_HOST"))
 
 # when answering tools/list:
 tools = posthog.prepare_tool_list(my_tools)
@@ -471,7 +473,8 @@ Keep the server's existing error handling: if `main` doesn't return a `Result`, 
 - Check existing env files (`.env`, `.env.local`, etc.) for a PostHog project token. If a valid `phc_…` token and host are already set, reference those and skip the rest of this step.
 - If the token is missing, use the PostHog MCP server's `projects-get` tool to fetch the project's `api_token`. If multiple projects come back, ask the user which to use. If the MCP server isn't connected, ask the user for their project token directly.
 - Host: `https://us.i.posthog.com` for US Cloud, `https://eu.i.posthog.com` for EU Cloud.
-- Write `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ[...]` in Python) — never hardcode the token.
+- Write `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` to the appropriate env file and reference them in code (`process.env.*` in JS, `os.environ.get(...)` in Python) — never hardcode the token.
+- **TypeScript / JavaScript and Python:** a missing token must never stop the server. Both clients run disabled without one, so read it optionally and never throw on it, in development either: on STDIO the client launches the server, and a crash only shows up as a failed connection. Warn on stderr instead. Nothing loads an env file on its own, and an MCP client may start the server from another directory, so tell the user to set the variables in the `env` block of their MCP client's server config. For a start script, use the loader the project already has; if it has none, use Node's `--env-file-if-exists=.env` (Node 22.9 or later). Don't add `dotenv` to a STDIO server without `quiet: true`: by default it prints to stdout, which corrupts the stream.
 - **Go:** write only `POSTHOG_PROJECT_TOKEN` and read it with `os.Getenv`; the host goes in `posthog.Config.Endpoint` as in STEP 4. Go doesn't load `.env` files on its own, so tell the user to export the variable (or load it the way the project already loads config).
 - **Ruby:** write only `POSTHOG_PROJECT_TOKEN` and read it with `ENV["POSTHOG_PROJECT_TOKEN"]` (a missing token disables the client instead of raising); the host goes in the client's `host:` option as in STEP 4. Ruby loads `.env` only through a gem such as `dotenv`, so if the project has none, tell the user to export the variable.
 - **Rust:** write only `POSTHOG_PROJECT_TOKEN` and read it with `std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default()`; the host goes in the `posthog_rs::client` call as in STEP 4. Rust loads `.env` only through a crate such as `dotenvy`, so if the project has none, tell the user to export the variable.
@@ -492,12 +495,33 @@ The PostHog client batches events; the user owns the client's lifecycle.
   ```
 
 - **Serverless / edge (mcp-handler on Vercel, Workers, Lambda):** `SIGTERM` is unreliable — flush at the end of each invocation with `await posthog.flush()`, or `ctx.waitUntil(posthog.flush())` where supported.
-- **STDIO transports specifically:** the server's stdout is the protocol channel. Do not add `console.log` for debugging — it corrupts the MCP stream. If you need SDK-internal warnings, pass a `logger` option to `instrument()` that writes to stderr or a file.
+- **STDIO transports specifically:** MCP clients usually disconnect by closing stdin, which sends no signal, so the process exits with events still queued. Drain on that too:
+
+  ```ts
+  process.stdin.once("end", async () => {
+    await posthog.shutdown()
+    process.exit(0)
+  })
+  ```
+
+  `serveStdio` and `server.connect` return as soon as the server is listening, not when the client disconnects. Never shut down in a `finally` after them: it runs at startup, and the client drops the tool calls that follow.
+
+  The server's stdout is the protocol channel. Do not add `console.log` for debugging — it corrupts the MCP stream. If you need SDK-internal warnings, pass a `logger` option to `instrument()` that writes to stderr or a file.
 
 **Python:**
 
 - **Long-running server (STDIO or persistent HTTP):** drain on exit. On the `instrument()` path, `await analytics.flush()` waits for in-flight auto-capture events, then `posthog.shutdown()` flushes and stops the client — call both from your shutdown path. For `PostHogMCP`, `posthog.shutdown()` (or `posthog.flush()`) drains the MCP captures first.
-- **STDIO transports specifically:** stdout is the protocol channel — never `print()` to it. For SDK-internal warnings pass `logger=lambda m: print(m, file=sys.stderr)` (or a file writer) via `MCPAnalyticsOptions(...)`.
+- **STDIO transports specifically:** a closed stdin flushes at interpreter exit, but SIGTERM skips that and loses queued events, so add a handler. Use `os._exit`, because `sys.exit` hangs on the thread reading stdin:
+
+  ```python
+  def stop(*_):
+      posthog.shutdown()
+      os._exit(0)
+
+  signal.signal(signal.SIGTERM, stop)
+  ```
+
+  Stdout is the protocol channel — never `print()` to it. For SDK-internal warnings pass `logger=lambda m: print(m, file=sys.stderr)` (or a file writer) via `MCPAnalyticsOptions(...)`.
 
 **Go:**
 

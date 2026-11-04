@@ -15,7 +15,9 @@ dependsOn: [capture]
 ## Goal
 
 Create a starter PostHog dashboard with a few insights built on the events this
-integration instruments, using the PostHog MCP.
+integration instruments, using the PostHog MCP. MCP analytics' `$mcp_tool_call`
+counts as one of those events, and can carry the dashboard on its own. Where an app
+sits beside an MCP server, build mainly on the app's events.
 
 ## How you know you succeeded
 

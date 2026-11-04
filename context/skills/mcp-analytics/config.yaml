@@ -1,4 +1,7 @@
 # MCP analytics — instrument a user's own MCP server with the PostHog MCP SDK for its language.
+# Reachable via `wizard mcp-analytics`; also queued on integration-v2 runs where
+# the wizard's scan finds an MCP server — the task follows this skill inside the
+# main run.
 type: skill
 template: description.md
 category: mcp-analytics

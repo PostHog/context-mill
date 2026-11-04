@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [integration-v2-capture, posthog-best-practices]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
-dependsOn: [install, init, identify]
+dependsOn: [install, init, identify, mcp-analytics]
 ---
 
 ## Goal
@@ -39,6 +39,18 @@ pass `DISTINCT_ID` there so the gap is visible in the code, and say in your hand
 that identity exists but could not be reached, so the report calls it out as an issue
 to follow up rather than claiming events that belong to nobody.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target: capture its actions, and leave a
+separately run server's files to the `mcp-analytics` task. If the MCP server is the whole project, it is your target.
+
+Where the `mcp-analytics` handoff says the server now records every tool call as
+`$mcp_tool_call`, those calls are already captured, with the tool's name and whether
+it failed: add no event that only records that a tool ran or returned. An event
+inside a tool has to carry something `$mcp_tool_call` does not — what the tool
+produced or changed, in properties that vary from call to call. Where no tool has
+such an outcome, add no events for them. Where that task was not needed or never
+ran, instrument tool calls like any other action.
+
 Never put PII in an event. When new information about the user surfaces, tag the
 user the way the identify docs describe, not the event.
 
@@ -46,6 +58,8 @@ user the way the identify docs describe, not the event.
 
 The meaningful user actions across the app have capture calls that fire on the
 real action, not on page load, each one attributable to the user who took it, and
-`.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented.
+`.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented. On
+a server where `$mcp_tool_call` already covers every action, no events is the right
+result: leave that list empty and say why in your handoff.
 
 You do not run builds, linters, or tests — the review task verifies the whole integration after you; your edits just need to be right by reading.

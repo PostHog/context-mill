@@ -21,6 +21,11 @@ If there are no LLM calls, complete as `not needed` with the reason and make no
 changes. Do not install a vendor SDK, add a demo call, or use manual capture to
 invent an AI feature in an app that has none.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app's LLM calls are your target. Leave a separately run
+server's files alone, and name any LLM calls you find there in your handoff so the
+report can point them out. If the MCP server is the whole project, it is your target.
+
 For existing LLM calls, load the `ai-observability` skill menu and install the
 variant matching the calling code's language and provider or agent framework.
 Follow that skill's selection rules and instrumentation references. Manual
@@ -38,7 +43,8 @@ default. If a variant cannot be chosen from the code, report the ambiguity as
 `not needed`; this default run does not ask the user to choose a provider.
 
 This is the instrumentation part of a larger integration. Name the packages
-this task needs in your handoff for review to install; do not edit dependency
+this task needs in your handoff for review to install, and list each one in the
+handoff's `packages` field; do not edit dependency
 manifests, and never write a version number you invented — the package manager
 resolves real versions when review installs by name. Defer the skill's
 package-manager and import-check commands to that task. For Go, review adds the

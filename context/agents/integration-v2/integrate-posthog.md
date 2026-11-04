@@ -21,8 +21,13 @@ Plan a PostHog integration and seed the task queue with this graph:
   of one another, so they run in parallel. `error-tracking` makes the errors the app
   does not catch reach PostHog, by whatever means the SDK offers for that — it needs
   the SDK installed and initialized, not the events.
-- `capture`, after `identify` — it decides the events and instruments them, and it
-  reads how identity is already established before it instruments anything.
+- `mcp-analytics`, after `identify` — it instruments the project's own MCP server
+  so every tool call is captured. Queue it only when `enqueue_task` offers it and
+  the detected facts name MCP server candidates; otherwise skip it.
+- `capture`, after `identify`, and after `mcp-analytics` when you queued it — it
+  decides the events and instruments them, and it reads how identity is already
+  established, and which tool calls MCP analytics already records, before it
+  instruments anything.
 - `ai-observability`, after `capture`, parallel to `error-tracking` — it instruments
   existing LLM calls, or reports that none apply. Queue it on every default run; the
   task checks applicability rather than the planner guessing from a package name.
@@ -32,8 +37,8 @@ Plan a PostHog integration and seed the task queue with this graph:
   and initialization files, and Logs preserves any tracing provider AIO
   configures — an ordering-dependent instruction. (Their dependency installs
   are deferred to review, so manifests are not the conflict.)
-- `review`, after `install`, `init`, `identify`, `capture`, `error-tracking`,
-  `ai-observability`, and `logs` —
+- `review`, after `install`, `init`, `identify`, `mcp-analytics`, `capture`,
+  `error-tracking`, `ai-observability`, and `logs` —
   it installs the dependencies, verifies the project builds/typechecks/lints, and
   reviews every change the run made, fixing what fails. There is no separate build
   step: verifying and reviewing are one pass over the same changeset.
