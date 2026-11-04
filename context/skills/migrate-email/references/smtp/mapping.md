@@ -20,14 +20,14 @@ Fields set in the transporter's `defaults`, the second argument of `createTransp
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length, or an entry has anything but a `filename`, a `content`, a `path` to a file, a `contentType`, a `cid`, and an `encoding` of its string content. An `href`, a `path` that is a URL or a `data:` URI, a stream `content`, `raw`, `headers`, and an `inline` disposition without a `cid` keep it. See "Attachments by path" below |
 | `headers` | none | Always: no PostHog SDK takes headers yet. This includes every header the code sets on a MIME message, such as `msg["X-Entity-Ref-ID"]` or `addCustomHeader` |
 | `list` | none | Always: no PostHog SDK takes headers yet. `List-Unsubscribe` is a header too |
-| `priority` | none | Always |
-| `sender` | none | Always |
+| `priority` | none | Always. PostHog's send doesn't take it yet |
+| `sender` | none | Always. PostHog's send doesn't take it yet |
 | `inReplyTo`, `references`, `messageId`, `date`, `xMailer`, `otp` | none | Always: no PostHog SDK takes headers yet |
-| `watchHtml`, `amp`, `alternatives` | none | Always |
+| `watchHtml`, `amp`, `alternatives` | none | Always. PostHog's send doesn't take it yet |
 | `icalEvent` | none | Always. An `.ics` file sent only as an attachment moves as an attachment |
 | `envelope` | none | Its `from` or recipients differ from the `from`, `to`, `cc`, and `bcc` of the message, such as a bounce address of its own. An `envelope` with the same addresses moves without it: note it in the plan row |
 | `raw`, a message the code writes by hand, `net/smtp`, `Net::SMTP`, or a `gen_smtp` body that is not `:mimemail.encode` output | none | Always. The fields are in a string the code built, and PostHog takes fields |
-| `dsn` | none | Always |
+| `dsn` | none | Always. PostHog's send doesn't take it yet |
 | `dkim` on the message or the transporter | none | Never. The moved send is signed with the DKIM records of the PostHog sender that Step 4 sets up. Note in the plan row that the site moves without it |
 | `attachDataUrls` | none | The `html` holds a `data:` image |
 | `encoding`, `textEncoding`, `disableFileAccess`, `disableUrlAccess`, `pool`, `secure`, and other connection options | none | Never. They say how Nodemailer writes the message and reaches the server, and the moved site builds no message and opens no connection |
