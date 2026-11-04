@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Amazon SES account. The agent never changes the account: it reads what the person exports or allows.
 
-Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's `region`, or `AWS_REGION`, names one. Read each of them.
+Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's `region`, or `AWS_REGION`, names one. Read each of them. Each Region answers on its own host, `email.<region>.amazonaws.com`, so every command in this file sets `--region` to the Region it reads.
 
 ## DNS records
 
