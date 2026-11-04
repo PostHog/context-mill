@@ -119,6 +119,8 @@ var response = await client.SendEmailAsync(msg);
 
 **HTTP.** `POST https://api.sendgrid.com/v3/mail/send`, or `api.eu.sendgrid.com` for an EU subuser, with `Authorization: Bearer <key>`. A success answers `202` with no body and the message id in the `X-Message-Id` header. An error answers `{ "errors": [{ "message", "field", "help" }] }`. Look for `api.sendgrid.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
+**EU subusers.** An app on an EU subuser either names `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, such as `client.setDataResidency('eu')` on `@sendgrid/client` in Node.js or `sg.set_sendgrid_data_residency("eu")` in Python. Either one means every API request in `account.md` goes to `api.eu.sendgrid.com`.
+
 ```json
 {
   "personalizations": [{ "to": [{ "email": "jane@example.com" }], "dynamic_template_data": { "name": "Jane" } }],
