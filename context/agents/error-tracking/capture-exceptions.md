@@ -24,30 +24,15 @@ never manual capture calls sprinkled across files.
 An app that runs code on a server as well as in the browser has two runtimes,
 and each needs its own capture. Cover every runtime the docs cover for this
 framework and the app actually uses: the server side takes the SDK's server
-library, where the framework hands you its errors (for Next.js 15 and later,
-`onRequestError` in `instrumentation.ts`, in both runtimes Next.js calls it
-from: Node.js and edge). A browser-only setup leaves every server error
-uncaptured. An Electron app has the same split: its main process
+library, where the framework hands you its errors (for Next.js,
+`onRequestError` in `instrumentation.ts`). A browser-only setup leaves every
+server error uncaptured. An Electron app has the same split: its main process
 runs Node, and its uncaught errors never reach the renderer's capture, so the
 main process takes the server library. A packaged app ships without the
 developer's `.env`, so a runtime `process.env` lookup in the main process is
 always empty there: read the token the way the bundler inlines it at build time
 (electron-vite: `import.meta.env.MAIN_VITE_*`). A fully static app has no
 server runtime to cover.
-
-A framework hook exists only from the version that introduced it, so read the
-installed framework version from the lockfile before you wire one. Next.js 14
-never calls `onRequestError`, and runs `instrumentation.ts` only with
-`experimental.instrumentationHook: true`: when you add `instrumentation.ts` on
-Next.js 14, set that flag too, or none of it runs. When the installed version
-has no hook for its server errors, do not export one it will never call, and
-do not wrap routes by hand to make up for it: still wire what the docs give
-for that version (Next.js 14: the flag, `register()`, `withPostHogProxy`
-around the middleware), and name the errors that stay uncaptured, with the
-upgrade that adds the hook, as a manual follow-up in your handoff, so the
-report puts it in its warning block. Create the server client when the server
-starts (in Next.js, from `register()`), not on the first failed request, so
-its process-level autocapture listens from boot.
 
 A page often shows two setups side by side: a global initializer, and an
 explicit client you hold. Follow one of them the whole way through. Taking the
@@ -58,17 +43,15 @@ The SDK is installed and initialized — either it already was, or the install
 and init tasks before you did it (see their handoffs); build on that, do not
 re-check it.
 
-Install nothing except the server libraries your server-side capture imports
-(for Next.js, the docs use two), at the minimum versions the docs give,
-when the manifest lacks them: add them with the project's package manager
+Install nothing except the server library your server-side capture imports,
+when the manifest lacks it: add it with the project's package manager
 (`detect_package_manager`). When it answers `No lockfile found. Default to
 npm`, look up the tree first: in a workspace package, use the manager whose
 lockfile sits at the workspace root above this directory, and npm only when no
 parent holds a lockfile. Do not run tests or start the app, and do not touch
 the build config: when the flow includes a configure task, it owns those files.
-The one exception is a flag the docs say a hook needs to run at all (Next.js
-14's `experimental.instrumentationHook`): add that key, change nothing else
-in the file, and name it in your handoff so the configure task keeps it.
+The exception is a flag the docs say a hook needs to run at all (Next.js 14's
+`experimental.instrumentationHook`).
 Stay inside this project's directory and set up capture in those places; that
 is the whole job.
 
@@ -98,22 +81,6 @@ environment, so a build that cannot find an SDK (`SDK location not found`)
 failed because of this shell, not your edit: do not retry it, and say so in
 your handoff.
 
-## Name the user on server errors
-
-A server error links to the person and the session replay only when its
-capture carries the browser's identity. Where the browser calls the app's own
-server (one app such as Next.js, or a separate API), send it: set
-`tracing_headers` in the browser init to the hostnames the browser calls
-(`window.location.hostname` for the app's own requests). On the server, the
-identity comes from the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID`
-request headers first, then from the PostHog cookie: its distinct ID, and the
-session ID from `$sesid` while that session is fresh. When the docs give an SDK
-helper that does this (Next.js: `createOnRequestError` and `withPostHogProxy`
-from `@posthog/next`), use it and parse nothing yourself. Otherwise pass the
-distinct ID to the capture call and the session ID as `$session_id`, following
-the docs' pattern. These values are analytics context: never use them to
-authenticate anyone.
-
 ## Do not copy the SDK's own listeners
 
 Exception autocapture already registers the global handlers: `window.onerror`
@@ -131,17 +98,7 @@ global handler fires. Express error middleware, Fastify `setErrorHandler`, Hono
 `onError`, Vue `app.config.errorHandler`, Angular `ErrorHandler`, SvelteKit
 `handleError`, a React error boundary, Next.js `global-error` — hook those,
 because the framework swallows the error and the global listener never hears
-of it. The boundaries the app already has are such hooks too: add capture to
-every one that exists — each Next.js `error.tsx`, a custom `global-error.tsx`,
-a Pages Router `_error` or `_app` boundary — since each swallows what it
-catches. Creating new boundaries per route is the hand-wrapping to avoid;
-capturing in the ones the app has is not. The same holds for a wrapper the
-docs give around a framework entry point the hook misses, such as
-`withPostHogProxy` around the app's existing `proxy.ts` or `middleware.ts`:
-wrap the one the app has, and create none. When the docs name a framework API
-whose errors skip the framework's hook (Next.js `after()`), search the project
-for its import once and add the capture the docs show at each use. That is a
-lookup, not reading through the app. NestJS is one more layer up: its exception filters answer every request
+of it. NestJS is one more layer up: its exception filters answer every request
 error before Express error middleware runs, so capture goes in a global filter
 (the app's existing `@Catch()` filter when it has one), not in
 `setupExpressErrorHandler`. A platform with no autocapture at all, such as Go,
@@ -156,10 +113,6 @@ and every PostHog library in the manifest is imported. No global error listener
 of your own sits beside the SDK's autocapture. The project builds as well as it
 did before your edits. You installed nothing but the server library your
 capture imports, and did not run tests, search outside the project, or read
-through the whole app or hand-wrap individual components or routes. Every
-error boundary the app already had now captures, every use of an API the docs
-say skips the hook captures, and server captures carry the browser's distinct
-ID and session ID. Your handoff names the files you changed,
-the capture mechanism, the server errors that stay uncaptured on the installed
-version (none, when every hook exists), and the build command you ran with its
-result, so the report can explain it to the user.
+through the whole app or hand-wrap individual components or routes. Your handoff names the files you changed, the capture mechanism, and
+the build command you ran with its result, so the report can explain it to the
+user.
