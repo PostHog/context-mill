@@ -2,6 +2,8 @@
 
 What the migration needs from the person's Loops account. The agent never changes the account: it reads what the person exports or allows.
 
+Every request in this file goes to `app.loops.so`, Loops' one host, even when the app's client points at another URL with `WithBaseURL` or `apiRoot`, as `sdk-reference.md` says.
+
 ## DNS records
 
 A sending domain set up at Loops carries these records. Keep all of them until the cutover is done. The Loops dashboard shows the exact names and values under Settings, then Domain, then View records. It can also download them as a zone file, or share them on a public records page.
