@@ -38,7 +38,7 @@ A SendGrid send has no idempotency key, so the moved site sends none either. Pos
 |---|---|
 | `sgMail.send(msg)`, `sgMail.send(msg, callback)`, `SendGridAPIClient.send`, `sg.client.mail._('send').post`, `$sendgrid->send`, `client.Send`, `SendEmailAsync`, `POST /v3/mail/send` | A field above keeps it |
 | `sgMail.send(msg, true)`, `sgMail.sendMultiple`, `sgMail.send([...])`, `Mail(..., is_multiple=True)`, `CreateSingleEmailToMultipleRecipients`, `CreateMultipleEmailsToMultipleRecipients` | Always: each sends several emails in one call |
-| SMTP through `smtp.sendgrid.net` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them |
+| SMTP through `smtp.sendgrid.net` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer (Django, Rails, Laravel, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
 
