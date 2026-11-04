@@ -9,11 +9,11 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | SendGrid | PostHog | A site stays on SendGrid when |
 |---|---|---|
 | `from` | `from` | Never. `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
-| `to` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name |
+| `to` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name, unless the name is the address itself |
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
 | `content` | `text` for `text/plain`, `html` for `text/html` | It holds another type, or two entries of one type |
-| `templateId` with `dynamicTemplateData` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
+| `templateId` with `dynamicTemplateData` (in Node.js also `template_id` with `dynamic_template_data`: the helper takes snake_case keys too) | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
 | `substitutions` | none | Always. PostHog's send doesn't take it yet |
 | `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ email, name }` moves as the bare address, as for `to` |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
@@ -36,7 +36,7 @@ A SendGrid send has no idempotency key, so the moved site sends none either. Pos
 
 | SendGrid call | A site stays on SendGrid when |
 |---|---|
-| `sgMail.send(msg)`, `SendGridAPIClient.send`, `sg.client.mail._('send').post`, `$sendgrid->send`, `client.Send`, `SendEmailAsync`, `POST /v3/mail/send` | A field above keeps it |
+| `sgMail.send(msg)`, `sgMail.send(msg, callback)`, `SendGridAPIClient.send`, `sg.client.mail._('send').post`, `$sendgrid->send`, `client.Send`, `SendEmailAsync`, `POST /v3/mail/send` | A field above keeps it |
 | `sgMail.send(msg, true)`, `sgMail.sendMultiple`, `sgMail.send([...])`, `Mail(..., is_multiple=True)`, `CreateSingleEmailToMultipleRecipients`, `CreateMultipleEmailsToMultipleRecipients` | Always: each sends several emails in one call |
 | SMTP through `smtp.sendgrid.net` | Always. PostHog has no SMTP relay |
 | A framework mailer (Django, Rails, Laravel, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
@@ -127,7 +127,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **Errors.** Keep the site failing the same way it did:
 
-- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode ?? error.code, name: error.name })`. `err.code` keeps holding the HTTP status, and holds `network_error` when the request never reached PostHog, and a check of `err.code === 400` becomes a check of `err.name === 'validation_error'`. A read of `err.response.body` becomes a read of `err.message`.
+- **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode ?? error.code, name: error.name })`. `err.code` keeps holding the HTTP status, and holds `network_error` when the request never reached PostHog, and a check of `err.code === 400` becomes a check of `err.name === 'validation_error'`. A read of `err.response.body` becomes a read of `err.message`. A callback, `sgMail.send(msg, (err, result) => { ... })`, never threw: it becomes the same code run after the send, with `err` built from `error` the way the throw above builds it, or `null` when there is no `error`, and `result` from `data`.
 - **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code. `HTTPError` caught only SendGrid's answers: a network failure raised `URLError` past it. PostHog's exception covers both, so raise it again first when its code is `network_error`. A catch of one subclass becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `TooManyRequestsError` checks the status code `429`, and `BadRequestsError` checks the name `validation_error`, as Step 7 says.
 - **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more becomes "there is an error", a branch on `400` reads PostHog's error name `validation_error`, and a branch on another status, such as 429, reads PostHog's status code. Their SendGrid clients don't raise on a refused send: a site that never read the status went on after one, and only a network failure raised (Ruby, PHP, .NET) or set `err` (Go). Such a site logs PostHog's error and goes on, and raises or returns it when its code is `network_error`, as Step 7 says.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where SendGrid took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
