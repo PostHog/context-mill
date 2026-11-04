@@ -4,6 +4,8 @@ What the migration needs from the account behind the SMTP host. SMTP is only how
 
 Name that provider in the plan, such as `SMTP host: smtp.mailgun.org (Mailgun)`. When the host comes from a variable with no value in the repository, ask the person which provider runs it. The steps say "the provider" for it.
 
+**Region.** The agent sends no request to the provider: the person reads its dashboard. When the host is regional, as `sdk-reference.md` says, the domain records and the suppression list belong to the account in that region. Tell the person to open the provider's dashboard in that region. For Amazon SES, open the console in the region the host names, such as `eu-west-1` for `email-smtp.eu-west-1.amazonaws.com`: SES keeps the suppression list per region. An app that sends through hosts in several regions has a list in each one. Read every region the app's hosts use.
+
 ## DNS records
 
 A domain that sends through an SMTP provider carries that provider's records. Keep all of them until the cutover is done, and longer when the domain also gets or sends normal mail. The provider's dashboard shows the exact names, under its domain or sender settings.
