@@ -78,4 +78,4 @@ An address can come back once per type. Repeating it in the import is safe.
 **Leave out the other entries.**
 
 - **`List Unsubscribe` and `Unsubscribe Link`** are unsubscribes from non-transactional mail, and so are `Manually Added` and `Compliance` entries of type `non_transactional`, and entries with a `list_id`. They are marketing preferences, and PostHog's opt-outs apply to marketing messages only. SparkPost skipped these addresses on any send that was not marked `transactional: true`, and sends that move send as transactional. Count them, and tell the person the count in the report.
-- **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Count them for the report.
+- **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Count them for the report. Step 3 asks about them first, as `mapping.md` says under "Tracking".

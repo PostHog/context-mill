@@ -49,6 +49,7 @@ A SparkPost send without an `Idempotency-Key` header sends no `idempotencyKey` a
 - Neither tracked: a code site moves with `captureEngagement: false`, and a template site stays, because the template form takes no `captureEngagement`.
 - One tracked and one not, such as `open_tracking: false` with clicks left on: the site stays, because `captureEngagement: false` turns off both.
 - The site stays when its recipients' `options` disagree, when it sets `initial_open: true` with open tracking off, or when it sets `click_tracking: true` on an account whose `click_tracking` is `false`: SparkPost's docs don't say whether those were tracked.
+- An address with an `open_tracking` entry on the suppression list, a `Tracking Consent Revoked` entry, got no open tracking, and PostHog has no such setting per address. Ask the person once whether the list holds such entries, or read them as `account.md` says under "Suppression list". When it does, a site that tracked opens stays, and the reason is `open tracking consent revoked for some recipients`, unless the person accepts that PostHog tracks opens for those addresses: then note it in the plan row.
 
 When a site leaves open or click tracking to the account, or sends from a subaccount, ask the person once for each account the moved sites send from, or read the settings as `account.md` says. When the answer is not given, the site stays, and the reason is `account tracking not checked`.
 
