@@ -31,7 +31,9 @@ A site whose template the person moves to PostHog needs the content of its activ
 
 **Copy from the dashboard.** In SendGrid: Email API, then Dynamic Templates, then the template, then its active version. Ask the person for the template's id, the version's subject, its HTML from the code editor, and its plain text when it has one.
 
-**Read from the API.** `GET https://api.sendgrid.com/v3/templates/{template_id}` with `Authorization: Bearer $SENDGRID_READ_API_KEY`. The answer holds `id`, `name`, `generation` (`dynamic` or `legacy`), and `versions`, a list of `{ id, active, name, subject, html_content, plain_content }`. Take the version whose `active` is `1`.
+**Read from the API.** For an EU subuser, whose app sends through `api.eu.sendgrid.com`, use that host in every request of this file instead of `api.sendgrid.com`.
+
+`GET https://api.sendgrid.com/v3/templates/{template_id}` with `Authorization: Bearer $SENDGRID_READ_API_KEY`. The answer holds `id`, `name`, `generation` (`dynamic` or `legacy`), and `versions`, a list of `{ id, active, name, subject, html_content, plain_content }`. Take the version whose `active` is `1`.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
