@@ -70,6 +70,7 @@ const { data, error } = await posthog.emails.send({
 ```
 
 - Errors: `send` never throws on an API error. It answers `{ data, error }`: `data.id` is the message id, and `error` has `name`, `code`, `message`, and `statusCode`. A bad argument comes back as `error` too.
+- App host: the client option `appHost`, such as `https://us.posthog.com`, for a reverse proxy or a self-hosted host, as Step 7 says.
 - `enableLocalEvaluation: false`: the secret key also turns on local feature flag evaluation. Keep it off unless the key has `feature_flag:read` and the app uses local evaluation.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
 
@@ -95,7 +96,8 @@ result = posthog.emails.send(
 )
 ```
 
-- Errors: `send` raises `posthog.emails.EmailError` on an API error, with `.code`, `.name`, `.status_code`, and `.message`. A bad argument raises `TypeError` or `ValueError`. It answers a result whose `.id` is the message id.
+- Errors: `send` raises `posthog.emails.EmailError` on an API error, and on a network error left after the retries, with the code `network_error`. It has `.code`, `.name`, `.status_code`, and `.message`. A bad argument raises `TypeError` or `ValueError`. It answers a result whose `.id` is the message id.
+- App host: the client argument `app_host`, such as `https://us.posthog.com`, for a reverse proxy or a self-hosted host, as Step 7 says.
 - Async apps use `AsyncPosthog` from `posthog`, and `await posthog.emails.send(...)`. Install `posthog[async]` for them: without its extra, the first async send fails before it reaches PostHog.
 
 ## Go: `github.com/posthog/posthog-go`
@@ -118,6 +120,7 @@ result, err := client.Emails().Send(ctx, posthog.CodeEmail{
 
 - The template form is `posthog.TemplateEmail{To, TemplateID, TemplateData, ...}`.
 - Errors: `Send` answers `(*SendEmailResult, error)`, and `result.ID` is the message id. The error is always a `*posthog.EmailError`, with `Code`, `Name`, `Message`, and `StatusCode`. Read it with `errors.As`.
+- App host: `posthog.Config{AppHost: ...}`, such as `https://us.posthog.com`, for a reverse proxy or a self-hosted host, as Step 7 says.
 - A site with no `context.Context` passes `context.Background()`.
 - With a secret key, the client starts polling feature flag definitions from `Endpoint` when it is built, and sends the secret key to do it. No option turns that off. When the app's host is a reverse proxy, give the email send its own client whose `Endpoint` is PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the secret key.
 
@@ -140,7 +143,7 @@ result = posthog.emails.send(
 )
 ```
 
-- Errors: `send` raises `PostHog::EmailError` on an API error, with `#code`, `#name`, `#status_code`, and `#message`. A bad argument raises `ArgumentError`. It answers a result whose `id` is the message id.
+- Errors: `send` raises `PostHog::EmailError` on an API error, and on a network error left after the retries, with the code `network_error`. It has `#code`, `#name`, `#status_code`, and `#message`. A bad argument raises `ArgumentError`. It answers a result whose `id` is the message id.
 - With a secret key, the client loads feature flag definitions from `host` when it is built and keeps polling them, and sends the secret key to do it. No option turns that off. When the app's host is a reverse proxy, give the email send its own client whose `host` is PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the secret key.
 
 ## PHP: `posthog/posthog-php`
@@ -161,7 +164,7 @@ $result = $posthog->emails()->send([
 ```
 
 - `loadFeatureFlags: false`: with a secret key, the client loads feature flags at start and sends the secret key to `host` to do it. Keep it off unless the key has `feature_flag:read` and the app uses local evaluation. Give the email send its own client, as above, and leave the app's `PostHog::init` for captures as it is: never add the secret key to it.
-- Errors: `send` throws `PostHog\EmailError` on an API error and on a bad argument, with `getErrorCode()`, `getErrorName()`, `getStatusCode()`, and `getMessage()`. It answers a result whose `getId()` is the message id.
+- Errors: `send` throws `PostHog\EmailError` on an API error, on a network error left after the retries (code `network_error`), and on a bad argument, with `getErrorCode()`, `getErrorName()`, `getStatusCode()`, and `getMessage()`. It answers a result whose `getId()` is the message id.
 
 ## .NET: `PostHog`
 
@@ -186,7 +189,7 @@ var sent = await posthog.Emails.SendAsync(new SendCodeEmailOptions
 
 - The template form is `new SendTemplateEmailOptions { To, TemplateId, TemplateData }`.
 - Apps that use dependency injection register the client with `AddPostHog` and take `IPostHogEmails`.
-- Errors: `SendAsync` throws `PostHog.Emails.EmailException` on an API error, with `Code`, `Name`, `StatusCode`, and `Message`. A bad argument throws `ArgumentException`. `sent.Id` is the message id. There is no sync send.
+- Errors: `SendAsync` throws `PostHog.Emails.EmailException` on an API error, and on a network error left after the retries, with the code `network_error`. It has `Code`, `Name`, `StatusCode`, and `Message`. A bad argument throws `ArgumentException`. `sent.Id` is the message id. There is no sync send.
 
 ## Elixir: `posthog`
 
