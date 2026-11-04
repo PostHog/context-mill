@@ -9,7 +9,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid'];
+const PROVIDERS = ['resend', 'sendgrid', 'amazon-ses'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 
 async function loadSkills() {
