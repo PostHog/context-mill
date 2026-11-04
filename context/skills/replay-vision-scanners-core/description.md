@@ -43,10 +43,16 @@ only as the brief and the volume tiers below say. The
 scaffold carries the quality bar ("unambiguous on screen", what to report);
 your blanks carry everything product-specific.
 
-**The `name`** is short, sentence case, and in the product's own words. Never
-reuse the legacy fixed names — "Broken experiences", "User frustration",
-"Session summaries" — earlier wizard generations created scanners under them,
-and a generic name defeats the point of a scanner written for this product.
+**The `name`** is short, sentence case, in the product's own words, and
+starts with the product's name ("Artisan Ceramics checkout outcome", not
+"Checkout outcome"), so a project with several apps can tell their scanners
+apart. Never reuse the legacy fixed names — "Broken experiences", "User
+frustration", "Session summaries" — earlier wizard generations created
+scanners under them, and a generic name defeats the point of a scanner
+written for this product.
+
+Create every scanner with `"enabled": true`. Setup never creates a paused
+scanner; a scanner with nothing to scan yet costs nothing.
 
 **`{{PRODUCT_CONTEXT}}`** is one plain factual sentence: what this product is
 and what a user in the watched flow is trying to do, in the product's own
@@ -198,13 +204,20 @@ Names are custom per product, so a re-run cannot rely on a fixed name to find
 its own earlier scanner. Before creating, check the scanner inventory (reuse
 one your run already fetched — STEP 1 or an upstream handoff — before calling
 `vision-scanners-list` again). A scanner is this brief from an earlier run
-only when **all three** hold: same `scanner_type`, its prompt contains the
-brief's **match phrase** (each brief states it as a literal substring), and
+only when **all four** hold: same `scanner_type`, its prompt contains the
+brief's **match phrase** (each brief states it as a literal substring),
 `emits_signals` matches your flow — `false` for the `replay-vision` command
 (the API stores an omitted flag as `false`), `true` for a scanner
-self-driving's step 6c creates to emit signals. A scanner matching type and
-phrase but carrying the *other* flow's `emits_signals` value belongs to that
-flow: leave it untouched and note the overlap in your handoff. Update a match
+self-driving's step 6c creates to emit signals — and it is about **this
+product**: its name or its prompt's context sentence names this product or
+its key flow. A legacy fixed-name scanner ("Broken experiences", "User
+frustration", "Session summaries") names no product, so it passes this
+fourth test. A scanner matching type and phrase but carrying the *other*
+flow's `emits_signals` value belongs to that flow: leave it untouched and
+note the overlap in your handoff. A scanner matching type, phrase, and flow
+but about **another product** belongs to another app in the same project:
+leave it untouched, create this product's own scanner beside it, and note
+the other app's scanner in your handoff. Update a match
 in place with `vision-scanners-update` — fresh blanks **including the
 `name`** (this is how legacy fixed-name scanners upgrade to the customized
 form) — instead of creating a duplicate. Leave `enabled` as it is: a paused
@@ -227,7 +240,8 @@ On an update, keep what a person may have tuned:
   tier, and that turning on "Free credits only" is the user's choice.
 
 **Never blind-overwrite a user's scanner.** A scanner that fails the
-three-part test is theirs, whatever it is named — leave it untouched. If it
+four-part test is theirs, or another app's, whatever it is named — leave it
+untouched. If it
 already covers this brief's ground, skip creating and record that in your
 handoff. On a 400 for a unique name, fetch that one scanner and apply the
 same test: yours means update it; otherwise make **one** rename attempt

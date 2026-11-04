@@ -8,8 +8,8 @@ locked.
 
 ```jsonc
 {
-  // AGENT FILLS `name`, per the core naming rule - "Checkout outcome",
-  // "Booking outcome".
+  // AGENT FILLS `name`, per the core naming rule - "Artisan Ceramics checkout
+  // outcome", "Courtside booking outcome".
   "name": "<name>",
   "scanner_type": "classifier",
   "scanner_config": {

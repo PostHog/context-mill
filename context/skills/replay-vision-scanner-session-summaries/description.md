@@ -7,8 +7,8 @@ locked, and the query stays unscoped on every tier.
 
 ```jsonc
 {
-  // AGENT FILLS `name`, per the core naming rule - "Shopper session
-  // summaries", "Player session recaps".
+  // AGENT FILLS `name`, per the core naming rule - "Artisan Ceramics
+  // session summaries", "Courtside session recaps".
   "name": "<name>",
   "scanner_type": "summarizer",
   "scanner_config": {

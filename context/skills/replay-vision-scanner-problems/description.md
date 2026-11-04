@@ -7,8 +7,8 @@ the blanks; the scaffold around them is locked.
 
 ```jsonc
 {
-  // AGENT FILLS `name`, per the core naming rule - "Checkout problems",
-  // "Booking problems".
+  // AGENT FILLS `name`, per the core naming rule - "Artisan Ceramics checkout
+  // problems", "Courtside booking problems".
   "name": "<name>",
   "scanner_type": "monitor",
   "scanner_config": {
