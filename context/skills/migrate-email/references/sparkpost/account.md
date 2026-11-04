@@ -32,7 +32,7 @@ The steps call this key the full-access provider key.
 
 ## Tracking settings
 
-A site that sets no open or click tracking, in its recipients' `options`, its own `options`, or its template's, sends with the account's settings, as `mapping.md` says under "Tracking". A subaccount can also turn off open tracking for every send of its own.
+A site that sets no open or click tracking, in its recipients' `options`, its own `options`, or its template's, sends with the account's settings, as `mapping.md` says under "Tracking". A subaccount can also turn off open tracking for every send of its own. Every site that tracked opens, including one that sets its own tracking, also needs whether the account or subaccount it sends from minimizes open events: that setting wins over the send's own value.
 
 **Ask the person.** In SparkPost's account settings: whether engagement tracking is on by default for API sends, whether click tracking is turned off, whether open events are minimized, and whether sends are transactional by default. For each subaccount the moved sites send from: whether open tracking is turned off for it, and whether its open events are minimized.
 
