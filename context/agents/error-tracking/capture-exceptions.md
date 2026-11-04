@@ -38,12 +38,16 @@ server runtime to cover.
 A framework hook exists only from the version that introduced it, so read the
 installed framework version from the lockfile before you wire one. Next.js 14
 never calls `onRequestError`, and runs `instrumentation.ts` only with
-`experimental.instrumentationHook: true`. When the installed version has no
-hook for its server errors, do not export one it will never call: name the
-errors that stay uncaptured in your handoff, and the upgrade that adds the
-hook. Create the server client when the server starts (in Next.js, from
-`register()`), not on the first failed request, so its process-level
-autocapture listens from boot.
+`experimental.instrumentationHook: true`: when you add `instrumentation.ts` on
+Next.js 14, set that flag too, or none of it runs. When the installed version
+has no hook for its server errors, do not export one it will never call, and
+do not wrap routes by hand to make up for it: still wire what the docs give
+for that version (Next.js 14: the flag, `register()`, `withPostHogProxy`
+around the middleware), and name the errors that stay uncaptured, with the
+upgrade that adds the hook, as a manual follow-up in your handoff, so the
+report puts it in its warning block. Create the server client when the server
+starts (in Next.js, from `register()`), not on the first failed request, so
+its process-level autocapture listens from boot.
 
 A page often shows two setups side by side: a global initializer, and an
 explicit client you hold. Follow one of them the whole way through. Taking the
@@ -62,6 +66,9 @@ npm`, look up the tree first: in a workspace package, use the manager whose
 lockfile sits at the workspace root above this directory, and npm only when no
 parent holds a lockfile. Do not run tests or start the app, and do not touch
 the build config: when the flow includes a configure task, it owns those files.
+The one exception is a flag the docs say a hook needs to run at all (Next.js
+14's `experimental.instrumentationHook`): add that key, change nothing else
+in the file, and name it in your handoff so the configure task keeps it.
 Stay inside this project's directory and set up capture in those places; that
 is the whole job.
 

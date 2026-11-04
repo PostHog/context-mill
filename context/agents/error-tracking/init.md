@@ -55,6 +55,15 @@ file and look for the exact name the init reads. It returns names, never values.
   in `.env.example`. Do not rename the code to match a name you would rather
   have written; the code is the half that already exists.
 
+Either way the existing init stays where it is and as it is: same file, same
+options, same fallbacks. A placeholder fallback (`?? "phc_placeholder"`) does
+not make it missing: it is an existing init whose variable is absent, so
+define that variable and keep the code. Even when your skill shows another init point (in
+Next.js, `instrumentation-client.ts` instead of a provider), do not move it
+there, and do not drop an option such as `capture_pageview` that the app
+chose. Moving an init loses what the app configured, and the analytics it
+already collects change without anyone asking for it.
+
 An empty key is the quiet failure here. A client constructed from `''` throws
 nothing and logs nothing. The build is clean, the app starts, every capture call
 returns — and no event ever arrives.
