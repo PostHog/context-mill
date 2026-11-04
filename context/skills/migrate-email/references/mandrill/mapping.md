@@ -33,7 +33,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `url_strip_qs`, `preserve_recipients` | none | Never on their own. They change only Mailchimp Transactional's reports, or what several recipients see |
 | `async` | none | Never on its own. It changes only when Mailchimp Transactional answers |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
-| `metadata`, `recipient_metadata` | none | Always: no PostHog SDK takes tags yet |
+| `metadata`, `recipient_metadata` | none | Always: no PostHog SDK takes metadata yet |
 | `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files with `images`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
 | `images` | `attachments`, each with `contentId` | The same as `attachments`, counted together with them |
 | `subaccount` | none | Always. The subaccount has its own reports, quota, and denylist at Mailchimp Transactional |
@@ -56,7 +56,7 @@ A Mailchimp Transactional send has no idempotency key, so the moved site sends n
 | SMTP through `smtp.mandrillapp.com` | Always. PostHog has no SMTP relay |
 | A framework mailer (djrill, Anymail, `mandrill_mailer`, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
-| A send through the older PHP client `mandrill/mandrill` | Always. Its source is no longer published, so the rewrite can't tell how the site failed |
+| A send through the older PHP client `mandrill/mandrill`, or through a copy of it kept in the app's own code, even under other class names, that posts to `mandrillapp.com/api` | Always. Its source is no longer published, so the rewrite can't tell how the site failed |
 
 ## Code around the send
 
@@ -76,7 +76,7 @@ Mailchimp Transactional's SDKs report an error in two ways. The Python and Ruby 
 A stored template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Mailchimp Transactional template, makes it transactional, and gives you its template ID. Until then the site stays on Mailchimp Transactional. The check needs the content of the template's published version, because the code has only its slug. `account.md` says how to get it.
 
 - The site's `merge_language` says which merge tags the template uses. When the site doesn't set it, the account's default decides: read the template, `*|NAME|*` is the Mailchimp language and `{{name}}` is Handlebars.
-- A site whose `template_content` holds an entry stays: it fills an `mc:edit` region with content, usually HTML, and PostHog's Liquid escapes HTML in a value. An empty `template_content`, such as `[]`, moves.
+- A site whose `template_content` holds an entry stays: it fills an `mc:edit` region with content, usually HTML, and PostHog's Liquid escapes HTML in a value. An empty `template_content`, such as `[]`, moves. So does a list whose entries have no `name`, such as `[{}]`, which the API's own examples send: an entry with no `name` fills no region.
 - Mailchimp Transactional reads merge var names in any case. PostHog's Liquid doesn't: write each variable with the name the code sends, such as `{{ variables.first_name }}` for `{ name: 'first_name' }`, even when the template writes `*|FIRST_NAME|*`. Names that differ only in case are one variable, such as `reset_url` in `global_merge_vars` and `RESET_URL` in `merge_vars`: use one spelling in the template and in `templateData`.
 
 Merge tags become Liquid in the PostHog template. Values move under `variables`.
@@ -151,7 +151,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with one entry per merge var: `{ [name]: content }` from `global_merge_vars`, then the entries of the one recipient's `merge_vars`, which win over a global entry with the same name in any case. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
-**Errors.** Keep the site failing the same way it did. Never widen a catch: a catch of one error class or one status becomes a catch of PostHog's error that checks its `code` or status code, and raises or returns every other error as before.
+**Errors.** Keep the site failing the same way it did. Never widen a catch: a catch of one error class or one status becomes a catch of PostHog's error that checks its `code` or status code, and raises or returns every other error as before. A catch of every error around the send, such as a bare `except:`, `except Exception`, `rescue => e`, `rescue StandardError`, or `catch (\Throwable $e)`, stays as it is: it caught network errors before too, so it raises no `network_error` again, whatever the bullets below say for a narrower catch.
 
 - **Node.js.** The official SDK answered the `AxiosError` in place of the list, and `posthog.emails.send` answers `{ data, error }`: neither throws. Where the code checked the answer for an error, or a recipient's `status` for `rejected` or `invalid`, check `error`, and run the same branch. Where that branch threw the answer, throw from the error, `if (error) throw Object.assign(new Error(error.message), { statusCode: error.statusCode, name: error.name, code: error.code })`, so a network failure, which has no status, keeps `err.code` `network_error`, and change each read of the `AxiosError` in its `catch`, such as `err.response.status`, to `err.statusCode`, and `err.response.data` to `err.message`. A check of `ValidationError` in the error body, such as `response.response?.data?.name === 'ValidationError'`, or of a recipient's `status` for `invalid` alone, becomes `error?.name === 'validation_error'`, after `recipient_suppressed`. A check of one other status, such as `response.response?.status === 429`, becomes `error?.statusCode === 429`. Every other error goes the way it went before. A site that never checked the answer never failed on an error: add no check.
 - **Node.js, `mandrill-api`.** Replace the callbacks with `const { data, error } = await posthog.emails.send(...)`. The body of `onSuccess` runs when there is no `error`, and the body of `onError` runs with `error` in place of the error body, reading `error.message`. A check of the body's `name` for `ValidationError` in `onError` becomes `error.name === 'validation_error'`, after `recipient_suppressed`. Without `onError`, the old client threw: `if (error) throw new Error(error.message)`.
