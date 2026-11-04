@@ -20,7 +20,7 @@ Read the provider's `sdk-reference.md` for the call shapes, and its `mapping.md`
 
 A **site** is one place in the code that decides what a send contains: its content and its fields. Usually that is the `emails.send(...)` call or the HTTP request itself.
 
-- When a helper builds the send from a few parameters, such as a subject and a template name, the helper is one site, however many places call it. Read its callers anyway: they decide values such as how many recipients a send has.
+- When a helper builds the send from a few parameters, such as a subject and a template name, the helper is one site, however many places call it. Read its callers anyway: they decide values such as how many recipients a send has. When some callers pass one address and others several, the helper stays, and the plan row names the callers that pass one address, so the person can give them a send of their own.
 - When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not. The same holds for a queue job or a transport that posts a message built elsewhere, such as a JSON string: each place that builds the message is a site.
 - Find a helper's callers by searching the repository. When you can't find or read every caller, each send through the helper stays, and the reason names the caller or the value you could not read.
 - A forwarding helper that nothing in the repository calls is not a site, unless the repository is a library that exports it: no code builds a message for it. List it with the other provider calls, and leave it as it is. A function that builds its own send stays a site, even when nothing in the repository calls it.
@@ -34,6 +34,7 @@ For each site, read the surrounding code and record:
 - The content: `template` for a template stored at the provider, `react` for a component the provider renders, `html`, or `text`. A site that sets both `html` and `text` is `html`.
 - Every field the site sets, including fields set on the payload object after it is created and fields set through options, such as an idempotency key.
 - Where `from` comes from: the literal address, or the name of the environment variable or config value that holds it.
+- For a `template` site, where its template ID comes from: the literal, or the environment variable or config value that holds it, read the same way as `from`.
 
 Also list every other call to the provider that is not a send, such as reading an email's status, contacts, or domains. These calls stay on the provider. Note what each one does, because a site whose code reads the status back stays on the provider too.
 
@@ -51,7 +52,7 @@ Go through `mapping.md` field by field. A site **moves** when PostHog can send e
 
 A field set to an empty value, such as `""`, `[]`, `{}`, or `null`, or to its off value, such as `false` for a flag that is off unless set, counts as not set, even where `mapping.md` keeps every site that sets the field, unless its row names that empty or off value. A field that the code sets on some sends only, such as under a condition or from a caller's argument, counts as set.
 
-When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
+When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When it comes from an environment variable or a config value, read it from the example env file or the config, or ask the person once what it holds. When you still can't tell, the site stays, and the reason says what you could not check.
 
 A site stays when no sender can be verified for its `from`: an address on a free mail domain, such as `gmail.com` or `outlook.com`, on the provider's shared or sandbox domain, on a domain whose DNS records the person can't publish, such as a school's or another company's, or taken from a user, a customer, or a tenant at run time. The reason names the address or where it comes from. When a site sets no `from`, the provider sent from the account's default sender: ask the person for that address once, and the site stays when they can't name it.
 
