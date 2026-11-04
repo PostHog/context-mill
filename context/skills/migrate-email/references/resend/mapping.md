@@ -19,8 +19,8 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `tags` | none | Always. PostHog's send doesn't take it yet |
 | `attachments` | none | Always. PostHog's send doesn't take it yet |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
-| `scheduledAt` / `scheduled_at` | none | Always |
-| `topicId` / `topic_id` | none | Always |
+| `scheduledAt` / `scheduled_at` | none | Always. PostHog's send doesn't take it yet |
+| `topicId` / `topic_id` | none | Always. PostHog's send doesn't take it yet |
 
 ## Calls
 
