@@ -25,6 +25,8 @@ A sending domain set up at Loops carries these records. Keep all of them until t
 
 Loops API keys have no permissions to choose: every key can send and change the account. So the run never reads the app's own key. When the person chooses the API over the dashboard, ask them to create a separate key for the migration in Loops (Settings, then API, then Generate key), store it in `LOOPS_MIGRATION_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Use it only for the reads below. Its last use is the suppression check in Step 5. At the end of Step 5, on every way out of it, ask the person to revoke the key in Loops (the trash icon next to it on the API settings page) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
+An app with several Loops teams, one per sending domain, needs one migration key per team: each team's emails and contacts are visible only to its own keys. Match each site to its team by the API key variable its client reads. Ask for one key per team, each in its own variable, such as `LOOPS_MIGRATION_API_KEY_MAIL_EXAMPLE_COM`, read each team's emails and audience with its own key, and ask the person to revoke every one at the end of Step 5.
+
 The steps call this key the full-access provider key.
 
 ## Template content
@@ -33,7 +35,7 @@ A site whose Loops email the person moves to PostHog needs the content of its pu
 
 **Copy from the dashboard.** Ask the person to open the transactional email in Loops, and to give you:
 
-- the Name, From, Reply, Subject, CC, and BCC fields (click `>` to show all of them), with any data variable in them;
+- the Name, From, Reply, Subject, Preview, CC, and BCC fields (click `>` to show all of them), with any data variable in them;
 - the email's text, with each data variable where it stands, each array block with its variable name and the variables inside it, and each conditional section with its condition;
 - each optional data variable and its fallback value;
 - the example payload from the email's Publish page (**Show payload**), which lists its data variables.
@@ -55,9 +57,9 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 Loops suppresses an address after a hard bounce or a spam complaint, and skips it on every later send. **Loops has no export of its suppression list, and no API route that lists it.** It only answers for one contact at a time. Say this plainly to the person, and offer these ways instead:
 
-**The app's own record (preferred).** When the app keeps the addresses its Loops webhook reported, such as from `email.hardBounced` and `email.spamReported` events, ask the person to export those addresses from the app's database to a CSV outside the repository, with a column that says which event each came from, and tell you where they saved it.
+**The app's own record (preferred).** When the app keeps the addresses its Loops webhook reported, such as from `email.hardBounced` and `email.spamReported` events, ask the person to export those addresses from the app's database to a CSV outside the repository, with a column that says which event each came from, and tell you where they saved it. Ask whether the app kept those events since its first Loops send. When it didn't, the record misses the older suppressions: import it, and write the phase as `- [ ] suppressions — <imported>/<entries> imported: the app's record starts after its first Loops send`.
 
-**Check each contact through the API.** Ask the person to download their audience from Loops (Audience, then the `•••` menu, then **Download**) to a file outside the repository, and tell you where it is. For each address in its email column, call `GET https://app.loops.so/api/v1/contacts/suppression?email=<the address, URL-encoded>` with `Authorization: Bearer $LOOPS_MIGRATION_API_KEY`. Take each answer whose `isSuppressed` is `true`. A `404` means the address is not a contact: skip it. Send at most 10 requests per second, and wait and retry on `429`. Tell the person how long that takes for their count before you start, and ask whether to go on. This finds only addresses that are contacts in the audience: a transactional send alone does not add its recipient to the audience.
+**Check each contact through the API.** Ask the person to download their audience from Loops (Audience, then the `•••` menu, then **Download**) to a file outside the repository, and tell you where it is. For each address in its email column, call `GET https://app.loops.so/api/v1/contacts/suppression?email=<the address, URL-encoded>` with `Authorization: Bearer $LOOPS_MIGRATION_API_KEY`. Take each answer whose `isSuppressed` is `true`. A `404` means the address is not a contact: skip it. Loops allows 10 requests per second for the whole team, and the app's own sends share that limit, so send at most 5 requests per second, and wait and retry on `429`. Tell the person how long that takes for their count, that it shares the app's sending limit, and that a quiet hour is the best time, and ask whether to go on. This finds only addresses that are contacts in the audience: a transactional send alone does not add its recipient to the audience. So this check never covers the whole list: write the phase as `- [ ] suppressions — <imported>/<entries> imported: audience contacts only`, so the report lists the import as partial.
 
 When the person has neither, the import is not done: write why in the plan.
 
