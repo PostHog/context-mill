@@ -13,11 +13,11 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `text` | `text` | Never |
 | `react` | `html`, rendered in the app | Never. The app renders the component |
 | `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
-| `cc`, `bcc` | none | Always |
+| `cc`, `bcc` | none | Always. This skill doesn't move them yet, so keep the site on Resend |
 | `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always |
 | `tags` | none | Always |
-| `attachments` | none | Always |
+| `attachments` | none | Always. This skill doesn't move them yet, so keep the site on Resend |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
 | `scheduledAt` / `scheduled_at` | none | Always |
 | `topicId` / `topic_id` | none | Always |
