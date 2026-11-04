@@ -23,7 +23,7 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## Check that the key is set
 
-The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key, such as `grep -cE '^(export +)?POSTHOG_PROJECT_SECRET_API_KEY=.?phs_' .env`. A count of `0` means the key is not set.
+The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key, such as `grep -cE '^\s*(export\s+)?POSTHOG_PROJECT_SECRET_API_KEY\s*=\s*.?phs_' .env`. A count of `0` means the key is not set.
 
 A person who says they will add the key later has not set it, and neither has one who declines. Don't wait for them: record the key as not set, and go on.
 
