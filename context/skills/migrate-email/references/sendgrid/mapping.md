@@ -21,8 +21,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
-| No `trackingSettings` | `captureEngagement: false` when open or click tracking is off in the account, as `account.md` says under "Tracking" | Tracking is off in the account, and the installed SDK has no `captureEngagement` or the site sends a `templateId`: the template form takes no `captureEngagement` |
-| `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or the settings do anything else, such as `subscriptionTracking` or `ganalytics`. `false` turns off both open and click capture: note it in the plan row |
+| No `trackingSettings` | `captureEngagement: false` when open and click tracking are both off in the account, as `account.md` says under "Tracking" | Only one of open and click tracking is off in the account, the person can't say (the reason is `account tracking not checked`), or both are off and the installed SDK has no `captureEngagement` or the site sends a `templateId`: the template form takes no `captureEngagement` |
+| `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, the settings do anything else, such as `subscriptionTracking` or `ganalytics`, or open or click tracking stays on, from the settings or from the account for the one the settings don't set: `false` turns off both |
 | `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
 | `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |

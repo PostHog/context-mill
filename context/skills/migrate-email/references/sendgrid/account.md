@@ -29,7 +29,7 @@ The steps call this key the full-access provider key.
 
 ## Tracking
 
-A send without `trackingSettings` follows the account's open and click tracking. PostHog records opens and clicks unless the send sets `captureEngagement: false`. Ask the person once whether open tracking or click tracking is off in SendGrid (Settings, then Tracking). When either is off, the moved sites without `trackingSettings` send `captureEngagement: false`, and a template site without `trackingSettings` stays, as `mapping.md` says. Note the answer in the plan.
+A send without `trackingSettings` follows the account's open and click tracking. PostHog records opens and clicks unless the send sets `captureEngagement: false`. Ask the person once whether open tracking or click tracking is off in SendGrid (Settings, then Tracking). When both are off, the moved sites without `trackingSettings` send `captureEngagement: false`, and a template site without `trackingSettings` stays. When only one is off, the sites without `trackingSettings` stay, because `captureEngagement: false` turns off both. When the person can't say, they stay, and the reason is `account tracking not checked`. Note the answer in the plan.
 
 ## Template content
 
