@@ -92,6 +92,7 @@ mg.send_message('mail.example.com', {
 - `Mailgun::Client.new(key, 'api.eu.mailgun.net')` is the EU client.
 - `Mailgun::MessageBuilder` builds the same fields: `from`, `add_recipient(:to | :cc | :bcc, address)`, `reply_to`, `subject`, `body_text`, `body_html`, `add_attachment(path_or_io, filename)`, `add_inline_image`, `add_tag`, `variable` (a `v:` value), `header`, `deliver_at`, `track_opens`, `track_clicks`, `test_mode`, `template`, `template_version`, and `add_custom_parameter`. `send_message(domain, builder)` sends it.
 - `Mailgun::BatchMessage.new(mg, domain)` sends one email per recipient, in parts of 1,000.
+- Test mode: `Mailgun.configure { |config| config.test_mode = true }`, or `enable_test_mode!` on a client. The client then keeps each message in `Mailgun::Client.deliveries` and sends nothing.
 
 **PHP.** `send` answers a `SendResponse`: `getId()` is the message id and `getMessage()` the text. It throws `Mailgun\Exception\HttpClientException` on a 4xx answer, with `getResponseCode()` and `getResponseBody()`, and `Mailgun\Exception\HttpServerException` on a 5xx answer. A client built with `NoopHydrator` throws neither: it answers the raw PSR-7 response, and the code reads `getStatusCode()`.
 
