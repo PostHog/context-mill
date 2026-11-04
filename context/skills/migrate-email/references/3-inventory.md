@@ -23,7 +23,7 @@ A **site** is one place in the code that decides what a send contains: its conte
 - When a helper builds the send from a few parameters, such as a subject and a template name, the helper is one site, however many places call it. Read its callers anyway: they decide values such as how many recipients a send has.
 - When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not. The same holds for a queue job or a transport that posts a message built elsewhere, such as a JSON string: each place that builds the message is a site.
 - Find a helper's callers by searching the repository. When you can't find or read every caller, each send through the helper stays, and the reason names the caller or the value you could not read.
-- A helper that nothing in the repository calls is not a site, unless the repository is a library that exports it. List it with the other provider calls, and leave it as it is.
+- A forwarding helper that nothing in the repository calls is not a site, unless the repository is a library that exports it: no code builds a message for it. List it with the other provider calls, and leave it as it is. A function that builds its own send stays a site, even when nothing in the repository calls it.
 - When one function chooses between this provider and others, by a setting or as a fallback when a send fails, the branch that sends through this provider is the site. Move only that branch, and leave the other branches as they are.
 
 For each site, read the surrounding code and record:
@@ -53,7 +53,7 @@ A field set to an empty value, such as `""`, `[]`, `{}`, or `null`, or to its of
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
-A site stays when no sender can be verified for its `from`: an address on a free mail domain, such as `gmail.com` or `outlook.com`, on the provider's shared or sandbox domain, or taken from a user, a customer, or a tenant at run time. The reason names the address or where it comes from. When a site sets no `from`, the provider sent from the account's default sender: ask the person for that address once, and the site stays when they can't name it.
+A site stays when no sender can be verified for its `from`: an address on a free mail domain, such as `gmail.com` or `outlook.com`, on the provider's shared or sandbox domain, on a domain whose DNS records the person can't publish, such as a school's or another company's, or taken from a user, a customer, or a tenant at run time. The reason names the address or where it comes from. When a site sets no `from`, the provider sent from the account's default sender: ask the person for that address once, and the site stays when they can't name it.
 
 A `template` site moves only to a template made in PostHog, and the person makes that template. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template. Ask the person once, for every other template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`.
 
