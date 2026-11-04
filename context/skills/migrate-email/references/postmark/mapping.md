@@ -35,7 +35,7 @@ A Postmark send has no idempotency key, so the moved site sends none either. Pos
 |---|---|
 | `sendEmail`, `outbound.send`, `emails.send` (`postmarker`), `deliver`, `deliver_message`, PHP `sendEmail` and `sendEmailModel`, `SendMessageAsync`, Go `SendEmail`, `POST /email` | A field above keeps it |
 | `sendEmailWithTemplate`, `outbound.send_with_template`, `emails.send_with_template`, `deliver_with_template`, `deliver_message_with_template`, PHP `sendEmailWithTemplate`, `SendEmailWithTemplateAsync`, `POST /email/withTemplate` | See "Templates" |
-| `sendEmailBatch`, `sendEmailBatchWithTemplates`, `sendBulkEmail`, `send_batch`, `send_batch_with_template`, `send_bulk`, `deliver_in_batches`, `deliver_in_batches_with_templates`, `deliver_messages`, PHP `sendEmailBatch` and `sendEmailBatchWithTemplate`, `SendMessagesAsync`, Go `SendEmailBatch`, `POST /email/batch`, `/email/batchWithTemplates`, `/email/bulk` | Always: each sends several emails in one call |
+| `sendEmailBatch`, `sendEmailBatchWithTemplates`, `sendBulkEmail`, `send_batch`, `send_batch_with_template`, `send_bulk`, `deliver_in_batches`, `deliver_in_batches_with_templates`, `deliver_messages`, PHP `sendEmailBatch` and `sendEmailBatchWithTemplate`, `SendMessagesAsync`, Go `SendEmailBatch`, `POST /email/batch`, `/email/batchWithTemplates`, `/email/bulk` | Always: each sends several emails in one call. The one exception is a batch call whose argument is a list of exactly one message, written in the code, such as PHP `sendEmailBatch([$message])`: that is one send. Classify it by that message's fields, and a template message by "Templates" |
 | SMTP through `smtp.postmarkapp.com` or `smtp-broadcasts.postmarkapp.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them |
 | A framework mailer (`postmark-rails`, a Django backend, Laravel or Symfony `postmark`, Swoosh, Bamboo, `nodemailer-postmark-transport`) | Always. PostHog has no mailer driver |
 | A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
@@ -51,7 +51,7 @@ Postmark's SDKs throw on an API error: Node.js, both Python SDKs, Ruby, PHP, and
 | A branch on an inactive recipient: `InactiveRecipientsError`, `InactiveRecipientException`, `Postmark::InactiveRecipientError`, or `ErrorCode` `406` | Never. PostHog refuses a suppressed address with the code `recipient_suppressed` |
 | A branch on another Postmark `ErrorCode`, or on the error's message text | Always. A catch of `InvalidEmailRequestError` or Python's `ValidationException` is not such a branch: the Rewrite section maps it |
 | A read of the inactive addresses from the error (`recipients`, `inactive_recipients`) | Always |
-| A check of `ErrorCode` or `Message` in a send's answer | Never. Read PostHog's error instead, as the Rewrite section says |
+| A check of `ErrorCode`, `Message`, or .NET's `Status` in a send's answer | Never. Read PostHog's error instead, as the Rewrite section says |
 | `MessageID` stored for a webhook handler or a status read | Always, when a webhook handler or the Messages or Bounces API uses it |
 | `MessageID` logged or stored for the app's own use | Never. Use PostHog's message id |
 
@@ -83,7 +83,7 @@ Postmark's Mustachio becomes Liquid in the PostHog template. Values move under `
 - `{{{ pm:unsubscribe }}}` keeps the template on Postmark: it is Postmark's unsubscribe link.
 - An inverted section `{{^items}}` on a list or an object, a section `{{#items}}` on a list without `each`, a name inside `{{#person}}` that the site doesn't put on `person`, and `../` that reads anything but a top-level key all keep the template on Postmark. Inside `{{#each}}`, one `../` reaches the list, not the model: Postmark needs `../../` for a top-level key there.
 - The PostHog template carries its own sender, reply-to address, and subject. A Postmark template send always sets `From`: the site moves only when `From` is the same in every send, and the person makes the PostHog template send from it. The same holds for `ReplyTo` when the site sets it. Otherwise it stays.
-- A site that sets `Cc`, `Bcc`, `Attachments`, `TrackOpens`, `TrackLinks`, or a `MessageStream` other than `outbound` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes none of them. `Headers`, `Metadata`, and `Tag` keep any site, as the Fields table says.
+- A site that sets `Cc`, `Bcc`, `Attachments`, `TrackOpens: false`, `TrackLinks: 'None'`, or a `MessageStream` other than `outbound` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes none of them. `TrackOpens: true`, `TrackLinks` set to anything but `None`, and `MessageStream: 'outbound'` next to the template are dropped, as the Fields table says. `Headers`, `Metadata`, and `Tag` keep any site, as the Fields table says.
 - With `InlineCss` on, its default, Postmark moved the template's `<style>` rules into each tag. Tell the person to check how the PostHog template looks in its test send.
 
 ## Webhooks
@@ -117,9 +117,10 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - Python `client.outbound.send({ ... })` (keys `sender`, `to`, `html_body`, or the HTTP names), and `postmarker` `client.emails.send(From=, To=, ...)`: the same fields.
 - Ruby `client.deliver(from:, to:, subject:, html_body:, text_body:, ...)`: the same fields.
 - PHP `sendEmail($from, $to, $subject, $htmlBody, $textBody, $tag, $trackOpens, $replyTo, $cc, $bcc, $headers, $attachments, $trackLinks, $metadata, $messageStream)`: read each argument by its position or its name. A `null` argument sets nothing.
-- .NET `new PostmarkMessage { ... }`: the same fields.
+- .NET `new PostmarkMessage { ... }`: the same fields. The positional forms `new PostmarkMessage(from, to, subject, textBody, htmlBody, headers, metadata, messageStream)` and `SendMessageAsync(from, to, subject, textBody, htmlBody, headers, metadata, messageStream)` take the text body before the HTML body, unlike PHP. Read each argument by its position, and a `null` or left-out argument sets nothing. The `SendMessage` with the same arguments is synchronous: `posthog-sdks.md` says what a synchronous .NET site does.
 - Go `postmark.Email{ ... }`: the same fields.
 - A raw HTTP body: its fields.
+- A batch of one message: the fields of that message, sent with PostHog's send for one email.
 
 **The fields.**
 
@@ -144,6 +145,10 @@ Never widen a catch. Where the code caught only one kind of Postmark error, catc
 - **.NET.** `catch (PostmarkValidationException ex)` caught API errors only: network errors went past it, such as an `HttpRequestException`. It becomes `catch (PostHog.Emails.EmailException ex) when (ex.Code != "network_error")`. `ex.Response.Message` becomes `ex.Message`, a branch on the `422` answer becomes `ex.Name == "validation_error"`, and a check of `ex.Response.ErrorCode` for `406` becomes `ex.Code == "recipient_suppressed"`.
 - **Go.** Both return an error. Keep `if err != nil`, and read PostHog's `*posthog.EmailError` with `errors.As` where the code read Postmark's. A branch on one `ErrorCode` becomes a check of the error's `Code` or `StatusCode`, a branch on a `422` reads its `Name` for `validation_error`, and every other error goes on as before.
 - **HTTP.** The code read the status or `ErrorCode` of the answer. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more, or an `ErrorCode` other than 0, becomes "there is an error", a branch on `422` reads PostHog's error name `validation_error`, and a branch on another status, such as `429`, reads PostHog's status code.
+
+**Checks of the answer.** A single send threw on any answer but `200` before the code read it: .NET's `SendMessageAsync` throws `PostmarkValidationException`, and PHP's `sendEmail` throws `PostmarkException`. A check after the call, such as `response.Status != PostmarkStatus.Success` or `getErrorCode() != 0`, only ever saw a sent email. Remove the check, keep the code it guarded on success, and let PostHog's error take the path Postmark's exception took, as the bullets above say.
+
+**A batch of one.** The batch route answers `200` even when it refuses the message, and puts the refusal in the message's `ErrorCode` in the answer's list. Only a refusal of the whole request, such as a bad token, or a network failure threw. Code that read the list's first entry reads PostHog's result instead: its `ErrorCode` check becomes a check for PostHog's error, and its `MessageID` becomes PostHog's message id. A site that never read the entry went on after a refused message: catch PostHog's error, log it, and go on, and raise or return it again when its code is `network_error` or its status code is `401`, or `500` or more.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `MessageID` (`message_id`, `getMessageID()`), or stored it for the app's own use, takes PostHog's message id instead.
 
