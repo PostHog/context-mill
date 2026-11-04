@@ -20,7 +20,7 @@ A domain verified at Postmark carries these records. Keep all of them until the 
 
 ## Migration token
 
-Postmark's Server API tokens can't be limited to reads: each one can send mail and change the server's settings. The app's own token can read templates and suppressions, but the run doesn't use it. When the person chooses the API over the dashboard, ask them to generate a separate Server API token for the migration on the server the app sends from (the server, then API Tokens, then Generate New; a server holds up to three tokens), store it in `POSTMARK_MIGRATION_SERVER_TOKEN` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the token in Postmark (the server, then API Tokens) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the token, and never write it into another file.
+Postmark's Server API tokens can't be limited to reads: each one can send mail and change the server's settings. The app's own token can read templates and suppressions, but the run doesn't use it. When the person chooses the API over the dashboard, ask them to generate a separate Server API token for the migration on the server the moved sites send from (the server, then API Tokens, then Generate New; a server holds up to three tokens), store it in `POSTMARK_MIGRATION_SERVER_TOKEN` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the token in Postmark (the server, then API Tokens) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the token, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -36,7 +36,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 ## Suppression list
 
-Postmark keeps one suppression list per message stream. It refuses a send to an address on the stream's list with error code `406`. Import the list of `outbound`, the default transactional stream, which the moved sites send through.
+Postmark keeps one suppression list per message stream. It refuses a send to an address on the stream's list with error code `406`. Import the list of `outbound`, the default transactional stream, which the moved sites send through. Each server has its own streams and lists, and each Server API token belongs to one server. When the moved sites send with the tokens of more than one server, import the `outbound` list of each of them, and count the import as complete only when every one is in. Through the API, take one server at a time: read its list with a migration token from that server, then ask the person to delete that token and put the next server's in its place.
 
 **Export from the dashboard (preferred).** In Postmark: the server, then the `outbound` stream, then Suppressions, then **Export**. It saves a JSON file. Ask the person where they saved it. Read its fields to find each entry's address and reason.
 
@@ -54,5 +54,5 @@ Postmark keeps one suppression list per message stream. It refuses a send to an 
 
 **Leave out the other lists.**
 
-- **Broadcast streams** hold the suppressions of marketing mail, such as unsubscribes from a newsletter. PostHog's opt-outs apply to marketing messages only, and transactional email ignores them. Count the entries of each broadcast stream, and tell the person the count in the report.
+- **Broadcast streams** hold the suppressions of marketing mail, such as unsubscribes from a newsletter. PostHog's opt-outs apply to marketing messages only, and transactional email ignores them. At Postmark they never stopped the `outbound` stream's mail, so nothing changes for them when the sends move.
 - **Other transactional streams** belong to the sites that send through them, and those sites stay on Postmark. Leave their lists where they are.
