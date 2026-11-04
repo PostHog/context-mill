@@ -16,11 +16,11 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
 | `%recipient.<name>%`, `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` | none | Always: Mailgun fills them at send time |
-| `amp-html` | none | Always |
-| `message` (MIME) | none | Always |
+| `amp-html` | none | Always. PostHog's send doesn't take it yet |
+| `message` (MIME) | none | Always. PostHog's send doesn't take it yet |
 | `template` with `t:variables`, `h:X-Mailgun-Variables`, or `v:` values | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
 | `t:version` | the PostHog template made from that version | See "Templates" |
-| `t:text` | none | Always |
+| `t:text` | none | Always. PostHog's send doesn't take it yet |
 | `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `Name <address>` moves as the bare address, as for `to` |
 | `h:Reply-To` | `replyTo` | It carries a name, holds more than 10 addresses, or the code builds it at run time and you cannot tell that it holds bare addresses only |
 | `attachment` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all. A file given by path moves when the rewrite can read it, as for any other file |
@@ -30,11 +30,11 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
 | `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks` set to `no` or `false` | `captureEngagement: false` | The installed SDK has no `captureEngagement`, or a tracking field is set to anything else, such as `yes` or `htmlonly`. `false` turns off both open and click capture: note it in the plan row |
 | An `Idempotency-Key` request header | `idempotencyKey` | Never |
-| `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always |
-| `recipient-variables` | none | Always |
+| `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
+| `recipient-variables` | none | Always. PostHog's send doesn't take it yet |
 | `o:testmode` | none | Always. Test mode is not a send |
-| `o:dkim`, `o:secondary-dkim`, `o:secondary-dkim-public`, `o:require-tls`, `o:skip-verification` | none | Always |
-| `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always |
+| `o:dkim`, `o:secondary-dkim`, `o:secondary-dkim-public`, `o:require-tls`, `o:skip-verification` | none | Always. PostHog's send doesn't take it yet |
+| `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always. PostHog's send doesn't take it yet |
 
 A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header the code passes. A moved site without one sends none either: PostHog's SDK makes one for each call and reuses it on its own retries.
 
