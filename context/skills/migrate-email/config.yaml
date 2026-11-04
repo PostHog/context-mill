@@ -19,3 +19,6 @@ variants:
   - id: sendgrid
     display_name: SendGrid
     tags: [sendgrid]
+  - id: smtp
+    display_name: SMTP
+    tags: [smtp]
