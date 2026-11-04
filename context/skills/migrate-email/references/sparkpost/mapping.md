@@ -6,11 +6,11 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 ## Fields
 
-SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK names, such as Python's `from_email` and `template`.
+SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK names, such as Python's `from_email` and `template`, and the camelCase names Node.js 1.x takes under `transmissionBody`, such as `substitutionData`.
 
 | SparkPost | PostHog | A site stays on SparkPost when |
 |---|---|---|
-| `content.from`, `override.from` | `from` | It holds a template expression that "Content" keeps. `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
+| `content.from`, `override.from` | `from` | It holds a template expression that "Content" keeps, or it is on SparkPost's sandbox domain `sparkpostbox.com`, which no sender can be verified for (Step 3). `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `recipients` | `to` | It holds more than one recipient without `header_to`, or it is `{ list_id }`: a stored list always stays. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name |
 | `recipients` with `header_to`, a `CC` header, or the SDK's `cc` and `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. See "Cc and bcc" |
 | `content.subject` | `subject` | It holds a template expression that "Content" keeps |
@@ -56,7 +56,7 @@ SparkPost has no `cc` or `bcc` field. A cc or bcc is one more entry in `recipien
 
 | SparkPost call | A site stays on SparkPost when |
 |---|---|
-| `client.transmissions.send`, `sp.transmissions.send`, `send_message`, `send_payload`, `$sparky->transmissions->post`, `client.Send`, `client.SendContext`, `client.Transmissions.Send`, `SparkPost.Transmission.send`, `SparkPost.send`, `POST /api/v1/transmissions` | A field above keeps it |
+| `client.transmissions.send`, `client.transmissions.send({ transmissionBody }, callback)` in Node.js 1.x, `sp.transmissions.send`, `send_message`, `send_payload`, `$sparky->transmissions->post`, `client.Send`, `client.SendContext`, `client.Transmissions.Send`, `SparkPost.Transmission.send`, `SparkPost.send`, `POST /api/v1/transmissions` | A field above keeps it |
 | A transmission with several `recipients` without `header_to`, or a stored `list_id` | Always: it sends several emails in one call |
 | SMTP through `smtp.sparkpostmail.com` or `smtp.eu.sparkpostmail.com` | Always. PostHog has no SMTP relay |
 | A framework mailer or transport (Django, Rails, Laravel, Swoosh, Bamboo, `nodemailer-sparkpost-transport`) | Always. PostHog has no mailer driver |
@@ -69,11 +69,11 @@ SparkPost's SDKs report an error in two ways. The Node.js, Python, Ruby, PHP, an
 | Code | A site stays on SparkPost when |
 |---|---|
 | A `catch`, `except`, or `rescue` that reads `err.statusCode`, `err.errors`, `e.status`, `e.errors`, `getCode()`, `getBody()`, or `Response.StatusCode` | It branches on a SparkPost error `code`, such as `1902`, or on its text. A branch on the HTTP status moves: a branch on `400` or `422`, SparkPost's answers to an invalid send, reads PostHog's error name `validation_error`, a branch on `420`, its sending limit, reads PostHog's code `quota_limited`, and a branch on another status reads PostHog's status code, as the Rewrite section says |
-| A callback `(err, data)` that checks `err` | Never. Check PostHog's error instead |
+| A callback `(err, data)`, or `(err, res)` in Node.js 1.x, that checks `err` | Never. Check PostHog's error instead |
 | A check of `res.HTTP.StatusCode` in Go, or a match on `%SparkPost.Endpoint.Error{}` in Elixir | Never. Read PostHog's error instead, as the Rewrite section says |
 | A check of `total_rejected_recipients` or `total_accepted_recipients` | Never. With one recipient, check PostHog's error instead |
 | `results.id`, the transmission id, stored for a webhook, a status read, or a cancel by campaign | Always, when the webhook handler, the Events API, or the cancel uses it |
-| `results.id` logged or stored for the app's own use | Never. Use PostHog's message id |
+| `results.id`, or `res.body.results.id` in Node.js 1.x, logged or stored for the app's own use | Never. Use PostHog's message id |
 
 ## Content
 
@@ -145,7 +145,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The call.** The SparkPost transmission becomes one PostHog send. Build its fields from the transmission the site built:
 
-- Node.js, PHP, and HTTP: `content.from`, `content.subject`, `content.html`, `content.text`, `content.reply_to`, `content.attachments`, the one recipient, and the cc and bcc recipients.
+- Node.js, PHP, and HTTP: `content.from`, `content.subject`, `content.html`, `content.text`, `content.reply_to`, `content.attachments`, the one recipient, and the cc and bcc recipients. In Node.js 1.x they sit under `transmissionBody`, and the rewrite drops that wrapper.
 - Python `send(recipients=, from_email=, subject=, html=, text=, reply_to=, cc=, bcc=, attachments=)`: the same fields. An attachment with `filename` (a path) is read into its content first.
 - Ruby `send_message(to, from, subject, html, text_message:)`: the same fields.
 - Go `sp.Transmission{Recipients, Content: sp.Content{From, Subject, HTML, Text, ReplyTo, Attachments}}`: the same fields.
@@ -185,6 +185,6 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - In Python, Ruby, and .NET, SparkPost's error class covers an error answer from the API only: a network error raised the HTTP library's own error, past the `except`, `rescue`, or `catch`. In Node.js, PHP, Go, and Elixir, SparkPost's error covered network errors too, so nothing changes there. PostHog's error also covers a network error, with the code `network_error`. Where the old catch named only SparkPost's class, raise an error whose code is `network_error` again, so it goes where it went before.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where SparkPost took it and rejected it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
-**The answer.** The message id of a moved send is PostHog's. Code that logged `results.id`, or stored it for the app's own use, takes PostHog's message id instead.
+**The answer.** The message id of a moved send is PostHog's. Code that logged `results.id`, or `res.body.results.id` in Node.js 1.x, or stored it for the app's own use, takes PostHog's message id instead.
 
 **The SparkPost client.** Keep the SparkPost client, its import, and its setup while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package and its key: the person removes them after the cutover. The SparkPost SDKs serve SparkPost only. The framework mailers that can send through SparkPost, such as `django-anymail`, Swoosh, and Bamboo, also serve other providers and the app's other mail: they always stay, and Step 9 never lists them for removal.

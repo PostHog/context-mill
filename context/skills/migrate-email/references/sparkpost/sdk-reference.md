@@ -21,6 +21,8 @@ The API key lives in `SPARKPOST_API_KEY` by convention, and the Node.js, Python,
 
 SparkPost calls a send a **transmission**. One transmission sends one email to each entry in `recipients`.
 
+SparkPost's sandbox domain is `sparkpostbox.com`, such as `testing@sparkpostbox.com`: an account sends its first test emails from it before it has a sending domain.
+
 These are not SparkPost's send SDK, and alone they are not a migration: `@types/sparkpost` holds types only, `heml` builds email HTML only, `gosparkpost/events` only parses webhook events, and `nodemailer` alone sends through any SMTP server.
 
 ## Clients and sends
@@ -46,6 +48,7 @@ await client.transmissions.send({
 - Top-level `cc` and `bcc`, each a list of `{ address }`, are the SDK's own fields: it turns them into recipients with `header_to` and a `CC` header before the request.
 - `send(transmission, options)` passes `options` as query parameters, such as `num_rcpt_errors`. They are not send fields.
 - `client.request(...)`, `client.post({ uri: 'transmissions', json })` send a raw body.
+- Version 1.x of `sparkpost` takes `client.transmissions.send({ transmissionBody }, callback)`: the transmission sits under `transmissionBody`, and its keys may be written in camelCase, such as `substitutionData` or `campaignId`, which the SDK turns into the HTTP names. The callback gets `(err, res)`, where `res` is the HTTP response and `res.body.results.id` the transmission id. An API error has `err.statusCode` and `err.errors`, as in 2.x, and a network error is the HTTP library's own error.
 
 **Python.** It raises `sparkpost.exceptions.SparkPostAPIException` on an API error: `e.status` is the HTTP status, `e.errors` a list of strings, and `e.response` the `requests` response. A success answers the `results` dict, whose `id` is the transmission id.
 
