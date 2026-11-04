@@ -11,6 +11,12 @@ and the legacy variants must keep describing the majors they install.
 Refresh a copy only to pick up a fix to the legacy page itself, never from a
 page that already describes a v1 major. The v1 variants point at the live pages.
 
+`feature-flags/` holds the two feature flag pages the Android variants read,
+taken on 2026-11-04 while they still described posthog-android 3.x. The
+`adding-feature-flag-code` page is a group `shared_docs` entry that every other
+variant keeps reading live: a variant's own `shared_docs` entry replaces the
+group's one with the same file name.
+
 | File | Source |
 | --- | --- |
 | `python.md` | https://posthog.com/docs/libraries/python.md |
@@ -26,3 +32,5 @@ page that already describes a v1 major. The v1 variants point at the live pages.
 | `flutter.md` | https://posthog.com/docs/libraries/flutter.md |
 | `django.md` | https://posthog.com/docs/libraries/django.md |
 | `flask.md` | https://posthog.com/docs/libraries/flask.md |
+| `feature-flags/android.md` | https://posthog.com/docs/feature-flags/installation/android.md |
+| `feature-flags/adding-feature-flag-code.md` | https://posthog.com/docs/feature-flags/adding-feature-flag-code.md |

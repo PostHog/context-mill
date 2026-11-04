@@ -132,7 +132,9 @@ variants:
     display_name: Android
     tags: [android, java]
     docs_urls:
-      - https://posthog.com/docs/feature-flags/installation/android.md
+      - context/docs-snapshots/legacy/feature-flags/android.md
+    shared_docs:
+      - context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md
 
   - id: ios
     display_name: iOS

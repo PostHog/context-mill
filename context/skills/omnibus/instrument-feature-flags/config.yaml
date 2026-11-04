@@ -29,7 +29,7 @@ variants:
       - https://posthog.com/docs/feature-flags/installation/dotnet.md
       - https://posthog.com/docs/libraries/dotnet.md
       - https://posthog.com/docs/feature-flags/installation/elixir.md
-      - https://posthog.com/docs/feature-flags/installation/android.md
+      - context/docs-snapshots/legacy/feature-flags/android.md
       - https://posthog.com/docs/feature-flags/installation/ios.md
       - context/docs-snapshots/legacy/usage.md
       - https://posthog.com/docs/feature-flags/installation/flutter.md

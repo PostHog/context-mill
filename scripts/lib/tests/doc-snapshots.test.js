@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import yaml from 'js-yaml';
-import { loadDoc } from '../skill-generator.js';
+import { loadDoc, expandSkillGroups } from '../skill-generator.js';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 
@@ -75,6 +75,7 @@ describe('the legacy SDK pages are read from the snapshots everywhere', () => {
         'https://posthog.com/docs/libraries/flutter.md',
         'https://posthog.com/docs/libraries/django.md',
         'https://posthog.com/docs/libraries/flask.md',
+        'https://posthog.com/docs/feature-flags/installation/android.md',
     ];
 
     // Those pages move to the capture v1 majors on release day; a skill fetching one live would flip with them.
@@ -94,5 +95,37 @@ describe('a snapshot keeps its own file name', async () => {
     it('uses the basename for a repo path and the last URL segment for a page', () => {
         expect(urlToFilename('context/docs-snapshots/legacy/usage.md')).toBe('usage.md');
         expect(urlToFilename('https://posthog.com/docs/libraries/ios/usage.md')).toBe('usage.md');
+    });
+});
+
+describe('a variant shared doc', () => {
+    const LIVE_FLAGS = 'https://posthog.com/docs/feature-flags/adding-feature-flag-code.md';
+    const SNAPSHOT_FLAGS = 'context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md';
+    const BEST = 'https://posthog.com/docs/feature-flags/best-practices.md';
+
+    it('replaces the group one with the same file name, in place', () => {
+        const [legacy, other] = expandSkillGroups({
+            flags: {
+                shared_docs: [LIVE_FLAGS, BEST],
+                variants: [
+                    { id: 'legacy', display_name: 'Legacy', shared_docs: [SNAPSHOT_FLAGS, 'context/extra.md'] },
+                    { id: 'other', display_name: 'Other' },
+                ],
+            },
+        }, repoRoot);
+        expect(legacy._sharedDocs).toEqual([SNAPSHOT_FLAGS, BEST, 'context/extra.md']);
+        expect(other._sharedDocs).toEqual([LIVE_FLAGS, BEST]);
+    });
+
+    // The live page moves to posthog-android 4.0 on release day; the Android variants install 3.x.
+    it('gives the Android flag variants the 3.x flag code page', () => {
+        for (const config of ['feature-flags', 'integration-v2/feature-flags-step']) {
+            const file = path.join(repoRoot, 'context', 'skills', config, 'config.yaml');
+            const group = yaml.load(fs.readFileSync(file, 'utf8'));
+            const skills = expandSkillGroups({ [config]: group }, path.join(repoRoot, 'context'));
+            const android = skills.find(skill => skill._shortId === 'android');
+            expect(android._sharedDocs, config).toContain(SNAPSHOT_FLAGS);
+            expect(android._sharedDocs, config).not.toContain(LIVE_FLAGS);
+        }
     });
 });

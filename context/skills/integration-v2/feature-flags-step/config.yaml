@@ -261,7 +261,9 @@ variants:
   - java
   - kotlin
   docs_urls:
-  - https://posthog.com/docs/feature-flags/installation/android.md
+  - context/docs-snapshots/legacy/feature-flags/android.md
+  shared_docs:
+  - context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md
 - id: sveltekit
   framework: sveltekit
   display_name: SvelteKit

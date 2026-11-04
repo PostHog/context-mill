@@ -312,7 +312,7 @@ function expandSkillGroups(config, configDir) {
                 : baseTemplate;
 
             // Support per-variation shared_docs (merged with base)
-            const sharedDocs = [...baseSharedDocs, ...(variation.shared_docs || [])];
+            const sharedDocs = mergeSharedDocs(baseSharedDocs, variation.shared_docs || []);
 
             // Skill ID: {compositeKey-dashed}-{shortId}, dropping the "-all" suffix
             const skillId = variation.id === 'all'
@@ -516,6 +516,19 @@ async function fetchDoc(url) {
         return { content: cached.content, title: cached.title };
     }
     throw lastError;
+}
+
+/**
+ * A variant's shared doc replaces the group's one that writes the same
+ * reference file, in place, so a legacy variant can read a snapshot of a page
+ * the other variants keep reading live. Any other variant doc is appended.
+ */
+function mergeSharedDocs(baseDocs, variantDocs) {
+    const nameOf = (entry) => urlToFilename(typeof entry === 'string' ? entry : entry.url);
+    const byName = new Map(variantDocs.map(entry => [nameOf(entry), entry]));
+    const merged = baseDocs.map(entry => byName.get(nameOf(entry)) ?? entry);
+    const baseNames = new Set(baseDocs.map(nameOf));
+    return [...merged, ...variantDocs.filter(entry => !baseNames.has(nameOf(entry)))];
 }
 
 /** A `docs_urls` entry without a scheme is a file in this repo (a snapshot), not a page to fetch. */
