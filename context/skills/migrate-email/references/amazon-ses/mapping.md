@@ -26,8 +26,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
 | `FromEmailAddressIdentityArn`, `FeedbackForwardingEmailAddressIdentityArn` / `SourceArn`, `ReturnPathArn`, `FromArn` | none | Always: the site sends for an identity another AWS account owns |
-| `EndpointId` | none | Always |
-| `TenantName` | none | Always |
+| `EndpointId` | none | Always. PostHog's send doesn't take it yet |
+| `TenantName` | none | Always. PostHog's send doesn't take it yet |
 
 An Amazon SES send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
