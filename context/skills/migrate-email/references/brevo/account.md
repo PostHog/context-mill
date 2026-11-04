@@ -23,15 +23,17 @@ A domain authenticated at Brevo carries these records. Keep all of them until th
 
 A Brevo API key can't be limited to some APIs: every key has full access to the account. The app's own key can read templates and the blocked contacts list, but the steps never read the app's key from its env file. When the person chooses the API over the dashboard, ask them to generate a new API key for this migration in Brevo (Settings, then SMTP & API, then API keys), store it in `BREVO_MIGRATION_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Brevo and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
+Brevo can block API calls from IP addresses it doesn't know. It turns this on by itself once no new address has called the API for 30 days. When Brevo refuses a read because of the IP address, ask the person to authorize this machine's address in Brevo (Settings, then Security, then Authorized IPs), and to remove it when they delete the key. Don't retry the read until they have.
+
 The steps call this key the full-access provider key.
 
 ## Template content
 
 A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
 
-**Copy from the dashboard.** In Brevo's list of email templates, the template's id is the number after `#` in its name. Ask the person for the template's id, its subject, its sender and reply-to address, its "To" field when it is not the default, and its HTML from the template's code editor.
+**Copy from the dashboard.** In Brevo's list of email templates, the template's id is the number after `#` in its name. Ask the person for the template's id, its subject, its sender and reply-to address, its "To" field when it is not the default, its HTML from the template's code editor, and whether it has an attachment under "Show Advanced Options".
 
-**Read from the API.** `GET https://api.brevo.com/v3/smtp/templates/{templateId}` with the header `api-key: $BREVO_MIGRATION_API_KEY`. The answer holds `id`, `name`, `subject`, `isActive`, `htmlContent`, `sender` (`{ name, email, id }`), `replyTo`, `toField`, and `tag`. On the general rate limit tier Brevo allows 300 requests an hour to this route: read only the templates the sites send.
+**Read from the API.** `GET https://api.brevo.com/v3/smtp/templates/{templateId}` with the header `api-key: $BREVO_MIGRATION_API_KEY`. The answer holds `id`, `name`, `subject`, `isActive`, `htmlContent`, `sender` (`{ name, email, id }`), `replyTo`, `toField`, and `tag`. It doesn't show the template's attachment: ask the person whether the template has one, as above. On the general rate limit tier Brevo allows 300 requests an hour to this route: read only the templates the sites send.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
