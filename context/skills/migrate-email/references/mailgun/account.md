@@ -2,6 +2,8 @@
 
 What the migration needs from the person's Mailgun account. The agent never changes the account: it reads what the person exports or allows.
 
+**Regions.** Mailgun's regions are separate, and every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. An app in the EU region names `api.eu.mailgun.net` in its client, its Rails `mailgun_settings`, or `mailgun.APIBaseEU` in Go, as `sdk-reference.md` says under "EU region". For such an app, use `https://api.eu.mailgun.net` in every request of this file. Each request below names both hosts.
+
 ## DNS records
 
 A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`, carries these records. Keep all of them until the cutover is done. The Mailgun dashboard shows the exact names and values in the domain's DNS records, under Send, then Sending, then Domains.
@@ -26,8 +28,6 @@ A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`
 The app's own Mailgun key is often a domain sending key, which can only send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in Mailgun (Settings, then API Security) with the role that has the fewest rights and still reads templates and suppressions, and a short expiry when the form offers one. Ask them to store it in `MAILGUN_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailgun and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
-
-Mailgun's regions are separate. Every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. The app's client shows the region: an EU client sets `api.eu.mailgun.net` as its URL or host, as `sdk-reference.md` shows. Each request below names both hosts.
 
 ## Template content
 
