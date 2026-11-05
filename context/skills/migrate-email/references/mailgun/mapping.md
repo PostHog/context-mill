@@ -57,7 +57,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 | `/messages.mime`, `client.mimemessage.create`, `send_message` with `message:`, `$mg->messages()->sendMime`, `mailgun.NewMIMEMessage` | Always: a MIME message is built outside the send |
 | `Mailgun::BatchMessage`, `$mg->messages()->getBatchMessage`, `AddRecipientAndVariables` on a message with more than one recipient, or a send with `recipient-variables` and more than one address in `to` | Always: each sends several emails in one call |
 | A send whose `to` is a Mailgun mailing list address | Always: Mailgun sends it to every member |
-| SMTP through `smtp.mailgun.org` or `smtp.eu.mailgun.org` | Always. PostHog has no SMTP relay |
+| SMTP through `smtp.mailgun.org` or `smtp.eu.mailgun.org` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer or transport (Laravel, Symfony, Rails, Django, Nodemailer, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 

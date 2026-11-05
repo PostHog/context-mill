@@ -28,3 +28,6 @@ variants:
   - id: loops
     display_name: Loops
     tags: [loops]
+  - id: smtp
+    display_name: SMTP
+    tags: [smtp]
