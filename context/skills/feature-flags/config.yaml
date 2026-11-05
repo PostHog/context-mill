@@ -140,8 +140,11 @@ variants:
     display_name: iOS
     tags: [ios, swift]
     docs_urls:
-      - https://posthog.com/docs/feature-flags/installation/ios.md
+      - context/docs-snapshots/legacy/feature-flags/ios.md
       - context/docs-snapshots/legacy/usage.md
+    shared_docs:
+      - context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md
+
   - id: flutter
     display_name: Flutter
     tags: [flutter, dart]

@@ -145,7 +145,7 @@ variants:
     display_name: iOS
     tags: [ios, swift]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/ios.md
+      - context/docs-snapshots/legacy/error-tracking/ios.md
 
   - id: android
     display_name: Android

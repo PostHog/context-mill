@@ -69,7 +69,7 @@ variants:
     display_name: iOS
     tags: [ios, swift]
     docs_urls:
-      - https://posthog.com/docs/logs/installation/ios.md
+      - context/docs-snapshots/legacy/logs-installation/ios.md
 
   - id: flutter
     display_name: Flutter

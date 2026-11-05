@@ -76,6 +76,9 @@ describe('the legacy SDK pages are read from the snapshots everywhere', () => {
         'https://posthog.com/docs/libraries/django.md',
         'https://posthog.com/docs/libraries/flask.md',
         'https://posthog.com/docs/feature-flags/installation/android.md',
+        'https://posthog.com/docs/feature-flags/installation/ios.md',
+        'https://posthog.com/docs/error-tracking/installation/ios.md',
+        'https://posthog.com/docs/logs/installation/ios.md',
     ];
 
     // Those pages move to the capture v1 majors on release day; a skill fetching one live would flip with them.
@@ -117,15 +120,18 @@ describe('a variant shared doc', () => {
         expect(other._sharedDocs).toEqual([LIVE_FLAGS, BEST]);
     });
 
-    // The live page moves to posthog-android 4.0 on release day; the Android variants install 3.x.
-    it('gives the Android flag variants the 3.x flag code page', () => {
-        for (const config of ['feature-flags', 'integration-v2/feature-flags-step']) {
+    // The live page moves to posthog-android 4.0 and posthog-ios 4.0 on release day; these variants install 3.x.
+    it.each([
+        ['android', 'android'],
+        ['ios', 'swift'],
+    ])('gives the %s flag variants the 3.x flag code page', (standalone, step) => {
+        for (const [config, id] of [['feature-flags', standalone], ['integration-v2/feature-flags-step', step]]) {
             const file = path.join(repoRoot, 'context', 'skills', config, 'config.yaml');
             const group = yaml.load(fs.readFileSync(file, 'utf8'));
             const skills = expandSkillGroups({ [config]: group }, path.join(repoRoot, 'context'));
-            const android = skills.find(skill => skill._shortId === 'android');
-            expect(android._sharedDocs, config).toContain(SNAPSHOT_FLAGS);
-            expect(android._sharedDocs, config).not.toContain(LIVE_FLAGS);
+            const variant = skills.find(skill => skill._shortId === id);
+            expect(variant._sharedDocs, config).toContain(SNAPSHOT_FLAGS);
+            expect(variant._sharedDocs, config).not.toContain(LIVE_FLAGS);
         }
     });
 });

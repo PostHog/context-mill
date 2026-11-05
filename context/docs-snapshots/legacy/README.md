@@ -17,6 +17,13 @@ taken on 2026-11-04 while they still described posthog-android 3.x. The
 variant keeps reading live: a variant's own `shared_docs` entry replaces the
 group's one with the same file name.
 
+The iOS pages in `feature-flags/`, `error-tracking/` and `logs-installation/`
+were taken on 2026-11-05 while they still described posthog-ios 3.x
+(CocoaPods, `from: "3.56.0"`). The iOS flag variants also read the
+`adding-feature-flag-code` snapshot, which still has the 3.x
+`reloadFeatureFlags` block and the `didReceiveFeatureFlags` fallback. The logs
+folder isn't named `logs/` because `.gitignore` ignores that name.
+
 | File | Source |
 | --- | --- |
 | `python.md` | https://posthog.com/docs/libraries/python.md |
@@ -34,3 +41,6 @@ group's one with the same file name.
 | `flask.md` | https://posthog.com/docs/libraries/flask.md |
 | `feature-flags/android.md` | https://posthog.com/docs/feature-flags/installation/android.md |
 | `feature-flags/adding-feature-flag-code.md` | https://posthog.com/docs/feature-flags/adding-feature-flag-code.md |
+| `feature-flags/ios.md` | https://posthog.com/docs/feature-flags/installation/ios.md |
+| `error-tracking/ios.md` | https://posthog.com/docs/error-tracking/installation/ios.md |
+| `logs-installation/ios.md` | https://posthog.com/docs/logs/installation/ios.md |
