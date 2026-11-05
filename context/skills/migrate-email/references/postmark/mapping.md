@@ -12,8 +12,8 @@ Postmark fields are written in their HTTP names here, such as `HtmlBody`. Python
 | `To` | `to` | It holds more than one address: a comma in the string, a list with more than one entry in Ruby, PHP, or `postmarker`, or a value the code builds at run time that you cannot tell holds one address. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name |
 | `Subject` | `subject` | Never |
 | `HtmlBody`, `TextBody` | `html`, `text` | Never |
-| `TemplateId` or `TemplateAlias`, with `TemplateModel` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
-| `InlineCss` | none | Never on its own. It only shapes how Postmark renders its template, and the PostHog template holds its own HTML |
+| `TemplateId` or `TemplateAlias`, with `TemplateModel` | the template's email, with its layout, brought into the code and rendered with `TemplateModel`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
+| `InlineCss` | none | Never on its own. It shapes how Postmark rendered the template's CSS: the email brought into the code carries that CSS, as "Templates" says |
 | `Cc`, `Bcc` | none | Always. PostHog's send doesn't take it yet |
 | `ReplyTo` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `Attachments` | none | Always. PostHog's send doesn't take it yet |
@@ -32,7 +32,7 @@ Count only the fields the code sets.
 - Neither tracked: the site moves with `captureEngagement: false`.
 - One tracked and one not, such as a `postmarker` send on a server with open tracking on: the site stays, because `captureEngagement: false` turns off both.
 - The installed SDK has no `captureEngagement`, and Postmark tracked neither: the site stays.
-- A template site that Postmark sent with one of them untracked stays, as "Templates" says.
+- A template site that moves to a template made in PostHog, and that Postmark sent with one of them untracked, stays, as "Templates made in PostHog" says. A template brought into the code follows the bullets above.
 
 Opens follow the server's setting whenever a site leaves out `TrackOpens` or sets it to `null`, in every SDK, `postmarker` and .NET included, except PHP's `sendEmailModel` with a `PostmarkMessage`: the model sets `TrackOpens` to `false` unless the code sets it, and sends that, so its opens were not tracked. Links follow it when a site leaves out `TrackLinks` or sets it to `null`, except in a `postmarker` send and a .NET SDK message that never sets it, whose links were not tracked. When either one follows the server, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
 
@@ -72,9 +72,43 @@ Postmark's SDKs throw on an API error: Node.js, both Python SDKs, Ruby, PHP, and
 
 ## Templates
 
-A template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Postmark template, makes it transactional, and gives you its template ID. Until then the site stays on Postmark. The check needs the template's subject, HTML body, and text body, because the code has only its id or alias. `account.md` says how to get them.
+A template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's subject, HTML body, and text body, because the code has only its id or alias. `account.md` says how to get them. The code renders them with the site's `TemplateModel`, and the send sets the rendered `subject`, `html`, and `text`.
 
-A template with a layout (its `LayoutTemplate` names one) renders inside that layout at `{{{ @content }}}`. The check needs the layout's content too, and the person makes one PostHog template from both: the layout's HTML with the template's HTML in place of `{{{ @content }}}`, and the same for the text body. Tell them so when you ask them to make it.
+A template with a layout (its `LayoutTemplate` names one) renders inside that layout at `{{{ @content }}}`, so the layout and the template come into the code as one email: the layout's HTML with the template's HTML in place of `{{{ @content }}}`, and the same for the text body, all rendered with the same `TemplateModel`. The check needs the layout's content too. When several emails share a layout, write it once as a piece they share. When only one of the layout and the template has a text body, the docs don't say what Postmark sent as text, so the template stays on Postmark.
+
+Postmark templates are Mustachio. In the code:
+
+| Postmark | In the code |
+|---|---|
+| `{{name}}`, `{{ name }}` | The value, escaped. A missing or `null` value renders as nothing, and so does a list or an object. A number renders as its digits. A boolean renders as `True` or `False`, as Mustachio's source does: the docs don't say, so note it in the plan row |
+| `{{person.first_name}}` | The nested value, escaped. A missing step of the path renders as nothing |
+| `{{{name}}}`, `{{& name}}` | The value as it is, unescaped, under the rule of `template-to-code.md`. In the subject and the text, it is the plain value |
+| `{{#paid}}…{{/paid}}`, on a value that is never a list | The part, rendered once when the value passes Mustachio's truth test below. Inside it, names are read from that value: `{{#person}}{{first_name}}{{/person}}` reads `person.first_name`, and `{{.}}` is the value itself |
+| `{{^paid}}…{{/paid}}` | The part, rendered when the value fails the truth test |
+| `{{name}}{{^name}}there{{/name}}`, Mustachio's only fallback | The value, or `there` when it fails the truth test: `""` gets the fallback too |
+| `{{#each items}}…{{/each}}` | A loop over the list, in order. Nothing when the list is missing, `null`, or empty |
+| Inside `{{#each items}}`: `{{.}}`, `{{name}}`, `{{#each .}}` | The current item, its field, or a loop over the item when it is a list itself. Mustachio has no index, first, or last |
+| `{{../name}}`, `{{../../name}}` | The value one level out for each `../`. Out of a section, one level is the scope the section is in. Out of an `each` item, one level is the list, so `../../name` reads the scope the list is in. A `../` past the top stays at the top, in Mustachio's source |
+| `{{! note }}` | Nothing |
+| The layout's `{{{ @content }}}` | The template's HTML, or its text, in its place |
+| The template's `Subject` | The send's `subject`, rendered with the same conversions and no escaping. A layout has no subject |
+| The template's `TextBody`, inside the layout's | The send's `text`, with no escaping. Mustachio keeps every line break around its tags, so keep the lines as they are. A template without a text body sends `html` only |
+
+- Mustachio's truth test: a missing value, `null`, `false`, `""`, and an empty list fail it. Every other string, including `"0"` and `"false"`, `true`, a number other than `0`, and an object with keys pass it. Write that test out in the code, as `template-to-code.md` says. The docs don't say what `0` or an empty object does: a section or an inverted section whose value can be either keeps the template on Postmark, because which part Postmark sent can't be told.
+- Inside a section or an `each`, a bare name reads only the section's value or the current item. Postmark's docs reach an outer value with `../` only, and don't say whether a bare name looks outside: a bare name that the value or the item doesn't always carry keeps the template on Postmark. So does a bare name inside an inverted section, which has no value to read it from: only `../` reads there.
+- A section `{{#items}}` on a value that can be a list, an `{{#each}}` on a value that can be an object or a scalar, a path into a list by position, such as `{{items.0.name}}`, a partial (`{{> name}}`), and any other tag keep the template on Postmark. The docs show a list only with `each`, and Mustachio's source renders such a section once with the whole list as its value and fails such an `each`.
+- `{{{ pm:unsubscribe }}}`, also inside a link as `href="{{{ pm:unsubscribe }}}"`, keeps the template on Postmark: Postmark fills it from its account with the stream's unsubscribe link.
+- With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches, as Postmark did when it sent the email, and keep the `<style>` block for the rules a tag can't hold, such as `@media`. Do it once, while you write the email: the code adds no inliner. Postmark's docs don't say whether it kept the `<style>` block, so note in the plan row that the CSS was inlined in the code, for the person to compare a test send. A site that sends `InlineCss: false`, or `false` for PHP's `$inlineCss`, keeps the HTML as it is.
+- Postmark hosts no images for templates: its editor has no upload, and its docs name no image host. A template's images are on the person's own hosts, so none needs listing.
+- A Postmark template holds no sender or reply-to address, and a template send always sets `From`. The send takes the site's own `From` and `ReplyTo`. Its subject comes only from the template: the template routes take no `Subject`.
+- A template site follows "Tracking" like any other site: it moves with no field when Postmark tracked both opens and links, and with `captureEngagement: false` when it tracked neither.
+- No single send fills Postmark's template language into its own content: `POST /email` and the batch route send `Subject`, `HtmlBody`, and `TextBody` as they are, so a `{{name}}` in them was mailed as written, and nothing about it changes. Only the Bulk API fills its own content with each message's `TemplateModel`, and a bulk call stays, as "Calls" says.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Postmark template, makes it transactional, and gives you its template ID. Until then the site stays on Postmark.
+
+For a template with a layout, the person makes one PostHog template from both: the layout's HTML with the template's HTML in place of `{{{ @content }}}`, and the same for the text body. Tell them so when you ask them to make it.
 
 Postmark's Mustachio becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
@@ -136,6 +170,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - Go `postmark.Email{ ... }`: the same fields.
 - A raw HTTP body: its fields.
 - A batch of one message: the fields of that message, sent with PostHog's send for one email.
+- A template send, such as `sendEmailWithTemplate`, `send_with_template`, `deliver_with_template`, .NET `TemplatedPostmarkMessage`, or `POST /email/withTemplate`: its `From`, `To`, `ReplyTo`, and tracking fields, as for any message, and the rendered email, as "Templates brought into the code" says. PHP `sendEmailWithTemplate($from, $to, $templateIdOrAlias, $templateModel, $inlineCss, ...)` takes the rest from `$tag` on in `sendEmail`'s order.
 
 **The fields.**
 
@@ -146,6 +181,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `MessageStream: 'outbound'` is dropped, as the Fields table says.
 - `TrackOpens` and `TrackLinks` are dropped. The send gets `captureEngagement: false` when Postmark tracked neither opens nor links, as "Tracking" says, whether the site's field, `postmarker`'s or .NET's default, or the server's setting did. Note in the plan row each site that got it from the server's setting.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email, inside its layout, from `TemplateModel`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`, and drops `TemplateId`, `TemplateAlias`, `TemplateModel`, and `InlineCss`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `TemplateModel`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
