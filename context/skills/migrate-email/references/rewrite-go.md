@@ -22,7 +22,6 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 ```
 
 - With `SecretKey` set, the client starts polling flag definitions from `Endpoint` with it as soon as it's built, and there is no option to turn that off. Give the key the feature flag read scope too, or it logs a failed poll each time. Tell the person.
-- Behind a reverse proxy, that poll would hand the key to the proxy. Give email its own client, with `Endpoint` set to PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the key.
 - The app host option is `AppHost`.
 - Close the client when the app exits.
 

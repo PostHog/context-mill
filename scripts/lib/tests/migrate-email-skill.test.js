@@ -146,6 +146,13 @@ describe('migrate-email skill', () => {
             expect(rewrite).toMatch(/[rR]eply_?[tT]o[^\n]*(list|once per address)/);
         });
 
+        it('keeps the secret key off a reverse proxy for every SDK, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toMatch(/unless its host is a reverse proxy/);
+            expect(rewriteStep).toMatch(/When the app's host is a reverse proxy, give email its own client with the host set to PostHog's own host/);
+        });
+
         it('lists the coarse error names once, in step 7', () => {
             const rewriteStep = read('7-rewrite.md');
 
