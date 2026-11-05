@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -222,6 +222,16 @@ describe('migrate-email skill', () => {
 
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
+        });
+
+        it('brings a Postmark template into the code with its layout, raw values, and inlined CSS', () => {
+            const mapping = read('postmark/mapping.md');
+            const inCode = mapping.split('### Templates made in PostHog')[0];
+
+            expect(inCode).toMatch(/the layout and the template come into the code as one email/);
+            expect(inCode).toMatch(/\| `\{\{\{name\}\}\}`, `\{\{& name\}\}` \| The value as it is, unescaped/);
+            expect(inCode).toMatch(/With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches/);
+            expect(mapping).not.toMatch(/\| `InlineCss` \| none \| Never on its own\. It only shapes how Postmark renders its template, and the PostHog template holds its own HTML \|/);
         });
     });
 
