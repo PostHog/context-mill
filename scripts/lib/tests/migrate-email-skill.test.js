@@ -140,6 +140,16 @@ describe('migrate-email skill', () => {
             }
             expect(rewrite).toContain('POSTHOG_PROJECT_SECRET_API_KEY');
             expect(rewrite).toMatch(/migrated_?[fF]rom|MigratedFrom/);
+            expect(rewrite).not.toContain('Code around the send');
+            expect(rewrite).toMatch(/[rR]eply_?[tT]o[^\n]*(list|once per address)/);
+        });
+
+        it('lists the coarse error names once, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            for (const name of ['validation_error', 'missing_api_key', 'invalid_permission', 'not_found', 'concurrent_idempotent_requests', 'invalid_idempotent_request', 'rate_limit_exceeded', 'monthly_quota_exceeded', 'service_unavailable', 'application_error']) {
+                expect(rewriteStep).toContain(`\`${name}\``);
+            }
         });
 
         it('no longer keeps a send on Resend for its language alone', () => {
