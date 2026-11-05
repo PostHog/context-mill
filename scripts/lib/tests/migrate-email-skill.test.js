@@ -13,6 +13,8 @@ const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
 const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet', 'mandrill'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
+// Resend's mapping belongs to the base PRs; SMTP stores no templates.
+const TEMPLATES_IN_CODE = PROVIDERS.filter((provider) => !['resend', 'smtp'].includes(provider));
 
 async function loadSkills() {
     vi.resetModules();
@@ -170,6 +172,52 @@ describe('migrate-email skill', () => {
         });
     });
 
+    describe('templates stored at the provider', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it('brings a template site into the code by default, in step 3', () => {
+            const inventory = read('3-inventory.md');
+
+            expect(inventory).toMatch(/A `template` site moves by bringing its email into the code/);
+            expect(inventory).toContain('`template-to-code.md`');
+            expect(inventory).toMatch(/### A template in PostHog, when the person asks for one/);
+            expect(inventory).not.toMatch(/A `template` site moves only to a template made in PostHog/);
+        });
+
+        it('renders the email in each SDK language without a new dependency', () => {
+            const toCode = read('template-to-code.md');
+
+            for (const sdk of SDKS) expect(toCode, sdk).toContain(`| \`${sdk}\` |`);
+            expect(toCode).toMatch(/Add no template engine or other dependency/);
+            expect(toCode).toMatch(/React Email/);
+        });
+
+        it('escapes every HTML value the way the provider did, and never the text or subject', () => {
+            const toCode = read('template-to-code.md');
+
+            expect(toCode).toMatch(/Escape every value in the HTML part/);
+            expect(toCode).toMatch(/Never escape a value in the text part or in the subject/);
+            expect(toCode).toMatch(/carries text from a user, a form, or another service, escape it anyway/);
+        });
+
+        it('sends a template brought into the code in the code form, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toMatch(/For a provider template that moves into the code, read the rest of `template-to-code.md` first/);
+            expect(rewriteStep).toMatch(/For a template brought into the code, the code renders them, and the send has no template data/);
+        });
+
+        it.each(TEMPLATES_IN_CODE)('has the %s mapping bring its templates into the code, with a template in PostHog only on request', (provider) => {
+            const mapping = read(`${provider}/mapping.md`);
+
+            expect(mapping).toContain('`template-to-code.md`');
+            expect(mapping).toMatch(/### Templates made in PostHog\n\nOnly for a template the person asks to make in PostHog/);
+            expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
+            expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
+        });
+    });
+
     describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
         const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];
@@ -227,6 +275,7 @@ describe('migrate-email skill', () => {
             expect(existsSync(join(skillDir, 'references', `rewrite-${sdk}.md`))).toBe(true);
         }
         expect(existsSync(join(skillDir, 'references', 'posthog-sdks.md'))).toBe(false);
+        expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
         const otherProviders = PROVIDERS.filter((other) => other !== provider);
         expect(otherProviders.filter((other) => existsSync(join(skillDir, 'references', other)))).toEqual([]);
     });
