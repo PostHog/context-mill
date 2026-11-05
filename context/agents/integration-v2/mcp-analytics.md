@@ -39,8 +39,10 @@ Build on what earlier tasks set up. Where `init` created a server client in the
 same process as the MCP server, pass it to the SDK, or on a custom dispatcher swap
 it for `PostHogMCP` in place, and never create a second one. Where it did not, such
 as a browser client or a client in another package, create one server client in
-the MCP server's package with `enableExceptionAutocapture: true`, because the
-`error-tracking` task stays with the app. Where the skill resolves a `distinctId`, take it
+the MCP server's package with `new PostHog(token, { host,
+enableExceptionAutocapture: true })`, because the `error-tracking` task stays with
+the app. It has to be on that constructor to capture uncaught crashes: the option
+of the same name on `instrument()` only covers failed tool calls. Where the skill resolves a `distinctId`, take it
 from where the identify handoff says identity lives, and omit it rather than
 invent one. If that client throws when its config is missing, change the throw
 to a warning on stderr: analytics must never stop the server from booting.
@@ -50,8 +52,8 @@ skill's install and verify steps, name the packages in your handoff for review
 to install, and list each one in the handoff's `packages` field, each with the
 skill's minimum version and any feature it needs, and say which package directory
 they belong in:
-`@posthog/mcp` pinned exact at its latest release (0.18.0 or later) plus
-`posthog-node`; `posthog` 7.62.0 or later for Python; `posthogmcpsdk` v1.34.0
+`@posthog/mcp@latest` saved exact, where 0.18.0 is only the oldest version that
+works, plus `posthog-node`; `posthog` 7.62.0 or later for Python; `posthogmcpsdk` v1.34.0
 or later through `go get`, which needs Go 1.25; `posthog-ruby` 3.29.0 or later,
 plus `logger` and `base64` on Ruby 3.4 or later; `posthog-rs` with the `mcp`
 feature, 0.29.0 or later, which needs `rmcp` 3.7 and Rust 1.88. Do not edit
@@ -61,11 +63,14 @@ your handoff. Do not run the server.
 
 Skip the skill's credentials step. Use the project and host the wizard supplied
 and the env names from upstream handoffs, not the skill's
-`POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST`; inspect and write environment files
-only through `check_env_keys` and `set_env_values`. Do not request credentials
+`POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST`. The exception is a separately run server
+when those names carry a browser prefix like `NEXT_PUBLIC_` or `VITE_`: there use
+`POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST`, in that server's own env file. Inspect
+and write environment files only through `check_env_keys` and `set_env_values`. Do not request credentials
 or select a different project. On a STDIO server, say in your handoff that the
 user sets these variables in the `env` block of their MCP client's server
-config: the client starts the server, and nothing there reads the env file.
+config, and that the env file is only where to copy the values from: the client
+starts the server, and nothing there reads the file.
 
 ## How you know you succeeded
 

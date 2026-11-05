@@ -25,19 +25,41 @@ upstream handoffs name, in their `packages` field or their text, adding the
 named ones by bare name with the project's package manager so it resolves real
 versions. The app's existing dependencies
 are not yours to touch: never upgrade, downgrade, or re-add a package this
-integration did not introduce. If an instrumentation package's peer range
+integration did not introduce. Check peer warnings after each install (`pnpm peers check` lists them on pnpm). An optional
+peer range the app's version falls short of is not a conflict: keep that version if its
+install exits zero and the project typechecks and builds, and name the mismatch in your
+handoff so the report can say so. If an instrumentation package's required peer range
 conflicts with a dependency the app already has, install an older
 instrumentation version that fits the app's existing versions — find it with
 the package manager, stepping down major versions (`pkg@^7`, then `@^6`,
-…) for a few attempts rather than looking for documentation of one. If none
+…) for a few attempts rather than looking for documentation of one. A version
+fits only if its install command exits zero. A build can't tell you this: it
+reads what is already in `node_modules`, while the project's next fresh install
+hits the same error. That includes the package manager refusing something the
+package brings in under project policy, such as pnpm's ignored build scripts or
+trust rules, which is this integration's failure, not the environment's. Never
+change the project's allowlists or policy settings to get past it. Undo what
+that command changed by removing the package or reinstalling the version it
+replaced, then treat the version as one that does not fit. If none
 fits, revert that piece of instrumentation, leave the app's dependency alone,
 and record the incompatibility so the report can say what was skipped and why.
+The exception is an AI Observability wrapper, because those LLM calls can still be
+tracked without it. Remove the wrapper and capture its calls manually through the
+PostHog server SDK, matching any manual capture the task already wrote and keeping
+the distinct ID and trace the wrapper was given, without changing the calls: one
+`$ai_generation` per call with `$ai_trace_id`, `$ai_model`, `$ai_provider`, `$ai_input`,
+`$ai_output_choices`, `$ai_input_tokens`, `$ai_output_tokens` and `$ai_latency`, and
+one `$ai_embedding` per embedding call, without the output fields. Record that manual
+capture replaced the wrapper, and why.
 A handoff that names a package with a feature or an exact pin (`cargo add
-posthog-rs --features mcp`, `@posthog/mcp` pinned exact at its latest release)
-gets installed that way, and one that names a minimum version is never stepped
-below it. Install an exact-pinned package in its own command, so the pin doesn't
+posthog-rs --features mcp`, `@posthog/mcp@latest` saved exact) gets installed that
+way. A minimum version is a floor, not the version to install: install the latest
+unless a peer conflict forces an older one, and never go below the minimum. Install an exact-pinned package in its own command, so the pin doesn't
 spread to packages named without one. In a workspace, install each package into the
-workspace package that imports it, not the repository root. When the project already declares a package, or a dependency like
+workspace package that imports it, not the repository root. After your last install, run
+the project's install once more without changing the lockfile (`pnpm install
+--frozen-lockfile` or its equivalent): if it fails on a package this run added, that package
+does not fit. When the project already declares a package, or a dependency like
 `rmcp`, below a handoff's minimum, do not raise it: revert that task's
 instrumentation and record the pin the user would raise. A toolchain older than
 a handoff's minimum surfaces here as a failed install or build in that task's
@@ -58,7 +80,8 @@ task's instrumentation because its packages could not be installed, record the
 failed command and its error as the reason, not a version minimum: the report
 should send the user to the install problem. A build that then fails against an
 older copy already in `node_modules` is part of that same install failure. When
-you revert a task, delete the files it created rather than leaving them empty.
+you revert a task, delete the files it created rather than leaving them empty, and
+remove the parameters, options and refactors it added that nothing uses anymore.
 
 **Review, as a strict reviewer who did none of the writing.** The changeset is
 already handed to you: `read_handoffs` returns every upstream task's handoff, and
@@ -100,6 +123,17 @@ drops is squarely yours to catch and fix — it is a code defect. What you canno
 confirm delivery: you cannot exercise the app, and you never treat "I could not
 verify events arrive" as a finding.
 
+Analytics must also never fail or stall the app's own work, and no build shows you this.
+Where the app waits on a PostHog flush or shutdown, its rejection has to be caught and its
+client needs a short request timeout with no retries (`requestTimeout` and `fetchRetryCount`
+on Node), or a PostHog outage fails a request whose own work succeeded. A client nothing
+waits on keeps the SDK's default timeout and retries, and so does one a process only waits on
+at exit, which gets a bounded wait such as `posthog.shutdown(3000)` instead. A client that only long-running servers
+or workers load needs no flush per capture, so remove it, and it flushes in the app's existing
+shutdown path, with a bounded wait. Remove any format check on a PostHog key, such as a URL rule
+in an env schema: a blank value fails it and stops the app booting. This changes how events are
+sent, not what is captured, so it is yours to fix.
+
 Stay inside verify-and-review. These are not your job:
 
 - The report or the dashboard — other tasks own those; do not write or judge them.
@@ -112,12 +146,14 @@ If you notice something real but out of scope, leave it — a one-line mention i
 handoff, no more. Only flag what you can pin to a specific line and dimension — no
 taste-based rewrites, and never expand the integration. For each fix, ask what would
 behave differently if it were wrong, and check by reading the callers. After any
-change, re-run the build or lint and confirm it still passes.
+change, re-run the build or lint and confirm it still passes. Last, run the project's
+format check if it defines one (a `format` script), and format only the files this run
+changed, with the project's formatter or by hand, leaving anything else it flags alone.
 
 ## How you know you succeeded
 
-The project installed and builds, typechecks, and lints as well as it did before the
-run; you can name each review dimension and say it passes; and your fixes are in the
+The project installed and builds, typechecks, lints, and passes its format check as well
+as it did before the run; you can name each review dimension and say it passes; and your fixes are in the
 files. If the build or lint fails only on pre-existing errors you did not introduce,
 that still counts — put a one-line summary in the `conflict` field and the detail in
 what you did. Reserve a failed status for when your own changes break the build. Put

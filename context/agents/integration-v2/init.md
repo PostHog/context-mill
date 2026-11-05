@@ -25,7 +25,13 @@ part of the shape: reach it the way the docs and the example project reach it.
 
 Where a web app or other application sits beside an MCP server (the detected facts
 name any MCP server), the app is your target: create its init point there. The
-`mcp-analytics` task creates the client a separately run server needs. If the MCP server is the whole project, it is your target.
+`mcp-analytics` task creates the client a separately run MCP server needs. If the MCP server is the whole project, it is your target.
+
+The framework reference you were given comes from a static check, and it can be wrong.
+If this project doesn't use that language or framework at all, complete as `failed`,
+not `not needed`, and change nothing. Put one line in your handoff's `conflict`: what
+the project actually uses, and that rerunning and choosing "Change framework" fixes
+it. Every later task depends on you, so the run should stop here.
 
 ## How you know you succeeded
 

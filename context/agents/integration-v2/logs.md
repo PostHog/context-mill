@@ -26,8 +26,8 @@ browser-only app must not receive a server exporter. If no documented setup
 applies, complete as `not needed` and explain why.
 
 Where a web app or other application sits beside an MCP server (the detected facts
-name any MCP server), the app is your target, and MCP analytics owns the server. Leave a
-separately run server's files alone, and add no exporter or log lines to the tool
+name any MCP server), the app is your target, and MCP analytics owns the MCP server.
+Workers, queues and shared packages belong to the app. Leave a separately run MCP server's files alone, and add no exporter or log lines to the tool
 handlers of an MCP route inside the app. If the MCP server is the whole project, it is your target.
 
 Export only log lines this integration adds. Create a dedicated logger for the

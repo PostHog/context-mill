@@ -67,13 +67,15 @@ describe('default integration observability flow', () => {
         expect(ancestors('dashboard').has('logs')).toBe(false);
     });
 
-    it('runs MCP analytics after identify and before capture, beside error-tracking', () => {
+    it('runs MCP analytics after identify, beside error-tracking and capture', () => {
         for (const type of ['install', 'init', 'identify']) {
             expect(ancestors('mcp-analytics').has(type)).toBe(true);
         }
         expect(ancestors('mcp-analytics').has('error-tracking')).toBe(false);
-        // capture reads its handoff to skip events that $mcp_tool_call already covers.
-        expect(ancestors('capture').has('mcp-analytics')).toBe(true);
+        // The planner adds this edge only when the server and capture's code share an app.
+        expect(ancestors('capture').has('mcp-analytics')).toBe(false);
+        // Its insights can build on $mcp_tool_call, so it needs the handoff.
+        expect(ancestors('dashboard').has('mcp-analytics')).toBe(true);
         expect(ancestors('review').has('mcp-analytics')).toBe(true);
         expect(ancestors('report').has('mcp-analytics')).toBe(true);
     });

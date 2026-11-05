@@ -24,10 +24,13 @@ Plan a PostHog integration and seed the task queue with this graph:
 - `mcp-analytics`, after `identify` — it instruments the project's own MCP server
   so every tool call is captured. Queue it only when `enqueue_task` offers it and
   the detected facts name MCP server candidates; otherwise skip it.
-- `capture`, after `identify`, and after `mcp-analytics` when you queued it — it
-  decides the events and instruments them, and it reads how identity is already
-  established, and which tool calls MCP analytics already records, before it
-  instruments anything.
+- `capture`, after `identify` — it decides the events and instruments them, and it
+  reads how identity is already established before it instruments anything. Make it
+  also wait for `mcp-analytics` only when the two share code: the MCP server is the
+  whole project, or a route inside the app. There `capture` reads which tool calls
+  MCP analytics already records. When the server runs separately from a web app or
+  other application, they touch different files, so run them in parallel. If you
+  can't tell from the code, make it wait.
 - `ai-observability`, after `capture`, parallel to `error-tracking` — it instruments
   existing LLM calls, or reports that none apply. Queue it on every default run; the
   task checks applicability rather than the planner guessing from a package name.
@@ -42,8 +45,9 @@ Plan a PostHog integration and seed the task queue with this graph:
   it installs the dependencies, verifies the project builds/typechecks/lints, and
   reviews every change the run made, fixing what fails. There is no separate build
   step: verifying and reviewing are one pass over the same changeset.
-- `dashboard`, after `capture`, independent of AIO, Logs, and `review` — it builds insights from the
-  instrumented events, which `capture` has already defined; it needs no code review.
+- `dashboard`, after `capture`, and after `mcp-analytics` when you queued it,
+  independent of AIO, Logs, and `review` — it builds insights from the instrumented
+  events, which those tasks have already defined; it needs no code review.
 - `report`, after `dashboard` **and** `review` — it writes the setup report last, so
   it describes the integration as reviewed rather than as first written.
 

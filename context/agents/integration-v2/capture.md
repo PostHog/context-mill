@@ -9,7 +9,7 @@ effort_sdk: high
 skills: [integration-v2-capture, posthog-best-practices]
 allowedTools: [Read, Write, Edit, Glob, Grep]
 disallowedTools: [enqueue_task]
-dependsOn: [install, init, identify, mcp-analytics]
+dependsOn: [install, init, identify]
 ---
 
 ## Goal
@@ -40,8 +40,8 @@ that identity exists but could not be reached, so the report calls it out as an 
 to follow up rather than claiming events that belong to nobody.
 
 Where a web app or other application sits beside an MCP server (the detected facts
-name any MCP server), the app is your target: capture its actions, and leave a
-separately run server's files to the `mcp-analytics` task. If the MCP server is the whole project, it is your target.
+name any MCP server), the app is your target: capture its actions. Workers, queues and shared packages belong to the app. Leave a
+separately run MCP server's files to the `mcp-analytics` task. If the MCP server is the whole project, it is your target.
 
 Where the `mcp-analytics` handoff says the server now records every tool call as
 `$mcp_tool_call`, those calls are already captured, with the tool's name and whether
@@ -58,8 +58,9 @@ user the way the identify docs describe, not the event.
 
 The meaningful user actions across the app have capture calls that fire on the
 real action, not on page load, each one attributable to the user who took it, and
-`.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented. On
-a server where `$mcp_tool_call` already covers every action, no events is the right
-result: leave that list empty and say why in your handoff.
+`.posthog-wizard-cache/.posthog-events.json` lists the events you instrumented. Only
+where the MCP server is the whole project and `$mcp_tool_call` already covers every
+action is no events the right result: leave that list empty and say why in your
+handoff.
 
 You do not run builds, linters, or tests — the review task verifies the whole integration after you; your edits just need to be right by reading.
