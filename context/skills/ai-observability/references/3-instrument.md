@@ -1,12 +1,15 @@
 ---
 next_step: 4-verify.md
 title: AI Observability Setup - Instrument
-description: Swap in the wrapper client, then attach identity and tool spans so the calls form a session tree
+description: Instrument the existing model calls, then attach identity and tool spans so the calls form a session tree
 ---
 
 The install doc holds the code for this variant. Copy it and change the values. This step covers what the doc cannot know: the values this app supplies, and the shape the result must have.
 
 ## Swap the client
+
+This section applies to wrapper variants. For `manual-capture`, use the
+manual transport contract below instead of swapping a vendor client.
 
 Build a PostHog client. Replace the vendor client with the PostHog wrapper for this provider. The wrapper takes the same constructor arguments and stays call-compatible, so the existing calls keep working. A gateway keeps its `base_url`.
 
@@ -27,6 +30,10 @@ For a new PostHog client, set `privacy_mode=False` in Python or `privacyMode: fa
 Preserve existing privacy settings, redaction, and explicit user or project requirements to exclude content. If those requirements apply, use the variant's documented privacy control and explain the choice in the handoff. The false default is for new setup, not permission to weaken an existing privacy decision. Framework hooks, OpenTelemetry, and manual capture must follow their own documented controls; do not invent SDK options for them or assume the SDK setting filters manually captured content.
 
 Read the [privacy-mode docs](https://posthog.com/docs/ai-observability/privacy-mode) for SDK-wide and per-request controls. The handoff in `4-verify.md` tells the user when and where to change this after setup.
+
+## Capture manual proxy calls
+
+For `manual-capture`, follow `references/manual-capture.md`. Capture each provider request once after its outcome is known. Preserve responses and streams, mark errors and interruptions, and connect sessions, traces, users, and tool spans. Record unverified paths in the ledger.
 
 ### The OpenTelemetry path
 
@@ -69,9 +76,10 @@ posthog_properties={"$ai_session_id": session_id, "$ai_provider": "groq"}
 
 ## Capture tool calls as spans
 
-The wrapper records the model call. It never sees the tool dispatch loop, so nothing else records a tool run.
+The wrapper or manual generation capture records the model call. Neither sees
+the tool dispatch loop, so nothing else records a tool run.
 
-If the app registers tools, capture each run as an `$ai_span` event with `posthog.capture()`. Give it the turn's `$ai_trace_id` so the span joins the trace. The install doc lists the span properties.
+If the app registers tools, capture each run as an `$ai_span` event with `posthog.capture()`. Give it the turn's `$ai_trace_id` so the span joins the trace. The install doc lists the span properties. Check every tool dispatch path, not just registration or one example call.
 
 On the OpenTelemetry path there is no PostHog client to call. Record the tool run as a child span of the turn span instead, with `gen_ai.*` attributes so it passes the AI span filter. A plain span named after the tool is dropped.
 
@@ -83,7 +91,8 @@ An app that registers no tools has no spans. That is a complete result, not a ga
 
 ## Do not
 
-- Do not restructure the app. This step swaps a constructor and adds arguments to calls.
+- Do not restructure the app. A wrapper swaps a constructor and adds arguments;
+  manual capture instruments the existing transport and dispatch paths.
 - Do not omit `posthog_trace_id` and expect the calls to group.
 - Do not leave a turn span that fails the AI span filter on the OpenTelemetry path.
 - Do not mint a session id per call or per turn.

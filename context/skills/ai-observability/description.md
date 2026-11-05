@@ -16,8 +16,8 @@ Read every referenced file **before editing**. Then work through them in order:
 
 1. **Begin** — see `references/1-begin.md`. Pick the variant with the ordered rules (framework before provider, gateway base URL before the SDK it borrows), then read four facts from the code: the conversation, the user, the turn, and whether the app registers tools.
 2. **Install** — see `references/2-install.md`. Declare the variant's packages in the manifest — and only those. For providers and gateways that's the PostHog SDK alongside the vendor SDK, with no OpenTelemetry packages.
-3. **Instrument** — see `references/3-instrument.md`. Swap the vendor client for PostHog's wrapper, attach `$ai_session_id`, a per-turn `posthog_trace_id`, and the distinct id to every call, and capture tool runs as `$ai_span` events. This step is what turns isolated generations into a session tree.
-4. **Verify** — see `references/4-verify.md`. Describe a request the user can trigger, and grade what lands in PostHog — one session, grouped traces, right attribution — rather than what the diff contains.
+3. **Instrument** — see `references/3-instrument.md`. Follow the selected variant, group calls in a session and trace, and capture tool runs as spans.
+4. **Verify** — see `references/4-verify.md`. Check the expected event tree and report uncovered paths.
 
 ## Reference files
 
