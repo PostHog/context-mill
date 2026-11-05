@@ -33,7 +33,7 @@ The client loads flag definitions only when it evaluates a flag, so a client tha
 ## The answer
 
 - The send returns a `SendEmailResult`. `Id` is the message ID, a `string`.
-- On an API error it throws `EmailException`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `StatusCode` is the HTTP status.
+- On an API error it throws `EmailException`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`.
 - It throws the same `EmailException` for a network error that is left after the retries, with the code `network_error`. `Message` is there too.
 - A bad argument throws `ArgumentException`, before any request.
