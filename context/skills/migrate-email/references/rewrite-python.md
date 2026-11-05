@@ -25,7 +25,7 @@ posthog = Posthog(
 )
 ```
 
-- The client loads flag definitions only when it evaluates a flag, so a client that only sends email needs no other setting.
+- With `secret_key` set, the client loads flag definitions from `host` with it the first time it evaluates a flag. A client that only sends email never evaluates one, so it needs no other setting.
 - The app host option is `app_host`.
 - `AsyncPosthog`, from `posthog[async]`, takes the same options. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
 - Without the `async` extra, the first send on `AsyncPosthog` fails before it reaches PostHog.
