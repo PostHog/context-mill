@@ -1,8 +1,8 @@
 # SendGrid to PostHog mapping
 
-This file decides, field by field, whether PostHog can send a SendGrid call site. A site moves only when every field it sets moves. Otherwise it stays on SendGrid, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and `posthog-sdks.md` has PostHog's names in each language.
+This file decides, field by field, whether PostHog can send a SendGrid call site. A site moves only when every field it sets moves. Otherwise it stays on SendGrid, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and the rewrite file for the site's language, which Step 7 names, has PostHog's names in that language.
 
-PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name `posthog-sdks.md` gives for the site's language, such as `reply_to` in Python.
+PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name the rewrite file gives for the site's language, such as `reply_to` in Python.
 
 ## Fields
 
@@ -15,9 +15,9 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `content` | `text` for `text/plain`, `html` for `text/html` | It holds another type, or two entries of one type |
 | `templateId` with `dynamicTemplateData` (in Node.js also `template_id` with `dynamic_template_data`: the helper takes snake_case keys too) | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
 | `substitutions` | none | Always. PostHog's send doesn't take it yet |
-| `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `{ email, name }` moves as the bare address, as for `to` |
+| `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
-| `attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, a `disposition` is `inline` without a `contentId`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
+| `attachments` | none | Always. PostHog's send doesn't take it yet |
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
@@ -40,11 +40,11 @@ A SendGrid send has no idempotency key, so the moved site sends none either. Pos
 | `sgMail.send(msg, true)`, `sgMail.sendMultiple`, `sgMail.send([...])`, `Mail(..., is_multiple=True)`, `CreateSingleEmailToMultipleRecipients`, `CreateMultipleEmailsToMultipleRecipients` | Always: each sends several emails in one call |
 | SMTP through `smtp.sendgrid.net` | Always. PostHog has no SMTP relay |
 | A framework mailer (Django, Rails, Laravel, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
-| A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
+| A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 
 ## Code around the send
 
-SendGrid's SDKs report an error in two ways. The Node.js and Python SDKs throw. The Ruby, PHP, Go, and .NET SDKs answer a response, and the code reads its status code. `posthog-sdks.md` says how PostHog's SDK reports an error in each language. Keep the site failing the same way it did, as the Rewrite section says.
+SendGrid's SDKs report an error in two ways. The Node.js and Python SDKs throw. The Ruby, PHP, Go, and .NET SDKs answer a response, and the code reads its status code. The rewrite file says under "The answer" how PostHog's SDK reports an error in its language. Keep the site failing the same way it did, as the Rewrite section says.
 
 | Code | A site stays on SendGrid when |
 |---|---|
@@ -80,7 +80,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - Any other helper, such as `{{#equals}}`, `{{formatDate}}`, `{{#greaterThan}}`, `{{length}}`, or `{{#and}}`, keeps the template on SendGrid. So does `{{@index}}`, a partial, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `cc`, `bcc`, `attachments`, or `trackingSettings` next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes none of them. So does a `templateId` site without `trackingSettings` when open or click tracking is off in the account.
+- A site that sets `trackingSettings` next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. So does a `templateId` site without `trackingSettings` when open or click tracking is off in the account.
 
 ## Webhooks
 
@@ -101,7 +101,7 @@ PostHog's events carry no SendGrid `sg_message_id` and no `custom_args`. A site 
 
 ## Rewrite
 
-How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and `posthog-sdks.md` has the client and the send in each language.
+How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and the rewrite file for the site's language has the client and the send.
 
 **The PostHog client.** Set `migratedFrom: 'sendgrid'` on the client that Step 7 configures, when its client options take it.
 
@@ -118,9 +118,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **The fields.**
 
 - `{ email: 'hello@mail.example.com', name: 'Example' }` in `from` becomes `'Example <hello@mail.example.com>'`. A `from` without a name becomes the bare address.
-- `to`, `cc`, and `bcc` become bare addresses. A list with one entry in `to` becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
+- `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `content` entries become `text` and `html`.
-- An attachment `{ content, filename, type, contentId }` becomes `{ content, filename, contentType: type, contentId }`. Drop `disposition`: `contentId` makes a file inline. In Node.js and Python, `content` stays the same base64 string. In Go and Elixir, the SDK takes the raw file: decode the base64 string first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `dynamicTemplateData`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
@@ -128,8 +127,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **Errors.** Keep the site failing the same way it did:
 
 - **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where `sgMail.send` threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.statusCode ?? error.code, name: error.name, posthogCode: error.code })`. `err.code` keeps holding the HTTP status, and holds `network_error` when the request never reached PostHog, `err.posthogCode` holds PostHog's own code, so a branch on `err.code === 429` also checks `err.posthogCode !== 'quota_limited'`, as Step 7 says, and a check of `err.code === 400` becomes a check of `err.name === 'validation_error'`. A read of `err.response.body` becomes a read of `err.message`. A callback, `sgMail.send(msg, (err, result) => { ... })`, never threw: it becomes the same code run after the send, with `err` built from `error` the way the throw above builds it, or `null` when there is no `error`, and `result` from `data`. PostHog's `data` is an object, not SendGrid's `[response, body]` list: never destructure it as a list, and rewrite each read of the answer, such as `const [response] = await sgMail.send(msg)` or `result[0]`, as "The answer" below says.
-- **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception `posthog-sdks.md` names, and `e.status_code` with its status code. `HTTPError` caught only SendGrid's answers: a network failure raised `URLError` past it. PostHog's exception covers both, so raise it again first when its code is `network_error`. A catch of one subclass becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `TooManyRequestsError` checks the status code `429`, and `BadRequestsError` checks the name `validation_error`, as Step 7 says. Several such handlers on one `try` become one `except` of the PostHog exception: it checks each kind in the order the handlers had, runs that handler's code, and raises every other error again. Separate `except` clauses of the same PostHog exception would let the first one take every error.
-- **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way `posthog-sdks.md` says for the language, and keep each branch: a status of 400 or more becomes "there is an error", a branch on `400` reads PostHog's error name `validation_error`, and a branch on another status, such as 429, reads PostHog's status code. Their SendGrid clients don't raise on a refused send: a site that never read the status went on after one, and only a network failure raised (Ruby, PHP, .NET) or set `err` (Go). A .NET client whose options set `HttpErrorAsException` is the exception: it threw on a refused send, so its sites throw PostHog's exception the way they threw before, and the next sentence does not apply to them. Such a site logs PostHog's error and goes on, and raises or returns it when its code is `network_error`, as Step 7 says.
+- **Python.** PostHog's SDK raises too. Replace `except HTTPError` with the PostHog exception the rewrite file names, and `e.status_code` with its status code. `HTTPError` caught only SendGrid's answers: a network failure raised `URLError` past it. PostHog's exception covers both, so raise it again first when its code is `network_error`. A catch of one subclass becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `TooManyRequestsError` checks the status code `429`, and `BadRequestsError` checks the name `validation_error`, as Step 7 says. Several such handlers on one `try` become one `except` of the PostHog exception: it checks each kind in the order the handlers had, runs that handler's code, and raises every other error again. Separate `except` clauses of the same PostHog exception would let the first one take every error.
+- **Ruby, PHP, Go, and .NET.** The code read SendGrid's status code. Read PostHog's error the way the rewrite file says under "The answer", and keep each branch: a status of 400 or more becomes "there is an error", a branch on `400` reads PostHog's error name `validation_error`, and a branch on another status, such as 429, reads PostHog's status code. Their SendGrid clients don't raise on a refused send: a site that never read the status went on after one, and only a network failure raised (Ruby, PHP, .NET) or set `err` (Go). A .NET client whose options set `HttpErrorAsException` is the exception: it threw on a refused send, so its sites throw PostHog's exception the way they threw before, and the next sentence does not apply to them. Such a site logs PostHog's error and goes on, and raises or returns it when its code is `network_error`, as Step 7 says.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where SendGrid took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `X-Message-Id`, or stored it for the app's own use, takes PostHog's message id instead.
