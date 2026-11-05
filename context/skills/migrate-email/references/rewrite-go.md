@@ -30,13 +30,13 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 - Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, and `CaptureEngagement` (`posthog.Ptr(false)`) optional.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
-- `ReplyTo` is a `[]string`.
+- `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
 
 ## The answer
 
 - The send returns a `*posthog.SendEmailResult` and an error. `ID` is the message ID.
-- An API error is a `*posthog.EmailError`: read it with `errors.As`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `StatusCode` is the HTTP status.
+- An API error is a `*posthog.EmailError`: read it with `errors.As`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `var emailErr *posthog.EmailError` and `if errors.As(err, &emailErr) && emailErr.Code == "recipient_suppressed"`.
 - Every error from the send is a `*posthog.EmailError`: also a network error that is left after the retries, with the code `network_error`, and a bad argument, with a code that starts with `invalid_`. `Message` is there too.
 
