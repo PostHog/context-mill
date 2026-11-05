@@ -14,7 +14,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `text`, `html` | `text`, `html` | Never |
 | `content` | `text` for `text/plain`, `html` for `text/html` | It holds another type, or two entries of one type |
 | `templateId` with `dynamicTemplateData` (in Node.js also `template_id` with `dynamic_template_data`: the helper takes snake_case keys too) | the template's email, brought into the code and rendered with `dynamicTemplateData`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
-| `substitutions` | none | Always. PostHog's send doesn't take it yet |
+| `substitutions` on a send with its own `subject` and `content` | none: the code puts the values into the subject and the content before the send | The message also sets `sections`, or it sends a template. Otherwise SendGrid replaced every occurrence of each key, such as `-name-`, as it is written, in the subject, the HTML, and the text, and inserted the value as it is. The code does the same with a plain string replace of each key, under the escaping rule of `template-to-code.md`, and sends the result |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `attachments` | none | Always. PostHog's send doesn't take it yet |
