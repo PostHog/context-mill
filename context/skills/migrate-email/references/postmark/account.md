@@ -36,13 +36,13 @@ A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's sett
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
+A site whose template moves needs the content of the template and of its layout: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content: the subject, the HTML, and the text as they are stored, in Mustachio, with the `<style>` blocks not yet inlined.
 
 **Copy from the dashboard.** In Postmark: the server the site sends from, then Templates, then the template. Ask the person for the template's id or alias, its subject, its HTML, and its text body when it has one. When the template uses a layout, ask for the layout's HTML and text too.
 
 **Read from the API.** `GET https://api.postmarkapp.com/templates/{templateIdOrAlias}` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of the server the site sends from: each server has its own templates, and an id or alias finds only that server's. The answer holds `TemplateId`, `Alias`, `Name`, `Subject`, `HtmlBody`, `TextBody`, `TemplateType` (`Standard` or `Layout`), `LayoutTemplate`, and `Active`. When `LayoutTemplate` holds an alias, read that layout with the same route and token.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 

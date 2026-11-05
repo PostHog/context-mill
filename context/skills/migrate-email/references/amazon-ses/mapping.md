@@ -15,8 +15,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Subject.Data` | `subject` | Never |
 | `Body.Html.Data`, `Body.Text.Data` | `html`, `text` | Never |
 | `Charset` on the subject or a body part | none | It is set to anything other than UTF-8. Ignore case, `-`, and `_` when you compare: `utf-8`, `utf8`, and `UTF_8` are UTF-8 and move. Any other charset, such as `ISO-8859-1`, keeps the site |
-| `Content.Template` with `TemplateName` or `TemplateArn` / `SendTemplatedEmail` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
-| `Content.Template.TemplateContent` | a template made in PostHog | See "Templates". The content is in the code |
+| `Content.Template` with `TemplateName` or `TemplateArn` and `TemplateData` / `SendTemplatedEmail` with `Template` or `TemplateArn` and `TemplateData` | the template's email, brought into the code and rendered with `TemplateData`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
+| `Content.Template.TemplateContent` with `TemplateData` | none: the code renders `TemplateData` into its `Subject`, `Html`, and `Text` before the send | It uses a tag other than `{{name}}` or a path such as `{{contact.firstName}}`, as "Templates" says |
 | `Content.Raw` / `SendRawEmail` | none | Always: the code builds the MIME message itself |
 | `Attachments` | none | Always. PostHog's send doesn't take it yet |
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
@@ -37,7 +37,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 A send with neither gets no tracking pixel, and its links stay as written. Read the account's VDM settings and each set the sites use, as `account.md` says under "Configuration sets", and work out, for opens and for clicks, whether Amazon SES tracked them:
 
 - Both tracked: the site moves with no `captureEngagement` field.
-- Neither tracked: the site moves with `captureEngagement: false`. A template site stays, and the reason is `open and click tracking off`: the template form takes no `captureEngagement`. So does a site whose installed SDK has no `captureEngagement`.
+- Neither tracked: the site moves with `captureEngagement: false`. A template site that moves to a template made in PostHog stays, and the reason is `open and click tracking off`: the template form takes no `captureEngagement`. So does a site whose installed SDK has no `captureEngagement`.
 - One tracked and one not: the site stays, because `captureEngagement: false` turns off both.
 
 When a site's tracking depends on a setting the person can't give and the read-only key can't read, the site stays, and the reason is `account tracking not checked` for the account's VDM settings, or `configuration set <name> tracking not checked` for a set's.
@@ -71,11 +71,47 @@ Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The
 
 ## Templates
 
-A site that sends a stored template moves only to a template made in PostHog. This skill never makes one: the person makes it from the Amazon SES template, makes it transactional, and gives you its template ID. Until then the site stays on Amazon SES. The check needs the template's content, because the code has only its name. `account.md` says how to get it.
+A site that sends a stored template moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its name or ARN. `account.md` says how to get it, from the Region the site sends in. The code renders the template's subject, HTML, and text with the values of the site's `TemplateData`, and the send sets the rendered `subject`, `html`, and `text`.
 
-A site that sends an inline template, `Content.Template.TemplateContent`, has its content in the code. It follows the same path: read the content from the code, check it, and ask the person to make the PostHog template from it.
+A site that sends an inline template, `Content.Template.TemplateContent`, already has its content in the code: Amazon SES only filled in the values. It moves the same way, from the content the code passed. Literal strings become the email, as `template-to-code.md` says under "Where the email goes". Content the code reads at run time, such as from a file or a database, stays where it is, and a function next to the send replaces each marker in it. Amazon SES takes only simple substitutions in an inline template, so one that uses anything other than `{{name}}` or a path such as `{{contact.firstName}}` stays: the docs don't say what Amazon SES did with the rest.
 
-Amazon SES's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+`TemplateData` is a JSON string. The code renders from the object it was built from, before `JSON.stringify`, `json.dumps`, `Jason.encode!`, or the language's own encoder. When the code only has the string, such as one read from a queue, parse it first.
+
+Amazon SES templates are Handlebars. In the code:
+
+| Amazon SES | In the code |
+|---|---|
+| `{{name}}`, `{{ name }}` | The value. Amazon SES inserted it as it is, unescaped, in every part. In the HTML, escape it anyway, except a value the code builds as HTML itself, under the rule of `template-to-code.md` |
+| `{{contact.firstName}}` | The nested value, the same way |
+| `{{{name}}}` | The same as `{{name}}`: Amazon SES escapes neither |
+| A value missing from `TemplateData`, or a missing step of a path | Amazon SES failed the render: it accepted the send, answered a `MessageId`, and never sent it, with a `Rendering Failure` event that says `Attribute '<name>' is not present in the rendering data.` The render in the code raises before the send, so the email still doesn't go out, and the site's error handling now sees it. Note it in the plan row |
+| A `null` value, or `""` | The docs name only a missing value. Treat `null` as missing, and render `""` as nothing. Note in the plan row each value the code can pass as `null` or `""` |
+| A number or a boolean | As `TemplateData` writes it, such as `10.0`, `3`, or `true`: Python's `True` renders as `true`. The docs don't say how Amazon SES writes a number, so render the text of the JSON |
+| `{{#if a}}…{{else if b}}…{{else}}…{{/if}}` | A branch that tests each value for Handlebars truth, in order. With `includeZero=true`, `0` is true |
+| `{{#unless a}}…{{else}}…{{/unless}}` | The same branch, with the test turned around |
+| `{{#each items}}…{{else}}…{{/each}}` | A loop over the list, or over the values of an object in the order its keys stand in `TemplateData`. The `{{else}}` part shows when there is nothing to walk |
+| Inside `{{#each}}`: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field. A bare name reads only the item. When an item can lack that field, the template stays: the docs don't say whether Amazon SES failed the render or read the value outside the loop |
+| Inside `{{#each}}`: `{{@index}}`, `{{@key}}`, `{{@first}}`, `{{@last}}`, `{{../name}}`, `{{@root.name}}` | The item's position from 0, its key in an object, whether it is the first or the last, and the value one level out or at the top |
+| `{{#with contact}}…{{else}}…{{/with}}` | The block, where bare names read the fields of `contact`, or the `{{else}}` part when `contact` is false |
+| `{{lookup obj key}}`, `(lookup items 0)` | The entry of `obj` under the value of `key`, or the list's entry at that position. The docs don't say what a missing entry renders: treat it as a missing value |
+| `{{#* inline "name"}}…{{/inline}}` with `{{> name}}` | A small function or template next to the email, called where `{{> name}}` stands, with the values in scope there: the item, inside a loop. A partial belongs to the part that defines it, so the HTML and the text each have their own. The newline after `{{/inline}}` renders as nothing |
+| `~` in a tag, such as `{{/inline~}}` or `{{~name}}` | The whitespace on that side of the tag is left out |
+| `{{! note }}`, `{{!-- note --}}`, `{{log …}}` | Nothing |
+| The template's `Subject` / `SubjectPart` | The send's `subject`, rendered with the same conversions and no escaping |
+| The template's `Html` / `HtmlPart` | The send's `html`. A template without an HTML part sends `text` only |
+| The template's `Text` / `TextPart` | The send's `text`, with no escaping. A template without a text part sends `html` only |
+
+- Handlebars truth: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object. Write that test out in the code, as `template-to-code.md` says. The docs don't say whether a value missing from `TemplateData` that only an `if`, `unless`, `each`, or `with` reads fails the render: treat it as false, and note it in the plan row.
+- Any other helper, a `{{> name}}` whose part defines no such inline partial, and the `{{amazonSESUnsubscribeUrl}}` tag, which Amazon SES fills only for a send with `ListManagementOptions`, keep the template on Amazon SES.
+- A template belongs to one Region: a template of the same name in another Region is another template. Read each one in the Region its site sends in, as `account.md` says. A `TemplateArn` names its Region after `arn:aws:ses:` and its name after `template/`. Two sites that send the same name in two Regions share one email only when the two contents are the same.
+- An Amazon SES template holds no sender, reply-to address, or preview text, so the send takes the site's own `FromEmailAddress` / `Source` and `ReplyToAddresses`, as the "Fields" table says. Its subject always comes from the template: a templated send has no subject of its own.
+- Amazon SES hosts no images, so a template's images sit on the person's own hosts, such as an S3 bucket. Keep every URL, and list none as hosted by the provider.
+- A site that sets `ConfigurationOverrides.Tracking` next to the template, or whose configuration set or account left opens and clicks untracked, moves into the code with `captureEngagement: false`, as "Open and click tracking" says. Its `ConfigurationSetName` follows the "Fields" table, as for any send.
+- `Content.Template.Headers` and `Attachments` keep the site, as the "Fields" table says. `SendBulkTemplatedEmail` and `SendBulkEmail` still stay, as "Calls" says: each sends several emails in one call.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Amazon SES template, makes it transactional, and gives you its template ID. Until then the site stays on Amazon SES. An inline template takes the same path when the person asks for one: read its content from the code for the check. Amazon SES's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | Amazon SES | PostHog |
 |---|---|
@@ -93,7 +129,7 @@ Amazon SES's Handlebars becomes Liquid in the PostHog template. Values move unde
 - Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on Amazon SES.
 - Inside `{{#each}}`, a bare `{{name}}` reads the current item, as `{{this.name}}` does. It becomes `{{ item.name }}`, never `{{ variables.name }}`. `{{this}}` is the item itself and becomes `{{ item }}`.
 - Any other helper, such as `{{#with}}`, `{{lookup}}`, or `{{log}}`, keeps the template on Amazon SES. So does an inline partial (`{{#* inline}}` and `{{> name}}`), `{{@index}}`, `{{@key}}`, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
-- `TemplateData` is a JSON string. `templateData` takes the object it was built from, before `JSON.stringify` or `json.dumps`. When the code only has the string, parse it.
+- `templateData` takes the object `TemplateData` was built from, as above.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `FromEmailAddress` / `Source` or `ReplyToAddresses` next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
 - A site that sets `ConfigurationOverrides.Tracking` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`.
 - A template site that Amazon SES sent with opens or clicks untracked, or whose tracking isn't checked, stays, as "Open and click tracking" says: the template form takes no `captureEngagement`.
@@ -124,9 +160,9 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The call.** The Amazon SES send becomes one PostHog send. Build its fields from the input the site built:
 
-- v2 `SendEmail` in any SDK: `FromEmailAddress`, `Destination`, `ReplyToAddresses`, and `Content.Simple`.
-- v1 `SendEmail` in any SDK: `Source`, `Destination`, `ReplyToAddresses`, and `Message`.
-- Elixir `ExAws.SES.send_email_v2(destination, content, from, opts)`: the same v2 fields, with `opts[:reply_addresses]` as `ReplyToAddresses`. `ExAws.SES.send_email(dst, msg, from, opts)`: `dst.to`, the `html`, `text`, and `subject` of `build_message`, and `opts[:reply_to]`.
+- v2 `SendEmail` in any SDK: `FromEmailAddress`, `Destination`, `ReplyToAddresses`, and `Content.Simple` or `Content.Template`.
+- v1 `SendEmail` in any SDK: `Source`, `Destination`, `ReplyToAddresses`, and `Message`. v1 `SendTemplatedEmail`: `Source`, `Destination`, `ReplyToAddresses`, `Template` or `TemplateArn`, and `TemplateData`.
+- Elixir `ExAws.SES.send_email_v2(destination, content, from, opts)`: the same v2 fields, with `opts[:reply_addresses]` as `ReplyToAddresses`. `ExAws.SES.send_email(dst, msg, from, opts)`: `dst.to`, the `html`, `text`, and `subject` of `build_message`, and `opts[:reply_to]`. `ExAws.SES.send_templated_email(dst, src, template, template_data, opts)`: `dst.to`, `src`, the template's name, the map encoded into `template_data`, and `opts[:reply_to]`.
 - A raw HTTP request: the fields of its JSON body or its form parameters.
 
 **The fields.**
@@ -136,6 +172,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `Subject.Data`, `Body.Html.Data`, and `Body.Text.Data` become `subject`, `html`, and `text`.
 - `ConfigurationOverrides.Tracking` is dropped. The send gets `captureEngagement: false` when Amazon SES tracked neither opens nor clicks, as "Open and click tracking" says, whether the override, the configuration set, or the account's VDM settings did. Note in the plan row each site that got it from a set or the account.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from the object of its `TemplateData`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`. An inline template is sent the same way. Remove the encode of `TemplateData` when nothing else uses the string.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the object of the site's `TemplateData`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
