@@ -35,12 +35,13 @@ $posthog = new Client(
 ## The send
 
 - Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'capture_engagement'` optional.
+- `'reply_to'` takes one address or a list of addresses.
 - Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
 
 ## The answer
 
 - The send returns a `SendEmailResult`. `getId()` is the message ID.
-- On an API error it throws `PostHog\EmailError`. `getErrorCode()` is PostHog's error code, a string such as `recipient_suppressed`, `getErrorName()` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `getStatusCode()` is the HTTP status.
+- On an API error it throws `PostHog\EmailError`. `getErrorCode()` is PostHog's error code, a string such as `recipient_suppressed`, `getErrorName()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `getStatusCode()` is the HTTP status.
 - Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`.
 - It throws the same `PostHog\EmailError` for a network error that is left after the retries, with the code `network_error`, and for a bad argument, with a code that starts with `invalid_`. `getMessage()` is there too.
 
