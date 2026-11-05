@@ -13,23 +13,40 @@ Add `{:posthog, "~> <latest version>"}` to the deps in `mix.exs`, or raise the v
 
 ## The client
 
-Set the keys in the `:posthog` config, in `config/runtime.exs` so they come from the environment at run time:
+When the app doesn't use PostHog yet, set the keys in the `:posthog` config, in `config/runtime.exs` so they come from the environment at run time:
 
 ```elixir
 config :posthog,
   api_host: System.get_env("POSTHOG_HOST"),
   api_key: System.get_env("POSTHOG_PROJECT_TOKEN"),
   secret_key: System.get_env("POSTHOG_PROJECT_SECRET_API_KEY"),
+  enable_local_evaluation: false,
   migrated_from: "<provider>" # only when the config takes it
 ```
 
-- With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts, so an app that only sends email with it sets `enable_local_evaluation: false`. Behind a reverse proxy, always set it, so the proxy never sees the key. Otherwise give the key the feature flag read scope too.
+When the app already uses PostHog, leave its `:posthog` config as it is, and give email its own named instance in the application's children:
+
+```elixir
+{PostHog.Supervisor,
+ PostHog.Config.validate!(
+   supervisor_name: MyApp.PostHogEmail,
+   api_host: System.get_env("POSTHOG_HOST"),
+   api_key: System.get_env("POSTHOG_PROJECT_TOKEN"),
+   secret_key: System.get_env("POSTHOG_PROJECT_SECRET_API_KEY"),
+   enable_local_evaluation: false,
+   migrated_from: "<provider>" # only when the config takes it
+ )}
+```
+
+- With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts. `enable_local_evaluation: false` stops that, so the key needs no flag scope and never reaches a reverse proxy. Turning it off on the app's existing config would break the flags the app evaluates locally, so the existing config keeps its own settings.
 - The app host option is `app_host`.
+- Name the instance after the app, such as `MyApp.PostHogEmail`, and pass that name first to each call below.
 
 ## The send
 
 - Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
+- With email's own instance, the name comes first: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., ...)`.
 
 ## The answer
 

@@ -122,6 +122,6 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 ### Elixir
 
-- `Resend.Emails.send(%{from: ..., to: ..., ...})`, with or without a client as the first argument, becomes `PostHog.Emails.send(from: ..., to: ..., ...)` with a keyword list. Resend's Elixir SDK takes no idempotency key, so the site sends none unless the old code set one some other way.
+- `Resend.Emails.send(%{from: ..., to: ..., ...})`, with or without a client as the first argument, becomes `PostHog.Emails.send(from: ..., to: ..., ...)` with a keyword list, with the instance name first when email has its own instance. Resend's Elixir SDK takes no idempotency key, so the site sends none unless the old code set one some other way.
 - `{:ok, %Resend.Emails.Email{id: id}}` becomes `{:ok, result}` with `result.id`.
 - `{:error, %Resend.Error{}}` becomes `{:error, %PostHog.Emails.Error{}}`. Resend's `name` is a string and PostHog's is an atom: a match on `name: "rate_limit_exceeded"` becomes `name: :rate_limit_exceeded`.
