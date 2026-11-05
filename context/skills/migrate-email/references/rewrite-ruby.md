@@ -9,15 +9,15 @@ For a site in Ruby, such as in a Rails app. A site that sends through Rails' mai
 
 ## Install
 
-`bundle add posthog-ruby`, or `bundle update posthog-ruby` when the app has it. Require it with `require 'posthog'`.
+`bundle add posthog-ruby`. When the app has it, raise its version constraint in the `Gemfile` when the constraint holds back the latest release, then run `bundle update posthog-ruby`. Require it with `require 'posthog'`.
 
 ## The client
 
 ```ruby
 POSTHOG = PostHog::Client.new({
-  api_key: ENV.fetch('POSTHOG_PROJECT_TOKEN'),
-  host: ENV.fetch('POSTHOG_HOST'),
-  secret_key: ENV.fetch('POSTHOG_PROJECT_SECRET_API_KEY'),
+  api_key: ENV['POSTHOG_PROJECT_TOKEN'],
+  host: ENV['POSTHOG_HOST'],
+  secret_key: ENV['POSTHOG_PROJECT_SECRET_API_KEY'],
   migrated_from: '<provider>' # only when the client takes it
 })
 ```
@@ -39,4 +39,4 @@ POSTHOG = PostHog::Client.new({
 
 ## Check
 
-`ruby -c` on each changed file, and the project's type checker when it has one, such as Sorbet or Steep.
+`ruby -c` on each changed file, the project's type checker on the whole project when it has one, such as Sorbet or Steep, and the app's boot, such as `bin/rails runner 'true'` in Rails.

@@ -9,23 +9,24 @@ For a site in Rust.
 
 ## Install
 
-`cargo add posthog-rs`, or `cargo update -p posthog-rs` when the app has it. An app that sends from async code uses the crate's `async-client` feature, and a blocking app uses the blocking client.
+`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app uses the blocking client.
 
 ## The client
 
 ```rust
 let mut options = posthog_rs::ClientOptionsBuilder::default();
 options
-    .api_key(std::env::var("POSTHOG_PROJECT_TOKEN")?)
-    .host(std::env::var("POSTHOG_HOST")?)
-    .secret_key(std::env::var("POSTHOG_PROJECT_SECRET_API_KEY")?)
+    .api_key(std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default())
+    .host(std::env::var("POSTHOG_HOST").unwrap_or_default())
+    .secret_key(std::env::var("POSTHOG_PROJECT_SECRET_API_KEY").unwrap_or_default())
     .migrated_from("<provider>"); // only when the builder has it
 let posthog = posthog_rs::client(options.build()?).await;
 ```
 
 - The client loads flag definitions only with `enable_local_evaluation` on, so a client that only sends email needs no other setting.
 - The app host option is `app_host`.
-- Create the client once, and share it where the sites send.
+- Create the client once, and share it where the sites send. A blank secret key counts as none, so a send without it fails with its own error.
+- The async client and the blocking client are separate. A site in async code uses the async client, and a site in blocking code the blocking one.
 
 ## The send
 

@@ -38,7 +38,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 
 | Code | A site stays on Resend when |
 |---|---|
-| A branch on Resend's error name: `error.name` in Node.js, Go, and Elixir, `error_type` in Python, `getErrorType()` in PHP, or `ErrorType` in .NET, or on the error class that stands for it, such as `resend.exceptions.RateLimitError` or `Resend::Error::RateLimitExceededError` | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
+| A branch on Resend's error name: `error.name` in Node.js, Go, and Elixir, `error_type` in Python, `getErrorType()` in PHP, or `ErrorType` in .NET | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
 
@@ -86,14 +86,14 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `resend.Emails.send(params, options={"idempotency_key": key})` becomes `posthog.emails.send(...)` with keyword arguments: `params["from"]` becomes `from_=`, and the options' `idempotency_key` becomes `idempotency_key=`. `resend.Emails.send_async` becomes the same call on `AsyncPosthog`, awaited.
 - Resend answers a dict, and PostHog a `SendEmailResult`: `response["id"]` becomes `result.id`.
-- Both raise on an API error. `except resend.exceptions.ResendError` becomes `except EmailError`, from `posthog.emails`. A class for one error, such as `resend.exceptions.RateLimitError`, becomes `EmailError` with a check of `error.name`.
+- Both raise on an API error. `except resend.exceptions.ResendError` becomes `except EmailError`, from `posthog.emails`. A class that stands for an HTTP status, such as `resend.exceptions.RateLimitError` for `429`, becomes `EmailError` with a check of `error.status_code`, such as `error.status_code == 429`, because one status covers more than one PostHog name.
 - Resend's `error.code` is the HTTP status, and PostHog's is a string error code. Code that read `error.code` reads `error.status_code`, and code that read `error.error_type` reads `error.name`.
 
 ### Ruby
 
 - `Resend::Emails.send(params, options: { idempotency_key: key })` becomes `POSTHOG.emails.send(...)` with keyword arguments, and the options' `idempotency_key` becomes `idempotency_key:`.
 - Resend answers a hash-like response, and PostHog a `SendResult`: `response[:id]` becomes `result.id`.
-- Both raise on an API error. `rescue Resend::Error` becomes `rescue PostHog::EmailError`. A class for one error, such as `Resend::Error::RateLimitExceededError`, becomes `PostHog::EmailError` with a check of `e.name`.
+- Both raise on an API error. `rescue Resend::Error` becomes `rescue PostHog::EmailError`. A class that stands for an HTTP status, such as `Resend::Error::RateLimitExceededError` for `429`, becomes `PostHog::EmailError` with a check of `e.status_code`, such as `e.status_code == 429`, because one status covers more than one PostHog name.
 
 ### PHP
 

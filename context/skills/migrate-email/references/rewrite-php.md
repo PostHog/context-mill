@@ -19,13 +19,13 @@ use PostHog\PostHog;
 
 PostHog::init(
     client: new Client(
-        getenv('POSTHOG_PROJECT_TOKEN'),
+        getenv('POSTHOG_PROJECT_TOKEN') ?: null,
         [
-            'host' => getenv('POSTHOG_HOST'),
+            'host' => getenv('POSTHOG_HOST') ?: null,
             'migrated_from' => '<provider>', // only when the options take it
         ],
         loadFeatureFlags: false,
-        secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY'),
+        secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY') ?: null,
     ),
 );
 ```
@@ -47,4 +47,4 @@ PostHog::init(
 
 ## Check
 
-`php -l` on each changed file, and the project's static analyzer when it has one, such as PHPStan or Psalm.
+`php -l` on each changed file, and the project's static analyzer on the whole project when it has one, such as PHPStan or Psalm.

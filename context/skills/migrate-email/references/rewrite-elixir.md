@@ -39,4 +39,4 @@ config :posthog,
 
 ## Check
 
-`mix compile`.
+`mix compile --force`, comparing its warnings with the ones Step 7 kept: an undefined function shows only as a warning.

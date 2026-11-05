@@ -16,7 +16,7 @@ Check that the app still builds, its tests still pass, and one moved email reach
 
 ## Build and tests
 
-- Run the check that each moved site's rewrite file names under "Check", as Step 7 did. Fix each error that is not in the list Step 7 kept, in any file: the rewrite or the PostHog SDK's install or upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
+- Run the check that each moved site's rewrite file names under "Check", on the whole project, as Step 7 did. Fix each error or warning that is not in the list Step 7 kept, in any file: the rewrite or the PostHog SDK's install or upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
 - Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks the PostHog SDK's send and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
 - Search the changed files for the provider's calls: a moved site has none left, and each moved site has one PostHog send.
 

@@ -9,7 +9,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK 
 
 | Language of the site | PostHog SDK | Rewrite file |
 |---|---|---|
-| JavaScript or TypeScript on Node.js | `posthog-node` | `rewrite-node.md` |
+| JavaScript or TypeScript on a server: Node.js, or an edge runtime such as Cloudflare Workers or Vercel Edge Functions | `posthog-node` | `rewrite-node.md` |
 | Python | `posthog` | `rewrite-python.md` |
 | Go | `github.com/posthog/posthog-go` | `rewrite-go.md` |
 | Ruby | `posthog-ruby` | `rewrite-ruby.md` |
@@ -31,7 +31,7 @@ Read the rewrite file of each language that has a site that moves, and only thos
 
 - Change only the sites whose `moves` is `yes`. Never change a site that stays, and never change a line that a site that stays still needs.
 - When no site moves, tick the phase in the plan with `none moved` and go to the next step.
-- Run the check that the rewrite file names under "Check", and keep its errors: Step 8 compares with them. For a site in JavaScript or TypeScript, that is the project's typecheck.
+- Run the check that the rewrite file names under "Check", on the whole project, and keep its errors and warnings: Step 8 compares with them. For a site in JavaScript or TypeScript, that is the project's typecheck.
 
 ## Set up the SDK
 
@@ -41,13 +41,15 @@ Install or upgrade the SDK to its latest release, as the rewrite file says under
 - a site that sets a reply-to address: the send takes one;
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
+When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
+
 When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — <SDK> has no <capability> yet`, tell the person, and go on with the rest. When the client options lack the provider name, leave it out of the client. When no site is left in a language, undo that SDK's install or upgrade. When no site is left at all, tick the phase with `none moved`, and go to the next step.
 
 ## Set up the client
 
-Configure one server-side client for email in each language that has a site that moves, as the rewrite file says under "The client":
+Configure one server-side client for email in each language that has a site that moves, as the rewrite file says under "The client". When a language's sites mix synchronous and asynchronous code, and its SDK has a separate client for each, such as Python and Rust, configure one of each, and have each site use the client that matches its call:
 
-- Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up.
+- Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up. Read it, and the token and host, without raising when a variable is missing, as the rewrite file shows: Step 6 can leave the key unset, and an app that can't start takes down the sends that stay on the provider too. A send without the key fails with its own error.
 - Set the provider name to the value the provider's `mapping.md` names under "The PostHog client", when the client options take it. The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
 - Reuse the app's existing PostHog client in that language when it has one, and add the secret key and the provider name to it.
 - The rewrite file says whether the client loads feature flag definitions with the secret key, and what to set on a client that only sends email. Keep that setting unless the key also has `feature_flag:read` and the app uses local evaluation.

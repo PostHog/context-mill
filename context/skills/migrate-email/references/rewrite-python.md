@@ -9,7 +9,7 @@ For a site in Python.
 
 ## Install
 
-Install or upgrade `posthog` to its latest release with the project's tool, such as `uv add posthog`, `poetry add posthog@latest`, or a `posthog>=<version>` line in `requirements.txt`. An app that sends from `async` code uses `posthog[async]` and its `AsyncPosthog` client.
+Install or upgrade `posthog` to its latest release with the project's tool, such as `uv add posthog`, `poetry add posthog@latest`, or a `posthog>=<version>` line in `requirements.txt`. An app with sites in `async` code installs `posthog[async]` for its `AsyncPosthog` client.
 
 ## The client
 
@@ -18,16 +18,16 @@ import os
 from posthog import Posthog
 
 posthog = Posthog(
-    os.environ["POSTHOG_PROJECT_TOKEN"],
-    host=os.environ["POSTHOG_HOST"],
-    secret_key=os.environ["POSTHOG_PROJECT_SECRET_API_KEY"],
+    os.environ.get("POSTHOG_PROJECT_TOKEN"),
+    host=os.environ.get("POSTHOG_HOST"),
+    secret_key=os.environ.get("POSTHOG_PROJECT_SECRET_API_KEY"),
     migrated_from="<provider>",  # only when the client takes it
 )
 ```
 
 - The client loads flag definitions only when it evaluates a flag, so a client that only sends email needs no other setting.
 - The app host option is `app_host`.
-- With `AsyncPosthog`, await each call below.
+- `AsyncPosthog`, from `posthog[async]`, takes the same options. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
 
 ## The send
 
@@ -42,4 +42,4 @@ posthog = Posthog(
 
 ## Check
 
-The project's type checker when it has one, such as `mypy` or `pyright`, and `python -m compileall -q` on each changed file.
+The project's type checker on the whole project when it has one, such as `mypy` or `pyright`, and `python -m compileall -q` on the app's source directories.

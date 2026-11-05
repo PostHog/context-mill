@@ -5,7 +5,7 @@ description: The PostHog side of a moved site in JavaScript or TypeScript on Nod
 
 # Send with posthog-node
 
-For a site in JavaScript or TypeScript that runs on Node.js. A site that runs in the browser never sends email: the secret key stays on the server.
+For a site in JavaScript or TypeScript that runs on a server: Node.js, or an edge runtime such as Cloudflare Workers or Vercel Edge Functions, which posthog-node also supports. A site that runs in the browser never sends email: the secret key stays on the server.
 
 ## Install
 
@@ -26,6 +26,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 - The client polls feature flag definitions with the secret key, so a client that only sends email sets `enableLocalEvaluation: false`.
 - The app host option is `appHost`.
+- On an edge runtime without `process.env`, read the variables the way the app reads its provider key, such as from a Worker's `env`.
 
 ## The send
 
