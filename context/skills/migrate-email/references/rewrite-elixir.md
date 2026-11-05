@@ -17,8 +17,8 @@ When the app doesn't use PostHog yet, set the keys in the `:posthog` config, in 
 
 ```elixir
 config :posthog,
-  api_host: System.get_env("POSTHOG_HOST"),
-  api_key: System.get_env("POSTHOG_PROJECT_TOKEN"),
+  api_host: System.get_env("POSTHOG_HOST", "https://us.i.posthog.com"),
+  api_key: System.get_env("POSTHOG_PROJECT_TOKEN", ""),
   secret_key: System.get_env("POSTHOG_PROJECT_SECRET_API_KEY"),
   enable_local_evaluation: false,
   migrated_from: "<provider>" # only when the config takes it
@@ -30,8 +30,8 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 {PostHog.Supervisor,
  PostHog.Config.validate!(
    supervisor_name: MyApp.PostHogEmail,
-   api_host: System.get_env("POSTHOG_HOST"),
-   api_key: System.get_env("POSTHOG_PROJECT_TOKEN"),
+   api_host: System.get_env("POSTHOG_HOST") || Application.get_env(:posthog, :api_host, "https://us.i.posthog.com"),
+   api_key: System.get_env("POSTHOG_PROJECT_TOKEN") || Application.get_env(:posthog, :api_key, ""),
    secret_key: System.get_env("POSTHOG_PROJECT_SECRET_API_KEY"),
    enable_local_evaluation: false,
    migrated_from: "<provider>" # only when the config takes it
@@ -39,6 +39,7 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 ```
 
 - With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts. `enable_local_evaluation: false` stops that, so the key needs no flag scope and never reaches a reverse proxy. Turning it off on the app's existing config would break the flags the app evaluates locally, so the existing config keeps its own settings.
+- `api_host` and `api_key` must be strings, and a `nil` stops the app from starting, so each one falls back as above: to the app's own `:posthog` value, or to the US Cloud host and an empty token. Use `https://eu.i.posthog.com` for EU Cloud. `secret_key` can be `nil`, and a send without it fails with its own error.
 - The app host option is `app_host`.
 - Name the instance after the app, such as `MyApp.PostHogEmail`, and pass that name first to each call below.
 
