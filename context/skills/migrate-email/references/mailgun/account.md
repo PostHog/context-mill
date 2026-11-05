@@ -31,9 +31,9 @@ The steps call this key the full-access provider key.
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the content of the version it sends: the active version, or the one the site names with `t:version`.
+A site whose template moves needs the content of the version it sends, the active version or the one the site names with `t:version`: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, as the Handlebars or Go source of the version's HTML. A version has no text part of its own: `t:text` makes one at send time.
 
-**Copy from the dashboard.** In the Mailgun dashboard, open the template and the version the site sends. Ask the person for the template's name, the version's engine, its HTML content, and its `From`, `Reply-To`, and `Subject` headers when the version sets them.
+**Copy from the dashboard.** In the Mailgun dashboard, open the template and the version the site sends. Ask the person for the template's name, the version's engine, its HTML content with the `{{` placeholders as they are, and its `From`, `Reply-To`, and `Subject` headers when the version sets them. When the site names the template by its id, ask for its name too.
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
@@ -42,9 +42,9 @@ A site whose template the person moves to PostHog needs the content of the versi
 - When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an account in the EU region, reads an account template with its active version.
 - `GET https://api.mailgun.net/v4/templates/<name>/versions/<tag>`, or `https://api.eu.mailgun.net` for an account in the EU region, reads the account template's version a site names with `t:version`.
 
-The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`.
+The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`. The version also carries `version.mjml`, which the docs call the template's source and don't relate to `template`: take `template`, and when `mjml` is not empty, note in the plan row that the email came from `template`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Tracking settings
 
