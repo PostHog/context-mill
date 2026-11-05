@@ -47,7 +47,7 @@ Read the rewrite file of each language that has a site that moves, and only thos
 
 Install or upgrade the SDK to its latest release, as the rewrite file says under "Install". Early releases of an SDK may not send email, or may send only a template made in PostHog. Check the installed version for what the moving sites need:
 
-- a site with `html`, `text`, or a component: the send takes a template key with a subject and an HTML or text body;
+- a site with `html`, `text`, or a component, and a `template` site that moves into the code: the send takes a template key with a subject and an HTML or text body;
 - each other field a site sets, such as a reply-to address or engagement capture: the send takes it;
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
@@ -83,7 +83,8 @@ PostHog records each send, and its sent, opened and clicked events when engageme
 
 For each site that moves, in plan order:
 
-- Rewrite the call as the provider's `mapping.md` says, for the site's language and content form: `html` and `text` content, a component the app renders, or a template made in PostHog. Write the PostHog send as the rewrite file says under "The send".
+- Rewrite the call as the provider's `mapping.md` says, for the site's language and content form: `html` and `text` content, a component the app renders, a provider template brought into the code, or a template made in PostHog. Write the PostHog send as the rewrite file says under "The send".
+- For a provider template that moves into the code, read the rest of `template-to-code.md` first. Write its email from the content Step 3 checked, render it at the site, and send the result in the code form, with the subject, `from`, and reply-to address the provider template set. Then delete the temporary copy of its content.
 - Give each send with rendered content a template key that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key, in any language.
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
@@ -93,10 +94,10 @@ For each site that moves, in plan order:
 - A branch on the provider's answer to an invalid send, such as a `400` or a `422`, becomes a branch on PostHog's error name `validation_error`, never on a status code: PostHog's statuses for invalid sends differ from the provider's, and `recipient_suppressed` is a `validation_error` with status `422`. Handle `recipient_suppressed` before that branch, as the provider's `mapping.md` says.
 - A branch on the provider's rate limit, such as a retry, a wait, or a re-queue on status `429`, becomes a branch on PostHog's status code `429` with a code other than `quota_limited`. PostHog answers a used-up sending quota with status `429` and the code `quota_limited`, which no retry fixes: it takes the path of every other error.
 - When the old code handled the provider's answer to a bad value that the app passes at run time, such as an empty recipient, also catch the argument error that the rewrite file names, or check the value before the send.
-- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and a field that the provider's `mapping.md` says to add because the old send behaved that way without setting it, such as engagement capture turned off (`captureEngagement: false` in Node.js) for a send that had no open or click tracking, from an account setting or because nothing turned it on. The template data takes the place of the provider's template variables.
+- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, the subject, body, `from`, and reply-to address that a provider template brought into the code held, and a field that the provider's `mapping.md` says to add because the old send behaved that way without setting it, such as engagement capture turned off (`captureEngagement: false` in Node.js) for a send that had no open or click tracking, from an account setting or because nothing turned it on. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each value the move changed, such as a recipient name the To line loses, each new dependency, each upgraded one with its old and new version, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Write down each email brought into the code, as `template-to-code.md` says under "Write down". Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each value the move changed, such as a recipient name the To line loses, each new dependency, each upgraded one with its old and new version, and each new env variable name.
