@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -264,6 +264,15 @@ describe('migrate-email skill', () => {
 
             expect(mapping).toMatch(/\| `params` on a send with its own `htmlContent` or `textContent` \| none: the code renders the content and the `subject` with `params` before the send \|/);
             expect(mapping).not.toMatch(/\| `params` without `templateId` \| none \| Always/);
+        });
+
+        it('renders Mailjet template language in the code, and blocks only where Mailjet blocked', () => {
+            const mapping = read('mailjet/mapping.md');
+
+            expect(mapping).toMatch(/\| `TemplateLanguage` \| none: with `true`, the code renders Mailjet's template language into the content before the send/);
+            expect(mapping).not.toMatch(/PostHog's code form sends the content as it is/);
+            expect(mapping).toMatch(/Without `TemplateErrorDeliver: true`, the render raises on a left-out value/);
+            expect(mapping).toMatch(/With `TemplateErrorDeliver: true`, Mailjet sent the email anyway/);
         });
     });
 
