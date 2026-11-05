@@ -30,12 +30,15 @@ POSTHOG = PostHog::Client.new({
 
 - Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
+- posthog-ruby has no `cc`, `bcc`, or attachments yet: a site that sets one stays, as Step 7 says.
 
 ## The answer
 
 - The send returns a `SendResult`. Its `id` is the message ID.
 - On an API error it raises `PostHog::EmailError`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `status_code` is the HTTP status.
 - Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`.
+- It raises the same `PostHog::EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
+- A bad argument raises `ArgumentError`, before any request.
 
 ## Check
 

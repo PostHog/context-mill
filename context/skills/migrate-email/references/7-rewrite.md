@@ -20,6 +20,17 @@ Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK 
 
 Read the rewrite file of each language that has a site that moves, and only those.
 
+## What every SDK's send takes and answers
+
+- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to address, `cc`, `bcc`, attachments, and engagement capture, which is on unless the send turns it off. PostHog makes the text part from the HTML when the send has no text. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
+- Both forms take a distinct ID, an idempotency key, and a retry count, `maxRetries` in Node.js.
+- No SDK takes headers, tags, a send time, several `to` addresses, or an attachment by path or URL: read a file into its content first.
+- An attachment has a filename and content, both required, and an optional content type and content ID. The content ID is a bare name, such as `logo`, without `cid:` or angle brackets, and the HTML shows the file inline with `<img src="cid:logo">`. The rewrite file says what the content is in its language.
+- The message ID in the answer is PostHog's, not the provider's.
+- An error's name follows Resend's error names, such as `validation_error` or `rate_limit_exceeded`. Its code is PostHog's own, such as `recipient_suppressed`, `sender_not_verified`, or `quota_limited`: branch on the code. A send to a suppressed address fails with the code `recipient_suppressed` and the name `validation_error`.
+- Every SDK retries network errors and rate limits by itself, twice by default, with the same idempotency key. A network error that is left after the retries comes back as the same error type as an API error, with the code `network_error`.
+- A bad argument fails before any request: as the language's argument error, or as the email error with a code that starts with `invalid_`. The rewrite file says which.
+
 ## Status
 
 ```
@@ -39,6 +50,7 @@ Install or upgrade the SDK to its latest release, as the rewrite file says under
 
 - a site with `html`, `text`, or a component: the send takes a template key with a subject and an HTML or text body;
 - a site that sets a reply-to address: the send takes one;
+- a site that sets `cc`, `bcc`, or attachments: the send takes them. Only some SDKs have them, as the rewrite file says under "The send";
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
 When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
