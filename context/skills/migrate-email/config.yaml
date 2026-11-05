@@ -40,3 +40,6 @@ variants:
   - id: mailjet
     display_name: Mailjet
     tags: [mailjet]
+  - id: mandrill
+    display_name: Mailchimp Transactional
+    tags: [mandrill]

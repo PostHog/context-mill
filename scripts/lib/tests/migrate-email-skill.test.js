@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet', 'mandrill'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -273,6 +273,14 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/PostHog's code form sends the content as it is/);
             expect(mapping).toMatch(/Without `TemplateErrorDeliver: true`, the render raises on a left-out value/);
             expect(mapping).toMatch(/With `TemplateErrorDeliver: true`, Mailjet sent the email anyway/);
+        });
+
+        it('renders mandrill merge tags in the code instead of keeping a site with its own content', () => {
+            const mapping = read('mandrill/mapping.md');
+
+            expect(mapping).toMatch(/\| `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` \| none: the code renders the merge tags in `subject`, `from_name`, `html`, and `text` before the send \|/);
+            expect(mapping).not.toMatch(/\| `subject` \| `subject` \| It holds a merge tag/);
+            expect(mapping).not.toMatch(/\| `html`, `text` \| `html`, `text` \| They hold a merge tag/);
         });
     });
 
