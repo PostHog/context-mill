@@ -31,6 +31,14 @@ describe('sending-transactional-emails skill', () => {
         expect(DESCRIPTION).toContain('Read `references/sending-transactional-emails.md` first');
     });
 
+    it('fetches every reference file the PostHog skill links to', () => {
+        const fetched = skill()[0].docs_urls.map((doc) => doc.url.split('/sending-transactional-emails/')[1]);
+
+        expect(fetched).toEqual(
+            expect.arrayContaining(['references/moving-from-other-providers.md', 'references/sdks.md']),
+        );
+    });
+
     it('checks for server code before it asks anything', () => {
         const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
         const firstRule = wizardSection.split('\n- ')[1];
