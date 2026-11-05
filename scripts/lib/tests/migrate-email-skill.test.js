@@ -223,6 +223,13 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('renders Brevo params in a send\'s own content in the code instead of keeping the site', () => {
+            const mapping = read('brevo/mapping.md');
+
+            expect(mapping).toMatch(/\| `params` on a send with its own `htmlContent` or `textContent` \| none: the code renders the content and the `subject` with `params` before the send \|/);
+            expect(mapping).not.toMatch(/\| `params` without `templateId` \| none \| Always/);
+        });
     });
 
     describe('the key check in step 6', () => {
