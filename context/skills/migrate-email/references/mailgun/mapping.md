@@ -1,8 +1,8 @@
 # Mailgun to PostHog mapping
 
-This file decides, field by field, whether PostHog can send a Mailgun call site. A site moves only when every field it sets moves. Otherwise it stays on Mailgun, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and `posthog-sdks.md` has PostHog's names in each language.
+This file decides, field by field, whether PostHog can send a Mailgun call site. A site moves only when every field it sets moves. Otherwise it stays on Mailgun, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and the rewrite file for the site's language, which Step 7 names, has PostHog's names in that language.
 
-PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name `posthog-sdks.md` gives for the site's language, such as `reply_to` in Python.
+PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name the rewrite file gives for the site's language, such as `reply_to` in Python.
 
 ## Fields
 
@@ -21,10 +21,10 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `template` with `t:variables`, `h:X-Mailgun-Variables`, or `v:` values | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
 | `t:version` | the PostHog template made from that version | See "Templates" |
 | `t:text` | none | Always. PostHog's send doesn't take it yet |
-| `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `Name <address>` moves as the bare address, as for `to` |
+| `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `h:Reply-To` | `replyTo` | It carries a name, holds more than 10 addresses, or the code builds it at run time and you cannot tell that it holds bare addresses only |
-| `attachment` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all. A file given by path moves when the rewrite can read it, as for any other file |
-| `inline` | `attachments`, with `contentId` | As for `attachment`. `contentId` is the file name the HTML references as `cid:<filename>`, bare, without `cid:` |
+| `attachment` | none | Always. PostHog's send doesn't take it yet |
+| `inline` | none | Always. PostHog's send doesn't take it yet |
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
@@ -58,7 +58,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 | A send whose `to` is a Mailgun mailing list address | Always: Mailgun sends it to every member |
 | SMTP through `smtp.mailgun.org` or `smtp.eu.mailgun.org` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer or transport (Laravel, Symfony, Rails, Django, Nodemailer, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
-| A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
+| A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 
 ## Domains
 
@@ -71,7 +71,7 @@ Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs 
 - These throw or raise on a failed status: `axios`, `got`, Ruby's `rest-client`, Guzzle unless `'http_errors' => false`, .NET `HttpClient` followed by `EnsureSuccessStatusCode()`, and RestSharp with `ThrowOnAnyError = true`, or from version 107 with `Post` or `PostAsync`, which throw on any failed status but `404`.
 - These answer a failed status as a response: `fetch`, `requests`, `httpx`, Ruby's `Net::HTTP` (unless the code calls `.value`), PHP's `curl_exec`, Guzzle with `'http_errors' => false`, .NET `HttpClient` without `EnsureSuccessStatusCode()`, RestSharp's `Execute`, `ExecuteAsync`, and `ExecutePostAsync`, and every RestSharp call before version 107, and Go's `net/http`.
 
-`posthog-sdks.md` says how PostHog's SDK reports an error in each language. Keep the site failing the same way it did, as the Rewrite section says.
+The rewrite file says under "The answer" how PostHog's SDK reports an error in its language. Keep the site failing the same way it did, as the Rewrite section says.
 
 | Code | A site stays on Mailgun when |
 |---|---|
@@ -80,7 +80,7 @@ Mailgun's SDKs report an error in two ways. The Node.js, Ruby, PHP, and Go SDKs 
 | A client that sends nothing: a Ruby client in test mode, `Mailgun.configure` with `test_mode = true` or `enable_test_mode!` on the client, which keeps the message in `Mailgun::Client.deliveries`, or a Python `Client(..., dry_run=True)`, which answers the request locally | Always, when the app turns it on outside its tests, such as from an env setting. When only the tests turn it on, the site moves: note in the report each place that turns it on and each test that reads `Mailgun::Client.deliveries` or the dry-run answer, since those tests now need the PostHog send stubbed |
 | The message `id` stored for a webhook handler or an Events API read | Always, when the handler or the read uses it |
 | The message `id` logged or stored for the app's own use | Never. Use PostHog's message id |
-| A read of the answer's headers, such as a rate-limit header | Always: PostHog's answer holds its message id, as `posthog-sdks.md` says, not Mailgun's headers |
+| A read of the answer's headers, such as a rate-limit header | Always: PostHog's answer holds its message id, as the rewrite file says under "The answer", not Mailgun's headers |
 
 ## Templates
 
@@ -112,7 +112,7 @@ Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `
 - Any other helper, `{{@index}}`, a partial, a block inside `{{#each}}` that reads a value outside the loop with `../`, and `%recipient.<name>%` or an unsubscribe variable keep the template on Mailgun.
 - The site's values become `templateData`: the object of `t:variables`, else of `h:X-Mailgun-Variables`, else the `v:` values by name. Parse a JSON string into its object. A site that sets `v:` values next to `t:variables` stays when a webhook handler reads them back, as in "Webhooks".
 - The PostHog template carries its own sender, reply-to address, and subject. Tell the person to put the version's `From`, `Reply-To`, and `Subject` headers into it, for each one the site doesn't set. A site that sets `from`, `h:Reply-To`, or `subject` next to `template` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `cc`, `bcc`, `attachment`, `inline`, or an `o:` option, such as `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks`, next to `template` stays: a template made in PostHog sends with its own settings, and the template form takes none of them. So does a template site whose sending domain has open or click tracking off, as "Tracking" says: the template form takes no `captureEngagement`.
+- A site that sets `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks` next to `template` stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. So does a template site whose sending domain has open or click tracking off, as "Tracking" says: the template form takes no `captureEngagement`.
 
 ## Webhooks
 
@@ -133,14 +133,14 @@ PostHog's events carry no Mailgun message id, no `user-variables`, and no Mailgu
 
 ## Rewrite
 
-How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and `posthog-sdks.md` has the client and the send in each language.
+How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and the rewrite file for the site's language has the client and the send.
 
 **The PostHog client.** Set `migratedFrom: 'mailgun'` on the client that Step 7 configures, when its client options take it.
 
 **The call.** The Mailgun send becomes one PostHog send. Build its fields from the message the site built:
 
 - Node.js `mg.messages.create(domain, data)` and `mailgun.messages().send(data, callback)`: the fields of `data`.
-- Python `client.messages.create(domain=, data=, files=)`, or a `requests` or `httpx` post: the fields of `data`, and the files of `files`.
+- Python `client.messages.create(domain=, data=)`, or a `requests` or `httpx` post: the fields of `data`.
 - Ruby `send_message(domain, params)`: the fields of `params`, or the fields a `MessageBuilder` set.
 - PHP `$mg->messages()->send($domain, $params)`: the fields of `$params`.
 - Go `NewMessage(...)` and its setters: `from`, `subject`, `text`, `to`, and each field a setter sets.
@@ -151,9 +151,8 @@ Drop the domain argument and the Mailgun client of the call.
 **The fields.**
 
 - `from` stays as it is. When the code built it from a name and an address, such as with a builder setter that takes both, write `'Name <address>'`, with the name in double quotes when it holds a comma, a quote, or another special character, such as `'"Acme, Inc." <hello@mail.example.com>'`.
-- `to`, `cc`, and `bcc` become bare addresses. A list with one entry in `to` becomes that entry. A comma-separated string becomes a list. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
+- `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `h:Reply-To` becomes `replyTo`.
-- An attachment becomes `{ filename, content, contentType }`: Node.js `{ data, filename, contentType }`, Python `("attachment", (filename, content))`, and Go `AddBufferAttachment(filename, content)`. Mailgun takes the raw file, so `content` is the same bytes in every language, and Go and Elixir need no decoding. Content that is a path or a stream is read into its bytes first. Content that is a string of the file's text becomes its bytes, such as `Buffer.from(text)` in Node.js or `text.encode()` in Python: PostHog reads a string as base64. An `inline` file also gets `contentId` set to its file name, bare, such as `logo.png`, so the HTML's `cid:logo.png` still finds it.
 - Tracking becomes `captureEngagement: false` when Mailgun tracked neither opens nor clicks, as "Tracking" says, whether the send turned them off or the domain did. Drop the tracking fields. When both were on, drop them and set nothing. Note in the plan row each site that got `captureEngagement: false` from the domain's setting.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.

@@ -1,8 +1,8 @@
 # Brevo to PostHog mapping
 
-This file decides, field by field, whether PostHog can send a Brevo call site. A site moves only when every field it sets moves. Otherwise it stays on Brevo, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and `posthog-sdks.md` has PostHog's names in each language.
+This file decides, field by field, whether PostHog can send a Brevo call site. A site moves only when every field it sets moves. Otherwise it stays on Brevo, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and the rewrite file for the site's language, which Step 7 names, has PostHog's names in that language.
 
-PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name `posthog-sdks.md` gives for the site's language, such as `reply_to` in Python. Brevo fields are written in their HTTP names, such as `htmlContent`: `sdk-reference.md` gives them in each SDK.
+PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name the rewrite file gives for the site's language, such as `reply_to` in Python. Brevo fields are written in their HTTP names, such as `htmlContent`: `sdk-reference.md` gives them in each SDK.
 
 ## Fields
 
@@ -16,12 +16,11 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `htmlContent`, `textContent` | `html`, `text` | Never, unless `params` is set too (see below) |
 | `params` without `templateId` | none | Always: Brevo fills `{{ params.NAME }}` into the send's own content, and PostHog sends the content as it is |
 | `templateId` with `params` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
-| `cc`, `bcc` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. An entry's name is lost, as for `to` |
+| `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo` | `replyTo` | It carries a `name` |
 | `contactPixelTrackingConsent`, set to `true` or `false`, or `removeTrackingPixel: true`, on a `to`, `cc`, or `bcc` entry | none | Always, `false` included: with per-contact tracking consent on, `false` makes Brevo count the recipient's opens and clicks without tying them to the recipient. PostHog's send doesn't take a tracking setting per recipient yet |
 | Open and click tracking, which the send leaves to the account | `captureEngagement: false`, or no field | See "Tracking" below |
-| `attachment` with `content` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
-| `attachment` with `url` | none | Always. PostHog takes file content only, and a file behind a URL can't be checked for size here |
+| `attachment`, with `content` or `url` | none | Always. PostHog's send doesn't take it yet |
 | `headers` with `idempotencyKey` (or `IdempotencyKey`) only | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Brevo keeps a key for 15 minutes, and PostHog keeps it for 24 hours. A key the code can send again for another email within 24 hours, such as one built only from a user id and the email's kind, keeps the site too: PostHog would send no new email for it, or refuse it with `idempotency_key_reused` |
 | `headers`, any other header | none | Always: no PostHog SDK takes headers yet |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
@@ -49,12 +48,12 @@ A Brevo send without an idempotency key moves without one.
 | A loop that sends one email per address | Never for the call itself: each call is one send. Keep the loop |
 | SMTP through `smtp-relay.brevo.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer (Django Anymail, Symfony Mailer, Swoosh), or a delivery method the app registers with Rails ActionMailer that sends through Brevo | Always. PostHog has no mailer driver |
-| .NET `SendTransacEmail`, the sync send | As `posthog-sdks.md` says for a synchronous .NET send |
-| A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
+| .NET `SendTransacEmail`, the sync send | As the .NET rewrite file says under "The send" for a synchronous send |
+| A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 
 ## Code around the send
 
-Every Brevo SDK reports an API error by throwing, except Go, which answers an error value. `sdk-reference.md` names each SDK's error and its fields. `posthog-sdks.md` says how PostHog's SDK reports an error in each language. Keep the site failing the same way it did, as the Rewrite section says.
+Every Brevo SDK reports an API error by throwing, except Go, which answers an error value. `sdk-reference.md` names each SDK's error and its fields. The rewrite file says under "The answer" how PostHog's SDK reports an error in its language. Keep the site failing the same way it did, as the Rewrite section says.
 
 | Code | A site stays on Brevo when |
 |---|---|
@@ -106,7 +105,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - A Brevo template has no plain text part. The PostHog template takes its HTML, and no text the person didn't write.
 - A template's `tag` is not carried over. When the template has a tag and a webhook handler reads `tags` back, the site stays. When it has a tag and no handler reads it, note in the plan row that the tag is lost.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `sender`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `cc`, `bcc`, `attachment`, or a recipient's tracking setting next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes none of them. A template site moves only when Brevo tracked its opens and clicks per recipient, as "Tracking" says: the template form takes no `captureEngagement`.
+- A site that sets a recipient's tracking setting next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes no tracking setting. A template site moves only when Brevo tracked its opens and clicks per recipient, as "Tracking" says: the template form takes no `captureEngagement`.
 - A Brevo template can carry its own attachment, added in its advanced options. The send doesn't name it, and `account.md` says how to find it. A template with an attachment keeps the site on Brevo.
 
 ## Webhooks
@@ -128,7 +127,7 @@ PostHog's events carry no Brevo `message-id`, no `tags`, and no `X-Mailin-custom
 
 ## Rewrite
 
-How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and `posthog-sdks.md` has the client and the send in each language.
+How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and the rewrite file for the site's language has the client and the send.
 
 **The PostHog client.** Set `migratedFrom: 'brevo'` on the client that Step 7 configures, when its client options take it.
 
@@ -144,10 +143,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - `sender: { email: 'hello@mail.example.com', name: 'Example' }` becomes `from: 'Example <hello@mail.example.com>'`. A name with a comma, a quote, or another special character goes in double quotes, such as `'"Example, Inc." <hello@mail.example.com>'`, with a quote in the name escaped as `\"`. A `sender` without a name becomes the bare address.
 - `to: [{ email, name }]` becomes `to: email`. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
-- `cc` and `bcc` become lists of bare addresses.
 - `replyTo: { email }` becomes `replyTo: email`.
 - `htmlContent` becomes `html`, and `textContent` becomes `text`.
-- An attachment `{ content, name }` becomes `{ content, filename: name }`. In Node.js and Python, `content` stays the same base64 string. In Go and Elixir, the SDK takes the raw file: decode the base64 string first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice. A Brevo attachment carries no type: set `contentType` from the file name's extension, such as `application/pdf` for `.pdf`.
 - `headers: { idempotencyKey: key }` becomes `idempotencyKey: key`.
 - The send gets `captureEngagement: false` when Brevo tracked neither opens nor clicks for the account, as "Tracking" says. Note it in the plan row.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
@@ -157,7 +154,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **Errors.** Keep the site failing the same way it did:
 
 - **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where the Brevo send threw into a `catch`, throw from the error so the same `catch` runs, and keep each property the `catch` reads, with PostHog's status code in it: `if (error) throw Object.assign(new Error(error.message), { statusCode: error.statusCode, name: error.name, code: error.code })`. A network failure has no status: `err.code` is `network_error` then. Name the status the way the old error did: `statusCode` for `@getbrevo/brevo` and `sib-api-v3-typescript`, `response: { statusCode: error.statusCode }` where the `catch` reads `err.response.statusCode`, as with `@sendinblue/client` and the `HttpError` of `@getbrevo/brevo` 1.x to 3.x, and `status` for `sib-api-v3-sdk`. A read of `err.body` or `err.response.body` becomes a read of `err.message`. A check of `400` or `422`, or an `instanceof` branch on `Brevo.BadRequestError` or `Brevo.UnprocessableEntityError`, becomes a check of `err.name === 'validation_error'`. An `instanceof` branch on another Brevo error class becomes a check of its status code, from the table under "Code around the send". When the `catch` handled only that class or status and threw the rest again, it keeps doing so: never widen it. A raw HTTP site that threw on `!res.ok` throws on `error` the same way.
-- **Python.** PostHog's SDK raises too. Replace `except ApiError` (or `ApiException`) with the PostHog exception `posthog-sdks.md` names, and `e.status_code` (or `e.status`) with its status code. A read of `e.body` becomes a read of its message. Brevo's Python errors cover only its answers: a network failure raised the HTTP library's error past them. PostHog's exception covers both, so raise it again first when its code is `network_error`. A catch of one Brevo error class, or an `except` that handles one status, becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `429` (`TooManyRequestsError`) checks the status code, and `400` or `422` (`BadRequestError`, `UnprocessableEntityError`) checks the name `validation_error`, as Step 7 says.
+- **Python.** PostHog's SDK raises too. Replace `except ApiError` (or `ApiException`) with the PostHog exception the rewrite file names, and `e.status_code` (or `e.status`) with its status code. A read of `e.body` becomes a read of its message. Brevo's Python errors cover only its answers: a network failure raised the HTTP library's error past them. PostHog's exception covers both, so raise it again first when its code is `network_error`. A catch of one Brevo error class, or an `except` that handles one status, becomes a catch of the PostHog exception that checks for the same kind of error, and raises every other error again: `429` (`TooManyRequestsError`) checks the status code, and `400` or `422` (`BadRequestError`, `UnprocessableEntityError`) checks the name `validation_error`, as Step 7 says.
 - **PHP, Ruby, and .NET.** PostHog's SDK throws too. Replace the Brevo exception in the `catch` or `rescue` with PostHog's, and the status read (`getCode()`, `code`, `ErrorCode`) with its status code. A `catch` or `rescue` that handled one status checks for the same kind of error, and throws or raises every other error again: a branch on `400` or `422` reads PostHog's error name `validation_error` (`getErrorName()`, `name`, `Name`), and a branch on another status, such as 429, reads PostHog's status code.
 - **Go.** `err` stays the error to check. A check of `resp.StatusCode` becomes a check of `err`: a status of 400 or more becomes "there is an error", a branch on `400` or `422` reads `Name` (`validation_error`) from the `*posthog.EmailError` with `errors.As`, and a branch on another status, such as 429, reads its `StatusCode`. Every other error goes back the way it did before, such as returned to the caller.
 - **A raw HTTP request.** It failed the way its client does, with the options the code gives it. These threw on a refused send: `axios` unless `validateStatus` accepts a failed status, `got` and `ky` unless `throwHttpErrors: false`, Guzzle unless `'http_errors' => false`, Faraday with `raise_error`, `requests` or `httpx` followed by `raise_for_status()`, and .NET `HttpClient` followed by `EnsureSuccessStatusCode()`. Their sites fail on every PostHog error, as the bullet for the language says, and a read of the client's status, such as axios's `err.response.status`, reads PostHog's status code. `fetch`, `requests`, `httpx`, Ruby `Net::HTTP`, Go `net/http`, PHP `curl_exec`, and .NET `HttpClient` without `EnsureSuccessStatusCode()` answered a refused send as a response. A site on one of them that never read the status logs PostHog's error and goes on, and raises or returns it when its code is `network_error`, as Step 7 says. PHP's `curl_exec` didn't raise on a network failure either: it returned `false`. A site that never checked that went on after a network failure too, so its moved site also logs `network_error` and goes on. Note each such site in the report.
