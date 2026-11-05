@@ -19,7 +19,7 @@ group's one with the same file name.
 
 The iOS pages in `feature-flags/`, `error-tracking/` and `logs-installation/`
 were taken on 2026-11-05 while they still described posthog-ios 3.x
-(CocoaPods, `from: "3.56.0"`). The iOS flag variants also read the
+(CocoaPods, `from: "3.56.0"`, `"3.59.3"` for logs). The iOS flag variants also read the
 `adding-feature-flag-code` snapshot, which still has the 3.x
 `reloadFeatureFlags` block and the `didReceiveFeatureFlags` fallback. The logs
 folder isn't named `logs/` because `.gitignore` ignores that name.
