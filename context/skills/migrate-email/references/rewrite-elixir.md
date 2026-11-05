@@ -30,12 +30,14 @@ config :posthog,
 
 - Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
+- `cc:` and `bcc:` take one address or a list. `attachments:` takes a list of maps with `filename`, `content`, `content_type`, and `content_id`, where `content` is the raw binary: decode a base64 string first, or the SDK encodes it again.
 
 ## The answer
 
 - The send returns `{:ok, result}`, and `result.id` is the message ID.
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", as an atom, such as `:rate_limit_exceeded`.
 - Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
+- A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
 
 ## Check
 

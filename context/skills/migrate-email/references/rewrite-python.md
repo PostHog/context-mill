@@ -28,17 +28,21 @@ posthog = Posthog(
 - The client loads flag definitions only when it evaluates a flag, so a client that only sends email needs no other setting.
 - The app host option is `app_host`.
 - `AsyncPosthog`, from `posthog[async]`, takes the same options. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
+- Without the `async` extra, the first send on `AsyncPosthog` fails before it reaches PostHog.
 
 ## The send
 
 - Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, and `capture_engagement` optional. `from` is a Python keyword, so the argument is `from_`.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
+- `cc` and `bcc` take one address or a list. `attachments` takes a list of dicts with `filename`, `content`, `content_type`, and `content_id`, where `content` is `bytes` or a base64 string.
 
 ## The answer
 
 - The send returns a `SendEmailResult`. Its `id` is the message ID.
 - On an API error it raises `EmailError`, imported from `posthog.emails`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `status_code` is the HTTP status.
 - Suppressed recipient: `except EmailError as error:` with `if error.code == "recipient_suppressed":`.
+- It raises the same `EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
+- A bad argument raises `TypeError` or `ValueError`, before any request.
 
 ## Check
 
