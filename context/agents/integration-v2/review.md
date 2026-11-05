@@ -2,6 +2,8 @@
 type: review
 flow: integration-v2
 label: Verify and review the integration
+timeoutSeconds: 600
+onTimeout: continue
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
 model_sdk: claude-sonnet-5
@@ -14,13 +16,18 @@ dependsOn: [install, init, identify, error-tracking, capture, ai-observability, 
 
 ## Goal
 
-You are the last hands on the code. First make the integration run, then review it,
-then leave it building to the best of your ability. Do both in one pass, verifying and reviewing are the same
-reading of the same changeset.
+You are the last hands on the code. Work in this order, in one pass, because
+verifying and reviewing are the same reading of the same changeset:
 
-**Install and verify.** The earlier steps edited code but did not install —
-install now, then verify the project builds, typechecks, and lints, whichever
-of those it defines. Install what the manifest declares plus every package the
+1. Install.
+2. Review by reading the code, and make your fixes.
+3. Run the build.
+4. Run typecheck only if the build doesn't include it.
+5. Lint the changed files.
+6. If a failure comes from our change, fix it and rerun that check once.
+
+**Install.** The earlier steps edited code but did not install — install now.
+Install what the manifest declares plus every package the
 upstream handoffs name, adding the named ones by bare name with the project's
 package manager so it resolves real versions. The app's existing dependencies
 are not yours to touch: never upgrade, downgrade, or re-add a package this
@@ -32,9 +39,9 @@ the package manager, stepping down major versions (`pkg@^7`, then `@^6`,
 fits, revert that piece of instrumentation, leave the app's dependency alone,
 and record the incompatibility so the report can say what was skipped and why. An optional upstream task
 (AI Observability, Logs) may have failed and left partial edits no handoff
-describes — install and build either way, and let the build surface stray
+describes — install and run the chosen compile checks either way, and let them surface stray
 imports; fix or revert them like any other defect. Do not run the test suite; the
-runtime does not allow it, and a green build is the bar. A bad version only surfaces
+runtime does not allow it, and the chosen compile checks are the bar. A bad version only surfaces
 here: if the install fails because a declared version does not exist (npm `ETARGET`,
 "no matching version", a yanked release), do not guess pins — reinstall the
 package by bare name and let the package manager pick, matching the framework
@@ -91,14 +98,45 @@ Stay inside verify-and-review. These are not your job:
 If you notice something real but out of scope, leave it — a one-line mention in your
 handoff, no more. Only flag what you can pin to a specific line and dimension — no
 taste-based rewrites, and never expand the integration. For each fix, ask what would
-behave differently if it were wrong, and check by reading the callers. After any
-change, re-run the build or lint and confirm it still passes.
+behave differently if it were wrong, and check by reading the callers.
+
+**Verify, once your review fixes are in.** Use as few slow commands as you can. Use
+the narrowest package or workspace target that covers the integration's changed code.
+Run a root script only when the workspace requires it, filtered to that target where
+supported; do not check unrelated packages.
+Choose the compile checks once per changed package by inspecting its scripts and
+framework behavior. If the build includes typechecking, run the build only. If
+build and typecheck/check (such as svelte-check) cover different failures, run the
+build, then the typecheck, once each: a passing typecheck does not prove bundling,
+asset imports, or framework compilation work. If only one check exists, run it. Skip
+equivalent checks, not distinct coverage; do not add alternative checks after a failure.
+Then lint only the files this integration changed. Invoke the installed linter
+with those paths, replacing broad targets such as `.` while preserving the
+project's config and options. Appending paths to a script that still targets
+`.` does not scope it. Run the full lint script only when scoped lint is not
+supported, once; do not broaden or switch checks after a failure.
+
+Each check ends in one of three results:
+
+- **Passed:** move on.
+- **Failed because of our change** (the error names a file we edited or a package we
+  added): batch your fixes, then rerun that check once, along with any check that
+  passed earlier if the fixes changed code it covers. If it still fails, report the
+  remaining issue and stop that check.
+- **Couldn't verify** (a prebuild script fails, a tool crashes, a command hangs or
+  times out, or the errors are only in code we didn't touch): record it once and stop
+  that check. Don't rerun it, split it into alternative checks, or increase its timeout.
+
+The task has a ten-minute total budget, including install, review, and verification,
+and a long command can be stopped early to fit it. A timeout means verification is
+incomplete, not that the check passed.
 
 ## How you know you succeeded
 
-The project installed and builds, typechecks, and lints as well as it did before the
-run; you can name each review dimension and say it passes; and your fixes are in the
-files. If the build or lint fails only on pre-existing errors you did not introduce,
+The project installed and the chosen compile checks and lint passed, or you
+recorded exactly what could not be verified; you can name each review dimension
+and say it passes; and your fixes are in the files. If the build or lint fails only on pre-existing errors you did not introduce,
 that still counts — put a one-line summary in the `conflict` field and the detail in
-what you did. Reserve a failed status for when your own changes break the build. Put
-the number of fixes and the dimension each addressed in your handoff.
+what you did. Record a timed-out check as verification incomplete in `conflict`,
+naming the command; never claim it passed. Reserve a failed status for when your own changes
+break the build. Put the number of fixes and the dimension each addressed in your handoff.
