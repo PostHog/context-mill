@@ -35,7 +35,9 @@ module with the app: no edits and no env files for it, and name it in your hando
 For existing LLM calls, load the `ai-observability` skill menu and install the
 variant matching the calling code's language and provider or agent framework.
 Follow that skill's selection rules and instrumentation references. Manual
-capture is appropriate only for existing calls without a supported wrapper.
+capture is appropriate only for existing calls without a supported wrapper. Never replace the
+client or SDK the app already calls to make a wrapper fit, because that changes the requests it
+sends: a call on a provider's own SDK with no wrapper for that SDK gets manual capture.
 Instrument against the provider SDK version the app already uses; never
 require, assume, or request an upgrade of the app's own dependencies — if the
 wrapper cannot support the app's version, fall back to manual capture or

@@ -102,7 +102,8 @@ order:
    wrapping around code that cannot fail, config for features that were not set up,
    and comments that narrate what a line does or that it was added.
 2. Unrelated — the run must not have changed behavior outside the integration.
-   Revert reformatting, renames, or edits in code the integration never needed.
+   Revert reformatting, renames, or edits in code the integration never needed. If a task
+   swapped the app's LLM client or SDK, put it back and capture those calls manually.
 3. Codebase patterns — for each kind of edit (client construction, how call sites
    reach it, config and env access, imports, naming, comment density), find one
    neighboring example in this project and compare. If a change invented a seam the
