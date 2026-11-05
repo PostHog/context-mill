@@ -223,6 +223,16 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('brings every Loops email into the code, turning each LMX tag into HTML', () => {
+            const mapping = read('loops/mapping.md');
+            const lmx = mapping.match(/### From LMX to HTML\n([\s\S]*?)\n### /)?.[1] ?? '';
+            const tags = ['Style', 'H1', 'H2', 'H3', 'Paragraph', 'Quote', 'CodeBlock', 'Button', 'Image', 'Divider', 'OrderedList', 'UnorderedList', 'ListItem', 'Columns', 'ColumnItem', 'Section', 'Component', 'Icons', 'Icon', 'Strong', 'Em', 'Underline', 'Code', 'Strike', 'Text', 'Link', 'Br'];
+
+            expect(mapping).not.toMatch(/No Loops site moves to the code form/);
+            for (const tag of tags) expect(lmx, tag).toMatch(new RegExp(`\`<${tag}[ />]`));
+            expect(mapping).toMatch(/\| `transactionalId` \| the Loops email, brought into the code/);
+        });
     });
 
     describe('the key check in step 6', () => {
