@@ -93,6 +93,7 @@ describe('mcp-analytics instructions', () => {
         ['rustc', /`rustc/],
         ['cargo test', /`cargo test/],
         ['bare gofmt', /`gofmt/],
+        ['uv add with an @ version', /`uv add [^`]*@/],
     ])('never tells the agent to run %s', (_command, pattern) => {
         expect(text).not.toMatch(pattern);
     });
