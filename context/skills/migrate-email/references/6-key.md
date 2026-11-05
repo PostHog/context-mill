@@ -15,7 +15,7 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## The PostHog key
 
-- Ask the person to create a project secret API key (it starts with `phs_`) with the `hog_flow:write` scope in their PostHog project settings.
+- Ask the person to create a project secret API key (it starts with `phs_`) with the `transactional_email:write` scope in their PostHog project settings. A key that already has `hog_flow:write` works too.
 - The key goes into `POSTHOG_PROJECT_SECRET_API_KEY`, in the env file the app loads its provider key from, such as `.env` or `.env.local`. Check that git ignores that file. When it doesn't, ask the person where the key goes.
 - Ask the person to add the key to that file themselves. Inside the Wizard, ask for it and store it as the "Inside the PostHog Wizard" section of `SKILL.md` says.
 - Add the variable name, without a value, to the project's env example file when it has one.
