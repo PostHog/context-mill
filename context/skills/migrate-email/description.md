@@ -20,7 +20,7 @@ The folder `references/<provider>/` holds everything specific to {display_name}.
 - `mapping.md`: how each send field maps to PostHog, what keeps a call site on {display_name}, and how to rewrite a site that moves.
 - `account.md`: the DNS records the app sends with now, and how to get the templates and the suppression list.
 
-The rewrite files next to the step files, `rewrite-<language>.md`, have PostHog's email send in each language the sites can move in. Step 7 says which one to read.
+The rewrite files next to the step files, `rewrite-<language>.md`, have PostHog's email send in each language the sites can move in. Step 7 says which one to read. `template-to-code.md` says how a send of a template stored at {display_name} moves with its email in the app's code. Steps 3 and 7 say when to read it.
 
 Everything you need is on disk. Do not fetch the {display_name} docs. Never tell the person how PostHog behaves where these files don't say: say that you can't tell.
 
@@ -56,4 +56,4 @@ Outside the Wizard, skip the `[STATUS]` lines, and tell the person why you stopp
 
 `transactional-emails.md` is the transactional email overview. It covers how to create a transactional email and its API key, idempotency, and the error codes. `api.md` covers the send route, including content from your code, and the checks of a send.
 
-When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves the {display_name} sends to PostHog's SDKs, with the content in the app's code, or to a template the person makes in PostHog. Where the two disagree, this skill's steps win.
+When the `sending-transactional-emails` skill is available, read it for the PostHog side of a send. Its `moving-from-other-providers.md` moves sends to a template stored in PostHog. This skill moves the {display_name} sends to PostHog's SDKs with the content in the app's code, and brings a template stored at {display_name} into the code too. It moves a send to a template the person makes in PostHog only when they ask for one. Where the two disagree, this skill's steps win.
