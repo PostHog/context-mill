@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.60.0](https://github.com/PostHog/context-mill/compare/v1.59.0...v1.60.0) (2026-11-05)
+
+
+### Features
+
+* **data-warehouse-destination:** add the warehouse destination setup skill ([#457](https://github.com/PostHog/context-mill/issues/457)) ([61a6f75](https://github.com/PostHog/context-mill/commit/61a6f750d0613daf19434b2b1a2864c27a6983b7))
+* **mcp-analytics:** add Go, Ruby, and Rust to the skill ([#419](https://github.com/PostHog/context-mill/issues/419)) ([1601f41](https://github.com/PostHog/context-mill/commit/1601f412077d7abcfd0fcef95520c05abb8b88d4))
+* **replay-vision:** fit scanner filters to volume and rework default scanners ([#449](https://github.com/PostHog/context-mill/issues/449)) ([ba6e2f2](https://github.com/PostHog/context-mill/commit/ba6e2f253c3e078282f1c323a009268d135365bc))
+
+
+### Bug Fixes
+
+* **error-tracking:** allow the Next.js 14 instrumentation flag, keep existing inits ([#446](https://github.com/PostHog/context-mill/issues/446)) ([6fc01bd](https://github.com/PostHog/context-mill/commit/6fc01bd58f883533a3dddec3660243e16df347e9))
+* **error-tracking:** init the Next.js browser SDK at the top level of instrumentation-client.ts ([#443](https://github.com/PostHog/context-mill/issues/443)) ([148f9b8](https://github.com/PostHog/context-mill/commit/148f9b831ff753bf9bd07cb1139c97ef29c8a8ed))
+* **mcp-analytics:** keep go build from dropping a binary in the project ([#458](https://github.com/PostHog/context-mill/issues/458)) ([3464174](https://github.com/PostHog/context-mill/commit/3464174f116fce985c893b157a497a3d4046b6a8))
+* **replay-vision:** say when replay is off or the change needs a deploy ([#448](https://github.com/PostHog/context-mill/issues/448)) ([dfabd13](https://github.com/PostHog/context-mill/commit/dfabd13a6171693a2b058eb3bd013a7403fee84d))
+
 ## [1.59.0](https://github.com/PostHog/context-mill/compare/v1.58.0...v1.59.0) (2026-10-27)
 
 
