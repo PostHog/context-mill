@@ -223,6 +223,14 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('renders mandrill merge tags in the code instead of keeping a site with its own content', () => {
+            const mapping = read('mandrill/mapping.md');
+
+            expect(mapping).toMatch(/\| `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` \| none: the code renders the merge tags in `subject`, `from_name`, `html`, and `text` before the send \|/);
+            expect(mapping).not.toMatch(/\| `subject` \| `subject` \| It holds a merge tag/);
+            expect(mapping).not.toMatch(/\| `html`, `text` \| `html`, `text` \| They hold a merge tag/);
+        });
     });
 
     describe('the key check in step 6', () => {

@@ -20,7 +20,7 @@ A sending domain at Mailchimp Transactional carries these records. Keep all of t
 
 ## Read-only key
 
-The app's own Mailchimp Transactional key can usually call every API method, but some keys are limited to the send calls. Never use the app's key for reads. When the person chooses the API over the dashboard, ask them to create a new key in Mailchimp Transactional (Settings, then **+ New API Key**) and limit it to the API calls `templates/info`, `templates/list`, and `rejects/list`. Ask them to store it in `MANDRILL_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailchimp Transactional and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own Mailchimp Transactional key can usually call every API method, but some keys are limited to the send calls. Never use the app's key for reads. When the person chooses the API over the dashboard, ask them to create a new key in Mailchimp Transactional (Settings, then **+ New API Key**) and limit it to the API calls `templates/info`, `templates/list`, `mctemplates/info`, and `rejects/list`. Ask them to store it in `MANDRILL_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailchimp Transactional and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -37,13 +37,15 @@ The API has no read of these settings. Note the click tracking choice as the pag
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the content of its published version, to check it before they make the PostHog template.
+A site whose template moves needs the content of its published version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, as HTML and text with the merge tags as written.
 
 **Copy from the dashboard.** In Mailchimp Transactional: the Templates page, then the template. Ask the person for the template's slug, its published subject, from address and from name, its HTML, and its text when it has one. Ask them which merge language the account uses by default (Sending Defaults, then Merge Language) when the site doesn't set `merge_language`.
 
 **Read from the API.** `POST https://mandrillapp.com/api/1.4/templates/info` with the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "name": "<template slug>" }`. The answer holds `slug`, `name`, `labels`, the draft fields `code`, `text`, `subject`, `from_email`, and `from_name`, and the published fields `publish_code`, `publish_text`, `publish_subject`, `publish_from_email`, and `publish_from_name`. Take the published fields: sends use them.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+**A Mailchimp template.** A `messages.sendMcTemplate` site sends a template by its `mc_template_id`. Read it with `POST https://mandrillapp.com/api/1.4/mctemplates/info` and the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "mc_template_id": <id> }`. The answer holds `subject`, `from_email`, `from_name`, the draft `code` and `text`, and the published `publish_code` and `publish_text`. Take the published ones, or the draft ones when the site sets `mc_template_version: 'draft'`. Or ask the person to copy the same fields from the template in their Mailchimp account.
+
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 
