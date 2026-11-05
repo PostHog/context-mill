@@ -223,6 +223,13 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('renders an Amazon SES inline template in the code instead of a template made in PostHog', () => {
+            const mapping = read('amazon-ses/mapping.md');
+
+            expect(mapping).toMatch(/\| `Content.Template.TemplateContent` with `TemplateData` \| none: the code renders `TemplateData` into its `Subject`, `Html`, and `Text` before the send \|/);
+            expect(mapping).not.toMatch(/\| `Content.Template.TemplateContent` \| a template made in PostHog \|/);
+        });
     });
 
     describe('the key check in step 6', () => {

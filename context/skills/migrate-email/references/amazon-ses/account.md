@@ -32,7 +32,9 @@ The steps call this key the full-access provider key.
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template. A site that sends an inline template has its content in the code: read it there.
+A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content: the subject, the HTML, and the text, each as a string. A site that sends an inline template has its content in the code: read it there.
+
+A template belongs to one Region. Read each one in the Region its site sends in, or, for a site that names a `TemplateArn`, in the Region the ARN names.
 
 **Read with the AWS CLI (preferred).** Ask the person to run, for a v2 site:
 
@@ -48,9 +50,11 @@ aws ses get-template --template-name <name> --region <region> > <file outside th
 
 The answer holds `Template`, which is `{ TemplateName, SubjectPart, HtmlPart, TextPart }`.
 
+Each part is a JSON string: read it decoded, so `\n` is a line break and `\"` a quote. A part the template doesn't have is missing from the answer.
+
 Ask the person where they saved each file.
 
-**Read from the API.** With the key above, run the same command yourself and keep the answer only in the temporary file Step 3 writes, which Step 3 deletes once the site is classified.
+**Read from the API.** With the key above, run the same command yourself and keep the answer only in the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code.
 
 Read the person's copies where they saved them. Never write the content into the plan or the report.
 
