@@ -38,7 +38,7 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
  )}
 ```
 
-- With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts. `enable_local_evaluation: false` stops that, so the key needs no flag scope and never reaches a reverse proxy. Turning it off on the app's existing config would break the flags the app evaluates locally, so the existing config keeps its own settings.
+- With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts. `enable_local_evaluation: false` stops that, so the key needs no flag scope. Behind a reverse proxy, set the instance's `api_host` to PostHog's own host, as Step 7 says. Turning it off on the app's existing config would break the flags the app evaluates locally, so the existing config keeps its own settings.
 - `api_host` and `api_key` must be strings, and a `nil` stops the app from starting, so each one falls back as above: to the app's own `:posthog` value, then, when that is unset or `nil`, to the US Cloud host and an empty token. Use `https://eu.i.posthog.com` for EU Cloud. `secret_key` can be `nil`, and a send without it fails with its own error.
 - The app host option is `app_host`.
 - Name the instance after the app, such as `MyApp.PostHogEmail`, and pass that name first to each call below.

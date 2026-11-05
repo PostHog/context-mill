@@ -23,7 +23,6 @@ POSTHOG = PostHog::Client.new({
 ```
 
 - With `secret_key` set, the client loads flag definitions from `host` with it when it starts, and keeps polling. Give the key the feature flag read scope too. Tell the person.
-- Behind a reverse proxy, that load would hand the key to the proxy. Give email its own client, with `host` set to PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the key.
 - The app host option is `app_host`.
 - In Rails, create the client once, such as in an initializer.
 
