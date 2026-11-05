@@ -327,7 +327,7 @@ variants:
   - swiftui
   - xcodegen
   docs_urls:
-  - https://posthog.com/docs/error-tracking/installation/ios.md
+  - context/docs-snapshots/legacy/error-tracking/ios.md
   - context/docs-snapshots/legacy/ios.md
   - context/docs-snapshots/legacy/usage.md
   - context/docs-snapshots/legacy/configuration.md
