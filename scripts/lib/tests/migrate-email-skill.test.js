@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -257,6 +257,13 @@ describe('migrate-email skill', () => {
 
             expect(mapping).toMatch(/\| `Content.Template.TemplateContent` with `TemplateData` \| none: the code renders `TemplateData` into its `Subject`, `Html`, and `Text` before the send \|/);
             expect(mapping).not.toMatch(/\| `Content.Template.TemplateContent` \| a template made in PostHog \|/);
+        });
+
+        it('renders Brevo params in a send\'s own content in the code instead of keeping the site', () => {
+            const mapping = read('brevo/mapping.md');
+
+            expect(mapping).toMatch(/\| `params` on a send with its own `htmlContent` or `textContent` \| none: the code renders the content and the `subject` with `params` before the send \|/);
+            expect(mapping).not.toMatch(/\| `params` without `templateId` \| none \| Always/);
         });
     });
 

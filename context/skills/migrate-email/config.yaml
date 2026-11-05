@@ -34,3 +34,6 @@ variants:
   - id: amazon-ses
     display_name: Amazon SES
     tags: [amazon-ses]
+  - id: brevo
+    display_name: Brevo
+    tags: [brevo]
