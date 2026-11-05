@@ -49,7 +49,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Checks
 
-<The typecheck, the tests, and the test email: what passed, what failed, and what was not checked and why. Each file Step 8 fixed outside the moved sites. Say which of the send, the engagement event, and the product event showed on one person.>
+<The check each rewrite file names, such as the typecheck, the tests, and the test email: what passed, what failed, and what was not checked and why. Each file Step 8 fixed outside the moved sites. Say which of the send, the engagement event, and the product event showed on one person.>
 
 ## Sending tier
 

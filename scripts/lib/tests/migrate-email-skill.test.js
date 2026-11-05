@@ -110,6 +110,46 @@ describe('migrate-email skill', () => {
         ]);
     });
 
+    describe('the rewrite for each PostHog SDK', () => {
+        const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it('bundles one rewrite file for each SDK', async () => {
+            outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+            const skillDir = await buildSkill('migrate-email-resend', outputDir);
+
+            for (const sdk of SDKS) {
+                expect(existsSync(join(skillDir, 'references', `rewrite-${sdk}.md`)), sdk).toBe(true);
+            }
+        });
+
+        it('has step 7 pick the rewrite file by the language of each site', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            for (const sdk of SDKS) expect(rewriteStep).toContain(`\`rewrite-${sdk}.md\``);
+            expect(rewriteStep).not.toMatch(/```(js|ts|python|go|ruby|php|csharp|rust|elixir)\n/);
+        });
+
+        it.each(SDKS)('gives the %s rewrite the secret key, the provider header, and the check to run', (sdk) => {
+            const rewrite = read(`rewrite-${sdk}.md`);
+
+            for (const heading of ['## Install', '## The client', '## The send', '## The answer', '## Check']) {
+                expect(rewrite).toContain(heading);
+            }
+            expect(rewrite).toContain('POSTHOG_PROJECT_SECRET_API_KEY');
+            expect(rewrite).toMatch(/migrated_?[fF]rom|MigratedFrom/);
+        });
+
+        it('no longer keeps a send on Resend for its language alone', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).not.toMatch(/other than JavaScript or TypeScript/);
+            expect(mapping).not.toMatch(/until the skill moves that language/);
+        });
+    });
+
     describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
         const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];
