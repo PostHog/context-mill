@@ -40,13 +40,13 @@ A site that sets no open or click tracking, in its recipients' `options`, its ow
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the content of its published version, to check it before they make the PostHog template.
+A site whose template moves needs the content of the version it sends: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content as SparkPost stores it, in its template language, and so does the dashboard. A site sends the published version, or the draft when it sets `use_draft_template: true`.
 
-**Copy from the dashboard.** In SparkPost: Content, then Templates, then the template, then its published version. Ask the person for the template's id, its subject, its from address, its reply-to address when it has one, its HTML, and its plain text when it has one. Also ask whether the version has an AMP part or custom headers, and how its open tracking, click tracking, and transactional settings are set: `mapping.md` keeps a template for each of them.
+**Copy from the dashboard.** In SparkPost: Content, then Templates, then the template, then the version the site sends. Ask the person for the template's id, its subject, its from address, its reply-to address when it has one, its HTML, and its plain text when it has one. Also ask whether the version has an AMP part or custom headers, and how its open tracking, click tracking, and transactional settings are set: `mapping.md` keeps a template for each of them. For each snippet the content renders with `render_snippet`, ask for its id, its HTML, and its text.
 
-**Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false` with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options` with `open_tracking`, `click_tracking`, and `transactional`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`. A template the site sends with `use_draft_template: true` stays, so its draft needs no read.
+**Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false`, or `?draft=true` for a site that sends the draft, with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options` with `open_tracking`, `click_tracking`, and `transactional`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`, or `email_rfc822` alone. A snippet reads from `GET https://api.sparkpost.com/api/labs/snippets/{snippet_id}`, whose `results.content` holds `html`, `text`, and `amp_html`. SparkPost's docs don't name the key permission that reads snippets: when the read is refused, ask the person for copies.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 

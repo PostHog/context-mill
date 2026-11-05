@@ -223,6 +223,14 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('renders SparkPost template language in inline content in the code, recipient values first', () => {
+            const mapping = read('sparkpost/mapping.md');
+
+            expect(mapping).toMatch(/Inline content with template language moves into the code too: the code renders the site's `subject`, `from`, `reply_to`, `text`, and `html`/);
+            expect(mapping).toMatch(/the recipient's `substitution_data` wins over the transmission's/);
+            expect(mapping).not.toMatch(/the reason `inline content uses SparkPost's template language`/);
+        });
     });
 
     describe('the key check in step 6', () => {

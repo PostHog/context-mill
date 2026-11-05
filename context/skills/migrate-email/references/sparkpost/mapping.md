@@ -10,20 +10,20 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 
 | SparkPost | PostHog | A site stays on SparkPost when |
 |---|---|---|
-| `content.from`, `override.from` | `from` | It holds a template expression that "Content" keeps, or it is on SparkPost's sandbox domain `sparkpostbox.com`, which no sender can be verified for (Step 3). `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
+| `content.from`, `override.from` | `from` | It holds template language that "Templates" doesn't place, or it is on SparkPost's sandbox domain `sparkpostbox.com`, which no sender can be verified for (Step 3). `{ email, name }` becomes `'Name <email>'`, with the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `recipients` | `to` | It holds more than one recipient without `header_to`, or it is `{ list_id }`: a stored list always stays. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name |
 | `recipients` with `header_to`, a `CC` header, or the SDK's `cc` and `bcc` | none | Always. PostHog's send doesn't take it yet. "Cc and bcc" says how to spot them |
-| `content.subject` | `subject` | It holds a template expression that "Content" keeps |
-| `content.text`, `content.html` | `text`, `html` | They hold template language that "Content" keeps |
+| `content.subject` | `subject` | It holds template language that "Templates" doesn't place |
+| `content.text`, `content.html` | `text`, `html` | They hold template language that "Templates" doesn't place |
 | `content.amp_html` | none | Always. PostHog's send doesn't take it yet |
-| `content.reply_to`, `override.reply_to` | `replyTo` | It carries a name, such as `Sales <sales@example.com>`, or a template expression that "Content" keeps |
+| `content.reply_to`, `override.reply_to` | `replyTo` | It carries a name, such as `Sales <sales@example.com>`, or template language that "Templates" doesn't place |
 | `content.headers` | none | Always: no PostHog SDK takes headers yet |
 | `content.attachments` | none | Always. PostHog's send doesn't take it yet |
 | `content.inline_images` | none | Always. PostHog's send doesn't take it yet |
-| `content.template_id` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". `use_draft_template: true` always stays: it sends a draft that can still change |
+| `content.template_id` | the template's email, brought into the code and rendered with `substitution_data`, sent as `subject`, `html`, and `text` with the template's `from` and `reply_to`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates". With `use_draft_template: true`, the draft comes into the code only when the person confirms it, as "Templates" says |
 | `content.ab_test_id` | none | Always. PostHog's send doesn't take it yet |
 | `content.email_rfc822` | none | Always: PostHog takes no raw MIME message |
-| `substitution_data`, `recipients[].substitution_data` | `templateData` for a template, or values the code fills in for inline content | See "Content" and "Templates" |
+| `substitution_data`, `recipients[].substitution_data` | none: the code renders the values into the content before the send, for a stored template and for inline content alike. `templateData` only for a template made in PostHog | See "Templates" |
 | `metadata`, `recipients[].metadata` | none | Always: no PostHog SDK takes tags yet |
 | `recipients[].tags` | none | Always: no PostHog SDK takes tags yet |
 | `campaign_id` | none | Always: no PostHog SDK takes tags yet |
@@ -46,7 +46,7 @@ A SparkPost send without an `Idempotency-Key` header sends no `idempotencyKey` a
 **Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Work out, for opens and for clicks, whether SparkPost tracked them. The first of these that sets one wins: the recipient's `options`, the transmission's `options`, the template's `options` for a template site, and then the account's settings, which `account.md` reads under "Tracking settings". There, `rest_tracking_default` decides both, and it is `true` unless the person turned it off, and the account's `click_tracking: false` turns clicks off. A site that sends from a subaccount with `open_tracking_disabled: true` tracked no opens, whatever it set. `initial_open` only adds a second open pixel at the top: it decides nothing on its own.
 
 - Both tracked: the site moves, and the tracking fields are dropped.
-- Neither tracked: a code site moves with `captureEngagement: false`, and a template site stays, because the template form takes no `captureEngagement`.
+- Neither tracked: the site moves with `captureEngagement: false`, also a template site brought into the code. A site that moves to a template made in PostHog stays, because the template form takes no `captureEngagement`.
 - One tracked and one not, such as `open_tracking: false` with clicks left on: the site stays, because `captureEngagement: false` turns off both.
 - The site stays when its recipients' `options` disagree, when it sets `initial_open: true` with open tracking off, or when it sets `click_tracking: true` on an account whose `click_tracking` is `false`: SparkPost's docs don't say whether those were tracked.
 - An address with an `open_tracking` entry on the suppression list, a `Tracking Consent Revoked` entry, got no open tracking, and PostHog has no such setting per address. Ask the person once whether the list holds such entries, or read them as `account.md` says under "Suppression list". When it does, a site that tracked opens stays, and the reason is `open tracking consent revoked for some recipients`, unless the person accepts that PostHog tracks opens for those addresses: then note it in the plan row.
@@ -90,18 +90,59 @@ SparkPost's SDKs report an error in two ways. The Node.js, Python, Ruby, PHP, an
 
 ## Content
 
-SparkPost runs inline content through its template language too, with values from `substitution_data` and `metadata`. Read the site's `subject`, `from`, `reply_to`, `text`, and `html` for `{{`. With `options.perform_substitutions: false`, read only `subject`, `from`, and `reply_to`: `text` and `html` go as they are:
+SparkPost runs inline content through its template language too, with values from `substitution_data`. Read the site's `subject`, `from`, `reply_to`, `text`, and `html` for `{{`, and its `html` and `text` for `data-msys-` and `[[data-msys-`. With `options.perform_substitutions: false`, read only `subject`, `from`, and `reply_to` for `{{`: `text` and `html` go as they are, and a `{{` in them is text.
 
 - No template language: the content moves as it is.
-- Plain expressions only, such as `{{name}}`, `{{user.first_name}}`, `{{address.name}}`, or `{{ name or 'there' }}`, whose values the site itself passes in `substitution_data` or `metadata`, or reads from the recipient: the site moves, and the rewrite fills each value in the code. See "Rewrite".
-- An expression inside a link URL, such as `href="https://acme.dev/r?t={{token}}"`, moves only when the value holds URL-safe characters only, such as an id or a token the app makes. SparkPost URL-encodes it.
-- Anything else keeps the site on SparkPost, with the reason `inline content uses SparkPost's template language`: a statement (`if`, `each`), `{{{ }}}`, a macro such as `render_dynamic_content` or `empty`, `dynamic_html`, `dynamic_plain`, arithmetic, `#` for a length, an array index, and any `data-msys-*` link attribute or `[[data-msys-...]]` in `text`.
+- Inline content with template language moves into the code too: the code renders the site's `subject`, `from`, `reply_to`, `text`, and `html` with the "Templates" table before the send, from the values the site puts into `substitution_data`, and the send carries no `substitution_data`. Where the transmission and its one recipient both set a key, the recipient's `substitution_data` wins over the transmission's. A part the table doesn't place keeps the site, and the reason names it.
 
 ## Templates
 
-A stored template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the SparkPost template, makes it transactional, and gives you its template ID. Until then the site stays on SparkPost. The check needs the content of the template's published version, because the code has only its id. `account.md` says how to get it.
+A stored template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the version the site sends, the published one unless it sets `use_draft_template: true`, because the code has only its id. `account.md` says how to get it, and how to get a snippet the template renders. The code renders the version's `subject`, `from`, `reply_to`, `html`, and `text` with the site's `substitution_data`, the recipient's values winning over the transmission's, and the send sets the rendered `subject`, `html`, `text`, `from`, and `replyTo`. Inline content uses the same language, and moves by the same table, as "Content" says.
 
-SparkPost's template language becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+SparkPost's template language, in the code:
+
+| SparkPost | In the code |
+|---|---|
+| `{{name}}`, `{{ name }}` | The value, escaped in `html`, and as it is in `text`, the subject, `from`, and `reply_to`. A missing or `null` value renders as nothing. A number renders as the JSON number the site sent, such as `5` or `39.99`, never `5.0` |
+| `{{user.first_name}}`, `{{user['first_name']}}`, `{{user[part]}}` | The nested value, by a fixed key or by the key that another value holds, escaped the same way. A missing step of the path renders as nothing |
+| `{{items[1]}}`, `{{items[1].name}}` | The item at that position, counting from 1, so `items[0]` in a language that counts from 0. A position past the end renders as nothing |
+| `{{{name}}}` | The value as it is, unescaped, under the rule of `template-to-code.md`. In `text` and the subject, it is the plain value |
+| `{{ name or 'there' }}` | The value, or `there` when the value is missing or `null`. An empty string stays empty. When the value can be `false`, the template stays: the docs don't say what `or` does with it |
+| `{{if a}}…{{elseif b}}…{{else}}…{{end}}`, with an optional `then` after a condition | A branch that tests each condition in order, with SparkPost's truth test below |
+| `==`, `!=` in a condition | A comparison of two strings, or of two numbers. When the two sides can differ in type, such as `3` and `"3"`, the template stays: the docs don't say how they compare |
+| `<`, `>`, `<=`, `>=` in a condition | A comparison of two numbers. On any other value the template stays |
+| `and`, `or`, `not` in a condition | The same logic, each side tested with the truth test. A condition that mixes `and` with `or`, or puts `not` before a comparison, without parentheses, keeps the template: the docs don't say how they bind |
+| `{{#items}}` | The number of entries in the list. A value that is not always a list keeps the template |
+| `+`, `-`, `*` | The same arithmetic, on whole numbers. `/`, or a value that is not always a whole number, keeps the template: the docs don't say how the result is written |
+| `{{each items}}…{{end}}` | A loop over the list, in order. A missing, `null`, or empty list renders nothing. A value that can be anything else keeps the template |
+| Inside `{{each}}`: `{{loop_var}}`, `{{loop_var.name}}` | The current item, or its field |
+| Inside nested `{{each}}`: `{{loop_vars.cart.name}}` | The current item of the loop over `cart`, named by the last part of the loop's path, such as `a_nested_array` for `{{each loop_vars.cart.a_nested_array}}` |
+| Inside `{{each}}`: a bare `{{name}}` | The value outside the loop, never a field of the item, as the docs' `dynamic_html[loop_var]` example reads it |
+| `{{loop_index}}` | Keeps the template: the docs don't say whether it counts from 0 or from 1 |
+| `empty(items)`, as in `{{if not empty(items)}}` | Whether the list has no entries. On a value that can be anything but a list, the template stays |
+| `render_dynamic_content(dynamic_html.offer)`, also with `dynamic_plain` or `dynamic_html[loop_var]` | The chunk the site passes under `dynamic_html` in the transmission's `substitution_data`, or under `dynamic_plain` in `text`, rendered with this table as its own small template and inserted as it is. A chunk the code doesn't build from literals, such as one read from a database, or one under a recipient's `substitution_data`, keeps the template: its template language can't be checked |
+| `render_snippet("footer")` | The snippet, brought into the code as a piece the emails share: its `html` in `html` and its `text` in `text`, rendered with the same values and inserted as it is. A snippet id from a value moves when the code sets that value from literals only: the code picks among the snippets it knows, and raises on any other id, as SparkPost failed the send. A snippet without the part the content needs, or whose content the person can't give, keeps the template |
+| `opening_double_curly()` and the other brace macros | The braces as text: `{`, `}`, `{{`, `}}`, `{{{`, or `}}}` |
+| `{{address.name}}`, `{{address.email}}`, `{{email}}`, `{{email_id}}` | The one recipient's name, or its address |
+| A statement (`if`, `elseif`, `else`, `end`, `each`) on its own line | No line in the output, and no whitespace after the statement. Build `text` the same way, so its lines match |
+| An expression in a link URL, such as `href="https://acme.dev/r?t={{token}}"` | The value URL-encoded, each byte other than letters, digits, `-`, `.`, `_`, and `~` written as `%XX`, then escaped as HTML in `html`. `{{{ }}}` in a URL inserts it as it is. The docs don't say which characters SparkPost leaves as they are: when the value can hold one outside that set, note it in the plan row |
+| A link whose `https://` comes from a value, such as `href="{{url}}"` | The value escaped as HTML, with no URL encoding. SparkPost doesn't treat it as a link, and its docs don't say how it escapes it: note it in the plan row |
+| `data-msys-linkname` | Dropped. PostHog's click events carry no link name: note it in the plan row |
+| `data-msys-clicktrack="0"`, `[[data-msys-clicktrack="0"]]` in `text` | Dropped, when SparkPost tracked no clicks for the send, as "Tracking" says. When it tracked them, the template stays: PostHog would track that link |
+| The version's `subject`, `from`, and `reply_to` | The send's `subject`, `from`, and `replyTo`, rendered with no escaping. A `from` of `{ name, email }` becomes `'Name <email>'`, as the Fields table says |
+| The version's `text` | The send's `text`, with no escaping. A version without `text` sends `html` only |
+
+- SparkPost's truth test: a block renders for a value that is not `false`, `null`, or missing. The docs don't say how `0`, `""`, or an empty list test. When a value that an `if` tests on its own can be one of them at run time, the template stays. Write the test out, as `template-to-code.md` says, such as `value !== false && value != null` in Node.js.
+- When the transmission and the recipient set one key to two objects, and the template reads a field the recipient's object doesn't have, the template stays: the docs don't say whether the two objects merge.
+- Anything else keeps the template on SparkPost: the reserved values `env_from` and `return_path`, `{{else}}` inside `{{each}}`, any other macro, and the link attributes `data-msys-unsubscribe` (SparkPost records the unsubscribe from the click), `data-msys-revoke-tracking`, and `data-msys-sublink` (the tracked path serves app links), in `html` or as `[[...]]` in `text`. So does a version with `headers`, an `amp_html` part, or `email_rfc822` content, a `reply_to` that carries a name, and a `transactional` setting of `false` that applies. The docs name no `opt_out` value or other tag that SparkPost fills with an unsubscribe link: a `{{opt_out}}` is a value the site passes, and renders like any other.
+- SparkPost's docs say it stores no images, so a template's images sit on hosts the person chose. Keep every URL. An image on a SparkPost host, whose name ends in `sparkpost.com` or `sparkpostmail.com`, serves only while the account does: list it, as `template-to-code.md` says.
+- A template's `options` decide tracking and `transactional` under the transmission's, as "Tracking" and the Fields table say. A site brought into the code moves with `captureEngagement: false` when SparkPost tracked neither opens nor clicks, and stays when it tracked only one.
+- `override.from` and `override.reply_to` replace the template's `from` and `reply_to`: the send takes the override. `metadata`, `campaign_id`, `recipients[].tags`, and the other fields next to `template_id` keep the site or move as the Fields table says.
+- `use_draft_template: true` sends the draft, which anyone in the SparkPost account can still change. Ask the person once whether the draft as it is now is the email to keep in the code. When they say yes, bring the draft in. Otherwise the site stays, and the reason is `sends a SparkPost draft that can still change`.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the SparkPost template, makes it transactional, and gives you its template ID. Until then the site stays on SparkPost. A site with `use_draft_template: true` stays: it sends a draft that can still change. SparkPost's template language becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | SparkPost | PostHog |
 |---|---|
@@ -125,7 +166,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - SparkPost's `each` walks a list. An `each` over a value that is not always a list keeps the template on SparkPost.
 - `{{{name}}}` inserts HTML as it is. PostHog's Liquid escapes it, so a template that uses triple braces stays on SparkPost.
 - SparkPost reads the current item of an `each` through `loop_var`, and its docs don't say what a bare `{{name}}` inside `each` reads. A bare name inside `each` keeps the template on SparkPost. `{{loop_var}}` and `{{loop_var.name}}` become `{{ item }}` and `{{ item.name }}`, never `{{ variables.name }}`.
-- An expression inside a link URL converts only when the value holds URL-safe characters only, as in "Content". SparkPost URL-encodes it, and the conversion above inserts it as it is.
+- An expression inside a link URL converts only when the value holds URL-safe characters only, such as an id or a token the app makes. SparkPost URL-encodes it, and the conversion above inserts it as it is.
 - Anything else keeps the template on SparkPost: `loop_index`, `loop_vars` in nested loops, `#` for a length, an array index, arithmetic, `not` inside a longer condition, more than one `and` or `or`, a macro such as `render_dynamic_content`, `render_snippet`, `empty`, or a brace macro, the reserved values `email_id`, `env_from`, and `return_path`, and any `data-msys-*` link attribute or `[[data-msys-...]]` in `text`.
 - A template whose `from` or `reply_to` holds a template expression, or whose version has `headers` or an `amp_html` part, stays.
 - A template keeps its own `options`: `open_tracking`, `click_tracking`, and `transactional`. A transmission option the site sets wins over the template's, and the account's setting applies when neither sets one. The template moves only when SparkPost tracked both opens and clicks, as "Tracking" says: the template form takes no `captureEngagement`. When the `transactional` that applies is `false`, the site stays, and when neither sets it, the account's `transactional_default` applies, as the Fields table says for `options.transactional`.
@@ -158,12 +199,13 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The call.** The SparkPost transmission becomes one PostHog send. Build its fields from the transmission the site built:
 
-- Node.js, PHP, and HTTP: `content.from`, `content.subject`, `content.html`, `content.text`, `content.reply_to`, and the one recipient. In Node.js 1.x they sit under `transmissionBody`, and the rewrite drops that wrapper. The 1.x SDK also renamed keys before the send, as `sdk-reference.md` says: classify the site and build `templateData` and the filled-in values from the names SparkPost got, so `substitutionData: { firstName }` fills `{{first_name}}` and becomes `templateData: { first_name }`.
+- Node.js, PHP, and HTTP: `content.from`, `content.subject`, `content.html`, `content.text`, `content.reply_to`, and the one recipient. In Node.js 1.x they sit under `transmissionBody`, and the rewrite drops that wrapper. The 1.x SDK also renamed keys before the send, as `sdk-reference.md` says: classify the site and render its values by the names SparkPost got, so `substitutionData: { firstName }` fills `{{first_name}}`, and becomes `templateData: { first_name }` for a template made in PostHog.
 - Python `send(recipients=, from_email=, subject=, html=, text=, reply_to=)`: the same fields.
 - Ruby `send_message(to, from, subject, html, text_message:)`: the same fields.
 - Go `sp.Transmission{Recipients, Content: sp.Content{From, Subject, HTML, Text, ReplyTo}}`: the same fields.
 - .NET `transmission.Content` and `transmission.Recipients`: the same fields.
 - Elixir `%Transmission{recipients:, content: %Content.Inline{...}}` or `SparkPost.send(to:, from:, subject:, text:, html:)`: the same fields.
+- A template site names its template by `content.template_id`, Python's `template=`, the `template_id` key of Go's content map, .NET's `Content.TemplateId`, or Elixir's `%Content.TemplateRef{}`. Its `subject`, `from`, `reply_to`, `html`, and `text` come from the email brought into the code.
 
 **The fields.**
 
@@ -173,14 +215,14 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - The `Idempotency-Key` header becomes `idempotencyKey`, with the same value.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
-**Inline content with plain expressions.** Fill each value in the code, from the same source the site put into `substitution_data` or `metadata`, and drop those objects from the send:
+**Inline content with template language.** Render it in the code before the send, as "Templates" says, from the same values the site put into `substitution_data`, and drop `substitution_data` from the send. A short content renders at the site. A long one, or one with statements, becomes an email file, as `template-to-code.md` says under "Where the email goes":
 
 - Apply the fallback of an `or` first: `{{ name or 'there' }}` becomes the value with a fallback for a missing or `null` value only, such as `name ?? 'there'` in Node.js or `'there' if name is None else name` in Python.
-- Then turn each value into a string, and a missing or `null` value that has no fallback into an empty string, as SparkPost rendered it. Every escape helper below takes a string: Python's `html.escape(42)` raises.
-- In `html`, escape the value for HTML, as SparkPost did: write a small escape helper in Node.js and Elixir, and use `html.escape` in Python, `html.EscapeString` in Go, `htmlspecialchars` in PHP, `CGI.escapeHTML` in Ruby, and `WebUtility.HtmlEncode` in .NET. Reuse the app's own helper when it has one.
-- In `text`, `subject`, `from`, and `reply_to`, insert the value as it is. When the value is the name in `from`, quote it as "The fields" says.
-- `{{address.name}}` and `{{address.email}}` become the recipient's name and address.
+- Then turn each value into a string, and a missing or `null` value that has no fallback into an empty string, as SparkPost rendered it. Every escape helper takes a string: Python's `html.escape(42)` raises.
+- In `html`, escape the value with the escape `template-to-code.md` names for the language, or the app's own helper. In `text`, `subject`, `from`, and `reply_to`, insert the value as it is. When the value is the name in `from`, quote it as "The fields" says.
 - Note each site that got an escape helper in the plan.
+
+**Templates brought into the code.** The site renders the email from its `substitution_data`, the recipient's values winning, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the template's `from` and `reply_to` as `from` and `replyTo`, or the site's `override.from` and `override.reply_to` where it sets them. It sends no `templateId` and no `templateData`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `substitution_data` and the recipient's `substitution_data` merged, the recipient's values winning. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
