@@ -223,6 +223,15 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
+
+        it('renders Mailjet template language in the code, and blocks only where Mailjet blocked', () => {
+            const mapping = read('mailjet/mapping.md');
+
+            expect(mapping).toMatch(/\| `TemplateLanguage` \| none: with `true`, the code renders Mailjet's template language into the content before the send/);
+            expect(mapping).not.toMatch(/PostHog's code form sends the content as it is/);
+            expect(mapping).toMatch(/Without `TemplateErrorDeliver: true`, the render raises on a left-out value/);
+            expect(mapping).toMatch(/With `TemplateErrorDeliver: true`, Mailjet sent the email anyway/);
+        });
     });
 
     describe('the key check in step 6', () => {

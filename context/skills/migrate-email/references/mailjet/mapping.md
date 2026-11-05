@@ -14,11 +14,11 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `Sender` | none | Always. PostHog's send doesn't take it yet | `Sender` |
 | `To` | `to` | It holds more than one address. A list with one entry moves as that entry. `{ Email, Name }` moves as the bare address: note in the plan row that the To line loses the name | `To`, or `Recipients` |
 | `Subject` | `subject` | Never | `Subject` |
-| `TextPart`, `HTMLPart` | `text`, `html` | Never | `Text-part`, `Html-part` |
-| `TemplateID` with `Variables` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" | `Mj-TemplateID`, `Vars` |
-| `TemplateLanguage` | none | It is `true` without `TemplateID`: Mailjet fills the template language in `TextPart` and `HTMLPart`, and PostHog's code form sends the content as it is. With `TemplateID`, see "Templates" | `Mj-TemplateLanguage` |
-| `Variables` | `templateData` | It is set without `TemplateID` | `Vars`, or `Recipients[].Vars` |
-| `TemplateErrorReporting`, `TemplateErrorDeliver` | none | Always. PostHog's send doesn't take it yet | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
+| `TextPart`, `HTMLPart` | `text`, `html` | They hold a tag that Mailjet fills from the account, such as `[[UNSUB_LINK_EN]]` or `[[PERMALINK]]`, as "Templates" says. With `TemplateLanguage: true`, see "Templates" | `Text-part`, `Html-part` |
+| `TemplateID` with `Variables` | the template's email, brought into the code and rendered with `Variables`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" | `Mj-TemplateID`, `Vars` |
+| `TemplateLanguage` | none: with `true`, the code renders Mailjet's template language into the content before the send, whether the content is a template's or the site's own `Subject`, `TextPart`, and `HTMLPart` | See "Templates" | `Mj-TemplateLanguage` |
+| `Variables` | none: the values the code renders into the content | A value keeps the template on Mailjet, as "Templates" says | `Vars`, or `Recipients[].Vars` |
+| `TemplateErrorReporting`, `TemplateErrorDeliver` | none: the render keeps what each did, as "Templates" says | Never | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
 | `Cc`, `Bcc` | none | Always. PostHog's send doesn't take it yet | `Cc`, `Bcc`, one string |
 | `ReplyTo` | `replyTo` | It carries a `Name`, or the code builds the value at run time and you cannot tell that it holds a bare address only | none: v3 sets it in `Headers`, which keeps the site |
 | `Attachments` | none | Always. PostHog's send doesn't take it yet | `Attachments` |
@@ -40,7 +40,7 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 - Both `disabled`: the site moves with `captureEngagement: false`.
 - One `enabled` and one `disabled`: the site stays, because `captureEngagement: false` turns off both.
 - The installed SDK has no `captureEngagement`, and Mailjet tracked neither: the site stays.
-- A `TemplateID` site that Mailjet sent with one of them `disabled`, by its own field or the account's setting, stays, as "Templates" says.
+- A `TemplateID` site that moves to a template made in PostHog, and that Mailjet sent with one of them `disabled`, by its own field or the account's setting, stays, as "Templates made in PostHog" says. A `TemplateID` site brought into the code follows the rules above.
 
 When a site leaves one of them to the account, ask the person once for each Mailjet account the sites send from whether its open tracking and click tracking are on, as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `account tracking not checked`.
 
@@ -82,7 +82,52 @@ Mailjet's SDKs report an error in three ways. The Node.js and Ruby SDKs throw. T
 
 ## Templates
 
-A site that sends `TemplateID` moves only to a template made in PostHog. This skill never makes one: the person makes it from the Mailjet template, makes it transactional, and gives you its template ID. Until then the site stays on Mailjet. The check needs the template's content, because the code has only its number. `account.md` says how to get it.
+A site that sends `TemplateID` moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its number. `account.md` says how to get it. A site that sets `TemplateLanguage: true` with its own `Subject`, `TextPart`, and `HTMLPart` moves the same way, with no content to get: the code renders that content before the send, where Mailjet rendered it after. Either way, the send sets the rendered `subject`, `html`, and `text`.
+
+Without `TemplateLanguage: true`, Mailjet reads no `{{...}}` or `{% ... %}`, so the content goes out as it is written, and the moved send renders none of it. Mailjet's v3 docs fill `[[var:name]]` from `Vars` without `Mj-TemplateLanguage`, so render a `[[var:...]]` tag with the site's values either way, and note it in the plan row when `TemplateLanguage` isn't set: the v3.1 docs don't say whether Mailjet filled it then.
+
+Mailjet's template language, in the code:
+
+| Mailjet | In the code |
+|---|---|
+| `{{var:name}}`, `{{ var:name }}`, `[[var:name]]` | The value of `Variables`, escaped in the HTML part (see below). A boolean prints as `true` or `false`, as Mailjet's loop example shows, whatever the language prints. A value the site leaves out is a template error |
+| `{{var:user.first_name}}` | The nested value, the same way. A left-out step of the path is a template error |
+| `{{var:name:"there"}}`, `{{var:name:there}}`, `[[var:name:"there"]]` | The value, or `there` when the site leaves the value out. `""` is a value: it prints as nothing, and the default doesn't replace it. The docs don't say what `null` does: use the default for it, and note it in the plan row |
+| `{% if var:a %}…{% elseif var:b %}…{% else %}…{% endif %}` | A branch that tests each value for Mailjet's truth, below, in order. `var:a:default` in a test uses the default when the value is left out. A left-out value without a default is a template error |
+| `=`, `==`, `===`, `!=`, `<>`, `>`, `<`, `>=`, `<=` | The same comparison: `=`, `==`, and `===` all test equal, and `!=` and `<>` not equal. When the code can pass a number on one side and a string on the other, the docs don't say how Mailjet compares them, so the template stays |
+| `and`, `or`, `xor`, `not`, and parentheses | The same logic. `xor` is true when exactly one side is true |
+| `+`, `-`, `*`, `/`, `div`, `mod` | The same arithmetic: `/` divides with decimals, `div` keeps the integer part, and `mod` is the remainder. Spaces count: `var:x - 1` subtracts, and `var:x-1` is a value named `x-1` |
+| `{% for item in var:items %}…{% endfor %}` | A loop over the list in order, or over the values of an object in the order the code put them in. A loop over a left-out value is a template error |
+| Inside the loop: `{{ item }}`, `{{ item.name }}`, `{% for x in item.list %}` | The current item, its field, or a loop inside it. Mailjet has no index, first, or last value, and a `{{var:name}}` inside the loop still reads the send's value |
+| `{% set name = value %}`, then `{{ name }}` | A local value in the code, set where the template sets it and changed where it sets it again. A value the site passes under the same name doesn't replace it |
+| `Upper(x)`, `Lower(x)`, `Capitalize(x)` | The value in upper case, in lower case, or with its first letter in upper case and the rest as it is |
+| `Round(x, n)`, `Int(x)` | The number rounded to `n` decimals, or its integer part. The docs don't say how a value halfway between rounds: round it away from zero, and note it in the plan row |
+| `FormatNumber(format, n)`, `FormatNumberLocale(format, n, locale)` | The number written with the format: `0` is a digit always shown, `#` a digit shown only when it counts, `,` the thousands separator, and `.` the decimal point. `FormatNumber` uses `en_US`, `,` for thousands and `.` for decimals, as does `en_GB`. `fr_FR` uses a space for thousands and `,` for decimals, as the docs show `1 000,00`. Any other locale keeps the template on Mailjet |
+| `UrlEncode(x)` | The value encoded for a URL. The docs don't say whether a space becomes `+` or `%20`: use `%20`, and note it in the plan row |
+| `Escape(x)` | The value escaped as HTML, wherever it stands |
+| `{{mj:contact.email}}`, `{{mj:contact.local_part}}`, `{{mj:contact.domain}}` | The `to` address, the part before its `@`, and the part after it |
+| `{{mj:sender.email}}`, `{{mj:sender.local_part}}`, `{{mj:sender.domain}}` | The `from` address and its parts, the same way |
+| `{{mj:template.ID}}`, `{{mj:template.name}}` | The template's number and name, written as they are |
+| The template's `Headers.Subject`, or the site's `Subject` | The send's `subject`, rendered with the same language and no escaping |
+| The template's `Html-part` | The send's `html`. `MJMLContent` is not used: the HTML part is already rendered from it |
+| The template's `Text-part` | The send's `text`, with no escaping. An empty `Text-part` sends `html` only. The docs don't say what text Mailjet made from the HTML for a template with `IsTextPartGenerationEnabled`: note it in the plan row |
+| The template's `Headers.From`, `Headers.Reply-to` | The send's `from` and `replyTo`, as the "Fields" table writes `From` and `ReplyTo` |
+
+**Escaping.** Mailjet's docs never say it escapes a value, and its `Escape` function is there to escape one, so Mailjet inserted each value as it is. In the HTML part, a value the code builds as HTML itself goes in as it is, under the rule of `template-to-code.md`. Escape every other value, and note each one that carries text from a user, a form, or another service in the plan row. Never escape a value in the text part or the subject, unless the template passes it through `Escape`.
+
+**Mailjet's truth.** The docs show `false` as false, and `true` and any other string as true, `"false"` included. They don't say what `0`, `""`, `null`, an empty list, or an empty object do. A test of a value alone, such as `{% if var:coupon %}`, that the code can pass as one of those keeps the template on Mailjet. A comparison, such as `var:count > 0` or `var:coupon != ""`, moves. Write the test out in the code, as `template-to-code.md` says.
+
+**Template errors.** Mailjet checked the template language after it took the call, and the call answered as for any send. Without `TemplateErrorDeliver: true`, the render raises on a left-out value without a default: Mailjet blocked such an email, with a `blocked` event and the error `error in template language`, and sent nothing. So around the render, the site catches only that error, logs it, sends nothing, and goes on as it did after a send. With `TemplateErrorDeliver: true`, Mailjet sent the email anyway: the left-out value renders as nothing, the site sends, and the plan row notes it, because the docs don't say what Mailjet printed in its place. `TemplateErrorReporting` mailed the error to an address: the log takes its place, and the report names that address, so the person knows where the errors go now. Since October 2025, Mailjet prints nothing for a left-out value that the template declares, and the docs don't say where a template declares one: when the code can leave out a value without a default, note it in the plan row.
+
+- **What keeps a template on Mailjet.** A tag Mailjet fills from the account, in any part: `[[UNSUB_LINK_EN]]` and every other `[[UNSUB_LINK...]]`, `[[UNSUB_ALL_LINK_EN]]`, `[[WORKFLOW_EXIT_LINK_EN]]`, `[[PERMALINK]]`, `[[SHARE_...]]`, `{{mj:unsub_link}}`, `{{mj:share_...}}`, and any other `[[...]]` tag without `var:`. A value only Mailjet holds: `{{segment:...}}`, `HasOpenedSince`, `HasClickedSince`, and any other `mj:` value, such as `mj:contact.ID`, `mj:contact.name`, or `mj:sender.name`. A function the table doesn't name. A header in `Headers` other than `From`, `Subject`, and `Reply-to`.
+- **Contact properties.** `{{data:name}}` and `[[data:name]]` print a contact property stored at Mailjet, which the code doesn't have, so they keep the template on Mailjet. They move only when the person names the value of the app that the property holds, such as a first name the app stores and copies to Mailjet, and the code at the site can read it: it then prints that value, or its default, or nothing when the app has none, never a template error. Note it in the plan row.
+- **Images.** Images uploaded to Mailjet's gallery or editor have URLs on a subdomain of `mjt.lu`, such as `https://<id>.mjt.lu/tplimg/...`. The docs don't name the host, so treat any image on a Mailjet host as one. Keep them, and list them, as `template-to-code.md` says.
+- **The site's fields and the template's settings.** The template's `Headers` are defaults: a `From`, `Subject`, or `ReplyTo` that the site sets replaces the template's, as Mailjet did. A `From` or `Reply-to` header that holds the template language keeps the template: the docs say only the subject takes it. A `Reply-to` header with a name keeps it, as the "Fields" table says for `ReplyTo`.
+- **Tracking.** A site brought into the code follows "Tracking" above, like any other site.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailjet template, makes it transactional, and gives you its template ID. Until then the site stays on Mailjet.
 
 A site that sends `TemplateID` without `TemplateLanguage: true` gets no values filled in: its template moves as it is, and the site sends no `templateData`.
 
@@ -146,10 +191,12 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - `From: { Email: 'hello@mail.example.com', Name: 'Example' }` becomes `'Example <hello@mail.example.com>'`. A name that holds a comma, a quote, or another special character goes in double quotes, such as `'"Acme, Inc." <hello@mail.example.com>'`, with each quote inside it escaped. A `From` without a `Name` becomes the bare address.
 - `To` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
-- `TextPart` becomes `text`, and `HTMLPart` becomes `html`.
+- `TextPart` becomes `text`, and `HTMLPart` becomes `html`, rendered first when the site sets `TemplateLanguage: true`.
 - `ReplyTo: { Email }` becomes `replyTo` with the bare address.
 - `TrackOpens` and `TrackClicks` are dropped. The send gets `captureEngagement: false` when Mailjet tracked neither opens nor clicks, as "Tracking" says, whether the site's fields or the account's setting did. Note in the plan row each site that got it from the account's setting.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from `Variables`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the `from` and `replyTo` that the site sets, or else the template's `From` and `Reply-to` headers. It sends no `templateId` and no `templateData`. A site with `TemplateLanguage: true` and its own content renders that content the same way before the send. A site that picks its `TemplateID` from a map, such as one template per locale, brings each template in it into the code, and picks the email the same way: it moves only when every one of them moves. Around the render, the site handles a template error as "Templates" says.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `Variables`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them. A site that picks its `TemplateID` from a map, such as one template per locale, sends each template in it: it moves only when every one has a PostHog template ID, and the map then holds those IDs.
 
