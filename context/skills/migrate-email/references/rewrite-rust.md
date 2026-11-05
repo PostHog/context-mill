@@ -33,7 +33,7 @@ let posthog = posthog_rs::client(options.build()?).await;
 - Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, and `.capture_engagement(false)` optional.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
-- Call `.reply_to(...)` once per address. posthog-rs has no `cc`, `bcc`, or attachments yet: a site that sets one stays, as Step 7 says.
+- Call `.reply_to(...)` once per address.
 
 ## The answer
 

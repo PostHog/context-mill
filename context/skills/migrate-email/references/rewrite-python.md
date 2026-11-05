@@ -34,7 +34,6 @@ posthog = Posthog(
 
 - Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, and `capture_engagement` optional. `from` is a Python keyword, so the argument is `from_`.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
-- `cc` and `bcc` take one address or a list. `attachments` takes a list of dicts with `filename`, `content`, `content_type`, and `content_id`, where `content` is `bytes` or a base64 string.
 
 ## The answer
 

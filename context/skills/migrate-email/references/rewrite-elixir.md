@@ -23,14 +23,13 @@ config :posthog,
   migrated_from: "<provider>" # only when the config takes it
 ```
 
-- With `secret_key` set, the SDK loads flag definitions with it when it starts, so an app that only sends email with it sets `enable_local_evaluation: false`. Otherwise give the key the feature flag read scope too.
+- With `secret_key` set, the SDK loads flag definitions from `api_host` with it when it starts, so an app that only sends email with it sets `enable_local_evaluation: false`. Behind a reverse proxy, always set it, so the proxy never sees the key. Otherwise give the key the feature flag read scope too.
 - The app host option is `app_host`.
 
 ## The send
 
 - Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
-- `cc:` and `bcc:` take one address or a list. `attachments:` takes a list of maps with `filename`, `content`, `content_type`, and `content_id`, where `content` is the raw binary: decode a base64 string first, or the SDK encodes it again.
 
 ## The answer
 

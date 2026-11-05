@@ -15,30 +15,27 @@ For a site in PHP, such as in a Laravel or Symfony app. A site that sends throug
 
 ```php
 use PostHog\Client;
-use PostHog\PostHog;
 
-PostHog::init(
-    client: new Client(
-        getenv('POSTHOG_PROJECT_TOKEN') ?: null,
-        [
-            'host' => getenv('POSTHOG_HOST') ?: null,
-            'migrated_from' => '<provider>', // only when the options take it
-        ],
-        loadFeatureFlags: false,
-        secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY') ?: null,
-    ),
+$posthog = new Client(
+    getenv('POSTHOG_PROJECT_TOKEN') ?: null,
+    [
+        'host' => getenv('POSTHOG_HOST') ?: null,
+        'migrated_from' => '<provider>', // only when the options take it
+    ],
+    loadFeatureFlags: false,
+    secretKey: getenv('POSTHOG_PROJECT_SECRET_API_KEY') ?: null,
 );
 ```
 
-- With a secret key, the client loads flag definitions with it when it starts, so a client that only sends email is built with `loadFeatureFlags: false`. An app that already calls `PostHog::init` with the key and evaluates flags keeps its client, and the key needs the feature flag read scope too.
+- Give email its own client, as above, and leave the app's `PostHog::init` as it is: calling `PostHog::init` again replaces the client the app's captures use. With a secret key, a client loads flag definitions with it when it starts, so the email client is built with `loadFeatureFlags: false`, which also keeps the key off a proxy.
+- Create it once, such as in a service container binding, and use it where the sites send.
 - The app host option is `app_host`.
 - Read the env variables the way the app reads its provider key, such as `env()` or `$_ENV` in a framework.
 
 ## The send
 
-- Code send: `PostHog::emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'capture_engagement'` optional.
-- Template send: `PostHog::emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
-- posthog-php has no `cc`, `bcc`, or attachments yet: a site that sets one stays, as Step 7 says.
+- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'capture_engagement'` optional.
+- Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
 
 ## The answer
 

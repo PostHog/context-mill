@@ -27,7 +27,7 @@ The client loads flag definitions only when it evaluates a flag, so a client tha
 
 - Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, and `CaptureEngagement` optional.
 - Template send: `await emails.SendAsync(new SendTemplateEmailOptions { To, TemplateId, TemplateData, DistinctId, IdempotencyKey })`.
-- `ReplyTo` is a list, and `TemplateId` is a `Guid`. The .NET SDK has no `cc`, `bcc`, or attachments yet: a site that sets one stays, as Step 7 says.
+- `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
 
 ## The answer

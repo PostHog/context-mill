@@ -97,7 +97,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 ### PHP
 
-- `$resend->emails->send([...], ['idempotency_key' => $key])`, `$resend->emails->create(...)`, and Laravel's `Resend::emails()->send(...)` facade become `PostHog::emails()->send([...])`, and the options' `idempotency_key` moves into the array.
+- `$resend->emails->send([...], ['idempotency_key' => $key])`, `$resend->emails->create(...)`, and Laravel's `Resend::emails()->send(...)` facade become `$posthog->emails()->send([...])` on the email client the rewrite file sets up, and the options' `idempotency_key` moves into the array.
 - Resend answers a `Resend\Email`, and PostHog a `SendEmailResult`: `$email->id` becomes `$result->getId()`.
 - Both throw on an API error. `catch (\Resend\Exceptions\ErrorException $e)` becomes `catch (\PostHog\EmailError $e)`.
 - Resend's `getErrorCode()` is the HTTP status as an `int`, and PostHog's `getErrorCode()` is a string error code. Code that read `getErrorCode()` reads `getStatusCode()`, and code that read `getErrorType()` reads `getErrorName()`.

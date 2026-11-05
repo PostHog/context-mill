@@ -22,7 +22,8 @@ POSTHOG = PostHog::Client.new({
 })
 ```
 
-- With `secret_key` set, the client loads flag definitions with it when it starts, so give the key the feature flag read scope too. Tell the person.
+- With `secret_key` set, the client loads flag definitions from `host` with it when it starts, and keeps polling. Give the key the feature flag read scope too. Tell the person.
+- Behind a reverse proxy, that load would hand the key to the proxy. Give email its own client, with `host` set to PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the key.
 - The app host option is `app_host`.
 - In Rails, create the client once, such as in an initializer.
 
@@ -30,7 +31,6 @@ POSTHOG = PostHog::Client.new({
 
 - Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
-- posthog-ruby has no `cc`, `bcc`, or attachments yet: a site that sets one stays, as Step 7 says.
 
 ## The answer
 

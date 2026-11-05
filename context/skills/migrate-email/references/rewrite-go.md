@@ -21,7 +21,8 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 })
 ```
 
-- With `SecretKey` set, the client polls flag definitions with it, so give the key the feature flag read scope too, or it logs a failed poll each time. Tell the person.
+- With `SecretKey` set, the client starts polling flag definitions from `Endpoint` with it as soon as it's built, and there is no option to turn that off. Give the key the feature flag read scope too, or it logs a failed poll each time. Tell the person.
+- Behind a reverse proxy, that poll would hand the key to the proxy. Give email its own client, with `Endpoint` set to PostHog's host, such as `https://us.i.posthog.com`, and leave the app's existing client without the key.
 - The app host option is `AppHost`.
 - Close the client when the app exits.
 
@@ -29,7 +30,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 - Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, and `CaptureEngagement` (`posthog.Ptr(false)`) optional.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
-- `ReplyTo`, `Cc`, and `Bcc` are `[]string`. `Attachments` is a list of `posthog.EmailAttachment`, whose `Content` is the raw file as `[]byte`: decode a base64 string first, or the SDK encodes it again.
+- `ReplyTo` is a `[]string`.
 - A site with no `context.Context` passes `context.Background()`.
 
 ## The answer

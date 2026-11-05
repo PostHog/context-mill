@@ -22,13 +22,12 @@ Read the rewrite file of each language that has a site that moves, and only thos
 
 ## What every SDK's send takes and answers
 
-- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to address, `cc`, `bcc`, attachments, and engagement capture, which is on unless the send turns it off. PostHog makes the text part from the HTML when the send has no text. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
-- Both forms take a distinct ID, an idempotency key, and a retry count, `maxRetries` in Node.js.
-- No SDK takes headers, tags, a send time, several `to` addresses, or an attachment by path or URL: read a file into its content first.
-- An attachment has a filename and content, both required, and an optional content type and content ID. The content ID is a bare name, such as `logo`, without `cid:` or angle brackets, and the HTML shows the file inline with `<img src="cid:logo">`. The rewrite file says what the content is in its language.
+- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to address, and engagement capture, which is on unless the send turns it off. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
+- Both forms take a distinct ID and an idempotency key.
+- No SDK takes `cc`, `bcc`, attachments, headers, tags, a send time, or several `to` addresses yet. The provider's `mapping.md` keeps a site that sets one.
 - The message ID in the answer is PostHog's, not the provider's.
 - An error's name follows Resend's error names, such as `validation_error` or `rate_limit_exceeded`. Its code is PostHog's own, such as `recipient_suppressed`, `sender_not_verified`, or `quota_limited`: branch on the code. A send to a suppressed address fails with the code `recipient_suppressed` and the name `validation_error`.
-- Every SDK retries network errors and rate limits by itself, twice by default, with the same idempotency key. A network error that is left after the retries comes back as the same error type as an API error, with the code `network_error`.
+- Every SDK retries network errors and rate limits by itself, with the same idempotency key. A network error that is left after the retries comes back as the same error type as an API error, with the code `network_error`.
 - A bad argument fails before any request: as the language's argument error, or as the email error with a code that starts with `invalid_`. The rewrite file says which.
 
 ## Status
@@ -50,7 +49,6 @@ Install or upgrade the SDK to its latest release, as the rewrite file says under
 
 - a site with `html`, `text`, or a component: the send takes a template key with a subject and an HTML or text body;
 - a site that sets a reply-to address: the send takes one;
-- a site that sets `cc`, `bcc`, or attachments: the send takes them. Only some SDKs have them, as the rewrite file says under "The send";
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
 When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
@@ -63,10 +61,10 @@ Configure one server-side client for email in each language that has a site that
 
 - Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up. Read it, and the token and host, without raising when a variable is missing, as the rewrite file shows: Step 6 can leave the key unset, and an app that can't start takes down the sends that stay on the provider too. A send without the key fails with its own error.
 - Set the provider name to the value the provider's `mapping.md` names under "The PostHog client", when the client options take it. The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
-- Reuse the app's existing PostHog client in that language when it has one, and add the secret key and the provider name to it.
+- Reuse the app's existing PostHog client in that language when it has one, and add the secret key and the provider name to it, unless the rewrite file says to give email its own client.
 - The rewrite file says whether the client loads feature flag definitions with the secret key, and what to set on a client that only sends email. Keep that setting unless the key also has `feature_flag:read` and the app uses local evaluation.
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
-- When the host is a reverse proxy or a self-hosted instance, also set the app host, under the name the rewrite file gives, to the PostHog app URL, such as `https://us.posthog.com`. The SDKs never send the secret key to a proxy, and without the app host the send fails with `missing_app_host`.
+- When the host is a reverse proxy or a self-hosted instance, also set the app host, under the name the rewrite file gives, to the PostHog app URL, such as `https://us.posthog.com`. The email send goes only to the app host, and without it the send fails with `missing_app_host`. Some SDKs also load flag definitions with the secret key from the host, which would hand the key to the proxy: the rewrite file says how to keep it off.
 - Put a new client in its own server-only module, next to the provider's client, and use it where the sites send.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 

@@ -32,7 +32,6 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 - Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, and `captureEngagement` optional.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
-- `cc` and `bcc` take one address or a list. `attachments` takes a list of `{ filename, content, contentType, contentId }`, where `content` is a `Buffer`, a `Uint8Array`, or a base64 string.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
 
 ## The answer
