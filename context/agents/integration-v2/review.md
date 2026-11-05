@@ -3,6 +3,7 @@ type: review
 flow: integration-v2
 label: Verify and review the integration
 timeoutSeconds: 600
+onTimeout: continue
 model_pi: openai/gpt-5.6-sol
 effort_pi: medium
 model_sdk: claude-sonnet-5
@@ -10,8 +11,7 @@ effort_sdk: high
 skills: [posthog-best-practices, integration-v2-build]
 allowedTools: [Read, Edit, Glob, Grep, Bash]
 disallowedTools: [enqueue_task]
-dependsOn:
-  [install, init, identify, error-tracking, capture, ai-observability, logs]
+dependsOn: [install, init, identify, error-tracking, capture, ai-observability, logs]
 ---
 
 ## Goal
