@@ -47,7 +47,7 @@ Read the rewrite file of each language that has a site that moves, and only thos
 
 Install or upgrade the SDK to its latest release, as the rewrite file says under "Install". Early releases of an SDK may not send email, or may send only a template made in PostHog. Check the installed version for what the moving sites need:
 
-- a site with `html`, `text`, or a component: the send takes a template key with a subject and an HTML or text body;
+- a site with `html`, `text`, or a component, and a `template` site that moves into the code: the send takes a template key with a subject and an HTML or text body;
 - a site that sets a reply-to address: the send takes one;
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
@@ -83,15 +83,16 @@ PostHog records each send, and its sent, opened and clicked events when engageme
 
 For each site that moves, in plan order:
 
-- Rewrite the call as the provider's `mapping.md` says, for the site's language and content form: `html` and `text` content, a component the app renders, or a template made in PostHog. Write the PostHog send as the rewrite file says under "The send".
+- Rewrite the call as the provider's `mapping.md` says, for the site's language and content form: `html` and `text` content, a component the app renders, a provider template brought into the code, or a template made in PostHog. Write the PostHog send as the rewrite file says under "The send".
+- For a provider template that moves into the code, read the rest of `template-to-code.md` first. Write its email from the content Step 3 checked, render it at the site, and send the result in the code form, with the subject, `from`, and reply-to address the provider template set. Then delete the temporary copy of its content.
 - Give each send with rendered content a template key that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key, in any language.
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - Handle the answer as the rewrite file says under "The answer". Some SDKs return an error and some raise or throw one: when the old call and the new one differ, change the code around the send so the site fails the same way.
-- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID. The template data takes the place of the provider's template variables.
+- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and the subject, body, `from`, and reply-to address that a provider template brought into the code held. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Write down each email brought into the code, as `template-to-code.md` says under "Write down". Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.

@@ -5,7 +5,7 @@ next_step: 4-sender.md
 
 # Step 3, list and classify every send
 
-List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only files you write are the plan file and the template files below.
+List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only files you write are the plan file and the temporary copies of template content below.
 
 ## Status
 
@@ -46,11 +46,15 @@ Go through `mapping.md` field by field. A site **moves** when PostHog can send e
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
-A `template` site moves only to a template made in PostHog, and the person makes that template. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template. Ask the person once, for every other template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`.
+A `template` site moves by bringing its email into the code: the code renders the provider template's content and sends it in the code form. Read `template-to-code.md` up to "Where the email goes" now, and Step 7 reads the rest. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template.
 
-A template they move needs its content to be classified. Read the provider's `account.md`, and ask the person once for every template they move: copies from the dashboard that they save in files outside the repository and tell you where, or a read through the API. Read the person's copies where they saved them. Write an API answer to a file in the system's temporary folder, never in the repository or the plan, and delete that file as soon as its site is classified. When the person can't give the content, the site stays, and the reason is `template content not checked`.
+Ask the person once, listing every other template the sites send, with the plan for each: it moves into the code, in a file next to its send, and from then on they change the email there. For each one, they can also say to keep it on the provider for now, or to make it a template in PostHog instead, such as when people who don't change code edit that email. A template they keep stays, and the reason is `kept on <provider name> for now`.
 
-A template whose content passes the checks moves only once the person has made it in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as `mapping.md` says under "Content". Record each template ID with its site under the sites table, and write the address in the site's `from` column, so Step 4 sets up a sender for its domain. A template without an ID stays, and the reason is `PostHog template not made yet`.
+Each template that moves needs its content to be checked. Read the provider's `account.md`, and ask the person once for every such template: copies from the dashboard that they save in files outside the repository and tell you where, or a read through the API, where `account.md` says the API returns the content. Check each one as `template-to-code.md` says under "Check", with the provider's `mapping.md` under "Templates". When the person can't give the content, the site stays, and the reason is `template content not checked`. A template whose check fails stays, and the reason names the part that keeps it. Write the template's sender in the site's `from` column, so Step 4 sets up a sender for its domain, and classify that address as any other `from`.
+
+### A template in PostHog, when the person asks for one
+
+A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
 
 ## Write the plan file
 
@@ -75,5 +79,7 @@ A sites table, one row per site, in source tree order:
 ```
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
+
+Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer.
 
 A list of the other provider calls, each with its file, line, and what it does.
