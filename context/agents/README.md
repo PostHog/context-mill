@@ -19,11 +19,11 @@ injects the basics (project context, how to report, how to surface progress),
 so a prompt never restates them. Frontmatter stays flat: scalars and inline
 `[a, b]` arrays only, the wizard's parser is deliberately not a YAML engine.
 
-Queued tasks may set `timeoutSeconds` to a positive integer up to 86400. The
-wizard cancels the task when its wall-clock budget expires, waits for cleanup,
-and stops the run with an incomplete-task error without retrying the task. The integration review sets 600 seconds; Pi bash commands also
-have a separate 300-second maximum, including installs. Release the wizard's
-task-budget support before relying on this metadata in published prompts.
+Queued tasks may set `timeoutSeconds` to a positive integer up to 86400, along with
+`onTimeout`. At that limit the wizard cancels the task, waits for cleanup, and does
+not retry it. With `onTimeout: continue`, the task completes with a conflict saying
+what is unverified, so later tasks and the report still run. With `onTimeout: fail`,
+the run stops. The build rejects a budget without a valid `onTimeout`.
 
 This README is documentation, not data: the build serves every other `.md`
 under a flow folder as an agent prompt.
