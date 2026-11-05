@@ -16,26 +16,17 @@ dependsOn: [install, init, identify, error-tracking, capture, ai-observability, 
 
 ## Goal
 
-You are the last hands on the code. First make the integration run, then review it,
-then leave it passing the chosen compile checks to the best of your ability. Do both in one pass, verifying and reviewing are the same
-reading of the same changeset.
+You are the last hands on the code. Work in this order, in one pass, because
+verifying and reviewing are the same reading of the same changeset:
 
-**Install and verify.** The earlier steps edited code but did not install —
-install now, then verify with as few slow commands as you can. Use the narrowest
-package or workspace target that covers the integration's changed code. Run a
-root script only when the workspace requires it, filtered to that target where
-supported; do not check unrelated packages.
-Choose the compile checks once per changed package by inspecting its scripts and
-framework behavior. If the build includes typechecking, run the build only. If
-build and typecheck/check (such as svelte-check) cover different failures, run both
-once: a passing typecheck does not prove bundling, asset imports, or framework
-compilation work. If only one check exists, run it. Skip equivalent checks, not
-distinct coverage; do not add alternative checks after a failure.
-Then lint only the files this integration changed. Invoke the installed linter
-with those paths, replacing broad targets such as `.` while preserving the
-project's config and options. Appending paths to a script that still targets
-`.` does not scope it. Run the full lint script only when scoped lint is not
-supported, once; do not broaden or switch checks after a failure.
+1. Install.
+2. Review by reading the code, and make your fixes.
+3. Run the build.
+4. Run typecheck only if the build doesn't include it.
+5. Lint the changed files.
+6. If a failure comes from our change, fix it and rerun that check once.
+
+**Install.** The earlier steps edited code but did not install — install now.
 Install what the manifest declares plus every package the
 upstream handoffs name, adding the named ones by bare name with the project's
 package manager so it resolves real versions. The app's existing dependencies
@@ -107,17 +98,38 @@ Stay inside verify-and-review. These are not your job:
 If you notice something real but out of scope, leave it — a one-line mention in your
 handoff, no more. Only flag what you can pin to a specific line and dimension — no
 taste-based rewrites, and never expand the integration. For each fix, ask what would
-behave differently if it were wrong, and check by reading the callers. After any
-change, batch all fixes before rerunning the affected check, including a compile
-check that previously passed if your review edits changed code. Make review
-edits before final verification where possible. Allow at most one rerun of each
-check after fixes; if it still fails, report the remaining issue and stop that
-check. Never rerun a timed-out command, split it into alternative checks, or
-increase its timeout. When a check fails on pre-existing errors or because the
-tool itself is broken (a config or CLI mismatch), record it once and do not run
-it again. The task has a ten-minute total budget, including install, review,
-and verification; every bash command also has a five-minute maximum. A timeout
-means verification is incomplete, not that the check passed.
+behave differently if it were wrong, and check by reading the callers.
+
+**Verify, once your review fixes are in.** Use as few slow commands as you can. Use
+the narrowest package or workspace target that covers the integration's changed code.
+Run a root script only when the workspace requires it, filtered to that target where
+supported; do not check unrelated packages.
+Choose the compile checks once per changed package by inspecting its scripts and
+framework behavior. If the build includes typechecking, run the build only. If
+build and typecheck/check (such as svelte-check) cover different failures, run the
+build, then the typecheck, once each: a passing typecheck does not prove bundling,
+asset imports, or framework compilation work. If only one check exists, run it. Skip
+equivalent checks, not distinct coverage; do not add alternative checks after a failure.
+Then lint only the files this integration changed. Invoke the installed linter
+with those paths, replacing broad targets such as `.` while preserving the
+project's config and options. Appending paths to a script that still targets
+`.` does not scope it. Run the full lint script only when scoped lint is not
+supported, once; do not broaden or switch checks after a failure.
+
+Each check ends in one of three results:
+
+- **Passed:** move on.
+- **Failed because of our change** (the error names a file we edited or a package we
+  added): batch your fixes, then rerun that check once, along with any check that
+  passed earlier if the fixes changed code it covers. If it still fails, report the
+  remaining issue and stop that check.
+- **Couldn't verify** (a prebuild script fails, a tool crashes, a command hangs or
+  times out, or the errors are only in code we didn't touch): record it once and stop
+  that check. Don't rerun it, split it into alternative checks, or increase its timeout.
+
+The task has a ten-minute total budget, including install, review, and verification,
+and a long command can be stopped early to fit it. A timeout means verification is
+incomplete, not that the check passed.
 
 ## How you know you succeeded
 
