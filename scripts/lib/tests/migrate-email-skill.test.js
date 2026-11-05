@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet', 'mandrill'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses', 'brevo', 'mailjet', 'mandrill', 'sparkpost'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -281,6 +281,14 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/\| `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` \| none: the code renders the merge tags in `subject`, `from_name`, `html`, and `text` before the send \|/);
             expect(mapping).not.toMatch(/\| `subject` \| `subject` \| It holds a merge tag/);
             expect(mapping).not.toMatch(/\| `html`, `text` \| `html`, `text` \| They hold a merge tag/);
+        });
+
+        it('renders SparkPost template language in inline content in the code, recipient values first', () => {
+            const mapping = read('sparkpost/mapping.md');
+
+            expect(mapping).toMatch(/Inline content with template language moves into the code too: the code renders the site's `subject`, `from`, `reply_to`, `text`, and `html`/);
+            expect(mapping).toMatch(/the recipient's `substitution_data` wins over the transmission's/);
+            expect(mapping).not.toMatch(/the reason `inline content uses SparkPost's template language`/);
         });
     });
 

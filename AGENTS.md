@@ -104,6 +104,7 @@ longer exist — only some keep an alias.
 | `wizard migrate brevo` | `migrate-email-brevo` |
 | `wizard migrate mailjet` | `migrate-email-mailjet` |
 | `wizard migrate mandrill` | `migrate-email-mandrill` |
+| `wizard migrate sparkpost` | `migrate-email-sparkpost` |
 
 **Commands vs. skills:** those audit subcommands **are** skills, promoted to
 commands via `cli: role: command`. A `role: skill` skill is reachable only via

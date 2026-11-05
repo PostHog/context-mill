@@ -43,3 +43,6 @@ variants:
   - id: mandrill
     display_name: Mailchimp Transactional
     tags: [mandrill]
+  - id: sparkpost
+    display_name: SparkPost
+    tags: [sparkpost]
