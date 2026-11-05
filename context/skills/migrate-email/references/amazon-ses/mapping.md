@@ -1,8 +1,8 @@
 # Amazon SES to PostHog mapping
 
-This file decides, field by field, whether PostHog can send an Amazon SES call site. A site moves only when every field it sets moves. Otherwise it stays on Amazon SES, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and `posthog-sdks.md` has PostHog's names in each language.
+This file decides, field by field, whether PostHog can send an Amazon SES call site. A site moves only when every field it sets moves. Otherwise it stays on Amazon SES, and the reason names the first field or feature that keeps it there. `api.md` has the PostHog side in full, and the rewrite file for the site's language, which Step 7 names, has PostHog's names in that language.
 
-PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name `posthog-sdks.md` gives for the site's language, such as `reply_to` in Python. Amazon SES fields are written in their v2 names, with the v1 name after a slash where it differs. `sdk-reference.md` has both.
+PostHog fields are written in their Node.js names here, such as `replyTo`. Use the name the rewrite file gives for the site's language, such as `reply_to` in Python. Amazon SES fields are written in their v2 names, with the v1 name after a slash where it differs. `sdk-reference.md` has both.
 
 ## Fields
 
@@ -10,7 +10,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 |---|---|---|
 | `FromEmailAddress` / `Source` | `from` | Never. `Name <address>` stays as it is. When the code builds it from a name and an address, put the name in double quotes when it holds a comma, a quote, or another special character. It needs a verified sender (Step 4) |
 | `Destination.ToAddresses` | `to` | It holds more than one address, or none. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name |
-| `Destination.CcAddresses`, `BccAddresses` | `cc`, `bcc` | The installed SDK has no `cc` or `bcc` (Step 7 checks), there are more than 10 of either, or the code builds the list at run time and you cannot tell it stays at 10 or fewer. `Name <address>` moves as the bare address, as for `to` |
+| `Destination.CcAddresses`, `BccAddresses` | none | Always. PostHog's send doesn't take it yet |
 | `ReplyToAddresses` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only. A value read from an environment variable or a config file counts as read when `.env.example`, the config file, or the person shows a bare address for it |
 | `Subject.Data` | `subject` | Never |
 | `Body.Html.Data`, `Body.Text.Data` | `html`, `text` | Never |
@@ -18,7 +18,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Content.Template` with `TemplateName` or `TemplateArn` / `SendTemplatedEmail` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
 | `Content.Template.TemplateContent` | a template made in PostHog | See "Templates". The content is in the code |
 | `Content.Raw` / `SendRawEmail` | none | Always: the code builds the MIME message itself |
-| `Attachments` | `attachments` | The installed SDK has no `attachments`, there are more than 10 files, a `ContentDisposition` is `INLINE` without a `ContentId`, an attachment sets `ContentDescription` or a `ContentTransferEncoding` other than `BASE64`, the HTML references the `cid:` of an attachment whose `ContentDisposition` isn't `INLINE`, or the files can add up to more than 512 KB, such as an upload of the user's or a PDF of unbounded length. PostHog takes at most 10 files and 512 KB in all |
+| `Attachments` | none | Always. PostHog's send doesn't take it yet |
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `EmailTags` / `Tags` | none | Always: no PostHog SDK takes tags yet |
 | `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"). Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
@@ -52,20 +52,20 @@ An Amazon SES send has no idempotency key, so the moved site sends none either. 
 | `SendTemplatedEmail` / `send_templated_email` | A field above keeps it, or "Templates" does |
 | `SendRawEmail` / `send_raw_email`, and `SendEmail` with `Content.Raw` | Always: the code builds the MIME message itself |
 | `SendBulkEmail`, `SendBulkTemplatedEmail`, and their names in each SDK | Always: each sends several emails in one call |
-| Nodemailer's `SES` transport | Always: `posthog-sdks.md` has no Nodemailer transport |
+| Nodemailer's `SES` transport | Always: PostHog has no Nodemailer transport |
 | SMTP through `email-smtp.<region>.amazonaws.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
-| A framework mailer (Django, Rails, Laravel, Symfony, Swoosh, Bamboo) | Always: `posthog-sdks.md` has no mailer driver |
-| A send in a language whose PostHog SDK has no email send (`posthog-sdks.md` lists them), such as Java | Always |
+| A framework mailer (Django, Rails, Laravel, Symfony, Swoosh, Bamboo) | Always: PostHog has no mailer driver |
+| A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 
 ## Code around the send
 
-Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The Go, Rust, and Elixir SDKs return an error value. `posthog-sdks.md` says how PostHog's SDK reports an error in each language. Keep the site failing the same way it did, as the Rewrite section says.
+Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The Go, Rust, and Elixir SDKs return an error value. The rewrite file says under "The answer" how PostHog's SDK reports an error in its language. Keep the site failing the same way it did, as the Rewrite section says.
 
 | Code | A site stays on Amazon SES when |
 |---|---|
 | A `catch`, `except`, `rescue`, or error check that only logs the error, returns, or throws it again | Never. Log PostHog's error instead |
 | A branch on an Amazon SES error name, such as `err.name === 'MessageRejected'`, `e.response['Error']['Code']`, `e.code`, `getAwsErrorCode()`, `ErrorCode`, `errors.As(err, &mr)` with `*types.MessageRejected`, or a `SendEmailError` variant | The name is anything but `TooManyRequestsException`, the v1 API's `Throttling`, or `BadRequestException`, or the site is in Rust. In another language, a branch on `TooManyRequestsException` or `Throttling` moves as a check of PostHog's status code for `429`, and a branch on `BadRequestException` moves as a check of PostHog's error name `validation_error` |
-| A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, `HTTPStatusCode()`, or `raw_response()` in Rust | The site is in Rust: `posthog-sdks.md` gives PostHog's Rust error no status code. In another language, a branch on `400` reads PostHog's error name `validation_error`, and also its status code for `429` when the site sends with the v1 API (see "Errors"). A branch on another status, such as `429`, reads PostHog's status code |
+| A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, `HTTPStatusCode()`, or `raw_response()` in Rust | The site is in Rust. In another language, a branch on `400` reads PostHog's error name `validation_error`, and also its status code for `429` when the site sends with the v1 API (see "Errors"). A branch on another status, such as `429`, reads PostHog's status code |
 | The `MessageId` stored for a webhook handler or a `GetMessageInsights` read | Always, when a handler or the read uses it |
 | The `MessageId` logged or stored for the app's own use | Never. Use PostHog's message id |
 
@@ -95,7 +95,7 @@ Amazon SES's Handlebars becomes Liquid in the PostHog template. Values move unde
 - Any other helper, such as `{{#with}}`, `{{lookup}}`, or `{{log}}`, keeps the template on Amazon SES. So does an inline partial (`{{#* inline}}` and `{{> name}}`), `{{@index}}`, `{{@key}}`, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - `TemplateData` is a JSON string. `templateData` takes the object it was built from, before `JSON.stringify` or `json.dumps`. When the code only has the string, parse it.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `FromEmailAddress` / `Source` or `ReplyToAddresses` next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `CcAddresses`, `BccAddresses`, `Attachments`, or `ConfigurationOverrides.Tracking` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes none of them.
+- A site that sets `ConfigurationOverrides.Tracking` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`.
 - A template site that Amazon SES sent with opens or clicks untracked, or whose tracking isn't checked, stays, as "Open and click tracking" says: the template form takes no `captureEngagement`.
 
 ## Webhooks
@@ -118,7 +118,7 @@ PostHog's events carry no Amazon SES `mail.messageId` and no `mail.tags`. A site
 
 ## Rewrite
 
-How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and `posthog-sdks.md` has the client and the send in each language.
+How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and the rewrite file for the site's language has the client and the send.
 
 **The PostHog client.** Set `migratedFrom: 'amazon-ses'` on the client that Step 7 configures, when its client options take it.
 
@@ -126,15 +126,14 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - v2 `SendEmail` in any SDK: `FromEmailAddress`, `Destination`, `ReplyToAddresses`, and `Content.Simple`.
 - v1 `SendEmail` in any SDK: `Source`, `Destination`, `ReplyToAddresses`, and `Message`.
-- Elixir `ExAws.SES.send_email_v2(destination, content, from, opts)`: the same v2 fields, with `opts[:reply_addresses]` as `ReplyToAddresses`. `ExAws.SES.send_email(dst, msg, from, opts)`: `dst.to`, `dst.cc`, `dst.bcc`, the `html`, `text`, and `subject` of `build_message`, and `opts[:reply_to]`.
+- Elixir `ExAws.SES.send_email_v2(destination, content, from, opts)`: the same v2 fields, with `opts[:reply_addresses]` as `ReplyToAddresses`. `ExAws.SES.send_email(dst, msg, from, opts)`: `dst.to`, the `html`, `text`, and `subject` of `build_message`, and `opts[:reply_to]`.
 - A raw HTTP request: the fields of its JSON body or its form parameters.
 
 **The fields.**
 
 - `FromEmailAddress` / `Source` becomes `from` as it is, with its name.
-- The one entry of `ToAddresses` becomes `to`. `CcAddresses` and `BccAddresses` become `cc` and `bcc`. Each becomes a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
+- The one entry of `ToAddresses` becomes `to`, as a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `Subject.Data`, `Body.Html.Data`, and `Body.Text.Data` become `subject`, `html`, and `text`.
-- An attachment `{ FileName, RawContent, ContentType }` becomes `{ filename: FileName, content: RawContent, contentType: ContentType }`. Its `ContentId` becomes `contentId` only when its `ContentDisposition` is `INLINE`, because `contentId` makes a file inline. Drop the `ContentId` of every other attachment, and drop `ContentDisposition`. `contentId` is a bare name: drop `cid:` and angle brackets when the code has them. In the AWS SDKs `RawContent` holds the raw file: pass it as it is, as `posthog-sdks.md` takes bytes in each language. Where the code holds the file as a base64 string, Node.js and Python keep the base64 string, and Go and Elixir decode it first, as `posthog-sdks.md` says, or the recipient gets the file encoded twice. The body of a raw HTTP request holds base64, and so does Elixir's `ex_aws_ses`, which sends `Content` as JSON as it is: decode its `RawContent` with `Base.decode64!` first.
 - `ConfigurationOverrides.Tracking` is dropped. The send gets `captureEngagement: false` when Amazon SES tracked neither opens nor clicks, as "Open and click tracking" says, whether the override, the configuration set, or the account's VDM settings did. Note in the plan row each site that got it from a set or the account.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
@@ -143,10 +142,10 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 **Errors.** Keep the site failing the same way it did:
 
 - **Node.js.** `posthog.emails.send` never throws on an API error: it answers `{ data, error }`. Where the Amazon SES send threw into a `catch`, throw from the error so the same `catch` runs: `if (error) throw Object.assign(new Error(error.message), { code: error.code, name: error.name, statusCode: error.statusCode })`. In that `catch`, a read of `err.name` for logging becomes `err.code`, and a read of `err.$metadata.httpStatusCode` becomes `err.statusCode`. A check of `err.name === 'BadRequestException'` or of the status `400` becomes a check of `err.name === 'validation_error'`.
-- **Python.** PostHog's SDK raises too. Replace `except ClientError` with the PostHog exception `posthog-sdks.md` names, `e.response['Error']['Code']` with its code, `e.response['Error']['Message']` with its message, and `e.response['ResponseMetadata']['HTTPStatusCode']` with its status code. A check of the code `BadRequestException` or the status `400` becomes a check of its name `validation_error`. `ClientError` covered only Amazon SES's answers: a network failure raised `EndpointConnectionError` or another `BotoCoreError` past it. PostHog's exception covers both, so raise it again first when its code is `network_error`. When the same `try` also guards other AWS calls, keep their `except` as well.
-- **Ruby, PHP, and .NET.** PostHog's SDK throws too. Replace the rescued or caught Amazon SES exception (`Aws::SESV2::Errors::ServiceError`, `Aws\SesV2\Exception\SesV2Exception`, `AmazonSimpleEmailServiceV2Exception`, and their v1 names) with the PostHog exception `posthog-sdks.md` names, and the error code and status code reads with its own. A check of the code `BadRequestException` or the status `400` becomes a check of PostHog's error name `validation_error`. In Ruby and .NET the service exception covered only Amazon SES's answers, and a network failure (`Seahorse::Client::NetworkingError`, `HttpRequestException`) passed it: raise PostHog's exception again first when its code is `network_error`, before the handler logs or does anything else. In .NET, put a `when (e.Code != "network_error")` filter on each `catch` of PostHog's exception that replaces the service exception, so a network failure passes it untouched, as before. When the handler catches the AWS SDK's base exception (`Aws::Errors::ServiceError`, `Aws\Exception\AwsException`, `Amazon.Runtime.AmazonServiceException`), or its `try` also guards other AWS calls, keep that handler for those calls and add PostHog's next to it.
+- **Python.** PostHog's SDK raises too. Replace `except ClientError` with the PostHog exception the rewrite file names, `e.response['Error']['Code']` with its code, `e.response['Error']['Message']` with its message, and `e.response['ResponseMetadata']['HTTPStatusCode']` with its status code. A check of the code `BadRequestException` or the status `400` becomes a check of its name `validation_error`. `ClientError` covered only Amazon SES's answers: a network failure raised `EndpointConnectionError` or another `BotoCoreError` past it. PostHog's exception covers both, so raise it again first when its code is `network_error`. When the same `try` also guards other AWS calls, keep their `except` as well.
+- **Ruby, PHP, and .NET.** PostHog's SDK throws too. Replace the rescued or caught Amazon SES exception (`Aws::SESV2::Errors::ServiceError`, `Aws\SesV2\Exception\SesV2Exception`, `AmazonSimpleEmailServiceV2Exception`, and their v1 names) with the PostHog exception the rewrite file names, and the error code and status code reads with its own. A check of the code `BadRequestException` or the status `400` becomes a check of PostHog's error name `validation_error`. In Ruby and .NET the service exception covered only Amazon SES's answers, and a network failure (`Seahorse::Client::NetworkingError`, `HttpRequestException`) passed it: raise PostHog's exception again first when its code is `network_error`, before the handler logs or does anything else. In .NET, put a `when (e.Code != "network_error")` filter on each `catch` of PostHog's exception that replaces the service exception, so a network failure passes it untouched, as before. When the handler catches the AWS SDK's base exception (`Aws::Errors::ServiceError`, `Aws\Exception\AwsException`, `Amazon.Runtime.AmazonServiceException`), or its `try` also guards other AWS calls, keep that handler for those calls and add PostHog's next to it.
 - **A raw HTTP request.** It failed the way its client does. `axios` (unless its `validateStatus` accepts a failed status), `got` and `ky` (unless `throwHttpErrors: false`), Guzzle (unless `'http_errors' => false`), Faraday with `raise_error`, `raise_for_status()`, and `EnsureSuccessStatusCode()` threw on a refused send: the moved site raises PostHog's error the same way, as the language's bullet says, and a read of the client's status in the `catch` reads PostHog's status code. `fetch`, `aws4fetch`'s `AwsClient.fetch`, `requests`, `httpx`, Ruby's `Net::HTTP`, Go's `net/http`, and .NET `HttpClient` without `EnsureSuccessStatusCode()` answered it as a response: a check of that answer's status becomes a check of PostHog's error, and when the code never read the answer, Step 7's rule for an answer the code never read applies.
-- **Go, Rust, and Elixir.** The site checked an error value. Check PostHog's error value the way `posthog-sdks.md` says for the language. A plain `if err != nil`, `?`, or `{:error, _}` branch stays as it is. In Go and Elixir, a branch on the status, such as `{:error, {:http_error, 429, _}}` or `HTTPStatusCode()`, reads PostHog's status code, except a branch on `400`, or Go's `*types.BadRequestException`, which reads PostHog's error name `validation_error`. In Rust, a branch on the status or on an error variant keeps the site on Amazon SES, as below.
+- **Go, Rust, and Elixir.** The site checked an error value. Check PostHog's error value the way the rewrite file says under "The answer". A plain `if err != nil`, `?`, or `{:error, _}` branch stays as it is. In Go and Elixir, a branch on the status, such as `{:error, {:http_error, 429, _}}` or `HTTPStatusCode()`, reads PostHog's status code, except a branch on `400`, or Go's `*types.BadRequestException`, which reads PostHog's error name `validation_error`. In Rust, a branch on the status or on an error variant keeps the site on Amazon SES, as below.
 - A branch on `TooManyRequestsException` becomes a check of PostHog's status code for `429`. So does a branch on the v1 API's `Throttling`: the v1 API answers a send over the sending rate or the daily quota with the code `Throttling` and status `400`, where v2 answers too many requests with `TooManyRequestsException` and `429`.
 - PostHog answers a used-up quota with status `429` and the code `quota_limited`, which no retry clears. When a `429` branch tries the send again or waits before it, it also checks for a code other than `quota_limited`, and `quota_limited` takes the path of every other error. Note it in the plan row.
 - In a site that sends with the v1 API, a branch on the status `400` also took throttling. It becomes a branch on PostHog's error name `validation_error` or its status code `429`, so a throttled send still takes it.
@@ -158,7 +157,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
   - **PHP:** a catch that tested `getAwsErrorCode() === 'TooManyRequestsException'` catches `PostHog\EmailError`, tests `getStatusCode() === 429`, and throws every other error again.
   - **.NET:** `catch (TooManyRequestsException)` becomes `catch (EmailException e) when (e.StatusCode == 429)`.
   - **Go:** `errors.As(err, &throttled)` with `*types.TooManyRequestsException` becomes `errors.As(err, &emailErr) && emailErr.StatusCode == 429`. Every other error goes on to the site's next check as before.
-  - **Rust:** `posthog-sdks.md` gives PostHog's Rust error no status code and no name, so a match on `SendEmailError::TooManyRequestsException` or `SendEmailError::BadRequestException` keeps the site on Amazon SES.
+  - **Rust:** a match on `SendEmailError::TooManyRequestsException` or `SendEmailError::BadRequestException` keeps the site on Amazon SES.
   - **Elixir:** `{:error, {:http_error, 429, _}}` becomes `{:error, %PostHog.Emails.Error{status_code: 429}}`. Every other `{:error, _}` goes on as before.
 - PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Amazon SES took it and didn't send it. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
