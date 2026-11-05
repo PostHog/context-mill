@@ -1,0 +1,22 @@
+# Spend audit — feature flags
+
+Find flag evaluations the project pays for without needing them. Read
+`flag_calls_by_flag` and `events_by_lib` from the `measure-volumes` handoff.
+List active flags with the flags tool. Grep the code for
+`isFeatureEnabled\(|getFeatureFlag\(|get_feature_flag\(|is_feature_enabled\(|useFeatureFlag|getAllFlags\(|get_all_flags\(`,
+`sendFeatureFlags|send_feature_flags`, `personalApiKey|personal_api_key`,
+`featureFlagsPollingInterval|poll_interval`, `onFeatureFlags\(`,
+`bootstrap` when it is connected.
+
+`$feature_flag_called` approximates flag requests: the browser SDK sends one per
+flag per page load, server SDKs one per evaluation. Say so in `evidence` when
+you use it as `before`.
+
+| Check id                          | Condition                                                                                                                         | Finding                                                                                                                                                                                                                                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flags-server-no-local-eval`      | A server SDK (`posthog-node`, `posthog-python`, `posthog-go`, `posthog-ruby`, `posthog-php`, `posthog-java`) evaluates flags without a personal API key / local evaluation | `saving`, `feature_flags`/`feature_flag_requests`, `before` = calls from that `lib`, `after.low` = 0, `after.high` = `before * 0.1` (polling and cohort-dependent flags still request). `fixed_in: pr`, `code_change` = enable local evaluation on the client init and read the personal API key from the environment. Tradeoff: a personal API key with `feature_flag:read` has to exist in the server environment. |
+| `flags-send-with-every-capture`   | A server SDK sets `sendFeatureFlags: true` (or `send_feature_flags=True`) on `capture()` or the client                             | `saving`, `feature_flags`/`feature_flag_requests`, `before` = events from that `lib` (each capture requested flags), `after.low` = `after.high` = 0 for that path. `fixed_in: pr`. Tradeoff: events stop carrying `$feature/...` properties unless the code passes evaluated flags explicitly. |
+| `flags-browser-overcalled`        | For a flag, `calls / sessions` ≥ 5 on `web`                                                                                        | `saving`, `product_analytics`/`events` (the `$feature_flag_called` events themselves), `before` = `calls`, `after.low` = `sessions`, `after.high` = `calls / 2`. `fixed_in: pr`, `code_change` = read the flag once per page in `onFeatureFlags` or a hook, not in a loop or on every render. |
+| `flags-polling-interval`          | A server SDK polls local evaluation faster than every 30 seconds                                                                   | `unpriced`, `effort: code`, `fixed_in: pr` (set the interval to 30s or more). Requests from polling are not in the events table, so do not size it. |
+| `flags-active-unreferenced`       | A flag is active in PostHog and its key appears nowhere in the code                                                               | `unpriced`, `effort: setting`, `fixed_in: notebook`, `settings_path: /project/<project id>/feature_flags`, `setting: "Archive <key> if no other service reads it"`. The repository may not be the only reader, so this is a question for the user, never a code change. |
+| `flags-fine`                      | None of the above                                                                                                                 | `passed`. |

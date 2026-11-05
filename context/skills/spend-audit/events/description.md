@@ -1,0 +1,23 @@
+# Spend audit — events and autocapture
+
+Find event volume that buys nothing and events nobody looks at. Read
+`volume_by_event`, `events_by_host`, `events_by_lib` and
+`custom_properties_by_event` from the `measure-volumes` handoff. Grep the code
+for `posthog\.capture\(|\.capture\(`, `autocapture`, `capture_pageview`,
+`capture_pageleave`, `capture_heatmaps|enable_heatmaps`, `posthog\.init\(` when
+it is connected.
+
+| Check id                         | Condition                                                                                                              | Finding                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `events-autocapture-share`       | `$autocapture` is ≥ 30% of all events and no action, insight or dashboard uses `$autocapture` or `$elements` (usage check from the queries skill) | `saving`, `product_analytics`/`events`, `before` = `$autocapture` count, `after.low` = 0 (turn autocapture off), `after.high` = `before * 0.5` (restrict it to an element allowlist). `fixed_in: pr` when the init config is in the code (`autocapture: false` or `autocapture: { element_allowlist: [...] }`), otherwise `notebook` with `settings_path: /project/<project id>/settings/project-autocapture`. Tradeoff: no retroactive click analysis on elements nobody named. |
+| `events-pageleave`               | `$pageleave` is ≥ 15% of events and web analytics is not in use (no web analytics insight, no bounce-rate reference)  | `saving`, `product_analytics`/`events`, `before` = `$pageleave` count, `after.low` = `after.high` = 0, `fixed_in: pr` (`capture_pageleave: false`). Tradeoff: bounce rate and time on page stop computing. When web analytics is in use: `passed`. |
+| `events-heatmaps`                | `$$heatmap` events are ≥ 10% of events and no heatmap was viewed in 30 days (recordings/heatmaps list tool, or skip)   | `unpriced` when you cannot tell whether heatmaps are viewed; otherwise `saving` with `before` = `$$heatmap` count, `after` = 0..0, `fixed_in: pr` (`capture_heatmaps: false`). |
+| `events-dev-hosts`               | `events_by_host` shows `localhost`, `127.0.0.1`, `*.local`, `staging`, `dev`, `preview` or `vercel.app` hosts         | `saving`, `product_analytics`/`events`, `before` = events from those hosts, `after.low` = `after.high` = 0, `fixed_in: pr`, `code_change` = gate `posthog.init` on the production environment, or `opt_out_capturing_by_default` off production. Tradeoff: no test data in the project (the user can keep a separate project for it). |
+| `events-flag-called-share`       | `$feature_flag_called` is ≥ 20% of events                                                                              | Hand it to `audit-flags` through your handoff; do not size it here (it owns the fix). |
+| `events-unused-custom`           | A custom event with ≥ 1,000 events a month that no insight, dashboard, cohort or experiment references                  | `value`, with `events: [{ name, monthly, file, line }]`. Say in `evidence` what the event is, from the code around the capture site. Never propose removing it. |
+| `events-no-custom-properties`    | A custom event with ≥ 10,000 events a month and `avg_custom_properties` < 0.5                                           | `value`, same shape. The insight that makes it useful is a trend over time; a property the code could add is a suggestion for the notebook's value section, not a code change. |
+| `events-kitchen-sink`            | One custom event carries ≥ 50% of all custom event volume                                                               | `unpriced`, `effort: code`: the event is probably several events under one name. Name the property that distinguishes them. |
+| `events-fine`                    | None of the above                                                                                                      | `passed`. |
+
+Compute the usage check once for all custom events, as the queries skill
+describes, not once per event.
