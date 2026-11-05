@@ -29,7 +29,7 @@ A **site** is one place in the code that decides what a send contains: its conte
 For each site, read the surrounding code and record:
 
 - The file and the line of the call.
-- The language it is written in, such as `ts`, `py`, `rb`, `php`, `go`, `cs`, `ex`, or `rs`.
+- The language of the call, such as `node`, `python`, `go`, `ruby`, `php`, `dotnet`, `rust`, or `elixir`, by the name of its rewrite file in Step 7. A call in any other language, such as Java, is recorded under its own name: `mapping.md` keeps it on the provider.
 - How it sends: `sdk`, `http`, or `smtp`.
 - The content: `template` for a template stored at the provider, `react` for a component the provider renders, `html`, or `text`. A site that sets both `html` and `text` is `html`.
 - Every field the site sets, including fields set on the payload object after it is created and fields set through options, such as an idempotency key.
@@ -83,7 +83,7 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 A sites table, one row per site, in source tree order:
 
 ```
-| site | file | line | lang | sends | content | from | moves | reason |
+| site | file | line | language | sends | content | from | moves | reason |
 ```
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
