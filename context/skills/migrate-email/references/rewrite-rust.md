@@ -38,7 +38,7 @@ let posthog = posthog_rs::client(options.build()?).await;
 ## The answer
 
 - The send returns a `Result`. On success, `SendEmailResult`'s `id` is the message ID.
-- An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names the provider's `mapping.md` lists under "Code around the send", and `status()` is the HTTP status.
+- An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status()` is the HTTP status.
 - Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`.
 - A network error that is left after the retries is the same `EmailError`, with the code `network_error`, and so is a bad argument, with a code that starts with `invalid_`.
 
