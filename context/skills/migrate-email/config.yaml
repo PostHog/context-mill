@@ -31,3 +31,6 @@ variants:
   - id: smtp
     display_name: SMTP
     tags: [smtp]
+  - id: amazon-ses
+    display_name: Amazon SES
+    tags: [amazon-ses]

@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp'];
+const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun', 'loops', 'smtp', 'amazon-ses'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -250,6 +250,13 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/No Loops site moves to the code form/);
             for (const tag of tags) expect(lmx, tag).toMatch(new RegExp(`\`<${tag}[ />]`));
             expect(mapping).toMatch(/\| `transactionalId` \| the Loops email, brought into the code/);
+        });
+
+        it('renders an Amazon SES inline template in the code instead of a template made in PostHog', () => {
+            const mapping = read('amazon-ses/mapping.md');
+
+            expect(mapping).toMatch(/\| `Content.Template.TemplateContent` with `TemplateData` \| none: the code renders `TemplateData` into its `Subject`, `Html`, and `Text` before the send \|/);
+            expect(mapping).not.toMatch(/\| `Content.Template.TemplateContent` \| a template made in PostHog \|/);
         });
     });
 
