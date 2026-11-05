@@ -13,9 +13,9 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `sender` with a `name` and no `email` or `id` | none | Always: the address comes from Brevo, not the code |
 | `to` | `to` | It holds more than one entry. A list with one entry moves as that entry's address: note in the plan row when the entry carries a name, because the To line loses it |
 | `subject` | `subject` | Never |
-| `htmlContent`, `textContent` | `html`, `text` | Never, unless `params` is set too (see below) |
-| `params` without `templateId` | none | Always: Brevo fills `{{ params.NAME }}` into the send's own content, and PostHog sends the content as it is |
-| `templateId` with `params` | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
+| `htmlContent`, `textContent` | `html`, `text` | Never. With `params`, see the next row |
+| `params` on a send with its own `htmlContent` or `textContent` | none: the code renders the content and the `subject` with `params` before the send | A part of the content keeps it, as "Templates" says. Brevo filled its template language, such as `{{ params.NAME }}`, into the send's own content. The code renders it with the same rules, and sends the result |
+| `templateId` with `params` | the template's email, brought into the code and rendered with `params`, sent as `subject` and `html`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo` | `replyTo` | It carries a `name` |
 | `contactPixelTrackingConsent`, set to `true` or `false`, or `removeTrackingPixel: true`, on a `to`, `cc`, or `bcc` entry | none | Always, `false` included: with per-contact tracking consent on, `false` makes Brevo count the recipient's opens and clicks without tying them to the recipient. PostHog's send doesn't take a tracking setting per recipient yet |
@@ -35,7 +35,7 @@ A Brevo send without an idempotency key moves without one.
 - Anonymous tracking and per-contact tracking consent both off, and Brevo tracked opens and clicks: the site moves with no `captureEngagement` field.
 - Anonymous tracking on: the site stays, and the reason is `account tracking anonymized`. Brevo counted opens and clicks without tying them to a recipient, and PostHog's send either ties them to the person or captures none.
 - Per-contact tracking consent on: the site stays, and the reason is `per-contact tracking consent on`. Brevo tracked a recipient only as their consent said, and PostHog's send doesn't take a consent per recipient yet.
-- Brevo turned off both open and click tracking for the account: the site moves with `captureEngagement: false`. A template site stays, and so does a site whose installed SDK has no `captureEngagement`: the reason is `account tracking off`.
+- Brevo turned off both open and click tracking for the account: the site moves with `captureEngagement: false`. A site that moves to a template made in PostHog stays, and so does a site whose installed SDK has no `captureEngagement`: the reason is `account tracking off`.
 - Brevo turned off one of them and not the other: the site stays, because `captureEngagement: false` turns off both.
 - The person can't say: the site stays, and the reason is `account tracking not checked`.
 
@@ -67,9 +67,69 @@ Every Brevo SDK reports an API error by throwing, except Go, which answers an er
 
 ## Templates
 
-A template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Brevo template, makes it transactional, and gives you its template ID. Until then the site stays on Brevo. The check needs the template's content, because the code has only its id. `account.md` says how to get it.
+A template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its id. `account.md` says how to get it. The code renders the template's HTML and subject with the site's `params`, and the send sets the rendered `subject` and `html`.
 
-Brevo's template language becomes Liquid in the PostHog template. Values move from `params` to `variables`, and each name keeps its case:
+A send with its own `htmlContent` or `textContent` and `params` moves the same way: the code renders that content with `params` under the table below, and sends the result. The docs don't say whether Brevo rendered such a send's `subject`. A subject without `{{` or `{%` is the same either way. A subject with them moves only when the person confirms, from an email the site sent, that the subject showed the values. Otherwise the site stays, and the reason is `subject rendering not checked`.
+
+Brevo's template language works like Django's templates. In the code:
+
+| Brevo | In the code |
+|---|---|
+| `{{ params.name }}` | The value, escaped. A missing value and `null` render as nothing. A string renders as it is. A number renders as the app's JSON encoder wrote it into `params`, such as `40` or `40.5`: the docs don't say how Brevo writes one, so note it in the plan row. A boolean, a list, or an object written out keeps the template: the docs don't say how Brevo writes them |
+| `{{ params.user.first_name }}`, `{{ params.items.0.name }}` | The nested value, or the list entry at that position from 0, escaped. A missing step of the path renders as nothing |
+| `{{ params.name\|safe }}`, and every value inside `{% autoescape off %}…{% endautoescape %}` | The value as it is, unescaped, under the rule of `template-to-code.md` |
+| `{{ params.name\|escape }}` | The value, escaped once |
+| `{{ params.name\|default:"there" }}` | The value, escaped, or `there` when Brevo's truth test below finds the value false: missing, `null`, `""`, `0`, `false`, an empty list, or an empty object |
+| `{{ params.name\|default_if_none:"there" }}` | The value, escaped, or `there` only when it is missing or `null`. `""` stays `""` |
+| `\|upper`, `\|lower` | The value as text, in upper or lower case, letter by letter in Unicode |
+| `\|capfirst` | The value as text, with its first character in upper case and the rest as it is |
+| `\|title` | Each word with its first letter in upper case and the rest in lower case, where a word is a run of letters and digits. A value that can hold an apostrophe or a word that starts with a digit keeps the template: the docs don't say how Brevo writes those |
+| `\|truncatechars:N` | The value as text when it has at most N characters. Otherwise its first N-1 characters followed by `…`, so the result has N characters |
+| `\|floatformat:N` | The number with N decimals when N is above 0. With `0`, a negative N, or no N: a whole number with no decimals, and any other number with as many decimals as N without its sign, or 1 with no N. The docs say it takes numbers only, so a value that is not always a number keeps the template. They don't say how a value exactly halfway rounds: when the code can pass one, such as `2.5`, note it in the plan row |
+| `\|integer`, `\|float` | The number, or a string of a number, cut to a whole number toward 0, or written with six decimals, such as `10.000000` |
+| `\|lang_format:"en,%.2f"`, `\|lang_format:"fr,%.2f"` | The number with that many decimals, with `,` between thousands and `.` before the decimals for `en`, and a non-breaking space (U+00A0) between thousands and `,` before the decimals for `fr`. Write the separators yourself, not with the language's locale formatting, which can use other spaces. Without the `%.Nf` part, or with another language, it keeps the template: the docs show examples only, not how many decimals it keeps or how other languages group digits |
+| `\|length` | The number of characters in a string, of entries in a list or an object, and `0` for anything else |
+| `\|first`, `\|last` | The first or last entry of a list, or the first or last character of a string. On an object, it keeps the template |
+| `\|join:", "` on a list of strings | The strings joined with the separator, escaped as a whole. Without a separator, or on a list that holds anything but strings, it keeps the template |
+| `\|base64_encode`, with `std`, `raw_std`, `url`, or `raw_url` | The value's UTF-8 bytes in base64: standard, standard without `=` padding, URL-safe with `-` and `_`, or URL-safe without padding. With no option, standard |
+| `\|time_parse:"…"`, `\|time_parse_rfc3339` | The string read as a time, with the layout written as Go writes its reference time `Monday January 2 15:04:05 -0700 MST 2006`, English names, and UTC when the string names no zone. Parts the layout leaves out are 0 |
+| `\|date:"…"` on a parsed time | The time written with the same kind of layout, in English, with the language's date formatting. The tokens are `2006` `06` `January` `Jan` `01` `1` `02` `2` `_2` `Monday` `Mon` `15` `03` `3` `04` `4` `05` `5` `PM` `pm` `-0700` `-07:00` `MST`. Any other token keeps the template |
+| `\|date_i18n:"de,…"` | As `date`, with day and month names in `en`, `fr`, `it`, `es`, `de`, or `pt`. It moves only with full names (`Monday`, `January`), written as that language's own names, such as `Freitag`. Abbreviated names keep the template: the docs don't say which Brevo writes |
+| `\|time_in_location:"Europe/Berlin"`, `\|time_add_date:"1,2,3"`, `\|time_add_duration:"1h2m3s"`, `\|time_unix` | The time in that IANA zone; plus years, months, and days, where a day past the month's end rolls over into the next month, such as January 31 plus one month being March 3, or March 2 in a leap year; plus hours, minutes, and seconds; and the Unix time in seconds |
+| `{{ time_now }}` with `date` | The send time, in the time zone set in the Brevo account, or UTC when none is set: ask the person for it once. A time written without `date` keeps the template |
+| `{% if a %}…{% elif b %}…{% else %}…{% endif %}` | A branch that tests each value for Brevo's truth, in order |
+| `not`, `and`, `or`, and parentheses in a condition | The same test written out: `not` binds tightest, then `and`, then `or`, and parentheses group as written |
+| `==`, `!=` | Two numbers equal by value, so `3` equals `3.0`. Any other two values equal only when they have the same type and value, so `"3"` doesn't equal `3`, and a string compares with its case. Brevo's docs warn that a test on a number with decimals may not give the right result: a `==` or `!=` on a value that can be one keeps the template |
+| `>`, `<`, `>=`, `<=` | A comparison of numbers, after turning a string of a number, such as `"10"`, into that number. A side that can be anything else keeps the template: the docs don't say how Brevo compares it |
+| `"x" in params.name` | Whether the string holds `x`, or the list holds an entry equal to `x` as `==` says. On an object, it keeps the template |
+| `{% for item in params.items %}…{% endfor %}`, with `reversed` or `limit:N` | A loop over the list, in order, backwards, or over its first N entries. Inside it, `item` is the entry, and `params.name` still reads the send's value. A `for` over a value that can be anything but a list, `null`, or missing keeps the template: the docs describe lists only |
+| `{% else %}` or `{% empty %}` before `{% endfor %}` | What shows when the list is empty, missing, or `null` |
+| `forloop.Counter`, `forloop.Counter0`, `forloop.Revcounter`, `forloop.Revcounter0`, `forloop.First`, `forloop.Last`, `forloop.Parentloop` | The entry's position from 1 or from 0, how many entries are left counting this one or not, whether it is the first or the last, and the same values for the loop around this one. With `limit`, `Revcounter`, `Revcounter0`, and `Last` keep the template: the docs don't say whether they count the whole list |
+| `{% comment %}…{% endcomment %}`, `{% verbatim %}…{% endverbatim %}` | Nothing, and the text between the tags as it is |
+| `{% set x = … %}`, `{% with x = … %}…{% endwith %}` | A local value with that name, from the same expression |
+| `{{ contact.ATTRIBUTE }}` | The value the app keeps for that attribute, only as the bullet below says. Otherwise it keeps the template |
+| The template's `subject` | The send's `subject`, rendered with the same rules and no escaping |
+| The template's `sender` | The send's `from`, as `'Name <email>'`, as the "Fields" table says for `sender` |
+| The template's `replyTo` | The send's `replyTo` |
+| The template's `toField` | Nothing: PostHog's `to` takes one address, and the To line loses the name the field set. Note it in the plan row |
+
+Write the `\|` above as a plain `|`. The table escapes it.
+
+- Brevo's truth: `false`, a missing value, `null`, `""`, `0`, `0.0`, an empty list, and an empty object are false. Everything else is true, including `"0"`, `"false"`, and `" "`. Write that test out in the code, as `template-to-code.md` says.
+- `{{ contact.ATTRIBUTE }}` reads the contact saved in Brevo for the recipient. It moves only when the person names the value of the app that the attribute is copied from, and the site already holds that value for the same recipient, such as `FIRSTNAME` from the user record the site sends to. `{{ contact.EMAIL }}` is the site's `to` address. The code passes that value as a variable, and the plan row notes that the email now shows the app's value: a recipient that had no contact in Brevo, or an older copy of the value, got something else before. Otherwise the template stays, and the reason is `reads Brevo contact attribute <ATTRIBUTE>`.
+- Any other filter or tag keeps the template on Brevo, such as `|slice`, whose docs don't agree with their own examples, `|urlencode`, `|escapejs`, `|aes_256`, the `hash_` filters, `{% for key, value in … %}`, `{% cycle %}`, `{% firstof %}`, `{% ifchanged %}`, `{% now %}`, `{% filter %}`, and `{% include %}`. So does `{{ feed.… }}`, a coupon code, and every link Brevo fills from its account: `{{ mirror }}`, `{{ unsubscribe }}`, `{{ update_profile }}`, `{{ revoke_open_pixel_tracking }}`, and `{{ doubleoptin }}`.
+- A template in Brevo's old template language reads no `params`. When its placeholders are not `{{ … }}` and `{% … %}`, it stays.
+- A Brevo template has no plain text part and no separate preview text: a preheader is part of its HTML. The send has `html` only. A send with its own `textContent` sends it as `text`. The docs don't say whether Brevo escaped values in a text part or a subject: the code never does, as `template-to-code.md` says.
+- A template's `tag` is not carried over. When the template has a tag and a webhook handler reads `tags` back, the site stays. When it has a tag and no handler reads it, note in the plan row that the tag is lost.
+- A Brevo template can carry its own attachment, added in its advanced options. The send doesn't name it, and `account.md` says how to find it. A template with an attachment keeps the site on Brevo.
+- A template whose `sender` has an `id` and no `email` stays, as the "Fields" table says for `sender`.
+- Brevo applies the template's sender and subject unless the send sets its own, so a site's `sender` and `subject` next to `templateId` win over the template's. The docs don't say how Brevo treated a site's subject that holds `{{` or `{%`: such a subject keeps the site. The docs don't say whether a site's `replyTo` wins over the template's: the site moves only when the template has no reply-to address, or the site's is the same in every send as the template's. Brevo ignores a site's `htmlContent` and `textContent` next to `templateId`, so the send drops them.
+- Images uploaded to Brevo have URLs on `img.mailinblue.com`, or on another host with `brevo`, `sendinblue`, or `mailinblue` in its name. Keep them, and list them, as `template-to-code.md` says.
+- A template site moves into the code with tracking as "Tracking" says, as any site does.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Brevo template, makes it transactional, and gives you its template ID. Until then the site stays on Brevo. Brevo's template language becomes Liquid in the PostHog template. Values move from `params` to `variables`, and each name keeps its case:
 
 | Brevo | PostHog |
 |---|---|
@@ -100,13 +160,11 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - `{{ contact.ATTRIBUTE }}` reads a contact saved in Brevo. A PostHog send has no contact to read, so a template that uses it stays on Brevo. So does a template with `{{ feed.… }}`, `{{ time_now }}`, `{{ mirror }}`, `{{ unsubscribe }}`, `{{ update_profile }}`, `{{ revoke_open_pixel_tracking }}`, or `{{ doubleoptin }}`, and a template whose `toField` reads a contact attribute.
 - Any other filter, such as `|safe`, `|date`, `|floatformat`, `|capfirst`, `|title`, `|truncatechars`, `|lang_format`, `|time_parse`, `|base64_encode`, or `|aes_256`, keeps the template on Brevo. So does a condition with `in`, and `forloop.Revcounter`.
 - PostHog's Liquid escapes HTML in a value. When the code passes a value that holds HTML markup, such as a block of rendered rows, the template stays on Brevo.
-- A template in Brevo's old template language reads no `params`. When its placeholders are not `{{ … }}` and `{% … %}`, it stays.
 - Brevo's `default` replaces every value its `if` treats as false, such as `0`. Liquid's `default` doesn't replace `0`. A `default` on a value that is not always a string, `null`, or missing keeps the template on Brevo.
 - A Brevo template has no plain text part. The PostHog template takes its HTML, and no text the person didn't write.
-- A template's `tag` is not carried over. When the template has a tag and a webhook handler reads `tags` back, the site stays. When it has a tag and no handler reads it, note in the plan row that the tag is lost.
+- The bullets above on the old template language, the template's tag, and its attachment hold for a template made in PostHog too.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `sender`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
 - A site that sets a recipient's tracking setting next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes no tracking setting. A template site moves only when Brevo tracked its opens and clicks per recipient, as "Tracking" says: the template form takes no `captureEngagement`.
-- A Brevo template can carry its own attachment, added in its advanced options. The send doesn't name it, and `account.md` says how to find it. A template with an attachment keeps the site on Brevo.
 
 ## Webhooks
 
@@ -144,10 +202,12 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `sender: { email: 'hello@mail.example.com', name: 'Example' }` becomes `from: 'Example <hello@mail.example.com>'`. A name with a comma, a quote, or another special character goes in double quotes, such as `'"Example, Inc." <hello@mail.example.com>'`, with a quote in the name escaped as `\"`. A `sender` without a name becomes the bare address.
 - `to: [{ email, name }]` becomes `to: email`. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `replyTo: { email }` becomes `replyTo: email`.
-- `htmlContent` becomes `html`, and `textContent` becomes `text`.
+- `htmlContent` becomes `html`, and `textContent` becomes `text`. With `params`, they are the content the code rendered, as "Templates" says, and the send has no `params`.
 - `headers: { idempotencyKey: key }` becomes `idempotencyKey: key`.
 - The send gets `captureEngagement: false` when Brevo tracked neither opens nor clicks for the account, as "Tracking" says. Note it in the plan row.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from `params`, as "Templates" says, and sends `templateKey`, the rendered `subject` and `html`, and the `from` and `replyTo` from the site or else from the template. It sends no `templateId` and no `templateData`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `params`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them. Brevo's `templateId` is a number and PostHog's is a UUID string: never reuse the Brevo number.
 
