@@ -224,6 +224,16 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
         });
 
+        it('brings a Postmark template into the code with its layout, raw values, and inlined CSS', () => {
+            const mapping = read('postmark/mapping.md');
+            const inCode = mapping.split('### Templates made in PostHog')[0];
+
+            expect(inCode).toMatch(/the layout and the template come into the code as one email/);
+            expect(inCode).toMatch(/\| `\{\{\{name\}\}\}`, `\{\{& name\}\}` \| The value as it is, unescaped/);
+            expect(inCode).toMatch(/With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches/);
+            expect(mapping).not.toMatch(/\| `InlineCss` \| none \| Never on its own\. It only shapes how Postmark renders its template, and the PostHog template holds its own HTML \|/);
+        });
+
         it('fills the recipient variables of a mailgun send to one address in the code instead of keeping the site', () => {
             const mapping = read('mailgun/mapping.md');
 
