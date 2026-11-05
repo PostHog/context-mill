@@ -13,7 +13,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
 | `content` | `text` for `text/plain`, `html` for `text/html` | It holds another type, or two entries of one type |
-| `templateId` with `dynamicTemplateData` (in Node.js also `template_id` with `dynamic_template_data`: the helper takes snake_case keys too) | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
+| `templateId` with `dynamicTemplateData` (in Node.js also `template_id` with `dynamic_template_data`: the helper takes snake_case keys too) | the template's email, brought into the code and rendered with `dynamicTemplateData`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates". A legacy template, whose id has no `d-` prefix, always stays |
 | `substitutions` | none | Always. PostHog's send doesn't take it yet |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
@@ -21,7 +21,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
-| No `trackingSettings` | `captureEngagement: false` when open and click tracking are both off in the account, as `account.md` says under "Tracking" | Only one of open and click tracking is off in the account, the person can't say (the reason is `account tracking not checked`), or both are off and the installed SDK has no `captureEngagement` or the site sends a `templateId`: the template form takes no `captureEngagement` |
+| No `trackingSettings` | `captureEngagement: false` when open and click tracking are both off in the account, as `account.md` says under "Tracking" | Only one of open and click tracking is off in the account, the person can't say (the reason is `account tracking not checked`), or both are off and the installed SDK has no `captureEngagement` or the site moves to a template made in PostHog: the template form takes no `captureEngagement` |
 | `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, the settings do anything else, such as `subscriptionTracking` or `ganalytics`, or open or click tracking stays on, from the settings or from the account for the one the settings don't set: `false` turns off both |
 | `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
 | `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
@@ -55,9 +55,38 @@ SendGrid's SDKs report an error in two ways. The Node.js and Python SDKs throw. 
 
 ## Templates
 
-A dynamic template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the SendGrid template, makes it transactional, and gives you its template ID. Until then the site stays on SendGrid. The check needs the content of the template's active version, because the code has only its id. `account.md` says how to get it.
+A dynamic template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the template's active version, because the code has only its id. `account.md` says how to get it. The code renders the version's HTML, plain text, and subject with the site's `dynamicTemplateData`, and the send sets the rendered `subject`, `html`, and `text`.
 
-SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+SendGrid templates are Handlebars. In the code:
+
+| SendGrid | In the code |
+|---|---|
+| `{{name}}`, `{{ name }}` | The value, escaped. A missing value renders as nothing |
+| `{{user.first_name}}` | The nested value, escaped. A missing step of the path renders as nothing |
+| `{{{name}}}` | The value as it is, unescaped, under the rule of `template-to-code.md`. In the subject, it is the plain value |
+| `{{insert name "default=there"}}`, `{{insert name "there"}}` | The value, escaped, or `there` when the value is missing. When the code can pass `null` or `""` for it, use the fallback for those too, and note it in the plan row: SendGrid's docs don't say what `insert` does with them |
+| `{{#if a}}…{{else if b}}…{{else}}…{{/if}}` | A branch that tests each value for Handlebars truth, in order |
+| `{{#unless a}}…{{else}}…{{/unless}}` | The same branch, with the test turned around |
+| `{{#each items}}…{{else}}…{{/each}}` | A loop over the list, or over the values of an object in key order. The `{{else}}` part shows when there is nothing to walk |
+| Inside `{{#each}}`: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field. A bare name reads the item first, then the value outside the loop when the item has no such field |
+| Inside `{{#each}}`: `{{@index}}`, `{{@key}}`, `{{@first}}`, `{{@last}}`, `../name`, `@root.name` | The item's position from 0, its key in an object, whether it is the first or the last, and the value one level out or at the top |
+| `{{#equals a b}}`, `{{#notEquals a b}}` | A branch on `a == b`, or its opposite, after turning a number and a string of the same number into the same value: `3` equals `"3"` |
+| `{{#greaterThan a b}}`, `{{#lessThan a b}}` | A branch on `a > b` or `a < b`, comparing numbers |
+| `{{#and a b}}`, `{{#or a b}}` | A branch on both, or either, being true. `""`, `0`, and `0.0` are false, and so is a missing value |
+| `(length x)` | The number of characters in a string, the number of entries in a list, and `0` for anything else |
+| `{{formatDate ts "MMMM D, YYYY"}}`, with an optional offset such as `"-0800"` | The time, from epoch milliseconds or ISO 8601, in UTC or at that offset, written with the language's date formatting. The tokens are `YYYY` `YY` `MMMM` `MMM` `MM` `M` `DD` `D` `dddd` `ddd` `HH` `H` `hh` `h` `mm` `m` `ss` `s` `A` `ZZ` `Z`, in English. With no format, the full ISO 8601 time |
+| The version's `subject` | The send's `subject`, rendered with the same conversions and no escaping |
+| The version's plain text | The send's `text`, with no escaping. A version without plain text sends `html` only |
+
+- Handlebars truth: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object. Write that test out in the code, as `template-to-code.md` says.
+- Any other helper, a partial (`{{> name}}`), or an `{{unsubscribe}}`, `{{{unsubscribe}}}`, `{{weblink}}`, or `{{{unsubscribe_preferences}}}` tag that SendGrid fills from the account keeps the template on SendGrid. Such tags come from unsubscribe groups, which a transactional send through PostHog doesn't have.
+- A SendGrid template holds no sender, so the send takes the site's own `from` and `replyTo`. A site that sets `subject` next to `templateId` moves only when the version has no subject, or when the site's subject is the same in every send as the version's: which one SendGrid sent can't be told from the code. Otherwise it stays.
+- Images that the template's editor uploaded to SendGrid have URLs on `marketing-image-production.s3.amazonaws.com` or `mc.sendgrid.com`. Keep them, and list them, as `template-to-code.md` says.
+- A site that sets `trackingSettings` next to `templateId` moves into the code with `captureEngagement: false` as the "Fields" table says. So does a `templateId` site without `trackingSettings` when both open and click tracking are off in the account.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the SendGrid template, makes it transactional, and gives you its template ID. Until then the site stays on SendGrid. SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | SendGrid | PostHog |
 |---|---|
@@ -121,6 +150,8 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `content` entries become `text` and `html`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from `dynamicTemplateData`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `dynamicTemplateData`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
