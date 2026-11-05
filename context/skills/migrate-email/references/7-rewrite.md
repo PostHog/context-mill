@@ -5,7 +5,30 @@ next_step: 8-verify.md
 
 # Step 7, move every site that can move
 
-Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK in the site's language. The provider's `mapping.md` has the rewrite of each field, call, and content form under "Rewrite".
+Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK for the site's language. The provider's `mapping.md` has the rewrite of each field, call, and content form under "Rewrite". The SDK's rewrite file has the PostHog side: the install, the client, the send, the answer, and the check to run.
+
+| Language of the site | PostHog SDK | Rewrite file |
+|---|---|---|
+| JavaScript or TypeScript on a server: Node.js, or an edge runtime such as Cloudflare Workers or Vercel Edge Functions | `posthog-node` | `rewrite-node.md` |
+| Python | `posthog` | `rewrite-python.md` |
+| Go | `github.com/posthog/posthog-go` | `rewrite-go.md` |
+| Ruby | `posthog-ruby` | `rewrite-ruby.md` |
+| PHP | `posthog/posthog-php` | `rewrite-php.md` |
+| C# or F# on .NET | `PostHog` | `rewrite-dotnet.md` |
+| Rust | `posthog-rs` | `rewrite-rust.md` |
+| Elixir | `posthog` | `rewrite-elixir.md` |
+
+Read the rewrite file of each language that has a site that moves, and only those.
+
+## What every SDK's send takes and answers
+
+- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to address, and engagement capture, which is on unless the send turns it off. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
+- Both forms take a distinct ID and an idempotency key.
+- No SDK takes `cc`, `bcc`, attachments, headers, tags, a send time, or several `to` addresses yet. The provider's `mapping.md` keeps a site that sets one.
+- The message ID in the answer is PostHog's, not the provider's.
+- An error's name follows Resend's error names, such as `validation_error` or `rate_limit_exceeded`. Its code is PostHog's own, such as `recipient_suppressed`, `sender_not_verified`, or `quota_limited`: branch on the code. A send to a suppressed address fails with the code `recipient_suppressed` and the name `validation_error`.
+- Every SDK retries network errors and rate limits by itself, with the same idempotency key. A network error that is left after the retries comes back as the same error type as an API error, with the code `network_error`.
+- A bad argument fails before any request: as the language's argument error, or as the email error with a code that starts with `invalid_`. The rewrite file says which.
 
 ## Status
 
@@ -18,59 +41,61 @@ Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK 
 
 - Change only the sites whose `moves` is `yes`. Never change a site that stays, and never change a line that a site that stays still needs.
 - When no site moves, tick the phase in the plan with `none moved` and go to the next step.
-- Run the project's typecheck for each language a moving site is written in, such as its `typecheck` script, `tsc --noEmit`, `mypy`, `go vet`, or `dotnet build`, or its build when it has no typecheck, and keep its errors: Step 8 compares with them.
+- Run the check that the rewrite file names under "Check", on the whole project, and keep its errors and warnings: Step 8 compares with them. For a site in JavaScript or TypeScript, that is the project's typecheck.
+
+## Set up the SDK
+
+Install or upgrade the SDK to its latest release, as the rewrite file says under "Install". Early releases of an SDK may not send email, or may send only a template made in PostHog. Check the installed version for what the moving sites need:
+
+- a site with `html`, `text`, or a component: the send takes a template key with a subject and an HTML or text body;
+- each other field a site sets, such as a reply-to address or engagement capture: the send takes it;
+- the client: the client options take the provider name, under the name the rewrite file gives.
+
+When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
+
+When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — <SDK> has no <capability> yet`, tell the person, and go on with the rest. When the client options lack the provider name, leave it out of the client. When no site is left in a language, undo that SDK's install or upgrade. When no site is left at all, tick the phase with `none moved`, and go to the next step.
 
 ## Set up the client
 
-Each site moves with the PostHog SDK of the language it is written in. Read the part of `posthog-sdks.md` for each such language. The provider's `mapping.md` decides which languages move: a site in a language it keeps on the provider stays, even when `posthog-sdks.md` lists that language. A site in a language that `posthog-sdks.md` doesn't list stays: mark its row `moves: no — PostHog has no email send in <language> yet`.
+Configure one server-side client for email in each language that has a site that moves, as the rewrite file says under "The client". When a language's sites mix synchronous and asynchronous code, and its SDK has a separate client for each that one app can use side by side, such as Python, configure one of each, and have each site use the client that matches its call:
 
-Install or upgrade the language's PostHog SDK to its latest release with the project's package manager. `emails.send` alone is not enough: early releases send only a template made in PostHog. Check the installed package's types or source for what the moving sites need, as `posthog-sdks.md` says under "Check the installed release":
-
-- a site with `html`, `text`, or a component: the send takes `templateKey` with `subject` and `html` or `text`;
-- each other field a site sets, such as `replyTo`, `cc`, `bcc`, or `attachments`: the send takes it;
-- the client: the client options take `migratedFrom`.
-
-When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — <the SDK> has no <field> yet`, tell the person, and go on with the rest. When the client options lack `migratedFrom`, leave it out of the client. When no site in a language is left, undo the install or upgrade of that language's SDK. When no site is left at all, tick the phase with `none moved`, and go to the next step.
-
-Configure one server-side client per language, as `posthog-sdks.md` shows:
-
-- Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`.
-- When the client options take `migratedFrom`, set it to the value that the provider's `mapping.md` names under "The PostHog client". The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
-- Reuse the app's existing PostHog client in that language when it has one, and add the secret key, and `migratedFrom` when the client options take it, unless `posthog-sdks.md` says to give the email send its own client in that language. Then build that client and leave the app's client as it is. Where `posthog-sdks.md` says the secret key turns on local feature flag evaluation or flag loading, turn it off as it shows, unless the key also has `feature_flag:read` and the app uses local evaluation.
+- Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up. Read it, and the token and host, without raising when a variable is missing, as the rewrite file shows: Step 6 can leave the key unset, and an app that can't start takes down the sends that stay on the provider too. A send without the key fails with its own error.
+- Set the provider name to the value the provider's `mapping.md` names under "The PostHog client", when the client options take it. The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
+- Reuse the app's existing PostHog client in that language when it has one, and add the secret key and the provider name to it, unless the rewrite file says to give email its own client.
+- The rewrite file says whether the client loads feature flag definitions with the secret key, and what to set on a client that only sends email. Keep that setting unless the key also has `feature_flag:read` and the app uses local evaluation.
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
-- When the host is a reverse proxy or a self-hosted instance, also set the app host to the PostHog app URL, such as `https://us.posthog.com`. The email send never sends the secret key to a proxy, and without the app host it fails with `missing_app_host`. Flag loading does send it to the host, which is one more reason to keep it off, or to give the email send its own client where `posthog-sdks.md` says so.
-- Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
+- When the host is a reverse proxy or a self-hosted instance, also set the app host, under the name the rewrite file gives, to the PostHog app URL, such as `https://us.posthog.com`. The email send goes only to the app host, and without it the send fails with `missing_app_host`. Some SDKs also load flag definitions with the secret key from the host, which would hand the key to the proxy: the rewrite file says how to keep it off.
+- Put a new client in its own server-only module, next to the provider's client, and use it where the sites send.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with `distinctId`. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
 
-- Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side captures.
-- At each site, pass the same ID for the recipient, such as `distinctId: user.id`. Follow the recipient back through the callers when the site only has the address.
-- Without `distinctId`, PostHog records the email against a person whose distinct ID is the recipient's address. Unless the app identifies people by their address, that is a separate person from the user.
-- When the recipient isn't a user yet, such as an invite or an address check before the account exists, isn't a user at all, such as a team inbox, or the site has no way to know the user, leave `distinctId` out and note it in the plan row.
+- Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side PostHog captures.
+- At each site, pass the same ID for the recipient, such as `user.id`. Follow the recipient back through the callers when the site only has the address.
+- Without a distinct ID, PostHog records the email against a person whose distinct ID is the recipient's address. Unless the app identifies people by their address, that is a separate person from the user.
+- When the recipient isn't a user yet, such as an invite or an address check before the account exists, isn't a user at all, such as a team inbox, or the site has no way to know the user, leave the distinct ID out and note it in the plan row.
 - When the app identifies no one in PostHog, use the app's own user ID, and note it for the report.
 
 ## Rewrite each site
 
 For each site that moves, in plan order:
 
-- Rewrite the call as the provider's `mapping.md` says, for the site's content form: `html` and `text` content, a component the app renders, or a template made in PostHog.
-- Give each send with rendered content a `templateKey` that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key.
+- Rewrite the call as the provider's `mapping.md` says, for the site's language and content form: `html` and `text` content, a component the app renders, or a template made in PostHog. Write the PostHog send as the rewrite file says under "The send".
+- Give each send with rendered content a template key that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key, in any language.
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
-- Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
-- Keep the site failing the same way it did. `posthog-sdks.md` says how the SDK reports an error in each language: Node.js answers `{ data, error }` and never throws on an API error, and the other languages raise or return an error value. When the old call threw on an error, or the code checked a status, check PostHog's error so the site fails the same way, as the provider's `mapping.md` says under "Rewrite".
+- Keep the site failing the same way it did. The rewrite file says under "The answer" how its SDK reports an error: Node.js answers `{ data, error }` and never throws on an API error, and the other languages raise or return an error value. When the old call threw on an error, or the code checked a status, check PostHog's error so the site fails the same way, as the provider's `mapping.md` says under "Rewrite".
 - When the old call answered a refused send without raising, and the code never read that answer, such as a raw HTTP call whose status the code never checked, the site went on as if the send worked, and only a network failure raised or returned an error. Keep that: catch PostHog's error, log it and go on, and raise or return it when its code is `network_error`. Note the site in the plan.
 - When the old code caught only some errors, such as one error class or one status, catch PostHog's error and branch on its `code` or status code for those, and raise or return every other error as before. Several handlers of the provider's error classes on one `try` become one catch of PostHog's error that branches in their order: the first of several catches of the same error type would take every error. Never widen a catch. PostHog reports a network error with the same error type as an API error, with the code `network_error`. When the old catch took only the provider's answers, such as an HTTP error class, and a network failure passed it, raise or return `network_error` the way the old code let a network failure through. When a later handler of the same `try`, such as a broader `rescue` or `except` after it, took that network failure, run that handler's code for `network_error`: a raise inside one handler skips the handlers after it. A catch of every error around the send, such as a bare `except:`, `except Exception`, `rescue => e`, or `catch (\Throwable $e)`, caught network failures before too: it stays as it is, and lets no `network_error` through, here and in the bullet above.
 - A branch on the provider's answer to an invalid send, such as a `400` or a `422`, becomes a branch on PostHog's error name `validation_error`, never on a status code: PostHog's statuses for invalid sends differ from the provider's, and `recipient_suppressed` is a `validation_error` with status `422`. Handle `recipient_suppressed` before that branch, as the provider's `mapping.md` says.
 - A branch on the provider's rate limit, such as a retry, a wait, or a re-queue on status `429`, becomes a branch on PostHog's status code `429` with a code other than `quota_limited`. PostHog answers a used-up sending quota with status `429` and the code `quota_limited`, which no retry fixes: it takes the path of every other error.
-- When the old code handled the provider's answer to a bad value that the app passes at run time, such as an empty recipient, also catch the argument error that `posthog-sdks.md` names for the language, or check the value before the send.
-- Never add a field that the old call didn't set, apart from `templateKey`, `templateId`, and `distinctId`, and a field that the provider's `mapping.md` says to add because the old send behaved that way without setting it, such as `captureEngagement: false` for a send that had no open or click tracking, from an account setting or because nothing turned it on. `templateData` takes the place of the provider's template variables.
+- When the old code handled the provider's answer to a bad value that the app passes at run time, such as an empty recipient, also catch the argument error that the rewrite file names, or check the value before the send.
+- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and a field that the provider's `mapping.md` says to add because the old send behaved that way without setting it, such as engagement capture turned off (`captureEngagement: false` in Node.js) for a send that had no open or click tracking, from an account setting or because nothing turned it on. The template data takes the place of the provider's template variables.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's `templateKey`, or its `templateId` for a template made in PostHog. Under the table, note each site without a `distinctId`, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each value the move changed, such as a recipient name the To line loses, each new dependency, each upgraded one with its old and new version, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each value the move changed, such as a recipient name the To line loses, each new dependency, each upgraded one with its old and new version, and each new env variable name.
