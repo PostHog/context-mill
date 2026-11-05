@@ -149,6 +149,7 @@ describe('migrate-email skill', () => {
 
             expect(rewriteStep).toMatch(/unless its host is a reverse proxy/);
             expect(rewriteStep).toMatch(/When the app's host is a reverse proxy, give email its own client with the host set to PostHog's own host/);
+            expect(rewriteStep).toMatch(/leave the secret key off the app's existing client/);
         });
 
         it('lists the coarse error names once, in step 7', () => {
