@@ -47,7 +47,7 @@ When the latest release lacks one of these, change no site that needs it. Mark e
 
 ## Set up the client
 
-Configure one server-side client for email in each language that has a site that moves, as the rewrite file says under "The client". When a language's sites mix synchronous and asynchronous code, and its SDK has a separate client for each, such as Python and Rust, configure one of each, and have each site use the client that matches its call:
+Configure one server-side client for email in each language that has a site that moves, as the rewrite file says under "The client". When a language's sites mix synchronous and asynchronous code, and its SDK has a separate client for each that one app can use side by side, such as Python, configure one of each, and have each site use the client that matches its call:
 
 - Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up. Read it, and the token and host, without raising when a variable is missing, as the rewrite file shows: Step 6 can leave the key unset, and an app that can't start takes down the sends that stay on the provider too. A send without the key fails with its own error.
 - Set the provider name to the value the provider's `mapping.md` names under "The PostHog client", when the client options take it. The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.

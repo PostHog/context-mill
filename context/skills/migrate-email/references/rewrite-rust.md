@@ -9,7 +9,7 @@ For a site in Rust.
 
 ## Install
 
-`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app uses the blocking client.
+`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app builds without it.
 
 ## The client
 
@@ -26,7 +26,7 @@ let posthog = posthog_rs::client(options.build()?).await;
 - The client loads flag definitions only with `enable_local_evaluation` on, so a client that only sends email needs no other setting.
 - The app host option is `app_host`.
 - Create the client once, and share it where the sites send. A blank secret key counts as none, so a send without it fails with its own error.
-- The async client and the blocking client are separate. A site in async code uses the async client, and a site in blocking code the blocking one.
+- The crate builds one client: the async one with the `async-client` feature, and the blocking one without it. Use the one the app's features give. A site whose code doesn't match it, such as a blocking site in an app built with `async-client`, stays, with the reason `posthog-rs builds only the <async|blocking> client here`.
 
 ## The send
 
