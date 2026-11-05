@@ -21,7 +21,7 @@ Set these on `PostHogOptions`:
 
 With ASP.NET's `builder.AddPostHog()`, set the options in the `PostHog` configuration section, such as `PostHog:SecretKey`, and inject `IPostHogEmails` where the site sends. Otherwise use `posthog.Emails` on a `PostHogClient` that the app creates once.
 
-The client loads flag definitions only when it evaluates a flag, so a client that only sends email needs no other setting.
+With `SecretKey` set, the client loads flag definitions from its host with it when it evaluates a flag. A client that only sends email never evaluates one, so it needs no other setting.
 
 ## The send
 
