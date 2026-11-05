@@ -88,6 +88,7 @@ describe('migrate-email skill', () => {
             DOCS_PAGES['https://posthog.com/docs/workflows/transactional-emails/api.md'],
         );
         expect(existsSync(join(skillDir, 'references', 'resend', 'sdk-reference.md'))).toBe(true);
+        expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
@@ -108,6 +109,105 @@ describe('migrate-email skill', () => {
             '`references/8-verify.md`',
             '`references/9-report.md`',
         ]);
+    });
+
+    describe('a Resend template brought into the code', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it('makes the code the default in steps 3 and 7, with a template in PostHog only on request', () => {
+            const inventory = read('3-inventory.md');
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(inventory).toMatch(/A `template` site moves by bringing its email into the code/);
+            expect(inventory).toMatch(/### A template in PostHog, when the person asks for one/);
+            expect(inventory).not.toMatch(/A `template` site moves only to a template made in PostHog/);
+            expect(rewriteStep).toMatch(/For a provider template that moves into the code, read the rest of `template-to-code.md` first/);
+            expect(rewriteStep).toMatch(/For a template brought into the code, the code renders them, and the send has no template data/);
+        });
+
+        it('has the Resend mapping bring its templates into the code, with the Liquid form kept for PostHog templates', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toContain('`template-to-code.md`');
+            expect(mapping).toMatch(/### Templates made in PostHog\n\nOnly for a template the person asks to make in PostHog/);
+            expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
+            expect(mapping).toMatch(/`\{\{\{NAME\}\}\}` becomes `\{\{ variables\.NAME \}\}`/);
+            expect(read('resend/account.md')).not.toMatch(/Step 3 deletes once the site is classified/);
+        });
+
+        it('escapes a Resend variable by the shared rule, and applies a fallback only to a missing value', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toMatch(/\| `\{\{\{NAME\}\}\}` in the HTML \| The value\. Resend inserts it as it is and never escapes it, so it falls under the rule of `template-to-code\.md`/);
+            expect(mapping).toMatch(/\| `\{\{\{NAME\}\}\}` in the subject or the text \| The value as it is, with no escaping \|/);
+            expect(mapping).toMatch(/`""` renders as nothing, not as the fallback/);
+        });
+
+        it("lets the site's own from, reply-to and subject win over the template's", () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toMatch(/A subject the site sets next to `template` wins/);
+            expect(mapping).toMatch(/\*\*Templates brought into the code\.\*\*[^\n]*the site's own where it sets them, otherwise the template's/);
+        });
+    });
+
+    describe('the rewrite for each PostHog SDK', () => {
+        const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it('bundles one rewrite file for each SDK', async () => {
+            outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+            const skillDir = await buildSkill('migrate-email-resend', outputDir);
+
+            for (const sdk of SDKS) {
+                expect(existsSync(join(skillDir, 'references', `rewrite-${sdk}.md`)), sdk).toBe(true);
+            }
+        });
+
+        it('has step 7 pick the rewrite file by the language of each site', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            for (const sdk of SDKS) expect(rewriteStep).toContain(`\`rewrite-${sdk}.md\``);
+            expect(rewriteStep).not.toMatch(/```(js|ts|python|go|ruby|php|csharp|rust|elixir)\n/);
+        });
+
+        it.each(SDKS)('gives the %s rewrite the secret key, the provider header, and the check to run', (sdk) => {
+            const rewrite = read(`rewrite-${sdk}.md`);
+
+            for (const heading of ['## Install', '## The client', '## The send', '## The answer', '## Check']) {
+                expect(rewrite).toContain(heading);
+            }
+            expect(rewrite).toContain('POSTHOG_PROJECT_SECRET_API_KEY');
+            expect(rewrite).toMatch(/migrated_?[fF]rom|MigratedFrom/);
+            expect(rewrite).not.toContain('Code around the send');
+            expect(rewrite).toMatch(/[rR]eply_?[tT]o[^\n]*(list|once per address)/);
+        });
+
+        it('keeps the secret key off a reverse proxy for every SDK, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toMatch(/unless its host is a reverse proxy/);
+            expect(rewriteStep).toMatch(/When the app's host is a reverse proxy, give email its own client with the host set to PostHog's own host/);
+            expect(rewriteStep).toMatch(/leave the secret key off the app's existing client/);
+        });
+
+        it('lists the coarse error names once, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            for (const name of ['validation_error', 'missing_api_key', 'invalid_permission', 'not_found', 'concurrent_idempotent_requests', 'invalid_idempotent_request', 'rate_limit_exceeded', 'monthly_quota_exceeded', 'service_unavailable', 'application_error']) {
+                expect(rewriteStep).toContain(`\`${name}\``);
+            }
+        });
+
+        it('no longer keeps a send on Resend for its language alone', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).not.toMatch(/other than JavaScript or TypeScript/);
+            expect(mapping).not.toMatch(/until the skill moves that language/);
+        });
     });
 
     describe('the key check in step 6', () => {
