@@ -15,12 +15,13 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `to` | `to` | It holds more than one address, as a list or a comma-separated string. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name. A string from one stored address, such as a user's email, holds one address. A string the code joins from several, or takes from input or a mail object that can hold several, counts as several |
 | `subject` | `subject` | Never |
 | `text`, `html` | `text`, `html` | Never |
-| `%recipient.<name>%`, `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` | none | Always: Mailgun fills them at send time |
+| `%recipient.<name>%` in `subject`, `text`, or `html` | none: the code puts the value in, as the `recipient-variables` row says | The send has no `recipient-variables` that holds `<name>` for its `to` address: Mailgun's docs don't say what it renders then. A bare `%recipient%` always stays: the docs don't say what it holds |
+| `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` | none | Always: Mailgun fills them at send time from its unsubscribe lists |
 | `amp-html` | none | Always. PostHog's send doesn't take it yet |
 | `message` (MIME) | none | Always. PostHog's send doesn't take it yet |
-| `template` with `t:variables`, `h:X-Mailgun-Variables`, or `v:` values | a template made in PostHog, sent by its `templateId` with `templateData` | See "Templates" |
-| `t:version` | the PostHog template made from that version | See "Templates" |
-| `t:text` | none | Always. PostHog's send doesn't take it yet |
+| `template` with `t:variables`, `h:X-Mailgun-Variables`, or `v:` values | the template's email, brought into the code and rendered with those values, sent as `subject` and `html`, and `text` when the site sets `t:text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
+| `t:version` | the version it names, brought into the code in place of the active one | See "Templates" |
+| `t:text` | `text`, written in the code from the version's content | See "Templates". A site that moves to a template made in PostHog stays, as before: the template form has no `t:text` |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `h:Reply-To` | `replyTo` | It carries a name, holds more than 10 addresses, or the code builds it at run time and you cannot tell that it holds bare addresses only |
 | `attachment` | none | Always. PostHog's send doesn't take it yet |
@@ -31,7 +32,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | `captureEngagement: false`, or no field | See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
 | An `Idempotency-Key` request header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
-| `recipient-variables` | none | Always. PostHog's send doesn't take it yet |
+| `recipient-variables`, on a send with one address in `to` and its own `subject`, `text`, or `html` | none: the code puts the values into the subject and the content before the send | `to` holds more than one address, or the send sets `template`. Otherwise Mailgun replaced each `%recipient.<name>%` in the subject, the text, and the HTML with the value of `<name>` in the entry of the `to` address. The code does the same with a plain string replace, under the escaping rule of `template-to-code.md`, and sends the result. Mailgun's docs don't say whether it escaped the value, so escape it in the HTML, unless the code builds it as HTML. A name the entry can lack, or a value that can be anything but a string or a whole number, keeps the site: the docs don't say what Mailgun writes for it. Go's `AddRecipientAndVariables` sets `to` and `recipient-variables` together |
 | `o:testmode` | none | Always. Test mode is not a send |
 | `o:dkim`, `o:secondary-dkim`, `o:secondary-dkim-public`, `o:require-tls`, `o:skip-verification` | none | Always. PostHog's send doesn't take it yet |
 | `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always. PostHog's send doesn't take it yet |
@@ -54,7 +55,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 |---|---|
 | `mg.messages.create`, `mailgun.messages().send`, `client.messages.create`, `send_message` with a hash or a `MessageBuilder`, `$mg->messages()->send`, `mg.Send` with `NewMessage`, `POST /v3/<domain>/messages` | A field above keeps it |
 | `/messages.mime`, `client.mimemessage.create`, `send_message` with `message:`, `$mg->messages()->sendMime`, `mailgun.NewMIMEMessage` | Always: a MIME message is built outside the send |
-| `Mailgun::BatchMessage`, `$mg->messages()->getBatchMessage`, `AddRecipientAndVariables`, or any send with `recipient-variables` | Always: each sends several emails in one call |
+| `Mailgun::BatchMessage`, `$mg->messages()->getBatchMessage`, `AddRecipientAndVariables` on a message with more than one recipient, or a send with `recipient-variables` and more than one address in `to` | Always: each sends several emails in one call |
 | A send whose `to` is a Mailgun mailing list address | Always: Mailgun sends it to every member |
 | SMTP through `smtp.mailgun.org` or `smtp.eu.mailgun.org` | Always. PostHog has no SMTP relay |
 | A framework mailer or transport (Laravel, Symfony, Rails, Django, Nodemailer, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
@@ -84,11 +85,43 @@ The rewrite file says under "The answer" how PostHog's SDK reports an error in i
 
 ## Templates
 
-A template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Mailgun template, makes it transactional, and gives you its template ID. Until then the site stays on Mailgun. The check needs the content of the version the site sends, the active one unless the site sets `t:version`, because the code has only the template's name. `account.md` says how to get it.
+A template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the version the site sends, the active one unless the site sets `t:version`, because the code has only the template's name or id. `account.md` says how to get it. The code renders the version's content and subject with the site's values, and the send sets the rendered `subject` and `html`, and `text` when the site sets `t:text`.
 
-A version whose `engine` is `go` stays: this file converts Handlebars only.
+The site's values are the object of `t:variables`, else of `h:X-Mailgun-Variables`, else the `v:` values by name. Parse a JSON string into its object. A site that sets `v:` values next to `t:variables` stays when a webhook handler reads them back, as in "Webhooks".
 
-Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+A version whose `engine` is `go` stays: Mailgun's docs describe its Handlebars engine only, so how the Go engine escapes and fills a missing value can't be told.
+
+Mailgun templates are Handlebars, with the block helpers `if`, `unless`, `each`, `with`, and `equal` only. In the code:
+
+| Mailgun | In the code |
+|---|---|
+| `{{name}}`, `{{ name }}` | The value, escaped. A missing or `null` value renders as nothing |
+| `{{user.first_name}}` | The nested value, escaped. A missing step of the path renders as nothing |
+| `{{{name}}}` | The value as it is, unescaped, under the rule of `template-to-code.md`. In the subject, it is the plain value |
+| `{{#if a}}…{{else if b}}…{{else}}…{{/if}}` | A branch that tests each value for Handlebars truth, in order |
+| `{{#unless a}}…{{else}}…{{/unless}}` | The same branch, with the test turned around |
+| `{{#each items}}…{{else}}…{{/each}}`, when `items` is always a list or missing | A loop over the list, in order. The `{{else}}` part shows when the list is empty or missing |
+| Inside `{{#each}}`: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field, escaped |
+| Inside `{{#each}}`: `{{@index}}`, `{{@first}}`, `{{@last}}`, `{{../name}}` | The item's position from 0, whether it is the first or the last, and the value one level out |
+| `{{#with author}}…{{else}}…{{/with}}` | A branch on the Handlebars truth of `author`. Inside it, a bare name reads a field of `author`. The `{{else}}` part shows when `author` is false |
+| `{{#equal plan "pro"}}…{{/equal}}` | A branch on both sides, written as strings, being the same: `5` equals `"5"` |
+| The version's `Subject` header | The send's `subject`, with no escaping, when the site sets none |
+| The version's `From` header | The send's `from`, when the site sets none |
+| The version's `Reply-To` header | The send's `replyTo`, when the site sets no `h:Reply-To` |
+| `t:text: yes` on the site | The send's `text`: the email's text file, which you write from the version's content with the same words, values, and links, rendered with no escaping. A site without `t:text` sends `html` only |
+
+- Handlebars truth: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Every other string, number, and list is true, including `"0"` and `"false"`. Write that test out in the code, as `template-to-code.md` says. Mailgun's docs don't define it, and don't say whether an empty object is true: an `if`, `unless`, or `with` on a value that can be an empty object keeps the template on Mailgun.
+- Mailgun's docs show each form only with its values set. Where they are silent, the table follows Handlebars: the escaping, a missing value rendering as nothing, `{{else}}` in `each` and `with`, and the `@` and `../` names. Note in the plan row each site whose template uses one of them.
+- These keep the template on Mailgun, because the docs don't say what Mailgun does: an `each` over a value that can be an object, whose key order they don't give; a bare name inside `each` or `with` that the item can lack, where Mailgun may read the value outside the block; an `equal` on a value that can be a boolean, a fraction, `null`, or missing, which they don't say how Mailgun writes as a string; and an `{{else}}` inside `equal`.
+- Mailgun's docs don't say how `t:text` builds the text part. Name the text file you wrote in the plan row, so the person reads it before the cutover.
+- Any other helper, a partial (`{{> name}}`), and a `%recipient%`, `%recipient.<name>%`, `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` tag keep the template on Mailgun: Mailgun fills the tags at send time, from the batch or from its unsubscribe lists. So does a header that holds `{{`: the docs don't say whether Mailgun renders a header.
+- A `from`, `subject`, or `h:Reply-To` that the site sets wins over the version's header, as Mailgun's docs say. When neither the site nor the version sets a sender, Mailgun sent from `postmaster@<sending domain>`: write that address in the site's `from` column.
+- Mailgun's docs don't name a host for images that its template editor uploads. List each image whose URL has `mailgun` in its host, as `template-to-code.md` says.
+- Open and click tracking move as "Tracking" says, as for any other site: a template brought into the code takes `captureEngagement`.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailgun template, makes it transactional, and gives you its template ID. Until then the site stays on Mailgun. Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | Mailgun | PostHog |
 |---|---|
@@ -110,7 +143,7 @@ Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `
 - `{{{name}}}` inserts HTML as it is. PostHog's Liquid escapes it, so a template that uses triple braces stays on Mailgun.
 - `equal` compares both sides as strings. When the code passes the value as a number or a boolean, compare with it unquoted in Liquid, such as `== 5`.
 - Any other helper, `{{@index}}`, a partial, a block inside `{{#each}}` that reads a value outside the loop with `../`, and `%recipient.<name>%` or an unsubscribe variable keep the template on Mailgun.
-- The site's values become `templateData`: the object of `t:variables`, else of `h:X-Mailgun-Variables`, else the `v:` values by name. Parse a JSON string into its object. A site that sets `v:` values next to `t:variables` stays when a webhook handler reads them back, as in "Webhooks".
+- The site's values, as "Templates" says, become `templateData`.
 - The PostHog template carries its own sender, reply-to address, and subject. Tell the person to put the version's `From`, `Reply-To`, and `Subject` headers into it, for each one the site doesn't set. A site that sets `from`, `h:Reply-To`, or `subject` next to `template` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
 - A site that sets `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks` next to `template` stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. So does a template site whose sending domain has open or click tracking off, as "Tracking" says: the template form takes no `captureEngagement`.
 
@@ -155,7 +188,10 @@ Drop the domain argument and the Mailgun client of the call.
 - `h:Reply-To` becomes `replyTo`.
 - Tracking becomes `captureEngagement: false` when Mailgun tracked neither opens nor clicks, as "Tracking" says, whether the send turned them off or the domain did. Drop the tracking fields. When both were on, drop them and set nothing. Note in the plan row each site that got `captureEngagement: false` from the domain's setting.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
+- `recipient-variables` on a send to one address: replace each `%recipient.<name>%` in the subject, the text, and the HTML with the value of that address's entry before the send, as the "Fields" table says, and drop `recipient-variables`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from its template values, as "Templates" says, and sends `templateKey`, the rendered `subject` and `html`, `text` when it set `t:text`, and the `from` and `replyTo` of the site, else of the version's headers. It sends no `templateId` and no `templateData`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's template values, as "Templates" says. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
