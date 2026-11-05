@@ -28,13 +28,13 @@ The steps call this key the full-access provider key. This run creates none, so 
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
+A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, with the template language as it is written. A site with `TemplateLanguage: true` and its own content needs none of this: its content is in the code.
 
-**Copy from the dashboard.** In the Mailjet dashboard, open the template. Ask the person for the template's number, its subject, its sender and reply-to address, its HTML, and its plain text when it has one. For a template built in the drag-and-drop or MJML editor, ask for the HTML it exports, not the editor's source.
+**Copy from the dashboard.** In the Mailjet dashboard, open the template. Ask the person for the template's number, its subject, its sender and reply-to address, any other header it sets, its HTML, and its plain text when it has one. For a template built in the drag-and-drop or MJML editor, ask for the HTML it exports, not the editor's source.
 
-**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, and `Reply-to`. Use `Html-part`, not `MJMLContent`.
+**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, `Reply-to`, and any other header the template sets. Use `Html-part`, not `MJMLContent`: Mailjet renders the HTML part from the MJML. A v3 site can pass the template's name in `Mj-TemplateID` instead of its number: `GET https://api.mailjet.com/v3/REST/template?Name={name}` answers its `ID`. When the API answers no template for the number the site sends, ask the person for the dashboard copy.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 

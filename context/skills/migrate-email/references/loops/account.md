@@ -31,27 +31,31 @@ The steps call this key the full-access provider key.
 
 ## Template content
 
-A site whose Loops email the person moves to PostHog needs the content of its published version, to check it before they make the PostHog template.
-
-**Copy from the dashboard.** Ask the person to open the transactional email in Loops, and to give you:
-
-- the Name, From, Reply, Subject, Preview, CC, and BCC fields (click `>` to show all of them), with any data variable in them;
-- the email's text, with each data variable where it stands, each array block with its variable name and the variables inside it, and each conditional section with its condition;
-- each optional data variable and its fallback value;
-- the example payload from the email's Publish page (**Show payload**), which lists its data variables.
-
-An email made from uploaded MJML: ask for the MJML file instead of the text.
+Every Loops site sends a Loops email, so each site that moves needs the content of the email's published version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, but not as HTML: it answers the body in LMX, Loops' markup, which `mapping.md` turns into HTML under "Templates". The dashboard has no export of an email's HTML, so its copy is a preview send.
 
 **Read from the API.** With `Authorization: Bearer $LOOPS_MIGRATION_API_KEY`:
 
 1. `GET https://app.loops.so/api/v1/transactional-emails/{transactionalId}` answers `publishedEmailMessageId` and `dataVariables`, the names the published version uses.
-2. `GET https://app.loops.so/api/v1/email-messages/{publishedEmailMessageId}` answers `subject`, `fromName`, `fromEmail` (the part before the sending domain), `replyToEmail`, `ccEmail` and `bccEmail` (only when set), `dataVariablesFallbacks`, and `lmx`, the body in LMX, where a data variable is `{data.name}`.
+2. `GET https://app.loops.so/api/v1/email-messages/{publishedEmailMessageId}` answers `subject`, `previewText`, `fromName`, `fromEmail` (the part before the sending domain), `replyToEmail`, `ccEmail` and `bccEmail` (only when set), `languageCode` (only when set), `emailFormat` (`styled` or `plain`), `dataVariablesFallbacks` (only when set), and `lmx`, the body in LMX.
+3. For a `<Style themeId="…" />` in the LMX, `GET https://app.loops.so/api/v1/themes/{themeId}` answers its `styles`, with the names of the `<Style />` attributes.
+4. For each `<Component componentId="…" />`, `GET https://app.loops.so/api/v1/components/{componentId}` answers its `lmx`.
 
-- A `401` means the key is wrong, or the content API is not on for the team. Ask for the dashboard copy instead.
-- A `409` means the email was made from MJML. Ask for the MJML file instead.
+- A `401` means the key is wrong, or the content API is not on for the team. Ask for the preview send instead.
+- A `409` means the email was made from MJML, or Loops can't give its content as LMX. Ask for the preview send instead.
 - These routes allow 60 requests per 60 seconds for each team. Wait and retry on `429`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+**Copy a preview send.** Ask the person to open the transactional email in Loops, switch to its published version with the toggle in the top right when it has a draft, and give you:
+
+- the Name, From, Reply, Subject, Preview, CC, and BCC fields (click `>` to show all of them), with any data variable in them;
+- each optional data variable and its fallback value, each conditional section with its condition, and each array block with its variable name and the variables inside it, with their **Array item** option;
+- the example payload from the email's Publish page (**Show payload**), which lists its data variables;
+- a preview of it: **Send a preview**, with **Add preview tag** off, each data variable filled with its own name in double brackets, such as `[[firstName]]`, each condition variable filled so that its section shows, and each array with two items when the form takes them. A section that shows only when another one hides needs a second preview. Ask them to save the raw message they get, such as Gmail's **Show original**, then **Download original**, as a `.eml` file outside the repository.
+
+A preview send is also how you read a theme or a social icon that the API doesn't give: ask for one when `mapping.md` says so.
+
+**An email made from MJML.** The API answers `409`, and the editor shows the **Code** option. Ask for the preview send: its HTML is the MJML that Loops compiled. When the person has the MJML file they uploaded, and it has no `<loops-array>` and no `img` folder, you can instead compile it once with the MJML CLI, in a folder in the system's temporary folder, only when the person allows it. Never add MJML to the app. Without either, the site stays, and the reason is `MJML email not compiled`.
+
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 

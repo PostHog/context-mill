@@ -17,11 +17,11 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `to` entries of type `cc` | none | Always. PostHog's send doesn't take it yet |
 | `to` entries of type `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `bcc_address` | none | Always. PostHog's send doesn't take it yet |
-| `subject` | `subject` | It holds a merge tag (see `merge`) |
-| `html`, `text` | `html`, `text` | They hold a merge tag (see `merge`) |
+| `subject` | `subject` | Never. A merge tag in it is rendered by the code, as the `merge` row says |
+| `html`, `text` | `html`, `text` | Never. A merge tag in them is rendered by the code, as the `merge` row says |
 | `headers` with `Reply-To` | `replyTo`, one address or a list | The value carries a name, there are more than 10 addresses, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` with any other header | none | Always: no PostHog SDK takes headers yet |
-| `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` | none | `html`, `text`, `subject`, or `from_name` holds a merge tag, such as `*\|NAME\|*` or `{{name}}`. Without a merge tag in them, the values change nothing, and the site moves without them |
+| `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` | none: the code renders the merge tags in `subject`, `from_name`, `html`, and `text` before the send | A tag or a helper in them that "Templates" doesn't place, such as `*\|UNSUB:…\|*`, or "Templates" can't tell whether Mailchimp Transactional filled them. Otherwise it filled each merge tag in those four fields from the values, in the site's merge language, and the code does the same, as "Templates" says. Without a merge tag in them, the values change nothing, and the site moves without them |
 | `merge_vars` with entries for more than one `rcpt` | none | Always: the site sends to several recipients |
 | `track_opens`, `track_clicks`, set to `true` or `false` | `captureEngagement: false` when Mailchimp Transactional tracked neither opens nor clicks | See "Tracking" below |
 | `auto_text` set to `true` | none | Never. PostHog makes the text part from `html` when the send has no `text` |
@@ -48,7 +48,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 - Both off: the site moves with `captureEngagement: false`.
 - One on and one off, such as `track_clicks: false` on an account that tracks opens: the site stays, because `captureEngagement: false` turns off both.
 - The installed SDK has no `captureEngagement`, and Mailchimp Transactional tracked neither: the site stays.
-- A template site that Mailchimp Transactional sent with either one off stays, as "Templates" says.
+- A template site brought into the code follows the same rules. One that moves to a template made in PostHog stays when Mailchimp Transactional sent it with either one off, as "Templates made in PostHog" says.
 
 When a site leaves out `track_opens` or `track_clicks`, and the person can't say what the Sending Defaults set for it, the site stays, and the reason is `account tracking not checked`. The API has no read of the Sending Defaults.
 
@@ -60,7 +60,7 @@ A Mailchimp Transactional send has no idempotency key, so the moved site sends n
 |---|---|
 | `messages.send` in every SDK and older client, a community client's send, `POST /api/<version>/messages/send` | A field above keeps it |
 | `messages.sendTemplate`, `send_template`, `POST /api/<version>/messages/send-template` | A field above keeps it, or "Templates" does |
-| `messages.sendMcTemplate`, `send_mc_template`, `messages/send-mc-template` | Always. The template lives in Mailchimp. It moves once the person makes it in PostHog and the site is checked as a stored template |
+| `messages.sendMcTemplate`, `send_mc_template`, `messages/send-mc-template` | A field above keeps it, or "Templates" does. Its content comes from Mailchimp, as `account.md` says |
 | `messages.sendRaw`, `send_raw`, `messages/send-raw` | Always. PostHog takes no MIME document |
 | Several entries of type `to`, with or without `preserve_recipients: false` | Always: each sends several emails, or one email to several people, in one call |
 | SMTP through `smtp.mandrillapp.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
@@ -89,9 +89,73 @@ And in every SDK, a recipient that Mailchimp Transactional refused comes back in
 
 ## Templates
 
-A stored template site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Mailchimp Transactional template, makes it transactional, and gives you its template ID. Until then the site stays on Mailchimp Transactional. The check needs the content of the template's published version, because the code has only its slug. `account.md` says how to get it.
+A stored template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the template's published version, because the code has only its slug. `account.md` says how to get it. The code renders the template's HTML, text, subject, and from name with the site's merge values, fills its `mc:edit` regions from `template_content`, and the send sets the rendered `subject`, `html`, `text`, and `from`. A `messages.send` site whose own content holds merge tags renders them the same way. A `messages.sendMcTemplate` site moves like a stored template, with the content of its Mailchimp template.
 
-- The site's `merge_language` says which merge tags the template uses. When the site doesn't set it, the account's default decides: read the template, `*|NAME|*` is the Mailchimp language and `{{name}}` is Handlebars.
+- The site's `merge_language` says which merge tags the content uses. When the site doesn't set it, the account's default decides: read the template, `*|NAME|*` is the Mailchimp language and `{{name}}` is Handlebars. A tag of the other language is not a tag: it prints as it is written.
+- The values are `global_merge_vars`, then the entries of the one recipient's `merge_vars`, which win over a global entry with the same name in any case. Mailchimp Transactional reads names in any case, so the code does too: `*|FIRST_NAME|*` reads `first_name`.
+- Mailchimp Transactional fills merge tags when `merge` is `true` or the site sends merge vars, and leaves them as written with `merge: false` and no merge vars. With `merge: false` and merge vars, or with none of the three and a merge tag in the content, the docs don't say whether it filled them: the site stays, and the reason names it.
+- A merge tag prints a string or a number as it is. A value that can be another type, such as a boolean, a list, or an object, printed by a tag keeps the template on Mailchimp Transactional: the docs don't say how it prints. A Handlebars loop or condition may still read such a value.
+
+| Mailchimp merge language | In the code |
+|---|---|
+| `*\|NAME\|*` | The value, escaped. A value the code builds as HTML goes in as it is, under the rule of `template-to-code.md`: the docs don't say whether the plain tag escapes, and such a value showed as HTML only if it didn't. A missing value renders as nothing. Note both in the plan row: the docs don't say |
+| `*\|HTML:NAME\|*` | The value as it is, unescaped, under the rule of `template-to-code.md` |
+| `*\|UPPER:NAME\|*`, `*\|LOWER:NAME\|*` | The value in upper or lower case, escaped as `*\|NAME\|*` is |
+| `*\|URL:NAME\|*` | The value URL-encoded: each UTF-8 byte other than a letter, a digit, `-`, `_`, or `.` becomes `%` and two uppercase hex digits. A value that can hold a space or a `~` keeps the template: the docs don't say how they encode |
+| `*\|IF:NAME\|*…*\|ELSEIF:…\|*…*\|ELSE:\|*…*\|END:IF\|*` | A branch that tests each condition in order and shows the part of the first that is true, or the `ELSE:` part. `IF:NAME` tests whether a value is provided |
+| `*\|IFNOT:NAME\|*…*\|ELSE:\|*…*\|END:IF\|*` | The same branch, with the test turned around |
+| `*\|IF:NAME=value\|*`, `*\|IF:NAME!=value\|*`, and the same in `ELSEIF:` | A comparison of the value with the text after the operator, character by character. A missing value makes `=` false. A `!=` on a value that can be missing keeps the template: the docs say only what `=` does then. The docs don't say whether case counts: note it in the plan row |
+| `*\|IF:NAME>3\|*`, with `>`, `<`, `>=`, or `<=`, with or without spaces | A comparison of numbers. A value that can be missing, or that is not always a number or a string of one, keeps the template: the docs don't say how it compares |
+| `*\|EMAIL\|*` | The `to` address, escaped |
+| `*\|FNAME\|*`, `*\|LNAME\|*` | The merge var of that name, when the site always sends one. Note in the plan row that the docs don't say whether it wins over the name Mailchimp Transactional reads from the `to` entry. Without one, the template stays: the docs don't say how it splits that name |
+| `*\|CURRENT_YEAR\|*` | The current year at send time, in four digits |
+| `*\|DATE:d/m/y\|*` | The current date at send time, with `d` the day in 2 digits, `m` the month in 2 digits, `y` the year in 2 digits, `Y` the year in 4 digits, and every other character as it is. Any other letter keeps the template: the docs name only these |
+| `mc:edit="name"` on an element in the HTML, with a `template_content` entry of that `name` | The element, with its content replaced by the entry's `content`, inserted as it is under the rule of `template-to-code.md`. An element that no entry fills keeps the template's content. A region inside another region keeps the template: the docs say it may not be replaced as expected |
+
+| Handlebars | In the code |
+|---|---|
+| `{{name}}`, `{{user.first_name}}` | The value, escaped. A missing value, or a missing step of the path, renders as nothing |
+| `{{{name}}}` | The value as it is, unescaped, under the rule of `template-to-code.md` |
+| `\{{name}}`, `\\{{name}}` | `{{name}}` as it is written, and a `\` followed by the value |
+| `{{! … }}`, `{{!-- … --}}` | Nothing |
+| `{{#if a}}…{{elseif b}}…{{else}}…{{/if}}`, also with `{{else if b}}` | A branch that tests each value for Handlebars truth, in order |
+| `{{#unless a}}…{{else}}…{{/unless}}` | The same branch, with the test turned around |
+| ``{{#if `a > 3`}}``, ``{{#if `a < 3`}}`` | A comparison of numbers. A value that can be missing, or that is not always a number, keeps the template: the docs don't say how it compares |
+| ``{{#if `a == "text"`}}`` | A comparison of the value with the text in double quotes, character by character. A missing value makes it false. Any other operator in backticks keeps the template: the docs show only `<`, `>`, and `==` |
+| `{{#each items}}…{{else}}…{{/each}}` | A loop over the list, or over the values of an object in key order. The `{{else}}` part shows when there is nothing to walk |
+| `{{#items}}…{{/items}}` | The same loop, when `items` is always a list. Otherwise the template stays |
+| Inside a loop: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field. A bare name that the item can lack, while a value of that name exists outside the loop, keeps the template: the docs don't say which one it reads |
+| Inside a loop: `{{@index}}`, `{{@key}}`, `{{@first}}`, `{{@last}}`, `{{../name}}`, `{{@root.name}}` | The item's position from 0, its key in an object, whether it is the first or the last, and the value one level out or at the top |
+| `{{#with user}}…{{/with}}` | The part, with each name inside read from `user`, as `user.name` |
+| `{{upper name}}`, `{{lower name}}`, also on a text in double quotes | The value in upper or lower case, escaped as the braces say |
+| `{{striptags name}}` | The value with every `<…>` tag removed, then escaped as the braces say. The docs don't say what it does with entities or a `<` that opens no tag: note it in the plan row |
+| `{{url name}}` | The value URL-encoded, as `*\|URL:NAME\|*` is |
+| `{{date}}`, `{{date "Y-m-d"}}` | The current date at send time, with the letters of `*\|DATE:…\|*`. With no format, `d/m/Y` |
+
+| The template | In the code |
+|---|---|
+| `publish_code` | The send's `html`. A template without HTML sends the site's `html` when the site sets one |
+| `publish_text` | The send's `text`, with no escaping. A template without text sends `html` only |
+| `publish_subject` | The send's `subject`, rendered with no escaping |
+| `publish_from_email` with `publish_from_name` | The send's `from`, with the name rendered with no escaping |
+
+Write the `\|` above as a plain `|`. The tables escape it.
+
+- The truth tests, written out. Mailchimp's `IF:NAME` is true when a value is provided, and an empty string counts as none: true when the value is set and not `""`. A value that can be `false` or `0` keeps the template: the docs don't say how they test. Handlebars truth, as the docs list it: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object.
+- In the text part, the subject, and the from name, nothing is escaped: Handlebars renders `{{name}}` there as `{{{name}}}`, as the docs say, and Mailchimp tags insert the value as it is.
+- The current date and year: the docs don't say in which time zone. Use UTC, and note it in the plan row.
+- These keep the template on Mailchimp Transactional: `*|UNSUB:…|*` and `{{unsub …}}`, whose link Mailchimp Transactional builds and which adds the address to its Rejection Denylist when clicked; `*|TITLE:NAME|*` and `{{title …}}`, whose title case keeps some short words lower, such as `is` in the docs' example, by a list the docs don't give; `*|DATE|*` with no format; `*|ARCHIVE|*`, `*|LIST:…|*`, `*|MC:SUBJECT|*`, and any other tag the tables don't place, which the docs say mostly don't work and don't say what they render; a partial (`{{> name}}`), which the docs say is not supported; and any other helper, such as `lookup` or `log`.
+- Mailchimp Transactional stores no images. A template's images are on hosts of their own, and those on Mailchimp's, such as `mcusercontent.com` or `gallery.mailchimp.com`, from Mailchimp's Content Studio or a template sent from Mailchimp, belong to the provider. Keep them, and list them, as `template-to-code.md` says.
+- The site's own fields win over the template's: a `subject`, `from_email`, or `from_name` in `message` replaces the template's, as the docs say. A `from_name` with a merge tag renders like the template's. When neither sets a `from_email`, ask the person for the address the emails came from, as Step 3 does for a site without `from`. A Mailchimp Transactional template holds no reply-to address: the site's `Reply-To` header gives it, as "Fields" says.
+- The template's HTML is the site's `html` for every row of "Fields", such as `inline_css` and `auto_html`, and for "Tracking".
+- A site that sets `text` next to the template stays: the docs don't say which text Mailchimp Transactional sent.
+- With Handlebars, `template_content` fills nothing: regions work only with the Mailchimp merge language. The template's content stays as it is.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailchimp Transactional template, makes it transactional, and gives you its template ID. Until then the site stays on Mailchimp Transactional.
+
+- The site's `merge_language` says which merge tags the template uses, as "Templates" says.
 - A site whose `template_content` holds an entry stays: it fills an `mc:edit` region with content, usually HTML, and PostHog's Liquid escapes HTML in a value. An empty `template_content`, such as `[]`, moves. So does a list whose entries have no `name`, such as `[{}]`, which the API's own examples send: an entry with no `name` fills no region.
 - Mailchimp Transactional reads merge var names in any case. PostHog's Liquid doesn't: write each variable with the name the code sends, such as `{{ variables.first_name }}` for `{ name: 'first_name' }`, even when the template writes `*|FIRST_NAME|*`. Names that differ only in case are one variable, such as `reset_url` in `global_merge_vars` and `RESET_URL` in `merge_vars`: use one spelling in the template and in `templateData`.
 
@@ -162,7 +226,10 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `headers: { 'Reply-To': 'support@example.com' }` becomes `replyTo: 'support@example.com'`. Several addresses in one value, separated by commas, become a list.
 - A site that Mailchimp Transactional tracked neither opens nor clicks for, from its own `track_opens` and `track_clicks` or from the account's Sending Defaults, sends `captureEngagement: false`, as "Tracking" says. Without it, the moved send would capture what Mailchimp Transactional didn't track.
 - The fields that move as none, such as `async`, `url_strip_qs`, and `preserve_recipients`, are left out.
+- Merge tags in the site's own `subject`, `from_name`, `html`, and `text` are rendered in the code from the merge values, as "Templates" says, and the send carries the result. The content stays where the code builds it: replace each tag with code that inserts its value.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
+
+**Templates brought into the code.** The site renders the email from its merge values and `template_content`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and `from` from the site's `from_email` and `from_name` or the template's. It sends `replyTo` from the site's `Reply-To` header. It sends no `templateId` and no `templateData`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with one entry per merge var: `{ [name]: content }` from `global_merge_vars`, then the entries of the one recipient's `merge_vars`, which win over a global entry with the same name in any case. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
