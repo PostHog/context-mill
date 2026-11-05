@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.60.1](https://github.com/PostHog/context-mill/compare/v1.60.0...v1.60.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **integration-v2:** bound review checks without skipping typechecking ([#470](https://github.com/PostHog/context-mill/issues/470)) ([52b72a0](https://github.com/PostHog/context-mill/commit/52b72a00091cffe59467e1ab7f4720054cc8e0c6))
+
 ## [1.60.0](https://github.com/PostHog/context-mill/compare/v1.59.0...v1.60.0) (2026-11-05)
 
 
