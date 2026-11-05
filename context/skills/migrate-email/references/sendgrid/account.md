@@ -29,17 +29,17 @@ The steps call this key the full-access provider key.
 
 ## Tracking
 
-A send without `trackingSettings` follows the account's open and click tracking. PostHog records opens and clicks unless the send sets `captureEngagement: false`. Ask the person once whether open tracking or click tracking is off in SendGrid (Settings, then Tracking). When both are off, the moved sites without `trackingSettings` send `captureEngagement: false`, and a template site without `trackingSettings` stays. When only one is off, the sites without `trackingSettings` stay, because `captureEngagement: false` turns off both. When the person can't say, they stay, and the reason is `account tracking not checked`. Note the answer in the plan.
+A send without `trackingSettings` follows the account's open and click tracking. PostHog records opens and clicks unless the send sets `captureEngagement: false`. Ask the person once whether open tracking or click tracking is off in SendGrid (Settings, then Tracking). When both are off, the moved sites without `trackingSettings` send `captureEngagement: false`, and a template site without `trackingSettings` stays only when it moves to a template made in PostHog. When only one is off, the sites without `trackingSettings` stay, because `captureEngagement: false` turns off both. When the person can't say, they stay, and the reason is `account tracking not checked`. Note the answer in the plan.
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the content of its active version, to check it before they make the PostHog template.
+A site whose template moves needs the content of its active version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content.
 
 **Copy from the dashboard.** In SendGrid: Email API, then Dynamic Templates, then the template, then its active version. Ask the person for the template's id, the version's subject, its HTML from the code editor, and its plain text when it has one.
 
 **Read from the API.** `GET https://api.sendgrid.com/v3/templates/{template_id}` with `Authorization: Bearer $SENDGRID_READ_API_KEY`. The answer holds `id`, `name`, `generation` (`dynamic` or `legacy`), and `versions`, a list of `{ id, active, name, subject, html_content, plain_content }`. Take the version whose `active` is `1`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 
