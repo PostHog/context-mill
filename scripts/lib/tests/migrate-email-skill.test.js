@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
 
@@ -88,6 +89,69 @@ describe('migrate-email skill', () => {
         );
         expect(existsSync(join(skillDir, 'references', 'resend', 'sdk-reference.md'))).toBe(true);
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
+    });
+
+    it('runs the rewrite and verify steps between the key and the report', async () => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill('migrate-email-resend', outputDir);
+        const workflow = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/^\d+\. `references\/[^`]+`/gm);
+
+        expect(workflow.map((step) => step.replace(/^\d+\. /, ''))).toEqual([
+            '`references/1-detect.md`',
+            '`references/2-preflight.md`',
+            '`references/3-inventory.md`',
+            '`references/4-sender.md`',
+            '`references/5-suppressions.md`',
+            '`references/6-key.md`',
+            '`references/7-rewrite.md`',
+            '`references/8-verify.md`',
+            '`references/9-report.md`',
+        ]);
+    });
+
+    describe('the key check in step 6', () => {
+        const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
+        const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];
+        let envDir;
+
+        afterEach(() => {
+            if (envDir) rmSync(envDir, { recursive: true, force: true });
+            envDir = undefined;
+        });
+
+        function check(envFile) {
+            envDir = mkdtempSync(join(tmpdir(), 'migrate-key-'));
+            writeFileSync(join(envDir, '.env'), envFile);
+            return spawnSync('bash', ['-c', command], { cwd: envDir, encoding: 'utf8' });
+        }
+
+        it.each([
+            ['a plain key', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '1'],
+            ['an exported, spaced and double-quoted key', '  export POSTHOG_PROJECT_SECRET_API_KEY = "phs_abc"\n', '1'],
+            ['a single-quoted key', "POSTHOG_PROJECT_SECRET_API_KEY='phs_abc'\n", '1'],
+            ['a key after an empty line for it', 'POSTHOG_PROJECT_SECRET_API_KEY=\nPOSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '1'],
+            ['no line for the key', 'RESEND_API_KEY=re_abc\n', '0'],
+            ['an empty key', 'POSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
+            ['an empty quoted key', 'POSTHOG_PROJECT_SECRET_API_KEY=""\n', '0'],
+            ['a commented-out line', '# POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+            ['a value that is only a comment', 'POSTHOG_PROJECT_SECRET_API_KEY= #phs_abc\n', '0'],
+            ['a key overridden by a later empty line', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\nPOSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
+            ['another variable ending in the name', 'OTHER_POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+        ])('finds the key in %s only when it is set, and never prints it', (_name, envFile, count) => {
+            const result = check(envFile);
+
+            expect(result.stdout.trim()).toBe(count);
+            expect(result.stdout).not.toContain('phs_');
+            expect(result.stderr).toBe('');
+        });
+
+        it('ticks the phase only when the check found the key', () => {
+            expect(command).toBeDefined();
+            expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
+            expect(keyStep).toMatch(/Tick the phase in the plan file only when the check above found the key/);
+            expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
+        });
     });
 
     it('publishes Resend and Statsig as wizard migrate subcommands', async () => {

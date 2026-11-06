@@ -5,7 +5,7 @@ next_step: 4-sender.md
 
 # Step 3, list and classify every send
 
-List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only file you write is the plan file.
+List every place the code sends email through the provider, and decide for each one whether PostHog can send it. Change no source file. The only files you write are the plan file and the template files below.
 
 ## Status
 
@@ -45,7 +45,9 @@ Go through `mapping.md` field by field. A site **moves** when PostHog can send e
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
-A `template` site moves only to a template made in PostHog, and the person makes that template. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template. Ask the person once, for every other template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`. For each template they move, ask them to copy it from the provider's dashboard into a file outside the repository, and to tell you where they saved it. Read those files to classify the site, and never write the content into the plan. When the person can't give the content, the site stays, and the reason is `template content not checked`.
+A `template` site moves only to a template made in PostHog, and the person makes that template. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template. Ask the person once, for every other template the sites send, whether to move it to PostHog or keep it on the provider for now. A template they keep stays, and the reason is `kept on <provider name> for now`.
+
+A template they move needs its content to be classified. Read the provider's `account.md`, and ask the person once for every template they move: copies from the dashboard that they save in files outside the repository and tell you where, or a read through the API. Read the person's copies where they saved them. Write an API answer to a file in the system's temporary folder, never in the repository or the plan, and delete that file as soon as its site is classified. When the person can't give the content, the site stays, and the reason is `template content not checked`.
 
 A template whose content passes the checks moves only once the person has made it in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as `mapping.md` says under "Content". Record each template ID with its site under the sites table, and write the address in the site's `from` column, so Step 4 sets up a sender for its domain. A template without an ID stays, and the reason is `PostHog template not made yet`.
 
@@ -61,6 +63,8 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 - [ ] sender
 - [ ] suppressions
 - [ ] key
+- [ ] rewrite
+- [ ] verify
 ```
 
 A sites table, one row per site, in source tree order:
