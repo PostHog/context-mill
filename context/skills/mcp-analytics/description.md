@@ -489,8 +489,11 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
   ```ts
   process.on("SIGTERM", async () => {
-    await posthog.shutdown()
-    process.exit(0)
+    try {
+      await posthog.shutdown(3000)
+    } finally {
+      process.exit(0)
+    }
   })
   ```
 
@@ -499,8 +502,11 @@ The PostHog client batches events; the user owns the client's lifecycle.
 
   ```ts
   process.stdin.once("end", async () => {
-    await posthog.shutdown()
-    process.exit(0)
+    try {
+      await posthog.shutdown(3000)
+    } finally {
+      process.exit(0)
+    }
   })
   ```
 
@@ -511,11 +517,13 @@ The PostHog client batches events; the user owns the client's lifecycle.
 **Python:**
 
 - **Long-running server (STDIO or persistent HTTP):** drain on exit. On the `instrument()` path, `await analytics.flush()` waits for in-flight auto-capture events, then `posthog.shutdown()` flushes and stops the client — call both from your shutdown path. For `PostHogMCP`, `posthog.shutdown()` (or `posthog.flush()`) drains the MCP captures first.
-- **STDIO transports specifically:** a closed stdin flushes at interpreter exit, but SIGTERM skips that and loses queued events, so add a handler. Use `os._exit`, because `sys.exit` hangs on the thread reading stdin:
+- **STDIO transports specifically:** a closed stdin flushes at interpreter exit, but SIGTERM skips that and loses queued events, so add a handler. Use `os._exit`, because `sys.exit` hangs on the thread reading stdin. Run the shutdown on its own thread with a short wait, because it has no time limit of its own and a hung PostHog host would keep the server alive. This handler runs on the event loop's thread, so it can't await `analytics.flush()`; tool calls that have returned are still delivered:
 
   ```python
   def stop(*_):
-      posthog.shutdown()
+      t = threading.Thread(target=posthog.shutdown, daemon=True)
+      t.start()
+      t.join(3)
       os._exit(0)
 
   signal.signal(signal.SIGTERM, stop)
