@@ -1,0 +1,62 @@
+/**
+ * The Wizard's `transactional-email` program runs this skill by its ID and
+ * matches the `[ABORT]` reasons of its Wizard section, so both are pinned here.
+ */
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+import { expandSkillGroups, loadSkillsConfig } from '../skill-generator.js';
+
+const CONFIG_DIR = join(process.cwd(), 'context');
+const DESCRIPTION = readFileSync(
+    join(CONFIG_DIR, 'skills', 'sending-transactional-emails', 'description.md'),
+    'utf8',
+);
+
+function skill() {
+    const config = loadSkillsConfig(CONFIG_DIR);
+    return expandSkillGroups(config, CONFIG_DIR).filter(
+        (s) => s._group === 'sending-transactional-emails',
+    );
+}
+
+describe('sending-transactional-emails skill', () => {
+    it('expands to the one skill ID the Wizard program runs', () => {
+        expect(skill().map((s) => s.id)).toEqual(['sending-transactional-emails']);
+    });
+
+    it('reads the PostHog skill under the name its description points to', () => {
+        expect(skill()[0].docs_urls[0].filename).toBe('sending-transactional-emails.md');
+        expect(DESCRIPTION).toContain('Read `references/sending-transactional-emails.md` first');
+    });
+
+    it('fetches every reference file the PostHog skill links to', () => {
+        const fetched = skill()[0].docs_urls.map((doc) => doc.url.split('/sending-transactional-emails/')[1]);
+
+        expect(fetched).toEqual(
+            expect.arrayContaining(['references/moving-from-other-providers.md', 'references/sdks.md']),
+        );
+    });
+
+    it('checks for server code before it asks anything', () => {
+        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
+        const firstRule = wizardSection.split('\n- ')[1];
+        expect(firstRule).toContain('emit `[ABORT] no server code found` and stop');
+        expect(firstRule).not.toContain('wizard_ask');
+    });
+
+    it.each(['transactional email api not enabled', 'no server code found'])(
+        'keeps the "%s" abort the Wizard program matches',
+        (reason) => {
+            expect(DESCRIPTION).toContain(`emit \`[ABORT] ${reason}\` and stop`);
+        },
+    );
+
+    it('asks once whether the email stays in code, with code recommended first', () => {
+        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
+        const question = '"Keep the email in your code (recommended) or design it in PostHog?"';
+        expect(wizardSection.split(question)).toHaveLength(2);
+        expect(wizardSection).toContain('with code as the first choice. Ask it once.');
+    });
+});
