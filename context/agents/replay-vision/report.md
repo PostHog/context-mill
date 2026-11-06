@@ -10,7 +10,7 @@ effort_sdk: medium
 skills: []
 allowedTools: [Read, Glob, Grep, Write, posthog_exec]
 disallowedTools: [enqueue_task]
-dependsOn: [scanner-broken-experiences, scanner-user-frustration, scanner-session-summaries]
+dependsOn: [scanner-problems, scanner-flow-outcome, scanner-session-summaries]
 ---
 
 ## Goal
