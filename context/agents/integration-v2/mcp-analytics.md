@@ -56,7 +56,8 @@ requirement from there. On TypeScript, name `@posthog/mcp@latest` saved exact; t
 skill's minimum is only the oldest version that works. Do not edit dependency
 manifests or write a version number you invented. If the project already declares
 one of these packages, or a dependency the skill sets a minimum for such as `rmcp`,
-below its minimum, say so in your handoff. Do not run the server.
+with a pin or cap that can't reach its minimum, say so in your handoff. A range that
+can reach it, such as `^1.12.0` for a 1.26.0 minimum, is fine. Do not run the server.
 
 Skip the skill's credentials step. Use the project and host the wizard supplied
 and the env names from upstream handoffs, not the skill's

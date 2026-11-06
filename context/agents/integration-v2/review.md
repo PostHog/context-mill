@@ -56,11 +56,15 @@ posthog-rs --features mcp`, `@posthog/mcp@latest` saved exact) gets installed th
 way. A minimum version is a floor, not the version to install: install the latest
 unless a peer conflict forces an older one, and never go below the minimum. Install an exact-pinned package in its own command, so the pin doesn't
 spread to packages named without one. In a workspace, install each package into the
-workspace package that imports it, not the repository root. After your last install, run
+workspace package that imports it, not the repository root. A package outside any workspace
+takes a directory flag with a relative path, for its install and its checks: `pnpm --dir <path> add`,
+`npm --prefix <path> install`, or `yarn --cwd <path> add`. `cd` isn't available. After your last install, run
 the project's install once more without changing the lockfile (`pnpm install
 --frozen-lockfile` or its equivalent): if it fails on a package this run added, that package
-does not fit. When the project already declares a package, or a dependency like
-`rmcp`, below a handoff's minimum, do not raise it: revert that task's
+does not fit. Judge a minimum by the version that installs, not the low end of a declared
+range: `^1.12.0` that resolves to 1.32.2 meets a 1.26.0 minimum, so install before you decide, and ask
+the package manager which version resolved. When a package, or a dependency like
+`rmcp`, still resolves below a handoff's minimum because of the project's pin, cap or lockfile, do not raise it: revert that task's
 instrumentation and record the pin the user would raise. A toolchain older than
 a handoff's minimum surfaces here as a failed install or build in that task's
 files; handle it the same way. Build Go with `go build -o /dev/null ./...` so no
