@@ -24,6 +24,12 @@ were taken on 2026-11-05 while they still described posthog-ios 3.x
 `reloadFeatureFlags` block and the `didReceiveFeatureFlags` fallback. The logs
 folder isn't named `logs/` because `.gitignore` ignores that name.
 
+The Android error tracking, logs and upload mappings pages and the Flutter
+feature flag, error tracking and logs install pages were taken on 2026-11-06
+while they still described posthog-android 3.x (`posthog-android:3.+`, `apiKey`)
+and posthog_flutter 5.x (`^5.x`). They reuse the product analytics onboarding
+steps that the 4.0 and 6.0 onboarding changes rewrite.
+
 | File | Source |
 | --- | --- |
 | `python.md` | https://posthog.com/docs/libraries/python.md |
@@ -44,3 +50,9 @@ folder isn't named `logs/` because `.gitignore` ignores that name.
 | `feature-flags/ios.md` | https://posthog.com/docs/feature-flags/installation/ios.md |
 | `error-tracking/ios.md` | https://posthog.com/docs/error-tracking/installation/ios.md |
 | `logs-installation/ios.md` | https://posthog.com/docs/logs/installation/ios.md |
+| `error-tracking/android.md` | https://posthog.com/docs/error-tracking/installation/android.md |
+| `logs-installation/android.md` | https://posthog.com/docs/logs/installation/android.md |
+| `upload-mappings/android.md` | https://posthog.com/docs/error-tracking/upload-mappings/android.md |
+| `feature-flags/flutter.md` | https://posthog.com/docs/feature-flags/installation/flutter.md |
+| `error-tracking/flutter.md` | https://posthog.com/docs/error-tracking/installation/flutter.md |
+| `logs-installation/flutter.md` | https://posthog.com/docs/logs/installation/flutter.md |

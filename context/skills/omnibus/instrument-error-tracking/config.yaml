@@ -35,7 +35,7 @@ variants:
       - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
       - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
       - https://posthog.com/docs/error-tracking/installation/react-native.md
-      - https://posthog.com/docs/error-tracking/installation/flutter.md
+      - context/docs-snapshots/legacy/error-tracking/flutter.md
       - context/docs-snapshots/legacy/error-tracking/ios.md
-      - https://posthog.com/docs/error-tracking/installation/android.md
+      - context/docs-snapshots/legacy/error-tracking/android.md
       - https://posthog.com/docs/error-tracking/installation/hono.md

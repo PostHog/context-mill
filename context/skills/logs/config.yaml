@@ -63,7 +63,7 @@ variants:
     display_name: Android
     tags: [android, kotlin, java]
     docs_urls:
-      - https://posthog.com/docs/logs/installation/android.md
+      - context/docs-snapshots/legacy/logs-installation/android.md
 
   - id: ios
     display_name: iOS
@@ -75,7 +75,7 @@ variants:
     display_name: Flutter
     tags: [flutter, dart]
     docs_urls:
-      - https://posthog.com/docs/logs/installation/flutter.md
+      - context/docs-snapshots/legacy/logs-installation/flutter.md
 
   - id: other
     display_name: Other Languages

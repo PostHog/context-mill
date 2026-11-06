@@ -360,7 +360,7 @@ variants:
   - dart
   - mobile
   docs_urls:
-  - https://posthog.com/docs/feature-flags/installation/flutter.md
+  - context/docs-snapshots/legacy/feature-flags/flutter.md
 - id: kmp
   framework: kmp
   display_name: Kotlin Multiplatform

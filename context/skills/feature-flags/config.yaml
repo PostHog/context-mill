@@ -149,7 +149,7 @@ variants:
     display_name: Flutter
     tags: [flutter, dart]
     docs_urls:
-      - https://posthog.com/docs/feature-flags/installation/flutter.md
+      - context/docs-snapshots/legacy/feature-flags/flutter.md
 
   - id: api
     display_name: API

@@ -32,6 +32,6 @@ variants:
       - context/docs-snapshots/legacy/feature-flags/android.md
       - context/docs-snapshots/legacy/feature-flags/ios.md
       - context/docs-snapshots/legacy/usage.md
-      - https://posthog.com/docs/feature-flags/installation/flutter.md
+      - context/docs-snapshots/legacy/feature-flags/flutter.md
       - https://posthog.com/docs/feature-flags/installation/api.md
       - https://posthog.com/docs/libraries/next-js.md

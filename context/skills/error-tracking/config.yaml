@@ -139,7 +139,7 @@ variants:
     display_name: Flutter
     tags: [flutter, dart]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/flutter.md
+      - context/docs-snapshots/legacy/error-tracking/flutter.md
 
   - id: ios
     display_name: iOS
@@ -151,7 +151,7 @@ variants:
     display_name: Android
     tags: [android, java, kotlin]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/installation/android.md
+      - context/docs-snapshots/legacy/error-tracking/android.md
 
   - id: hono
     display_name: Hono

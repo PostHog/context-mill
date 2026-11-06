@@ -243,7 +243,7 @@ variants:
   - java
   - kotlin
   docs_urls:
-  - https://posthog.com/docs/error-tracking/installation/android.md
+  - context/docs-snapshots/legacy/error-tracking/android.md
 - id: sveltekit
   framework: sveltekit
   display_name: SvelteKit
@@ -339,7 +339,7 @@ variants:
   - dart
   - mobile
   docs_urls:
-  - https://posthog.com/docs/error-tracking/installation/flutter.md
+  - context/docs-snapshots/legacy/error-tracking/flutter.md
 - id: kmp
   framework: kmp
   display_name: Kotlin Multiplatform

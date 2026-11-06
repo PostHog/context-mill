@@ -79,6 +79,12 @@ describe('the legacy SDK pages are read from the snapshots everywhere', () => {
         'https://posthog.com/docs/feature-flags/installation/ios.md',
         'https://posthog.com/docs/error-tracking/installation/ios.md',
         'https://posthog.com/docs/logs/installation/ios.md',
+        'https://posthog.com/docs/error-tracking/installation/android.md',
+        'https://posthog.com/docs/logs/installation/android.md',
+        'https://posthog.com/docs/error-tracking/upload-mappings/android.md',
+        'https://posthog.com/docs/feature-flags/installation/flutter.md',
+        'https://posthog.com/docs/error-tracking/installation/flutter.md',
+        'https://posthog.com/docs/logs/installation/flutter.md',
     ];
 
     // Those pages move to the capture v1 majors on release day; a skill fetching one live would flip with them.
