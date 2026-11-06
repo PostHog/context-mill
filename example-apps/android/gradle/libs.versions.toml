@@ -9,7 +9,7 @@ activityCompose = "1.8.0"
 kotlin = "2.0.21"
 composeBom = "2024.09.00"
 navigationCompose = "2.7.5"
-posthog = "3.72.1"
+posthog = "4.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

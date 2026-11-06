@@ -21,7 +21,7 @@ as well — a Dart-side setup alone leaves web builds capturing nothing. See
    ```bash
    flutter doctor
    ```
-2. **For iOS/macOS**: a Mac with Xcode and [CocoaPods](https://guides.cocoapods.org/using/getting-started.html) (`brew install cocoapods`)
+2. **For iOS/macOS**: a Mac with Xcode 26 or later. `posthog_flutter` 6 installs through Swift Package Manager, so use Flutter 3.44.2 or later (Swift Package Manager is on by default from 3.44, and this app's Dart constraint needs 3.44.2)
 3. **For Android**: Android Studio with an emulator or a connected device
 4. **For Web**: Chrome
 
@@ -64,8 +64,6 @@ flutter run -d chrome                                                 # Web (tok
 flutter run -d macos --dart-define=POSTHOG_PROJECT_TOKEN=phc_...     # macOS
 ```
 
-For iOS, install pods first (first time only): `cd ios && pod install && cd ..`
-
 ## Project structure
 
 ```
@@ -89,7 +87,7 @@ test/
 └── screens/                     # Event capture + error tracking widget tests
 
 android/                         # AUTO_INIT disabled in AndroidManifest.xml
-ios/                             # AUTO_INIT disabled in Runner/Info.plist; Podfile pins iOS 13+
+ios/                             # AUTO_INIT disabled in Runner/Info.plist; Runner targets iOS 15+
 web/                             # posthog-js snippet in index.html
 macos/                           # AUTO_INIT disabled in Runner/Info.plist;
                                  # network.client entitlement for the app sandbox

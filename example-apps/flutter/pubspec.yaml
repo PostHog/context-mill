@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   # PostHog Flutter SDK — the only dependency to add for PostHog integration.
   # @see https://posthog.com/docs/libraries/flutter
-  posthog_flutter: ^5.32.1
+  posthog_flutter: ^6.0.0
 
 dev_dependencies:
   flutter_test:
