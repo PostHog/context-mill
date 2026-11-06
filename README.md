@@ -90,7 +90,7 @@ Run `npm run build` to generate the release artifacts:
 |--------|-------------|
 | `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
 | `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL. It ships inside `skills-mcp-resources.zip`, not as its own release asset |
-| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table |
+| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each entry and bundle variant carries `title`, `description` and `tags`; the tags add `framework:<framework>` for the framework it serves, its `group` and (when set) `default` to the skill's own |
 | `dist/agents/agent-menu.json` | Orchestrator flows and the task prompts in each one |
 | `dist/skills-mcp-resources.zip` | One bundle of `manifest.json` and every skill ZIP, for the MCP server |
 
