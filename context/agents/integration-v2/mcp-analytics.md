@@ -49,17 +49,14 @@ to a warning on stderr: analytics must never stop the server from booting.
 
 This is the instrumentation part of a larger integration. Instead of the
 skill's install and verify steps, name the packages in your handoff for review
-to install, and list each one in the handoff's `packages` field, each with the
-skill's minimum version and any feature it needs, and say which package directory
-they belong in:
-`@posthog/mcp@latest` saved exact, where 0.18.0 is only the oldest version that
-works, plus `posthog-node`; `posthog` 7.62.0 or later for Python; `posthogmcpsdk` v1.34.0
-or later through `go get`, which needs Go 1.25; `posthog-ruby` 3.29.0 or later,
-plus `logger` and `base64` on Ruby 3.4 or later; `posthog-rs` with the `mcp`
-feature, 0.29.0 or later, which needs `rmcp` 3.7 and Rust 1.88. Do not edit
-dependency manifests or write a version number you invented. If the project
-already declares one of these packages, or `rmcp`, below its minimum, say so in
-your handoff. Do not run the server.
+to install, and list each one in the handoff's `packages` field, and say which
+package directory they belong in. Read the skill's install step for this, without
+running its commands: take each package, minimum version, feature and toolchain
+requirement from there. On TypeScript, name `@posthog/mcp@latest` saved exact; the
+skill's minimum is only the oldest version that works. Do not edit dependency
+manifests or write a version number you invented. If the project already declares
+one of these packages, or a dependency the skill sets a minimum for such as `rmcp`,
+below its minimum, say so in your handoff. Do not run the server.
 
 Skip the skill's credentials step. Use the project and host the wizard supplied
 and the env names from upstream handoffs, not the skill's

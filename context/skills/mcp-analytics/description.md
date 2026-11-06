@@ -517,7 +517,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 **Python:**
 
 - **Long-running server (STDIO or persistent HTTP):** drain on exit. On the `instrument()` path, `await analytics.flush()` waits for in-flight auto-capture events, then `posthog.shutdown()` flushes and stops the client — call both from your shutdown path. For `PostHogMCP`, `posthog.shutdown()` (or `posthog.flush()`) drains the MCP captures first.
-- **STDIO transports specifically:** a closed stdin flushes at interpreter exit, but SIGTERM skips that and loses queued events, so add a handler. Use `os._exit`, because `sys.exit` hangs on the thread reading stdin. Run the shutdown on its own thread with a short wait, because it has no time limit of its own and a hung PostHog host would keep the server alive. This handler runs on the event loop's thread, so it can't await `analytics.flush()`; tool calls that have returned are still delivered:
+- **STDIO transports specifically:** a closed stdin flushes at interpreter exit, but SIGTERM skips that and loses queued events, so add a handler. Use `os._exit`, because `sys.exit` hangs on the thread reading stdin. Never raise `SystemExit` or call `sys.exit` in the handler, even to trigger `atexit`: `os._exit` skips `atexit`, so call shutdown in the handler, and skip it when there's no client. Run the shutdown on its own thread with a short wait, because it has no time limit of its own and a hung PostHog host would keep the server alive. This handler runs on the event loop's thread, so it can't await `analytics.flush()`; tool calls that have returned are still delivered:
 
   ```python
   def stop(*_):
