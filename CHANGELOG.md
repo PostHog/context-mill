@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.61.0](https://github.com/PostHog/context-mill/compare/v1.60.1...v1.61.0) (2026-11-06)
+
+
+### Features
+
+* mcp analytics default run ([#476](https://github.com/PostHog/context-mill/issues/476)) ([eaffbc1](https://github.com/PostHog/context-mill/commit/eaffbc1030c76668ea3779d2e359dce52e465eec))
+
 ## [1.60.1](https://github.com/PostHog/context-mill/compare/v1.60.0...v1.60.1) (2026-11-05)
 
 
