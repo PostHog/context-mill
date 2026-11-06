@@ -22,8 +22,8 @@ variants:
       - https://posthog.com/docs/logs/installation/go.md
       - https://posthog.com/docs/logs/installation/java.md
       - https://posthog.com/docs/logs/installation/datadog.md
-      - https://posthog.com/docs/logs/installation/android.md
+      - context/docs-snapshots/legacy/logs-installation/android.md
       - https://posthog.com/docs/logs/installation/react-native.md
-      - https://posthog.com/docs/logs/installation/ios.md
-      - https://posthog.com/docs/logs/installation/flutter.md
+      - context/docs-snapshots/legacy/logs-installation/ios.md
+      - context/docs-snapshots/legacy/logs-installation/flutter.md
       - https://posthog.com/docs/logs/installation/other.md

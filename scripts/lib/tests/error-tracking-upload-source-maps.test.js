@@ -93,7 +93,7 @@ describe('error-tracking-upload-source-maps Android variant', () => {
             display_name: 'Android',
             description: 'Upload ProGuard / R8 mapping files to PostHog Error Tracking for Android',
             tags: ['error-tracking', 'source-maps', 'android', 'java', 'kotlin'],
-            docs_urls: ['https://posthog.com/docs/error-tracking/upload-mappings/android.md'],
+            docs_urls: ['context/docs-snapshots/legacy/upload-mappings/android.md'],
             _sharedDocs: [
                 'https://posthog.com/docs/error-tracking/upload-source-maps.md',
                 'https://posthog.com/docs/error-tracking/upload-source-maps/cli.md',

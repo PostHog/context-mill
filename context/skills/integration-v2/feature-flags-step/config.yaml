@@ -261,7 +261,9 @@ variants:
   - java
   - kotlin
   docs_urls:
-  - https://posthog.com/docs/feature-flags/installation/android.md
+  - context/docs-snapshots/legacy/feature-flags/android.md
+  shared_docs:
+  - context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md
 - id: sveltekit
   framework: sveltekit
   display_name: SvelteKit
@@ -346,8 +348,10 @@ variants:
   - swiftui
   - xcodegen
   docs_urls:
-  - https://posthog.com/docs/feature-flags/installation/ios.md
+  - context/docs-snapshots/legacy/feature-flags/ios.md
   - context/docs-snapshots/legacy/usage.md
+  shared_docs:
+  - context/docs-snapshots/legacy/feature-flags/adding-feature-flag-code.md
 - id: flutter
   framework: flutter
   display_name: Flutter
@@ -356,7 +360,7 @@ variants:
   - dart
   - mobile
   docs_urls:
-  - https://posthog.com/docs/feature-flags/installation/flutter.md
+  - context/docs-snapshots/legacy/feature-flags/flutter.md
 - id: kmp
   framework: kmp
   display_name: Kotlin Multiplatform

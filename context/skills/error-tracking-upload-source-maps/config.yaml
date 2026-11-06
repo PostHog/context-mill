@@ -55,7 +55,7 @@ variants:
     description: Upload ProGuard / R8 mapping files to PostHog Error Tracking for Android
     tags: [android, java, kotlin]
     docs_urls:
-      - https://posthog.com/docs/error-tracking/upload-mappings/android.md
+      - context/docs-snapshots/legacy/upload-mappings/android.md
 
   - id: flutter
     display_name: Flutter
@@ -64,7 +64,7 @@ variants:
     docs_urls:
       - https://posthog.com/docs/error-tracking/upload-source-maps/flutter.md
       - https://posthog.com/docs/error-tracking/upload-source-maps/web.md
-      - https://posthog.com/docs/error-tracking/upload-mappings/android.md
+      - context/docs-snapshots/legacy/upload-mappings/android.md
       - https://posthog.com/docs/error-tracking/upload-source-maps/ios.md
 
   - id: ios
