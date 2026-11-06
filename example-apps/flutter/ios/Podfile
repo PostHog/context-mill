@@ -1,6 +1,6 @@
-# posthog_flutter requires iOS 13.0+
+# posthog_flutter 6 requires iOS 15.0+
 # @see https://posthog.com/docs/libraries/flutter
-platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

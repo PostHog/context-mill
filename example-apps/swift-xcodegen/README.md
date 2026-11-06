@@ -19,7 +19,7 @@ So the PostHog SPM dependency lives in `project.yml`:
 packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
-    from: 3.64.1   # check github.com/PostHog/posthog-ios/releases for the latest
+    from: 4.0.0    # check github.com/PostHog/posthog-ios/releases for the latest
 
 targets:
   BurritoStand:
