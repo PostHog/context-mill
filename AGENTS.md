@@ -115,7 +115,7 @@ npm run dev        # Partial-rebuild dev server with watch
 
 - Skill content lives in markdown, never in JS/TS. The build pipeline reads YAML configs and stitches markdown together; it doesn't generate prose.
 - The `cli:` block is the **single source of truth** for the wizard's command surface for any skill. Don't duplicate command names in the wizard repo; they're derived from the manifest.
-- `additionalProperties: false` is set on the JSON Schema — adding a new field to the manifest shape is a coordinated change (bump the schema, bump consumer types in the wizard). See [PostHog/wizard AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md) for the wizard-side contract.
+- Adding a field to the manifest or menu shape is a coordinated change: the wizard reads `skill-menu.json` into typed `SkillEntry` objects, so add the field there in the same release (see [PostHog/wizard AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md)). Older wizards ignore fields they do not know.
 
 ## Companion projects
 

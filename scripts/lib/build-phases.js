@@ -217,17 +217,19 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
                 bundleEntries.set(group, entry);
                 skillsByCategory[cat].push(entry);
             }
-            // Each variant keeps its own id/framework/default so consumers resolve it exactly as they would a per-skill zip.
+            // Each variant keeps its own id/framework/default/captureMode so consumers resolve it exactly as they would a per-skill zip.
             const variant = { id: skill.id };
             if (skill.framework) variant.framework = skill.framework;
             if (skill.default) variant.default = true;
+            if (skill.captureMode) variant.captureMode = skill.captureMode;
             entry.variants.push(variant);
             continue;
         }
-        // group/framework/default let consumers resolve a bare skill id + framework by exact match.
+        // group/framework/default let consumers resolve a bare skill id + framework by exact match; captureMode narrows that to the SDK capture mode the run resolved.
         const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
         if (skill.framework) entry.framework = skill.framework;
         if (skill.default) entry.default = true;
+        if (skill.captureMode) entry.captureMode = skill.captureMode;
         skillsByCategory[cat].push(entry);
     }
 

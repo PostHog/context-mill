@@ -41,6 +41,23 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 describe('writeManifestAndMenu', () => {
+    it('emits captureMode on bundled variants and on plain entries, and omits it when unset', () => {
+        write([
+            skill('python', { bundle: true, framework: 'python' }),
+            skill('python-v1', { bundle: true, framework: 'python', captureMode: 'v1' }),
+            skill('go', { framework: 'go', captureMode: 'legacy' }),
+        ]);
+
+        const entries = menuEntries();
+        const bundle = entries.find(e => e.bundle);
+        expect(bundle.variants).toEqual([
+            { id: 'integration-v2-capture-python', framework: 'python' },
+            { id: 'integration-v2-capture-python-v1', framework: 'python', captureMode: 'v1' },
+        ]);
+        const plain = entries.find(e => e.id === 'integration-v2-capture-go');
+        expect(plain.captureMode).toBe('legacy');
+    });
+
     it('gives a bundled group one menu entry whose download url names the group JSON', () => {
         write([skill('django', { bundle: true }), skill('nextjs', { bundle: true })]);
 
