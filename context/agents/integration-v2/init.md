@@ -29,7 +29,9 @@ name any MCP server), the app is your target: create its init point there. The
 
 The framework reference you were given comes from a static check, and it can be wrong.
 If this project doesn't use that language or framework at all, complete as `failed`,
-not `not needed`, and change nothing. Put one line in your handoff's `conflict`: what
+not `not needed`, and change nothing. A different version or variant of the same framework,
+such as Pages Router and App Router in Next.js, is not a mismatch: continue, and follow what
+the project actually uses. Put one line in your handoff's `conflict`: what
 the project actually uses, and that rerunning and choosing "Change framework" fixes
 it. Every later task depends on you, so the run should stop here.
 
