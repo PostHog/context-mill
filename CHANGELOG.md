@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.61.1](https://github.com/PostHog/context-mill/compare/v1.61.0...v1.61.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **integration-v2:** don't stop the run on a framework variant ([#482](https://github.com/PostHog/context-mill/issues/482)) ([4ced6c7](https://github.com/PostHog/context-mill/commit/4ced6c7c5ac82879507e3ae9265429448c67524f))
+
 ## [1.61.0](https://github.com/PostHog/context-mill/compare/v1.60.1...v1.61.0) (2026-11-06)
 
 
