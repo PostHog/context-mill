@@ -14,8 +14,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import os from "node:os";
-import Anthropic from "@anthropic-ai/sdk";
 import { scan, triageMatches } from "@posthog/warlock";
+import { createTriageClassifier, TRIAGE_MODEL_ID } from "./lib/triage-classifier.js";
 
 // Text-based formats we feed to Warlock. Binary/unknown types are skipped on
 // purpose, since Warlock scans text content and non-text files add nothing.
@@ -58,23 +58,18 @@ const TEXT_EXTENSIONS = new Set([
   ".svelte",
 ]);
 
-// LLM used to triage Warlock matches as real threats vs false positives.
-const TRIAGE_MODEL = "claude-haiku-4-5";
-
 const isCI = Boolean(process.env.CI);
 
-// -- LLM triage setup --
-// Uses the PostHog LLM gateway to triage warlock
-// matches. The LLM decides whether each match is a real threat or a
-// false positive
+// -- Triage setup --
+// Warlock triages its matches with the PostHog AI gateway's decision model,
+// which scores each flagged hit as a threat or not (POST /v1/systemone).
 //
 // Auth is a pre-issued gateway bearer read from the file named by
 // CONTEXT_MILL_WARLOCK_GATEWAY_TOKEN_FILE (CI writes the secret there), the
 // same mechanism the wizard's CI uses (WIZARD_CI_GATEWAY_TOKEN_FILE).
-// The URL carries no path; the SDK appends /v1/messages.
 //   US: https://ai-gateway.us.posthog.com
 //   EU: https://ai-gateway.eu.posthog.com
-// ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN override both for local runs.
+// WARLOCK_GATEWAY_URL / WARLOCK_GATEWAY_TOKEN override both for local runs.
 
 function getGatewayUrl() {
   const host = process.env.POSTHOG_HOST || "https://us.posthog.com";
@@ -97,7 +92,7 @@ function getGatewayUrl() {
 }
 
 function readGatewayToken() {
-  if (process.env.ANTHROPIC_AUTH_TOKEN) return process.env.ANTHROPIC_AUTH_TOKEN;
+  if (process.env.WARLOCK_GATEWAY_TOKEN) return process.env.WARLOCK_GATEWAY_TOKEN;
   const tokenFile = process.env.CONTEXT_MILL_WARLOCK_GATEWAY_TOKEN_FILE;
   if (!tokenFile) return null;
   try {
@@ -107,37 +102,21 @@ function readGatewayToken() {
   }
 }
 
-function createLLMProvider() {
-  const baseURL = process.env.ANTHROPIC_BASE_URL || getGatewayUrl();
-  const authToken = readGatewayToken();
-  if (!authToken) return null;
-
-  // authToken sends `Authorization: Bearer`; the gateway rejects `x-api-key`.
-  const client = new Anthropic({
-    baseURL,
-    authToken,
+function createClassifier() {
+  const token = readGatewayToken();
+  if (!token) return null;
+  return createTriageClassifier({
+    gatewayURL: process.env.WARLOCK_GATEWAY_URL || getGatewayUrl(),
+    token,
   });
-
-  return async (prompt) => {
-    const res = await client.messages.create({
-      model: TRIAGE_MODEL,
-      max_tokens: 16384,
-      // Keep triage verdicts stable across runs.
-      temperature: 0,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const block = res.content?.[0];
-    if (!block || block.type !== "text" || typeof block.text !== "string") {
-      throw new Error(`Unexpected LLM response shape: ${JSON.stringify(res.content?.slice(0, 2))}`);
-    }
-    return block.text;
-  };
 }
 
-const TRIAGE_CONCURRENCY = 8;
+// Files triaged at once. Warlock keeps up to 4 decision requests in flight
+// per file, so 2 files stay under the gateway's 10 requests per second.
+const TRIAGE_CONCURRENCY = 2;
 
 // One file per call: triage of a combined string sees only its first files' text.
-async function triageEachFile(allMatches, llmProvider) {
+async function triageEachFile(allMatches, classify) {
   const matchIndicesByFile = new Map();
   allMatches.forEach(({ label }, matchIndex) => {
     matchIndicesByFile.set(label, [...(matchIndicesByFile.get(label) ?? []), matchIndex]);
@@ -151,7 +130,7 @@ async function triageEachFile(allMatches, llmProvider) {
       const fileResults = await triageMatches(
         allMatches[matchIndices[0]].content,
         matchIndices.map((matchIndex) => allMatches[matchIndex].match),
-        llmProvider,
+        classify,
       );
       matchIndices.forEach((matchIndex, j) => {
         triaged[matchIndex] = fileResults[j];
@@ -275,6 +254,7 @@ async function trackScanResult({ filesScanned, yaraMatches, threats, falsePositi
     false_positives: falsePositives,
     result,
     llm_triage_enabled: llmTriageEnabled,
+    triage_model: llmTriageEnabled ? TRIAGE_MODEL_ID : "",
     duration_ms: durationMs,
     rules_triggered: rulesTriggered,
     rules_by_verdict: rulesByVerdict,
@@ -304,13 +284,13 @@ async function trackScanResult({ filesScanned, yaraMatches, threats, falsePositi
 
 async function main() {
   const startTime = Date.now();
-  const llmProvider = createLLMProvider();
+  const classify = createClassifier();
 
-  if (llmProvider) {
-    console.log("LLM triage enabled (using PostHog gateway).\n");
+  if (classify) {
+    console.log(`Triage enabled (${TRIAGE_MODEL_ID} on the PostHog gateway).\n`);
   } else {
     console.log(
-      "LLM triage disabled (no gateway token configured). All matches will be treated as threats.\n",
+      "Triage disabled (no gateway token configured). All matches will be treated as threats.\n",
     );
   }
 
@@ -404,13 +384,13 @@ async function main() {
   let triagedMatches = [];
 
   if (allMatches.length > 0) {
-    triagedMatches = llmProvider
-      ? await triageEachFile(allMatches, llmProvider)
+    triagedMatches = classify
+      ? await triageEachFile(allMatches, classify)
       : allMatches.map(({ match }) => ({
           ...match,
           triage: {
             verdict: "true_positive",
-            reason: "No LLM triage available.",
+            reason: "No triage available.",
           },
         }));
 
@@ -440,7 +420,7 @@ async function main() {
     threats,
     falsePositives: warnings,
     result,
-    llmTriageEnabled: Boolean(llmProvider),
+    llmTriageEnabled: Boolean(classify),
     durationMs,
     triaged: triagedMatches,
   });
@@ -450,7 +430,7 @@ async function main() {
   if (warnings > 0) {
     console.log(
       color.yellow(
-        `${warnings} false positive(s) identified by LLM triage (not blocking).`,
+        `${warnings} false positive(s) identified by triage (not blocking).`,
       ),
     );
   }
