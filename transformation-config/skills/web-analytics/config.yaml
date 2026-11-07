@@ -1,0 +1,10 @@
+type: docs-only
+template: description.md
+description: Audit a PostHog web analytics setup for misconfigurations
+tags: [web-analytics, audit]
+shared_docs: []
+variants:
+  - id: doctor
+    display_name: Web Analytics Doctor
+    tags: []
+    docs_urls: []
