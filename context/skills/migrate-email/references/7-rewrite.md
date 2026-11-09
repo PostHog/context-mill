@@ -52,7 +52,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with `distinctId`. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its sent, opened and clicked events when engagement capture is on, against the person the send names with `distinctId`. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the `distinctId` of its `posthog-node` captures.
 - At each site, pass the same ID for the recipient, such as `distinctId: user.id`. Follow the recipient back through the callers when the site only has the address.
