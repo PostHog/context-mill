@@ -63,7 +63,7 @@ STEP 7: Set up environment variables.
   - If it gave you none, use the PostHog MCP server's `projects-get` tool to retrieve the project's `api_token`. If multiple projects are returned, ask the user which project to use. If the MCP server is not connected or not authenticated, ask the user for their PostHog project token instead.
   - Use the project token (it starts with `phc_`). Do not use a personal API key (it starts with `phx_`).
   - For the PostHog host URL: use the host that the tool or CLI which started this setup already gave you. If it gave you none, check the `projects-get` MCP response for a `region` field — `US` maps to `https://us.i.posthog.com`, `EU` maps to `https://eu.i.posthog.com`. If you still have no host from the calling tool, the MCP response, or existing project configuration, ask the user: "Are you on PostHog US Cloud or EU Cloud?" Do not assume US Cloud.
-  - For the OTLP traces endpoint, use `https://us.i.posthog.com/i/v1/traces` (US) or `https://eu.i.posthog.com/i/v1/traces` (EU), matching the region determined above, with the project token as an `Authorization: Bearer` header.
+  - For the OTLP traces endpoint, use the same host as above with the path `/i/v1/traces`: `https://us.i.posthog.com/i/v1/traces` (US) or `https://eu.i.posthog.com/i/v1/traces` (EU), with the project token as an `Authorization: Bearer` header.
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
 
