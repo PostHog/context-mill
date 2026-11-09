@@ -314,7 +314,7 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
-            expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(turn off its email step in PostHog when the code deploys, or both send it\)/);
+            expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(the one item done at the deploy itself: turn off its email step in PostHog as the code goes live, or both send it\)/);
             expect(read('9-report.md')).toMatch(/check that it is transactional, or in the site's marketing category/);
             expect(read('resend/mapping.md')).toMatch(/makes it transactional, or files it under the site's marketing category/);
         });
