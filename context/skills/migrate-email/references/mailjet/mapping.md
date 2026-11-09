@@ -30,19 +30,17 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `DeduplicateCampaign` | none | Always. PostHog's send doesn't take it yet | `Mj-deduplicatecampaign` |
 | `MonitoringCategory` | none | Always. PostHog's send doesn't take it yet | none |
 | `Priority` | none | Always. PostHog's send doesn't take it yet | `Mj-prio` |
-| `TrackOpens`, `TrackClicks` set to `disabled`, `enabled`, or `account_default`, or not set | `captureEngagement: false`, or no field | See "Tracking" below. `disabled` counts as set: it turns that tracking off for the send, whatever the account's setting | `Mj-trackopen`, `Mj-trackclick` set to `1` (`disabled`), `2` (`enabled`), or `0` (`account_default`), or not set |
-| `TrackOpens`, `TrackClicks` set to `anon` | none | Always. PostHog's send doesn't take it yet | `Mj-trackopen`, `Mj-trackclick` set to `3` |
+| `TrackOpens` set to `disabled`, `enabled`, or `account_default`, or not set. `TrackClicks` set to any value, or not set | none: PostHog adds its open pixel and counts no clicks | Mailjet sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. `disabled` counts as set: it turns that tracking off for the send, whatever the account's setting | `Mj-trackopen` set to `1` (`disabled`), `2` (`enabled`), or `0` (`account_default`), or not set. `Mj-trackclick` set to any value, or not set |
+| `TrackOpens` set to `anon` | none | Always. PostHog's send has no anonymous open tracking | `Mj-trackopen` set to `3` |
 | `URLTags` | none | Always. PostHog's send doesn't take it yet | none |
 
-**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Mailjet tracks opens as the send's `TrackOpens` says, and clicks as its `TrackClicks` says. For each one the send leaves out or sets to `account_default`, use the account's setting instead: on reads as `enabled`, and off as `disabled`. Then work out, for opens and for clicks, whether Mailjet tracked them:
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Mailjet tracks opens as the send's `TrackOpens` says, and clicks as its `TrackClicks` says. For each one the send leaves out or sets to `account_default`, use the account's setting instead: on reads as `enabled`, and off as `disabled`. `TrackClicks: anon` reads as `enabled`. Then work out, for opens and for clicks, whether Mailjet tracked them:
 
-- Both `enabled`: the site moves with no field.
-- Both `disabled`: the site moves with `captureEngagement: false`.
-- One `enabled` and one `disabled`: the site stays, because `captureEngagement: false` turns off both.
-- The installed SDK has no `captureEngagement`, and Mailjet tracked neither: the site stays.
-- A `TemplateID` site that moves to a template made in PostHog, and that Mailjet sent with one of them `disabled`, by its own field or the account's setting, stays, as "Templates made in PostHog" says. A `TemplateID` site brought into the code follows the rules above.
+- Opens `enabled`: the site moves. When Mailjet tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens `disabled`: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- A `TemplateID` site follows these rules like any other site, whether it is brought into the code or moves to a template made in PostHog.
 
-When a site leaves one of them to the account, ask the person once for each Mailjet account the sites send from whether its open tracking and click tracking are on, as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `account tracking not checked`.
+When a site leaves one of them to the account, ask the person once for each Mailjet account the sites send from whether its open tracking and click tracking are on, as `account.md` says under "Tracking settings". When the answer for open tracking is not given and the site leaves its opens to the account, the site stays, and the reason is `account tracking not checked`.
 
 The fields next to `Messages`:
 
@@ -154,11 +152,11 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - Any function, such as `Upper`, `Lower`, `Capitalize`, `Round`, `Int`, `FormatNumber`, `FormatNumberLocale`, `UrlEncode`, `Escape`, `HasOpenedSince`, or `HasClickedSince`, keeps the template on Mailjet. So do `{% set %}`, the operators `=`, `===`, `<>`, `xor`, `not`, `div`, `mod`, and arithmetic.
 - Liquid's `default` also replaces an empty string and `false`, and Mailjet prints its default only when the value is not set. When the code can pass `false` for such a value, the template stays on Mailjet. When the code can pass an empty string, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `From`, `ReplyTo`, or `Subject` next to `TemplateID` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that Mailjet sent with opens or clicks untracked, by its own `TrackOpens` or `TrackClicks` set to `disabled` or by the account's setting, as "Tracking" says, stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. When Mailjet tracked both, the tracking fields are dropped.
+- A template site follows "Tracking" like any other site: it stays when Mailjet sent it with opens untracked, or its open tracking isn't checked. When it moves, the tracking fields are dropped.
 
 ## Webhooks
 
-Mailjet's Event API stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+Mailjet's Event API stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Mailjet event | PostHog event |
 |---|---|
@@ -169,6 +167,8 @@ Mailjet's Event API stops getting events for a site that moves. PostHog records 
 | `click` | `$workflows_email_link_clicked` |
 | `blocked` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `unsub` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog also records `$workflows_email_sent` when it sends, which has no Mailjet event.
 
@@ -193,7 +193,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `To` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `TextPart` becomes `text`, and `HTMLPart` becomes `html`, rendered first when the site sets `TemplateLanguage: true`.
 - `ReplyTo: { Email }` becomes `replyTo` with the bare address.
-- `TrackOpens` and `TrackClicks` are dropped. The send gets `captureEngagement: false` when Mailjet tracked neither opens nor clicks, as "Tracking" says, whether the site's fields or the account's setting did. Note in the plan row each site that got it from the account's setting.
+- `TrackOpens` and `TrackClicks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates brought into the code.** The site renders the email from `Variables`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the `from` and `replyTo` that the site sets, or else the template's `From` and `Reply-to` headers. It sends no `templateId` and no `templateData`. A site with `TemplateLanguage: true` and its own content renders that content the same way before the send. A site that picks its `TemplateID` from a map, such as one template per locale, brings each template in it into the code, and picks the email the same way: it moves only when every one of them moves. Around the render, the site handles a template error as "Templates" says.
