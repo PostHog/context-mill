@@ -276,7 +276,11 @@ describe('migrate-email skill', () => {
             expect(inventory).toContain('`message-categories-list`');
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
             expect(inventory).toMatch(/`transactional`, or the key of the marketing category/);
-            expect(inventory).toMatch(/An email that a PostHog workflow sent keeps the category of its email step/);
+            expect(inventory).toMatch(/The email keeps the category of its email step: read the step.s `message_category_id` with `workflows-get`/);
+            expect(inventory).toMatch(/or when the person says it is/);
+            expect(inventory).toMatch(/When the person names an email that a PostHog workflow sends/);
+            for (const reason of ['no unsubscribe link', 'no marketing category in PostHog', 'no message category tools']) expect(inventory).toContain(`the reason is \`${reason}\``);
+            expect(inventory).toMatch(/A category whose key is `transactional` can't be named by a send/);
         });
 
         it.each(Object.entries(SEND_CATEGORY))('passes the category key in the %s code send and names an opted-out recipient', (sdk, field) => {
@@ -300,6 +304,7 @@ describe('migrate-email skill', () => {
 
             expect(guide).toMatch(/In a marketing email, the provider's unsubscribe link becomes `\{\{ unsubscribe_url \}\}`/);
             expect(guide).toMatch(/A function that replaces markers leaves `\{\{ unsubscribe_url \}\}` as it is/);
+            expect(guide).toContain("in JSX text, `{'{{ unsubscribe_url }}'}`");
         });
 
         it('checks in step 8 and reports in step 9 that every marketing site kept its category', () => {
@@ -307,6 +312,9 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<marketing sites> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
+            expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
+            expect(read('9-report.md')).toMatch(/check that it is transactional, or in the site's marketing category/);
+            expect(read('resend/mapping.md')).toMatch(/makes it transactional, or files it under the site's marketing category/);
         });
     });
 

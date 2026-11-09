@@ -55,7 +55,7 @@ Pick the first that fits the part of the app that sends:
 Write the `\|` above as a plain `|`. The table escapes it.
 
 - A function that replaces markers raises when a marker is left after the replace, so a misspelled name fails the send instead of mailing the marker.
-- A function that replaces markers leaves `{{ unsubscribe_url }}` as it is, and so does every renderer. In an engine that reads `{{ }}` itself, such as Jinja2, Handlebars, or Go's templates, write it as a literal the engine prints unchanged, and check that the rendered HTML and text hold it exactly: an escape for URLs, such as Go's `html/template` in an `href`, changes it.
+- A function that replaces markers leaves `{{ unsubscribe_url }}` as it is, and so does every renderer. In a renderer that reads braces itself, such as JSX, Jinja2, Handlebars, or Go's templates, write it as a literal the renderer prints unchanged, such as, in JSX text, `{'{{ unsubscribe_url }}'}`, and check that the rendered HTML and text hold it exactly: an escape for URLs, such as Go's `html/template` in an `href`, changes it.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
 
