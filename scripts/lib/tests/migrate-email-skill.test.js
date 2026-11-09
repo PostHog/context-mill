@@ -314,6 +314,10 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/captureEngagement: false/);
             expect(mapping).not.toMatch(/turns off both/);
         });
+
+        it('never has the rewrite add engagement capture for a send that had no tracking', () => {
+            expect(read('7-rewrite.md')).not.toMatch(/captureEngagement: false/);
+        });
     });
 
     it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the rewrite files, and no other provider', async (provider) => {
