@@ -72,12 +72,7 @@ Gauge stages a skill only as `name@label`, so `sync` pins the newest label of ea
 
 `.github/workflows/install-skill-evals.yml` runs the sample on the 1st and 15th of each month. Run it by hand from the Actions tab to pick the sample or everything, one skill, matching apps, and the agent. The results table lands in the job summary.
 
-Each run also posts to Slack the way wizard-workbench's Wizard CI does: one message when it starts, a thread reply per skill with the runs that failed a criterion, and an update with the totals when it finishes.
-
-The workflow needs these repository secrets:
-
-- **`GAUGE_API_TOKEN`.** An org API key for the `posthog-main` Gauge org.
-- **`SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID`.** The same bot and channel wizard-workbench posts to. Without them the run skips Slack.
+The workflow needs a `GAUGE_API_TOKEN` repository secret holding an org API key for the `posthog-main` Gauge org.
 
 ## Read a failure
 

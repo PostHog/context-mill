@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Syncs and runs the install-skill evals on hosted Gauge.
-// Usage: node evals/install-skills/gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]
+// Usage: node evals/install-skills/gauge.mjs <sync|run|results|plan> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait]
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -163,55 +163,7 @@ async function run() {
 
 const DONE = ['SUCCEEDED', 'FAILED', 'CANCELLED', 'ERRORED']
 
-// Posts to Slack the way wizard-workbench's Wizard CI does: one parent message, replies in its thread,
-// then an update to the parent. Does nothing without SLACK_BOT_TOKEN and SLACK_CHANNEL_ID.
-async function slack(method, body) {
-    const { SLACK_BOT_TOKEN: token, SLACK_CHANNEL_ID: channel, SLACK_DRY_RUN: dryRun } = process.env
-    if (dryRun) {
-        console.error(`[slack ${method}] ${JSON.stringify(body)}`)
-        return { ts: 'dry-run' }
-    }
-    if (!token || !channel) return {}
-    const response = await fetch(`https://slack.com/api/${method}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel, ...body }),
-    })
-    const json = await response.json()
-    if (!json.ok) console.error(`Slack ${method} failed: ${json.error}`)
-    return json
-}
-
-const runUrl = process.env.GITHUB_RUN_ID
-    ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-    : undefined
-
-function parentMessage(title, items, note) {
-    const skills = [...new Set(items.map((item) => item.entry.skill))]
-    const fields = [
-        { type: 'mrkdwn', text: `*Evals:* ${items.length}` },
-        { type: 'mrkdwn', text: `*Skills:* ${skills.length}` },
-        { type: 'mrkdwn', text: `*Agents:* ${flag('--agent') ?? config.runAgents.join(', ')}` },
-    ]
-    if (runUrl) fields.push({ type: 'mrkdwn', text: `*Workflow:* <${runUrl}|View run>` })
-    return {
-        text: title,
-        blocks: [
-            { type: 'section', text: { type: 'mrkdwn', text: `*${title}*` } },
-            { type: 'section', fields },
-            { type: 'context', elements: [{ type: 'mrkdwn', text: note }] },
-        ],
-    }
-}
-
-// Posts the parent message and prints its timestamp, which `results --slack-thread` replies under.
-async function slackStart() {
-    const posted = await slack('chat.postMessage', parentMessage('Install skill evals started', selected(), 'Running on Gauge...'))
-    console.log(posted.ts ?? '')
-}
-
 // Prints one Markdown table row per eval from its newest run. With --wait, polls until every run is graded.
-// With --slack-thread <ts>, replies once per skill under that message and updates it with the totals.
 async function results() {
     const existing = new Map(list(gauge(['eval', 'list'])).map((e) => [e.name, e]))
     const items = selected()
@@ -238,23 +190,6 @@ async function results() {
     const table = rows.map((r) => `| ${r.name} | ${r.status} | ${r.model} | ${r.graded - r.failed.length}/${r.graded} | ${r.failed.join(', ')} |`)
     console.log(['| Eval | Status | Model | Passed | Failed criteria |', '|---|---|---|---|---|', ...table].join('\n'))
 
-    const thread = flag('--slack-thread')
-    if (!thread) return
-    const clean = (r) => r.graded > 0 && !r.failed.length
-    for (const skill of new Set(rows.map((r) => r.skill))) {
-        const mine = rows.filter((r) => r.skill === skill)
-        const lines = mine.filter((r) => !clean(r)).map((r) => `• \`${r.app}\` ${r.graded ? `${r.graded - r.failed.length}/${r.graded}: ${r.failed.join(', ')}` : r.status}`)
-        await slack('chat.postMessage', {
-            thread_ts: thread,
-            text: skill,
-            blocks: [
-                { type: 'section', fields: [{ type: 'mrkdwn', text: `*Skill:* ${skill}` }, { type: 'mrkdwn', text: `*Clean runs:* ${mine.filter(clean).length}/${mine.length}` }] },
-                ...(lines.length ? [{ type: 'section', text: { type: 'mrkdwn', text: lines.join('\n').slice(0, 2900) } }] : []),
-            ],
-        })
-    }
-    const total = `${rows.filter(clean).length}/${rows.length} runs passed every criterion. Details in the thread.`
-    await slack('chat.update', { ts: thread, ...parentMessage('Install skill evals finished', items, total) })
 }
 
 // Lists what the other commands would act on, and starts nothing.
@@ -264,9 +199,9 @@ function plan() {
     console.log(`${items.length} evals`)
 }
 
-const commands = { sync, run, results, plan, 'slack-start': slackStart }
+const commands = { sync, run, results, plan }
 if (!commands[command]) {
-    console.error('usage: gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]')
+    console.error('usage: gauge.mjs <sync|run|results|plan> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait]')
     process.exit(1)
 }
 await commands[command]()

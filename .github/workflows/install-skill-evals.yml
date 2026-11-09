@@ -39,8 +39,6 @@ jobs:
       SKILL: ${{ inputs.skill }}
       APP: ${{ inputs.app }}
       AGENT: ${{ inputs.agent }}
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -65,13 +63,6 @@ jobs:
           mapfile -t args < selection.txt
           node evals/install-skills/gauge.mjs sync "${args[@]}"
 
-      - name: Post the start to Slack
-        id: slack
-        run: |
-          mapfile -t args < selection.txt
-          [ -n "$AGENT" ] && args+=(--agent "$AGENT")
-          echo "thread_ts=$(node evals/install-skills/gauge.mjs slack-start "${args[@]}")" >> "$GITHUB_OUTPUT"
-
       - name: Launch runs
         run: |
           mapfile -t args < selection.txt
@@ -82,7 +73,4 @@ jobs:
         run: |
           mapfile -t args < selection.txt
           [ -n "$AGENT" ] && args+=(--agent "$AGENT")
-          [ -n "$THREAD_TS" ] && args+=(--slack-thread "$THREAD_TS")
           node evals/install-skills/gauge.mjs results --wait "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
-        env:
-          THREAD_TS: ${{ steps.slack.outputs.thread_ts }}
