@@ -9,7 +9,7 @@ For a site in JavaScript or TypeScript that runs on a server: Node.js, or an edg
 
 ## Install
 
-Install or upgrade `posthog-node` to its latest release with the project's package manager. A site that sends a component renders it with `render` from `react-email` from version 6 on, or from `@react-email/render` before it. Add `react-email` when the app has neither. `template-to-code.md` says what an email brought into the code adds.
+Install or upgrade `posthog-node` to its latest release with the project's package manager. A site that sends a component renders it with `render` from `react-email` from version 6 on. Before it, `render` comes from `@react-email/components` or `@react-email/render`, whichever the app has. Add `@react-email/render` when the app has an older React Email package that exports no `render`, such as `react-email` before version 6, which is only the preview tool. Add `react-email` when the app has no React Email package. `template-to-code.md` says what an email brought into the code adds.
 
 ## The client
 

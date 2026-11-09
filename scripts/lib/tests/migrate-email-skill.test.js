@@ -167,9 +167,15 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/look at it with the preview script/);
         });
 
-        it('imports render from react-email from version 6 on', () => {
+        it('imports render from react-email from version 6 on, and installs a renderer before it', () => {
             expect(read('resend/mapping.md')).toMatch(/`import \{ render \} from 'react-email'` from version 6 on/);
             expect(read('rewrite-node.md')).toMatch(/`render` from `react-email` from version 6 on/);
+            expect(read('rewrite-node.md')).toMatch(/Add `@react-email\/render` when the app has an older React Email package that exports no `render`/);
+        });
+
+        it('lets a React Email component add the text part in the mapping and in step 7', () => {
+            expect(read('resend/mapping.md')).toMatch(/A template without `text` sends `html` only, unless the email is a React Email component/);
+            expect(read('7-rewrite.md')).toMatch(/and the text part a React Email component renders/);
         });
 
         it("lets the site's own from, reply-to and subject win over the template's", () => {

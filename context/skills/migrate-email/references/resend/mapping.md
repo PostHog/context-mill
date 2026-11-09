@@ -60,7 +60,7 @@ Resend templates hold only variables, with an optional fallback. In the code:
 | A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
 | The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
 | The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way |
-| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only |
+| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only, unless the email is a React Email component, which renders its own text part, as `template-to-code.md` says |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
@@ -105,7 +105,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 ### Node.js
 
 - `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload.
-- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `render` from the app's React Email package: `import { render } from 'react-email'` from version 6 on, or `from '@react-email/render'` before it. Keep a `text` the site already passes.
+- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `render` from the app's React Email package: `import { render } from 'react-email'` from version 6 on, or the `render` that `rewrite-node.md` names before it. Keep a `text` the site already passes.
 - An HTTP body's snake_case fields become camelCase: `reply_to` becomes `replyTo`.
 - posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working. `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working, and `error.message` and `error.statusCode` keep their names.
 
