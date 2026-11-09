@@ -22,25 +22,24 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `EmailTags` / `Tags` | none | Always: no PostHog SDK takes tags yet |
 | `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"). Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
-| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | `captureEngagement: false`, or no field | See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
+| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel and counts no clicks | Amazon SES sent it with opens untracked, or its open tracking isn't checked. See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
 | `FromEmailAddressIdentityArn`, `FeedbackForwardingEmailAddressIdentityArn` / `SourceArn`, `ReturnPathArn`, `FromArn` | none | Always: the site sends for an identity another AWS account owns |
 | `EndpointId` | none | Always. PostHog's send doesn't take it yet |
 | `TenantName` | none | Always. PostHog's send doesn't take it yet |
 
-**Open and click tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Amazon SES decides opens and clicks one at a time. When the send's `ConfigurationOverrides.Tracking` sets `OpenTrackingEnabled` or `ClickTrackingEnabled`, that value decides, with one limit: `DISABLED` doesn't track it, and `ENABLED` tracks it when the send's configuration set has an event destination that publishes any event type, VDM engagement metrics are on for the send, or the other one of opens and clicks is tracked for the send. Without any of these, AWS ignores `ENABLED` and the message is sent untracked. Otherwise Amazon SES tracks it when either of these is on for the send:
+**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Amazon SES decides opens and clicks one at a time. When the send's `ConfigurationOverrides.Tracking` sets `OpenTrackingEnabled` or `ClickTrackingEnabled`, that value decides, with one limit: `DISABLED` doesn't track it, and `ENABLED` tracks it when the send's configuration set has an event destination that publishes any event type, VDM engagement metrics are on for the send, or the other one of opens and clicks is tracked for the send. Without any of these, AWS ignores `ENABLED` and the message is sent untracked. Otherwise Amazon SES tracks it when either of these is on for the send:
 
 - VDM engagement tracking, which tracks both opens and clicks. The send's configuration set decides it when the set's `VdmOptions.DashboardOptions.EngagementMetrics` is set. Otherwise the account's `VdmAttributes.DashboardAttributes.EngagementMetrics` decides, for a send with no set too. Either is on only when it is `ENABLED` and the account's `VdmAttributes.VdmEnabled` is `ENABLED`.
 - An enabled event destination of the send's configuration set, the one it names or its identity's default one, whose `MatchingEventTypes` lists `OPEN` for opens or `CLICK` for clicks.
 
 A send with neither gets no tracking pixel, and its links stay as written. Read the account's VDM settings and each set the sites use, as `account.md` says under "Configuration sets", and work out, for opens and for clicks, whether Amazon SES tracked them:
 
-- Both tracked: the site moves with no `captureEngagement` field.
-- Neither tracked: the site moves with `captureEngagement: false`. A template site that moves to a template made in PostHog stays, and the reason is `open and click tracking off`: the template form takes no `captureEngagement`. So does a site whose installed SDK has no `captureEngagement`.
-- One tracked and one not: the site stays, because `captureEngagement: false` turns off both.
+- Opens tracked: the site moves. When Amazon SES tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
-When a site's tracking depends on a setting the person can't give and the read-only key can't read, the site stays, and the reason is `account tracking not checked` for the account's VDM settings, or `configuration set <name> tracking not checked` for a set's.
+When a site's open tracking depends on a setting the person can't give and the read-only key can't read, the site stays, and the reason is `account tracking not checked` for the account's VDM settings, or `configuration set <name> tracking not checked` for a set's.
 
 An Amazon SES send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -106,7 +105,7 @@ Amazon SES templates are Handlebars. In the code:
 - A template belongs to one Region: a template of the same name in another Region is another template. Read each one in the Region its site sends in, as `account.md` says. A `TemplateArn` names its Region after `arn:aws:ses:` and its name after `template/`. Two sites that send the same name in two Regions share one email only when the two contents are the same.
 - An Amazon SES template holds no sender, reply-to address, or preview text, so the send takes the site's own `FromEmailAddress` / `Source` and `ReplyToAddresses`, as the "Fields" table says. Its subject always comes from the template: a templated send has no subject of its own.
 - Amazon SES hosts no images, so a template's images sit on the person's own hosts, such as an S3 bucket. Keep every URL, and list none as hosted by the provider.
-- A site that sets `ConfigurationOverrides.Tracking` next to the template, or whose configuration set or account left opens and clicks untracked, moves into the code with `captureEngagement: false`, as "Open and click tracking" says. Its `ConfigurationSetName` follows the "Fields" table, as for any send.
+- A template site follows "Open and click tracking" like any other site: it stays when Amazon SES sent it with opens untracked. Its `ConfigurationSetName` follows the "Fields" table, as for any send.
 - `Content.Template.Headers` and `Attachments` keep the site, as the "Fields" table says. `SendBulkTemplatedEmail` and `SendBulkEmail` still stay, as "Calls" says: each sends several emails in one call.
 
 ### Templates made in PostHog
@@ -131,12 +130,11 @@ Only for a template the person asks to make in PostHog, as Step 3 says. The pers
 - Any other helper, such as `{{#with}}`, `{{lookup}}`, or `{{log}}`, keeps the template on Amazon SES. So does an inline partial (`{{#* inline}}` and `{{> name}}`), `{{@index}}`, `{{@key}}`, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - `templateData` takes the object `TemplateData` was built from, as above.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `FromEmailAddress` / `Source` or `ReplyToAddresses` next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `ConfigurationOverrides.Tracking` next to the template stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`.
-- A template site that Amazon SES sent with opens or clicks untracked, or whose tracking isn't checked, stays, as "Open and click tracking" says: the template form takes no `captureEngagement`.
+- A template site follows "Open and click tracking" like any other site: it stays when Amazon SES sent it with opens untracked, or its open tracking isn't checked.
 
 ## Webhooks
 
-The handlers stop getting events for a site that moves: Amazon SES no longer sends it. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+The handlers stop getting events for a site that moves: Amazon SES no longer sends it. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Amazon SES event | PostHog event |
 |---|---|
@@ -147,6 +145,8 @@ The handlers stop getting events for a site that moves: Amazon SES no longer sen
 | `Open` | `$workflows_email_opened` |
 | `Click` | `$workflows_email_link_clicked` |
 | `Reject`, `Rendering Failure`, `DeliveryDelay`, `Subscription` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 A bounce to an address on the account-level suppression list comes as a `Bounce` with `bounceSubType` `OnAccountSuppressionList`. PostHog refuses that send instead, with `recipient_suppressed`.
 
@@ -170,7 +170,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `FromEmailAddress` / `Source` becomes `from` as it is, with its name.
 - The one entry of `ToAddresses` becomes `to`, as a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `Subject.Data`, `Body.Html.Data`, and `Body.Text.Data` become `subject`, `html`, and `text`.
-- `ConfigurationOverrides.Tracking` is dropped. The send gets `captureEngagement: false` when Amazon SES tracked neither opens nor clicks, as "Open and click tracking" says, whether the override, the configuration set, or the account's VDM settings did. Note in the plan row each site that got it from a set or the account.
+- `ConfigurationOverrides.Tracking` is dropped, and the send gets no `captureEngagement` for it, as "Open and click tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates brought into the code.** The site renders the email from the object of its `TemplateData`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`. An inline template is sent the same way. Remove the encode of `TemplateData` when nothing else uses the string.
