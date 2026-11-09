@@ -41,7 +41,7 @@ Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/
 This check needs PostHog MCP access to query the operator's tenant. If the MCP server is unavailable, auth fails, or any call errors after one retry: resolve with `suggestion` and `details: "PostHog MCP unavailable — could not measure event usage in tenant"`. Do not block the audit.
 
 Procedure:
-1. Run **one** Grep: `posthog\.capture\(`. Collect every distinct static event name passed to `capture()` from the project source.
+1. Run **one** Grep: `posthog\??\.capture(\?\.)?\(`. Collect every distinct static event name passed to `capture()` from the project source.
 2. Call **`execute-sql`** with a query that joins event names captured in code against PostHog metadata. Specifically check whether each event is referenced by:
    - `system.insights` (saved insights) — search `query::TEXT ILIKE '%<event>%'`
    - `system.dashboards` (via insight membership)
@@ -155,7 +155,7 @@ Procedure:
 1. Pick a **high-signal event** to break down. Prefer a frequent event with high coverage across runtimes. Good candidates in order:
    - `$pageview` (web-only)
    - `$autocapture` (web-only)
-   - any custom event captured everywhere (run a quick `posthog\.capture\(` Grep + an MCP count to pick the highest-volume custom event)
+   - any custom event captured everywhere (run a quick `posthog\??\.capture(\?\.)?\(` Grep + an MCP count to pick the highest-volume custom event)
 2. Call `execute-sql` to break down that event by environment-signal properties over the last 7 days:
 
 ```sql

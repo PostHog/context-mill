@@ -43,7 +43,7 @@ Read this skill's bundled `anonymous-vs-identified-events.md` reference once (ty
 Background: posthog-node, posthog-python, and other backend SDKs default to processing person profiles on every `capture()` call. The SDK auto-attaches runtime metadata (`$os`, `$lib`, `$lib_version`, etc.) that overwrites whatever the client SDK previously set on the same person. The canonical failure pattern: a backend captures `subscription_upgraded` from a Linux server; the user's profile gets `$os = "Linux"` even though they're a macOS user, because the server SDK's `$os` overrode the client's. The fix is to set `$process_person_profile: false` on backend events that aren't supposed to update person properties (most server-side capture calls fit this).
 
 Run **two** Greps in parallel:
-- `posthog\.capture\(|posthog\.Capture\(|new PostHog\(.+\.capture` — every server-side capture call site. Filter to files that are server-side (Node/Python/Go/Java/Ruby/PHP) — exclude browser files.
+- `posthog\??\.capture(\?\.)?\(|posthog\??\.Capture(\?\.)?\(|new PostHog\(.+\.capture` — every server-side capture call site. Filter to files that are server-side (Node/Python/Go/Java/Ruby/PHP) — exclude browser files.
 - `\$process_person_profile|process_person_profile|processPersonProfile` — explicit usage of the property anywhere.
 
 Read each file that contains a server-side `capture(` hit, once. For each server-side capture, determine whether:
@@ -84,7 +84,7 @@ Background: posthog-node, posthog-python, and posthog-ruby buffer events in memo
 
 Run **three** Greps in parallel:
 - `posthog\.shutdown\(|posthog\.Shutdown\(|posthog\.flush\(|await posthog\.flush|posthog\.disable\(` — explicit flush/shutdown calls.
-- `posthog\.capture\(|posthog\.Capture\(` — every server-side capture call site.
+- `posthog\??\.capture(\?\.)?\(|posthog\??\.Capture(\?\.)?\(` — every server-side capture call site.
 - `exports\.handler|export\s+(default\s+)?(async\s+)?function\s+handler|app/api/.*/route\.(ts|js)|runtime\s*=\s*['"]edge['"]|celery|sidekiq|bullmq|defineEventHandler|onRequest|export\s+(const|let|var)\s+config\s*=\s*\{[^}]*runtime` — short-lived runtime signals.
 
 Read each file that contains both a short-lived signal AND a server-side capture, once. Determine whether the handler / worker function calls `posthog.shutdown()` or awaits `posthog.flush()` before returning.
@@ -123,8 +123,8 @@ Read this skill's bundled `identify-users.md` reference once (typically `.claude
 Background: a backend `posthog.capture()` with `$set` / `$set_once` properties on a user-scoped distinct_id makes that person *appear* identified in PostHog — the profile shows the properties — but no canonical `$identify` event fired and no anonymous → identified merge happened. Anonymous activity from that user's earlier sessions stays orphaned. The fix is either to call `posthog.identify(userId, properties)` (which fires the canonical merge event) instead of `posthog.capture(event, { $set: ... })`, or to ensure a prior `posthog.identify()` call from the client SDK preceded this capture for the same distinct_id.
 
 Run **two** Greps in parallel:
-- `posthog\.capture\(|posthog\.Capture\(` — every server-side capture call site.
-- `posthog\.identify\(|posthog\.Identify\(` — every server-side identify call site.
+- `posthog\??\.capture(\?\.)?\(|posthog\??\.Capture(\?\.)?\(` — every server-side capture call site.
+- `posthog\??\.identify(\?\.)?\(|posthog\??\.Identify(\?\.)?\(` — every server-side identify call site.
 
 Read each file that contains a server-side capture, once. For each capture whose properties include `$set`, `$set_once`, `setPersonProperties`, or `setOnce`:
 - Is there a `posthog.identify()` call in the same file (or imported module) using the same distinct_id?
