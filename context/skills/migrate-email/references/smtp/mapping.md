@@ -38,14 +38,11 @@ PostHog's `from` takes `'Name <address>'`, with the name in double quotes when i
 
 A send through SMTP has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
-**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`. An SMTP server tracks neither on its own, but the provider behind the host may, by an account, domain or server setting. Ask the person once, for each host the moved sites use, whether it tracked opens and clicks of these sends:
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. An SMTP server tracks neither opens nor clicks on its own, but the provider behind the host may, by an account, domain or server setting. Ask the person once, for each host the moved sites use, whether it tracked opens and clicks of these sends:
 
-- Both tracked: the site moves as it is.
-- Neither tracked, including a host with no tracking provider behind it, such as the company's own mail server: the site moves with `captureEngagement: false`.
-- One tracked and the other not: the site stays, and the reason is `<host> tracks only opens` or `<host> tracks only clicks`. `captureEngagement: false` turns off both.
-- The person can't say: the site stays, and the reason is `<host> tracking not checked`.
-
-A site that needs `captureEngagement: false` stays when the installed SDK has no `captureEngagement`.
+- Opens tracked: the site moves. When the host tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked, including a host with no tracking provider behind it, such as the company's own mail server: the site stays, and the reason is `<host> tracks no opens`. PostHog would add an open pixel the email never had.
+- The person can't say whether it tracked opens: the site stays, and the reason is `<host> tracking not checked`.
 
 ## Calls
 
@@ -104,7 +101,7 @@ Rendered content is classified the same way as any `html`: it moves as it is.
 
 ## Webhooks
 
-SMTP has no webhooks, so moving a site stops no SMTP event. The provider behind the host may post delivery events to a handler of the app (`sdk-reference.md`, "Webhooks"). That handler stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+SMTP has no webhooks, so moving a site stops no SMTP event. The provider behind the host may post delivery events to a handler of the app (`sdk-reference.md`, "Webhooks"). That handler stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Event of the provider behind the host | PostHog event |
 |---|---|
@@ -116,6 +113,8 @@ SMTP has no webhooks, so moving a site stops no SMTP event. The provider behind 
 | Clicked | `$workflows_email_link_clicked` |
 | Dropped or suppressed | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | Deferred, soft bounce, unsubscribe, and other events | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Message-ID of the SMTP message, no id of the provider behind the host, and no header the send set. A site whose events a handler matches by the Message-ID, by that provider's message id, or by a header stays on SMTP. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
