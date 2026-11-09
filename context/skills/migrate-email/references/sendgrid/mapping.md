@@ -21,14 +21,21 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
-| No `trackingSettings` | `captureEngagement: false` when open and click tracking are both off in the account, as `account.md` says under "Tracking" | Only one of open and click tracking is off in the account, the person can't say (the reason is `account tracking not checked`), or both are off and the installed SDK has no `captureEngagement` or the site moves to a template made in PostHog: the template form takes no `captureEngagement` |
-| `trackingSettings` that turns `openTracking` or `clickTracking` off | `captureEngagement: false` | The installed SDK has no `captureEngagement`, the settings do anything else, such as `subscriptionTracking` or `ganalytics`, or open or click tracking stays on, from the settings or from the account for the one the settings don't set: `false` turns off both |
+| No `trackingSettings` | none: PostHog adds its open pixel and counts no clicks | Open tracking is off in the account, or the person can't say (the reason is `account tracking not checked`). See "Open and click tracking" below, and `account.md` under "Tracking" |
+| `trackingSettings` with `openTracking` or `clickTracking` | none: PostHog adds its open pixel and counts no clicks | SendGrid sent it with opens untracked, from `openTracking` or from the account when the settings don't set it. See "Open and click tracking" below. It also stays when the settings do anything else, such as `subscriptionTracking`, `ganalytics`, or an `openTracking` `substitutionTag`: PostHog places its own pixel, so the tag would stay in the email as text |
 | `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
 | `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |
 | `ipPoolName` / `ip_pool_name` | none | Always. PostHog's send doesn't take it yet |
 | `mailSettings` / `mail_settings` | none | Always. Sandbox mode is not a send |
 | `personalizations` | the fields of its one entry | It holds more than one entry. One entry moves when each field in it moves |
+
+**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. Otherwise the account's setting decides, as `account.md` says under "Tracking".
+
+- Opens tracked: the site moves. When SendGrid tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+
+When a site's open tracking follows the account and the person can't say whether it is on, the site stays, and the reason is `account tracking not checked`.
 
 A SendGrid send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -82,7 +89,7 @@ SendGrid templates are Handlebars. In the code:
 - Any other helper, a partial (`{{> name}}`), or an `{{unsubscribe}}`, `{{{unsubscribe}}}`, `{{weblink}}`, or `{{{unsubscribe_preferences}}}` tag that SendGrid fills from the account keeps the template on SendGrid. Such tags come from unsubscribe groups, which a transactional send through PostHog doesn't have.
 - A SendGrid template holds no sender, so the send takes the site's own `from` and `replyTo`. A site that sets `subject` next to `templateId` moves only when the version has no subject, or when the site's subject is the same in every send as the version's: which one SendGrid sent can't be told from the code. Otherwise it stays.
 - Images that the template's editor uploaded to SendGrid have URLs on `marketing-image-production.s3.amazonaws.com` or `mc.sendgrid.com`. Keep them, and list them, as `template-to-code.md` says.
-- A site that sets `trackingSettings` next to `templateId` moves into the code with `captureEngagement: false` as the "Fields" table says. So does a `templateId` site without `trackingSettings` when both open and click tracking are off in the account.
+- A template site follows "Open and click tracking" like any other site: it stays when SendGrid sent it with opens untracked. Its `trackingSettings` follow the "Fields" table, as for any send.
 
 ### Templates made in PostHog
 
@@ -109,11 +116,11 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - Any other helper, such as `{{#equals}}`, `{{formatDate}}`, `{{#greaterThan}}`, `{{length}}`, or `{{#and}}`, keeps the template on SendGrid. So does `{{@index}}`, a partial, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - Liquid's `default` also replaces an empty string. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `trackingSettings` next to `templateId` stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. So does a `templateId` site without `trackingSettings` when open or click tracking is off in the account.
+- A template site follows "Open and click tracking" like any other site: it stays when SendGrid sent it with opens untracked, or its open tracking isn't checked.
 
 ## Webhooks
 
-The Event Webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+The Event Webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | SendGrid event | PostHog event |
 |---|---|
@@ -125,6 +132,8 @@ The Event Webhook stops getting events for a site that moves. PostHog records th
 | `click` | `$workflows_email_link_clicked` |
 | `dropped` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `deferred`, `unsubscribe`, `group_unsubscribe`, `group_resubscribe` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no SendGrid `sg_message_id` and no `custom_args`. A site whose events a handler matches by message id or by a custom arg stays on SendGrid. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
@@ -149,6 +158,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `{ email: 'hello@mail.example.com', name: 'Example' }` in `from` becomes `'Example <hello@mail.example.com>'`. A `from` without a name becomes the bare address.
 - `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `content` entries become `text` and `html`.
+- `trackingSettings` is dropped, and the send gets no `captureEngagement` for it, as "Open and click tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates brought into the code.** The site renders the email from `dynamicTemplateData`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`.
