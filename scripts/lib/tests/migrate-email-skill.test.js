@@ -158,6 +158,7 @@ describe('migrate-email skill', () => {
             const guide = read('template-to-code.md');
 
             expect(guide).toMatch(/the HTML with `render\(element\)` and the text with `toPlainText\(html\)`/);
+            expect(guide).toMatch(/A React Email package without `toPlainText`, such as `@react-email\/render` before 1\.2, renders the text with `render\(element, \{ plainText: true \}\)`/);
             expect(guide).toMatch(/Add the preview only with `react-email` 6 or later/);
             expect(guide).toMatch(/`email dev --dir emails`/);
             expect(guide).toMatch(/only when it has a default export, and skips every folder whose name starts with `_`/);
@@ -169,6 +170,7 @@ describe('migrate-email skill', () => {
             const guide = read('template-to-code.md');
 
             expect(guide).toMatch(/Greet the recipient by the name the app knows them by at the site/);
+            expect(guide).toMatch(/The name is a value the render takes, not a field of the send/);
             expect(guide).toMatch(/each email's greeting: the name it uses, or why it has none/);
         });
 
