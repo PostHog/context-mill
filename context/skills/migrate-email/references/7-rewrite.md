@@ -23,6 +23,7 @@ Read the rewrite file of each language that has a site that moves, and only thos
 ## What every SDK's send takes and answers
 
 - Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to addresses, and engagement capture, which is on unless the send turns it off. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
+- The code form also takes open and click tracking, which is on unless the send turns it off. Off sends the email without open and click tracking, so PostHog can't count its opens and clicks. It is independent of engagement capture: a provider's open or click tracking that is off maps to open and click tracking off, never to engagement capture off. The template form doesn't take it.
 - Both forms take a distinct ID and an idempotency key.
 - No SDK takes `cc`, `bcc`, attachments, headers, tags, a send time, or several `to` addresses yet. The provider's `mapping.md` keeps a site that sets one.
 - The message ID in the answer is PostHog's, not the provider's.
@@ -49,6 +50,7 @@ Install or upgrade the SDK to its latest release, as the rewrite file says under
 
 - a site with `html`, `text`, or a component, and a `template` site that moves into the code: the send takes a template key with a subject and an HTML or text body;
 - a site that sets a reply-to address: the send takes one;
+- a site whose old send went out with open or click tracking off: the send takes open and click tracking;
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
 When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
@@ -89,10 +91,11 @@ For each site that moves, in plan order:
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - Handle the answer as the rewrite file says under "The answer". Some SDKs return an error and some raise or throw one: when the old call and the new one differ, change the code around the send so the site fails the same way.
-- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and the subject, body, `from`, and reply-to address that a provider template brought into the code held. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
+- When the old send went out with open tracking or click tracking off, set open and click tracking to off, under the name the rewrite file gives. The provider's `mapping.md` names the setting that shows it. One of the two is enough, because PostHog's field turns off both: note it in the plan row. When the provider sets tracking per domain or per account and not per send, the call can't show it: `mapping.md` says what to ask. Without an answer, leave the field out. Leave engagement capture as it is.
+- Never add a field that the old call didn't set, apart from the template key, the template ID, the distinct ID, open and click tracking that is off as above, and the subject, body, `from`, and reply-to address that a provider template brought into the code held. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Write down each email brought into the code, as `template-to-code.md` says under "Write down". Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.
+Tick the phase in the plan: `- [x] rewrite — <n> sites moved`. Add a `key` column to the sites table with each moved site's template key, or its template ID for a template made in PostHog. Write down each email brought into the code, as `template-to-code.md` says under "Write down". Under the table, note each site without a distinct ID, each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site that sends with open and click tracking off and why, each idempotency key a retry across the deploy could send twice, each new dependency, each upgraded one with its old and new version, and each new env variable name.

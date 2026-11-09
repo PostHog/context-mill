@@ -45,7 +45,7 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 
 ## The send
 
-- Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
+- Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `capture_engagement:`, and `track_opens_and_clicks:` optional. `track_opens_and_clicks: false` turns off open and click tracking.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 - With email's own instance, the name comes first: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., ...)`.

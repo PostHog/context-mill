@@ -91,6 +91,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `from`, `subject`, `html`, `text`, and the reply-to address keep their values, under the PostHog SDK's names.
 - A send with rendered content gets a template key, as Step 7 says.
 - The idempotency key moves into the send, under the PostHog SDK's name for it.
+- Resend sets open and click tracking per domain, not per send, so the call doesn't show it. Ask the person once whether open tracking or click tracking is off for the domain the sites send from, in the domain's settings in Resend. When either is off, each site that sends from that domain sets open and click tracking to off. Without an answer, leave the field out, and note in the report that PostHog tracks the opens and clicks of these emails.
 
 **Templates brought into the code.** The site renders the email from its `variables`, as "Templates" says, and sends the template key, the rendered subject, HTML, and text, and the `from` and reply-to address: the site's own where it sets them, otherwise the template's. It sends no template ID and no template data.
 
