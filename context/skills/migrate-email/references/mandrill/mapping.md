@@ -37,7 +37,8 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `attachments` | none | Always. PostHog's send doesn't take it yet |
 | `images` | none | Always. PostHog's send doesn't take it yet |
 | `subaccount` | none | Always. The subaccount has its own reports, quota, and denylist at Mailchimp Transactional |
-| `tracking_domain`, `signing_domain`, `return_path_domain` | none | Always. PostHog's send doesn't take it yet |
+| `tracking_domain` | none: dropped. PostHog counts no clicks, so it has no domain for tracked links | Never. Note in the plan row that PostHog counts no clicks for the site |
+| `signing_domain`, `return_path_domain` | none | Always. PostHog's send doesn't take it yet |
 | `google_analytics_domains`, `google_analytics_campaign` | none | Always. PostHog's send doesn't take it yet |
 | `ip_pool` | none | Always. PostHog's send doesn't take it yet |
 | `send_at` | none | Always. PostHog's send doesn't take it yet |
@@ -203,11 +204,9 @@ The webhook stops getting events for a site that moves. PostHog records the even
 | `hard_bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked` |
+| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `reject` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `soft_bounce`, `deferral`, `unsub`, and the denylist and allowlist sync events | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Mailchimp Transactional `_id` and no `msg.metadata`. A site whose events a handler matches by the `_id` the send answered stays on Mailchimp Transactional, and so does a site that sets `metadata` (see "Fields"). For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 

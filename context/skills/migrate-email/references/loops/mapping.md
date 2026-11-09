@@ -31,6 +31,11 @@ The Loops email itself sets the rest, in its sending settings. The template chec
 
 A site with no idempotency key sends none in PostHog either.
 
+**Tracking.** Loops tracks no opens or clicks on a transactional email. PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes neither. Ask the person once, for all Loops sites, whether PostHog may add its open pixel to emails that never had one:
+
+- Yes: the sites move, and the report says that PostHog now counts their opens.
+- No, or no answer: every site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+
 ## Calls
 
 | Loops call | A site stays on Loops when |
@@ -183,7 +188,7 @@ Loops' webhook stops getting events for a site that moves. PostHog records the e
 | `email.hardBounced` | `$workflows_email_bounced` |
 | `email.spamReported` | `$workflows_email_blocked` |
 | `email.softBounced` | none |
-| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened` and `$workflows_email_link_clicked`, which it never had at Loops |
+| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops. PostHog never rewrites the links of these sends, so it counts no clicks |
 | `email.unsubscribed`, `email.resubscribed`, `campaign.email.sent`, `loop.email.sent`, `contact.*` | none. They are about campaigns, workflows, and contacts, which stay on Loops |
 
 A Loops send sets nothing that comes back in an event apart from its `transactionalId` and the recipient, so no handler keeps a site on Loops. For every handler that reads events with `sourceType` `transactional`, or that does not check `sourceType`, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler keeps working for the sites that stay, and for campaign and workflow events. Never change it.
