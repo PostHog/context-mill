@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Syncs and runs the install-skill evals on hosted Gauge.
-// Usage: node evals/install-skills/gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--week <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]
+// Usage: node evals/install-skills/gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -25,9 +25,9 @@ function gauge(args, { allowFail = false } = {}) {
 const list = (value) => (Array.isArray(value) ? value : (value.items ?? value.runs ?? []))
 const evalName = (skill, app) => `[install-skills] ${skill} on ${app}`
 
-// The weekly sample takes `weeklySample` apps per skill. It walks the apps one framework at a
-// time, so a week spreads across frameworks, and the window moves each week until every app has run.
-function sampleOf(entry, week) {
+// The sample takes `sample` apps per skill. It walks the apps one framework at a time, so one run
+// spreads across frameworks, and the window moves each period until every app has run.
+function sampleOf(entry, period) {
     const groups = new Map()
     for (const app of entry.apps) {
         const framework = app.split('/')[0]
@@ -37,26 +37,41 @@ function sampleOf(entry, week) {
     for (let i = 0; ordered.length < entry.apps.length; i++) {
         for (const apps of groups.values()) if (apps[i]) ordered.push(apps[i])
     }
-    const size = Math.min(entry.weeklySample, ordered.length)
-    const start = (week * size) % ordered.length
+    const size = Math.min(entry.sample, ordered.length)
+    const start = (period * size) % ordered.length
     return Array.from({ length: size }, (_, i) => ordered[(start + i) % ordered.length])
+}
+
+// The workflow runs on the 1st and 15th, so a period is half a month.
+function currentPeriod() {
+    const now = new Date()
+    return Number(flag('--period') ?? now.getUTCFullYear() * 24 + now.getUTCMonth() * 2 + (now.getUTCDate() >= 15 ? 1 : 0))
+}
+
+// Splits runs across `runAgents`. The pick is fixed per eval and period, so a rerun uses the same agent.
+function agentFor(name) {
+    const forced = flag('--agent')
+    if (forced) return forced
+    let hash = currentPeriod()
+    for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+    return config.runAgents[hash % config.runAgents.length]
 }
 
 function selected() {
     const skill = flag('--skill')
     const app = flag('--app')
     const limit = Number(flag('--limit') ?? Infinity)
-    const week = Number(flag('--week') ?? Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)))
+    const period = currentPeriod()
     const out = []
     for (const entry of config.skills) {
         if (skill && entry.skill !== skill) continue
         if (has('--delivery')) continue
-        for (const name of has('--sample') ? sampleOf(entry, week) : entry.apps) {
+        for (const name of has('--sample') ? sampleOf(entry, period) : entry.apps) {
             if (app && !name.includes(app)) continue
             out.push({ entry, app: name, name: evalName(entry.skill, name) })
         }
     }
-    // Delivery evals run with the weekly sample, with --delivery, or when nothing narrows the selection.
+    // Delivery evals run with the sample, with --delivery, or when nothing narrows the selection.
     const delivery = config.delivery
     if (delivery.mcp && delivery.projectId) {
         for (const { skill: deliverySkill, apps } of delivery.evals) {
@@ -130,13 +145,13 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // A launch holds more credits than the run ends up costing, so wait for holds to clear and retry.
 async function run() {
     const existing = new Map(list(gauge(['eval', 'list'])).map((e) => [e.name, e]))
-    const agent = flag('--agent') ?? config.defaultRunAgent
     let pending = selected().filter(({ name }) => existing.has(name) || console.log(`no saved eval, run sync first: ${name}`))
     for (let attempt = 0; pending.length && attempt < 30; attempt++) {
         const next = []
         for (const item of pending) {
+            const agent = agentFor(item.name)
             const result = gauge(['run', '--eval', existing.get(item.name).id, '--agent', agent, '--samples', '1', '--yes'], { allowFail: true })
-            if (!result.failed) console.log(`launched ${item.name}`)
+            if (!result.failed) console.log(`launched ${item.name} on ${agent}`)
             else if (result.failed.includes('Out of credits')) next.push(item)
             else console.log(`failed ${item.name}: ${result.failed.slice(-200)}`)
         }
@@ -176,7 +191,7 @@ function parentMessage(title, items, note) {
     const fields = [
         { type: 'mrkdwn', text: `*Evals:* ${items.length}` },
         { type: 'mrkdwn', text: `*Skills:* ${skills.length}` },
-        { type: 'mrkdwn', text: `*Agent:* ${flag('--agent') ?? config.defaultRunAgent}` },
+        { type: 'mrkdwn', text: `*Agents:* ${flag('--agent') ?? config.runAgents.join(', ')}` },
     ]
     if (runUrl) fields.push({ type: 'mrkdwn', text: `*Workflow:* <${runUrl}|View run>` })
     return {
@@ -245,13 +260,13 @@ async function results() {
 // Lists what the other commands would act on, and starts nothing.
 function plan() {
     const items = selected()
-    for (const { name } of items) console.log(name)
+    for (const { name } of items) console.log(`${name}\t${agentFor(name)}`)
     console.log(`${items.length} evals`)
 }
 
 const commands = { sync, run, results, plan, 'slack-start': slackStart }
 if (!commands[command]) {
-    console.error('usage: gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--week <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]')
+    console.error('usage: gauge.mjs <sync|run|results|plan|slack-start> [--sample] [--delivery] [--period <n>] [--skill <name>] [--app <substring>] [--agent <agent:model>] [--limit <n>] [--wait] [--slack-thread <ts>]')
     process.exit(1)
 }
 await commands[command]()

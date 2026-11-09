@@ -1,14 +1,14 @@
 name: Install skill evals
 
 # Runs the omnibus instrument-* skills on Gauge and grades the result.
-# Weekly: this week's sample. Manually: the sample, everything, or one skill or app.
+# Twice a month: the current sample. Manually: the sample, everything, or one skill or app.
 on:
   schedule:
-    - cron: '0 13 * * 1' # Mondays, after the daily PostHog/skills sync at 12:00 UTC
+    - cron: '0 13 1,15 * *' # The 1st and 15th, after the daily PostHog/skills sync at 12:00 UTC
   workflow_dispatch:
     inputs:
       scope:
-        description: 'sample runs this week''s sample, all runs every selected eval'
+        description: 'sample runs the current sample, all runs every selected eval'
         type: choice
         options: [sample, all]
         default: sample
@@ -19,7 +19,7 @@ on:
         description: 'Only apps whose path contains this text, such as next-js. Empty for every app.'
         required: false
       agent:
-        description: 'Agent and model, such as claude-code:claude-opus-5-5. Empty for the default.'
+        description: 'Agent and model for every run, such as claude-code:claude-opus-5-5. Empty to split runs across the default agents.'
         required: false
 
 permissions:

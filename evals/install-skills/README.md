@@ -19,7 +19,7 @@ Checks that a coding agent with one of the omnibus `instrument-*` skills sets up
 
 - **Apps.** They come from [wizard-workbench](https://github.com/PostHog/wizard-workbench) `apps/`, pinned to the commit in `evals.json`. Logs, metrics, and tracing use the server apps from `basic-integration`.
 - **Skills.** Gauge tracks `PostHog/skills#main/skills/omnibus/<skill>`, the mirror of this repo's released skills. A change here reaches the evals after a release and the daily mirror sync.
-- **Agents.** Each saved eval holds four models. A launch uses `defaultRunAgent` from `evals.json` unless you pass `--agent`.
+- **Agents.** Each launch picks one of `runAgents` in `evals.json`, Opus 5.5 or GPT-6.1 Sol, so about half the runs land on each. The pick is fixed per eval and period. `--agent` forces one for every run.
 
 ## The criteria
 
@@ -33,9 +33,11 @@ Checks that a coding agent with one of the omnibus `instrument-*` skills sets up
 
 The wording follows wizard-workbench `services/pr-evaluator/prompts/`. One item differs: `ph_reverse_proxy` passes when the agent suggests a reverse proxy in its handoff, since the task can't set one up.
 
-## The weekly sample
+## The sample
 
-Running all 145 evals costs about 16 Gauge credits each. The weekly run takes `weeklySample` apps per skill, 32 runs in total. It walks each skill's apps one framework at a time, so a week spreads across frameworks, and the window moves each week until every app has run.
+Running all 145 evals costs about 16 Gauge credits each. A scheduled run takes `sample` apps per skill, 32 runs in total. It walks each skill's apps one framework at a time, so one run spreads across frameworks, and the window moves each period until every app has run.
+
+The schedule is the 1st and 15th of each month, about 1,000 credits a month.
 
 ## The delivery layer
 
@@ -54,21 +56,21 @@ Mobile apps can't run in Gauge's VM, and browser-only apps need a headless brows
 Sign in once with `npm install -g @withgauge/cli` and `gauge auth login`.
 
 ```sh
-node evals/install-skills/gauge.mjs plan --sample                 # what this week's sample holds, starts nothing
+node evals/install-skills/gauge.mjs plan --sample                 # what the current sample holds and which agent each run gets
 node evals/install-skills/gauge.mjs sync                          # make Gauge match evals.json, starts nothing
-node evals/install-skills/gauge.mjs run --sample                  # launch this week's sample (spends credits)
+node evals/install-skills/gauge.mjs run --sample                  # launch the current sample (spends credits)
 node evals/install-skills/gauge.mjs run --skill instrument-logs   # launch one skill on every app
 node evals/install-skills/gauge.mjs run --app next-js             # launch every skill on matching apps
 node evals/install-skills/gauge.mjs results --sample --wait       # wait, then print a results table
 ```
 
-`--skill`, `--app`, `--sample`, `--week <n>`, and `--limit <n>` work on every command. `run` also takes `--agent <agent:model>`.
+`--skill`, `--app`, `--sample`, `--period <n>`, and `--limit <n>` work on every command. `run` also takes `--agent <agent:model>`.
 
 Gauge stages a skill only as `name@label`, so `sync` pins the newest label of each skill. Run `sync` before `run`, or the run uses the last pinned version.
 
 ## From GitHub Actions
 
-`.github/workflows/install-skill-evals.yml` runs the sample every Monday. Run it by hand from the Actions tab to pick the sample or everything, one skill, matching apps, and the agent. The results table lands in the job summary.
+`.github/workflows/install-skill-evals.yml` runs the sample on the 1st and 15th of each month. Run it by hand from the Actions tab to pick the sample or everything, one skill, matching apps, and the agent. The results table lands in the job summary.
 
 Each run also posts to Slack the way wizard-workbench's Wizard CI does: one message when it starts, a thread reply per skill with the runs that failed a criterion, and an update with the totals when it finishes.
 

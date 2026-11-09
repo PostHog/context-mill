@@ -7,11 +7,14 @@
     "claude-code:claude-opus-5-5,claude-sonnet-5-5",
     "codex:gpt-6-astra,gpt-6.1-sol"
   ],
-  "defaultRunAgent": "claude-code:claude-opus-5-5",
+  "runAgents": [
+    "claude-code:claude-opus-5-5",
+    "codex:gpt-6.1-sol"
+  ],
   "skills": [
     {
       "skill": "instrument-integration",
-      "weeklySample": 8,
+      "sample": 8,
       "prompt": "Add PostHog to the app in {app}/.",
       "appsRoot": "apps/basic-integration",
       "criteria": [
@@ -59,7 +62,7 @@
     },
     {
       "skill": "instrument-product-analytics",
-      "weeklySample": 8,
+      "sample": 8,
       "prompt": "Add PostHog product analytics to the app in {app}/.",
       "appsRoot": "apps/basic-integration",
       "criteria": [
@@ -107,7 +110,7 @@
     },
     {
       "skill": "instrument-error-tracking",
-      "weeklySample": 6,
+      "sample": 6,
       "prompt": "Set up PostHog error tracking in the app in {app}/.",
       "appsRoot": "apps/error-tracking",
       "criteria": [
@@ -149,7 +152,7 @@
     },
     {
       "skill": "instrument-feature-flags",
-      "weeklySample": 2,
+      "sample": 2,
       "prompt": "Add a PostHog feature flag to the app in {app}/ and use it to gate one feature.",
       "appsRoot": "apps/feature-flags",
       "criteria": [
@@ -163,7 +166,7 @@
     },
     {
       "skill": "instrument-llm-analytics",
-      "weeklySample": 2,
+      "sample": 2,
       "prompt": "Add PostHog AI observability to the LLM calls in the app in {app}/.",
       "appsRoot": "apps/ai-observability",
       "criteria": [
@@ -182,7 +185,7 @@
     },
     {
       "skill": "instrument-logs",
-      "weeklySample": 2,
+      "sample": 2,
       "prompt": "Send the logs from the app in {app}/ to PostHog.",
       "appsRoot": "apps/basic-integration",
       "criteria": [
@@ -205,7 +208,7 @@
     },
     {
       "skill": "instrument-metrics",
-      "weeklySample": 2,
+      "sample": 2,
       "prompt": "Add PostHog metrics to the app in {app}/.",
       "appsRoot": "apps/basic-integration",
       "criteria": [
@@ -228,7 +231,7 @@
     },
     {
       "skill": "instrument-tracing",
-      "weeklySample": 2,
+      "sample": 2,
       "prompt": "Add PostHog tracing to the app in {app}/.",
       "appsRoot": "apps/basic-integration",
       "criteria": [
