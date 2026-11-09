@@ -129,11 +129,9 @@ The Event Webhook stops getting events for a site that moves. PostHog records th
 | `bounce` | `$workflows_email_bounced` |
 | `spamreport` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked` |
+| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `dropped` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `deferred`, `unsubscribe`, `group_unsubscribe`, `group_resubscribe` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no SendGrid `sg_message_id` and no `custom_args`. A site whose events a handler matches by message id or by a custom arg stays on SendGrid. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 

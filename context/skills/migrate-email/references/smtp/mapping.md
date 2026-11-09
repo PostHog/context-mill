@@ -41,7 +41,8 @@ A send through SMTP has no idempotency key, so the moved site sends none either.
 **Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. An SMTP server tracks neither opens nor clicks on its own, but the provider behind the host may, by an account, domain or server setting. Ask the person once, for each host the moved sites use, whether it tracked opens and clicks of these sends:
 
 - Opens tracked: the site moves. When the host tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
-- Opens untracked, including a host with no tracking provider behind it, such as the company's own mail server: the site stays, and the reason is `<host> tracks no opens`. PostHog would add an open pixel the email never had.
+- A host that can't track opens, with no tracking provider behind it, such as the company's own mail server: ask the person once, for all such hosts, whether PostHog may add its open pixel to emails that never had one. Yes: the site moves, and the report says that PostHog now counts its opens. No, or no answer: the site stays, and the reason is `<host> tracks no opens`.
+- Open tracking turned off at the provider behind the host: the site stays, and the reason is `<host> tracks no opens`. PostHog would add an open pixel the email never had.
 - The person can't say whether it tracked opens: the site stays, and the reason is `<host> tracking not checked`.
 
 ## Calls
@@ -110,11 +111,9 @@ SMTP has no webhooks, so moving a site stops no SMTP event. The provider behind 
 | Bounced, hard or permanent | `$workflows_email_bounced` |
 | Spam complaint | `$workflows_email_blocked` |
 | Opened | `$workflows_email_opened` |
-| Clicked | `$workflows_email_link_clicked` |
+| Clicked | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | Dropped or suppressed | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | Deferred, soft bounce, unsubscribe, and other events | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Message-ID of the SMTP message, no id of the provider behind the host, and no header the send set. A site whose events a handler matches by the Message-ID, by that provider's message id, or by a header stays on SMTP. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
