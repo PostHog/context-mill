@@ -144,6 +144,34 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/`""` renders as nothing, not as the fallback/);
         });
 
+        it('writes a JavaScript or TypeScript email as a React Email component, with string-built HTML as the fallback', () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/1\. \*\*React Email\*\*, for JavaScript or TypeScript\. It is the default there, also when the app has no React Email package yet/);
+            expect(guide).toMatch(/Add `react-email` as a dependency/);
+            expect(guide).toMatch(/Never add `@react-email\/components`: it is deprecated/);
+            expect(guide).toMatch(/Use the string-built `node` row only when the part that sends can't take React Email/);
+            expect(guide).not.toMatch(/Add no template engine or other dependency\./);
+        });
+
+        it('renders the HTML and the text part from one component, with a preview of every email', () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/`render\(element\)`[^\n]*`render\(element, \{ plainText: true \}\)`, from the same element/);
+            expect(guide).toMatch(/`email dev --dir emails`/);
+            expect(guide).toMatch(/`@react-email\/ui` as a dev dependency/);
+            expect(guide).toMatch(/only when it has a default export, and skips every folder whose name starts with `_`/);
+            expect(guide).toMatch(/Set `PreviewProps` on the component/);
+            expect(guide).toMatch(/Greet the recipient by the name the app has for them/);
+            expect(guide).toMatch(/### Before and after/);
+            expect(read('9-report.md')).toMatch(/look at it with the preview script/);
+        });
+
+        it('imports render from react-email from version 6 on', () => {
+            expect(read('resend/mapping.md')).toMatch(/`import \{ render \} from 'react-email'` from version 6 on/);
+            expect(read('rewrite-node.md')).toMatch(/`render` from `react-email` from version 6 on/);
+        });
+
         it("lets the site's own from, reply-to and subject win over the template's", () => {
             const mapping = read('resend/mapping.md');
 

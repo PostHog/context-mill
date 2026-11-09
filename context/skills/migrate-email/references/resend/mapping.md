@@ -105,7 +105,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 ### Node.js
 
 - `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload.
-- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
+- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `render` from the app's React Email package: `import { render } from 'react-email'` from version 6 on, or `from '@react-email/render'` before it. Keep a `text` the site already passes.
 - An HTTP body's snake_case fields become camelCase: `reply_to` becomes `replyTo`.
 - posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working. `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working, and `error.message` and `error.statusCode` keep their names.
 
