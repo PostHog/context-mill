@@ -42,7 +42,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 
 - Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
-- `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays.
+- `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays, and the reason is `conflicting open tracking`.
 
 When a site sets neither `o:tracking-opens` nor `o:tracking`, ask the person once for each sending domain whether its open and click tracking are on, or read them as `account.md` says. When the domain's open tracking is not given, the site stays, and the reason is `domain tracking not checked`.
 
@@ -158,10 +158,8 @@ Mailgun's webhooks stop getting events for a site that moves. PostHog records th
 | `permanent_fail` for an address on a suppression list | none. PostHog refuses the send instead, with `recipient_suppressed` |
 | `complained` | `$workflows_email_blocked` |
 | `opened` | `$workflows_email_opened` |
-| `clicked` | `$workflows_email_link_clicked` |
+| `clicked` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `temporary_fail`, `unsubscribed` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Mailgun message id, no `user-variables`, and no Mailgun tags. A site whose events a handler matches by `message.headers["message-id"]`, by a `v:` or `X-Mailgun-Variables` value, or by an `o:tag` stays on Mailgun. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
