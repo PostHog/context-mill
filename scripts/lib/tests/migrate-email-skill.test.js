@@ -276,6 +276,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toContain('`message-categories-list`');
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
             expect(inventory).toMatch(/`transactional`, or the key of the marketing category/);
+            expect(inventory).toMatch(/An email that a PostHog workflow sent keeps the category of its email step/);
         });
 
         it.each(Object.entries(SEND_CATEGORY))('passes the category key in the %s code send and names an opted-out recipient', (sdk, field) => {
