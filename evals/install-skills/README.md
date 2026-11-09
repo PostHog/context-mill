@@ -37,6 +37,18 @@ The wording follows wizard-workbench `services/pr-evaluator/prompts/`. One item 
 
 Running all 145 evals costs about 16 Gauge credits each. The weekly run takes `weeklySample` apps per skill, 32 runs in total. It walks each skill's apps one framework at a time, so a week spreads across frameworks, and the window moves each week until every app has run.
 
+## The delivery layer
+
+A second layer checks that an event really reaches PostHog. It covers `instrument-product-analytics` on six server-side apps.
+
+- **Setup.** A Gauge setup script, `scripts/delivery-setup.ts`, reads the eval project's token and host through the PostHog MCP and hands them to the agent as `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST`.
+- **Task.** The prompt adds: run the app and confirm one of its events reaches PostHog.
+- **Grading.** Three more criteria in `criteria/delivery.json`: the app ran, a PostHog query returned this run's event, and the app used the provided credentials.
+
+The layer is off until `delivery.mcp` and `delivery.projectId` in `evals.json` name a PostHog MCP server in Gauge that is signed in to a project made only for evals. The setup script refuses any other project.
+
+Mobile apps can't run in Gauge's VM, and browser-only apps need a headless browser the VM doesn't have, so both stay on the rubric.
+
 ## Run it
 
 Sign in once with `npm install -g @withgauge/cli` and `gauge auth login`.
@@ -58,7 +70,12 @@ Gauge stages a skill only as `name@label`, so `sync` pins the newest label of ea
 
 `.github/workflows/install-skill-evals.yml` runs the sample every Monday. Run it by hand from the Actions tab to pick the sample or everything, one skill, matching apps, and the agent. The results table lands in the job summary.
 
-The workflow needs a `GAUGE_API_TOKEN` repository secret holding an org API key for the `posthog-main` Gauge org.
+Each run also posts to Slack the way wizard-workbench's Wizard CI does: one message when it starts, a thread reply per skill with the runs that failed a criterion, and an update with the totals when it finishes.
+
+The workflow needs these repository secrets:
+
+- **`GAUGE_API_TOKEN`.** An org API key for the `posthog-main` Gauge org.
+- **`SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID`.** The same bot and channel wizard-workbench posts to. Without them the run skips Slack.
 
 ## Read a failure
 

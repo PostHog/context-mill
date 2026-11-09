@@ -249,5 +249,25 @@
         "rails/fizzy"
       ]
     }
-  ]
+  ],
+  "delivery": {
+    "comment": "Second layer: the agent gets a real project token, runs the app, and must show an event arriving in PostHog. Off until mcp and projectId are set.",
+    "mcp": null,
+    "mcpServer": "mcp.posthog.com",
+    "projectId": null,
+    "promptSuffix": " Then run the app and confirm one of its events reaches PostHog.",
+    "evals": [
+      {
+        "skill": "instrument-product-analytics",
+        "apps": [
+          "django/django3-saas",
+          "flask/flask3-social-media",
+          "fastapi/fastapi3-ai-saas",
+          "javascript-node/express-todo",
+          "laravel/laravel12-saas",
+          "next-js/15-app-router-todo"
+        ]
+      }
+    ]
+  }
 }
