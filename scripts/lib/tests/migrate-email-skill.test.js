@@ -276,9 +276,9 @@ describe('migrate-email skill', () => {
             expect(inventory).toContain('`message-categories-list`');
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
             expect(inventory).toMatch(/`transactional`, or the key of the marketing category/);
-            expect(inventory).toMatch(/The email keeps the category of its email step: read the step.s `message_category_id` with `workflows-get`/);
-            expect(inventory).toMatch(/or when the person says it is/);
-            expect(inventory).toMatch(/When the person names an email that a PostHog workflow sends/);
+            expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` with `workflows-get`/);
+            expect(inventory).toMatch(/A step without a category, or with a transactional one, makes the site `transactional`/);
+            expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
             for (const reason of ['no unsubscribe link', 'no marketing category in PostHog', 'no message category tools']) expect(inventory).toContain(`the reason is \`${reason}\``);
             expect(inventory).toMatch(/A category whose key is `transactional` can't be named by a send/);
         });
@@ -295,6 +295,7 @@ describe('migrate-email skill', () => {
 
             expect(rewriteStep).toMatch(/A site whose `category` is a marketing key passes it as the send's category/);
             expect(rewriteStep).toMatch(/A `transactional` site leaves the category out/);
+            expect(rewriteStep).toMatch(/Its unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
             for (const code of ['unknown_category', 'unsubscribe_link_required', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
         });
@@ -313,6 +314,7 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
+            expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(turn off its email step in PostHog when the code deploys, or both send it\)/);
             expect(read('9-report.md')).toMatch(/check that it is transactional, or in the site's marketing category/);
             expect(read('resend/mapping.md')).toMatch(/makes it transactional, or files it under the site's marketing category/);
         });
