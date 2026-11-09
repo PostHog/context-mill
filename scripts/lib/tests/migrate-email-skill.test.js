@@ -173,6 +173,11 @@ describe('migrate-email skill', () => {
             expect(read('rewrite-node.md')).toMatch(/Add `@react-email\/render` when the app has an older React Email package that exports no `render`/);
         });
 
+        it("names each line only the provider's own text part had, so the person decides whether the email needs it", () => {
+            expect(read('template-to-code.md')).toMatch(/When the provider template had its own text part, compare it with the rendered one/);
+            expect(read('9-report.md')).toMatch(/each line only the provider's text part had/);
+        });
+
         it('lets a React Email component add the text part in the mapping and in step 7', () => {
             expect(read('resend/mapping.md')).toMatch(/A template without `text` sends `html` only, unless the email is a React Email component/);
             expect(read('7-rewrite.md')).toMatch(/and the text part a React Email component renders/);
