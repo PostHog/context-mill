@@ -174,7 +174,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 
 ## Webhooks
 
-Loops' webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+Loops' webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Loops event | PostHog event |
 |---|---|
