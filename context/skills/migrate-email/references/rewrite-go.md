@@ -27,7 +27,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 ## The send
 
-- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `CaptureEngagement` (`posthog.Ptr(false)`), and `TrackOpensAndClicks` optional. `TrackOpensAndClicks: posthog.Ptr(false)` turns off open and click tracking.
+- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `CaptureEngagement` (`posthog.Ptr(false)`), and `TrackOpensAndClicks` optional. `TrackOpensAndClicks: posthog.Ptr(false)` sends without PostHog's open pixel.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.

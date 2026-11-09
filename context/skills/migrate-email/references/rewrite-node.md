@@ -30,7 +30,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## The send
 
-- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `captureEngagement`, and `trackOpensAndClicks` optional. `trackOpensAndClicks: false` turns off open and click tracking.
+- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `captureEngagement`, and `trackOpensAndClicks` optional. `trackOpensAndClicks: false` sends without PostHog's open pixel.
 - `replyTo` takes one address or a list of addresses.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
