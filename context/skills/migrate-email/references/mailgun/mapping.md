@@ -29,7 +29,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
-| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | `captureEngagement: false`, or no field | See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
+| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | none: PostHog adds its open pixel and counts no clicks | Mailgun sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
 | An `Idempotency-Key` request header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
 | `recipient-variables`, on a send with one address in `to` and its own `subject`, `text`, or `html` | none: the code puts the values into the subject and the content before the send | `to` holds more than one address, or the send sets `template`. Otherwise Mailgun replaced each `%recipient.<name>%` in the subject, the text, and the HTML with the value of `<name>` in the entry of the `to` address. The code does the same with a plain string replace, under the escaping rule of `template-to-code.md`, and sends the result. Mailgun's docs don't say whether it escaped the value, so escape it in the HTML, unless the code builds it as HTML. A name the entry can lack, or a value that can be anything but a string or a whole number, keeps the site: the docs don't say what Mailgun writes for it. Go's `AddRecipientAndVariables` sets `to` and `recipient-variables` together |
@@ -38,14 +38,13 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always. PostHog's send doesn't take it yet |
 | Any field this table doesn't name, such as `sender` | none | Always. The reason names the field |
 
-**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Mailgun tracks each one only when it is on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. A send that sets one of them to `no` or `false` turns that tracking off, even on a domain with tracking on, such as a password reset with `o:tracking-clicks: 'no'`. Work out, for opens and for clicks, whether Mailgun tracked them:
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Mailgun tracks each one only when it is on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. A send that sets one of them to `no` or `false` turns that tracking off, even on a domain with tracking on, such as a password reset with `o:tracking-clicks: 'no'`. Work out, for opens and for clicks, whether Mailgun tracked them:
 
-- Both on: the site moves with no `captureEngagement` field.
-- Both off: the site moves with `captureEngagement: false`.
-- One on and one off, click tracking set to `htmlonly`, or `o:tracking` that disagrees with `o:tracking-opens` or `o:tracking-clicks` on the same send: the site stays.
-- The installed SDK has no `captureEngagement`, and Mailgun tracked neither: the site stays.
+- Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays.
 
-When a site sets no field for one of them, ask the person once for each sending domain whether its open and click tracking are on, or read them as `account.md` says. When the answer is not given, the site stays, and the reason is `domain tracking not checked`.
+When a site sets neither `o:tracking-opens` nor `o:tracking`, ask the person once for each sending domain whether its open and click tracking are on, or read them as `account.md` says. When the domain's open tracking is not given, the site stays, and the reason is `domain tracking not checked`.
 
 A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header the code passes. A moved site without one sends none either: PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -117,7 +116,7 @@ Mailgun templates are Handlebars, with the block helpers `if`, `unless`, `each`,
 - Any other helper, a partial (`{{> name}}`), and a `%recipient%`, `%recipient.<name>%`, `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` tag keep the template on Mailgun: Mailgun fills the tags at send time, from the batch or from its unsubscribe lists. So does a header that holds `{{`: the docs don't say whether Mailgun renders a header.
 - A `from`, `subject`, or `h:Reply-To` that the site sets wins over the version's header, as Mailgun's docs say. When neither the site nor the version sets a sender, Mailgun sent from `postmaster@<sending domain>`: write that address in the site's `from` column.
 - Mailgun's docs don't name a host for images that its template editor uploads. List each image whose URL has `mailgun` in its host, as `template-to-code.md` says.
-- Open and click tracking move as "Tracking" says, as for any other site: a template brought into the code takes `captureEngagement`.
+- A template site follows "Tracking" like any other site: it stays when Mailgun sent it with opens untracked.
 
 ### Templates made in PostHog
 
@@ -145,11 +144,11 @@ Only for a template the person asks to make in PostHog, as Step 3 says. The pers
 - Any other helper, `{{@index}}`, a partial, a block inside `{{#each}}` that reads a value outside the loop with `../`, and `%recipient.<name>%` or an unsubscribe variable keep the template on Mailgun.
 - The site's values, as "Templates" says, become `templateData`.
 - The PostHog template carries its own sender, reply-to address, and subject. Tell the person to put the version's `From`, `Reply-To`, and `Subject` headers into it, for each one the site doesn't set. A site that sets `from`, `h:Reply-To`, or `subject` next to `template` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `o:tracking`, `o:tracking-opens`, or `o:tracking-clicks` next to `template` stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. So does a template site whose sending domain has open or click tracking off, as "Tracking" says: the template form takes no `captureEngagement`.
+- A template site follows "Tracking" like any other site: it stays when Mailgun sent it with opens untracked, or its open tracking isn't checked.
 
 ## Webhooks
 
-Mailgun's webhooks stop getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+Mailgun's webhooks stop getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Mailgun event | PostHog event |
 |---|---|
@@ -161,6 +160,8 @@ Mailgun's webhooks stop getting events for a site that moves. PostHog records th
 | `opened` | `$workflows_email_opened` |
 | `clicked` | `$workflows_email_link_clicked` |
 | `temporary_fail`, `unsubscribed` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Mailgun message id, no `user-variables`, and no Mailgun tags. A site whose events a handler matches by `message.headers["message-id"]`, by a `v:` or `X-Mailgun-Variables` value, or by an `o:tag` stays on Mailgun. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
@@ -186,7 +187,7 @@ Drop the domain argument and the Mailgun client of the call.
 - `from` stays as it is. When the code built it from a name and an address, such as with a builder setter that takes both, write `'Name <address>'`, with the name in double quotes when it holds a comma, a quote, or another special character, such as `'"Acme, Inc." <hello@mail.example.com>'`.
 - `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `h:Reply-To` becomes `replyTo`.
-- Tracking becomes `captureEngagement: false` when Mailgun tracked neither opens nor clicks, as "Tracking" says, whether the send turned them off or the domain did. Drop the tracking fields. When both were on, drop them and set nothing. Note in the plan row each site that got `captureEngagement: false` from the domain's setting.
+- The tracking fields, `o:tracking`, `o:tracking-opens`, and `o:tracking-clicks`, and their setters are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
 - `recipient-variables` on a send to one address: replace each `%recipient.<name>%` in the subject, the text, and the HTML with the value of that address's entry before the send, as the "Fields" table says, and drop `recipient-variables`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
