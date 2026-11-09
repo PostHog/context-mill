@@ -164,11 +164,9 @@ Mailjet's Event API stops getting events for a site that moves. PostHog records 
 | `bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked` |
+| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `blocked` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `unsub` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog also records `$workflows_email_sent` when it sends, which has no Mailjet event.
 

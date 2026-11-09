@@ -177,11 +177,9 @@ A Brevo webhook stops getting events for a site that moves. PostHog records the 
 | `hard_bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
 | `opened`, `unique_opened` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked` |
+| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `blocked`, `invalid_email` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `soft_bounce`, `deferred`, `unsubscribed`, `proxy_open`, `unique_proxy_open` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no Brevo `message-id`, no `tags`, and no `X-Mailin-custom`. A site whose events a handler matches by message id, by a tag, or by `X-Mailin-custom` stays on Brevo. For every other handler, such as one that matches by the recipient's address, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 

@@ -144,10 +144,8 @@ Postmark stops sending events for a site that moves. PostHog records the events 
 | `Bounce` | `$workflows_email_bounced` |
 | `SpamComplaint` | `$workflows_email_blocked` |
 | `Open` | `$workflows_email_opened` |
-| `Click` | `$workflows_email_link_clicked` |
+| `Click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `SubscriptionChange` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 Postmark has no event for an accepted send. PostHog records `$workflows_email_sent` for each moved send. A send to an inactive address got a `406` error from Postmark, and Postmark posted no webhook for it. PostHog refuses it with `recipient_suppressed`.
 

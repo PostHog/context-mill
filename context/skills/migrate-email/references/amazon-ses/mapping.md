@@ -143,10 +143,8 @@ The handlers stop getting events for a site that moves: Amazon SES no longer sen
 | `Bounce` | `$workflows_email_bounced` |
 | `Complaint` | `$workflows_email_blocked` |
 | `Open` | `$workflows_email_opened` |
-| `Click` | `$workflows_email_link_clicked` |
+| `Click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
 | `Reject`, `Rendering Failure`, `DeliveryDelay`, `Subscription` | none |
-
-PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 A bounce to an address on the account-level suppression list comes as a `Bounce` with `bounceSubType` `OnAccountSuppressionList`. PostHog refuses that send instead, with `recipient_suppressed`.
 
