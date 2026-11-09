@@ -1,0 +1,253 @@
+{
+  "org": "posthog-main",
+  "repo": "https://github.com/PostHog/wizard-workbench",
+  "ref": "6c3c48af04b31d3e5da05826bb3e197df33c6f8a",
+  "tag": "install-skills",
+  "agents": [
+    "claude-code:claude-opus-5-5,claude-sonnet-5-5",
+    "codex:gpt-6-astra,gpt-6.1-sol"
+  ],
+  "defaultRunAgent": "claude-code:claude-opus-5-5",
+  "skills": [
+    {
+      "skill": "instrument-integration",
+      "weeklySample": 8,
+      "prompt": "Add PostHog to the app in {app}/.",
+      "appsRoot": "apps/basic-integration",
+      "criteria": [
+        "common",
+        "instrument-integration"
+      ],
+      "apps": [
+        "android/Jetchat",
+        "angular/angular-saas",
+        "astro/astro-hybrid-marketing",
+        "astro/astro-ssr-docs",
+        "astro/astro-static-marketing",
+        "astro/astro-view-transitions-marketing",
+        "django/django3-saas",
+        "fastapi/fastapi3-ai-saas",
+        "flask/flask3-social-media",
+        "javascript-node/express-todo",
+        "javascript-node/fastify-blog",
+        "javascript-node/hono-links",
+        "javascript-node/koa-notes",
+        "javascript-node/native-http-contacts",
+        "javascript-web/saas-dashboard",
+        "laravel/laravel12-saas",
+        "next-js/15-app-router-saas",
+        "next-js/15-app-router-todo",
+        "next-js/15-pages-router-saas",
+        "next-js/15-pages-router-todo",
+        "nuxt/movies-nuxt-3-6",
+        "nuxt/movies-nuxt-4",
+        "python/meeting-summarizer",
+        "rails/fizzy",
+        "react-native/expo-react-native-hacker-news",
+        "react-native/react-native-saas",
+        "react-router/react-router-v7-project",
+        "react-router/rrv7-starter",
+        "react-router/saas-template",
+        "react-router/shopper",
+        "sveltekit/CMSaasStarter",
+        "swift/hackers-ios",
+        "tanstack-router/tanstack-router-code-based-saas",
+        "tanstack-router/tanstack-router-file-based-saas",
+        "tanstack-start/tanstack-start-saas",
+        "vue/movies"
+      ]
+    },
+    {
+      "skill": "instrument-product-analytics",
+      "weeklySample": 8,
+      "prompt": "Add PostHog product analytics to the app in {app}/.",
+      "appsRoot": "apps/basic-integration",
+      "criteria": [
+        "common",
+        "instrument-product-analytics"
+      ],
+      "apps": [
+        "android/Jetchat",
+        "angular/angular-saas",
+        "astro/astro-hybrid-marketing",
+        "astro/astro-ssr-docs",
+        "astro/astro-static-marketing",
+        "astro/astro-view-transitions-marketing",
+        "django/django3-saas",
+        "fastapi/fastapi3-ai-saas",
+        "flask/flask3-social-media",
+        "javascript-node/express-todo",
+        "javascript-node/fastify-blog",
+        "javascript-node/hono-links",
+        "javascript-node/koa-notes",
+        "javascript-node/native-http-contacts",
+        "javascript-web/saas-dashboard",
+        "laravel/laravel12-saas",
+        "next-js/15-app-router-saas",
+        "next-js/15-app-router-todo",
+        "next-js/15-pages-router-saas",
+        "next-js/15-pages-router-todo",
+        "nuxt/movies-nuxt-3-6",
+        "nuxt/movies-nuxt-4",
+        "python/meeting-summarizer",
+        "rails/fizzy",
+        "react-native/expo-react-native-hacker-news",
+        "react-native/react-native-saas",
+        "react-router/react-router-v7-project",
+        "react-router/rrv7-starter",
+        "react-router/saas-template",
+        "react-router/shopper",
+        "sveltekit/CMSaasStarter",
+        "swift/hackers-ios",
+        "tanstack-router/tanstack-router-code-based-saas",
+        "tanstack-router/tanstack-router-file-based-saas",
+        "tanstack-start/tanstack-start-saas",
+        "vue/movies"
+      ]
+    },
+    {
+      "skill": "instrument-error-tracking",
+      "weeklySample": 6,
+      "prompt": "Set up PostHog error tracking in the app in {app}/.",
+      "appsRoot": "apps/error-tracking",
+      "criteria": [
+        "common",
+        "instrument-error-tracking"
+      ],
+      "apps": [
+        "android",
+        "go",
+        "ios-spm",
+        "no-posthog-angular",
+        "no-posthog-cloudflare-worker",
+        "no-posthog-django",
+        "no-posthog-electron",
+        "no-posthog-express",
+        "no-posthog-express-no-build",
+        "no-posthog-express-tsc",
+        "no-posthog-fastapi-uv",
+        "no-posthog-fastify",
+        "no-posthog-hono",
+        "no-posthog-javascript-web",
+        "no-posthog-koa",
+        "no-posthog-nestjs",
+        "no-posthog-next",
+        "no-posthog-next-14-app",
+        "no-posthog-next-15-pages",
+        "no-posthog-next-16-app",
+        "no-posthog-node-http",
+        "no-posthog-nuxt",
+        "no-posthog-react-router",
+        "no-posthog-spring-boot",
+        "no-posthog-sveltekit",
+        "no-posthog-vue",
+        "python-flask",
+        "react-native",
+        "react-native-expo",
+        "rust"
+      ]
+    },
+    {
+      "skill": "instrument-feature-flags",
+      "weeklySample": 2,
+      "prompt": "Add a PostHog feature flag to the app in {app}/ and use it to gate one feature.",
+      "appsRoot": "apps/feature-flags",
+      "criteria": [
+        "common",
+        "instrument-feature-flags"
+      ],
+      "apps": [
+        "django/django3-saas",
+        "next-js/15-app-router-saas"
+      ]
+    },
+    {
+      "skill": "instrument-llm-analytics",
+      "weeklySample": 2,
+      "prompt": "Add PostHog AI observability to the LLM calls in the app in {app}/.",
+      "appsRoot": "apps/ai-observability",
+      "criteria": [
+        "instrument-llm-analytics"
+      ],
+      "apps": [
+        "anthropic",
+        "google-adk",
+        "groq",
+        "manual-capture",
+        "openai",
+        "openai-agents",
+        "opentelemetry",
+        "vercel-ai"
+      ]
+    },
+    {
+      "skill": "instrument-logs",
+      "weeklySample": 2,
+      "prompt": "Send the logs from the app in {app}/ to PostHog.",
+      "appsRoot": "apps/basic-integration",
+      "criteria": [
+        "common",
+        "instrument-logs"
+      ],
+      "apps": [
+        "django/django3-saas",
+        "fastapi/fastapi3-ai-saas",
+        "flask/flask3-social-media",
+        "javascript-node/express-todo",
+        "javascript-node/fastify-blog",
+        "javascript-node/hono-links",
+        "javascript-node/koa-notes",
+        "javascript-node/native-http-contacts",
+        "laravel/laravel12-saas",
+        "python/meeting-summarizer",
+        "rails/fizzy"
+      ]
+    },
+    {
+      "skill": "instrument-metrics",
+      "weeklySample": 2,
+      "prompt": "Add PostHog metrics to the app in {app}/.",
+      "appsRoot": "apps/basic-integration",
+      "criteria": [
+        "common",
+        "instrument-metrics"
+      ],
+      "apps": [
+        "django/django3-saas",
+        "fastapi/fastapi3-ai-saas",
+        "flask/flask3-social-media",
+        "javascript-node/express-todo",
+        "javascript-node/fastify-blog",
+        "javascript-node/hono-links",
+        "javascript-node/koa-notes",
+        "javascript-node/native-http-contacts",
+        "laravel/laravel12-saas",
+        "python/meeting-summarizer",
+        "rails/fizzy"
+      ]
+    },
+    {
+      "skill": "instrument-tracing",
+      "weeklySample": 2,
+      "prompt": "Add PostHog tracing to the app in {app}/.",
+      "appsRoot": "apps/basic-integration",
+      "criteria": [
+        "common",
+        "instrument-tracing"
+      ],
+      "apps": [
+        "django/django3-saas",
+        "fastapi/fastapi3-ai-saas",
+        "flask/flask3-social-media",
+        "javascript-node/express-todo",
+        "javascript-node/fastify-blog",
+        "javascript-node/hono-links",
+        "javascript-node/koa-notes",
+        "javascript-node/native-http-contacts",
+        "laravel/laravel12-saas",
+        "python/meeting-summarizer",
+        "rails/fizzy"
+      ]
+    }
+  ]
+}
