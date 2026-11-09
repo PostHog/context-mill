@@ -22,7 +22,7 @@ Read the rewrite file of each language that has a site that moves, and only thos
 
 ## What every SDK's send takes and answers
 
-- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to addresses, and engagement capture, which is on unless the send turns it off. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
+- Each call sends one email to one `to` address, in one of two forms. The code form takes a template key, a subject, and HTML, text, or both, with an optional from address, reply-to addresses, and engagement capture, which is on unless the send turns it off. Engagement capture decides only whether the email's engagement events land on the recipient's person. Turning it off doesn't change the email: PostHog still adds its open pixel and rewrites links to count opens and clicks, so a provider's open or click tracking setting doesn't map to it. The template form takes a template ID with optional template data, for a template made in PostHog, and none of the code form's fields.
 - Both forms take a distinct ID and an idempotency key.
 - No SDK takes `cc`, `bcc`, attachments, headers, tags, a send time, or several `to` addresses yet. The provider's `mapping.md` keeps a site that sets one.
 - The message ID in the answer is PostHog's, not the provider's.
@@ -71,7 +71,7 @@ Configure one server-side client for email in each language that has a site that
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its sent, opened and clicked events when engagement capture is on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side PostHog captures.
 - At each site, pass the same ID for the recipient, such as `user.id`. Follow the recipient back through the callers when the site only has the address.
