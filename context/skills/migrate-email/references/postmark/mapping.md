@@ -20,21 +20,20 @@ Postmark fields are written in their HTTP names here, such as `HtmlBody`. Python
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `Metadata` | none | Always: no PostHog SDK takes tags yet |
 | `Tag` | none | Always: no PostHog SDK takes tags yet |
-| Open and link tracking: `TrackOpens`, `TrackLinks`, or neither | `captureEngagement: false`, or no field | See "Tracking" below |
+| Open and link tracking: `TrackOpens`, `TrackLinks`, or neither | none: PostHog adds its open pixel and counts no clicks | Postmark sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below |
 | `MessageStream: 'outbound'` | none | Never. `outbound` is the default transactional stream |
 | `MessageStream` naming any other stream | none | Always: the stream has its own settings, suppressions, and webhooks at Postmark |
 
 Count only the fields the code sets.
 
-**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Postmark tracks opens when the send's `TrackOpens` is `true`, or, when the send leaves it out or sets it to `null`, when its server's open tracking is on. It tracks links when the send's `TrackLinks` is anything but `None`, or, when the send leaves it out, when its server's link tracking is on. A new server tracks neither, until the person turns them on in its settings. `postmarker` sends `TrackLinks: "None"` when the code doesn't pass it, from `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)`: links of those sends were not tracked. So does the .NET SDK: the constructor of `PostmarkMessage` and `TemplatedPostmarkMessage` sets `TrackLinks` to `LinkTrackingOptions.None`, so a .NET SDK message whose code never sets `TrackLinks` sends `None`, and its links were not tracked. That includes the positional `SendMessageAsync(from, to, subject, textBody, htmlBody)`, which builds a `PostmarkMessage` and never sets it. A .NET message that sets `TrackLinks = null` sends no value and follows the server, and so does a .NET send through a plain HTTP client that leaves the field out. Work out, for opens and for links, whether Postmark tracked them:
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Postmark tracks opens when the send's `TrackOpens` is `true`, or, when the send leaves it out or sets it to `null`, when its server's open tracking is on. It tracks links when the send's `TrackLinks` is anything but `None`, or, when the send leaves it out, when its server's link tracking is on. A new server tracks neither, until the person turns them on in its settings. `postmarker` sends `TrackLinks: "None"` when the code doesn't pass it, from `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)`: links of those sends were not tracked. So does the .NET SDK: the constructor of `PostmarkMessage` and `TemplatedPostmarkMessage` sets `TrackLinks` to `LinkTrackingOptions.None`, so a .NET SDK message whose code never sets `TrackLinks` sends `None`, and its links were not tracked. That includes the positional `SendMessageAsync(from, to, subject, textBody, htmlBody)`, which builds a `PostmarkMessage` and never sets it. A .NET message that sets `TrackLinks = null` sends no value and follows the server, and so does a .NET send through a plain HTTP client that leaves the field out. Work out, for opens and for links, whether Postmark tracked them:
 
-- Both tracked: the site moves with no field. When `TrackLinks` was `HtmlOnly` or `TextOnly`, note in the plan row that PostHog tracks links in both parts.
-- Neither tracked: the site moves with `captureEngagement: false`.
-- One tracked and one not, such as a `postmarker` send on a server with open tracking on: the site stays, because `captureEngagement: false` turns off both.
-- The installed SDK has no `captureEngagement`, and Postmark tracked neither: the site stays.
-- A template site that moves to a template made in PostHog, and that Postmark sent with one of them untracked, stays, as "Templates made in PostHog" says. A template brought into the code follows the bullets above.
+- Opens tracked: the site moves. When Postmark tracked its links too, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
-Opens follow the server's setting whenever a site leaves out `TrackOpens` or sets it to `null`, in every SDK, `postmarker` and .NET included, except PHP's `sendEmailModel` with a `PostmarkMessage`: the model sets `TrackOpens` to `false` unless the code sets it, and sends that, so its opens were not tracked. Links follow it when a site leaves out `TrackLinks` or sets it to `null`, except in a `postmarker` send and a .NET SDK message that never sets it, whose links were not tracked. When either one follows the server, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When the answer is not given, the site stays, and the reason is `server tracking not checked`.
+Link tracking alone never keeps a site, and never adds a field. A template site follows these bullets too, whether it moves into the code or to a template made in PostHog.
+
+Opens follow the server's setting whenever a site leaves out `TrackOpens` or sets it to `null`, in every SDK, `postmarker` and .NET included, except PHP's `sendEmailModel` with a `PostmarkMessage`: the model sets `TrackOpens` to `false` unless the code sets it, and sends that, so its opens were not tracked. Links follow it when a site leaves out `TrackLinks` or sets it to `null`, except in a `postmarker` send and a .NET SDK message that never sets it, whose links were not tracked. When either one follows the server, ask the person once for each server the moved sites send from whether its open tracking and link tracking are on, or read them as `account.md` says under "Tracking settings". When a site's opens follow the server and the answer for open tracking is not given, the site stays, and the reason is `server tracking not checked`. An unanswered link tracking setting keeps no site.
 
 A Postmark send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -101,7 +100,7 @@ Postmark templates are Mustachio. In the code:
 - With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches, as Postmark did when it sent the email, and keep the `<style>` block for the rules a tag can't hold, such as `@media`. Do it once, while you write the email: the code adds no inliner. Postmark's docs don't say whether it kept the `<style>` block, so note in the plan row that the CSS was inlined in the code, for the person to compare a test send. A site that sends `InlineCss: false`, or `false` for PHP's `$inlineCss`, keeps the HTML as it is.
 - Postmark hosts no images for templates: its editor has no upload, and its docs name no image host. A template's images are on the person's own hosts, so none needs listing.
 - A Postmark template holds no sender or reply-to address, and a template send always sets `From`. The send takes the site's own `From` and `ReplyTo`. Its subject comes only from the template: the template routes take no `Subject`.
-- A template site follows "Tracking" like any other site: it moves with no field when Postmark tracked both opens and links, and with `captureEngagement: false` when it tracked neither.
+- A template site follows "Tracking" like any other site: it stays when Postmark sent it with opens untracked.
 - No single send fills Postmark's template language into its own content: `POST /email` and the batch route send `Subject`, `HtmlBody`, and `TextBody` as they are, so a `{{name}}` in them was mailed as written, and nothing about it changes. Only the Bulk API fills its own content with each message's `TemplateModel`, and a bulk call stays, as "Calls" says.
 
 ### Templates made in PostHog
@@ -132,12 +131,12 @@ Postmark's Mustachio becomes Liquid in the PostHog template. Values move under `
 - `{{{ pm:unsubscribe }}}` keeps the template on Postmark: it is Postmark's unsubscribe link.
 - An inverted section `{{^items}}` on a list or an object, a section `{{#items}}` on a list without `each`, a name inside `{{#person}}` that the site doesn't put on `person`, and `../` that reads anything but a top-level key all keep the template on Postmark. Inside `{{#each}}`, one `../` reaches the list, not the model: Postmark needs `../../` for a top-level key there.
 - The PostHog template carries its own sender, reply-to address, and subject. A Postmark template send always sets `From`: the site moves only when `From` is the same in every send, and the person makes the PostHog template send from it. The same holds for `ReplyTo` when the site sets it. Otherwise it stays.
-- A site that Postmark sent with opens or links untracked, by the site's own field, `postmarker`'s or .NET's default, or its server's setting, as "Tracking" says, stays: a template made in PostHog sends with its own settings, and the template form takes no `captureEngagement`. When Postmark tracked both, the tracking fields are dropped, and so is `MessageStream: 'outbound'`. `Cc`, `Bcc`, `Attachments`, `Headers`, `Metadata`, `Tag`, and a `MessageStream` other than `outbound` keep any site, as the Fields table says.
+- A template site follows "Tracking" like any other site: it stays when Postmark sent it with opens untracked, by the site's own field, PHP's model default, or its server's setting, or when its open tracking isn't checked. When it moves, the tracking fields are dropped, and so is `MessageStream: 'outbound'`. `Cc`, `Bcc`, `Attachments`, `Headers`, `Metadata`, `Tag`, and a `MessageStream` other than `outbound` keep any site, as the Fields table says.
 - With `InlineCss` on, its default, Postmark moved the template's `<style>` rules into each tag. Tell the person to check how the PostHog template looks in its test send.
 
 ## Webhooks
 
-Postmark stops sending events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+Postmark stops sending events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | Postmark `RecordType` | PostHog event |
 |---|---|
@@ -147,6 +146,8 @@ Postmark stops sending events for a site that moves. PostHog records the events 
 | `Open` | `$workflows_email_opened` |
 | `Click` | `$workflows_email_link_clicked` |
 | `SubscriptionChange` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 Postmark has no event for an accepted send. PostHog records `$workflows_email_sent` for each moved send. A send to an inactive address got a `406` error from Postmark, and Postmark posted no webhook for it. PostHog refuses it with `recipient_suppressed`.
 
@@ -179,7 +180,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - A `ReplyTo` with several addresses becomes a list of bare addresses: split a comma-separated string.
 - `HtmlBody` becomes `html`, and `TextBody` becomes `text`.
 - `MessageStream: 'outbound'` is dropped, as the Fields table says.
-- `TrackOpens` and `TrackLinks` are dropped. The send gets `captureEngagement: false` when Postmark tracked neither opens nor links, as "Tracking" says, whether the site's field, `postmarker`'s or .NET's default, or the server's setting did. Note in the plan row each site that got it from the server's setting.
+- `TrackOpens` and `TrackLinks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Templates brought into the code.** The site renders the email, inside its layout, from `TemplateModel`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`, and drops `TemplateId`, `TemplateAlias`, `TemplateModel`, and `InlineCss`.

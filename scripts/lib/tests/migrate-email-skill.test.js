@@ -328,6 +328,18 @@ describe('migrate-email skill', () => {
         });
     });
 
+    describe('open and click tracking', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it.each(PROVIDERS)('never maps %s open or click tracking onto engagement capture', (provider) => {
+            const mapping = read(`${provider}/mapping.md`);
+
+            expect(mapping).not.toMatch(/captureEngagement: false/);
+            expect(mapping).not.toMatch(/turns off both/);
+        });
+    });
+
     it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the rewrite files, and no other provider', async (provider) => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
