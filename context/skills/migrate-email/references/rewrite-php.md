@@ -34,7 +34,7 @@ $posthog = new Client(
 
 ## The send
 
-- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'capture_engagement'` optional.
+- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, `'capture_engagement'`, and `'category'` optional.
 - `'reply_to'` takes one address or a list of addresses.
 - Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
 
@@ -42,7 +42,7 @@ $posthog = new Client(
 
 - The send returns a `SendEmailResult`. `getId()` is the message ID.
 - On an API error it throws `PostHog\EmailError`. `getErrorCode()` is PostHog's error code, a string such as `recipient_suppressed`, `getErrorName()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `getStatusCode()` is the HTTP status.
-- Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`.
+- Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - It throws the same `PostHog\EmailError` for a network error that is left after the retries, with the code `network_error`, and for a bad argument, with a code that starts with `invalid_`. `getMessage()` is there too.
 
 ## Check

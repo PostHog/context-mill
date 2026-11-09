@@ -23,6 +23,8 @@ These parts keep a template on the provider, unless the provider's table says ho
 - a setting the code form has no field for, such as `cc`, `bcc`, an attachment, or a custom header in the template;
 - a helper whose result the provider computes in a way the table doesn't describe, such as a date format in a locale the table doesn't name.
 
+In a marketing email, the provider's unsubscribe link becomes `{{ unsubscribe_url }}`, which PostHog fills with the recipient's preferences link, so it keeps no template on the provider. Step 3 says which emails are marketing.
+
 Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Keep it until Step 7 has written the email, then delete it. When it is gone by then, read it again the same way. Read the person's own copies where they saved them.
 
 ## Where the email goes
@@ -53,6 +55,7 @@ Pick the first that fits the part of the app that sends:
 Write the `\|` above as a plain `|`. The table escapes it.
 
 - A function that replaces markers raises when a marker is left after the replace, so a misspelled name fails the send instead of mailing the marker.
+- A function that replaces markers leaves `{{ unsubscribe_url }}` as it is, and so does every renderer. In an engine that reads `{{ }}` itself, such as Jinja2, Handlebars, or Go's templates, write it as a literal the engine prints unchanged, and check that the rendered HTML and text hold it exactly: an escape for URLs, such as Go's `html/template` in an `href`, changes it.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
 

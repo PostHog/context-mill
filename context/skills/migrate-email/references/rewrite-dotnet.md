@@ -25,7 +25,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 
 ## The send
 
-- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, and `CaptureEngagement` optional.
+- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `CaptureEngagement`, and `Category` optional.
 - Template send: `await emails.SendAsync(new SendTemplateEmailOptions { To, TemplateId, TemplateData, DistinctId, IdempotencyKey })`.
 - `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
@@ -34,7 +34,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 
 - The send returns a `SendEmailResult`. `Id` is the message ID, a `string`.
 - On an API error it throws `EmailException`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
-- Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`.
+- Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - It throws the same `EmailException` for a network error that is left after the retries, with the code `network_error`. `Message` is there too.
 - A bad argument throws `ArgumentException`, before any request.
 

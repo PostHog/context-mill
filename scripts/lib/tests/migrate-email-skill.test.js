@@ -256,6 +256,59 @@ describe('migrate-email skill', () => {
         });
     });
 
+    describe('a marketing email', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+        const SEND_CATEGORY = {
+            node: '`category`',
+            python: '`category`',
+            go: '`Category`',
+            ruby: '`category:`',
+            php: "`'category'`",
+            dotnet: '`Category`',
+            rust: '`.category(...)`',
+            elixir: '`category:`',
+        };
+
+        it("records each site's category in step 3, with the key read from the project's message categories", () => {
+            const inventory = read('3-inventory.md');
+
+            expect(inventory).toContain('`message-categories-list`');
+            expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
+            expect(inventory).toMatch(/`transactional`, or the key of the marketing category/);
+        });
+
+        it.each(Object.entries(SEND_CATEGORY))('passes the category key in the %s code send and names an opted-out recipient', (sdk, field) => {
+            const rewrite = read(`rewrite-${sdk}.md`);
+
+            expect(rewrite.split('## The send')[1].split('## The answer')[0]).toContain(field);
+            expect(rewrite).toContain('recipient_opted_out');
+        });
+
+        it('sends a marketing key and leaves the category out of a transactional send, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toMatch(/A site whose `category` is a marketing key passes it as the send's category/);
+            expect(rewriteStep).toMatch(/A `transactional` site leaves the category out/);
+            for (const code of ['unknown_category', 'unsubscribe_link_required', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
+            expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
+        });
+
+        it("keeps the provider's unsubscribe link in a marketing email as PostHog's placeholder", () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/In a marketing email, the provider's unsubscribe link becomes `\{\{ unsubscribe_url \}\}`/);
+            expect(guide).toMatch(/A function that replaces markers leaves `\{\{ unsubscribe_url \}\}` as it is/);
+        });
+
+        it('checks in step 8 and reports in step 9 that every marketing site kept its category', () => {
+            expect(read('8-verify.md')).toMatch(/every site whose `category` is a marketing key passes that key/);
+            expect(read('8-verify.md')).toMatch(/category: <kept>\/<marketing sites> kept/);
+            expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
+            expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
+        });
+    });
+
     describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
         const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];

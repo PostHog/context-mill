@@ -45,7 +45,7 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 
 ## The send
 
-- Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
+- Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `capture_engagement:`, and `category:` optional.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 - With email's own instance, the name comes first: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., ...)`.
@@ -54,7 +54,7 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 
 - The send returns `{:ok, result}`, and `result.id` is the message ID.
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", as an atom, such as `:rate_limit_exceeded`.
-- Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
+- Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
 
 ## Check

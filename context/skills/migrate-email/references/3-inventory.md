@@ -29,6 +29,7 @@ For each site, read the surrounding code and record:
 - The language of the call, such as `node`, `python`, `go`, `ruby`, `php`, `dotnet`, `rust`, or `elixir`, by the name of its rewrite file in Step 7. A call in any other language, such as Java, is recorded under its own name: `mapping.md` keeps it on the provider.
 - How it sends: `sdk`, `http`, or `smtp`.
 - The content: `template` for a template stored at the provider, `react` for a component the provider renders, `html`, or `text`. A site that sets both `html` and `text` is `html`.
+- The category: `transactional`, or the key of the marketing category its email belongs to in PostHog, as "The category of each site" says.
 - Every field the site sets, including fields set on the payload object after it is created and fields set through options, such as an idempotency key.
 - Where `from` comes from: the literal address, or the name of the environment variable or config value that holds it.
 
@@ -54,7 +55,13 @@ Each template that moves needs its content to be checked. Read the provider's `a
 
 ### A template in PostHog, when the person asks for one
 
-A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
+A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, or file it under the site's category for a marketing site, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
+
+## The category of each site
+
+PostHog sends a transactional email to every recipient who isn't suppressed, and a marketing email only to those who also haven't opted out of its message category. A site keeps the kind of email it sent at the provider. It is marketing when the provider sent it as marketing: its content holds an unsubscribe link the provider fills, or the send names something the recipient can unsubscribe from that the provider's `mapping.md` moves. Every other site is `transactional`. A marketing site whose content has no unsubscribe link stays, and the reason is `marketing email without an unsubscribe link`: PostHog refuses to send it.
+
+When a marketing site moves, list the project's message categories with the PostHog MCP `message-categories-list` tool. Ask the person once, for every marketing site, which category of type `marketing` its email belongs to, and offer each by its name and key. When none fits, make the one they name with `message-categories-create`, as a `marketing` category. A category whose key is `transactional` can't be named by a send: ask for another. Record the key. A site without one stays, and the reason is `no marketing category in PostHog`.
 
 ## Write the plan file
 
@@ -75,7 +82,7 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 A sites table, one row per site, in source tree order:
 
 ```
-| site | file | line | language | sends | content | from | moves | reason |
+| site | file | line | language | sends | content | category | from | moves | reason |
 ```
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.

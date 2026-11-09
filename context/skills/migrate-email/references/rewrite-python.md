@@ -32,7 +32,7 @@ posthog = Posthog(
 
 ## The send
 
-- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, and `capture_engagement` optional. `from` is a Python keyword, so the argument is `from_`.
+- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, `capture_engagement`, and `category` optional. `from` is a Python keyword, so the argument is `from_`.
 - `reply_to` takes one address or a list of addresses.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
 
@@ -40,7 +40,7 @@ posthog = Posthog(
 
 - The send returns a `SendEmailResult`. Its `id` is the message ID.
 - On an API error it raises `EmailError`, imported from `posthog.emails`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
-- Suppressed recipient: `except EmailError as error:` with `if error.code == "recipient_suppressed":`.
+- Suppressed recipient: `except EmailError as error:` with `if error.code == "recipient_suppressed":`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - It raises the same `EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
 - A bad argument raises `TypeError` or `ValueError`, before any request.
 
