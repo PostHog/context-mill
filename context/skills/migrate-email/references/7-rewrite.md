@@ -89,7 +89,7 @@ For each site that moves, in plan order:
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - Handle the answer as the rewrite file says under "The answer". Some SDKs return an error and some raise or throw one: when the old call and the new one differ, change the code around the send so the site fails the same way.
-- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and the subject, body, `from`, and reply-to address that a provider template brought into the code held, and the text part a React Email component renders. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
+- Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, and the subject, body, `from`, and reply-to address that a provider template brought into the code held, and the text part of a React Email component written for a template brought into the code. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 

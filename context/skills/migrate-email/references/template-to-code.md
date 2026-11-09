@@ -54,17 +54,17 @@ Write the `\|` above as a plain `|`. The table escapes it.
 
 - A function that replaces markers raises when a marker is left after the replace, so a misspelled name fails the send instead of mailing the marker.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
-Use the string-built `node` row only when the part that sends can't take React Email: its code runs without a JSX compile step, such as plain JavaScript that Node.js runs as it is, or the person says no to a new dependency. Write the reason in the plan row.
+- Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
 
-- Add no dependency other than React Email. The app's engine is already in the app, and the table above needs only the language's standard library.
+Use the string-built `node` row only when the part that sends can't take React Email: Node.js runs its source as it is, as plain JavaScript or TypeScript with its type stripping, or `tsc` emits it with `"jsx": "preserve"` and nothing compiles the JSX after. A part that a bundler builds, that `tsc` emits with `"jsx": "react-jsx"`, or that Bun, `tsx`, or a framework such as Next.js runs, takes it. Write the reason in the plan row.
 
 ## React Email
 
-- **Packages.** Add `react-email` as a dependency, with `react` and `react-dom`, its peers, when the app lacks them. It holds the components and `render` from version 6 on. Never add `@react-email/components`: it is deprecated. An app that already has `@react-email/components` keeps it, and its emails import from it. Add `@react-email/ui` as a dev dependency, in the same version as `react-email`, for the preview. When the part that sends is TypeScript, check that its `tsconfig.json` sets `jsx`, such as `"jsx": "react-jsx"`.
-- **Preview.** Add a script that runs `email dev --dir emails`, with the folder's path from the project root, such as `"email:preview": "email dev --dir src/emails"`. The preview lists a `.tsx`, `.jsx`, or `.js` file in that folder only when it has a default export, and skips every folder whose name starts with `_`. So each email's file default-exports its component, and every other file exports by name or sits in a folder such as `emails/_shared/`.
+- **Packages.** Add `react-email` as a dependency, with `react` and `react-dom`, its peers, when the app lacks them. It holds the components and `render` from version 6 on. Never add `@react-email/components`: it is deprecated. An app that already has `@react-email/components` keeps it, and its emails import from it. When the part that sends is TypeScript, its `tsconfig.json` sets `jsx`, such as `"jsx": "react-jsx"`.
+- **Preview.** Add the preview only with `react-email` 6 or later: add `@react-email/ui` as a dev dependency, in the same version as `react-email`, and a script that runs `email dev --dir emails`, with the folder's path from the project root, such as `"email:preview": "email dev --dir src/emails"`. The preview lists a `.tsx`, `.jsx`, or `.js` file in that folder only when it has a default export, and skips every folder whose name starts with `_`. So each email's file default-exports its component, and every other file exports by name or sits in a folder such as `emails/_shared/`. An app that keeps an older React Email package gets no preview script, and the plan row says so.
 - **Layout.** Put what the emails share, such as the page, the card, the logo, and the footer, in one layout component, such as `MailLayout`, which takes the preview text and the body. Rebuild the provider's design with React Email's components (`Html`, `Head`, `Preview`, `Body`, `Container`, `Section`, `Row`, `Column`, `Text`, `Link`, `Button`, `Img`, `Hr`) with inline styles, keeping the provider's text, links, images, colors, and layout.
-- **Each email.** One file, `emails/<Name>Mail.tsx`, default-exports the email's component. Each variable becomes a typed prop. Set `PreviewProps` on the component with made-up values, so the preview shows the email filled in. Write no real person's name or address there.
-- **Render.** The file also exports a function that takes the props and returns `{ subject, html, text }`. One shared helper renders both parts: the HTML with `render(element)` and the text with `render(element, { plainText: true })`, from the same element, so the two can't drift. `render` is async. The site sends `html` and `text`. When the provider template had its own text part, compare it with the rendered one, and name in the plan row each line or link that only the provider's text had, so the person decides whether the email needs it.
+- **Each email.** One file, `emails/<Name>Mail.tsx` in TypeScript, or `emails/<Name>Mail.jsx` in JavaScript, default-exports the email's component. Each variable becomes a prop, typed in TypeScript, and so does the recipient's name, as "Variables" says. Set `PreviewProps` on the component with made-up values, so the preview shows the email filled in. Write no real person's name or address there.
+- **Render.** The file also exports a function that takes the props and returns `{ subject, html, text }`. One shared helper renders both parts: the HTML with `render(element)` and the text with `toPlainText(html)`, from that HTML, so the two can't drift. `render` is async. The site sends `html` and `text`. When the provider template had its own text part, compare it with the rendered one, and name in the plan row each line or link that only the provider's text had, so the person decides whether the email needs it.
 - **Escaping.** React escapes each value it renders, in text and in attributes, so pass each value as it is. A value the provider inserted as HTML goes in through `dangerouslySetInnerHTML`, under the rule of "Escaping".
 
 ### Before and after
@@ -111,11 +111,11 @@ And the helper every email shares, in `emails/renderMail.ts`:
 
 ```ts
 import type { ReactElement } from 'react'
-import { render } from 'react-email'
+import { render, toPlainText } from 'react-email'
 
 export async function renderMail(subject: string, element: ReactElement) {
-  const [html, text] = await Promise.all([render(element), render(element, { plainText: true })])
-  return { subject, html, text }
+  const html = await render(element)
+  return { subject, html, text: toPlainText(html) }
 }
 ```
 
@@ -135,7 +135,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - A condition tests what the provider tested, written out in the code. Never lean on the language's own truth test: `0`, `""`, `[]`, `"false"`, and `null` are true or false differently in each language and template language.
 - A loop walks the same list, in the same order, with the same item names.
 - A helper, such as a date format or a comparison, becomes code that gives the same result, as the table says.
-- Greet the recipient by the name the app has for them, such as the user's first name at the site, also when the provider's greeting named no one. Pass it as a variable, keep the provider's greeting, such as `Hi there`, for a recipient without a name, and note the change in the plan row.
+- Greet the recipient by the name the app knows them by at the site, also when the provider's greeting named no one: the user's first name, or the name the recipient has in the place the email is about, such as their name in a group. Look for it at the site and in the record the site loads for the recipient. Pass it as a variable, and keep the provider's greeting, such as `Hi there`, for a recipient without one.
 
 ## Settings of the template
 
@@ -151,4 +151,4 @@ Keep every image and link URL as it is. An image that the provider hosts, on a h
 
 ## Write down
 
-Under the sites table, list each email brought into the code: its files, its preview script, the provider template it came from with its ID or name, its variables, each greeting that now names the recipient, each line only the provider's text part had, each value inserted unescaped, each value now escaped that the provider inserted as it was, and each image the provider hosts. Never write the email's content into the plan or the report.
+Under the sites table, list each email brought into the code: its files, its preview script, the provider template it came from with its ID or name, its variables, each email's greeting: the name it uses, or why it has none, each line only the provider's text part had, each value inserted unescaped, each value now escaped that the provider inserted as it was, and each image the provider hosts. Never write the email's content into the plan or the report.

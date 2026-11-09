@@ -45,4 +45,4 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## Check
 
-The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck.
+The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. For a site that renders a React Email component, also run the build, or the way the app starts the part that sends, so a runtime that can't load JSX fails here.
