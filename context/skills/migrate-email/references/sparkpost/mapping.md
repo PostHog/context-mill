@@ -28,7 +28,7 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `recipients[].tags` | none | Always: no PostHog SDK takes tags yet |
 | `campaign_id` | none | Always: no PostHog SDK takes tags yet |
 | `description` | none | Never. It names the transmission in SparkPost's own reports only: note in the plan row that it no longer shows there |
-| Open and click tracking: `options.open_tracking`, `options.initial_open`, `options.click_tracking`, `recipients[].options`, or none of them | `captureEngagement: false`, or no field | See "Tracking" below. A field set to `false` counts as set: it turns that tracking off for the send, whatever the account's setting |
+| Open and click tracking: `options.open_tracking`, `options.initial_open`, `options.click_tracking`, `recipients[].options`, or none of them | none: PostHog adds its open pixel and counts no clicks | SparkPost sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. A field set to `false` counts as set: it turns that tracking off for the send, whatever the account's setting |
 | `options.transactional` | none | It is set to `false`. Set to `true`, it moves with nothing. Not set, it moves, and SparkPost used the account's `transactional_default`, which `account.md` reads under "Tracking settings": unless that is `true`, note in the plan row that SparkPost sent it as non-transactional, with its unsubscribe handling |
 | `options.start_time` | none | Always. PostHog's send doesn't take it yet |
 | `options.sandbox` | none | Always. A sandbox send is not a real send |
@@ -43,16 +43,15 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 
 A SparkPost send without an `Idempotency-Key` header sends no `idempotencyKey` after the move either.
 
-**Tracking.** PostHog captures opens and clicks unless the send sets `captureEngagement: false`, which turns off both. Work out, for opens and for clicks, whether SparkPost tracked them. The first of these that sets one wins: the recipient's `options`, the transmission's `options`, the template's `options` for a template site, and then the account's settings, which `account.md` reads under "Tracking settings". There, `rest_tracking_default` decides both, and it is `true` unless the person turned it off, and the account's `click_tracking: false` turns clicks off. A site that sends from a subaccount with `open_tracking_disabled: true` tracked no opens, whatever it set. `initial_open` only adds a second open pixel at the top: it decides nothing on its own.
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Work out, for opens and for clicks, whether SparkPost tracked them. The first of these that sets one wins: the recipient's `options`, the transmission's `options`, the template's `options` for a template site, and then the account's settings, which `account.md` reads under "Tracking settings". There, `rest_tracking_default` decides both, and it is `true` unless the person turned it off, and the account's `click_tracking: false` turns clicks off. A site that sends from a subaccount with `open_tracking_disabled: true` tracked no opens, whatever it set. `initial_open` only adds a second open pixel at the top: it decides nothing on its own.
 
-- Both tracked: the site moves, and the tracking fields are dropped.
-- Neither tracked: the site moves with `captureEngagement: false`, also a template site brought into the code. A site that moves to a template made in PostHog stays, because the template form takes no `captureEngagement`.
-- One tracked and one not, such as `open_tracking: false` with clicks left on: the site stays, because `captureEngagement: false` turns off both.
-- The site stays when its recipients' `options` disagree, when it sets `initial_open: true` with open tracking off, or when it sets `click_tracking: true` on an account whose `click_tracking` is `false`: SparkPost's docs don't say whether those were tracked.
+- Opens tracked: the site moves, and the tracking fields are dropped. When SparkPost tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens untracked, such as `open_tracking: false` at any level, or a template, account, or subaccount default that leaves them off: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had. Clicks don't change this.
+- The site stays when its recipients' `options` disagree on open tracking, or when it sets `initial_open: true` with open tracking off: SparkPost's docs don't say whether those emails got an open pixel.
 - An address with an `open_tracking` entry on the suppression list, a `Tracking Consent Revoked` entry, got no open tracking, and PostHog has no such setting per address. Ask the person once whether the list holds such entries, or read them as `account.md` says under "Suppression list". When it does, a site that tracked opens stays, and the reason is `open tracking consent revoked for some recipients`, unless the person accepts that PostHog tracks opens for those addresses: then note it in the plan row.
 - When the account or subaccount a site sends from minimizes its open events, its `enable_minimized_event_passthrough` setting as `account.md` reads it, a site that tracked opens stays, as a send that sets the field does: the setting wins over the send's own value, and PostHog's send doesn't take it yet. The reason is `open events minimized on the <account|subaccount>`. Check this for every site that tracked opens, also one that sets its own tracking. When the person can't say and the API can't be read, the site stays, and the reason is `open event minimization not checked`.
 
-When a site leaves open or click tracking to the account, or sends from a subaccount, ask the person once for each account the moved sites send from, or read the settings as `account.md` says. When the answer is not given, the site stays, and the reason is `account tracking not checked`.
+When a site leaves open tracking to the account, or sends from a subaccount, ask the person once for each account the moved sites send from, or read the settings as `account.md` says. When the answer is not given, the site stays, and the reason is `account tracking not checked`.
 
 ### Cc and bcc
 
@@ -128,7 +127,7 @@ SparkPost's template language, in the code:
 | An expression in a link URL, such as `href="https://acme.dev/r?t={{token}}"` | The value URL-encoded, each byte other than letters, digits, `-`, `.`, `_`, and `~` written as `%XX`, then escaped as HTML in `html`. `{{{ }}}` in a URL inserts it as it is. The docs don't say which characters SparkPost leaves as they are: when the value can hold one outside that set, note it in the plan row |
 | A link whose `https://` comes from a value, such as `href="{{url}}"` | The value escaped as HTML, with no URL encoding. SparkPost doesn't treat it as a link, and its docs don't say how it escapes it: note it in the plan row |
 | `data-msys-linkname` | Dropped. PostHog's click events carry no link name: note it in the plan row |
-| `data-msys-clicktrack="0"`, `[[data-msys-clicktrack="0"]]` in `text` | Dropped, when SparkPost tracked no clicks for the send, as "Tracking" says. When it tracked them, the template stays: PostHog would track that link |
+| `data-msys-clicktrack="0"`, `[[data-msys-clicktrack="0"]]` in `text` | Dropped. PostHog tracks no link of a code send, as "Tracking" says |
 | The version's `subject`, `from`, and `reply_to` | The send's `subject`, `from`, and `replyTo`, rendered with no escaping. A `from` of `{ name, email }` becomes `'Name <email>'`, as the Fields table says |
 | The version's `text` | The send's `text`, with no escaping. A version without `text` sends `html` only |
 
@@ -136,7 +135,7 @@ SparkPost's template language, in the code:
 - When the transmission and the recipient set one key to two objects, and the template reads a field the recipient's object doesn't have, the template stays: the docs don't say whether the two objects merge.
 - Anything else keeps the template on SparkPost: the reserved values `env_from` and `return_path`, `{{else}}` inside `{{each}}`, any other macro, and the link attributes `data-msys-unsubscribe` (SparkPost records the unsubscribe from the click), `data-msys-revoke-tracking`, and `data-msys-sublink` (the tracked path serves app links), in `html` or as `[[...]]` in `text`. So does a version with `headers`, an `amp_html` part, or `email_rfc822` content, a `reply_to` that carries a name, and a `transactional` setting of `false` that applies. The docs name no `opt_out` value or other tag that SparkPost fills with an unsubscribe link: a `{{opt_out}}` is a value the site passes, and renders like any other.
 - SparkPost's docs say it stores no images, so a template's images sit on hosts the person chose. Keep every URL. An image on a SparkPost host, whose name ends in `sparkpost.com` or `sparkpostmail.com`, serves only while the account does: list it, as `template-to-code.md` says.
-- A template's `options` decide tracking and `transactional` under the transmission's, as "Tracking" and the Fields table say. A site brought into the code moves with `captureEngagement: false` when SparkPost tracked neither opens nor clicks, and stays when it tracked only one.
+- A template's `options` decide tracking and `transactional` under the transmission's, as "Tracking" and the Fields table say. A template site follows "Tracking" like any other site: it stays when SparkPost sent it with opens untracked.
 - `override.from` and `override.reply_to` replace the template's `from` and `reply_to`: the send takes the override. `metadata`, `campaign_id`, `recipients[].tags`, and the other fields next to `template_id` keep the site or move as the Fields table says.
 - `use_draft_template: true` sends the draft, which anyone in the SparkPost account can still change. Ask the person once whether the draft as it is now is the email to keep in the code. When they say yes, bring the draft in. Otherwise the site stays, and the reason is `sends a SparkPost draft that can still change`.
 
@@ -169,14 +168,14 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - An expression inside a link URL converts only when the value holds URL-safe characters only, such as an id or a token the app makes. SparkPost URL-encodes it, and the conversion above inserts it as it is.
 - Anything else keeps the template on SparkPost: `loop_index`, `loop_vars` in nested loops, `#` for a length, an array index, arithmetic, `not` inside a longer condition, more than one `and` or `or`, a macro such as `render_dynamic_content`, `render_snippet`, `empty`, or a brace macro, the reserved values `email_id`, `env_from`, and `return_path`, and any `data-msys-*` link attribute or `[[data-msys-...]]` in `text`.
 - A template whose `from` or `reply_to` holds a template expression, or whose version has `headers` or an `amp_html` part, stays.
-- A template keeps its own `options`: `open_tracking`, `click_tracking`, and `transactional`. A transmission option the site sets wins over the template's, and the account's setting applies when neither sets one. The template moves only when SparkPost tracked both opens and clicks, as "Tracking" says: the template form takes no `captureEngagement`. When the `transactional` that applies is `false`, the site stays, and when neither sets it, the account's `transactional_default` applies, as the Fields table says for `options.transactional`.
+- A template keeps its own `options`: `open_tracking`, `click_tracking`, and `transactional`. A transmission option the site sets wins over the template's, and the account's setting applies when neither sets one. A template site follows "Tracking" like any other site: it stays when SparkPost sent it with opens untracked, or its open tracking isn't checked. When the `transactional` that applies is `false`, the site stays, and when neither sets it, the account's `transactional_default` applies, as the Fields table says for `options.transactional`.
 - Liquid's `default` also replaces an empty string, and SparkPost's `or` does not. When the code can pass an empty string for such a value, the email shows the fallback. Note it in the report.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `override.from` or `override.reply_to` next to `template_id` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A site that sets `metadata`, `campaign_id`, `recipients[].tags`, `options.initial_open`, or `recipients[].options` next to `template_id` stays: a template made in PostHog sends with its own settings, and the template form takes none of them. `options.open_tracking` and `options.click_tracking` next to `template_id` decide the tracking that applies, as the first bullet says: the site moves when both are on, and stays otherwise.
+- A site that sets `metadata`, `campaign_id`, or `recipients[].tags` next to `template_id` stays: a template made in PostHog sends with its own settings, and the template form takes none of them. `options.open_tracking`, `options.initial_open`, `options.click_tracking`, and `recipients[].options` next to `template_id` decide the tracking that applies, as the bullet above says, and are dropped.
 
 ## Webhooks
 
-The event webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement events are on for the project:
+The event webhook stops getting events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
 
 | SparkPost event `type` | PostHog event |
 |---|---|
@@ -188,6 +187,8 @@ The event webhook stops getting events for a site that moves. PostHog records th
 | `click` | `$workflows_email_link_clicked` |
 | `policy_rejection`, `generation_failure`, `generation_rejection` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `delay`, `list_unsubscribe`, `link_unsubscribe`, `amp_open`, `amp_initial_open`, `amp_click` | none |
+
+PostHog counts no clicks for a code send, so a moved site gets no `$workflows_email_link_clicked`.
 
 PostHog's events carry no SparkPost `transmission_id`, `message_id`, `rcpt_meta`, `rcpt_tags`, or `campaign_id`. A site whose events a handler matches by one of them stays on SparkPost. For every other handler, such as one that reads only `type` and `rcpt_to`, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
@@ -211,7 +212,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - `{ email: 'hello@mail.example.com', name: 'Example' }` in `from` becomes `'Example <hello@mail.example.com>'`. Put the name in double quotes when it holds a comma, a quote, or another special character, such as `'"Acme, Inc." <hello@mail.example.com>'`. A string `from` stays the same string.
 - The one recipient's address becomes `to`, as a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
-- Tracking becomes `captureEngagement: false` when SparkPost tracked neither opens nor clicks, as "Tracking" says, whether the send turned them off or the account did. Drop the tracking fields. When both were tracked, drop them and set nothing. Note in the plan row each site that got `captureEngagement: false` from an account's setting.
+- The tracking fields are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - The `Idempotency-Key` header becomes `idempotencyKey`, with the same value.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
