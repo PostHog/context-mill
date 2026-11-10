@@ -28,7 +28,7 @@ POSTHOG = PostHog::Client.new({
 
 ## The send
 
-- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `capture_engagement:`, and `track_opens_and_clicks:` optional. `track_opens_and_clicks: false` sends without PostHog's open pixel.
+- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a hash with `opens`, `clicks`, and `engagement`. Open tracking off is `tracking: { opens: false }`. `capture_engagement:` is deprecated: use `tracking: { engagement: false }`.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
 

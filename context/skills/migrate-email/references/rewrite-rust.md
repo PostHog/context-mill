@@ -30,7 +30,7 @@ let posthog = posthog_rs::client(options.build()?).await;
 
 ## The send
 
-- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.capture_engagement(false)`, and `.track_opens_and_clicks(false)` optional. `.track_opens_and_clicks(false)` sends without PostHog's open pixel.
+- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, and `.tracking(...)` optional. `.tracking(...)` takes `EmailTracking::on()`, `EmailTracking::off()`, or `EmailTracking::default()` with `.opens(...)`, `.clicks(...)`, and `.engagement(...)`. Open tracking off is `.tracking(EmailTracking::default().opens(false))`. `.capture_engagement(false)` is deprecated: use `.engagement(false)`.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.

@@ -34,7 +34,7 @@ $posthog = new Client(
 
 ## The send
 
-- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, `'capture_engagement'`, and `'track_opens_and_clicks'` optional. `'track_opens_and_clicks' => false` sends without PostHog's open pixel.
+- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'tracking'` optional. `'tracking'` takes `true`, `false`, or an array with `'opens'`, `'clicks'`, and `'engagement'`. Open tracking off is `'tracking' => ['opens' => false]`. `'capture_engagement'` is deprecated: use `'tracking' => ['engagement' => false]`.
 - `'reply_to'` takes one address or a list of addresses.
 - Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
 
