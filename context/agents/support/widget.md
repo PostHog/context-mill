@@ -2,9 +2,9 @@
 type: widget
 flow: support
 label: Let posthog-js load the widget
-model_pi: openai/gpt-5.6-terra
+model_pi: openai/gpt-6.1-terra
 effort_pi: low
-model_sdk: claude-sonnet-5
+model_sdk: claude-sonnet-5-5
 effort_sdk: medium
 skills: [posthog-best-practices]
 allowedTools: [Read, Edit, Glob, Grep]
@@ -21,13 +21,13 @@ and the in-app widget are on in PostHog. Usually no code change is needed.
 1. Find the `posthog.init(...)` call or the snippet. If it sets
    `disable_conversations: true`, remove that option. It stops the module
    from loading. Leave every other option alone.
-2. If the app already has a "Contact support", "Help" or "Chat with us"
-   link or button, and the user would expect it to open a chat, wire its
-   click to `posthog.conversations.open()`. Change only that handler. Never
-   add a new button or redesign the UI. `open()` needs `posthog-js` 1.442.0
-   or later. Read the resolved version from the lockfile (a snippet loads the
-   latest). If it is older, leave the link alone and record a follow-up to
-   upgrade.
+2. If the app already has a "Contact support" or "Chat with us" link or
+   button, wire its click to `posthog.conversations.open()`. Leave "Help"
+   links and links to docs alone. Change only that handler. Never add a new
+   button or redesign the UI. `open()` needs `posthog-js` 1.442.0 or later.
+   Read the resolved version from the lockfile (a snippet loads the latest).
+   If it is older, or there is no lockfile to read, leave the link alone and
+   record a follow-up to upgrade.
 3. If you can't confidently locate or edit the init, record a follow-up
    instead of guessing.
 

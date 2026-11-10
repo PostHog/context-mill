@@ -2,9 +2,9 @@
 type: enable-support
 flow: support
 label: Turn on Support in PostHog
-model_pi: openai/gpt-5.6-terra
+model_pi: openai/gpt-6.1-terra
 effort_pi: low
-model_sdk: claude-sonnet-5
+model_sdk: claude-sonnet-5-5
 effort_sdk: medium
 skills: [integration-v2-mcp]
 allowedTools: [Read, posthog_exec]

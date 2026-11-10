@@ -3,9 +3,9 @@ type: report
 flow: support
 label: Write the setup report
 sink: true
-model_pi: openai/gpt-5.6-sol
+model_pi: openai/gpt-6.1-terra
 effort_pi: medium
-model_sdk: claude-sonnet-5
+model_sdk: claude-sonnet-5-5
 effort_sdk: medium
 skills: [integration-v2-notebook, integration-v2-mcp]
 allowedTools: [Read, Glob, Grep, posthog_exec]

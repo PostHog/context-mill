@@ -2,9 +2,9 @@
 type: identify
 flow: support
 label: Identify users for Support tickets
-model_pi: openai/gpt-5.6-terra
+model_pi: openai/gpt-6.1-terra
 effort_pi: medium
-model_sdk: claude-sonnet-5
+model_sdk: claude-sonnet-5-5
 effort_sdk: high
 skills: [integration-v2-identify, posthog-best-practices]
 allowedTools: [Read, Edit, Glob, Grep]
