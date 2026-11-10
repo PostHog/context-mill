@@ -27,7 +27,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 | File | Line | Content | Category | Key | Status |
 |------|------|---------|----------|-----|--------|
 
-<One row per site. Category is blank or the key of the site's category. Key is the `templateKey` of a moved site, or its `templateId` for a template made in PostHog. A site whose provider template moved into the code names its email's files. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>". Under the table, list each category the plan marks new with its key, type, name, and description.>
+<One row per site. Category is blank or the key of the site's category. Key is the `templateKey` of a moved site, or its `templateId` for a template made in PostHog. A site whose provider template moved into the code names its email's files. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>". Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description.>
 
 <Each note under the plan's sites table: each fallback that an empty string now replaces, each site that got a branch for a suppressed or opted-out recipient, and each idempotency key a retry across the deploy could send twice.>
 

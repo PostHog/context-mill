@@ -61,7 +61,7 @@ A template the person asks to make in PostHog moves in the template form, by its
 
 PostHog sends a transactional email to every recipient who isn't suppressed, and a marketing email only to those who also haven't opted out of its message category. A site keeps the kind of email it sent. It is marketing when the provider sent it as marketing, such as with an unsubscribe link the provider fills, or a send that names something the recipient can unsubscribe from that the provider's `mapping.md` moves. Every other site is transactional, with no category.
 
-A category has a key, a type, `marketing` or `transactional`, a name, and an optional description. Copy an existing category's key, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of.
+A category has a key, a type, `marketing` or `transactional`, a name, and an optional description. Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of.
 
 When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it. Ask them for the workflow, or find it with `workflows-list`. The site keeps the category of the workflow's email step: read the step's `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`. A step without a category leaves the site's category blank.
 

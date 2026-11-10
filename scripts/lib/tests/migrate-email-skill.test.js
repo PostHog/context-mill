@@ -279,7 +279,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
             expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
             expect(inventory).toMatch(/A step without a category leaves the site's category blank/);
-            expect(inventory).toMatch(/Copy an existing category's key, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
+            expect(inventory).toMatch(/Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
             expect(inventory).toMatch(/for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet/);
             for (const reason of ['no unsubscribe link', 'no category named', 'no message category tools', 'copies_not_allowed']) expect(inventory).toContain(`the reason is \`${reason}\``);
@@ -316,7 +316,7 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
-            expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new with its key, type, name, and description/);
+            expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description/);
             expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the key, type, name, and description this report lists for it/);
             expect(read('9-report.md')).toMatch(/each category the code now defines \(the next send undoes a change to its name or description in PostHog, so change them in the code\)/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
