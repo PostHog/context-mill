@@ -1,0 +1,7 @@
+node_modules
+build
+.cache
+.env
+.env*.local
+!.env.example
+.DS_Store
