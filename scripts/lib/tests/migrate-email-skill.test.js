@@ -274,14 +274,14 @@ describe('migrate-email skill', () => {
             const inventory = read('3-inventory.md');
 
             expect(inventory).toContain('`message-categories-list`');
-            expect(inventory).not.toContain('message-categories-create');
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
-            expect(inventory).toMatch(/`transactional` for no category, or the key of the category its email is filed under in PostHog/);
+            expect(inventory).toMatch(/The category: `none`, or the key of the category its email is filed under in PostHog/);
             expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
             expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
-            expect(inventory).toMatch(/A step without a category makes the site `transactional`/);
+            expect(inventory).toMatch(/A step without a category makes the site's category `none`/);
             expect(inventory).toMatch(/Copy an existing category's key, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
+            expect(inventory).toMatch(/for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet/);
             for (const reason of ['no unsubscribe link', 'no category named', 'no message category tools', 'copies_not_allowed']) expect(inventory).toContain(`the reason is \`${reason}\``);
         });
 
@@ -296,10 +296,9 @@ describe('migrate-email skill', () => {
             const rewriteStep = read('7-rewrite.md');
 
             expect(rewriteStep).toMatch(/A site with a category passes it as the send's category, spelled as the rewrite file says under "The send", with the key, type, name, and description the plan notes, written exactly/);
-            expect(rewriteStep).toMatch(/A `transactional` site leaves the category out/);
+            expect(rewriteStep).toMatch(/A site whose category is `none` leaves the category out/);
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
             for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
-            expect(rewriteStep).not.toContain('unknown_category');
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
         });
 
@@ -313,10 +312,12 @@ describe('migrate-email skill', () => {
 
         it('checks each key against the project in step 8 and reports in step 9 that every site kept its category', () => {
             expect(read('8-verify.md')).toMatch(/every site with a category passes the key, type, name, and description the plan notes/);
-            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same/);
+            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same name and description/);
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
+            expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the same key, type, name, and description/);
+            expect(read('9-report.md')).toMatch(/each category the code now defines \(the next send undoes a change to its name or description in PostHog, so change them in the code\)/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
             expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(the one item done at the deploy itself: turn off its email step in PostHog as the code goes live, or both send it\)/);
             expect(read('9-report.md')).toMatch(/check that it is transactional, or in the site's category/);

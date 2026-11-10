@@ -29,7 +29,7 @@ For each site, read the surrounding code and record:
 - The language of the call, such as `node`, `python`, `go`, `ruby`, `php`, `dotnet`, `rust`, or `elixir`, by the name of its rewrite file in Step 7. A call in any other language, such as Java, is recorded under its own name: `mapping.md` keeps it on the provider.
 - How it sends: `sdk`, `http`, or `smtp`.
 - The content: `template` for a template stored at the provider, `react` for a component the provider renders, `html`, or `text`. A site that sets both `html` and `text` is `html`.
-- The category: `transactional` for no category, or the key of the category its email is filed under in PostHog, as "The category of each site" says.
+- The category: `none`, or the key of the category its email is filed under in PostHog, as "The category of each site" says.
 - Every field the site sets, including fields set on the payload object after it is created and fields set through options, such as an idempotency key.
 - Where `from` comes from: the literal address, or the name of the environment variable or config value that holds it.
 
@@ -59,11 +59,11 @@ A template the person asks to make in PostHog moves in the template form, by its
 
 ## The category of each site
 
-PostHog sends a transactional email to every recipient who isn't suppressed, and a marketing email only to those who also haven't opted out of its message category. A site keeps the kind of email it sent. It is marketing when the provider sent it as marketing, such as with an unsubscribe link the provider fills, or a send that names something the recipient can unsubscribe from that the provider's `mapping.md` moves. Every other site is `transactional`.
+PostHog sends a transactional email to every recipient who isn't suppressed, and a marketing email only to those who also haven't opted out of its message category. A site keeps the kind of email it sent. It is marketing when the provider sent it as marketing, such as with an unsubscribe link the provider fills, or a send that names something the recipient can unsubscribe from that the provider's `mapping.md` moves. Every other site is transactional, and its category is `none`.
 
 A category has a key, a type, `marketing` or `transactional`, a name, and an optional description. Copy an existing category's key, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of.
 
-When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it. Ask them for the workflow, or find it with `workflows-list`. The site keeps the category of the workflow's email step: read the step's `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`. A step without a category makes the site `transactional`.
+When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it. Ask them for the workflow, or find it with `workflows-list`. The site keeps the category of the workflow's email step: read the step's `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`. A step without a category makes the site's category `none`.
 
 For each other marketing site that moves, list the project's message categories with the PostHog MCP `message-categories-list` tool. Ask the person once which category of type `marketing` each one's email belongs to, and offer each by its name and key. When none fits, they name a new one: its key, its name, and a description if they want one. The first send creates a new category, so make none yourself. A marketing site they name no category for stays, and the reason is `no category named`. When the category tools are missing, every marketing site stays, and the reason is `no message category tools`.
 
