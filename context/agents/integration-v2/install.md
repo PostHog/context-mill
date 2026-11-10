@@ -13,18 +13,12 @@ dependsOn: []
 
 ## Goal
 
-Install the PostHog SDK with the project's own package manager, so a real
+Install the PostHog SDK with the project's own package manager, so the real
 published version lands in the manifest and the lockfile — not one you made up.
-Take the install command from the framework reference docs and keep the version or
-range it carries, so the project gets the major the docs cover: `npm install
-<pkg>@<major>` (or the project's pnpm/yarn/bun), `composer require <pkg>:<range>`.
-Where the docs' version contains `<` or `>` (a Python range, a Ruby `~>`), the
-wizard refuses it in a shell command: write it into `requirements.txt`,
-`pyproject.toml` or the `Gemfile`, then run `pip install -r requirements.txt` or
-`bundle install`. If the docs show no version, use the bare package name and let the
-manager resolve it. Never invent a version — one that was never published fails the
-whole run with `ETARGET`, and guessing another just fails again. Take versions from
-the docs, not from the example app's manifest.
+Run the manager's add command with the version the framework reference docs pin,
+and let it resolve the rest. If the wizard refuses that command, write the pin into
+the manifest and run the manifest install. Never invent a version — one that was never
+published fails the whole run with `ETARGET`, and guessing another just fails again.
 
 Add the client library, plus the server library if the app has server-side code
 that sends events. If the SDK is already installed, leave it and say so.
@@ -39,8 +33,7 @@ lockfiles are huge and full of hashes, so never read one whole.
 
 Some ecosystems pin an explicit version in a manifest no install command resolves
 (Swift SPM, Gradle). There, declare the dependency the way the framework reference
-shows, with the version the docs show. Do not look up the SDK's latest release, and
-do not invent a version. For Swift Package Manager, set `minimumVersion` to that version with `upToNextMajorVersion`; in an XcodeGen `project.yml`, use it as the package's `from:`.
+shows, with the version the docs pin — do not invent one.
 
 Attempt the install once. If it fails on something you own — a wrong package name or
 the wrong manager — fix that and run it one more time.
@@ -65,9 +58,8 @@ itself, it is the environment — fall back and move on.
 
 When you hit one of those, fall back: add the PostHog package to the manifest by hand
 at a known-good version, so the dependency is still declared for the later steps and
-for the user's own install. Use the version or range the framework reference docs
-show, written in the manifest's own syntax. If the docs show none, use the framework
-reference example's spec. Never invent a version that was never published. Then move on, and say in your
+for the user's own install. Use the version the framework reference docs pin; never
+invent a version that was never published. Then move on, and say in your
 handoff exactly what failed and the command
 you ran, so the review step and the report surface it.
 

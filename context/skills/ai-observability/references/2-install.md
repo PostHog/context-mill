@@ -6,9 +6,7 @@ description: Declare the packages the variant needs, and no others
 
 Declare the packages in the project manifest. Do not run the package manager. The build step installs them later.
 
-Read the manifest first. If a package is already there, keep its version and say so in the report. For a package you add, use the version or range the variant's install doc shows, written in the manifest's own syntax. Never write a version the doc doesn't show; if it shows none, match the style of the entries around it.
-
-{{> sdk-majors}}
+Read the manifest first. If a package is already there, keep its version and say so in the report. For a package you add, use the version the variant's install doc pins. Match the style of the entries around it.
 
 ## Providers and gateways
 

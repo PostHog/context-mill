@@ -6,12 +6,10 @@ This skill helps you add PostHog analytics to {display_name} applications using 
 
 1. Detect the existing app structure and package manager. For Flutter, check `pubspec.yaml`, `pubspec.lock`, `android/`, `ios/`, `macos/`, and `web/`.
 2. Read the matching reference file below before changing code. It is the source of truth for SDK installation, initialization, capture, identify, feature flags, error tracking, session replay, surveys, and platform-specific setup.
-3. Install the SDK using the platform package manager, with the version constraint the reference file shows. For Flutter, prefer `flutter pub add` with that constraint over manually editing `pubspec.yaml`.
+3. Install the SDK using the platform package manager, with the version the reference file pins. For Flutter, prefer `flutter pub add` over manually editing `pubspec.yaml`.
 4. Initialize PostHog once, using environment/configuration values for the project token and host. Never hardcode secrets.
 5. Add identify calls at login/signup boundaries and reset on logout.
 6. Verify with the project's normal analyzer, tests, or build commands.
-
-{{> sdk-majors}}
 
 ## Reference files
 
