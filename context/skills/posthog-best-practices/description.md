@@ -221,7 +221,7 @@ If the project uses PHP or Laravel:
 If the project uses Swift:
 
 - Read `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` from scheme env and fail fast if missing.
-- Verify any minimum `posthog-ios` version against the latest release.
+- Take the minimum `posthog-ios` version from the iOS docs, not from the latest release.
 - If the app uses macOS App Sandbox, enable outgoing network connections instead of disabling the sandbox.
 - If this applies, consult [the iOS docs](https://posthog.com/docs/libraries/ios).
 

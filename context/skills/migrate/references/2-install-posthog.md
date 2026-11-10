@@ -25,10 +25,10 @@ Call `mcp__wizard-tools__load_skill_menu({ category: "integration" })` to see wh
 
 Read the installed integration skill's main description file (`SKILL.md`). Pull two things out of it:
 
-1. **Which PostHog package(s) to add** to the project's manifest.
+1. **Which PostHog package(s) to add** to the project's manifest, with the version the install command in the skill's reference docs (`references/`) puts on each.
 2. **The minimal init code** for this framework, plus the file it belongs in.
 
-Edit the project's manifest to add the package entry. Edit (or create) the file the init code belongs in. Use environment variables for the key and host; never hardcode them.
+Edit the project's manifest to add the package entry with that version, written in the manifest's own syntax. Never write a version the docs don't show. Edit (or create) the file the init code belongs in. Use environment variables for the key and host; never hardcode them.
 
 That's it. Skip everything else in the integration skill:
 
