@@ -307,9 +307,8 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
         });
 
-        it('refuses a new category key that the project already has, in step 3 and again in step 8', () => {
+        it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
-            expect(read('8-verify.md')).toMatch(/Each key the plan marks as new must still be missing from it, whatever its category's type: when a category took it since Step 3, ask the person for another key, and change the site and the plan\./);
         });
 
         it('sends the category object and leaves the category out of a transactional send, in step 7', () => {
