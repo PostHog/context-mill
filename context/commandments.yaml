@@ -193,7 +193,7 @@ commandments:
   laravel:
     - "On Laravel 12 or later, install `posthog/posthog-laravel` and run `php artisan posthog:install`. Package discovery registers the client, request context, exception reporting and flushing, so do NOT add `PostHog::init`, a PostHog middleware, or an exception report callback"
     - "Call the `PostHog\\Laravel\\Facades\\PostHog` facade, not the PHP SDK's `PostHog\\PostHog` class"
-    - "Set the project token as `POSTHOG_API_KEY` and the host as `POSTHOG_HOST` in `.env`, the names the published `config/posthog.php` reads. A blank token disables the SDK without breaking boot"
+    - "Set the project token as `POSTHOG_PROJECT_TOKEN` and the host as `POSTHOG_HOST` in `.env`, the names the published `config/posthog.php` reads. `POSTHOG_API_KEY` is the deprecated name for the same token: keep it where an app already sets it, and never write it for a new install. A blank token disables the SDK without breaking boot"
     - "Inside a request, capture without a distinct id: the Laravel SDK takes the signed-in user from auth. Pass the user's id explicitly to `identify` at login and signup"
     - "Do NOT use Laravel's event system or observers for analytics, and leave the Laravel SDK's optional collectors off - call capture explicitly where actions occur"
     - "On Laravel 11 or earlier, use `posthog/posthog-php` with the manual setup from the Laravel docs: init once in a service provider, wrap each request in `PostHog::withContext` from a middleware, report exceptions from `withExceptions`, and call `PostHog::flush()` in queue jobs, Horizon and Octane, because a long-running worker never destructs and its buffered events are lost on restart"
