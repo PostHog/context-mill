@@ -266,7 +266,7 @@ android {
 
 dependencies {
     // PostHog Android SDK
-    implementation 'com.posthog:posthog-android:3.+'
+    implementation 'com.posthog:posthog-android:4.+'
     
     // Other dependencies...
 }
