@@ -20,8 +20,8 @@ class ErrorTestController extends Controller
         } catch (\Throwable $e) {
             if ($shouldCapture) {
                 // Capture in PostHog
-                $posthog->identify($user->email, $user->getPostHogProperties());
-                $eventId = $posthog->captureException($e, $user->email);
+                $posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
+                $eventId = $posthog->captureException($e, $user->getPostHogDistinctId());
 
                 return response()->json([
                     'error' => 'Operation failed',

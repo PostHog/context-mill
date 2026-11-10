@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "476aa681b3925049b59c4cb71b568fcd",
+    "content-hash": "5ae1c089c1dee2548832863537faf545",
     "packages": [
         {
             "name": "brick/math",
@@ -2548,26 +2548,31 @@
         },
         {
             "name": "posthog/posthog-php",
-            "version": "4.2.0",
+            "version": "4.22.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PostHog/posthog-php.git",
-                "reference": "e1ca536ff60071d844cf65290bf63806b81bc386"
+                "reference": "0edda86494c8b717b4ca14b21eccfbe997122f6a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/e1ca536ff60071d844cf65290bf63806b81bc386",
-                "reference": "e1ca536ff60071d844cf65290bf63806b81bc386",
+                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/0edda86494c8b717b4ca14b21eccfbe997122f6a",
+                "reference": "0edda86494c8b717b4ca14b21eccfbe997122f6a",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
                 "php": ">=8.2",
-                "symfony/clock": "^6.2|^7.0"
+                "symfony/clock": "^6.2|^7.0|^8.0",
+                "symfony/polyfill-iconv": "^1.31",
+                "symfony/polyfill-mbstring": "^1.31"
             },
             "require-dev": {
+                "ext-zlib": "*",
+                "open-telemetry/api": "^1.0",
+                "open-telemetry/sdk": "^1.0",
                 "phpunit/phpunit": "^11.0",
-                "squizlabs/php_codesniffer": "^3.7"
+                "squizlabs/php_codesniffer": "^4.0"
             },
             "bin": [
                 "bin/posthog"
@@ -2584,7 +2589,7 @@
             ],
             "authors": [
                 {
-                    "name": "PostHog <hey@posthog.com>",
+                    "name": "PostHog <engineering@posthog.com>",
                     "homepage": "https://posthog.com/"
                 }
             ],
@@ -2595,9 +2600,10 @@
             ],
             "support": {
                 "issues": "https://github.com/PostHog/posthog-php/issues",
-                "source": "https://github.com/PostHog/posthog-php/tree/4.2.0"
+                "source": "https://github.com/PostHog/posthog-php/tree/4.22.1"
             },
-            "time": "2026-04-06T22:54:03+00:00"
+            "time": "2026-11-09T08:11:57+00:00",
+            "published-time": "2026-11-09T08:12:04+00:00"
         },
         {
             "name": "psr/clock",
@@ -4290,6 +4296,91 @@
             "time": "2024-09-09T11:45:10+00:00"
         },
         {
+            "name": "symfony/polyfill-iconv",
+            "version": "v1.43.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-iconv.git",
+                "reference": "254724d95fe01b679cd97d88786e9623ee00bfb7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-iconv/zipball/254724d95fe01b679cd97d88786e9623ee00bfb7",
+                "reference": "254724d95fe01b679cd97d88786e9623ee00bfb7",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "provide": {
+                "ext-iconv": "*"
+            },
+            "suggest": {
+                "ext-iconv": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Iconv\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for the Iconv extension",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "iconv",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-iconv/tree/v1.43.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-09-29T06:25:14+00:00",
+            "published-time": "2026-09-30T10:23:39+00:00"
+        },
+        {
             "name": "symfony/polyfill-intl-grapheme",
             "version": "v1.33.0",
             "source": {
@@ -5846,5 +5937,5 @@
         "php": "^8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.11.0"
 }

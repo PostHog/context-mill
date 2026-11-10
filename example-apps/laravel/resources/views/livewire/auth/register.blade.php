@@ -49,8 +49,8 @@
 
         <h3 style="margin-top: 20px;">Code Example</h3>
         <pre>// After creating the user
-$posthog->identify($user->email, $user->getPostHogProperties());
-$posthog->capture($user->email, 'user_signed_up', [
+$posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
+$posthog->capture($user->getPostHogDistinctId(), 'user_signed_up', [
     'signup_method' => 'form'
 ]);</pre>
     </div>

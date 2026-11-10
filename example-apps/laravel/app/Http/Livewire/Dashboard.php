@@ -18,22 +18,18 @@ class Dashboard extends Component
         $user = Auth::user();
 
         // PostHog: Track dashboard view
-        $posthog->capture($user->email, 'dashboard_viewed', [
+        $posthog->capture($user->getPostHogDistinctId(), 'dashboard_viewed', [
             'is_staff' => $user->is_staff,
         ]);
 
-        // Check feature flag
-        $this->showNewFeature = $posthog->isFeatureEnabled(
-            'new-dashboard-feature',
-            $user->email,
+        // Evaluate flags once, then read from the snapshot
+        $flags = $posthog->evaluateFlags(
+            $user->getPostHogDistinctId(),
             $user->getPostHogProperties()
-        ) ?? false;
-
-        // Get feature flag payload
-        $this->featureConfig = $posthog->getFeatureFlagPayload(
-            'new-dashboard-feature',
-            $user->email
         );
+
+        $this->showNewFeature = $flags?->isEnabled('new-dashboard-feature') ?? false;
+        $this->featureConfig = $flags?->getFlagPayload('new-dashboard-feature');
     }
 
     public function testErrorWithCapture(PostHogService $posthog)
@@ -45,7 +41,7 @@ class Dashboard extends Component
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->email);
+            $errorId = $posthog->captureException($e, $user->getPostHogDistinctId());
 
             $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
             $this->errorMessage = null;
