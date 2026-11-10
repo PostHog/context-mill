@@ -3,30 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\PostHogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use PostHog\Laravel\Facades\PostHog;
 
 class ErrorTestController extends Controller
 {
-    public function test(Request $request, PostHogService $posthog): JsonResponse
+    public function test(Request $request): JsonResponse
     {
         $shouldCapture = $request->query('capture', 'true') === 'true';
-        $user = Auth::user();
 
         try {
             throw new \Exception('Test exception from critical operation');
         } catch (\Throwable $e) {
             if ($shouldCapture) {
                 // Capture in PostHog
-                $posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
-                $eventId = $posthog->captureException($e, $user->getPostHogDistinctId());
+                PostHog::captureException($e, properties: ['operation' => 'critical']);
 
                 return response()->json([
                     'error' => 'Operation failed',
-                    'error_id' => $eventId,
-                    'message' => "Error captured in PostHog. Reference ID: {$eventId}",
+                    'message' => 'Error captured in PostHog.',
                 ], 500);
             }
 

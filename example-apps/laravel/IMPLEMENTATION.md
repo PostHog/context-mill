@@ -13,12 +13,14 @@ This document summarizes the implementation of the Laravel PostHog example appli
 - ✅ SQLite database configuration
 
 **PostHog Integration**
-- ✅ PostHog configuration file (`config/posthog.php`)
-- ✅ PostHogService class with all core methods:
+- ✅ PostHog Laravel SDK (`posthog/posthog-laravel`), configuration published with `php artisan posthog:install` (`config/posthog.php`)
+- ✅ Calls through the `PostHog\Laravel\Facades\PostHog` facade:
   - `identify()` - User identification
   - `capture()` - Event tracking
   - `captureException()` - Error tracking
   - `evaluateFlags()` - Evaluate flags once, read values from the snapshot
+
+The SDK registers itself through package discovery and handles request context, exception reporting and flushing. The app has no PostHog service provider, middleware or wrapper class. Apps on Laravel 11 or earlier use the PHP SDK manual setup from the [Laravel docs page](https://posthog.com/docs/libraries/laravel) instead.
 
 **Authentication (Livewire Components)**
 - ✅ Login component with PostHog tracking
@@ -75,7 +77,7 @@ This document summarizes the implementation of the Laravel PostHog example appli
 
 ### 4. Error Tracking
 - Manual exception capture
-- Error ID generation
+- `captureException` returns a boolean, so no error ID is shown
 - Test endpoint with optional capture (`?capture=true/false`)
 
 ### 5. UI/UX
@@ -88,15 +90,15 @@ This document summarizes the implementation of the Laravel PostHog example appli
 
 | Feature | Location | PostHog Method |
 |---------|----------|----------------|
-| User Login | `Login.php:23-27` | `identify()` + `capture()` |
-| User Signup | `Register.php:29-32` | `identify()` + `capture()` |
-| User Logout | `web.php:25` | `capture()` |
-| Dashboard View | `Dashboard.php:18` | `capture()` |
-| Feature Flag Check | `Dashboard.php:21-25` | `evaluateFlags()` |
-| Feature Flag Payload | `Dashboard.php:28-31` | `evaluateFlags()` |
-| Burrito Tracking | `BurritoTracker.php:22-24` | `identify()` + `capture()` |
-| Profile View | `Profile.php:14` | `capture()` |
-| Error Capture | `ErrorTestController.php:22-24` | `identify()` + `captureException()` |
+| User Login | `Login.php` | `identify()` + `capture()` with explicit distinct ID |
+| User Signup | `Register.php` | `identify()` + `capture()` with explicit distinct ID |
+| User Logout | `routes/web.php` | `capture()` before `Auth::logout()` |
+| Dashboard View | `Dashboard.php` | `capture()` |
+| Feature Flag Check | `Dashboard.php` | `evaluateFlags(personProperties: ...)` + `isEnabled()` |
+| Feature Flag Payload | `Dashboard.php` | `getFlagPayload()` |
+| Burrito Tracking | `BurritoTracker.php`, `BurritoController.php` | `capture()` |
+| Profile View | `Profile.php` | `capture()` |
+| Error Capture | `Dashboard.php`, `Profile.php`, `ErrorTestController.php` | `captureException()` |
 
 ## 📁 File Structure
 
@@ -116,10 +118,8 @@ example-apps/laravel/
 │   │       ├── Dashboard.php
 │   │       ├── BurritoTracker.php
 │   │       └── Profile.php
-│   ├── Models/
-│   │   └── User.php
-│   └── Services/
-│       └── PostHogService.php
+│   └── Models/
+│       └── User.php
 ├── config/
 │   ├── app.php
 │   ├── auth.php
@@ -186,14 +186,14 @@ To make this a production-ready application:
 6. **Validation**: Add form request classes
 7. **Testing**: Implement PHPUnit tests
 8. **Caching**: Configure Redis/Memcached
-9. **Queue**: Set up queue workers for PostHog events
+9. **Queue**: The SDK flushes at queue job boundaries; no extra PostHog setup is needed for workers
 10. **Deployment**: Configure for production server
 
 ## 📝 Notes
 
 - This implementation uses inline CSS (matching Flask example) instead of Tailwind compilation
 - Livewire provides reactivity without separate JavaScript files
-- PostHog service is dependency-injected into components/controllers
+- PostHog is called through the SDK facade; no service is injected
 - Manual error capture pattern matches Flask implementation
 - Session-based burrito counter (same as Flask)
 - Default admin account: admin@example.com / admin
@@ -202,12 +202,12 @@ To make this a production-ready application:
 
 - [Laravel Documentation](https://laravel.com/docs)
 - [Livewire Documentation](https://livewire.laravel.com)
-- [PostHog PHP SDK](https://github.com/PostHog/posthog-php)
+- [PostHog Laravel SDK](https://github.com/PostHog/posthog-laravel)
 - [Eloquent ORM](https://laravel.com/docs/eloquent)
 
 ---
 
 **Implementation Date**: January 2026
-**Laravel Version**: 11.x
-**Livewire Version**: 3.x
-**PostHog PHP SDK**: 3.x
+**Laravel Version**: 12.x
+**Livewire Version**: 4.x
+**PostHog Laravel SDK**: 0.3.x
