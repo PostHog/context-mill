@@ -32,7 +32,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       GAUGE_API_TOKEN: ${{ secrets.GAUGE_API_TOKEN }}
       SCOPE: ${{ inputs.scope || 'sample' }}

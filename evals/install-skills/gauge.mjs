@@ -71,7 +71,7 @@ function selected() {
             out.push({ entry, app: name, name: evalName(entry.skill, name) })
         }
     }
-    // Delivery evals run with the sample, with --delivery, or when nothing narrows the selection.
+    // Delivery evals join every selection once the layer is on. --skill and --app narrow them, and --delivery runs them alone.
     const delivery = config.delivery
     if (delivery.mcp && delivery.projectId) {
         for (const { skill: deliverySkill, apps } of delivery.evals) {
