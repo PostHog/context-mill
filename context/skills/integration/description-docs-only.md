@@ -11,6 +11,8 @@ This skill helps you add PostHog analytics to {display_name} applications using 
 5. Add identify calls at login/signup boundaries and reset on logout.
 6. Verify with the project's normal analyzer, tests, or build commands.
 
+{{> sdk-majors}}
+
 ## Reference files
 
 {references}

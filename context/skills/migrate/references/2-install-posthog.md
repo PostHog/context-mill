@@ -30,6 +30,8 @@ Read the installed integration skill's main description file (`SKILL.md`). Pull 
 
 Edit the project's manifest to add the package entry with that version, written in the manifest's own syntax. Never write a version the docs don't show. Edit (or create) the file the init code belongs in. Use environment variables for the key and host; never hardcode them.
 
+{{> sdk-majors}}
+
 That's it. Skip everything else in the integration skill:
 
 - Do not read the example project code under `<skill>/examples/`.

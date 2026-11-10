@@ -125,6 +125,8 @@ Read `ruby.md` before editing.
 
 ### STEP 3: Install the SDK
 
+{{> sdk-majors}}
+
 #### TypeScript / JavaScript
 
 Install `@posthog/mcp` and `posthog-node` with the project's package manager and the install command in `typescript.md`, keeping the `@` version it puts on each name. Translate it to the project's manager (with pnpm, `pnpm add -E` followed by the same package specs) and add `-E` / `--save-exact`, which pins `@posthog/mcp` to the current release of that major. The `@` version also raises an already-declared older version, which a bare name leaves in place. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.

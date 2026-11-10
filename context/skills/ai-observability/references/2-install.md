@@ -8,6 +8,8 @@ Declare the packages in the project manifest. Do not run the package manager. Th
 
 Read the manifest first. If a package is already there, keep its version and say so in the report. For a package you add, use the version or range the variant's install doc shows, written in the manifest's own syntax. Never write a version the doc doesn't show; if it shows none, match the style of the entries around it.
 
+{{> sdk-majors}}
+
 ## Providers and gateways
 
 Every provider and every OpenAI-compatible gateway needs the PostHog SDK next to the vendor SDK.

@@ -12,6 +12,8 @@ docs' version contains one (a Python range, a Ruby `~>`), write it
 into the manifest (`requirements.txt`, `pyproject.toml`, `Gemfile`) and run the
 manifest install (`pip install -r requirements.txt`, `bundle install`).
 
+{{> sdk-majors}}
+
 Match the manager the project already uses (read the lockfile: `package-lock.json` →
 npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poetry.lock` →
 poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle). Add the

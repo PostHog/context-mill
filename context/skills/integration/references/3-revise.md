@@ -21,6 +21,8 @@ in the report. Include their changed files
 in this review and check that Logs preserved any AIO tracing setup. Verification
 of delivery belongs to the user's checklist; do not make paid LLM calls.
 
+{{> sdk-majors}}
+
 Once all other tasks are complete, run any linter or prettier-like scripts found in the package.json, but ONLY on the files you have edited or created during this session. Do not run formatting or linting across the entire project's codebase.
 
 ## Status

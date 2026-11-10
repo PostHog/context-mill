@@ -71,7 +71,6 @@ commandments:
     - When verifying with an automated browser (Playwright, Puppeteer, Selenium), posthog-js's bot filter silently drops every capture while flags and asset loads still succeed. Override navigator.webdriver, the user agent, AND navigator.userAgentData before concluding events do not send. Diagnose with ?__posthog_debug=true ("likely bot" in the console).
 
   javascript_node:
-    - "Use posthog-node 5.x. Do not install or upgrade to posthog-node 6 or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
@@ -82,7 +81,6 @@ commandments:
     - Reverse proxy is NOT needed for server-side Node.js – only client-side JavaScript needs a proxy to avoid ad blockers
 
   python:
-    - "Use posthog 7.x. Do not install or upgrade to posthog 8 or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
     - Declare posthog in the project's manifest with the version range the docs show, then install from the manifest (`pip install -r requirements.txt`, `uv sync`, `poetry install`)
@@ -96,7 +94,6 @@ commandments:
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
 
   go:
-    - "Use posthog-go v1 (`github.com/posthog/posthog-go`). Do not install or upgrade to posthog-go v2 (`github.com/posthog/posthog-go/v2`) or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - posthog-go is the Go SDK module. `go get` it and import it with the module path the docs show. From v2 on, the major is part of the path (`/v2`), so the `go get` and every import must use the same path
     - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
     - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
@@ -109,7 +106,6 @@ commandments:
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
   rust:
-    - "Use the `posthog-rs` crate (0.x). Do not install or upgrade to the `posthog` 1.0 crate or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - Add the Rust SDK with the `cargo add` command or `Cargo.toml` entry the docs show, keeping its version, and use the crate path the docs show. Before 1.0 the crate is `posthog-rs` (`posthog_rs::client(options).await`); from 1.0 it is `posthog` (`posthog::`)
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
@@ -270,7 +266,6 @@ commandments:
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
-    - "Use posthog-ios 3.x. Do not install or upgrade to posthog-ios 4 or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager or CocoaPods, using `https://github.com/PostHog/posthog-ios.git` for SPM
     - Initialize `PostHogSDK.shared.setup(config)` exactly once and as early as possible, either in `UIApplicationDelegate.application(_:didFinishLaunchingWithOptions:)` or in the SwiftUI `App` initializer
     - For SwiftUI apps, prefer meaningful `.postHogScreenView(...)` modifiers for screen tracking because automatic SwiftUI screen names can be internal view identifiers
@@ -294,7 +289,6 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - "Use posthog_flutter 5.x. Do not install or upgrade to posthog_flutter 6 or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - posthog_flutter is the Flutter SDK package name; add it with the version constraint the docs show, with `flutter pub add` or in `pubspec.yaml`
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
@@ -338,7 +332,6 @@ commandments:
     - Configure PostHog credentials in src/environments/environment.ts files, as Angular reads environment variables from these configuration files
 
   android:
-    - "Use posthog-android 3.x. Do not install or upgrade to posthog-android 4 or use its API, even when the package manager offers it or installed source, a changelog or a migration guide shows it"
     - Adapt dependency configuration to the appropriate build.gradle(.kts) file according to the project gradle version
     - Call `PostHogAndroid.setup()` only once in the Application class's `onCreate()` method, so it's initialized as early as possible and only once.
     - Initialize PostHog in the Application class's `onCreate()` method
