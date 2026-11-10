@@ -177,7 +177,7 @@ commandments:
     - Remember that source code is available in the vendor directory after composer install
     - posthog/posthog-php is the PHP SDK package name
     - Check composer.json for existing dependencies and autoload configuration before adding new files
-    - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init()
+    - The PHP SDK uses static methods (PostHog::capture, PostHog::identify) - initialize once with PostHog::init(), unless the app uses `posthog/posthog-laravel`, which initializes the client itself
     - PHP SDK methods take associative arrays with 'distinctId', 'event', 'properties' keys - not positional arguments
     - Any first-party loader or proxy script you add must load standalone — require its own config includes explicitly rather than assuming the app bootstrapped them
 
