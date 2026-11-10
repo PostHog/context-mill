@@ -32,7 +32,7 @@ posthog = Posthog(
 
 ## The send
 
-- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, `capture_engagement`, and `category` optional. `from` is a Python keyword, so the argument is `from_`.
+- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, `capture_engagement`, and `category` optional. A category: `category=MessageCategory(key=..., type="marketing", name=..., description=...)`, with `MessageCategory` imported from `posthog.emails`, with `"transactional"` as the type of a transactional one, and the description left out when it has none. `from` is a Python keyword, so the argument is `from_`.
 - `reply_to` takes one address or a list of addresses.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
 

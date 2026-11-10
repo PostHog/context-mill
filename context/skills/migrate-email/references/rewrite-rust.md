@@ -30,7 +30,7 @@ let posthog = posthog_rs::client(options.build()?).await;
 
 ## The send
 
-- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.capture_engagement(false)`, and `.category(...)` optional.
+- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.capture_engagement(false)`, and `.category(...)` optional. A category: `.category(MessageCategory::new(key, MessageCategoryType::Marketing, name).description(...))`, with `MessageCategoryType::Transactional` as the type of a transactional one, and the description left out when it has none.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.

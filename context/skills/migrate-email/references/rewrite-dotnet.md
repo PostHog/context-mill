@@ -25,7 +25,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 
 ## The send
 
-- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `CaptureEngagement`, and `Category` optional.
+- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `CaptureEngagement`, and `Category` optional. A category: `Category = new MessageCategory { Key, Type = MessageCategoryType.Marketing, Name, Description }`, with `MessageCategoryType.Transactional` as the type of a transactional one, and the description left out when it has none.
 - Template send: `await emails.SendAsync(new SendTemplateEmailOptions { To, TemplateId, TemplateData, DistinctId, IdempotencyKey })`.
 - `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.

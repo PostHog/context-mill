@@ -28,7 +28,7 @@ POSTHOG = PostHog::Client.new({
 
 ## The send
 
-- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `capture_engagement:`, and `category:` optional.
+- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `capture_engagement:`, and `category:` optional. A category: `category: PostHog::Emails::MessageCategory.new(key:, type: 'marketing', name:, description:)`, with `'transactional'` as the type of a transactional one, and the description left out when it has none.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
 

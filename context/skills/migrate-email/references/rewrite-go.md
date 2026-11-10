@@ -27,7 +27,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 ## The send
 
-- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `CaptureEngagement` (`posthog.Ptr(false)`), and `Category` optional.
+- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `CaptureEngagement` (`posthog.Ptr(false)`), and `Category` optional. A category: `Category: posthog.MessageCategory{Key, Type: posthog.MessageCategoryMarketing, Name, Description}`, with `posthog.MessageCategoryTransactional` as the type of a transactional one, and the description left out when it has none.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
