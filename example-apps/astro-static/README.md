@@ -36,7 +36,7 @@ PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog.
+Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs a warning naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -78,7 +78,7 @@ The PostHog snippet is included as an inline script to prevent Astro from proces
   !function(t,e){...}(document,window.posthog||[]);
   posthog.init('<ph_project_token>', {
     api_host: 'https://us.i.posthog.com',
-    defaults: '2026-01-30'
+    defaults: '2026-08-30'
   })
 </script>
 ```
@@ -145,6 +145,12 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+## Reverse proxy
+
+Ad blockers drop events sent to PostHog's domain. Routing events through your own domain avoids that.
+
+This example does not proxy requests: it has no server to run a proxy on, so the browser sends events straight to `PUBLIC_POSTHOG_HOST`. To use a proxy, point `PUBLIC_POSTHOG_HOST` at a proxy you host (for example on Cloudflare) and set `ui_host` in `posthog.init` to your PostHog app URL so toolbar links still work. If your app can't proxy requests itself, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), which is free for PostHog Cloud users.
 
 ## Learn more
 
