@@ -294,10 +294,8 @@ describe('migrate-email skill', () => {
 
         it('moves only a transactional site to a template made in PostHog, and checks only code-form categories', () => {
             const inventory = read('3-inventory.md');
-            const templateQuestion = inventory.split('Ask the person once, listing every other template')[1].split('\n')[0];
-            expect(templateQuestion).toMatch(/Only a transactional email can become a template in PostHog/);
-            expect(templateQuestion).toMatch(/for a marketing site, offer only the code form or keeping it/);
-            expect(inventory.split('### A template in PostHog')[1].split('\n## ')[0]).not.toMatch(/marketing/);
+            expect(inventory).toMatch(/A template made in PostHog is transactional, so when that content shows a marketing email, as "The category of each site" below says, it can't become one/);
+            expect(inventory).toMatch(/ask whether each moves into the code, which keeps its category and its unsubscribe link, or stays, with the reason `kept on <provider name> for now`/);
             expect(inventory).toMatch(/to make it in PostHog from the provider's template, make it transactional, and give you its template ID/);
             expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category;/);
             expect(read('8-verify.md')).toMatch(/Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes/);
