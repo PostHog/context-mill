@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.63.0](https://github.com/PostHog/context-mill/compare/v1.62.0...v1.63.0) (2026-11-10)
+
+
+### Features
+
+* **examples:** use the posthog laravel sdk in the laravel example ([#497](https://github.com/PostHog/context-mill/issues/497)) ([45bf02f](https://github.com/PostHog/context-mill/commit/45bf02fa654c69e6ff5f50c6990ffadddf79f6ed))
+* **skills:** add eight framework examples to the install skills ([#495](https://github.com/PostHog/context-mill/issues/495)) ([2a62006](https://github.com/PostHog/context-mill/commit/2a620065ddeca32910aef6328ba7e613fa66ba52))
+* **skills:** add install rules and missing SDK docs to the install skills ([#494](https://github.com/PostHog/context-mill/issues/494)) ([5eedf2f](https://github.com/PostHog/context-mill/commit/5eedf2f630786ef48331b0c243b7c112f5b16736))
+* **skills:** add server examples to the install skills ([#492](https://github.com/PostHog/context-mill/issues/492)) ([68a6f1f](https://github.com/PostHog/context-mill/commit/68a6f1fec970fd6517402211ea56d9a4c04e2816))
+* **skills:** fold agent eval findings into the install skills ([#491](https://github.com/PostHog/context-mill/issues/491)) ([91732f1](https://github.com/PostHog/context-mill/commit/91732f16a8effd8ef1686206d9785e54964e49c3))
+* **skills:** refresh the browser examples the install skills copy ([#493](https://github.com/PostHog/context-mill/issues/493)) ([8e65b48](https://github.com/PostHog/context-mill/commit/8e65b4829366007f9b29381410c2b0f05fd65610))
+* **skills:** use a token and host the calling tool already provides ([#489](https://github.com/PostHog/context-mill/issues/489)) ([617999f](https://github.com/PostHog/context-mill/commit/617999f5b27284efcabe691be919ee5f76dad6cc))
+
 ## [1.62.0](https://github.com/PostHog/context-mill/compare/v1.61.1...v1.62.0) (2026-11-10)
 
 
