@@ -314,10 +314,10 @@ describe('migrate-email skill', () => {
         it('checks each key against the project in step 8 and reports in step 9 that every site kept its category', () => {
             expect(read('8-verify.md')).toMatch(/every site with a category passes the key, type, name, and description the plan notes/);
             expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type, name, and description, and each key it marks new must not be/);
-            expect(read('8-verify.md')).toMatch(/When a key marked new is already in it with the site's type, ask the person whether the site uses that category, with its name and description copied exactly and the plan's new mark removed, or a key that isn't taken\. With the other type, ask them only for a key that isn't taken/);
-            expect(read('8-verify.md')).toMatch(/When they name no key, undo the site's change, set `moves` to `no`, and the reason is `no category named`/);
+            expect(read('8-verify.md')).toMatch(/When a key marked new is in it, ask the person for another key, as Step 3 does, and fix the site and the plan/);
             expect(read('8-verify.md')).toMatch(/Fix each site that fails, then run this step's checks again from the top/);
-            expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, or none is left moving, tick the phase with `nothing to check`/);
+            expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, tick the phase with `nothing to check`/);
+            expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
