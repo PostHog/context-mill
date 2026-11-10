@@ -2,8 +2,9 @@
 
 Install PostHog with the project's own package manager so the real published version
 is written to the manifest and the lockfile. Run the add command with the version the
-reference docs below pin and let the manager resolve the rest — never type a version
-the docs don't show; a version that was never published fails the run with `ETARGET`.
+reference docs below pin, or the bare package name if they pin none, and let the
+manager resolve the rest — never type a version the docs don't show; a version that
+was never published fails the run with `ETARGET`.
 If the wizard refuses that command, write the pin into the manifest and run the
 manifest install.
 
