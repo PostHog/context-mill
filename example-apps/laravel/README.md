@@ -39,11 +39,11 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
 
 3. Configure PostHog in `.env`:
    ```env
-   POSTHOG_API_KEY=phc_your_project_token
+   POSTHOG_PROJECT_TOKEN=phc_your_project_token
    POSTHOG_HOST=https://us.i.posthog.com
    POSTHOG_ENABLED=true
    ```
-   For an EU Cloud project, use `https://eu.i.posthog.com` as the host. With a blank `POSTHOG_API_KEY` the app boots with PostHog disabled.
+   For an EU Cloud project, use `https://eu.i.posthog.com` as the host. With a blank `POSTHOG_PROJECT_TOKEN` the app boots with PostHog disabled.
 
 4. Generate application key:
    ```bash
@@ -74,7 +74,7 @@ composer require posthog/posthog-laravel
 php artisan posthog:install
 ```
 
-`posthog:install` publishes `config/posthog.php`, which reads `POSTHOG_API_KEY`, `POSTHOG_HOST` and `POSTHOG_ENABLED`. Laravel's package discovery registers the service provider and the `PostHog\Laravel\Facades\PostHog` facade, so the app has no PostHog service provider, middleware, exception callback or wrapper class.
+`posthog:install` publishes `config/posthog.php`, which reads `POSTHOG_HOST` and `POSTHOG_ENABLED`. The published file reads the token from `POSTHOG_API_KEY`; this app changes that one line to `POSTHOG_PROJECT_TOKEN`, the name PostHog uses for the project token everywhere else. Laravel's package discovery registers the service provider and the `PostHog\Laravel\Facades\PostHog` facade, so the app has no PostHog service provider, middleware, exception callback or wrapper class.
 
 > **Laravel 11 or earlier:** the Laravel SDK does not support these versions. Use the PHP SDK (`posthog/posthog-php`) with the "Manual setup with the PHP SDK" steps on the [Laravel docs page](https://posthog.com/docs/libraries/laravel) instead. Do not combine that setup with this SDK.
 
@@ -85,7 +85,7 @@ php artisan posthog:install
 - Signed-out events with no identity get a fresh random ID with `$process_person_profile` set to `false`. These IDs do not link events from the same visitor ([anonymous vs identified events](https://posthog.com/docs/data/anonymous-vs-identified-events.md)).
 - Exceptions Laravel reports are captured, honoring `dontReport`.
 - Events are flushed at the end of each request, queue job and Octane tick.
-- A blank `POSTHOG_API_KEY` or `POSTHOG_ENABLED=false` turns every call into a no-op without breaking boot. Run `php artisan posthog:doctor` to check the configuration.
+- A blank `POSTHOG_PROJECT_TOKEN` or `POSTHOG_ENABLED=false` turns every call into a no-op without breaking boot. Run `php artisan posthog:doctor` to check the configuration.
 
 **Still done by the app**
 

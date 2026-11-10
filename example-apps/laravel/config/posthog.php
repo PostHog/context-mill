@@ -12,7 +12,9 @@ $consumer = env('POSTHOG_CONSUMER');
 
 return [
     'enabled' => env('POSTHOG_ENABLED', true),
-    'api_key' => env('POSTHOG_API_KEY'),
+    // The package's default name is POSTHOG_API_KEY. This app uses POSTHOG_PROJECT_TOKEN, the name
+    // PostHog uses for the project token everywhere else.
+    'api_key' => env('POSTHOG_PROJECT_TOKEN'),
     'host' => env('POSTHOG_HOST', 'https://us.i.posthog.com'),
     'secret_key' => env('POSTHOG_SECRET_KEY'),
     'release_id' => env('POSTHOG_RELEASE_ID'),
