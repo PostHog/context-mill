@@ -22,6 +22,7 @@ STEP 2: Research log capture. (Skip if PostHog log export is already configured.
 STEP 3: Install dependencies. (Skip if PostHog log export is already configured.)
   - Install the OpenTelemetry SDK and OTLP exporter packages for the detected platform.
   - Do not manually edit dependency files — use the package manager's install command.
+  - If the project keeps more than one lockfile for the same manifest, such as a second Gemfile lock for another bundle, update each one.
 
 STEP 4: Configure the OTLP exporter. (Skip if PostHog log export is already configured.)
   - PostHog logs use the OpenTelemetry protocol. Set up an OTLP exporter pointed at PostHog's ingest endpoint.
@@ -45,6 +46,8 @@ STEP 7: Set up environment variables.
   - For the OpenTelemetry endpoint, use the same host as above with the path `/v1`: `https://us.i.posthog.com/v1` (US) or `https://eu.i.posthog.com/v1` (EU).
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
+  - List the key names in `.env.example`, or the env template the project already uses, with placeholder values, so the next developer knows what to set. Create `.env.example` if the project has none. Never put real values in it.
+  - Read the keys as optional: a missing key must never break the build or boot. Follow the missing-configuration rule in `references/COMMANDMENTS.md`.
 
 ## Reference files
 

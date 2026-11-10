@@ -41,6 +41,8 @@ STEP 6: Set up environment variables. (Skip if the PostHog SDK is already config
   - For the OTLP metrics endpoint, use the same host as above with the path `/i/v1/metrics`: `https://us.i.posthog.com/i/v1/metrics` (US) or `https://eu.i.posthog.com/i/v1/metrics` (EU), with the project token as an `Authorization: Bearer` header.
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
+  - List the key names in `.env.example`, or the env template the project already uses, with placeholder values, so the next developer knows what to set. Create `.env.example` if the project has none. Never put real values in it.
+  - Read the keys as optional: a missing key must never break the build or boot. Follow the missing-configuration rule in `references/COMMANDMENTS.md`.
 
 STEP 7: Verify metrics arrive.
   - For short-lived processes (scripts, cron jobs, serverless), flush before exit (`posthog.metrics.flush()`, or the OTel provider's `forceFlush()`/`shutdown()`).

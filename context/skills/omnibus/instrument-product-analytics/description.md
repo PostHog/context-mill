@@ -21,9 +21,12 @@ STEP 2: Research integration. (Skip if PostHog is already set up.)
 
 STEP 3: Install the PostHog SDK. (Skip if PostHog is already set up.)
   - Add the PostHog SDK package for the detected platform. Do not manually edit package.json — use the package manager's install command.
+  - If the project keeps more than one lockfile for the same manifest, such as a second Gemfile lock for another bundle, update each one.
 
 STEP 4: Initialize PostHog. (Skip if PostHog is already set up.)
   - Follow the framework reference for where and how to initialize. This varies significantly by framework (e.g., instrumentation-client.ts for Next.js 15.3+, AppConfig.ready() for Django, create_app() for Flask).
+  - For posthog-js, set `defaults` to the preset the framework docs reference shows. The example projects can show an older preset.
+  - For posthog-js, if the framework reference documents a reverse proxy for this framework, set it up as part of this change. Otherwise, suggest one in your final message: a reverse proxy keeps ad blockers from dropping events (https://posthog.com/docs/advanced/proxy.md).
 
 STEP 5: Plan event tracking.
   - From the project's file list, select between 10 and 15 files that might have interesting business value for event tracking, especially conversion and churn events.
@@ -52,6 +55,8 @@ STEP 9: Set up environment variables.
   - For the PostHog host URL: use the host that the tool or CLI which started this setup already gave you. If it gave you none, check the `projects-get` MCP response for a `region` field — `US` maps to `https://us.i.posthog.com`, `EU` maps to `https://eu.i.posthog.com`. If you still have no host from the calling tool, the MCP response, or existing project configuration, ask the user: "Are you on PostHog US Cloud or EU Cloud?" Do not assume US Cloud.
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
+  - List the key names in `.env.example`, or the env template the project already uses, with placeholder values, so the next developer knows what to set. Create `.env.example` if the project has none. Never put real values in it.
+  - Read the keys as optional: a missing key must never break the build or boot. Follow the missing-configuration rule in `references/COMMANDMENTS.md`.
 
 STEP 10: Verify and clean up.
   - Check the project for errors. Look for type checking or build scripts in package.json.
