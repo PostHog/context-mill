@@ -297,7 +297,7 @@ describe('migrate-email skill', () => {
             const section = inventory.split('### A template in PostHog')[1]?.split('\n## ')[0] ?? '';
             const turnAway = section.indexOf('A marketing email can\'t become one');
             const makeRequest = section.indexOf('Ask the person once, for every transactional one, to make it in PostHog');
-            expect(section).toMatch(/Decide the kind of each template the person wants made in PostHog from its content, as "The category of each site" below says/);
+            expect(section).toMatch(/Get its content as the paragraph above says, and decide the kind of each template the person wants made in PostHog from it, as "The category of each site" below says\. When the person can't give the content, the site stays, and the reason is `template content not checked`/);
             expect(section).toMatch(/Tell the person once, for every marketing one, and ask whether each moves into the code, with the plan and the check of the paragraphs above, or stays, with the reason `kept on <provider name> for now`/);
             expect(section).toMatch(/Ask the person once, for every transactional one, to make it in PostHog from the provider's template, make it transactional, and give you its template ID/);
             expect(turnAway).toBeGreaterThan(-1);
