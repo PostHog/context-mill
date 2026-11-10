@@ -1,9 +1,11 @@
 # Install the PostHog SDK
 
 Install PostHog with the project's own package manager so the real published version
-is written to the manifest and the lockfile. Run the add command with the bare
-package name and let the manager resolve the version — never type a version number
-yourself; a version that was never published fails the run with `ETARGET`.
+is written to the manifest and the lockfile. Run the add command with the version the
+reference docs below pin and let the manager resolve the rest — never type a version
+the docs don't show; a version that was never published fails the run with `ETARGET`.
+If the wizard refuses that command, write the pin into the manifest and run the
+manifest install.
 
 Match the manager the project already uses (read the lockfile: `package-lock.json` →
 npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poetry.lock` →
@@ -14,7 +16,7 @@ Read the manifest first. If the SDK is already installed, leave it and say so.
 
 Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
 version — declare the dependency as the framework reference shows, taking the version
-from the SDK's latest release.
+the docs pin.
 
 Run the install once. Fix and retry only a mistake you own (wrong package or manager).
 If the environment blocks it — no registry, a pre-existing broken lockfile, a peer

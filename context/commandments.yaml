@@ -11,7 +11,7 @@ commandments:
     - Sending analytics must never fail or stall the app's own work. Where the app waits on a flush, handle any error it raises and keep the wait short. A long-running server or worker whose SDK sends in the background needs no flush after each capture
   # Installing and initializing a PostHog SDK. Skills that install an SDK carry the `sdk-install` tag.
   sdk-install:
-    - "Install the SDK with the package manager's add command and the bare package name, so it resolves a published version. Never type a version number by hand. Leave dependencies this integration did not add at their current versions"
+    - "Install the SDK with the package manager's add command and the version the SDK docs pin, so it resolves a published release of that major. Never type a version the docs don't show. Leave dependencies this integration did not add at their current versions"
     - "In a monorepo or workspace, install the SDK in the package that imports it, not at the repository root"
     - "Create one server-side client per process at startup and reuse it for every request. In serverless functions and other per-request handlers, flush before the handler returns, or the events are lost"
     - "Identify users with the app's own stable user id, such as a primary key or UUID, never an email or username. Send those as person properties instead. Identify once when the user logs in or signs up, and call `reset()` when they log out"
@@ -82,7 +82,7 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
-    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt`, at the version the Python SDK docs pin, and do NOT use unquoted version specifiers like `>=` directly in shell commands. To keep the docs' range, write it into `requirements.txt` and run `pip install -r requirements.txt`
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
@@ -259,9 +259,9 @@ commandments:
   swift:
     - 'Set the PostHog project token and host directly in code when creating the `PostHogConfig` (e.g. `PostHogConfig(projectToken: "<project-token>", host: "https://us.i.posthog.com")`). The project token is a public client-side key designed to ship in the app binary, so hardcoding it is safe and is the recommended approach for iOS'
     - 'Do NOT depend on Xcode scheme environment variables (`ProcessInfo.processInfo.environment`) as the only source of the token: they are injected only when launching from Xcode (debug/simulator), NOT in Archive/Release builds (TestFlight, App Store). Reading them is fine as an optional override, but never force-unwrap or `fatalError` on their absence — that crashes production builds on launch. Ensure a value always ships in the binary'
-    - 'Before editing any Xcode project file, check for a project generator spec. If a `project.yml` with XcodeGen-shaped content (top-level `targets:` and/or `packages:` keys — do not trust the filename alone) exists at the repo root, the `.xcodeproj` is generated and MUST NOT be edited directly: the next `xcodegen generate` silently wipes any edit to `project.pbxproj`. Instead declare the package in `project.yml` under `packages:` as `PostHog: { url: https://github.com/PostHog/posthog-ios, from: <latest release> }`, add `- package: PostHog` to the app target''s `dependencies:` list, then tell the user to re-run `xcodegen generate` to apply it'
+    - 'Before editing any Xcode project file, check for a project generator spec. If a `project.yml` with XcodeGen-shaped content (top-level `targets:` and/or `packages:` keys — do not trust the filename alone) exists at the repo root, the `.xcodeproj` is generated and MUST NOT be edited directly: the next `xcodegen generate` silently wipes any edit to `project.pbxproj`. Instead declare the package in `project.yml` under `packages:` as `PostHog: { url: https://github.com/PostHog/posthog-ios, from: <the version the iOS SDK docs pin> }`, add `- package: PostHog` to the app target''s `dependencies:` list, then tell the user to re-run `xcodegen generate` to apply it'
     - When adding SPM dependencies to project.pbxproj (only when no XcodeGen `project.yml` generator spec exists — see the rule above), create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
-    - Check the latest release version of posthog-ios at `https://github.com/PostHog/posthog-ios/releases` before setting the `minimumVersion` in the SPM package reference — do not hardcode a stale version
+    - Take the `minimumVersion` in the SPM package reference from the version the iOS SDK docs pin — do not hardcode a stale version
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
@@ -288,7 +288,7 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`
+    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`, at the version the Flutter SDK docs pin
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
     - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
