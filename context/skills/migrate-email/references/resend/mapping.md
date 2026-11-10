@@ -70,7 +70,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Resend template, makes it transactional, or files it under the site's category, and gives you its template ID. Until then the site stays on Resend.
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
 
 - In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and the name keeps its case. `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`, and a variable with a `fallback_value` in the template's definition gets the same `default`. Quote every fallback with `'`: a `"` inside the template's JSON body raises `TokenizationError`. Liquid has no escape character in a quoted value, so a fallback that holds a `'` keeps the site on Resend.
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.

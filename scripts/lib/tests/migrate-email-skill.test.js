@@ -292,8 +292,9 @@ describe('migrate-email skill', () => {
             expect(rewrite).toContain('recipient_opted_out');
         });
 
-        it("keeps a PostHog template site's category on the template, in steps 3, 7 and 8", () => {
-            expect(read('3-inventory.md')).toMatch(/or file it under the site's category, which they make in PostHog first when the plan marks it new/);
+        it('moves only a transactional site to a template made in PostHog, and checks only code-form categories', () => {
+            expect(read('3-inventory.md')).toMatch(/Only a transactional site moves to a template made in PostHog: a marketing site moves in the code form, which keeps its category and its unsubscribe link\./);
+            expect(read('3-inventory.md')).toMatch(/to make it in PostHog from the provider's template, make it transactional, and give you its template ID/);
             expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category;/);
             expect(read('8-verify.md')).toMatch(/Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes/);
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
@@ -307,7 +308,7 @@ describe('migrate-email skill', () => {
             const rewriteStep = read('7-rewrite.md');
 
             expect(rewriteStep).toMatch(/A site with a category that sends in the code form passes it as the send's category, spelled as the rewrite file says under "The send", with the key, type, name, and description the plan notes, written exactly/);
-            expect(rewriteStep).toMatch(/A site that sends a template made in PostHog passes no category: the template sends in its own, which the person set in Step 3/);
+            expect(rewriteStep).toMatch(/A site that sends a template made in PostHog is transactional and passes no category/);
             expect(rewriteStep).toMatch(/A site with a blank category leaves the category out/);
             expect(rewriteStep).toMatch(/unless its template key names a template made in PostHog: the send then follows that template's category, and PostHog refuses any other category, `transactional` included, with `category_mismatch`/);
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
@@ -335,8 +336,8 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/each category the code now defines \(the next send undoes a change to its name or description in PostHog, so change them in the code\)/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
             expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(the one item done at the deploy itself: turn off its email step in PostHog as the code goes live, or both send it\)/);
-            expect(read('9-report.md')).toMatch(/check that it is transactional, or in the site's category/);
-            expect(read('resend/mapping.md')).toMatch(/makes it transactional, or files it under the site's category/);
+            expect(read('9-report.md')).toMatch(/check that it is transactional, sends from a verified sender/);
+            expect(read('resend/mapping.md')).toMatch(/makes it transactional, and gives you its template ID/);
         });
     });
 
