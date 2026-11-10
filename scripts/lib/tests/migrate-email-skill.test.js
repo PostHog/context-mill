@@ -294,9 +294,14 @@ describe('migrate-email skill', () => {
 
         it('moves only a transactional site to a template made in PostHog, and checks only code-form categories', () => {
             const inventory = read('3-inventory.md');
-            expect(inventory).toMatch(/A template made in PostHog is transactional, so when that content shows a marketing email, as "The category of each site" below says, it can't become one/);
-            expect(inventory).toMatch(/ask whether each moves into the code, which keeps its category and its unsubscribe link, or stays, with the reason `kept on <provider name> for now`/);
-            expect(inventory).toMatch(/to make it in PostHog from the provider's template, make it transactional, and give you its template ID/);
+            const section = inventory.split('### A template in PostHog')[1]?.split('\n## ')[0] ?? '';
+            const turnAway = section.indexOf('A marketing email can\'t become one');
+            const makeRequest = section.indexOf('Ask the person once, for every transactional one, to make it in PostHog');
+            expect(section).toMatch(/Decide the kind of each template the person wants made in PostHog from its content, as "The category of each site" below says/);
+            expect(section).toMatch(/Tell the person once, for every marketing one, and ask whether each moves into the code, with the plan and the check of the paragraphs above, or stays, with the reason `kept on <provider name> for now`/);
+            expect(section).toMatch(/Ask the person once, for every transactional one, to make it in PostHog from the provider's template, make it transactional, and give you its template ID/);
+            expect(turnAway).toBeGreaterThan(-1);
+            expect(makeRequest).toBeGreaterThan(turnAway);
             expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category;/);
             expect(read('8-verify.md')).toMatch(/Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes/);
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
