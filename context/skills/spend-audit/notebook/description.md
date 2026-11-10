@@ -26,13 +26,16 @@ back to the project folder name. The date is today's, UTC.
    the volume removed per month in its unit. No dollar total. The product
    prices it.
 4. **Settings to change.** One block per `notebook` saving or unpriced
-   finding, ordered by volume removed, unpriced last. Each block: what to change
-   (the exact `setting`), a link to `<app url><settings_path>`, the evidence,
-   the tradeoff, and the effort.
+   finding that has a `setting`, ordered by volume removed, unpriced last. Each
+   block: what to change (the exact `setting`), a link to
+   `<app url><settings_path>`, the evidence, the tradeoff, and the effort.
 5. **Code changes.** What the pull request changes and why, one bullet per
-   applied finding with the file. Findings `apply-code-fixes` skipped are listed
-   here as "not applied: <reason>" and move to the notebook as unpriced. With
-   no pull request: the single line "No code changes needed".
+   applied finding with the file. Then the code changes for the user to make,
+   one block each with the file, the change, the evidence and the tradeoff:
+   every `pr` saving `apply-code-fixes` did not apply ("not applied: <reason>",
+   or "no code fix task ran"), and every unpriced finding with a
+   `code_change`. Only when both lists are empty: the single line "No code
+   changes needed".
 6. **Get more from what you pay for.** Each insight `value-insights` created,
    embedded, with one line on the question it answers and a link to its
    dashboard. Value findings with no insight (autocapture, a property

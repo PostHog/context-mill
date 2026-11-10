@@ -30,8 +30,8 @@ First settle two facts, mechanically:
    data-side audit; the report says the code side was skipped.
 2. **Which products carry volume?** Run the presence queries from the queries
    skill once: events in the last 30 days, replay sessions, `$exception`
-   events, `$feature_flag_called` events, `$groupidentify` events. A product
-   with no rows gets no audit task.
+   events, `$feature_flag_called` events, `$groupidentify` events, and the
+   group type mappings. A product with no rows gets no audit task.
 
 Then seed, in this order:
 
@@ -39,8 +39,9 @@ Then seed, in this order:
   measurements once so no audit task repeats them.
 - One `audit-<area>` per product with volume, each depending on
   `measure-volumes`: `audit-identify` and `audit-events` whenever there are
-  events at all, `audit-flags`, `audit-errors`, `audit-replay` and
-  `audit-groups` only when their presence query returned rows. Pass
+  events at all, `audit-flags`, `audit-errors` and `audit-replay` only when
+  their presence query returned rows, `audit-groups` when group types are
+  defined or `$groupidentify` returned rows. Pass
   `inputs: { code_connected: true | false }` to each so it knows whether to scan
   the source tree.
 - `apply-code-fixes`, after every `audit-*` task, only when the SDK is in this
@@ -56,6 +57,6 @@ Audit tasks for different areas share no edges, so they run in parallel.
 ## How you know you succeeded
 
 The queue holds `measure-volumes`, one audit task per product that actually has
-volume, `apply-code-fixes` only when the SDK is here, `value-insights`, and a
-`report` that waits for all of them. Every task label is the action in a few
+volume (for groups, group types defined), `apply-code-fixes` only when the SDK
+is here, `value-insights`, and a `report` that waits for all of them. Every task label is the action in a few
 words. Nothing was created in PostHog and no file was edited.

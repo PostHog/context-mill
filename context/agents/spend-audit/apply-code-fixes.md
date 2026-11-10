@@ -8,7 +8,7 @@ effort_pi: medium
 model_sdk: claude-sonnet-5
 effort_sdk: high
 skills: [spend-audit-findings, spend-audit-code-fixes]
-allowedTools: [Read, Write, Edit, Glob, Grep, Bash]
+allowedTools: [Read, Write, Edit, Glob, Grep, Bash, check_env_keys, set_env_values]
 disallowedTools: [enqueue_task]
 dependsOn: [measure-volumes]
 ---
@@ -16,10 +16,12 @@ dependsOn: [measure-volumes]
 ## Goal
 
 Apply the code-side fixes the audit tasks found. Read every `audit-*` handoff
-and take only the findings whose `fixed_in` is `pr`. For each one make the
-smallest edit that implements its `code_change` where the finding points,
-following the code-fixes skill for the SDK-specific shape. Touch nothing else:
-no reformatting, no unrelated cleanup, no removal of capture calls or flags.
+and take only the findings whose `kind` is `saving` and whose `fixed_in` is
+`pr`. An `unpriced` finding is never a code edit; the report lists it in the
+notebook for the user. For each saving make the smallest edit that implements
+its `code_change` where the finding points, following the code-fixes skill for
+the SDK-specific shape. Touch nothing else: no reformatting, no unrelated
+cleanup, no removal of capture calls or flags.
 
 When the project defines a typecheck, lint or build script, run it on the files
 you changed and fix what your edits broke. When a fix cannot be applied safely

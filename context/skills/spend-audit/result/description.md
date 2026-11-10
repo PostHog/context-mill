@@ -48,11 +48,16 @@ view. Pass exactly these fields.
 - `dashboard_ids` and `insight_ids` hold every id this run created, from the
   `value-insights` handoff. Nothing the user made, nothing from another run.
   An id you did not see in a create response does not go in.
-- `savings` holds every finding with `kind: saving`, mapped field for field
-  from the findings record. `before` and `after` are monthly volumes in `unit`.
-  `after.low <= after.high <= before`. `fixed_in` is `pr` only when
-  `apply-code-fixes` reported that id as applied; a skipped finding is not a
-  saving in this file (it is unpriced in the notebook).
+- `savings` holds every finding with `kind: saving`, each with exactly these
+  fields from its findings record: `id`, `title`, `billing_type`, `unit`,
+  `before`, `after` (`low`, `high`), `evidence`, `tradeoff`, `effort`,
+  `fixed_in`. No other fields: drop `area`, `kind`, `query`, `settings_path`,
+  `setting` and `code_change`. `before` and `after` are whole-number monthly
+  volumes in `unit`. `after.low <= after.high <= before`.
+- `fixed_in` is `pr` only when `apply-code-fixes` reported that id as applied.
+  A `pr` saving it skipped, or one no `apply-code-fixes` task ran for, stays in
+  `savings` with `fixed_in: notebook`, and the notebook lists its code change
+  for the user to make.
 - `value_items` holds every `kind: value` finding that got at least one
   insight, with those insight ids.
 - `checks_passed` holds the `title` of every `kind: passed` finding.

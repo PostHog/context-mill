@@ -1,9 +1,11 @@
 # Spend audit — code fixes
 
 `apply-code-fixes` edits the repository from the `code_change` of every finding
-whose `fixed_in` is `pr`. Each edit is the smallest change that implements the
-finding where it points. Nothing else changes: no reformatting, no renamed
-symbols, no removed capture calls, no new dependencies.
+whose `kind` is `saving` and whose `fixed_in` is `pr`. An `unpriced` finding is
+never a code edit, even with a `code_change`: the notebook lists it for the
+user. Each edit is the smallest change that implements the finding where it
+points. Nothing else changes: no reformatting, no renamed symbols, no removed
+capture calls, no new dependencies.
 
 Read the file before you edit it. Confirm the pattern the finding named is
 there; when it is not, skip the finding and say why in your handoff. Never read
@@ -22,6 +24,7 @@ autocapture: { element_allowlist: ['button', 'a'] },
 capture_pageleave: false,              // events-pageleave
 capture_heatmaps: false,               // events-heatmaps
 before_send: (event) => {              // errors-noisy-issues
+  const NOISY_EXCEPTION_TYPES = ['ResizeObserverLoopError'] // the types the finding named
   if (event?.event === '$exception') {
     const types = event.properties?.$exception_types ?? []
     if (types.some((t) => NOISY_EXCEPTION_TYPES.includes(t))) return null
@@ -42,17 +45,20 @@ Or move the call into the login success handler and add `posthog.reset()` to
 logout. When the project wraps PostHog in a provider or hook, edit the wrapper,
 not every call site.
 
-Gating on environment (`events-dev-hosts`, `errors-dev-hosts`):
+Non-production hosts (`events-dev-hosts`, `errors-dev-hosts`), inside the
+existing options object:
 
 ```js
-if (process.env.NODE_ENV === 'production') {
-  posthog.init(/* unchanged */)
-}
+opt_out_capturing_by_default:
+  // the exact hosts the finding measured
+  ['localhost', '127.0.0.1', 'staging.example.com'].includes(window.location.hostname) ||
+  window.location.hostname.endsWith('.local'),
 ```
 
-Use the project's own environment convention (`import.meta.env.PROD`,
-`NEXT_PUBLIC_VERCEL_ENV === 'production'`, a Django `settings.DEBUG`). Do not
-invent a new variable.
+Keep `posthog.init` running and the PostHog provider rendered on every host;
+never wrap them in an environment check, since components that read PostHog
+break without them. Never match a substring such as `dev` or `vercel.app`, and
+never opt out the production host.
 
 **Node (`posthog-node`)**:
 
@@ -65,15 +71,18 @@ const client = new PostHog(process.env.POSTHOG_KEY, {
 client.capture({ distinctId, event, properties })      // flags-send-with-every-capture: no sendFeatureFlags: true
 ```
 
-Add `POSTHOG_PERSONAL_API_KEY` to the environment through the wizard's env
-tools when the project has an `.env.example`; never write a key value.
+Check for `POSTHOG_PERSONAL_API_KEY` with `check_env_keys`. When the project
+has an `.env.example` without it, add the name there with `set_env_values` and
+an empty value; never write a key value.
 
 **Python (`posthog-python`)**: `personal_api_key=os.environ["POSTHOG_PERSONAL_API_KEY"]`,
 `poll_interval=30`, remove `send_feature_flags=True` from `capture()`.
 
 **Server identify on every request** (`identify-on-every-request`): keep one
-`identify()` or `$set` at signup or login, replace the per-request call with
-the plain `capture()` carrying `distinct_id` only.
+`identify()` or `$set` at signup or login. Delete the per-request `identify()`
+or standalone `$set` call. When the handler sends `$set` inside an event it
+captures anyway, keep that `capture()` and its event name and drop only the
+`$set` properties.
 
 **Mobile SDKs**: `personProfiles = .identifiedOnly` (iOS),
 `personProfiles = PersonProfiles.IDENTIFIED_ONLY` (Android),

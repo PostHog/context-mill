@@ -18,8 +18,7 @@ dependsOn: [measure-volumes]
 Turn the audit's value findings into insights and dashboards the user keeps.
 Read the `audit-events` and `audit-groups` handoffs and take the findings whose
 `kind` is `value`: custom events nothing queries, high-volume events with no
-custom properties, autocapture that no action uses, group analytics paid for
-but never aggregated on.
+custom properties, group analytics paid for but never aggregated on.
 
 Each insight has to make sense for what the event is, not just count it. Read
 the code where the event fires when the handoff names a file, so a start and a

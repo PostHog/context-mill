@@ -31,8 +31,10 @@ three outputs, in this order:
 3. **The result file**, through one `publish_result` call, always, and last,
    with the notebook's short id, every dashboard and insight id the run
    created, every sized saving, every value item, and every passed check, as
-   the result skill shapes them. A finding `apply-code-fixes` skipped moves to
-   the notebook as unpriced; it is not a `pr` saving anymore.
+   the result skill shapes them. A `pr` saving that `apply-code-fixes` did not
+   apply, because it skipped it or because no `apply-code-fixes` task ran, is a
+   saving with `fixed_in: notebook`, and the notebook lists its code change for
+   the user to make.
 
 Never state a dollar amount. The product prices the volumes from the user's own
 billing.
@@ -40,7 +42,8 @@ billing.
 ## How you know you succeeded
 
 A user who opens only the notebook knows what the audit created, what to change
-in PostHog and why, what the pull request changes, what new insights answer, and
-what was checked and found fine. The result file lists everything the run
-created and every saving with the query behind it. `publish_result` was called
-once, after the notebook existed, so the file carries its short id.
+in PostHog and why, what the pull request changes, what code to change
+themselves, what new insights answer, and what was checked and found fine. The
+result file lists everything the run created and every saving with its
+evidence. `publish_result` was called once, after the notebook existed, so the
+file carries its short id.

@@ -66,6 +66,13 @@ describe('spend audit flow', () => {
         expect(byType.get('report').optional).not.toBe(true);
     });
 
+    it('lets every task that loads a skill read it', () => {
+        for (const prompt of prompts.filter((p) => (p.skills ?? []).length > 0)) {
+            expect(prompt.allowedTools ?? [], `${prompt.type} must allow Read`).toContain('Read');
+            expect(prompt.disallowedTools ?? [], `${prompt.type} must not disallow Read`).not.toContain('Read');
+        }
+    });
+
     it('loads only skills that exist', () => {
         const skills = new Set(expandSkillGroups(loadSkillsConfig(configDir), configDir).map((skill) => skill.id));
         for (const prompt of prompts) {
