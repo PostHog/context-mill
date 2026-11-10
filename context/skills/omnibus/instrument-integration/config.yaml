@@ -2,7 +2,7 @@ type: skill
 template: description.md
 category: integration
 description: Add PostHog SDK integration to your application. Use when setting up PostHog for the first time or reviewing PRs that need PostHog initialization. Covers SDK installation, provider setup, and basic configuration for any framework.
-tags: []
+tags: [sdk-install]
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
@@ -72,6 +72,9 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
       - https://posthog.com/docs/libraries/nuxt-js.md
+      - https://posthog.com/docs/libraries/nuxt-js-2.md
+      - https://posthog.com/docs/libraries/gatsby.md
+      - https://posthog.com/docs/libraries/docusaurus.md
       - https://posthog.com/docs/libraries/vue-js.md
       - https://posthog.com/docs/libraries/tanstack-start.md
       - https://posthog.com/docs/libraries/svelte.md
@@ -81,6 +84,12 @@ variants:
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
       - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/libraries/nestjs.md
+      - https://posthog.com/docs/libraries/fastify.md
+      - https://posthog.com/docs/libraries/hono.md
+      - https://posthog.com/docs/libraries/remix.md
+      - https://posthog.com/docs/libraries/cloudflare-workers.md
+      - https://posthog.com/docs/libraries/convex.md
       - https://posthog.com/docs/references/posthog-node.md
       # Python
       - https://posthog.com/docs/libraries/django.md
@@ -91,6 +100,7 @@ variants:
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir
       - https://posthog.com/docs/libraries/elixir.md
+      - https://posthog.com/docs/libraries/phoenix.md
       # Go
       - https://posthog.com/docs/libraries/go.md
       # Java
@@ -112,3 +122,7 @@ variants:
       - https://posthog.com/docs/libraries/flutter.md
       - https://posthog.com/docs/libraries/kmp.md
       - https://posthog.com/docs/libraries/react-native.md
+      - https://posthog.com/docs/libraries/capacitor.md
+      - https://posthog.com/docs/libraries/unity.md
+      - https://posthog.com/docs/libraries/godot.md
+      - https://posthog.com/docs/libraries/roblox.md

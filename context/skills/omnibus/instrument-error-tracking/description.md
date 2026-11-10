@@ -6,6 +6,8 @@ Supported platforms: React, Next.js, Web (JavaScript), Node.js, Python, PHP, Rub
 
 ## Instructions
 
+Before you edit anything, read `references/COMMANDMENTS.md`. It lists the rules every PostHog install follows: how to install the SDK, where to create the client, how to identify users, Content Security Policy and multi-platform apps, plus the rules for this framework.
+
 Follow these steps IN ORDER:
 
 STEP 1: Analyze the codebase and detect the platform.

@@ -2,9 +2,11 @@
 
 Use this skill to add product analytics events (capture calls) that track meaningful user actions in new or changed code. Use it after implementing features or reviewing PRs to ensure key user behaviors are captured. If PostHog is not yet installed, this skill also covers initial SDK setup. Supports any framework or language.
 
-Supported frameworks and languages: Next.js, React Router, Nuxt, Vue, TanStack Start, SvelteKit, Astro, Angular, Django, Flask, FastAPI, Laravel, PHP, WordPress, Ruby on Rails, Elixir (Phoenix), Go, Java (Spring Boot), Rust, .NET, Android, iOS, Flutter, Kotlin Multiplatform, React Native, Expo, and more.
+Supported frameworks and languages: Next.js, React Router, Remix, Nuxt, Vue, TanStack Start, SvelteKit, Astro, Angular, Gatsby, Docusaurus, Django, Flask, FastAPI, Laravel, PHP, WordPress, Ruby on Rails, Elixir (Phoenix), Go, Java (Spring Boot), Rust, .NET, Android, iOS, Flutter, Kotlin Multiplatform, React Native, Expo, Capacitor, Node.js, NestJS, Fastify, Hono, Cloudflare Workers, Convex, Unity, Godot, Roblox, and more.
 
 ## Instructions
+
+Before you edit anything, read `references/COMMANDMENTS.md`. It lists the rules every PostHog install follows: how to install the SDK, where to create the client, how to identify users, Content Security Policy and multi-platform apps, plus the rules for this framework.
 
 Follow these steps IN ORDER:
 
