@@ -38,12 +38,25 @@ variants:
       # PHP
       - example-apps/laravel
       - example-apps/php
+      - example-apps/wordpress
       # Ruby
       - example-apps/ruby-on-rails
       - example-apps/ruby
+      # Elixir
+      - example-apps/elixir
+      # Go
+      - example-apps/go
+      # Java
+      - example-apps/java-spring-boot
+      # Rust
+      - example-apps/rust
+      # .NET
+      - example-apps/dotnet
       # Mobile
       - example-apps/android
       - example-apps/swift
+      - example-apps/swift-xcodegen
+      - example-apps/flutter
       - example-apps/react-native
       - example-apps/expo
     docs_urls:
@@ -71,9 +84,14 @@ variants:
       - https://posthog.com/docs/libraries/elixir.md
       # Go
       - https://posthog.com/docs/libraries/go.md
+      # Java
+      - https://posthog.com/docs/libraries/java.md
+      # Rust
+      - https://posthog.com/docs/libraries/rust.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/libraries/php.md
+      - https://posthog.com/docs/libraries/wordpress.md
       # Ruby
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
@@ -83,4 +101,5 @@ variants:
       - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/libraries/ios/configuration.md
       - https://posthog.com/docs/libraries/flutter.md
+      - https://posthog.com/docs/libraries/kmp.md
       - https://posthog.com/docs/libraries/react-native.md

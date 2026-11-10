@@ -18,8 +18,7 @@ This document summarizes the implementation of the Laravel PostHog example appli
   - `identify()` - User identification
   - `capture()` - Event tracking
   - `captureException()` - Error tracking
-  - `isFeatureEnabled()` - Feature flag checking
-  - `getFeatureFlagPayload()` - Feature flag payload retrieval
+  - `evaluateFlags()` - Evaluate flags once, read values from the snapshot
 
 **Authentication (Livewire Components)**
 - ✅ Login component with PostHog tracking
@@ -93,8 +92,8 @@ This document summarizes the implementation of the Laravel PostHog example appli
 | User Signup | `Register.php:29-32` | `identify()` + `capture()` |
 | User Logout | `web.php:25` | `capture()` |
 | Dashboard View | `Dashboard.php:18` | `capture()` |
-| Feature Flag Check | `Dashboard.php:21-25` | `isFeatureEnabled()` |
-| Feature Flag Payload | `Dashboard.php:28-31` | `getFeatureFlagPayload()` |
+| Feature Flag Check | `Dashboard.php:21-25` | `evaluateFlags()` |
+| Feature Flag Payload | `Dashboard.php:28-31` | `evaluateFlags()` |
 | Burrito Tracking | `BurritoTracker.php:22-24` | `identify()` + `capture()` |
 | Profile View | `Profile.php:14` | `capture()` |
 | Error Capture | `ErrorTestController.php:22-24` | `identify()` + `captureException()` |

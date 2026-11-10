@@ -55,8 +55,8 @@
     throw new \Exception('Test exception from critical operation');
 } catch (\Throwable $e) {
     // Capture exception with user context
-    $posthog->identify($user->email, $user->getPostHogProperties());
-    $eventId = $posthog->captureException($e, $user->email);
+    $posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
+    $eventId = $posthog->captureException($e, $user->getPostHogDistinctId());
 
     return response()->json([
         'error' => 'Operation failed',
