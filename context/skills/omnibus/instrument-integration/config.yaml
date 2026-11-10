@@ -30,8 +30,16 @@ variants:
       - example-apps/astro-ssr
       - example-apps/astro-hybrid
       - example-apps/angular
+      - example-apps/gatsby
+      - example-apps/docusaurus
+      - example-apps/remix
       # JavaScript / Server + Client
       - example-apps/javascript-node
+      - example-apps/nestjs
+      - example-apps/fastify
+      - example-apps/hono
+      - example-apps/cloudflare-workers
+      - example-apps/convex
       - example-apps/javascript-web
       # Python
       - example-apps/django
