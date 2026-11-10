@@ -23,7 +23,7 @@ Read the manifest first. If the SDK is already installed, leave it and say so.
 
 Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
 version — declare the dependency as the framework reference shows, with the version
-the docs show. Do not look up the SDK's latest release for it.
+the docs show. Do not look up the SDK's latest release for it. For Swift Package Manager, set `minimumVersion` to that version with `upToNextMajorVersion`; in an XcodeGen `project.yml`, use it as the package's `from:`.
 
 Run the install once. Fix and retry only a mistake you own (wrong package or manager).
 If the environment blocks it — no registry, a pre-existing broken lockfile, a peer

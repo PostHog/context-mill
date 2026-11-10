@@ -40,7 +40,7 @@ lockfiles are huge and full of hashes, so never read one whole.
 Some ecosystems pin an explicit version in a manifest no install command resolves
 (Swift SPM, Gradle). There, declare the dependency the way the framework reference
 shows, with the version the docs show. Do not look up the SDK's latest release, and
-do not invent a version.
+do not invent a version. For Swift Package Manager, set `minimumVersion` to that version with `upToNextMajorVersion`; in an XcodeGen `project.yml`, use it as the package's `from:`.
 
 Attempt the install once. If it fails on something you own — a wrong package name or
 the wrong manager — fix that and run it one more time.

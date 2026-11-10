@@ -11,8 +11,7 @@ commandments:
     - Sending analytics must never fail or stall the app's own work. Where the app waits on a flush, handle any error it raises and keep the wait short. A long-running server or worker whose SDK sends in the background needs no flush after each capture
   # Installing and initializing a PostHog SDK. Skills that install an SDK carry the `sdk-install` tag.
   sdk-install:
-    - "Install the SDK with the command or manifest entry that the reference docs show, and keep the version or range it carries, so the project gets the major the docs cover. Never type a version that the docs don't show, and never drop one they do. Take versions from the docs, not from example app manifests. If the docs show no version, use the bare package name. Leave dependencies this integration did not add at their current versions"
-    - "The wizard refuses any `<` or `>` in a shell command, even inside quotes. When the docs' version contains one (a Python range, a Ruby `~>`), write it into the manifest (`requirements.txt`, `pyproject.toml`, `Gemfile`) and run the manifest install (`pip install -r requirements.txt`, `bundle install`)"
+    - "Leave dependencies this integration did not add at their current versions"
     - "In a monorepo or workspace, install the SDK in the package that imports it, not at the repository root"
     - "Create one server-side client per process at startup and reuse it for every request. In serverless functions and other per-request handlers, flush before the handler returns, or the events are lost"
     - "Identify users with the app's own stable user id, such as a primary key or UUID, never an email or username. Send those as person properties instead. Identify once when the user logs in or signs up, and call `reset()` when they log out"
@@ -83,18 +82,17 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
-    - Declare posthog in the project's manifest with the version range the docs show, then install from the manifest (`pip install -r requirements.txt`, `uv sync`, `poetry install`)
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
-    - PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later - when you add one, raise the floor to that version and keep the upper bound the docs show
+    - PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later - when you add one, require at least that version
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
 
   go:
-    - posthog-go is the Go SDK module. `go get` it and import it with the module path the docs show. From v2 on, the major is part of the path (`/v2`), so the `go get` and every import must use the same path
+    - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
     - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
     - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
     - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
@@ -106,7 +104,7 @@ commandments:
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
   rust:
-    - Add the Rust SDK with the `cargo add` command or `Cargo.toml` entry the docs show, keeping its version, and use the crate path the docs show. Before 1.0 the crate is `posthog-rs` (`posthog_rs::client(options).await`); from 1.0 it is `posthog` (`posthog::`)
+    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
     - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
@@ -125,7 +123,7 @@ commandments:
 
   # Keyed `java-server` (not `java`) so these backend rules never fold into the Android skill, which carries the `java` tag. The Java variant is tagged [java, java-server].
   java-server:
-    - posthog-server is the PostHog Java server SDK; add the `com.posthog:posthog-server` dependency via Gradle or Maven, with the version the docs show, and import from `com.posthog.server`
+    - posthog-server is the PostHog Java server SDK; add the `com.posthog:posthog-server` dependency via Gradle or Maven and import from `com.posthog.server`
     - Build one client per process with `PostHogConfig.builder(token).host(host).build()` then `PostHog.with(config)`; share the returned `PostHogInterface` (for example as a singleton Spring `@Bean`), never per request
     - Read the project token and host from the environment or configuration; never hardcode PostHog secrets
     - Flush and close on shutdown with `posthog.flush()` and `posthog.close()` (for a Spring `@Bean`, use `destroyMethod = "close"`) so queued events are delivered before exit
@@ -135,7 +133,7 @@ commandments:
     - The Java server SDK has no automatic error tracking, surveys, or session replay; do not promise or scaffold those features
 
   elixir:
-    - posthog-elixir is installed as the `posthog` Hex package; add it to `mix.exs` with the version requirement the docs show and run `mix deps.get`
+    - posthog-elixir is installed as the `posthog` Hex package; add `{:posthog, "~> 2.0"}` to `mix.exs` and run `mix deps.get`
     - Configure PostHog in application config using `api_host`, `api_key`, and `in_app_otp_apps`; read secrets from environment or runtime config, never hardcode them
     - In tests, set `test_mode` to true so events are dropped instead of sent to PostHog
     - For Phoenix or Plug apps, add `PostHog.Integrations.Plug` before the router so request context is attached to captured events and errors
@@ -210,7 +208,7 @@ commandments:
     - WordPress catches fatals with its own WP_Fatal_Error_Handler and renders the recovery-mode page, so a fatal can be swallowed before a PHP handler reports it - capture exceptions explicitly with PostHog::captureException in a try/catch, and do not rely on WP_DEBUG being on in production to surface them
 
   ruby:
-    - "posthog-ruby is the Ruby SDK gem name (add it to the Gemfile with the version constraint the docs show) but require it with `require 'posthog'` (NOT `require 'posthog-ruby'`)"
+    - "posthog-ruby is the Ruby SDK gem name (add `gem 'posthog-ruby'` to Gemfile) but require it with `require 'posthog'` (NOT `require 'posthog-ruby'`)"
     - "Use PostHog::Client.new(api_key: key, host: host) for instance-based initialization in scripts and CLIs"
     - "In CLIs and scripts: MUST call client.shutdown before exit or all events are lost"
     - Use begin/rescue/ensure with shutdown in the ensure block for proper cleanup
@@ -260,9 +258,8 @@ commandments:
   swift:
     - 'Set the PostHog project token and host directly in code when creating the `PostHogConfig` (e.g. `PostHogConfig(projectToken: "<project-token>", host: "https://us.i.posthog.com")`). The project token is a public client-side key designed to ship in the app binary, so hardcoding it is safe and is the recommended approach for iOS'
     - 'Do NOT depend on Xcode scheme environment variables (`ProcessInfo.processInfo.environment`) as the only source of the token: they are injected only when launching from Xcode (debug/simulator), NOT in Archive/Release builds (TestFlight, App Store). Reading them is fine as an optional override, but never force-unwrap or `fatalError` on their absence — that crashes production builds on launch. Ensure a value always ships in the binary'
-    - 'Before editing any Xcode project file, check for a project generator spec. If a `project.yml` with XcodeGen-shaped content (top-level `targets:` and/or `packages:` keys — do not trust the filename alone) exists at the repo root, the `.xcodeproj` is generated and MUST NOT be edited directly: the next `xcodegen generate` silently wipes any edit to `project.pbxproj`. Instead declare the package in `project.yml` under `packages:` as `PostHog: { url: https://github.com/PostHog/posthog-ios, from: <version the docs show> }`, add `- package: PostHog` to the app target''s `dependencies:` list, then tell the user to re-run `xcodegen generate` to apply it'
+    - 'Before editing any Xcode project file, check for a project generator spec. If a `project.yml` with XcodeGen-shaped content (top-level `targets:` and/or `packages:` keys — do not trust the filename alone) exists at the repo root, the `.xcodeproj` is generated and MUST NOT be edited directly: the next `xcodegen generate` silently wipes any edit to `project.pbxproj`. Instead declare the package in `project.yml` under `packages:` as `PostHog: { url: https://github.com/PostHog/posthog-ios, from: <version> }`, add `- package: PostHog` to the app target''s `dependencies:` list, then tell the user to re-run `xcodegen generate` to apply it'
     - When adding SPM dependencies to project.pbxproj (only when no XcodeGen `project.yml` generator spec exists — see the rule above), create three distinct objects with unique UUIDs — a `PBXBuildFile` (with `productRef`), an `XCSwiftPackageProductDependency` (with `package` and `productName`), and an `XCRemoteSwiftPackageReference` (with `repositoryURL` and `requirement`). The build file goes in the Frameworks phase `files`, the product dependency goes in the target's `packageProductDependencies`, and the package reference goes in the project's `packageReferences`.
-    - Set the SPM package reference's `minimumVersion` to the version the docs show, with `upToNextMajorVersion`, so SPM resolves the newest release of that major. Do not look up the latest release for it
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
@@ -289,7 +286,7 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - posthog_flutter is the Flutter SDK package name; add it with the version constraint the docs show, with `flutter pub add` or in `pubspec.yaml`
+    - posthog_flutter is the Flutter SDK package name
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
     - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
