@@ -16,7 +16,7 @@ This is a [Django](https://djangoproject.com) example demonstrating PostHog inte
 ### 1. Install dependencies
 
 ```bash
-pip install posthog
+pip install "posthog<8"
 ```
 
 ### 2. Configure environment variables

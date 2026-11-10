@@ -72,7 +72,7 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
-    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
+    - Install dependencies with `pip install "posthog<8"` or `pip install -r requirements.txt` and do NOT use unquoted version specifiers like `>=` directly in shell commands
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
@@ -95,7 +95,7 @@ commandments:
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
   rust:
-    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
+    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs@0.31` and construct the client with `posthog_rs::client(options).await`
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
     - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
@@ -197,7 +197,7 @@ commandments:
     - WordPress catches fatals with its own WP_Fatal_Error_Handler and renders the recovery-mode page, so a fatal can be swallowed before a PHP handler reports it - capture exceptions explicitly with PostHog::captureException in a try/catch, and do not rely on WP_DEBUG being on in production to surface them
 
   ruby:
-    - "posthog-ruby is the Ruby SDK gem name (add `gem 'posthog-ruby'` to Gemfile) but require it with `require 'posthog'` (NOT `require 'posthog-ruby'`)"
+    - "posthog-ruby is the Ruby SDK gem name (add `gem 'posthog-ruby', '~> 3.0'` to Gemfile) but require it with `require 'posthog'` (NOT `require 'posthog-ruby'`)"
     - "Use PostHog::Client.new(api_key: key, host: host) for instance-based initialization in scripts and CLIs"
     - "In CLIs and scripts: MUST call client.shutdown before exit or all events are lost"
     - Use begin/rescue/ensure with shutdown in the ensure block for proper cleanup

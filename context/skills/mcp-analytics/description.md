@@ -127,7 +127,7 @@ Read `ruby.md` before editing.
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add -E @posthog/mcp@latest posthog-node` (`-E` / `--save-exact` pins the current release; keep `@latest`, because a bare name leaves an already-declared older version in place). Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
+Install `@posthog/mcp` and `posthog-node` with the project's package manager, pinning `@posthog/mcp` to its current published version (it's in beta) — e.g. `pnpm add -E @posthog/mcp@latest posthog-node@5` (`-E` / `--save-exact` pins the current release; keep `@latest`, because a bare name leaves an already-declared older version in place). Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 

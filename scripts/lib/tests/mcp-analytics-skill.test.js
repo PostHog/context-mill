@@ -150,7 +150,7 @@ describe('mcp-analytics instructions', () => {
         ['Go reports input_required rounds', '`$mcp_input_required`'],
         ['Go tidies go.mod', '`go mod tidy`'],
         // A bare package name keeps an already-declared version, so these raise one below the floor.
-        ['TypeScript upgrades an existing @posthog/mcp', '`pnpm add -E @posthog/mcp@latest posthog-node`'],
+        ['TypeScript upgrades an existing @posthog/mcp', '`pnpm add -E @posthog/mcp@latest posthog-node@5`'],
         ['Python raises a declared posthog pin', 'raise that declaration to `posthog>=7.62.0`'],
         ['Rust reports an rmcp bump from cargo add', 'say in the report that `cargo add` raised `rmcp`'],
         ['Rust is reported as experimental', 'The Rust SDK is experimental'],
