@@ -32,6 +32,7 @@ STEP 3: Install dependencies. (Skip if the codebase already exports OpenTelemetr
     - PHP: the packages from the platform reference. For auto-instrumentation, the `opentelemetry` PHP extension (from PECL) and the `open-telemetry/opentelemetry-auto-*` package for the framework, such as `open-telemetry/opentelemetry-auto-slim`.
     - Ruby: `opentelemetry-sdk`, `opentelemetry-exporter-otlp`, and `opentelemetry-instrumentation-all`, enabled with `c.use_all`.
   - Do not manually edit dependency files — use the package manager's install command.
+  - If the project keeps more than one lockfile for the same manifest, such as a second Gemfile lock for another bundle, update each one.
 
 STEP 4: Configure the OTLP trace exporter.
   - Send spans over OTLP HTTP/protobuf to `/i/v1/traces` on the PostHog host, with the project token in an `Authorization: Bearer` header. Do not use `/i/v0/ai/otel`. That endpoint accepts only LLM spans.
@@ -66,6 +67,8 @@ STEP 7: Set up environment variables.
   - For the OTLP traces endpoint, use the same host as above with the path `/i/v1/traces`: `https://us.i.posthog.com/i/v1/traces` (US) or `https://eu.i.posthog.com/i/v1/traces` (EU), with the project token as an `Authorization: Bearer` header.
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
+  - List the key names in `.env.example`, or the env template the project already uses, with placeholder values, so the next developer knows what to set. Create `.env.example` if the project has none. Never put real values in it.
+  - Read the keys as optional: a missing key must never break the build or boot. Follow the missing-configuration rule in `references/COMMANDMENTS.md`.
 
 STEP 8: Flush spans in short-lived processes.
   - The batch processor exports spans on an interval. A script, cron job, or serverless function can stop before the batch is sent.
