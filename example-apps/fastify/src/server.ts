@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import rateLimit from '@fastify/rate-limit'
 import auth from './plugins/auth.js'
 import posthog from './plugins/posthog.js'
 import routes from './routes.js'
@@ -7,6 +8,8 @@ const app = Fastify({ logger: true })
 
 // Order matters: auth sets request.user before PostHog reads it, and both
 // register before the routes.
+// Rate limits apply only to routes that opt in through their config, such as /login.
+await app.register(rateLimit, { global: false })
 await app.register(auth)
 await app.register(posthog)
 await app.register(routes)

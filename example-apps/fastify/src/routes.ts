@@ -7,22 +7,26 @@ const routes: FastifyPluginAsync = async (app) => {
   }))
 
   // User identification: identify once, on login, with the app's own user id.
-  app.post<{ Body: { username?: string } }>('/login', async (request, reply) => {
-    const username = request.body?.username?.trim()
-    if (!username) {
-      return reply.code(400).send({ error: 'username is required' })
+  app.post<{ Body: { username?: string } }>(
+    '/login',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const username = request.body?.username?.trim()
+      if (!username) {
+        return reply.code(400).send({ error: 'username is required' })
+      }
+
+      const { user, sessionId } = app.auth.login(username)
+      reply.setCookie('session', sessionId, { httpOnly: true, sameSite: 'lax', path: '/' })
+
+      app.posthog.identify({
+        distinctId: user.id,
+        properties: { username: user.username },
+      })
+
+      return { user }
     }
-
-    const { user, sessionId } = app.auth.login(username)
-    reply.setCookie('session', sessionId, { httpOnly: true, sameSite: 'lax', path: '/' })
-
-    app.posthog.identify({
-      distinctId: user.id,
-      properties: { username: user.username },
-    })
-
-    return { user }
-  })
+  )
 
   app.post('/logout', async (request, reply) => {
     app.auth.logout(request.cookies.session)
