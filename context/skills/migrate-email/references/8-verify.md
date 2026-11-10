@@ -5,7 +5,7 @@ next_step: 9-report.md
 
 # Step 8, check the moved sites
 
-Check that the app still builds, its tests still pass, and one moved email reaches one person in PostHog. When no site moved in Step 7, tick the phase with `nothing to check` and go to the next step.
+Check that the app still builds, its tests still pass, and one moved email reaches one person in PostHog. When no site moved in Step 7, or none is left moving, tick the phase with `nothing to check` and go to the next step.
 
 ## Status
 

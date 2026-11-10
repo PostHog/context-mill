@@ -317,6 +317,7 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/When a key marked new is already in it with the site's type, ask the person whether the site uses that category, with its name and description copied exactly and the plan's new mark removed, or a key that isn't taken\. With the other type, ask them only for a key that isn't taken/);
             expect(read('8-verify.md')).toMatch(/When they name no key, undo the site's change, set `moves` to `no`, and the reason is `no category named`/);
             expect(read('8-verify.md')).toMatch(/Fix each site that fails, then run this step's checks again from the top/);
+            expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, or none is left moving, tick the phase with `nothing to check`/);
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
