@@ -299,7 +299,8 @@ describe('migrate-email skill', () => {
         it('sends the category object and leaves the category out of a transactional send, in step 7', () => {
             const rewriteStep = read('7-rewrite.md');
 
-            expect(rewriteStep).toMatch(/A site with a category passes it as the send's category, spelled as the rewrite file says under "The send", with the key, type, name, and description the plan notes, written exactly/);
+            expect(rewriteStep).toMatch(/A site with a category that sends in the code form passes it as the send's category, spelled as the rewrite file says under "The send", with the key, type, name, and description the plan notes, written exactly/);
+            expect(rewriteStep).toMatch(/A site that sends a template made in PostHog passes no category: the template sends in its own, which the person set in Step 3/);
             expect(rewriteStep).toMatch(/A site with a blank category leaves the category out/);
             expect(rewriteStep).toMatch(/unless its template key names a template made in PostHog: the send then follows that template's category, and PostHog refuses any other category, `transactional` included, with `category_mismatch`/);
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
