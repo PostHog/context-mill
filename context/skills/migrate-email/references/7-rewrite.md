@@ -50,7 +50,7 @@ Install or upgrade the SDK to its latest release, as the rewrite file says under
 
 - a site with `html`, `text`, or a component, and a `template` site that moves into the code: the send takes a template key with a subject and an HTML or text body;
 - a site that sets a reply-to address: the send takes one;
-- a site with a category: the code send takes a category;
+- a code-form site with a category: the code send takes a category;
 - the client: the client options take the provider name, under the name the rewrite file gives.
 
 When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.

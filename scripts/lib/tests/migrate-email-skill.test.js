@@ -292,6 +292,13 @@ describe('migrate-email skill', () => {
             expect(rewrite).toContain('recipient_opted_out');
         });
 
+        it("keeps a PostHog template site's category on the template, in steps 3, 7 and 8", () => {
+            expect(read('3-inventory.md')).toMatch(/or file it under the site's category, which they make in PostHog first when the plan marks it new/);
+            expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category;/);
+            expect(read('8-verify.md')).toMatch(/Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes/);
+            expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
+        });
+
         it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
         });
@@ -317,7 +324,6 @@ describe('migrate-email skill', () => {
         });
 
         it('checks each key against the project in step 8 and reports in step 9 that every site kept its category', () => {
-            expect(read('8-verify.md')).toMatch(/every site with a category passes the key, type, name, and description the plan notes/);
             expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type, name, and description\./);
             expect(read('8-verify.md')).toMatch(/Fix each site that fails, then run this step's checks again from the top/);
             expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, tick the phase with `nothing to check`/);
