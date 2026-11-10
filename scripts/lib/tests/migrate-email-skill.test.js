@@ -292,6 +292,10 @@ describe('migrate-email skill', () => {
             expect(rewrite).toContain('recipient_opted_out');
         });
 
+        it('refuses a new category key that the project already has, in step 3', () => {
+            expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
+        });
+
         it('sends the category object and leaves the category out of a transactional send, in step 7', () => {
             const rewriteStep = read('7-rewrite.md');
 
@@ -313,11 +317,11 @@ describe('migrate-email skill', () => {
 
         it('checks each key against the project in step 8 and reports in step 9 that every site kept its category', () => {
             expect(read('8-verify.md')).toMatch(/every site with a category passes the key, type, name, and description the plan notes/);
-            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type, name, and description, and each key it marks new must not be/);
-            expect(read('8-verify.md')).toMatch(/When a key marked new is in it, ask the person for another key, as Step 3 does, and fix the site and the plan/);
+            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, and each key the plan notes that is in it must have the same type, name, and description/);
+            expect(read('8-verify.md')).toMatch(/A key marked new that is in it with the same type, name, and description was made by a send or by the person, and passes/);
+            expect(read('8-verify.md')).toMatch(/A key marked new that is in it with another type, name, or description was the project's before: change no code, count the site as not kept, and record a failed check that names the key, so the person picks another before the deploy/);
             expect(read('8-verify.md')).toMatch(/Fix each site that fails, then run this step's checks again from the top/);
             expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, tick the phase with `nothing to check`/);
-            expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
             expect(read('9-report.md')).toMatch(/\| File \| Line \| Content \| Category \| Key \| Status \|/);
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
