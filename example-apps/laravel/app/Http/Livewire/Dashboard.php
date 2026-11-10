@@ -2,9 +2,9 @@
 
 namespace App\Http\Livewire;
 
-use App\Services\PostHogService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use PostHog\Laravel\Facades\PostHog;
 
 class Dashboard extends Component
 {
@@ -13,41 +13,32 @@ class Dashboard extends Component
     public ?string $errorMessage = null;
     public ?string $successMessage = null;
 
-    public function mount(PostHogService $posthog)
+    public function mount()
     {
         $user = Auth::user();
 
         // PostHog: Track dashboard view
-        $posthog->capture($user->email, 'dashboard_viewed', [
+        PostHog::capture('dashboard_viewed', [
             'is_staff' => $user->is_staff,
         ]);
 
-        // Check feature flag
-        $this->showNewFeature = $posthog->isFeatureEnabled(
-            'new-dashboard-feature',
-            $user->email,
-            $user->getPostHogProperties()
-        ) ?? false;
+        // Evaluate flags once, then read from the snapshot
+        $flags = PostHog::evaluateFlags(personProperties: $user->getPostHogProperties());
 
-        // Get feature flag payload
-        $this->featureConfig = $posthog->getFeatureFlagPayload(
-            'new-dashboard-feature',
-            $user->email
-        );
+        $this->showNewFeature = $flags->isEnabled('new-dashboard-feature');
+        $this->featureConfig = $flags->getFlagPayload('new-dashboard-feature');
     }
 
-    public function testErrorWithCapture(PostHogService $posthog)
+    public function testErrorWithCapture()
     {
-        $user = Auth::user();
-
         try {
             // Simulate an error
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->email);
+            PostHog::captureException($e);
 
-            $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
+            $this->successMessage = 'Error captured in PostHog!';
             $this->errorMessage = null;
         }
     }

@@ -203,10 +203,14 @@ If the project uses Ruby or Rails:
 
 If the project uses PHP or Laravel:
 
-- Use `posthog/posthog-php` and initialize once before calling static SDK methods.
-- Pass associative arrays, not positional args.
-- For Laravel, wrap PostHog in a service and configure it via `config/posthog.php`.
-- Bind identity per request rather than per capture: `PostHog::contextFromHeaders`
+- For Laravel 12 or later, use `posthog/posthog-laravel` and its
+  `PostHog\Laravel\Facades\PostHog` facade. It initializes the client, binds
+  identity to each request (the authenticated user first), reports exceptions,
+  and flushes at request and worker boundaries. Don't add `PostHog::init`, a
+  PostHog middleware, or an exception report callback on top of it.
+- For plain PHP and Laravel 11 or earlier, use `posthog/posthog-php` and initialize
+  once before calling static SDK methods. Pass associative arrays, not positional args.
+  Bind identity per request rather than per capture: `PostHog::contextFromHeaders`
   reads the incoming tracing headers and `PostHog::withContext` wraps the request
   in that context. Prefer the authenticated id (`auth()->id()`) for anything
   security-sensitive.

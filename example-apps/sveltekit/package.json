@@ -21,7 +21,7 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
-		"posthog-js": "^1.316.0",
-		"posthog-node": "^5.20.0"
+		"posthog-js": "^1.444.4",
+		"posthog-node": "^5.61.2"
 	}
 }

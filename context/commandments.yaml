@@ -9,6 +9,16 @@ commandments:
   all:
     - A missing PostHog configuration must never break the app — read keys optionally (never a required setting, and never with a format check such as a URL rule in an env schema, which a blank value fails at boot), guard init and capture behind their presence, and keep build and boot working with no PostHog environment set — but never silently: in development or debug builds fail loudly, using the language's idiomatic error, with the message "<VAR> variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once <VAR> is configured" (substituting the actual variable name); production stays a no-op. Only client code, in a browser or on a device, raises it as an error. Server-side code (a server, a worker, a module they load) logs that message as a warning outside production and keeps running, because an error there stops the process from booting for anyone without PostHog keys. A process another program launches, such as an MCP server on STDIO, has nobody watching it boot and no development build — it always writes the warning to stderr (never stdout, which can carry the protocol)
     - Sending analytics must never fail or stall the app's own work. Where the app waits on a flush, handle any error it raises and keep the wait short. A long-running server or worker whose SDK sends in the background needs no flush after each capture
+  # Installing and initializing a PostHog SDK. Skills that install an SDK carry the `sdk-install` tag.
+  sdk-install:
+    - "Install the SDK with the package manager's add command and the bare package name, so it resolves a published version. Never type a version number by hand. Leave dependencies this integration did not add at their current versions"
+    - "In a monorepo or workspace, install the SDK in the package that imports it, not at the repository root"
+    - "Create one server-side client per process at startup and reuse it for every request. In serverless functions and other per-request handlers, flush before the handler returns, or the events are lost"
+    - "Identify users with the app's own stable user id, such as a primary key or UUID, never an email or username. Send those as person properties instead. Identify once when the user logs in or signs up, and call `reset()` when they log out"
+    - "On a server, identity belongs to the request, never to the process. Where the SDK has middleware or a context for the framework, use it, so events and errors inside the request carry the user. For a signed-out visitor, use a random id kept for the visit and set `$process_person_profile` to false. If the framework integration already sends signed-out events as personless, as the Laravel SDK does, keep its behavior. Never share one id, such as \"anonymous\", across visitors"
+    - "If the app sends a Content-Security-Policy (a meta tag or a response header), extend it for the browser SDK in one change: allow the PostHog hosts, or the reverse proxy, in `script-src` and `connect-src`, and `blob:` in `worker-src` for session replay. A partial change fails silently: the SDK loads, but events or recordings never send"
+    - "When one codebase ships several platform targets (Flutter, React Native, Kotlin Multiplatform), initialize PostHog for every target the project ships. One init call often covers only some of them"
+
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
@@ -181,10 +191,12 @@ commandments:
     - Create a singleton PostHog server client to avoid re-initialization on every request
 
   laravel:
-    - Create a dedicated PostHogService class in app/Services/ - do NOT scatter PostHog::capture calls throughout controllers
-    - Register PostHog configuration in config/posthog.php using env() for all settings (api_key, host, disabled)
-    - Do NOT use Laravel's event system or observers for analytics - call capture explicitly where actions occur
-    - Call PostHog::flush() after capture in queue jobs, Horizon, and Octane - a long-running worker never destructs, so its events sit in the SDK buffer until batch_size (default 100) is reached and are silently lost on restart
+    - "On Laravel 12 or later, install `posthog/posthog-laravel` and run `php artisan posthog:install`. Package discovery registers the client, request context, exception reporting and flushing, so do NOT add `PostHog::init`, a PostHog middleware, or an exception report callback"
+    - "Call the `PostHog\\Laravel\\Facades\\PostHog` facade, not the PHP SDK's `PostHog\\PostHog` class"
+    - "Set the project token as `POSTHOG_API_KEY` and the host as `POSTHOG_HOST` in `.env`, the names the published `config/posthog.php` reads. A blank token disables the SDK without breaking boot"
+    - "Inside a request, capture without a distinct id: the Laravel SDK takes the signed-in user from auth. Pass the user's id explicitly to `identify` at login and signup"
+    - "Do NOT use Laravel's event system or observers for analytics, and leave the Laravel SDK's optional collectors off - call capture explicitly where actions occur"
+    - "On Laravel 11 or earlier, use `posthog/posthog-php` with the manual setup from the Laravel docs: init once in a service provider, wrap each request in `PostHog::withContext` from a middleware, report exceptions from `withExceptions`, and call `PostHog::flush()` in queue jobs, Horizon and Octane, because a long-running worker never destructs and its buffered events are lost on restart"
 
   wordpress:
     - Ship the integration as a standalone plugin in wp-content/plugins - do NOT edit a theme's functions.php, which is lost on theme switch or theme update

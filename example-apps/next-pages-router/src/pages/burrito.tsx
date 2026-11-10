@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import posthog from 'posthog-js';
@@ -11,8 +11,13 @@ export default function BurritoPage() {
   const [hasConsidered, setHasConsidered] = useState(false);
 
   // Redirect to home if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   if (!user) {
-    router.push('/');
     return null;
   }
 

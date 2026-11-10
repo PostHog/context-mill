@@ -5,9 +5,9 @@ use App\Http\Livewire\Auth\Register;
 use App\Http\Livewire\BurritoTracker;
 use App\Http\Livewire\Dashboard;
 use App\Http\Livewire\Profile;
-use App\Services\PostHogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use PostHog\Laravel\Facades\PostHog;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -21,11 +21,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/burrito', BurritoTracker::class)->name('burrito');
     Route::get('/profile', Profile::class)->name('profile');
 
-    Route::post('/logout', function (PostHogService $posthog) {
-        $user = Auth::user();
-
-        // PostHog: Track logout
-        $posthog->capture($user->email, 'user_logged_out');
+    Route::post('/logout', function () {
+        // PostHog: capture before logging out, while the request still has a signed-in user
+        PostHog::capture('user_logged_out');
 
         Auth::logout();
         request()->session()->invalidate();
