@@ -14,7 +14,7 @@ A small NestJS API ("burrito app") that shows how to integrate PostHog with `pos
 
 ## Getting started
 
-The interceptor's `getDistinctId` option needs `posthog-node` 5.65.0 or later.
+The interceptor's `getDistinctId` option needs `posthog-node` 5.68.0 or later.
 
 ### 1. Install dependencies
 
