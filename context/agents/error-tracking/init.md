@@ -83,9 +83,9 @@ hard `--env-file=.env` stops the app wherever the gitignored file is missing,
 the command commits the key. Name it in your handoff as a manual follow-up
 instead, with the variable names and the user's two options: load `.env` with
 `dotenv`, or set the variables in the app's environment. Say that until then,
-the guard stops the app at boot in development with
-`POSTHOG_… variable required by PostHog is missing or un-configured`. That loud
-failure is the guard doing its job.
+the guard reports `POSTHOG_… variable required by PostHog is missing or
+un-configured` in development and no events are sent. That loud failure is the
+guard doing its job.
 
 Some platforms have no environment to read at all, and there the answer is not
 a loader. Angular on the stock `@angular/build` builder is the common one:

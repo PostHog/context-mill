@@ -13,8 +13,8 @@ The mechanics live in dedicated step skills - install each one with `install_ski
 | --- | --- |
 | `replay-vision-enable-replay` | making session replay record (both halves) |
 | `replay-vision-scanners-core` | scanner create/update mechanics, sizing, collisions, security ground rules |
-| `replay-vision-scanner-broken-experiences` | the breakage monitor brief |
-| `replay-vision-scanner-user-frustration` | the frustration monitor brief |
+| `replay-vision-scanner-problems` | the problems monitor brief |
+| `replay-vision-scanner-flow-outcome` | the key flow outcome classifier brief |
 | `replay-vision-scanner-session-summaries` | the summary scanner brief |
 
 ### Abort cases
@@ -67,16 +67,17 @@ Emit `[STATUS] Creating scanners`.
 
 Create three scanners, one brief each, in this order:
 
-1. `replay-vision-scanner-broken-experiences` - the completion-flow breakage monitor.
-2. `replay-vision-scanner-user-frustration` - the `$rageclick` frustration monitor.
-3. `replay-vision-scanner-session-summaries` - the sampled summarizer.
+1. `replay-vision-scanner-problems` - the problems monitor: breakage and getting stuck.
+2. `replay-vision-scanner-flow-outcome` - the key flow outcome classifier.
+3. `replay-vision-scanner-session-summaries` - the summarizer.
 
 Install each skill, fill the blanks its brief names from the repo, and create with `vision-scanners-create` - `replay-vision-scanners-core` owns what is locked and how re-runs match. Reuse STEP 1's scanner inventory for the re-run check instead of listing again. Don't invent extra scanners.
 
 Per-scanner notes:
 
-- **No identifiable completion flow** for scanner 1: don't invent one - fall back to the handful of highest-traffic paths, and record that you couldn't identify a completion flow.
-- **Not a web app**: skip scanner 1; keep scanners 2 and 3 only if the product has any recorded web sessions at all. Skipping all three on a pure backend project is a correct outcome - record why.
+- **Pick the volume tier first**, as `replay-vision-scanners-core` says. With no scannable sessions yet (no recordings, or only recordings too short to scan) or low volume, every scanner watches all sessions with no filters and is `free_only`, sized to its share of the free credits left (`free_only_monthly_credits_left`). With high volume, each brief's targeted query applies with `free_only` off, written as the pages appear in real recordings and checked against real sessions before you create it. On a re-run, read the earlier tier from `free_only`, keep any `credit_limit`, keep the query and rate unless the tier changed, and never change `free_only` from false to true.
+- **No identifiable completion flow, or the flow's pages match no real session**: scanner 1 falls back to the handful of highest-traffic paths on high volume, and scanner 2 is skipped, never widened. Record why.
+- **Not a web app**: keep the scanners only if the product has any recorded web sessions at all. Skipping all three on a pure backend project is a correct outcome - record why.
 - Any failure on one scanner: handle it as `replay-vision-scanners-core` says, record the follow-up, and continue with the next. One failure never stops the step.
 
 ### STEP 5: Report and hand off
