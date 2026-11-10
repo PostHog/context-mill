@@ -2,9 +2,9 @@
 
 namespace App\Http\Livewire;
 
-use App\Services\PostHogService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use PostHog\Laravel\Facades\PostHog;
 
 class Dashboard extends Component
 {
@@ -13,37 +13,32 @@ class Dashboard extends Component
     public ?string $errorMessage = null;
     public ?string $successMessage = null;
 
-    public function mount(PostHogService $posthog)
+    public function mount()
     {
         $user = Auth::user();
 
         // PostHog: Track dashboard view
-        $posthog->capture($user->getPostHogDistinctId(), 'dashboard_viewed', [
+        PostHog::capture('dashboard_viewed', [
             'is_staff' => $user->is_staff,
         ]);
 
         // Evaluate flags once, then read from the snapshot
-        $flags = $posthog->evaluateFlags(
-            $user->getPostHogDistinctId(),
-            $user->getPostHogProperties()
-        );
+        $flags = PostHog::evaluateFlags(personProperties: $user->getPostHogProperties());
 
-        $this->showNewFeature = $flags?->isEnabled('new-dashboard-feature') ?? false;
-        $this->featureConfig = $flags?->getFlagPayload('new-dashboard-feature');
+        $this->showNewFeature = $flags->isEnabled('new-dashboard-feature');
+        $this->featureConfig = $flags->getFlagPayload('new-dashboard-feature');
     }
 
-    public function testErrorWithCapture(PostHogService $posthog)
+    public function testErrorWithCapture()
     {
-        $user = Auth::user();
-
         try {
             // Simulate an error
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->getPostHogDistinctId());
+            PostHog::captureException($e);
 
-            $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
+            $this->successMessage = 'Error captured in PostHog!';
             $this->errorMessage = null;
         }
     }

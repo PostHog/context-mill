@@ -35,11 +35,10 @@
     processPayment();
 } catch (\Throwable $e) {
     // Manually capture this specific exception
-    $errorId = $posthog->captureException($e, $user->getPostHogDistinctId());
+    PostHog::captureException($e);
 
     return response()->json([
         'error' => 'Operation failed',
-        'error_id' => $errorId
     ], 500);
 }</pre>
         <p class="text-gray" style="margin-top: 10px;">This demonstrates manual exception capture where you have control over whether errors are sent to PostHog.</p>
@@ -64,13 +63,10 @@
 
         <h3 style="margin-top: 20px;">Code Example</h3>
         <pre>// Evaluate flags once, then read from the snapshot
-$flags = $posthog->evaluateFlags(
-    $user->getPostHogDistinctId(),
-    $user->getPostHogProperties()
-);
+$flags = PostHog::evaluateFlags(personProperties: $user->getPostHogProperties());
 
-$showNewFeature = $flags?->isEnabled('new-dashboard-feature') ?? false;
-$featureConfig = $flags?->getFlagPayload('new-dashboard-feature');</pre>
+$showNewFeature = $flags->isEnabled('new-dashboard-feature');
+$featureConfig = $flags->getFlagPayload('new-dashboard-feature');</pre>
     </div>
 
 </div>

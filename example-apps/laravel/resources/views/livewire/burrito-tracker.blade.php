@@ -20,14 +20,12 @@
     <div class="card">
         <h3>Code Example</h3>
         <pre>// Livewire component method
-public function considerBurrito(PostHogService $posthog)
+public function considerBurrito()
 {
     $this->burritoCount++;
     session(['burrito_count' => $this->burritoCount]);
 
-    $user = Auth::user();
-    $posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
-    $posthog->capture($user->getPostHogDistinctId(), 'burrito_considered', [
+    PostHog::capture('burrito_considered', [
         'total_considerations' => $this->burritoCount,
     ]);
 }</pre>

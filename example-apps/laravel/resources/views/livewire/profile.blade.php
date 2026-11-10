@@ -54,14 +54,12 @@
         <pre>try {
     throw new \Exception('Test exception from critical operation');
 } catch (\Throwable $e) {
-    // Capture exception with user context
-    $posthog->identify($user->getPostHogDistinctId(), $user->getPostHogProperties());
-    $eventId = $posthog->captureException($e, $user->getPostHogDistinctId());
+    // Capture the exception; the SDK attributes it to the signed-in user
+    PostHog::captureException($e, properties: ['operation' => 'critical']);
 
     return response()->json([
         'error' => 'Operation failed',
-        'error_id' => $eventId,
-        'message' => "Error captured in PostHog. Reference ID: {$eventId}"
+        'message' => 'Error captured in PostHog.',
     ], 500);
 }</pre>
     </div>
