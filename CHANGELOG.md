@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.62.0](https://github.com/PostHog/context-mill/compare/v1.61.1...v1.62.0) (2026-11-10)
+
+
+### Features
+
+* **agents:** add support flow for wizard support ([#498](https://github.com/PostHog/context-mill/issues/498)) ([ddb882b](https://github.com/PostHog/context-mill/commit/ddb882bc18b079cae595f607c028b119a52b6d43))
+* **evals:** add Gauge evals for the omnibus install skills ([#490](https://github.com/PostHog/context-mill/issues/490)) ([229ae13](https://github.com/PostHog/context-mill/commit/229ae13249953c873bc2ee7f7d88cd8b154112e4))
+
+
+### Bug Fixes
+
+* **self-driving:** stop quoting a fixed $15 per PR in the connected-tools ask ([#499](https://github.com/PostHog/context-mill/issues/499)) ([68604e8](https://github.com/PostHog/context-mill/commit/68604e8b84316fcbdab334477beab069f33180a5))
+
 ## [1.61.1](https://github.com/PostHog/context-mill/compare/v1.61.0...v1.61.1) (2026-11-07)
 
 
