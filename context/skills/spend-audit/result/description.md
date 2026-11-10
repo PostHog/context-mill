@@ -3,7 +3,7 @@
 The result file is the machine-readable summary the product reads after the
 run. It prices the savings from the user's billing, shows the top three, and
 lists every created object for review and deletion. The `report` task writes
-it with one `publish_result` call, always, last, after the notebook exists.
+it with one `publish_program_result` call, always, last, after the notebook exists.
 
 The product rejects a file with unknown fields, ids from another project, or an
 `after` range above `before`. A rejected file drops the projection but keeps
@@ -64,6 +64,6 @@ view. Pass exactly these fields.
 - `unpriced` findings do not appear here. They live in the notebook only.
 - No dollar amounts anywhere. No extra fields, not even `notes`.
 
-Call `publish_result` once with this object. Its result tells you whether the
+Call `publish_program_result` once with this object. Its result tells you whether the
 file was written; a refusal names the field that failed, so fix that field and
 call again. Do not write the file yourself.

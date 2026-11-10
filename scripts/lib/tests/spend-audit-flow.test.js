@@ -50,7 +50,7 @@ describe('spend audit flow', () => {
         for (const prompt of prompts) {
             const writes = (prompt.allowedTools ?? []).some((tool) => WRITERS.includes(tool));
             expect(writes, `${prompt.type} must not edit the repository`).toBe(prompt.type === 'apply-code-fixes');
-            const publishes = (prompt.allowedTools ?? []).includes('publish_result');
+            const publishes = (prompt.allowedTools ?? []).includes('publish_program_result');
             expect(publishes, `${prompt.type} must not publish the result`).toBe(prompt.type === 'report');
             // A headless cloud run cannot answer a question, so no task may ask one.
             expect(prompt.allowedTools ?? []).not.toContain('wizard_ask');

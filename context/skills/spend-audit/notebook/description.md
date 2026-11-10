@@ -75,7 +75,7 @@ size, create the notebook with the first sections and append the rest with
 
 The create response carries `short_id` and the URL. Put the URL in your final
 message on its own line as `[NOTEBOOK_URL] <url>` so the wizard shows it, and
-pass `short_id` to `publish_result`.
+pass `short_id` to `publish_program_result`.
 
 ## Writing rules
 
