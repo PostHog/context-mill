@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.64.0](https://github.com/PostHog/context-mill/compare/v1.63.0...v1.64.0) (2026-11-11)
+
+
+### Features
+
+* install SDKs at the docs' version and keep agents on today's majors ([#502](https://github.com/PostHog/context-mill/issues/502)) ([e355882](https://github.com/PostHog/context-mill/commit/e35588261d7bee276ac37a800ce4712cbdc4a8a3))
+
+
+### Bug Fixes
+
+* **example-apps:** move the Go and Rust examples to the current SDK releases ([#506](https://github.com/PostHog/context-mill/issues/506)) ([e4ecff4](https://github.com/PostHog/context-mill/commit/e4ecff491455e4b1b63323f95c45d2451ffecc82))
+* **example-apps:** move the Python, Node and Laravel examples to the docs' pins ([#508](https://github.com/PostHog/context-mill/issues/508)) ([0281698](https://github.com/PostHog/context-mill/commit/02816989a2685d93127aeca4eba5b595d66bc812))
+* **integration-v2:** install the bare package name when the docs pin no version ([#505](https://github.com/PostHog/context-mill/issues/505)) ([665c2f3](https://github.com/PostHog/context-mill/commit/665c2f3d65b9ecf8e9fe8f5d48e73f2231acb5b8))
+* **integration-v2:** take the install version from the library doc ([#507](https://github.com/PostHog/context-mill/issues/507)) ([7dbcee7](https://github.com/PostHog/context-mill/commit/7dbcee75921f1be38a2304f6e4f097f645a60ace))
+
 ## [1.63.0](https://github.com/PostHog/context-mill/compare/v1.62.0...v1.63.0) (2026-11-10)
 
 
