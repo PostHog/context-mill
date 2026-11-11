@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ca2dfb871c7df60994d2e635385996da",
+    "content-hash": "c4251762f50609af3cc3ff88ab86404b",
     "packages": [
         {
             "name": "brick/math",
@@ -2601,23 +2601,23 @@
         },
         {
             "name": "posthog/posthog-laravel",
-            "version": "0.3.1",
+            "version": "0.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PostHog/posthog-laravel.git",
-                "reference": "ee72e7d1fd1d1bc5fffcd58654b7c0b03ad9b039"
+                "reference": "15105e0220bf5a81d41cf592f66def5d88a71c6a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PostHog/posthog-laravel/zipball/ee72e7d1fd1d1bc5fffcd58654b7c0b03ad9b039",
-                "reference": "ee72e7d1fd1d1bc5fffcd58654b7c0b03ad9b039",
+                "url": "https://api.github.com/repos/PostHog/posthog-laravel/zipball/15105e0220bf5a81d41cf592f66def5d88a71c6a",
+                "reference": "15105e0220bf5a81d41cf592f66def5d88a71c6a",
                 "shasum": ""
             },
             "require": {
                 "illuminate/contracts": "^12.0 || ^13.0",
                 "illuminate/support": "^12.0 || ^13.0",
                 "php": ">=8.2",
-                "posthog/posthog-php": "4.22.1"
+                "posthog/posthog-php": "4.23.1"
             },
             "require-dev": {
                 "laravel/octane": "^2.0",
@@ -2666,21 +2666,21 @@
                 "issues": "https://github.com/PostHog/posthog-php/issues",
                 "source": "https://github.com/PostHog/posthog-php/tree/main/packages/laravel"
             },
-            "time": "2026-11-09T08:12:19+00:00",
-            "published-time": "2026-11-09T08:12:25+00:00"
+            "time": "2026-11-11T12:27:56+00:00",
+            "published-time": "2026-11-11T14:26:39+00:00"
         },
         {
             "name": "posthog/posthog-php",
-            "version": "4.22.1",
+            "version": "4.23.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PostHog/posthog-php.git",
-                "reference": "0edda86494c8b717b4ca14b21eccfbe997122f6a"
+                "reference": "82cd1d0dc3ad495252657a413e39d15357bb3187"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/0edda86494c8b717b4ca14b21eccfbe997122f6a",
-                "reference": "0edda86494c8b717b4ca14b21eccfbe997122f6a",
+                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/82cd1d0dc3ad495252657a413e39d15357bb3187",
+                "reference": "82cd1d0dc3ad495252657a413e39d15357bb3187",
                 "shasum": ""
             },
             "require": {
@@ -2723,10 +2723,10 @@
             ],
             "support": {
                 "issues": "https://github.com/PostHog/posthog-php/issues",
-                "source": "https://github.com/PostHog/posthog-php/tree/4.22.1"
+                "source": "https://github.com/PostHog/posthog-php/tree/4.23.1"
             },
-            "time": "2026-11-09T08:11:57+00:00",
-            "published-time": "2026-11-09T08:12:04+00:00"
+            "time": "2026-11-11T12:27:10+00:00",
+            "published-time": "2026-11-11T12:27:18+00:00"
         },
         {
             "name": "psr/clock",
