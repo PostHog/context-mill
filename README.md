@@ -170,7 +170,7 @@ build; the team-owned skills below route review to their owning team instead.
 | `context/skills/migrate/`, `context/skills/audit*/`, `context/skills/events-audit/` | `@PostHog/team-fde` |
 | `context/skills/error-tracking/`, `context/agents/error-tracking/`, `context/skills/error-tracking-upload-source-maps/`, `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
 | `context/skills/revenue-analytics/`, `context/skills/web-analytics/` | `@PostHog/team-web-analytics` |
-| `context/skills/data-warehouse-source/` | `@PostHog/team-warehouse-sources` |
+| `context/skills/data-warehouse-source/`, `context/skills/data-warehouse-destination/` | `@PostHog/team-warehouse-sources` |
 | `context/skills/self-driving/` | `@PostHog/team-self-driving` |
 | `context/skills/mcp-analytics/` | `@PostHog/mcp-analytics` |
 | `context/skills/metrics/`, `context/agents/metrics/` | `@PostHog/team-apm` |

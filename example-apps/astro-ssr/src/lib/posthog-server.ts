@@ -8,7 +8,14 @@ let posthogClient: PostHog | null = null;
  */
 export function getPostHogServer(): PostHog {
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.POSTHOG_PROJECT_TOKEN || "", {
+    const token = import.meta.env.POSTHOG_PROJECT_TOKEN;
+    if (!token && import.meta.env.DEV) {
+      console.warn(
+        "POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog capture is disabled.",
+      );
+    }
+    posthogClient = new PostHog(token || "", {
+      disabled: !token,
       host: import.meta.env.POSTHOG_HOST || "https://us.i.posthog.com",
       // Flush immediately for demo purposes
       // In production, you might want to batch events

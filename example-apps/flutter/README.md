@@ -176,6 +176,10 @@ try {
 
 `Application Installed`, `Application Updated`, `Application Opened`, and `Application Backgrounded` are captured automatically (`captureApplicationLifecycleEvents` is enabled by default).
 
+## Reverse proxy
+
+On the web build, ad blockers often drop requests sent to PostHog's own domain. Set `POSTHOG_HOST` (and the `api_host` in `web/index.html`) to a reverse proxy to keep those events, for example PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md). The iOS and Android builds aren't affected by browser ad blockers, so they can keep the default host.
+
 ## Testing
 
 ```bash
