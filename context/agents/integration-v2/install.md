@@ -15,9 +15,10 @@ dependsOn: []
 
 Install the PostHog SDK with the project's own package manager, so the real
 published version lands in the manifest and the lockfile — not one you made up.
-Run the manager's add command with the version the framework reference docs pin
-and let it resolve the rest: `npm install <pkg>` (or the project's pnpm/yarn/bun),
-`pip install <pkg>`, `composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`.
+Run the manager's add command with the version the framework reference docs pin,
+or the bare package name if they pin none, and let it resolve the rest:
+`npm install <pkg>` (or the project's pnpm/yarn/bun), `pip install <pkg>`,
+`composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`.
 If the wizard refuses that command, write the pin into the manifest and run the
 manifest install. Never invent a version — one that was never published fails the
 whole run with `ETARGET`, and guessing another just fails again. The only version you
