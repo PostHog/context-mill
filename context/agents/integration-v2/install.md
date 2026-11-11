@@ -15,15 +15,17 @@ dependsOn: []
 
 Install the PostHog SDK with the project's own package manager, so the real
 published version lands in the manifest and the lockfile — not one you made up.
-Run the manager's add command with the version the framework reference docs pin,
-or the bare package name if they pin none, and let it resolve the rest:
+The version comes from the library doc your install skill lists under Reference.
+Open it before you install, and run the add command it shows with the version it
+pins, or the bare package name if it pins none, and let the manager resolve the rest:
 `npm install <pkg>` (or the project's pnpm/yarn/bun), `pip install <pkg>`,
 `composer require <pkg>`, `bundle add <pkg>`, `gem install <pkg>`.
+EXAMPLE.md shows code patterns only; never take a version from its manifests.
 If the wizard refuses that command, write the pin into the manifest and run the
 manifest install. Never invent a version — one that was never published fails the
 whole run with `ETARGET`, and guessing another just fails again. The only version you
-write by hand is one copied from the framework reference docs, and only in the
-environment fallback below.
+write by hand is one copied from the library doc, and only in the environment
+fallback below.
 
 Add the client library, plus the server library if the app has server-side code
 that sends events. If the SDK is already installed, leave it and say so.
@@ -37,8 +39,8 @@ Read the resolved version from the manifest or the package manager, not the lock
 lockfiles are huge and full of hashes, so never read one whole.
 
 Some ecosystems pin an explicit version in a manifest no install command resolves
-(Swift SPM, Gradle). There, declare the dependency the way the framework reference
-shows, with the version the docs pin — do not invent one.
+(Swift SPM, Gradle). There, declare the dependency the way the library doc shows, with
+the version it pins — do not invent one.
 
 Attempt the install once. If it fails on something you own — a wrong package name or
 the wrong manager — fix that and run it one more time.
@@ -62,9 +64,9 @@ fix; if it names another dependency, a version pin the project set, or the toolc
 itself, it is the environment — fall back and move on.
 
 When you hit one of those, fall back: add the PostHog package to the manifest by hand
-at a known-good version, so the dependency is still declared for the later steps and
-for the user's own install. Use the version the framework reference docs pin; never
-invent a version that was never published. Then move on, and say in your
+so the dependency is still declared for the later steps and for the user's own
+install. Use the version the library doc pins, or no version constraint if it pins
+none; never invent one. Then move on, and say in your
 handoff exactly what failed and the command
 you ran, so the review step and the report surface it.
 
