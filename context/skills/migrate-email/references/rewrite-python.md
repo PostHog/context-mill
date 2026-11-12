@@ -21,11 +21,12 @@ posthog = Posthog(
     os.environ.get("POSTHOG_PROJECT_TOKEN"),
     host=os.environ.get("POSTHOG_HOST"),
     secret_key=os.environ.get("POSTHOG_PROJECT_SECRET_API_KEY"),
+    enable_local_evaluation=False,
     migrated_from="<provider>",  # only when the client takes it
 )
 ```
 
-- With `secret_key` set, the client loads flag definitions from `host` with it the first time it evaluates a flag. A client that only sends email never evaluates one, so it needs no other setting.
+- With `secret_key` set, the client loads flag definitions from `host` with it the first time it evaluates a flag, and a worker forked from a process that made the client, such as under Gunicorn's `preload_app`, starts polling them at once. `enable_local_evaluation=False` stops both, so the key needs no flag scope.
 - The app host option is `app_host`.
 - `AsyncPosthog`, from `posthog[async]`, takes the same options. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
 - `AsyncPosthog` binds to the first event loop it runs on, and raises `RuntimeError` on any other. Create it where one loop runs for the app's life, such as an ASGI app's startup, and `await posthog.shutdown()` when it stops. Where each task runs its own loop, such as `asyncio.run` per job or `async` views under WSGI, create it inside that loop and `await posthog.shutdown()` before the loop ends.
