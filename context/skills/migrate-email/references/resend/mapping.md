@@ -141,6 +141,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
 - An HTTP body's snake_case fields become camelCase: `reply_to` becomes `replyTo`.
 - posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working for a send that goes out. A suppressed send has none, as "Suppressed recipients" says. `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working, and `error.message` and `error.statusCode` keep their names.
+- Resend answers a network failure as an `error` with the name `application_error` and a `statusCode` of `null`. posthog-node answers it with the code `network_error`, the name `service_unavailable`, and no `statusCode`. A branch on `error.name === 'application_error'` took network failures too: it also takes `error.code === 'network_error'`. A check of `error.statusCode === null` becomes `error.statusCode == null`, which a local argument error matches too, as Resend's `null` did.
 
 ### Python
 
