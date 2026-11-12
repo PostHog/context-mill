@@ -25,7 +25,7 @@ A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`
 
 ## Read-only key
 
-The app's own Mailgun key is often a domain sending key, which can only send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in Mailgun (Settings, then API Security) with the role that has the fewest rights and still reads templates and suppressions, and a short expiry when the form offers one. Ask them to store it in `MAILGUN_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailgun and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own Mailgun key is often a domain sending key, which can only send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in Mailgun (Settings, then API Security) with the role that has the fewest rights and still reads templates and suppressions, and a short expiry when the form offers one. Ask them to store it in `MAILGUN_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailgun and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -44,7 +44,7 @@ A site whose template moves needs the content of the version it sends, the activ
 
 The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`. When the site names the template by its id, take the answer only when its `template.id` is that id: a domain template and an account template can share a name. When neither the domain's nor the account's has that id, ask the person for the template. The version also carries `version.mjml`, which the docs call the template's source and don't relate to `template`: take `template`, and when `mjml` is not empty, note in the plan row that the email came from `template`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Tracking settings
 
@@ -76,5 +76,9 @@ Each answers `{ items, paging }`. A bounce is `{ address, code, error, created_a
 
 **Leave out the other lists.**
 
-- **Unsubscribes** are recipients who clicked a Mailgun unsubscribe link, for the whole domain or for some tags. PostHog's opt-outs apply to marketing messages only. At Mailgun an unsubscribe also stopped transactional mail from that domain, or with that tag. Once the sends move, these addresses get transactional email again. Count them, and write the count after the suppressions phase in the plan file, such as `- [x] suppressions — 120/120 imported; 37 Mailgun unsubscribes left out`, so the report's "Suppression list" and "Before cutover" name it: the person decides before the deploy whether these recipients may get the moved emails. Count the rows of the person's Unsubscribes download, or read `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain, page by page as above. When neither is given, write `Mailgun unsubscribes not counted` after the phase instead. Write the count or that line on every way out of Step 5, a phase line that says `not imported` included.
+- **Unsubscribes** are recipients who clicked a Mailgun unsubscribe link, for the whole domain or for some tags. PostHog's opt-outs apply to marketing messages only. At Mailgun an unsubscribe also stopped transactional mail from that domain, or with that tag, so once the sends move, these addresses get transactional email again. "For the report" says what Step 5 writes about them.
 - **Allowlists** are addresses and domains that Mailgun never adds to its bounce list. They are not suppressions.
+
+## For the report
+
+**Mailgun unsubscribes left out.** Count the unsubscribes of the domains whose sites move: the rows of the person's Unsubscribes download, or the items of `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain, page by page as "Suppression list" says. Write `Mailgun unsubscribes left out: <count>. Decide before cutover whether these recipients may get the moved emails.` When neither is given, write `Mailgun unsubscribes not counted. Count them in Mailgun, and decide before cutover whether these recipients may get the moved emails.`

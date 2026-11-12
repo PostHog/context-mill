@@ -29,7 +29,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
-| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | none: PostHog adds its open pixel and counts no clicks | Mailgun sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
+| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | none, as Step 7 says | Mailgun sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
 | An `Idempotency-Key` request header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
 | `recipient-variables`, on a send with one address in `to` and its own `subject`, `text`, or `html` | none: the code puts the values into the subject and the content before the send | `to` holds more than one address, or the send sets `template`. Otherwise Mailgun replaced each `%recipient.<name>%` in the subject, the text, and the HTML with the value of `<name>` in the entry of the `to` address. The code does the same with a plain string replace, under the escaping rule of `template-to-code.md`, and sends the result. Mailgun's docs don't say whether it escaped the value, so escape it in the HTML, unless the code builds it as HTML. A name the entry can lack, or a value that can be anything but a string or a whole number, keeps the site: the docs don't say what Mailgun writes for it. Go's `AddRecipientAndVariables` sets `to` and `recipient-variables` together |
@@ -38,9 +38,9 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `o:sending-ip`, `o:sending-ip-pool`, `o:archive-to`, `o:suppress-headers`, `o:tracking-pixel-location-top`, `o:campaign` | none | Always. PostHog's send doesn't take it yet |
 | Any field this table doesn't name, such as `sender` | none | Always. The reason names the field |
 
-**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Mailgun tracks each one only when it is on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. A send that sets one of them to `no` or `false` turns that tracking off, even on a domain with tracking on, such as a password reset with `o:tracking-clicks: 'no'`. Work out, for opens and for clicks, whether Mailgun tracked them:
+**Tracking.** PostHog's side is Step 7's: it adds its open pixel to every email, counts clicks only for a template made in PostHog that is not marked sensitive, and no field changes either. Mailgun tracks opens and clicks only when they are on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. A send that sets one of them to `no` or `false` turns that tracking off, even on a domain with tracking on, such as a password reset with `o:tracking-clicks: 'no'`. Work out, for opens and for clicks, whether Mailgun tracked them:
 
-- Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it.
+- Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 - `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays, and the reason is `conflicting open tracking`.
 
@@ -81,7 +81,8 @@ The rewrite file says under "The answer" how PostHog's SDK reports an error in i
 | A check of `response.status_code`, `response.ok`, `raise_for_status()`, `res.status`, `getStatusCode()`, or `StatusCode` | Never. Read PostHog's error instead, as the Rewrite section says |
 | A client that sends nothing: a Ruby client in test mode, `Mailgun.configure` with `test_mode = true` or `enable_test_mode!` on the client, which keeps the message in `Mailgun::Client.deliveries`, or a Python `Client(..., dry_run=True)`, which answers the request locally | Always, when the app turns it on outside its tests, such as from an env setting. When only the tests turn it on, the site moves: note in the report each place that turns it on and each test that reads `Mailgun::Client.deliveries` or the dry-run answer, since those tests now need the PostHog send stubbed |
 | The message `id` stored for a webhook handler or an Events API read | Always, when the handler or the read uses it |
-| The message `id` logged or stored for the app's own use | Never. Use PostHog's message id |
+| The message `id` logged or stored for the app's own use | Never. Use PostHog's message id, for a send that goes out: a suppressed send has none, as the Rewrite section says under "Errors" |
+| A send the code can cancel, such as a `fetch` or axios request with a `signal` a caller passes in or an `AbortController` it aborts, or a Go `context` or .NET cancellation token that a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as "HTTP" in the Rewrite section says |
 | A read of the answer's headers, such as a rate-limit header | Always: PostHog's answer holds its message id, as the rewrite file says under "The answer", not Mailgun's headers |
 
 ## Templates
@@ -123,7 +124,11 @@ Mailgun templates are Handlebars, with the block helpers `if`, `unless`, `each`,
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailgun template, makes it transactional, and gives you its template ID. Until then the site stays on Mailgun. Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailgun template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Mailgun.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+
+Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | Mailgun | PostHog |
 |---|---|
@@ -161,10 +166,18 @@ Mailgun's webhooks stop getting events for a site that moves. PostHog records th
 | `permanent_fail` for an address on a suppression list | none. PostHog refuses the send instead, with `recipient_suppressed` |
 | `complained` | `$workflows_email_blocked` |
 | `opened` | `$workflows_email_opened` |
-| `clicked` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `clicked` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks, as Step 7 says |
 | `temporary_fail`, `unsubscribed` | none |
 
 PostHog's events carry no Mailgun message id, no `user-variables`, and no Mailgun tags. A site whose events a handler matches by `message.headers["message-id"]`, by a `v:` or `X-Mailgun-Variables` value, or by an `o:tag` stays on Mailgun. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a `clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+
+## Calls that change the suppression list
+
+Step 5 says what to do with each of these calls. They are not sends, and they stay on Mailgun.
+
+A call that adds to or removes from a domain's bounce or complaint list, `POST` or `DELETE` on `/v3/<domain>/bounces` or `/v3/<domain>/complaints`, or the SDK's call for it, such as `mg.suppressions.create(domain, 'bounces', ...)` in Node.js, changes a list the import takes. A call on `/v3/<domain>/unsubscribes` changes a list the import leaves out, and stays a Mailgun write only.
 
 ## Rewrite
 
@@ -183,16 +196,17 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 Drop the domain argument and the Mailgun client of the call.
 
+**HTTP.** A site keeps a deadline that its request or its Mailgun client had, as Step 7 says under "Set up the client". These count as the site's own deadline: a timeout on the request, such as `requests.post(..., timeout=5)`, axios `timeout: 5000`, Guzzle's `'timeout' => 5`, or `signal: AbortSignal.timeout(5000)`; a timeout on the client, such as `timeout` in `mailgun.js`'s client options, or the `Timeout` of an `http.Client` that the code gives a Go client with `SetHTTPClient`; and a Go context from `context.WithTimeout` passed to `mg.Send`. A timeout the library sets on its own, which the code doesn't set, is not one. A `signal` or context that a caller can cancel is not a deadline: see "Code around the send".
+
 **The fields.**
 
 - `from` stays as it is. When the code built it from a name and an address, such as with a builder setter that takes both, write `'Name <address>'`, with the name in double quotes when it holds a comma, a quote, or another special character, such as `'"Acme, Inc." <hello@mail.example.com>'`.
 - `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `h:Reply-To` becomes `replyTo`: one address as a string, and a header with several addresses, such as `a@example.com, b@example.com`, as a list of them, split at each comma and trimmed. PostHog checks each entry as one address.
-- The tracking fields, `o:tracking`, `o:tracking-opens`, and `o:tracking-clicks`, and their setters are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
+- The tracking fields, `o:tracking`, `o:tracking-opens`, and `o:tracking-clicks`, and their setters are dropped, and the send gets no `captureEngagement` for them, as Step 7 says.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
 - `recipient-variables` on a send to one address: replace each `%recipient.<name>%` in the subject, the text, and the HTML with the value of that address's entry before the send, as the "Fields" table says, and drop `recipient-variables`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
-- A request or a Mailgun client with its own deadline, such as `requests.post(..., timeout=5)`, axios `timeout: 5000`, `signal: AbortSignal.timeout(5000)`, or `timeout` in `mailgun.js`'s client options, keeps it. PostHog's SDK otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. In Node.js, send such a site through a PostHog client of its own, set up as Step 7 sets up the shared one, with `emailRequestTimeoutMs` set to the site's deadline, one client per deadline the sites use, and set `maxRetries: 0` on the send, since the request never retried. The shared client keeps its default for every other site. In another language, do the same only when the installed PostHog SDK's email client takes a request timeout and its send can turn off retries. Otherwise the site stays on Mailgun, with the reason `the PostHog SDK can't keep the request's deadline`.
 
 **Templates brought into the code.** The site renders the email from its template values, as "Templates" says, and sends `templateKey`, the rendered `subject` and `html`, `text` when it set `t:text`, and the `from` and `replyTo` of the site, else of the version's headers. It sends no `templateId` and no `templateData`.
 
@@ -208,11 +222,9 @@ Drop the domain argument and the Mailgun client of the call.
 - **A status check, in any language.** A check of a response's status, such as `!res.ok` after `fetch`, `getStatusCode()` with `NoopHydrator`, or `resp.StatusCode` after Go's `http.Post`, never saw a network failure: the request threw, raised, or returned it first. Move the branch into the handling of PostHog's error, and before it, throw, raise, or return a `network_error` the way the request did. RestSharp's `Execute` calls and PHP's `curl_exec` answer a network failure as a response too, with status `0` or `false`: a branch that took every failure there takes a `network_error` too.
 - **A plain HTTP request whose client throws on a failed status**, as "Code around the send" lists. It failed on every API error and every network failure, as Mailgun's Node.js SDK does. Keep that: every PostHog error fails the site. In Node.js, throw from `error` as the Node.js bullet says. In Python, Ruby, PHP, and .NET, PostHog's SDK raises on its own. A catch of the client's error, such as `RestClient::ExceptionWithResponse`, Guzzle's `RequestException`, or .NET's `HttpRequestException`, becomes a catch of PostHog's error. A catch that never saw a network failure keeps it out: Guzzle 7 throws a failed connection as `ConnectException`, outside `RequestException`, so a catch of `RequestException` throws PostHog's error again first when its code is `network_error`. A catch of `TransferException` or `GuzzleException` took both, and takes every PostHog error. A catch that took some network failures and not others keeps the site on Mailgun, with the reason `catches one kind of network failure`, since PostHog's `network_error` doesn't say which kind it was: .NET's `HttpRequestException` takes a failed connection, but a timeout throws `TaskCanceledException` outside it, and `rest-client`'s `ExceptionWithResponse` takes a timeout, but not `RestClient::ServerBrokeConnection` or a refused connection. A read of the client's status in that catch, such as axios's `err.response.status`, got's `err.response.statusCode`, `rest-client`'s `e.http_code`, Guzzle's `$e->getResponse()->getStatusCode()`, or `HttpRequestException.StatusCode`, reads PostHog's status code, and a branch on `400` reads PostHog's error name `validation_error`. Never log the error and go on here.
 - **A send whose status the code never read**, on Mailgun's Python SDK or a plain HTTP request whose client answers a failed status as a response, as "Code around the send" lists. The site let every API error pass, and failed only where the request threw, raised, or returned a network failure. Keep both: handle PostHog's error, throw, raise, or return it when its code is `network_error`, and otherwise log it and go on. RestSharp's `Execute` calls and PHP's `curl_exec` answer a network failure without throwing too, so a site on one of them logs a `network_error` and goes on as well. In Node.js, that is a check of `error`; in Python, Ruby, PHP, and .NET, a catch of PostHog's error; in Go, a check of `err` with `errors.As`. Note each such site in the report.
-- PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Mailgun took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
+- PostHog refuses a send to a suppressed address with `recipient_suppressed`, where Mailgun took it and dropped it later. When the site throws, retries, or reports a failure on any error, handle `recipient_suppressed` before that branch the way the site handled a send that went out: log it and go on. A suppressed send has no message id: when the code after the send uses the id for more than a log line, such as returning it to its callers or storing it, the site stays, and the reason is `uses the message id of a suppressed send`, unless its callers already handle a send without an id. Note each site that got this branch in the report.
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged the Mailgun `id`, or stored it for the app's own use, takes PostHog's message id instead.
-
-**Suppression writes.** A call that adds to or removes from a domain's bounce or complaint list, `POST` or `DELETE` on `/v3/<domain>/bounces` or `/v3/<domain>/complaints`, or the SDK's call for it, such as `mg.suppressions.create(domain, 'bounces', ...)` in Node.js, changes a list the import takes: Step 5 says what the report asks for it. A call on `/v3/<domain>/unsubscribes` changes a list the import leaves out, and stays a Mailgun write only.
 
 **The Mailgun client.** Keep the Mailgun client, its import, and its `FormData` while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package, `form-data`, and the key: the person removes them after the cutover.
 
