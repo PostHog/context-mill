@@ -46,9 +46,9 @@ const messageId = result.body.Messages[0].To[0].MessageID
 
 - `new Mailjet({ apiKey, apiSecret })` and `new Mailjet.Client({ apiKey, apiSecret })` make the same client. `require('node-mailjet')` works too.
 - `.post('send', { version: 'v3.1', host: 'api.us.mailjet.com' })`, or `config: { host }` on the client, sends to the US host.
-- `.post('send')` with no version, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below.
+- `.post('send')` with no version, on a client with no version set, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below. A `version` in the options of `connect` or the client's `config` sets it for every `.post` that gives none.
 - `.request(body, params, false)` makes no request: it is a test call, not a send.
-- node-mailjet 3.x makes the client with `require('node-mailjet').connect(key, secret, options)`. `perform_api_call: false` in those options, or in the options of `.post`, makes no request.
+- node-mailjet 3.x makes the client with `require('node-mailjet').connect(key, secret, options)`. `perform_api_call: false` in the options of `.post` makes no request. In the options of `connect`, it makes no request only on a `.post` given no options: `.post`'s options replace the client's, and a `false` left out of them falls back to sending.
 
 **Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or an exact `==` pin in the manifest, names. A range such as `>=1.3.4`, or no version at all, names none unless every version it allows sits in one of the three bands below: before 1.7.0, 1.7.x, or from 1.8.0.
 
