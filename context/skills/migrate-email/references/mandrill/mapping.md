@@ -138,6 +138,8 @@ A stored template site moves by bringing the template into the code, as `templat
 | `publish_subject` | The send's `subject`, rendered with no escaping |
 | `publish_from_email` with `publish_from_name` | The send's `from`, with the name rendered with no escaping |
 
+A Mailchimp template, sent with `messages.sendMcTemplate`, has no published subject or sender: read its `subject` for `publish_subject`, and `from_email` with `from_name` for the sender. Its `publish_code` and `publish_text` are the HTML and text, or `code` and `text` when the site sets `mc_template_version: 'draft'`, as `account.md` says.
+
 Write the `\|` above as a plain `|`. The tables escape it.
 
 - The truth tests, written out. Mailchimp's `IF:NAME` is true when a value is provided, and an empty string counts as none: true when the value is set and not `""`. A value that can be `false` or `0` keeps the template: the docs don't say how they test. Handlebars truth, as the docs list it: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object.
