@@ -68,6 +68,8 @@ Import every hard bounce and spam complaint. An admin block or an unsubscribe ca
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
 
+**In a re-import.** Step 5's "Re-import only" has no plan, so no site moves or stays in it. The senders that send through PostHog are the ones the person names, asked once. Import the entries that block an address for every one of them, as above. For the admin blocks and unsubscribes that name one of those senders but not all, ask the question of "Blocks for some senders": yes imports them; no imports none of them, and tell the person that PostHog's sends from those senders can reach those addresses. Read the blocked domains too, as "Blocked domains" says, and name each one to the person: PostHog's sends reach those domains.
+
 ## Blocked domains
 
 Brevo can block every address on a domain. PostHog's list takes addresses, not domains, so a moved site's sends would reach addresses on a blocked domain again. Check this in Step 5, whether or not the import runs. Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
