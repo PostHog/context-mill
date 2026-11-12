@@ -55,16 +55,20 @@ function loadYaml(configPath) {
 // A line that is exactly `{{> name}}` is replaced at build time with the body
 // of `<configDir>/shared/name.md` (frontmatter stripped), so shared prose like
 // the MCP tool-calling grammar lives in one canonical file and every skill that
-// includes it stays in sync.
-const PARTIAL_DIRECTIVE = /^[ \t]*\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
+// includes it stays in sync. Each included line takes the directive's leading
+// whitespace, so an indented directive nests the partial under its list item.
+const PARTIAL_DIRECTIVE = /^([ \t]*)\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
 
 function expandPartials(body, configDir) {
-    return body.replace(PARTIAL_DIRECTIVE, (_match, name) => {
+    return body.replace(PARTIAL_DIRECTIVE, (_match, indent, name) => {
         const partialPath = path.join(configDir, 'shared', `${name}.md`);
         if (!fs.existsSync(partialPath)) {
             throw new Error(`Partial include {{> ${name}}} references missing file ${partialPath}`);
         }
-        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
+        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim()
+            .split('\n')
+            .map(line => (line ? indent + line : line))
+            .join('\n');
     });
 }
 
