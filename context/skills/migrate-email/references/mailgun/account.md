@@ -50,9 +50,9 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 A site that sets no open or click tracking field sends with its domain's setting, as `mapping.md` says under "Tracking".
 
-**Ask the person.** In the Mailgun dashboard, the sending domain's settings show whether open tracking and click tracking are on, and whether click tracking is HTML only.
+**Ask the person.** In the Mailgun dashboard, the sending domain's settings show whether open tracking and click tracking are on, whether click tracking is HTML only, and whether unsubscribe tracking, which adds an unsubscribe footer to each email, is on.
 
-**Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active` and `tracking.click.active`.
+**Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active`, `tracking.click.active`, and `tracking.unsubscribe.active`.
 
 ## Suppression list
 
