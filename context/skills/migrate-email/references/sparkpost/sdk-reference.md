@@ -188,7 +188,7 @@ The HTTP names, which the Node.js, PHP, and Elixir SDKs use too. Python renames 
 | `campaign_id` | String, sent back in webhook events and used in reports |
 | `description` | String that names the transmission in SparkPost |
 | `return_path` | The envelope sender on a bounce domain |
-| `override` | `from`, `reply_to`, and `list_id` that replace a stored template's values |
+| `override` | `from`, `reply_to`, `list_id`, and `headers` that replace the content's values, inline or a stored template's |
 | `tracking_domain` | A custom tracking domain for this send |
 | `options.start_time` | A send time, up to 3 days ahead |
 | `options.open_tracking`, `options.initial_open`, `options.click_tracking` | Booleans |
