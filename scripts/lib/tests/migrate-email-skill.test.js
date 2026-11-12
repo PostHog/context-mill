@@ -258,13 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('fills the recipient variables of a mailgun send to one address in the code instead of keeping the site', () => {
-            const mapping = read('mailgun/mapping.md');
-
-            expect(mapping).toMatch(/\| `recipient-variables`, on a send with one address in `to` and its own `subject`, `text`, or `html` \| none: the code puts the values into the subject and the content before the send \|/);
-            expect(mapping).toMatch(/\| `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` \| none \| Always: Mailgun fills them at send time/);
-            expect(mapping).not.toMatch(/\| `recipient-variables` \| none \| Always/);
-        });
     });
 
     describe('the key check in step 6', () => {

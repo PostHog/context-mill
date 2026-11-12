@@ -26,7 +26,7 @@ These are not Mailgun's send SDK, and alone they are not a migration: `flanker` 
 
 ## Clients and sends
 
-**Node.js, `mailgun.js`.** `mg.messages.create` answers `{ status, id, message }`: `id` is the message id in angle brackets, such as `<20260203192638.000be97f99f8cea1@mail.example.com>`. It throws on an API error: the error has `type: 'MailgunAPIError'`, `status` (the HTTP status), `message`, and `details` (the text of Mailgun's answer).
+**Node.js, `mailgun.js`.** `mg.messages.create` answers `{ status, id, message }`: `id` is the message id in angle brackets, such as `<20260203192638.000be97f99f8cea1@mail.example.com>`. It throws on an API error: the error has `type: 'MailgunAPIError'`, `status` (the HTTP status), `message`, and `details` (the text of Mailgun's answer). It throws a network failure as the same error, with status `400` and the network error's message as `details`.
 
 ```js
 import Mailgun from 'mailgun.js'
