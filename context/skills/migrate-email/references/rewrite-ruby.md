@@ -39,6 +39,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The client's `email_request_timeout_seconds:` is the time each email request may take, 15 by default, and `email_request_max_retries:` its retries, 2 by default. A send's `max_retries: 0` turns its retries off.
 - The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds:` set to it.
+- The SDK sets `Net::HTTP`'s open, read and write timeouts to that number, which limits each wait on the network, not the whole request. `Net::HTTP`'s own timeouts, and Faraday's `timeout` on its default `net_http` adapter, are the same kind of limit. A limit on the whole request, such as Typhoeus's `timeout` or Faraday's `timeout` on another adapter, such as `:typhoeus`, is a deadline the SDK can't keep: the site stays, as Step 7 says. A `Timeout.timeout` the code puts around the call is code around the send and stays around it.
 
 ## The answer
 
