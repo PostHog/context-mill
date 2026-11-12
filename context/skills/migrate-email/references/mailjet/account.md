@@ -66,7 +66,7 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 ## For the report
 
 - When the import read hard bounces from the message list: it reaches only the messages Mailjet still keeps, so older bounces may be missing.
-- The number of contact-list unsubscribes the import left out, when the person has them.
+- The number of contact-list unsubscribes the import left out. Ask the person for it, such as from their contact-list exports, and leave it out when they don't have it.
 
 ## Tracking settings
 
