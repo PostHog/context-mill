@@ -30,7 +30,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## The send
 
-- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, and `captureEngagement` optional.
+- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `sensitive`, and `tracking` optional. `tracking` takes `true`, `false`, or `{ opens, clicks, engagement }`. Open tracking off is `tracking: { opens: false }`. `captureEngagement` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
 - `replyTo` takes one address or a list of addresses.
 - `attachments` takes a list of up to 10 files, each `{ filename, content, contentType, contentId }`, with `content` as a Buffer, a `Uint8Array`, or a Base64 string, and `contentType` and `contentId` optional. A release whose send types have no `attachments` doesn't take files: upgrade, as Step 7 says.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.

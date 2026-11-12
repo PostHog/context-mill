@@ -34,7 +34,7 @@ posthog = Posthog(
 
 ## The send
 
-- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, and `capture_engagement` optional. `from` is a Python keyword, so the argument is `from_`.
+- Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, `sensitive`, and `tracking` optional. `tracking` takes `True`, `False`, or a dict with `"opens"`, `"clicks"`, and `"engagement"`. Open tracking off is `tracking={"opens": False}`. `capture_engagement` is deprecated: use `tracking={"engagement": False}`. `from` is a Python keyword, so the argument is `from_`. Sensitive is `sensitive=True`.
 - `reply_to` takes one address or a list of addresses.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
 
