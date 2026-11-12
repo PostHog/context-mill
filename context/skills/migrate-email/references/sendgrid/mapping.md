@@ -34,6 +34,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 - Opens tracked: the site moves. When SendGrid tracked its clicks too, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- Clicks untracked, on a site that moves to a template made in PostHog: PostHog would send the links of a template that is not marked sensitive through its click redirect, which they never went through. Ask the person to mark that template sensitive when they make it, as Step 3 asks, and note it in the plan row, so the report lists it before cutover.
 
 When a site's open tracking follows the account and the person can't say whether it is on, the site stays, and the reason is `account tracking not checked`.
 
