@@ -95,7 +95,7 @@ result = Mailjet::Send.create(messages: [{
 }])
 ```
 
-**PHP.** `post` answers a `Mailjet\Response` with `success()` (true for a 2xx status), `getStatus()`, `getReasonPhrase()`, `getBody()`, and `getData()`. It does not throw on an API error, only on a network error.
+**PHP.** `post` answers a `Mailjet\Response` with `success()` (true for a 2xx status), `getStatus()`, `getReasonPhrase()`, `getBody()`, and `getData()`. It does not throw on an API error, only on a network error: it lets Guzzle's exceptions through, such as `ConnectException` for a failed connection and a plain `RequestException` for a failed send or receive.
 
 ```php
 use \Mailjet\Resources;
