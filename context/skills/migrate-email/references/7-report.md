@@ -51,7 +51,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Before cutover
 
-<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, each idempotency key a retry across the deploy could send twice, each template made in PostHog with its ID (send a test of it from PostHog, and check that it is transactional, sends from a verified sender, and fills each variable the site sends), and each site that stays with what would let it move. When nothing is left, write "Nothing left before cutover.">
+<A numbered list of everything the person still has to do. Include each unverified domain, a missing or partial suppression import, `POSTHOG_PROJECT_SECRET_API_KEY` in the env file when the plan says it is not set, each place that needs the PostHog key, a tier that is too low or not checked, an API that is not confirmed, sends with content from the code (`html`, `text`, or `react`) when a site that moves has them (confirm with PostHog that the project can send them), each idempotency key a retry across the deploy could send twice, each template made in PostHog with its ID (send a test of it from PostHog, and check that it is transactional, sends from a verified sender, and fills each variable the site sends), and each site that stays with what would let it move. After an import, always end with: import the entries the provider added to its suppression list since the export, right before cutover. When nothing is left, write "Nothing left before cutover.">
 
 ## Summary
 ```

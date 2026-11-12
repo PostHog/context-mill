@@ -31,6 +31,7 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 
 - Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
 - Repeating an import is safe: an address already on the list stays on it.
+- The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover.
 - Never print the addresses, and never write them into the plan or the report. Count them.
 - When a call fails, read its error and fix the call. When it fails again, stop the import and record how many entries you imported.
 
