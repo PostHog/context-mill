@@ -10,7 +10,7 @@ We'd love your pull request!
 
 The context mill gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into versioned skills which can be shipped anywhere as zip files. 
 
-The PostHog [wizard](https://github.com/PostHog/wizard) downloads skills and menus from the latest release. The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) fetches the `skills-mcp-resources.zip` bundle and exposes it to any MCP-compatible client as resources. The [AI plugin](https://github.com/PostHog/ai-plugin) packages skills from here too.
+The PostHog [wizard](https://github.com/PostHog/wizard) downloads skills and menus from the latest release. The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) fetches the `skills-mcp-resources.zip` bundle and exposes it to any MCP-compatible client as resources.
 
 The context mill is a stopgap. The goal is to retire it once the docs themselves package cleanly into skills. See the [handbook](https://posthog.com/handbook/wizard-and-docs/context-mill).
 
