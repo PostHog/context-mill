@@ -1,0 +1,34 @@
+[
+  {
+    "name": "mt_capture_path",
+    "rubric": "The capture path fits the app: the `posthog.metrics` API where a PostHog SDK is installed or supported, or the existing OpenTelemetry metrics exporter pointed at PostHog's OTLP metrics endpoint. Adding OpenTelemetry packages when `posthog.metrics` was available is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_metrics_recorded",
+    "rubric": "At least one real metric is recorded at a meaningful site in the app's own code, such as a critical flow's success and failure counts or an external call's duration. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_types_and_units",
+    "rubric": "Each metric uses the right type: counters for values that only go up, gauges for values that go up and down, histograms for distributions. Histograms set an explicit unit. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_naming",
+    "rubric": "Metric names are stable, descriptive, and dot-separated, and a service name is set. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_low_cardinality",
+    "rubric": "Metric attributes are low cardinality. User IDs, session IDs, request IDs, and timestamps as attributes are NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_existing_preserved",
+    "rubric": "Existing metrics instrumentation (Prometheus, StatsD, OpenTelemetry) is left in place, with PostHog calls added next to it. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_token_host_env",
+    "rubric": "The project token and host or endpoint are read from environment variables, not hard-coded. **N/A** when the change reuses an already configured PostHog SDK. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "mt_flush_before_exit",
+    "rubric": "Short-lived processes flush metrics before exit. **N/A** for long-running servers. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

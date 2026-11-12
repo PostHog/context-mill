@@ -18,11 +18,12 @@ POSTHOG = PostHog::Client.new({
   api_key: ENV['POSTHOG_PROJECT_TOKEN'],
   host: ENV['POSTHOG_HOST'],
   secret_key: ENV['POSTHOG_PROJECT_SECRET_API_KEY'],
+  feature_flags_async_load: true,
   migrated_from: '<provider>' # only when the client takes it
 })
 ```
 
-- With `secret_key` set, the client loads flag definitions from `host` with it when it starts, and keeps polling. Give the key the feature flag read scope too. Tell the person.
+- With `secret_key` set, the client loads flag definitions from `host` with it, and keeps polling. Give the key the feature flag read scope too. Tell the person. `feature_flags_async_load: true` loads them on the polling thread, so a slow answer never holds the app's boot; set it on any client that gets the key.
 - The app host option is `app_host`.
 - In Rails, create the client once, such as in an initializer.
 

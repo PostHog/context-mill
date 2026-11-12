@@ -1,13 +1,22 @@
 import posthog from 'posthog-js';
-import { PUBLIC_POSTHOG_PROJECT_TOKEN } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+import { dev } from '$app/environment';
 import type { HandleClientError } from '@sveltejs/kit';
 
 // Initialize PostHog when the app starts in the browser
 export async function init() {
-	posthog.init(PUBLIC_POSTHOG_PROJECT_TOKEN, {
+	const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+	if (!token) {
+		if (dev) {
+			console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
+		}
+		return;
+	}
+
+	posthog.init(token, {
 		api_host: '/ingest',
-		ui_host: 'https://us.posthog.com',
-  defaults: '2026-01-30',
+		ui_host: env.PUBLIC_POSTHOG_HOST?.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com', // The PostHog app for your region
+		defaults: '2026-08-30',
 		capture_exceptions: true
 	});
 }
