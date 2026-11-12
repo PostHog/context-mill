@@ -152,7 +152,8 @@ Node.js names, with the HTTP names where they differ. The other SDKs use the sam
 | `content` | `content` | A list of `{ type, value }` |
 | `templateId` | `template_id` | A dynamic template (`d-...`), or a legacy template |
 | `dynamicTemplateData` | `personalizations[].dynamic_template_data` | Object that fills a dynamic template |
-| `substitutions` | `personalizations[].substitutions` | Values for a legacy template's `-name-` tags |
+| `substitutions` | `personalizations[].substitutions` | Values for tags in the subject, the content, and the reply-to address, such as `-name-` |
+| `substitutionWrappers` | none: `@sendgrid/mail` wraps each `substitutions` key in it before the request | Two strings, `['{{', '}}']` unless the message sets others |
 | `attachments` | `attachments` | A list of `{ content, filename, type, disposition, contentId }`. `content` is base64 |
 | `categories` | `categories` | A list of strings |
 | `customArgs` | `custom_args` | Object of string values, sent back in webhook events |

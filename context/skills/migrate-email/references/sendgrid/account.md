@@ -31,6 +31,16 @@ The steps call this key the full-access provider key.
 
 A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. PostHog adds its open pixel to every email and counts no clicks, as `mapping.md` says under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking). When open tracking is off, the sites that follow it stay, and the reason is `open tracking off`. When click tracking is on, note in the plan row of each moved site that follows it that PostHog counts no clicks for it. When the person can't say whether open tracking is on, the sites that follow it stay, and the reason is `account tracking not checked`. Note the answer in the plan.
 
+## Mail settings
+
+Three more account settings change every send that doesn't set them, and no send field of PostHog's does the same. In the same question, ask the person whether each one is on in SendGrid:
+
+- **Subscription tracking** (Settings, then Tracking): SendGrid added an unsubscribe link to each email, or filled the tag that stands for it. When it is on, every site whose `trackingSettings` doesn't set `subscriptionTracking` stays, and the reason is `account subscription tracking on`.
+- **Plain Content** (Settings, then Mail Settings): SendGrid sent only the text part. When it is on, every site stays, and the reason is `account plain content on`.
+- **Footer** (Settings, then Mail Settings): SendGrid appended the footer's HTML to the HTML part and its text to the text part. When it is on, ask the person for the footer's HTML and text. Each moved site appends them to its `html` and `text`, as SendGrid did, and the plan notes it. When the person can't give them, every site stays, and the reason is `account footer not copied`.
+
+When the person can't say whether one of these is on, the sites it would change stay, and the reason is `account mail settings not checked`. Note the answers in the plan.
+
 ## Template content
 
 A site whose template moves needs the content of its active version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content.
