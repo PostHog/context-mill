@@ -39,7 +39,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `if (error.name === '...')` | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
-| A `fetch` or axios request with a `signal` the code can abort, such as one a caller passes in or an `AbortController` it aborts | Always: `posthog.emails.send` takes no signal, so an email the old code cancelled would go out. A fixed `AbortSignal.timeout(...)` is a deadline, and moves as "HTTP" below says |
+| A `signal` the code can abort, such as one a caller passes in or an `AbortController` it aborts, on a `fetch` or axios request or in the options of `resend.emails.send(payload, { signal })`, which the SDK passes to its request | Always: `posthog.emails.send` takes no signal, so an email the old code cancelled would go out. A fixed `AbortSignal.timeout(...)` is a deadline, and moves as "HTTP" below says, in an SDK send too |
 
 ## Content
 
@@ -59,7 +59,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 
 **The PostHog client.** Set `migratedFrom: 'resend'` on the `posthog-node` client that Step 7 configures, when its client options take it.
 
-**The call.** `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload.
+**The call.** `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload. A `signal` in it is code around the send, as the table above says.
 
 **The fields.**
 
