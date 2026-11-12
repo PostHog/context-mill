@@ -9,6 +9,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@posthog/react": "^1.11.3",
+    "posthog-js": "^1.447.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router": "7.10.1"

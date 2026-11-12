@@ -1301,9 +1301,9 @@ checksum = "19f132c84eca552bf34cab8ec81f1c1dcc229b811638f9d283dceabe58c5569e"
 
 [[package]]
 name = "posthog-rs"
-version = "0.21.0"
+version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dc5d94870b23655fceae57574d6741475b114be5a018b25d22dd2aa076fbe13"
+checksum = "c193cc8361451fa68c1c2586350a9987f38dd82183f0484ea3376585c964fa8c"
 dependencies = [
  "backtrace",
  "chrono",
@@ -1335,6 +1335,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import posthog from 'posthog-js';
@@ -9,8 +10,13 @@ export default function ProfilePage() {
   const router = useRouter();
 
   // Redirect to home if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   if (!user) {
-    router.push('/');
     return null;
   }
 
