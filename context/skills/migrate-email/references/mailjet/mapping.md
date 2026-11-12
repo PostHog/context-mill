@@ -61,7 +61,7 @@ A Mailjet send has no idempotency key, so the moved site sends none either. Post
 | Mailjet call | A site stays on Mailjet when |
 |---|---|
 | `mailjet.post('send', { version: 'v3.1' }).request(...)`, `send.create(data=...)`, `Mailjet::Send.create`, `$mj->post(Resources::$Email, ...)`, `SendMailV31`, `SendTransactionalEmailAsync`, `PostAsync` with `SendV31.Resource`, `POST /v3.1/send` | A field above keeps it |
-| The v3 Send API: `.post('send')` without `v3.1`, a client without `version='v3.1'`, Go `SendMail`, `POST /v3/send` | A field above keeps it, by its v3 name. `Recipients` with more than one entry, and `Messages`, keep it |
+| The v3 Send API: `.post('send')` that sets no version on a Node client with no version set, or `{ version: 'v3' }`, a Python client without `version='v3.1'`, Go `SendMail`, `POST /v3/send` | A field above keeps it, by its v3 name. `Recipients` with more than one entry, and `Messages`, keep it |
 | `Messages` with more than one entry, `SendTransactionalEmailsAsync`, Java `SendEmailsRequest` with several messages | Always: each sends several emails in one call |
 | SMTP through `in-v3.mailjet.com` or `in.mailjet.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | Go `SendMailSMTP` | Always. It sends through Mailjet's SMTP host from Mailjet's own SDK |
