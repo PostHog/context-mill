@@ -38,7 +38,7 @@ A template the provider renders because a header names it stays with its site, s
 
 ## Open tracking
 
-An SMTP server adds no open pixel on its own. A provider behind the host adds one only when its open tracking is on, by its own setting, such as SendGrid's tracking settings, Mailgun's tracking for the sending domain, Postmark's open tracking for the message stream, or an Amazon SES configuration set that records opens and that the sends name. Ask the person once, for each host the moved sites use, whether it tracked the opens of these sends. A host with no provider behind it, such as the company's own mail server, and tracking that was off or never set up mean the site's emails had no open pixel; no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+An SMTP server adds no open pixel on its own. A provider behind the host adds one only when its open tracking is on, by its own setting, such as SendGrid's tracking settings, Mailgun's tracking for the sending domain, Postmark's open tracking for the message stream, or an Amazon SES configuration set that records opens, named by the sends or set as the sending identity's default. Ask the person once, for each host the moved sites use, whether it tracked the opens and the clicks of these sends: click tracking sits next to open tracking in each of these settings, and SES records clicks in the same configuration set. A host with no provider behind it, such as the company's own mail server, and tracking that was off or never set up mean the site's emails had no open pixel; no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
 
 ## Suppression list
 
