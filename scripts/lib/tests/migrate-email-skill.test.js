@@ -208,6 +208,16 @@ describe('migrate-email skill', () => {
         expect(unresolvedStepSections(skillDir)).toEqual([]);
     });
 
+    it.each(PROVIDERS)('lets migrate-email-%s start a suppression re-import from its entry at a section of Step 5', async (provider) => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill(`migrate-email-${provider}`, outputDir);
+
+        const entryPointers = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(STEP_SECTION)];
+        expect(entryPointers.map(([, stepNumber, fileNumber]) => stepNumber ?? fileNumber)).toContain('5');
+        expect(unresolvedStepSections(skillDir).filter((missing) => missing.startsWith('SKILL.md'))).toEqual([]);
+    });
+
     it('publishes each provider and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
         const { generator, skills } = await loadSkills();
         const entries = generateCliEntries({ allSkills: skills.map(generator.serializeSkill) });

@@ -13,6 +13,10 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 [STATUS] Importing the suppression list
 ```
 
+## Re-import only
+
+After the migration, while any site still sends through the provider, the provider keeps adding the addresses that bounce or complain to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone: do "Check the import tool", "Get the list", "Import it" and "The full-access key", reading the provider's `account.md` for them, and skip the other sections. There is no plan file. Tell the person how many entries you imported, of how many, and stop when this step ends: do not go on to the next step, and change no other file.
+
 ## Read the provider's notes
 
 Read the provider's `account.md` first, whether or not the import runs. Its "For the report" section, when it has one, names facts the report carries, such as a count of entries the import leaves out. Find each one as the section says, and write it under the phase in the plan file. Never write an address.
@@ -35,7 +39,7 @@ The provider's `account.md` says how to export the list, which entries to take, 
 
 - Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
 - Repeating an import is safe: an address already on the list stays on it.
-- The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover.
+- The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover, and for the weekly re-import of "Re-import only" while any site stays on the provider after it.
 - Never print the addresses, and never write them into the plan or the report. Count them.
 - When a call fails, read its error and fix the call. When it fails again, stop the import, record how many entries you imported, and ask the person once whether to repeat it now. Repeat it when they say yes.
 
@@ -49,4 +53,4 @@ Tick the phase in the plan file only when every entry is imported: `- [x] suppre
 
 ## The full-access key
 
-Every way out of this step ends here. When the plan says the run created a full-access provider key, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. After a partial import, ask once the person said no to a repeat, or the repeat ended. Note in the plan whether they did.
+Every way out of this step ends here. When the plan says the run created a full-access provider key, or a re-import created one, ask the person now to delete it at the provider and remove its variable from the env file, as `account.md` says. After a partial import, ask once the person said no to a repeat, or the repeat ended. Note in the plan whether they did, outside a re-import.
