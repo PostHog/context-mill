@@ -173,9 +173,9 @@ Step 5 says what to do with each of these calls. They are not sends, and they st
 
 | Adds an address | Removes an address |
 |---|---|
-| `POST /message-streams/{stream}/suppressions`, and each SDK's spelling of it, such as `createSuppressions` in Node.js and PHP, `create_suppressions` in Ruby, or `CreateSuppressions` in .NET | `POST /message-streams/{stream}/suppressions/delete`, and each SDK's spelling of it, such as `deleteSuppressions` in Node.js and PHP, `delete_suppressions` in Ruby, or `DeleteSuppressions` in .NET |
+| `POST /message-streams/{stream}/suppressions`, and each SDK's spelling of it, such as `createSuppressions` in Node.js and PHP, `create_suppressions` in Ruby, or `CreateSuppressions` in .NET | `POST /message-streams/{stream}/suppressions/delete`, and each SDK's spelling of it, such as `deleteSuppressions` in Node.js and PHP, `delete_suppressions` in Ruby, or `DeleteSuppressions` in .NET. `PUT /bounces/{bounceid}/activate` too, which reactivates a hard bounce and takes its address off the list: `activateBounce` in Node.js and PHP, `activate_bounce` in Ruby, or `ActivateBounceAsync` in .NET |
 
-Only a call on the `outbound` stream of a server whose list Step 5 imports counts, as "Servers" says. PHP and .NET use `outbound` when the call names no stream. A call on any other stream changes a list the import leaves out.
+Only a call on the `outbound` stream of a server whose list Step 5 imports counts, as "Servers" says. A bounce activation counts when the bounce's `MessageStream` is `outbound`. PHP and .NET use `outbound` when the call names no stream. A call on any other stream changes a list the import leaves out.
 
 ## Rewrite
 
