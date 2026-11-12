@@ -49,7 +49,10 @@ const messageId = result.body.Messages[0].To[0].MessageID
 - `.post('send')` with no version, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below.
 - `.request(body, params, false)` makes no request: it is a test call, not a send.
 
-**Python.** `send.create` answers a `requests.Response`. It does not raise on an API error: the code reads `result.status_code` and `result.json()`. It raises only on a network error or a timeout, such as `mailjet_rest.TimeoutError`, `CriticalApiError`, or `ApiError`.
+**Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or the pin in the manifest, names:
+
+- Before 1.8.0, it does not raise on an API error: the code reads `result.status_code` and `result.json()`. It raises only on a network error or a timeout, such as `mailjet_rest.TimeoutError`, `CriticalApiError`, or `ApiError`.
+- From 1.8.0, it also raises on an answer of 400 or more: `ValidationError` for 400, `MailjetAuthError` for 401 and 403, `DoesNotExistError` for 404, and `ApiRateLimitError` for 429, each a `MailjetApiError` with `status_code` and `response_body`. Any other status, such as a 500, raises a plain `ApiError` with no status. A timeout raises `TimeoutError` and a failed connection `CriticalApiError`, both `MailjetNetworkError`s. Every one of them is an `ApiError`. A `result.status_code` check after the call then sees only successes.
 
 ```python
 from mailjet_rest import Client
@@ -70,8 +73,9 @@ if result.status_code != 200:
 
 - The client also runs as a context manager: `with Client(...) as mailjet:`.
 - `api_url="https://api.us.mailjet.com/"` sends to the US host. A client without `version="v3.1"` sends to the v3 Send API.
+- `Client(..., dry_run=True)`, from 1.7.0, makes no request: it answers a `200` and sends nothing.
 
-**Ruby.** `Mailjet.configure` sets `api_key`, `secret_key`, `api_version` (`"v3.1"` for the body above), and `end_point`. `Mailjet::Send.create(messages: [...])` answers a resource whose `attributes[:messages]` holds the answer. It raises `Mailjet::CommunicationError` on an API error, with `code` (the HTTP status), and its subclasses `Mailjet::Unauthorized` (401) and `Mailjet::BadRequest` (400). One case does not raise: when the v3.1 Send API refuses a recipient as an invalid email address, the send answers the error body instead.
+**Ruby.** `Mailjet.configure` sets `api_key`, `secret_key`, `api_version` (`"v3.1"` for the body above), and `end_point`. `Mailjet::Send.create(messages: [...])` answers a resource whose `attributes[:messages]` holds the answer. It raises `Mailjet::CommunicationError` on an API error, with `code` (the HTTP status), and its subclasses `Mailjet::Unauthorized` (401) and `Mailjet::BadRequest` (400). One case does not raise: when the v3.1 Send API refuses a recipient as an invalid email address, the send answers the error body instead. With `perform_api_call` set to `false`, such as `config.perform_api_call = false` in `Mailjet.configure`, the gem makes no request and sends nothing.
 
 ```ruby
 require 'mailjet'
@@ -107,7 +111,7 @@ $response = $mj->post(Resources::$Email, ['body' => [
 if (!$response->success()) { /* ... */ }
 ```
 
-The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API.
+The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, or `'call' => false` in the options, the client makes no request and sends nothing.
 
 **Go.** `SendMailV31` answers `(*mailjet.ResultsV31, error)`. The error is a `*mailjet.APIFeedbackErrorsV31` on a 400 or 403 answer (`Messages[].Errors[]` with `ErrorCode`, `ErrorMessage`, and `StatusCode`), a `*mailjet.ErrorInfoV31` on any other error answer (`StatusCode`, `Message`), or a network error. `res.ResultsV31[0].To[0].MessageID` is the message id.
 

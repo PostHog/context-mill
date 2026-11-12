@@ -65,4 +65,9 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 
 ## Tracking settings
 
-Mailjet tracks the opens and clicks of a send that sets `TrackOpens` or `TrackClicks` to `account_default`, or doesn't set them, as the account's settings say. The setting covers every API key of the account, and Mailjet's API has no call that reads it. Ask the person once for each account the sites send from whether open tracking and click tracking are on, in the Mailjet account settings under email tracking. `mapping.md` says under "Tracking" how each answer decides the site. When the person can't tell whether open tracking is on, the sites that leave their opens to the account stay, and the reason is `account tracking not checked`. Note the answers in the plan.
+The account's tracking settings decide how Mailjet tracks the opens and clicks of every send, and they cap what a send's own `TrackOpens` and `TrackClicks` ask for. They cover every API key of the account, and Mailjet's API has no call that reads them. Ask the person once for each account the sites send from:
+
+- The open tracking and the click tracking setting, each `Enabled`, `Disabled`, or `Anonymous`, in the Mailjet dashboard under Account, then Tracking.
+- Whether any contact refused open tracking. Mailjet keeps it as the contact property "Open tracking consent": a contact list export shows it as `mjoptinopen`, where `0` means the contact opted out. An account that never collected tracking preferences has none.
+
+`mapping.md` says under "Tracking" how each answer decides the site. When the person can't tell the open tracking setting, or whether a contact opted out, the sites of that account stay, and the reason is `account tracking not checked`. Note the answers in the plan.

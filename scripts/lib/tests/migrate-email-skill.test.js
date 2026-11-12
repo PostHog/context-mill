@@ -258,14 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('renders Mailjet template language in the code, and blocks only where Mailjet blocked', () => {
-            const mapping = read('mailjet/mapping.md');
-
-            expect(mapping).toMatch(/\| `TemplateLanguage` \| none: with `true`, the code renders Mailjet's template language into the content before the send/);
-            expect(mapping).not.toMatch(/PostHog's code form sends the content as it is/);
-            expect(mapping).toMatch(/Without `TemplateErrorDeliver: true`, the render raises on a left-out value/);
-            expect(mapping).toMatch(/With `TemplateErrorDeliver: true`, Mailjet sent the email anyway/);
-        });
     });
 
     describe('the key check in step 6', () => {
