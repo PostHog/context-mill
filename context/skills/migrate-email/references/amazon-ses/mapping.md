@@ -29,7 +29,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `EndpointId` | none | Always. PostHog's send doesn't take it yet |
 | `TenantName` | none | Always. PostHog's send doesn't take it yet |
 
-**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Amazon SES decides opens and clicks one at a time. When the send's `ConfigurationOverrides.Tracking` sets `OpenTrackingEnabled` or `ClickTrackingEnabled`, that value decides, with one limit: `DISABLED` doesn't track it, and `ENABLED` tracks it when the send's configuration set has an event destination that publishes any event type, VDM engagement metrics are on for the send, or the other one of opens and clicks is tracked for the send. Without any of these, AWS ignores `ENABLED` and the message is sent untracked. Otherwise Amazon SES tracks it when either of these is on for the send:
+**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens, and counts no clicks for a send in the code form, as Step 7 says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Amazon SES decides opens and clicks one at a time. When the send's `ConfigurationOverrides.Tracking` sets `OpenTrackingEnabled` or `ClickTrackingEnabled`, that value decides, with one limit: `DISABLED` doesn't track it, and `ENABLED` tracks it when the send's configuration set has an event destination that publishes any event type, VDM engagement metrics are on for the send, or the other one of opens and clicks is tracked for the send. Without any of these, AWS ignores `ENABLED` and the message is sent untracked. Otherwise Amazon SES tracks it when either of these is on for the send:
 
 - VDM engagement tracking, which tracks both opens and clicks. The send's configuration set decides it when the set's `VdmOptions.DashboardOptions.EngagementMetrics` is set. Otherwise the account's `VdmAttributes.DashboardAttributes.EngagementMetrics` decides, for a send with no set too. Either is on only when it is `ENABLED` and the account's `VdmAttributes.VdmEnabled` is `ENABLED`.
 - An enabled event destination of the send's configuration set, the one it names or its identity's default one, whose `MatchingEventTypes` lists `OPEN` for opens or `CLICK` for clicks.
@@ -67,7 +67,17 @@ Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The
 | A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, `HTTPStatusCode()`, or `raw_response()` in Rust | Never. A branch on `400` reads PostHog's error name `validation_error`, and also its status code for `429` when the site sends with the v1 API (see "Errors"). A branch on another status, such as `429`, reads PostHog's status code |
 | The `MessageId` stored for a webhook handler or a `GetMessageInsights` read | Always, when a handler or the read uses it |
 | The `MessageId` logged or stored for the app's own use | Never. Use PostHog's message id |
-| A deadline or retry setting on the send, such as `timeout: 5000`, `AbortSignal.timeout(5000)`, or the AWS client's `requestTimeout` or `maxAttempts` | Always: PostHog's SDK sends with its own timeout and retries, and the rewrite files name no setting for either, so the moved send could outlive the caller's deadline while the API is down. The reason names the setting |
+| A deadline or retry setting on the request or its client | Never. "HTTP" below names the ones that count |
+
+## HTTP
+
+A site whose Amazon SES request had its own deadline keeps it, as `7-rewrite.md` says under "Set up the client". These count as the site's own deadline:
+
+- **A raw HTTP request.** The timeout of its HTTP client, such as `timeout: 5000` in `axios`, `got`, or `ky`, `AbortSignal.timeout(5000)` on `fetch` or `aws4fetch`, `timeout=` in `requests` or `httpx`, `'timeout'` in Guzzle, Faraday's `timeout`, `read_timeout` in `Net::HTTP`, Go's `http.Client` `Timeout` or a context with a deadline, and .NET's `HttpClient.Timeout` or a cancellation token with a timeout.
+- **A deadline on an AWS SDK call.** An abort signal on the call, such as `client.send(command, { abortSignal })` in Node.js, a context with a deadline in Go, or a cancellation token with a timeout in .NET. The SDK's retries ran inside it, so the moved send gets that deadline and no retries, as for a raw request.
+- **A timeout on an AWS SDK client.** A limit on each attempt, such as `requestHandler: { requestTimeout }` in Node.js, boto3's `Config(read_timeout=..., connect_timeout=...)`, Ruby's `http_read_timeout`, PHP's `'http' => ['timeout' => ...]`, `Timeout` on the .NET client's config, Rust's `timeout_config`, or `recv_timeout` in `ex_aws`'s HTTP options. Unlike a raw request, that client retried a failed attempt: the moved send gets that timeout for each request, and the retries the client's `maxAttempts`, `max_attempts`, `retry_limit`, or `retries` set, counted as retries after the first attempt, or PostHog's default when the client set none.
+
+A retry setting with no timeout is no deadline: the moved send sets the same number of retries after the first attempt, with the send's option that the rewrite file names under "A deadline".
 
 ## Templates
 
@@ -144,7 +154,7 @@ The handlers stop getting events for a site that moves: Amazon SES no longer sen
 | `Bounce` | `$workflows_email_bounced` |
 | `Complaint` | `$workflows_email_blocked` |
 | `Open` | `$workflows_email_opened` |
-| `Click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `Click` | none for a send in the code form: PostHog counts no clicks for it, as Step 7 says |
 | `Reject`, `Rendering Failure`, `DeliveryDelay`, `Subscription` | none |
 
 A bounce to an address on the account-level suppression list comes as a `Bounce` with `bounceSubType` `OnAccountSuppressionList`. PostHog refuses that send instead, with `recipient_suppressed`.
