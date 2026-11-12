@@ -52,6 +52,26 @@ function markdownFiles(dir) {
         .map((entry) => join(entry.parentPath ?? entry.path, entry.name));
 }
 
+const STEP_SECTION = /(?:Step (\d)|`(\d)-[a-z-]+\.md`)(?: says| does)? under "([^"]+)"/g;
+
+function unresolvedStepSections(skillDir) {
+    const referencesDir = join(skillDir, 'references');
+    const headingsOf = (number) => {
+        const step = readdirSync(referencesDir).find((name) => name.startsWith(`${number}-`) && name.endsWith('.md'));
+        return step ? [...readFileSync(join(referencesDir, step), 'utf8').matchAll(/^#+ (.+)$/gm)].map((match) => match[1].trim()) : [];
+    };
+    const missing = [];
+    for (const file of markdownFiles(skillDir)) {
+        for (const [, stepNumber, fileNumber, section] of readFileSync(file, 'utf8').matchAll(STEP_SECTION)) {
+            const headings = headingsOf(stepNumber ?? fileNumber);
+            if (!headings.some((heading) => heading === section || heading.startsWith(`${section},`))) {
+                missing.push(`${relative(skillDir, file)} → Step ${stepNumber ?? fileNumber}, "${section}"`);
+            }
+        }
+    }
+    return missing;
+}
+
 function unresolvedReferences(skillDir) {
     const missing = [];
     for (const file of markdownFiles(skillDir)) {
@@ -78,6 +98,14 @@ describe('migrate-email skill', () => {
 
         expect(readFileSync(join(skillDir, 'SKILL.md'), 'utf8')).toMatch(/^---\nname: migrate-email-resend\n/);
         expect(unresolvedReferences(skillDir)).toEqual([]);
+    });
+
+    it('points each "Step N says under" reference to a section that step has', async () => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill('migrate-email-resend', outputDir);
+
+        expect(unresolvedStepSections(skillDir)).toEqual([]);
     });
 
     it('bundles the transactional email docs and the Resend files', async () => {
