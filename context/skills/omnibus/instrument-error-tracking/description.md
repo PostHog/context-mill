@@ -44,7 +44,7 @@ STEP 6: Upload source maps (frontend/mobile only).
 STEP 7: Set up environment variables.
   - Check if the project already has PostHog environment variables configured (e.g. in `.env`, `.env.local`, or framework-specific env files). If valid values already exist, skip this step.
   - If the PostHog project token is missing, use the project token that the tool or CLI which started this setup already gave you (for example in its output or instructions).
-  - If it gave you none, call the PostHog MCP server's `project-get` tool with no ID to read the active project's `api_token`. If the active project may not be the one this app sends to, ask the user which project to use, find its ID with `projects-get`, and pass it to `project-get`. If the MCP server is not connected or not authenticated, ask the user for their PostHog project token instead.
+  - If it gave you none, call the PostHog MCP server's `projects-get` tool to list the projects. If more than one comes back, ask the user which project to use. Then call `project-get` with that project's `id` and read its `api_token`. If the MCP server is not connected or not authenticated, ask the user for their PostHog project token instead.
   - For the PostHog host URL: use the host that the tool or CLI which started this setup already gave you. If it gave you none, use the `api_host` field of the `project-get` response. If you still have no host from the calling tool, the MCP response, or existing project configuration, ask the user: "Are you on PostHog US Cloud or EU Cloud?" Do not assume US Cloud.
   - Write these values to the appropriate env file using the framework's naming convention.
   - Reference these environment variables in code instead of hardcoding them.
