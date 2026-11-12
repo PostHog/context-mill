@@ -6,7 +6,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 The site's fields are the fields of `message`, plus the top-level `async`, `ip_pool`, and `send_at`. A field set to `null` is not set.
 
-A field the site doesn't set takes the account's Sending Defaults: `track_opens`, `track_clicks`, `inline_css`, and `auto_html`. Classify the site with that value, as if the site set it. `account.md` says how to read them, and "Tracking" says what happens when the person can't say.
+A field the site doesn't set takes the account's Sending Defaults: `track_opens`, `track_clicks`, `inline_css`, `auto_html`, and `merge_language`. Classify the site with that value, as if the site set it. `account.md` says how to read them and what keeps a site when the person can't say.
 
 ## Fields
 
@@ -27,7 +27,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `auto_text` set to `true` | none | Never. PostHog makes the text part from `html` when the send has no `text` |
 | `auto_html` set to `true` | none | The site sends no `html` |
 | `inline_css` or `auto_html` set to `false` | none | Never. It overrides an account default that is on, and PostHog does neither |
-| `inline_css` set to `true` | none | The HTML has a `<style>` element: PostHog's send doesn't inline CSS yet. Without one, Mailchimp Transactional had nothing to inline, and the site moves |
+| `inline_css` set to `true` | none | The HTML has a `<style>` element, or the code doesn't show that it has none, such as HTML loaded from a database: PostHog's send doesn't inline CSS yet. HTML without one had nothing to inline, and the site moves |
 | `important` set to `true` | none | Always. PostHog's send doesn't take it yet |
 | `view_content_link` set to `false` | none | Always. PostHog's send doesn't take it yet |
 | `url_strip_qs`, `preserve_recipients` | none | Never on their own. They change only Mailchimp Transactional's reports, or what several recipients see |
@@ -62,7 +62,7 @@ A Mailchimp Transactional send has no idempotency key, so the moved site sends n
 | `messages.sendMcTemplate`, `send_mc_template`, `messages/send-mc-template` | A field above keeps it, or "Templates" does. Its content comes from Mailchimp, as `account.md` says |
 | `messages.sendRaw`, `send_raw`, `messages/send-raw` | Always. PostHog takes no MIME document |
 | Several entries of type `to`, with or without `preserve_recipients: false` | Always: each sends several emails, or one email to several people, in one call |
-| SMTP through `smtp.mandrillapp.com` | Always here. PostHog has no SMTP relay. When the wizard has the `migrate-email-smtp` skill, it moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
+| SMTP through `smtp.mandrillapp.com` | Always. PostHog has no SMTP relay |
 | A framework mailer (djrill, Anymail, `mandrill_mailer`, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 | A send through the older PHP client `mandrill/mandrill`, or through a copy of it kept in the app's own code, even under other class names, that posts to `mandrillapp.com/api` | Always. Its source is no longer published, so the rewrite can't tell how the site failed |
@@ -90,7 +90,7 @@ And in every SDK, a recipient that Mailchimp Transactional refused comes back in
 
 A stored template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the template's published version, because the code has only its slug. `account.md` says how to get it. The code renders the template's HTML, text, subject, and from name with the site's merge values, fills its `mc:edit` regions from `template_content`, and the send sets the rendered `subject`, `html`, `text`, and `from`. A `messages.send` site whose own content holds merge tags renders them the same way. A `messages.sendMcTemplate` site moves like a stored template, with the content of its Mailchimp template.
 
-- The site's `merge_language` says which merge tags the content uses. When the site doesn't set it, the account's default decides, which the person gives as `account.md` says. When they can't tell it, content whose tags are all of one language, `*|NAME|*` for the Mailchimp language or `{{name}}` for Handlebars, uses that language. Content with tags of both stays, and the reason is `merge language not checked`. A tag of the other language is not a tag: it prints as it is written.
+- The site's `merge_language` says which merge tags the content uses. When the site doesn't set it, the account's default decides, which the person gives as `account.md` says. When they can't tell it, content with any merge tag of either language, `*|NAME|*` or `{{name}}`, stays, and the reason is `merge language not checked`: a tag of the language the account doesn't use was sent as written. A tag of the other language is not a tag: it prints as it is written.
 - The values are `global_merge_vars`, then the entries of the one recipient's `merge_vars`, which win over a global entry with the same name in any case. Mailchimp Transactional reads names in any case, so the code does too: `*|FIRST_NAME|*` reads `first_name`.
 - Mailchimp Transactional fills merge tags when `merge` is `true` or the site sends merge vars, and leaves them as written with `merge: false` and no merge vars. With `merge: false` and merge vars, or with none of the three and a merge tag in the content, the docs don't say whether it filled them: the site stays, and the reason names it.
 - A merge tag prints a string or a number as it is. A value that can be another type, such as a boolean, a list, or an object, printed by a tag keeps the template on Mailchimp Transactional: the docs don't say how it prints. A Handlebars loop or condition may still read such a value.
