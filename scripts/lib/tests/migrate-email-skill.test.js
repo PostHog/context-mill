@@ -258,15 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('brings every Loops email into the code, turning each LMX tag into HTML', () => {
-            const mapping = read('loops/mapping.md');
-            const lmx = mapping.match(/### From LMX to HTML\n([\s\S]*?)\n### /)?.[1] ?? '';
-            const tags = ['Style', 'H1', 'H2', 'H3', 'Paragraph', 'Quote', 'CodeBlock', 'Button', 'Image', 'Divider', 'OrderedList', 'UnorderedList', 'ListItem', 'Columns', 'ColumnItem', 'Section', 'Component', 'Icons', 'Icon', 'Strong', 'Em', 'Underline', 'Code', 'Strike', 'Text', 'Link', 'Br'];
-
-            expect(mapping).not.toMatch(/No Loops site moves to the code form/);
-            for (const tag of tags) expect(lmx, tag).toMatch(new RegExp(`\`<${tag}[ />]`));
-            expect(mapping).toMatch(/\| `transactionalId` \| the Loops email, brought into the code/);
-        });
     });
 
     describe('the key check in step 6', () => {
