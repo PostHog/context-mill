@@ -323,6 +323,13 @@ describe('migrate-email skill', () => {
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
         });
 
+        it('says a send only creates or restores a category, and names its 400 refusals by code, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toMatch(/PostHog finds the project's category by its key, and creates it when there is none or restores it when it was deleted\. It uses the name and description only when it creates the category, and otherwise leaves the category as it is: rename a category in PostHog, not in the code\./);
+            expect(rewriteStep).toMatch(/The refusals `category_mismatch`, `too_many_categories`, `unsubscribe_link_required`, and `copies_not_allowed` come back as API errors with the status 400 and the name `validation_error`\./);
+        });
+
         it("keeps the provider's unsubscribe link in a marketing email as PostHog's placeholder", () => {
             const guide = read('template-to-code.md');
 
@@ -332,7 +339,7 @@ describe('migrate-email skill', () => {
         });
 
         it('checks each key against the project in step 8 and reports in step 9 that every site kept its category', () => {
-            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type, name, and description\./);
+            expect(read('8-verify.md')).toMatch(/List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type\. Otherwise the send makes a new category that no recipient opted out of, or fails with `category_mismatch` for the other type\./);
             expect(read('8-verify.md')).toMatch(/Fix each site that fails, then run this step's checks again from the top/);
             expect(read('8-verify.md')).toMatch(/When no site moved in Step 7, tick the phase with `nothing to check`/);
             expect(read('8-verify.md')).toMatch(/category: <kept>\/<sites with a category> kept/);
@@ -340,7 +347,6 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/opted out at <provider name>/);
             expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description/);
             expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the key, type, name, and description this report lists for it/);
-            expect(read('9-report.md')).toMatch(/each category the code now defines \(the next send undoes a change to its name or description in PostHog, so change them in the code\)/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
             expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(the one item done at the deploy itself: turn off its email step in PostHog as the code goes live, or both send it\)/);
             expect(read('9-report.md')).toMatch(/check that it is transactional, sends from a verified sender/);
