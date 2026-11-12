@@ -68,7 +68,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 
 **React.** `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
 
-**HTTP.** A `fetch` or `axios` call to `https://api.resend.com/emails` becomes `posthog.emails.send` with the camelCase fields: `reply_to` becomes `replyTo`, and the `Idempotency-Key` header becomes `idempotencyKey`. Code that read the response status reads `error` instead.
+**HTTP.** A `fetch` or `axios` call to `https://api.resend.com/emails` becomes `posthog.emails.send` with the camelCase fields: `reply_to` becomes `replyTo`, and the `Idempotency-Key` header becomes `idempotencyKey`. Code that read the response status reads `error` instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)` or axios `timeout: 5000`, keeps it: set `emailRequestTimeoutMs` to that value on the client the sends use, and pass `maxRetries: 0` on the send, since the request never retried. posthog-node otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. When sites use different deadlines, set the shortest, and note the sites whose deadline it shortens.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `variables` object. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 

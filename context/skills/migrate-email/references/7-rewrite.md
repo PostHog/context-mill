@@ -44,7 +44,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 ```
 
 - When the client options take `migratedFrom`, set it to the value that the provider's `mapping.md` names under "The PostHog client". posthog-node sends it with every email request, so PostHog knows that the sends moved from that provider.
-- Reuse the app's existing `posthog-node` client when it has one, and add `secretKey`, and `migratedFrom` when the client options take it. Keep `enableLocalEvaluation: false` unless the key also has `feature_flag:read` and the app uses local evaluation.
+- Reuse the app's existing `posthog-node` client when it sets neither `secretKey` nor `personalApiKey`: add `secretKey`, `enableLocalEvaluation: false`, and `migratedFrom` when the client options take it. A client that sets either key keeps it as it is: posthog-node also uses `secretKey` for local flag evaluation and remote config, and prefers it over `personalApiKey`, so the email key would replace the app's key. The sends get their own client instead, as above, and the plan notes it.
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
 - When `host` is a reverse proxy or a self-hosted instance, also set `appHost` to the PostHog app URL, such as `https://us.posthog.com`. posthog-node never sends the secret key to a proxy, and without `appHost` the send fails with `missing_app_host`.
 - Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
