@@ -118,7 +118,7 @@ Postmark templates are Mustachio. In the code:
 
 Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Postmark template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Postmark.
 
-An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and sends its links as they are, without its click redirect. Templates are not sensitive by default. When Postmark didn't track the site's links, or nobody knows whether it did, as "Tracking" says, ask the person to mark the template sensitive too, as Step 3 says under "A template in PostHog".
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and sends its links as they are, without its click redirect. Templates are not sensitive by default. When Postmark didn't track the site's links, or nobody knows whether it did, as `account.md` says under "Click tracking", ask the person to mark the template sensitive too, as Step 3 says under "A template in PostHog".
 
 For a template with a layout, the person makes one PostHog template from both: the layout's HTML with the template's HTML in place of `{{{ @content }}}`, and the same for the text body. Tell them so when you ask them to make it.
 
