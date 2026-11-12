@@ -28,13 +28,13 @@ describe('default integration observability flow', () => {
         if (distDir) rmSync(distDir, { recursive: true, force: true });
     });
 
-    it('publishes both tasks with tools that can discover their existing product skills', () => {
+    it('publishes the optional tasks with tools that can discover their existing product skills', () => {
         distDir = mkdtempSync(join(tmpdir(), 'integration-observability-'));
         buildAgents({ configDir, distDir, baseUrl: 'https://example.test' });
         const menu = JSON.parse(readFileSync(join(distDir, 'agents', 'agent-menu.json'), 'utf8'));
         const skills = expandSkillGroups(loadSkillsConfig(configDir), configDir);
 
-        for (const type of ['ai-observability', 'logs']) {
+        for (const type of ['ai-observability', 'logs', 'mcp-analytics']) {
             const entry = menu.agents.find((agent) => agent.flow === 'integration-v2' && agent.id === type);
             expect(entry).toBeDefined();
             const asset = entry.downloadUrl.split('/').pop();
@@ -65,5 +65,18 @@ describe('default integration observability flow', () => {
         expect(ancestors('report').has('ai-observability')).toBe(true);
         expect(byType.get('report').sink).toBe(true);
         expect(ancestors('dashboard').has('logs')).toBe(false);
+    });
+
+    it('runs MCP analytics after identify, beside error-tracking and capture', () => {
+        for (const type of ['install', 'init', 'identify']) {
+            expect(ancestors('mcp-analytics').has(type)).toBe(true);
+        }
+        expect(ancestors('mcp-analytics').has('error-tracking')).toBe(false);
+        // The planner adds this edge only when the server and capture's code share an app.
+        expect(ancestors('capture').has('mcp-analytics')).toBe(false);
+        // Its insights can build on $mcp_tool_call, so it needs the handoff.
+        expect(ancestors('dashboard').has('mcp-analytics')).toBe(true);
+        expect(ancestors('review').has('mcp-analytics')).toBe(true);
+        expect(ancestors('report').has('mcp-analytics')).toBe(true);
     });
 });

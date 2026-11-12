@@ -12,8 +12,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
-    "@posthog/react": "^1.7.0",
-    "posthog-js": "^1.406.2",
+    "@posthog/react": "^1.11.3",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.9.4",
     "@tanstack/react-router": "^1.158.0",
@@ -22,7 +21,8 @@
     "@tanstack/react-start": "^1.158.0",
     "@tanstack/router-plugin": "^1.158.0",
     "lucide-react": "^0.544.0",
-    "posthog-node": "^5.10.4",
+    "posthog-js": "^1.447.6",
+    "posthog-node": "^5.64.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.0.6",

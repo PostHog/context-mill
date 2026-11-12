@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "pinia": "^3.0.4",
-    "posthog-js": "^1.341.0",
+    "posthog-js": "^1.447.6",
     "vue": "^3.5.27",
     "vue-router": "^5.0.1"
   },
