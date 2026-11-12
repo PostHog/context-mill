@@ -20,7 +20,7 @@ A sending domain at Mailchimp Transactional carries these records. Keep all of t
 
 ## Read-only key
 
-The app's own Mailchimp Transactional key can usually call every API method, but some keys are limited to the send calls. Never use the app's key for reads. When the person chooses the API over the dashboard, ask them to create a new key in Mailchimp Transactional (Settings, then **+ New API Key**) and limit it to the API calls `templates/info`, `templates/list`, `mctemplates/info`, and `rejects/list`. Ask them to store it in `MANDRILL_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailchimp Transactional and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own Mailchimp Transactional key can usually call every API method, but some keys are limited to the send calls. Never use the app's key for reads. When the person chooses the API over the dashboard, ask them to create a new key in Mailchimp Transactional (Settings, then **+ New API Key**) and limit it to the API calls `templates/info`, `templates/list`, `mctemplates/info`, and `rejects/list`. Ask them to store it in `MANDRILL_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailchimp Transactional and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -48,7 +48,7 @@ A site whose template moves needs the content of its published version: Step 3 c
 
 **A Mailchimp template.** A `messages.sendMcTemplate` site sends a template by its `mc_template_id`. Read it with `POST https://mandrillapp.com/api/1.4/mctemplates/info` and the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "mc_template_id": <id> }`. The answer holds `subject`, `from_email`, `from_name`, the draft `code` and `text`, and the published `publish_code` and `publish_text`. Take the published ones, or the draft ones when the site sets `mc_template_version: 'draft'`. Or ask the person to copy the same fields from the template in their Mailchimp account.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 
@@ -70,6 +70,11 @@ Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and 
 
 - **Soft bounces** are temporary refusals by a receiving server. Mailchimp Transactional lets them expire after a day and sends to the address again.
 - **Expired entries** are addresses Mailchimp Transactional sends to again.
-- **Unsubscribes** come from an unsubscribe link or the recipient's mail program, and block only the one sender address they unsubscribed from. PostHog's opt-outs apply to marketing messages only, so once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
+- **Unsubscribes** come from an unsubscribe link or the recipient's mail program, and block only the one sender address they unsubscribed from. PostHog's opt-outs apply to marketing messages only, so once the sends move, these addresses get transactional email again. "For the report" counts them.
 
-PostHog keeps an imported entry until someone removes it, where Mailchimp Transactional let a hard bounce expire after seven days and a spam complaint after a year. Say so in the report's "Suppression list", so the person knows these addresses stay blocked for the moved sends.
+## For the report
+
+Step 5 writes these under the phase, whether or not the import runs:
+
+- How many of the main account's unsubscribe entries that have not expired the import leaves out: entries whose reason is `unsub`, counted in the export or the API's answer. When the person has neither, write that the count is not known.
+- That PostHog keeps an imported entry until someone removes it, where Mailchimp Transactional let a hard bounce expire after seven days and a spam complaint after a year, so these addresses stay blocked for the moved sends.
