@@ -23,7 +23,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `headers` with any other header | none | Always: no PostHog SDK takes headers yet |
 | `merge`, `merge_language`, `global_merge_vars`, `merge_vars` on a site with `html` or `text` | none: the code renders the merge tags in `subject`, `from_name`, `html`, and `text` before the send | A tag or a helper in them that "Templates" doesn't place, such as `*\|UNSUB:…\|*`, or "Templates" can't tell whether Mailchimp Transactional filled them. Otherwise it filled each merge tag in those four fields from the values, in the site's merge language, and the code does the same, as "Templates" says. Without a merge tag in them, the values change nothing, and the site moves without them |
 | `merge_vars` with entries for more than one `rcpt` | none | Always: the site sends to several recipients |
-| `track_opens`, `track_clicks`, set to `true` or `false` | none: PostHog adds its open pixel, and counts no clicks for a send in the code form | Mailchimp Transactional sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below |
+| `track_opens`, `track_clicks`, set to `true` or `false` | none: PostHog adds its open pixel, and counts no clicks for a send in the code form | Mailchimp Transactional sent it with opens untracked, or nobody can tell, and Step 3 keeps it. See "Tracking" below |
 | `auto_text` set to `true` | none | Never. PostHog makes the text part from `html` when the send has no `text` |
 | `auto_html` set to `true` | none | The site sends no `html` |
 | `inline_css` or `auto_html` set to `false` | none | Never. It overrides an account default that is on, and PostHog does neither |
@@ -46,10 +46,10 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 **Tracking.** PostHog adds its open pixel to every email it sends, and counts no clicks for a send in the code form, as Step 7 says. No field changes this, so tracking never maps to one. Mailchimp Transactional tracks opens when the send's `track_opens` is `true`, and clicks when its `track_clicks` is `true`. A send that leaves either one out takes the account's Sending Defaults for it, as `account.md` says. Click tracking that the account turns on for HTML emails only, or for text emails only, counts as on for an email that has that part, and as off for one that hasn't. Work out whether Mailchimp Transactional tracked the site's opens:
 
 - Opens tracked: the site moves. When Mailchimp Transactional tracked its clicks too, and the site moves in the code form, note in the plan row that PostHog counts no clicks for it.
-- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- Opens untracked, from the send's `track_opens: false`, the Sending Defaults, or a rule: its emails had no open pixel. Step 3 says under "Opens the provider didn't track" whether it moves.
 - A template site, brought into the code or moved to a template made in PostHog, follows the same rules.
 
-When a site leaves out `track_opens`, and the person can't say what the Sending Defaults set for opens, the site stays, and the reason is `account tracking not checked`. The API has no read of the Sending Defaults. A site whose click tracking alone can't be checked moves in the code form: note in the plan row that PostHog counts no clicks for it. A site that moves to a template made in PostHog, with its clicks untracked or not known, follows Step 3 under "A template in PostHog", as `account.md` says under "Click tracking".
+When a site leaves out `track_opens`, and the person can't say what the Sending Defaults set for opens, nobody can tell whether it tracked the site's opens: the site stays, and the reason is `open tracking not checked`, as Step 3 says there. The API has no read of the Sending Defaults. A site whose click tracking alone can't be checked moves in the code form: note in the plan row that PostHog counts no clicks for it. A site that moves to a template made in PostHog, with its clicks untracked or not known, follows Step 3 under "A template in PostHog", as `account.md` says under "Click tracking".
 
 A Mailchimp Transactional send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -194,7 +194,7 @@ Write the `\|` above as a plain `|`. The tables escape it.
 - Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on Mailchimp Transactional.
 - Inside `{{#each}}`, a bare `{{name}}` reads the current item, as `{{this.name}}` does. It becomes `{{ item.name }}`, never `{{ variables.name }}`.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from_email`, `from_name`, `subject`, or a `Reply-To` header next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A template site follows "Tracking" like any other site: it stays when Mailchimp Transactional sent it with opens untracked, from the send's `track_opens` or from the account's Sending Defaults, or its open tracking isn't checked.
+- A template site follows "Tracking" like any other site, for its opens from the send's `track_opens` or from the account's Sending Defaults.
 - A site that sets `html` or `text` next to the template stays: Mailchimp Transactional sends the site's `html` when the template has none, and the template form takes neither.
 
 ## Webhooks
@@ -210,11 +210,12 @@ The webhook stops getting events for a site that moves. PostHog records the even
 | `open` | `$workflows_email_opened` |
 | `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks, as Step 7 says |
 | `reject` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
-| `soft_bounce`, `deferral`, `unsub`, and the denylist and allowlist sync events | none |
+| `soft_bounce`, `deferral`, `unsub` | none |
+| The denylist and allowlist sync events | none: they concern the account's lists, not a send |
 
 PostHog's events carry no Mailchimp Transactional `_id` and no `msg.metadata`. A site whose events a handler matches by the `_id` the send answered stays on Mailchimp Transactional, and so does a site that sets `metadata` (see "Fields"). For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
-A site whose emails a `click` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+A site whose emails a handler acts on for a message event that has no PostHog event in the table, such as `soft_bounce`, `deferral`, `unsub`, or `reject`, stays, and the reason is `its <event> events feed a webhook handler`. A site whose emails a `click` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 
 ## Rewrite
 
