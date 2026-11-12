@@ -36,6 +36,7 @@ Give email a named instance of its own in the application's children, also when 
 
 - Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a map with `:opens`, `:clicks`, and `:engagement`. Open tracking off is `tracking: %{opens: false}`. `capture_engagement:` is deprecated: use `tracking: %{engagement: false}`. Sensitive is `sensitive: true`.
 - `reply_to:` takes one address or a list of addresses.
+- Files: `attachments: [%{filename: ..., content: ..., content_type: ..., content_id: ...}]`, up to 10 maps with atom keys, with `:content_type` and `:content_id` optional. `:content` is the file's raw binary, such as `File.read!/1` gives. Base64 content is sent as its text, so decode it first with `Base.decode64!/1`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 
 ## A deadline
@@ -50,6 +51,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns `{:ok, result}`, and `result.id` is the message ID.
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", as an atom, such as `:rate_limit_exceeded`.
 - Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
+- A send with files returns `{:error, %PostHog.Emails.Error{}}` with the code `"invalid_attachment"`, `"too_many_attachments"`, or `"message_too_large"` before any request, and with `"attachment_upload_failed"` when a file's upload failed, also when the storage can't be reached. Each sends nothing.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
 
 ## Check

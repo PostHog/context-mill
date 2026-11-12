@@ -76,9 +76,33 @@ PostHog adds its open pixel to every email it sends unless the send turns its `o
 
 - When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, the site moves with opens off. Write `opens off: <provider name> didn't track its opens` in its note under the sites table.
 - When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note.
+- When the app's docs promise that the site's emails carry no open tracking, as "Code and docs around the sends" below finds, the site moves with opens off, whatever the provider did. Write `opens off: <file> promises no open tracking` in its note.
 - When the provider tracked the site's opens, the site moves with nothing to note.
 
 A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it.
+
+### Files
+
+A site that sends files, which the provider calls attachments, moves only when every file can go through PostHog's send. The provider's `mapping.md` maps each file field to PostHog's, and says which of the provider's own file features keep a site. Whatever the provider, a site with files stays when:
+
+- its language's PostHog SDK has no release that takes files. The reason is `<SDK> has no attachments yet`. Step 7's table names the SDK of each language. Read that table and the "The send" section of the language's rewrite file now, for this check only: it says how to tell whether a release takes files. The release that counts is the one Step 7 would install: the latest on the package registry, or a build the person names as the one to use.
+- the list can hold more than 10 files, or the code builds it at run time and you cannot tell that it holds at most 10. The reason is `more than 10 files`.
+- a file can be larger than PostHog takes: the email with all its files must stay under 40 MB after Base64 encoding, about 29 MB of files. When the code reads a file whose size it doesn't bound, such as a user's upload, follow it to where it is made. The reason is `files can pass 40 MB`, unless the code already refuses larger files.
+- the provider fetches a file from a URL or a path: PostHog fetches no file, and only takes its bytes. The reason is `the provider fetches <file>`.
+- a file has no filename, or a filename whose extension PostHog refuses, in any case, such as `report.EXE`: PostHog refuses the whole email, so the file would stop the email from going out. It refuses `.ade`, `.adp`, `.app`, `.asp`, `.bas`, `.bat`, `.cer`, `.chm`, `.cmd`, `.com`, `.cpl`, `.crt`, `.csh`, `.der`, `.exe`, `.fxp`, `.gadget`, `.hlp`, `.hta`, `.inf`, `.ins`, `.isp`, `.its`, `.js`, `.jse`, `.ksh`, `.lib`, `.lnk`, `.mad`, `.maf`, `.mag`, `.mam`, `.maq`, `.mar`, `.mas`, `.mat`, `.mau`, `.mav`, `.maw`, `.mda`, `.mdb`, `.mde`, `.mdt`, `.mdw`, `.mdz`, `.msc`, `.msh`, `.msh1`, `.msh2`, `.mshxml`, `.msh1xml`, `.msh2xml`, `.msi`, `.msp`, `.mst`, `.ops`, `.pcd`, `.pif`, `.plg`, `.prf`, `.prg`, `.reg`, `.scf`, `.scr`, `.sct`, `.shb`, `.shs`, `.sys`, `.ps1`, `.ps1xml`, `.ps2`, `.ps2xml`, `.psc1`, `.psc2`, `.tmp`, `.url`, `.vb`, `.vbe`, `.vbs`, `.vps`, `.vsmacros`, `.vss`, `.vst`, `.vsw`, `.vxd`, `.ws`, `.wsc`, `.wsf`, `.wsh`, `.xnk`. A filename the code builds at run time from a user's input, whose extension it doesn't fix, counts as one that can be refused. The reason is `a file PostHog refuses: <filename or where it comes from>`.
+
+Write each file of a site that moves in its plan row: its filename, or where the code builds it, its content type, and whether the HTML shows it inline by a content ID.
+
+For each site with files that stays, write in its plan row what would let it move, so the report can tell the person: read the file in the app and pass its bytes for a URL or a path, a fixed filename or extension for a refused one, a bound on the size or the count, or the SDK release that takes files.
+
+### Code and docs around the sends
+
+The sends are not the only code that knows the provider. Search the repository, docs included, for the provider's name and for each variable that holds its key, and list what touches a site that moves. Change none of it in this step.
+
+- **Switches.** Code that reads the provider's key to decide whether to send at all, such as an `isEmailConfigured()` that checks the variable is set. Note which sites each switch guards: Step 7 says what happens to it.
+- **Counts and limits.** Code that counts the sends, labels them, or limits them to fit the provider's plan, such as a daily count stored under the provider's name, a daily cap, a share of that cap, or a pause between sends sized to the provider's rate limit. These stay as they are: the report names each, so the person can size it to PostHog's sending allowance.
+- **Promises.** What the app's own docs promise about these emails: a privacy policy or terms that name the provider as a processor, say what it receives or how long it keeps it, or say that the emails carry no open or click tracking, and specs, ADRs, and setup docs that say these emails go through the provider. Note each with its file and line. Never change a legal text: the report asks the person to update it before cutover. A promise of no open or click tracking also turns opens off for the site, as "Opens the provider didn't track" says.
+- **What the app's PostHog sends already do.** When the app already sends code emails with a PostHog SDK, note how: the module and client they use, how they read the key, token, and host, whether they turn engagement capture off, such as `tracking: { engagement: false }`, `tracking: false`, or the deprecated capture field set to `false`, and whether they pass a distinct ID. Step 7 follows them.
 
 ## Write the plan file
 
@@ -109,3 +133,5 @@ A sites table, one row per site, in source tree order:
 Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with opens off, note `opens off: <reason>`, as Step 3 says under "Opens the provider didn't track".
 
 A list of the other provider calls, each with its file, line, and what it does, and a list of the webhook handlers, each with its file, line, the events it handles, and how it finds the send.
+
+A list of the code and docs around the sends, under the headings `switches`, `counts and limits`, `promises`, and `app's PostHog sends`, each item with its file, line, and the sites it touches.

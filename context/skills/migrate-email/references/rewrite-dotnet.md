@@ -38,6 +38,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 ## The send
 
 - Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `Sensitive`, and `Tracking` optional. `Tracking` takes `EmailTracking.All`, `EmailTracking.None`, or `new EmailTracking { Opens, Clicks, Engagement }`. Open tracking off is `Tracking = new EmailTracking { Opens = false }`. `CaptureEngagement` is deprecated: use `Tracking = new EmailTracking { Engagement = false }`. Sensitive is `Sensitive = true`.
+- Files: `Attachments = [new EmailAttachment { Filename = ..., Content = ..., ContentType = ..., ContentId = ... }]`, from `PostHog.Emails`, up to 10, with `ContentType` and `ContentId` optional. `Content` is the bytes, a `byte[]` or `ReadOnlyMemory<byte>`: decode a Base64 string first with `Convert.FromBase64String`, and pass text as `Encoding.UTF8.GetBytes(text)`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `await emails.SendAsync(new SendTemplateEmailOptions { To, TemplateId, TemplateData, DistinctId, IdempotencyKey })`.
 - `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
@@ -56,6 +57,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `SendEmailResult`. `Id` is the message ID, a `string`.
 - On an API error it throws `EmailException`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`.
+- A send with files throws `ArgumentException` for a missing file, a blank `Filename`, or an empty `Content`, and `EmailException` with `too_many_attachments` or `message_too_large`, all before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - It throws the same `EmailException` for a network error that is left after the retries, with the code `network_error`. `Message` is there too.
 - A bad argument throws `ArgumentException`, before any request.
 

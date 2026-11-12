@@ -12,6 +12,8 @@ The transactional email API is in beta. PostHog enables it per project.
 
 Read the step files in order, one at a time. Each step names the next one. Do not read a step before the one before it tells you to.
 
+When the person asks only to re-import the {display_name} suppression list into PostHog, after a migration, skip the workflow: read `5-suppressions.md` under "Re-import only" and do only that.
+
 ## Provider files
 
 The folder `references/<provider>/` holds everything specific to {display_name}. The steps tell you when to read each file:
