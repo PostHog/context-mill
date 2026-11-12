@@ -13,15 +13,19 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 [STATUS] Importing the suppression list
 ```
 
+## Read the provider's notes
+
+Read the provider's `account.md` first, whether or not the import runs. Its "For the report" section, when it has one, names facts the report carries, such as a count of entries the import leaves out. Find each one as the section says, and write it under the phase in the plan file. Never write an address.
+
 ## Check the import tool
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
 
-When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) before cutover.
+When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) right before cutover, so the list holds the entries the provider adds until then.
 
 ## Get the list
 
-Read the provider's `account.md`. It says how to export the list, which entries to take, and how each entry maps to PostHog.
+The provider's `account.md` says how to export the list, which entries to take, and how each entry maps to PostHog.
 
 - Prefer the export the person downloads from the provider's dashboard. Ask them where they saved the file.
 - Read the list from the provider's API only when the person gives you a key that can read it, through an environment variable that `account.md` names. The app's own sending key usually can't.
