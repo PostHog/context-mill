@@ -317,7 +317,8 @@ describe('migrate-email skill', () => {
             expect(rewriteStep).toMatch(/A site with a category that sends in the code form passes it as the send's category, spelled as the rewrite file says under "The send", with the key, type, name, and description the plan notes, written exactly/);
             expect(rewriteStep).toMatch(/A site that sends a template made in PostHog is transactional and passes no category/);
             expect(rewriteStep).toMatch(/A site with a blank category leaves the category out/);
-            expect(rewriteStep).toMatch(/unless its template key names a template made in PostHog: the send then follows that template's category, and PostHog refuses any other category, `transactional` included, with `category_mismatch`/);
+            expect(rewriteStep).toMatch(/unless its template key names a template made in PostHog: the send then follows that template's category, and PostHog refuses any other category, and `transactional` too when the template has a category, with `category_mismatch`/);
+            expect(rewriteStep).toMatch(/The template form is transactional, and PostHog refuses a send in either form that names a template in a `marketing` category with `marketing_template`\./);
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
             for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
@@ -327,7 +328,7 @@ describe('migrate-email skill', () => {
             const rewriteStep = read('7-rewrite.md');
 
             expect(rewriteStep).toMatch(/PostHog finds the project's category by its key, and creates it when there is none or restores it when it was deleted\. It uses the name and description only when it creates the category, and otherwise leaves the category as it is: rename a category in PostHog, not in the code\./);
-            expect(rewriteStep).toMatch(/The refusals `category_mismatch`, `too_many_categories`, `unsubscribe_link_required`, and `copies_not_allowed` come back as API errors with the status 400 and the name `validation_error`\./);
+            expect(rewriteStep).toMatch(/The refusals `category_mismatch`, `too_many_categories`, `unsubscribe_link_required`, `copies_not_allowed`, and `marketing_template` come back as API errors with the status 400 and the name `validation_error`\./);
         });
 
         it("keeps the provider's unsubscribe link in a marketing email as PostHog's placeholder", () => {
