@@ -100,14 +100,6 @@ describe('migrate-email skill', () => {
         expect(unresolvedReferences(skillDir)).toEqual([]);
     });
 
-    it('points each "Step N says under" reference to a section that step has', async () => {
-        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
-
-        const skillDir = await buildSkill('migrate-email-resend', outputDir);
-
-        expect(unresolvedStepSections(skillDir)).toEqual([]);
-    });
-
     it('bundles the transactional email docs and the Resend files', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
@@ -195,6 +187,7 @@ describe('migrate-email skill', () => {
         const skillDir = await buildSkill(`migrate-email-${provider}`, outputDir);
 
         expect(unresolvedReferences(skillDir)).toEqual([]);
+        expect(unresolvedStepSections(skillDir)).toEqual([]);
         for (const file of PROVIDER_FILES) {
             expect(existsSync(join(skillDir, 'references', provider, file))).toBe(true);
         }
@@ -202,8 +195,10 @@ describe('migrate-email skill', () => {
             expect(existsSync(join(skillDir, 'references', `rewrite-${sdk}.md`))).toBe(true);
         }
         expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
-        const otherProviders = PROVIDERS.filter((other) => other !== provider);
-        expect(otherProviders.filter((other) => existsSync(join(skillDir, 'references', other)))).toEqual([]);
+        const bundledProviders = readdirSync(join(skillDir, 'references'), { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name);
+        expect(bundledProviders).toEqual([provider]);
     });
 
     it('publishes each provider and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
