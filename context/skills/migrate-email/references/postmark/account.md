@@ -34,6 +34,14 @@ A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's sett
 
 **Read from the API.** `GET https://api.postmarkapp.com/server` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of that server. The answer holds `TrackOpens`, a boolean, and `TrackLinks`: `None`, `HtmlAndText`, `HtmlOnly`, or `TextOnly`.
 
+## Sender signatures
+
+A send that leaves out `ReplyTo` takes the Reply-To address of its `From` address's sender signature, as `mapping.md` says under "Reply-to of the sender signature".
+
+**Ask the person.** In Postmark: Sender Signatures, then the address. It shows the signature's Reply-To address when it has one. An address that is not listed there, such as one a verified domain covers, has no sender signature of its own.
+
+The API reads sender signatures only with the account's Account API token (`GET /senders`), which can change every server of the account. Never ask for that token.
+
 ## Template content
 
 A site whose template moves needs the content of the template and of its layout: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content: the subject, the HTML, and the text as they are stored, in Mustachio, with the `<style>` blocks not yet inlined.
