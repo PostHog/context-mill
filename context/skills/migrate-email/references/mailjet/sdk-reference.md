@@ -49,10 +49,10 @@ const messageId = result.body.Messages[0].To[0].MessageID
 - `.post('send')` with no version, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below.
 - `.request(body, params, false)` makes no request: it is a test call, not a send.
 
-**Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or the pin in the manifest, names:
+**Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or an exact `==` pin in the manifest, names. A range such as `>=1.3.4`, or no version at all, names none unless every version it allows sits in one of the three bands below: before 1.7.0, 1.7.x, or from 1.8.0.
 
-- Before 1.8.0, it does not raise on an API error: the code reads `result.status_code` and `result.json()`. It raises only on a network error or a timeout, such as `mailjet_rest.TimeoutError`, `CriticalApiError`, or `ApiError`.
-- From 1.8.0, it also raises on an answer of 400 or more: `ValidationError` for 400, `MailjetAuthError` for 401 and 403, `DoesNotExistError` for 404, and `ApiRateLimitError` for 429, each a `MailjetApiError` with `status_code` and `response_body`. Any other status, such as a 500, raises a plain `ApiError` with no status. A timeout raises `TimeoutError` and a failed connection `CriticalApiError`, both `MailjetNetworkError`s. Every one of them is an `ApiError`. A `result.status_code` check after the call then sees only successes.
+- Before 1.8.0, it does not raise on an API error: the code reads `result.status_code` and `result.json()`. It raises on a network error or a timeout, such as `mailjet_rest.TimeoutError`, `CriticalApiError`, or `ApiError`. From 1.7.0, it also raises `MailjetAuthError`, with `status_code` 401, on a 401; a 403 still answers.
+- From 1.8.0, it also raises on an answer of 400 or more: `ValidationError` for 400, `MailjetAuthError` for 401 and 403, and `DoesNotExistError` for 404, each a `MailjetApiError` with `status_code` and `response_body`. The client retries a 429, 500, 502, 503, or 504 up to three times, a send too, and then raises a plain `ApiError` with no status, as for any other status. So with the client's own adapter, `ApiRateLimitError` never reaches the code. A timeout raises `TimeoutError` and a failed connection `CriticalApiError`, both `MailjetNetworkError`s. Every one of them is an `ApiError`. A `result.status_code` check after the call then sees only successes.
 
 ```python
 from mailjet_rest import Client
@@ -111,7 +111,7 @@ $response = $mj->post(Resources::$Email, ['body' => [
 if (!$response->success()) { /* ... */ }
 ```
 
-The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, or `'call' => false` in the options, the client makes no request and sends nothing.
+The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, the client makes no request and sends nothing, except on a `post` whose options leave out `'call'`, which sends. `'call' => false` in the options of `post` makes no request for that call. In the options of `Client`, `'call'` does nothing.
 
 **Go.** `SendMailV31` answers `(*mailjet.ResultsV31, error)`. The error is a `*mailjet.APIFeedbackErrorsV31` on a 400 or 403 answer (`Messages[].Errors[]` with `ErrorCode`, `ErrorMessage`, and `StatusCode`), a `*mailjet.ErrorInfoV31` on any other error answer (`StatusCode`, `Message`), or a network error. `res.ResultsV31[0].To[0].MessageID` is the message id.
 
