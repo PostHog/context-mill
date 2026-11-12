@@ -19,7 +19,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always. PostHog's send doesn't take it yet |
 | `tags` | none | Always. PostHog's send doesn't take it yet |
-| `attachments` | `attachments`, a list of `{ filename, content, contentType, contentId }` | The site is in a language other than JavaScript or TypeScript: only posthog-node takes files yet. It also stays when the list can hold more than 10 files, or the code builds it at run time and you cannot tell that it holds at most 10. When a file has a `path`: PostHog fetches no file from a URL or a path, and the code would have to download it first. When a file has no `filename`, or a filename the code doesn't fix whose extension PostHog refuses, such as `.exe`, `.bat`, `.js`, or `.msi` (Amazon SES's list of blocked attachment types): PostHog refuses the whole email. See "Attachments" |
+| `attachments` | `attachments` | Step 3 says so under "Files", or a file has a `path`: Resend fetches it, and PostHog fetches no file. See "Attachments" |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
 | `scheduledAt` / `scheduled_at` | none | Always. PostHog's send doesn't take it yet |
 | `topicId` / `topic_id` | none | Always. PostHog's send doesn't take it yet |
@@ -45,20 +45,17 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 
 ## Attachments
 
-Each file of a site that moves keeps its `filename` and `content`:
+Each file of a site that moves keeps its fields, under the PostHog SDK's names, as its rewrite file gives them:
 
 | Resend | PostHog |
 |---|---|
-| `filename` | `filename`. Required |
-| `content`, a Buffer or a Base64 string | `content`, a Buffer, a `Uint8Array`, or a Base64 string, unchanged. A string PostHog can't read as Base64 fails the send with the code `invalid_attachment` |
-| `contentType` / `content_type` | `contentType`. When the site sets none, Resend derived it from the filename's extension: set that type, such as `application/pdf` for `.pdf` or `text/calendar` for `.ics`, and note it in the plan row |
-| `contentId` / `content_id`, an inline image the HTML shows with `<img src="cid:...">` | `contentId`, the same bare ID |
-| `path` | none: the site stays |
+| `filename` | The filename. Resend can name a file from its `path`, and PostHog can't: a file without `filename` keeps the site, as Step 3 says |
+| `content`, a Buffer or a Base64 string | The content, as the same bytes or the same Base64 string |
+| `contentType` / `content_type` | The content type. When the site sets none, Resend derived it from the filename's extension: set that type, such as `application/pdf` for `.pdf` or `text/calendar` for `.ics`, and note it in the plan row |
+| `contentId` / `content_id` | The content ID, the same bare ID that the HTML shows with `<img src="cid:...">` |
+| `path`, a URL or a path that Resend fetches | none: the site stays, and the report says to read the file in the app and pass its bytes |
 
-- An email carries at most 10 files and 40 MB after Base64 encoding, about 29 MB of files, as Resend's 40 MB does. A send over either limit fails with the code `too_many_attachments` or `message_too_large`, both with the name `validation_error`, and sends nothing.
-- posthog-node uploads each file PostHog doesn't have yet before it sends, then sends the files' SHA-256 hashes with the email. A failed upload fails the send with the code `attachment_upload_failed`, and sends nothing: with the name `service_unavailable` when the file storage answered with a 5xx status, otherwise `application_error`. The SDK retries an upload the storage answered with a 429 or a 5xx status, and never retries `upload_quota_exceeded`.
-- A retry of the same email sends the same files, so it carries the same hashes and keeps its idempotency key valid.
-- PostHog opens files to projects in stages. A send with files from a project PostHog hasn't opened them to yet fails with the code `field_not_accepted` and sends nothing. Step 8 checks it.
+Resend takes an email of up to 40 MB after Base64 encoding with its files, as PostHog does. PostHog also takes at most 10 files, as Step 3 says.
 
 ## Content
 
@@ -139,7 +136,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `from`, `subject`, `html`, `text`, and the reply-to address keep their values, under the PostHog SDK's names.
 - A send with rendered content gets a template key, as Step 7 says.
 - The idempotency key moves into the send, under the PostHog SDK's name for it.
-- `attachments` keeps its list, each file rewritten as "Attachments" says. An HTTP body's `content_type` and `content_id` become `contentType` and `contentId`.
+- `attachments` keeps its list, each file rewritten as "Attachments" says.
 
 **Templates brought into the code.** The site renders the email from its `variables`, as "Templates" says, and sends the template key, the rendered subject, HTML, and text, and the `from` and reply-to address: the site's own where it sets them, otherwise the template's. It sends no template ID and no template data.
 

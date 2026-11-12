@@ -78,6 +78,20 @@ PostHog adds its open pixel to every email it sends, in the code form and from a
 - When nobody can tell whether the provider tracked a site's opens, the site stays, and the reason is `open tracking not checked`.
 - For each site that moves with the person's yes, write `open pixel added: the person agreed` in its note under the sites table, so the report names it.
 
+### Files
+
+A site that sends files, which the provider calls attachments, moves only when every file can go through PostHog's send. The provider's `mapping.md` maps each file field to PostHog's, and says which of the provider's own file features keep a site. Whatever the provider, a site with files stays when:
+
+- its language's PostHog SDK has no release that takes files. The reason is `<SDK> has no attachments yet`. Step 7's table names the SDK of each language, and its rewrite file says from which release the send takes files.
+- the list can hold more than 10 files, or the code builds it at run time and you cannot tell that it holds at most 10. The reason is `more than 10 files`.
+- a file can be larger than PostHog takes: the email with all its files must stay under 40 MB after Base64 encoding, about 29 MB of files. When the code reads a file whose size it doesn't bound, such as a user's upload, follow it to where it is made. The reason is `files can pass 40 MB`, unless the code already refuses larger files.
+- the provider fetches a file from a URL or a path: PostHog fetches no file, and only takes its bytes. The reason is `the provider fetches <file>`.
+- a file has no filename, or a filename whose extension PostHog refuses, in any case, such as `report.EXE`: PostHog refuses the whole email, so the file would stop the email from going out. It refuses `.ade`, `.adp`, `.app`, `.asp`, `.bas`, `.bat`, `.cer`, `.chm`, `.cmd`, `.com`, `.cpl`, `.crt`, `.csh`, `.der`, `.exe`, `.fxp`, `.gadget`, `.hlp`, `.hta`, `.inf`, `.ins`, `.isp`, `.its`, `.js`, `.jse`, `.ksh`, `.lib`, `.lnk`, `.mad`, `.maf`, `.mag`, `.mam`, `.maq`, `.mar`, `.mas`, `.mat`, `.mau`, `.mav`, `.maw`, `.mda`, `.mdb`, `.mde`, `.mdt`, `.mdw`, `.mdz`, `.msc`, `.msh`, `.msh1`, `.msh2`, `.mshxml`, `.msh1xml`, `.msh2xml`, `.msi`, `.msp`, `.mst`, `.ops`, `.pcd`, `.pif`, `.plg`, `.prf`, `.prg`, `.reg`, `.scf`, `.scr`, `.sct`, `.shb`, `.shs`, `.sys`, `.ps1`, `.ps1xml`, `.ps2`, `.ps2xml`, `.psc1`, `.psc2`, `.tmp`, `.url`, `.vb`, `.vbe`, `.vbs`, `.vps`, `.vsmacros`, `.vss`, `.vst`, `.vsw`, `.vxd`, `.ws`, `.wsc`, `.wsf`, `.wsh`, `.xnk`. A filename the code builds at run time from a user's input, whose extension it doesn't fix, counts as one that can be refused. The reason is `a file PostHog refuses: <filename or where it comes from>`.
+
+Write each file of a site that moves in its plan row: its filename, or where the code builds it, its content type, and whether the HTML shows it inline by a content ID.
+
+For each site with files that stays, write in its plan row what would let it move, so the report can tell the person: read the file in the app and pass its bytes for a URL or a path, a fixed filename or extension for a refused one, a bound on the size or the count, or the SDK release that takes files.
+
 ## Write the plan file
 
 Write `.posthog-email-migration-plan.md` at the project root with three sections. Never write an email address of a recipient into it. A `from` address is fine.
