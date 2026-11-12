@@ -50,6 +50,13 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 - Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 - With email's own instance, the name comes first: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., ...)`.
 
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The config's `email_request_timeout_ms` is the time each email request may take, 15000 by default, and `email_request_max_retries` its retries, 2 by default. A send's `max_retries: 0` turns its retries off.
+- The send takes no deadline of its own, so a deadline needs a named instance of its own, as above, with `email_request_timeout_ms` set to it.
+
 ## The answer
 
 - The send returns `{:ok, result}`, and `result.id` is the message ID.

@@ -37,6 +37,13 @@ posthog = Posthog(
 - `reply_to` takes one address or a list of addresses.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
 
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The client's `email_request_timeout_seconds` is the time each email request may take, 15 by default, and it takes a fraction, such as `2.5`. `email_request_max_retries` is its retries, 2 by default. A send's `max_retries=0` turns its retries off. `AsyncPosthog` takes the same.
+- The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds` set to it.
+
 ## The answer
 
 - The send returns a `SendEmailResult`. Its `id` is the message ID.

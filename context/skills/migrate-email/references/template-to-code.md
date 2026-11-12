@@ -23,7 +23,7 @@ These parts keep a template on the provider, unless the provider's table says ho
 - a setting the code form has no field for, such as `cc`, `bcc`, an attachment, or a custom header in the template;
 - a helper whose result the provider computes in a way the table doesn't describe, such as a date format in a locale the table doesn't name.
 
-Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Keep it until Step 7 has written the email, then delete it. When it is gone by then, read it again the same way. Read the person's own copies where they saved them.
+Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Keep it until Step 7 has written the email, then delete it. When it is gone by then, ask the person for a copy from the dashboard: the full-access key that an API read needs is deleted at the end of Step 5. Read the person's own copies where they saved them.
 
 ## Where the email goes
 
@@ -66,7 +66,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - **HTML.** Escape every value in the HTML part with the escape the table above names, or with the engine's auto-escaping. A value goes in unescaped only where the provider's template inserted it as it is, and only when the code builds that value as HTML itself from text it escapes or controls, such as a list it joins with `<br>` or a link it builds. Mark that value as HTML in the way the renderer expects, such as `Markup` in Jinja2, `raw` in ERB, `{!! !!}` in Blade, `template.HTML` in Go, or `dangerouslySetInnerHTML` in React Email, and name it in the plan row.
 - **Text that the code doesn't control.** When the provider inserted a value as it is, but the value carries text from a user, a form, or another service, escape it anyway. The old email rendered any markup in that text. The new one shows it as typed. Note it in the plan row.
 - **Text and subject.** Never escape a value in the text part or in the subject: they are not HTML.
-- **Attributes and URLs.** A value inside an attribute, such as a link's `href` or an image's `src`, is escaped as HTML too. Never URL-encode a value that the provider didn't encode.
+- **Attributes and URLs.** A value inside an attribute, such as a link's `href` or an image's `src`, is escaped as HTML too. When the attribute's value has no quotes in the provider's template, such as `href={{{URL}}}`, put it in double quotes in the code: an escaped value can still hold a space, `=`, or a backtick, which ends or changes an unquoted attribute. Never URL-encode a value that the provider didn't encode.
 
 ## Variables, fallbacks, conditions, and loops
 

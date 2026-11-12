@@ -30,6 +30,13 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 - `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
 
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- `SendAsync` keeps to its cancellation token: pass one with the site's deadline, such as from `using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5))`, and set `MaxRetries = 0` on the email options. No client of its own is needed. A token the caller can cancel, such as a request's `HttpContext.RequestAborted`, cancels the send the same way.
+- `PostHogOptions.EmailRequestTimeout` is the time each email request may take, 15 seconds by default, and `EmailRequestMaxRetries` its retries, 2 by default.
+
 ## The answer
 
 - The send returns a `SendEmailResult`. `Id` is the message ID, a `string`.

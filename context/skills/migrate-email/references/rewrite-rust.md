@@ -35,6 +35,13 @@ let posthog = posthog_rs::client(options.build()?).await;
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.
 
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The builder's `email_request_timeout_seconds` is the time each email request may take, 15 by default, in whole seconds, and `email_request_max_retries` its retries, 2 by default. A send's `.max_retries(0)` turns its retries off.
+- The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds` set to it. A deadline that is not whole seconds can't be kept: the site stays.
+
 ## The answer
 
 - The send returns a `Result`. On success, `SendEmailResult`'s `id` is the message ID.

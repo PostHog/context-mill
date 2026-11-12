@@ -97,6 +97,16 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
+## Calls that change the suppression list
+
+Step 5 says what to do with each of these calls. They are not sends, and they stay on Resend.
+
+| Adds an address | Removes an address |
+|---|---|
+| `resend.suppressions.add(...)`, `resend.suppressions.batch.add(...)`, `POST /suppressions`, `POST /suppressions/batch/add`, and each SDK's spelling of them, such as `Resend::Suppressions.add` in Ruby or `client.Suppressions.Add` in Go | `resend.suppressions.remove(...)`, `resend.suppressions.batch.remove(...)`, `DELETE /suppressions/{id or email}`, `POST /suppressions/batch/remove`, and each SDK's spelling of them |
+
+The import takes every entry of Resend's list, so every address these calls add or remove counts. A contact's `unsubscribed` flag is not on this list, as `account.md` says, so a call that sets it is not one of these.
+
 ## Rewrite
 
 How a site that moves is written with PostHog's SDK for its language. Step 7 says when to use each part, and the SDK's rewrite file gives the PostHog side of each call.
