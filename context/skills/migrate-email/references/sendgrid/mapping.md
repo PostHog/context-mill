@@ -77,7 +77,7 @@ SendGrid templates are Handlebars. In the code:
 | `{{#if a}}…{{else if b}}…{{else}}…{{/if}}` | A branch that tests each value for Handlebars truth, in order |
 | `{{#unless a}}…{{else}}…{{/unless}}` | The same branch, with the test turned around |
 | `{{#each items}}…{{else}}…{{/each}}` | A loop over the list, or over the values of an object in key order. The `{{else}}` part shows when there is nothing to walk |
-| Inside `{{#each}}`: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field. A bare name reads the item first, then the value outside the loop when the item has no such field |
+| Inside `{{#each}}`: `{{this}}`, `{{this.name}}`, or a bare `{{name}}` | The current item, or its field. A bare name reads the current item only: when the item has no such field, it renders as nothing, even when a value outside the loop has that name. Only `../name` and `@root.name` read outside the loop |
 | Inside `{{#each}}`: `{{@index}}`, `{{@key}}`, `{{@first}}`, `{{@last}}`, `../name`, `@root.name` | The item's position from 0, its key in an object, whether it is the first or the last, and the value one level out or at the top |
 | `{{#equals a b}}`, `{{#notEquals a b}}` | A branch on `a == b`, or its opposite, after turning a number and a string of the same number into the same value: `3` equals `"3"` |
 | `{{#greaterThan a b}}`, `{{#lessThan a b}}` | A branch on `a > b` or `a < b`, comparing numbers |
