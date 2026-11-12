@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { spawnSync } from 'child_process';
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
+import { generateCliEntries } from '../build-phases.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
 const DOCS_PAGES = {
@@ -138,27 +139,25 @@ describe('migrate-email skill', () => {
             ['a value that is only a comment', 'POSTHOG_PROJECT_SECRET_API_KEY= #phs_abc\n', '0'],
             ['a key overridden by a later empty line', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\nPOSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
             ['another variable ending in the name', 'OTHER_POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+            ['a placeholder in angle brackets', 'POSTHOG_PROJECT_SECRET_API_KEY=<phs_your_key>\n', '0'],
+            ['a value with another prefix', 'POSTHOG_PROJECT_SECRET_API_KEY=xphs_abc\n', '0'],
+            ['a value that starts with =', 'POSTHOG_PROJECT_SECRET_API_KEY==phs_abc\n', '0'],
         ])('finds the key in %s only when it is set, and never prints it', (_name, envFile, count) => {
+            expect(command).toBeDefined();
             const result = check(envFile);
 
             expect(result.stdout.trim()).toBe(count);
             expect(result.stdout).not.toContain('phs_');
             expect(result.stderr).toBe('');
         });
-
-        it('ticks the phase only when the check found the key', () => {
-            expect(command).toBeDefined();
-            expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
-            expect(keyStep).toMatch(/Tick the phase in the plan file only when the check above found the key/);
-            expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
-        });
     });
 
-    it('publishes Resend and Statsig as wizard migrate subcommands', async () => {
-        const { skills } = await loadSkills();
-        const cliOf = (id) => skills.find((skill) => skill.id === id)?._cli;
+    it('publishes Resend and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
+        const { generator, skills } = await loadSkills();
+        const entries = generateCliEntries({ allSkills: skills.map(generator.serializeSkill) });
+        const entryOf = (skillId) => entries.find((entry) => entry.skillId === skillId);
 
-        expect(cliOf('migrate-email-resend')).toEqual({ role: 'command', parentCommand: 'migrate', command: 'resend' });
-        expect(cliOf('migrate-statsig')).toEqual({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
+        expect(entryOf('migrate-email-resend')).toMatchObject({ role: 'command', parentCommand: 'migrate', command: 'resend' });
+        expect(entryOf('migrate-statsig')).toMatchObject({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
     });
 });

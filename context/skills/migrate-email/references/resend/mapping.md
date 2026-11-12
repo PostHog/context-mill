@@ -12,7 +12,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `html` | `html` | Never |
 | `text` | `text` | Never |
 | `react` | `html`, rendered in the app | Never. The app renders the component |
-| `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
+| `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo` / `reply_to`, or `subject` next to it |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always. PostHog's send doesn't take it yet |
@@ -43,13 +43,14 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 ## Content
 
 - `html`, `text`, and `react` content is rendered for one recipient before the send. PostHog sends it as it is.
-- A `template` site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
+- A `template` site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Resend template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Resend.
+- An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
 - The check needs the template's content, because the code has only its id. `account.md` says how to get it.
 - In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and the name keeps its case. `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`, and a variable with a `fallback_value` in the template's definition gets the same `default`. Quote every fallback with `'`: a `"` inside the template's JSON body raises `TokenizationError`. Liquid has no escape character in a quoted value, so a fallback that holds a `'` keeps the site on Resend.
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
 - Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output, and such a variable keeps the site on Resend. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
 - A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds a `'`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
-- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `template` stays on Resend.
+- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo` / `reply_to`, or `subject` next to `template` stays on Resend.
 
 ## Rewrite
 

@@ -23,10 +23,10 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## Check that the key is set
 
-The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value starts with `phs_`:
+The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value, after an optional quote, starts with `phs_`:
 
 ```bash
-grep -E '^[[:space:]]*(export[[:space:]]+)?POSTHOG_PROJECT_SECRET_API_KEY[[:space:]]*=' .env | tail -n 1 | grep -cE '^[^=]*=[[:space:]]*[^#[:space:]]?phs_'
+grep -E '^[[:space:]]*(export[[:space:]]+)?POSTHOG_PROJECT_SECRET_API_KEY[[:space:]]*=' .env | tail -n 1 | grep -cE "^[^=]*=[[:space:]]*[\"']?phs_"
 ```
 
 Use the env file the key went into in place of `.env`. A count of `0` means the key is not set.
