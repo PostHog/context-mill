@@ -23,7 +23,7 @@ A domain authenticated at SendGrid carries these records. Keep all of them until
 
 ## Read-only key
 
-The app's own SendGrid key is usually a key with the Mail Send permission only, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create a restricted key in SendGrid (Settings, then API Keys) with read access to Template Engine and Suppressions only, store it in `SENDGRID_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SendGrid and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own SendGrid key is usually a key with the Mail Send permission only, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create a restricted key in SendGrid (Settings, then API Keys) with read access to Template Engine and Suppressions only, store it in `SENDGRID_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SendGrid and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -50,7 +50,7 @@ A site whose template moves needs the content of its active version: Step 3 chec
 
 **Read from the API.** `GET https://api.sendgrid.com/v3/templates/{template_id}` with `Authorization: Bearer $SENDGRID_READ_API_KEY`. The answer holds `id`, `name`, `generation` (`dynamic` or `legacy`), and `versions`, a list of `{ id, active, name, subject, html_content, plain_content }`. Take the version whose `active` is `1`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 
@@ -77,4 +77,8 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 **Leave out the other lists.**
 
 - **Blocks** are temporary refusals by a receiving server, not a sign that the address is bad.
-- **Global unsubscribes and group unsubscribes** are marketing preferences, and PostHog's opt-outs apply to marketing messages only. At SendGrid a global unsubscribe also stopped transactional mail, unless the send bypassed it. Once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
+- **Global unsubscribes and group unsubscribes** are marketing preferences, and PostHog's opt-outs apply to marketing messages only. At SendGrid a global unsubscribe also stopped transactional mail, unless the send bypassed it. Once the sends move, these addresses get transactional email again. The report gives their count, as "For the report" says.
+
+## For the report
+
+The count of global unsubscribes and of group unsubscribes, which the import leaves out. Count the rows of the person's exports (Suppressions, then each of Global Unsubscribes and Group Unsubscribes, then **Export CSV**), or the entries of `GET https://api.sendgrid.com/v3/suppression/unsubscribes`, paged as above, and of `GET https://api.sendgrid.com/v3/asm/suppressions`, with the read-only key. When the person has neither, write `unsubscribes not counted`.

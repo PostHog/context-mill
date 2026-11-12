@@ -21,8 +21,8 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
-| No `trackingSettings` | none: PostHog adds its open pixel and counts no clicks | Open tracking is off in the account, or the person can't say (the reason is `account tracking not checked`). See "Open and click tracking" below, and `account.md` under "Tracking" |
-| `trackingSettings` with `openTracking` or `clickTracking` | none: PostHog adds its open pixel and counts no clicks | SendGrid sent it with opens untracked, from `openTracking` or from the account when the settings don't set it. See "Open and click tracking" below. It also stays when the settings do anything else, such as `subscriptionTracking`, `ganalytics`, or an `openTracking` `substitutionTag`: PostHog places its own pixel, so the tag would stay in the email as text |
+| No `trackingSettings` | none, as "Open and click tracking" says | Open tracking is off in the account, or the person can't say (the reason is `account tracking not checked`). See "Open and click tracking" below, and `account.md` under "Tracking" |
+| `trackingSettings` with `openTracking` or `clickTracking` | none, as "Open and click tracking" says | SendGrid sent it with opens untracked, from `openTracking` or from the account when the settings don't set it. See "Open and click tracking" below. It also stays when the settings do anything else, such as `subscriptionTracking`, `ganalytics`, or an `openTracking` `substitutionTag`: PostHog places its own pixel, so the tag would stay in the email as text |
 | `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
 | `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |
@@ -30,9 +30,9 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `mailSettings` / `mail_settings` | none | Always. Sandbox mode is not a send |
 | `personalizations` | the fields of its one entry | It holds more than one entry. One entry moves when each field in it moves |
 
-**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. Otherwise the account's setting decides, as `account.md` says under "Tracking".
+**Open and click tracking.** PostHog adds its open pixel to every email it sends, to count opens, and a send in the code form counts no clicks, as Step 7 says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. Otherwise the account's setting decides, as `account.md` says under "Tracking".
 
-- Opens tracked: the site moves. When SendGrid tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens tracked: the site moves. When SendGrid tracked its clicks too, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
 When a site's open tracking follows the account and the person can't say whether it is on, the site stays, and the reason is `account tracking not checked`.
@@ -62,6 +62,7 @@ SendGrid's SDKs report an error in two ways. The Node.js and Python SDKs throw. 
 | A check of `response.statusCode`, `status_code`, `statusCode()`, or `StatusCode` | Never. Read PostHog's error instead, as the Rewrite section says |
 | The `X-Message-Id` header stored for a webhook or a status read | Always, when the Event Webhook or the Email Activity API uses it |
 | The `X-Message-Id` header logged or stored for the app's own use | Never. Use PostHog's message id. When the code after the send can't go on without an id, such as a column that must hold one, the `recipient_suppressed` branch below has none to give: the site stays, and the reason is `needs a message id for a suppressed send`, unless that branch can skip the code that needs it |
+| A send the code can cancel: a request with a `signal` a caller passes in or an `AbortController` it aborts, a Go context a caller can cancel given to `SendWithContext` or `MakeRequestWithContext`, or a .NET `CancellationToken` a caller can cancel given to `SendEmailAsync` | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline moves, as "HTTP" under "Rewrite" says |
 
 ## Templates
 
@@ -89,7 +90,6 @@ SendGrid templates are Handlebars. In the code:
 | The version's plain text | The send's `text`, with no escaping. A version without plain text sends `html` only |
 
 - Handlebars truth: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object. Write that test out in the code, as `template-to-code.md` says.
-- Handlebars `{{name}}` escapes `=` and `` ` `` too, besides `&`, `<`, `>`, `"`, and `'`. So a value in an attribute without quotes, such as `title={{name}}`, stays inside that attribute at SendGrid. In the code's copy, put double quotes around each such attribute value, such as `title="{{name}}"`, so the escape of `template-to-code.md` keeps the value inside it too.
 - Any other helper, a partial (`{{> name}}`), or an `{{unsubscribe}}`, `{{{unsubscribe}}}`, `{{weblink}}`, or `{{{unsubscribe_preferences}}}` tag that SendGrid fills from the account keeps the template on SendGrid. Such tags come from unsubscribe groups, which a transactional send through PostHog doesn't have.
 - A SendGrid template holds no sender, so the send takes the site's own `from` and `replyTo`. A `from` or `replyTo` that holds a `{{` keeps the site on SendGrid, with the reason `placeholder in from or reply-to`: these files don't say whether SendGrid fills it from `dynamicTemplateData`. A site that sets `subject` next to `templateId` moves only when the version has no subject, or when the site's subject is the same in every send as the version's: which one SendGrid sent can't be told from the code. Otherwise it stays.
 - Images that the template's editor uploaded to SendGrid have URLs on `marketing-image-production.s3.amazonaws.com` or `mc.sendgrid.com`. Keep them, and list them, as `template-to-code.md` says.
@@ -97,7 +97,11 @@ SendGrid templates are Handlebars. In the code:
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the SendGrid template, makes it transactional, and gives you its template ID. Until then the site stays on SendGrid. SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the SendGrid template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on SendGrid.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+
+SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
 | SendGrid | PostHog |
 |---|---|
@@ -133,11 +137,13 @@ The Event Webhook stops getting events for a site that moves. PostHog records th
 | `bounce` | `$workflows_email_bounced` |
 | `spamreport` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks |
 | `dropped` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `deferred`, `unsubscribe`, `group_unsubscribe`, `group_resubscribe` | none |
 
 PostHog's events carry no SendGrid `sg_message_id` and no `custom_args`. A site whose events a handler matches by message id or by a custom arg stays on SendGrid. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a `click` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 
 ## Rewrite
 
@@ -163,7 +169,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `trackingSettings` is dropped, and the send gets no `captureEngagement` for it, as "Open and click tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
-**A send with its own deadline.** A send with a deadline keeps it, wherever the code sets it: on a raw HTTP request, such as `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, or `requests.post(..., timeout=5)`, or on the SendGrid client, such as `sgMail.setTimeout(3000)` or `client.setDefaultRequest('timeout', 3000)` in Node.js, `http_options: { read_timeout: 3 }` in Ruby, `CURLOPT_TIMEOUT` in the PHP client's `curl` options, an `HttpClient` with a `Timeout` given to the .NET client, or the `Timeout` of the Go client's `HTTPClient`. Keep it this way: set the PostHog client's email request timeout to that value, and turn off the send's retries, so the deadline still bounds the whole send, such as `emailRequestTimeoutMs` on the client and `maxRetries: 0` on the send in Node.js. The SDK otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. When sites use different deadlines, give each deadline its own email client with that timeout, and have each site use the client of its deadline. A site without a deadline keeps the default client. When the SDK has no such option, the site stays on SendGrid: `moves: no — the PostHog SDK can't keep the request's deadline`.
+**HTTP.** A request to `POST /v3/mail/send`, through `fetch`, axios, `requests`, `@sendgrid/client`, or another HTTP client, becomes the SDK's send in that language, with the fields "The call" names. A site's own deadline is a timeout the code sets on that request, or on the SendGrid client it sends through: `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, or `requests.post(..., timeout=5)` on a request; `sgMail.setTimeout(3000)` or `client.setDefaultRequest('timeout', 3000)` in Node.js; `http_options: { read_timeout: 3 }` in Ruby; `CURLOPT_TIMEOUT` in the PHP client's `curl` options; the `Timeout` of the `HttpClient` given to the .NET client, or a token that times out given to `SendEmailAsync(msg, token)`; and the `Timeout` of the Go client's `HTTPClient`, or a context with a deadline given to `SendWithContext` or `MakeRequestWithContext`. The site keeps that deadline, as Step 7 says under "Set up the client". SendGrid's own retries, .NET's `ReliabilitySettings` and Go's `MakeRequestRetry` on a rate limit, are no deadline: PostHog's send retries by itself. When a site with a deadline also retried, note in the plan row that its send no longer retries.
 
 **Templates brought into the code.** The site renders the email from `dynamicTemplateData`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`.
 
