@@ -97,7 +97,7 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
-A site whose emails an `email.clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `email.delivery_delayed`, stays, and the reason is `its <event> events feed a webhook handler`. A site whose emails an `email.clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 
 ## Calls that change the suppression list
 
