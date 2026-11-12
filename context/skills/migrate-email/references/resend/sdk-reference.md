@@ -100,6 +100,12 @@ A send with `template: { id: '...', variables: { PRODUCT: 'Laptop' } }` renders 
 - The template can hold a default `from`, `subject`, and `reply_to`. A value the send passes wins over the default.
 - A send with `template` passes no `html`, `text`, or `react`.
 
+## Webhooks
+
+Resend posts each event to an endpoint of the app, signed through Svix. An event has `type`, `created_at`, and `data`, which holds the send's `email_id`, `from`, `to`, `subject`, and `tags`. An email event's `type` is such as `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`, `email.opened`, or `email.clicked`. Resend also sends events on contacts and domains.
+
+Look for routes that read `email_id` or an `email.` event type, `resend.webhooks.verify`, `Webhook` from `svix`, and the `svix-id`, `svix-timestamp`, and `svix-signature` headers.
+
 ## Status reads
 
 `resend.emails.get(id)` and `GET https://api.resend.com/emails/{id}` return the email with `last_event`, such as `delivered`, `bounced`, or `complained`. Code that branches on `last_event` reads Resend's delivery state.
