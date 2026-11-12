@@ -97,7 +97,7 @@ For each site that moves, in plan order:
 - When the old code handled the provider's answer to a bad value that the app passes at run time, such as an empty recipient, also catch the argument error that the rewrite file names, or check the value before the send.
 - Never add a field that the old call didn't set, apart from the template key, the template ID, and the distinct ID, the subject, body, `from`, and reply-to address that a provider template brought into the code held, and a field that the provider's `mapping.md` or this step says to add because the old send behaved that way without setting it, such as no retries for a request that kept its own deadline. Open or click tracking never adds one: engagement capture decides only whether the email's events land on the recipient's person, and PostHog adds its open pixel either way. It sends each link through its click redirect only when the email is not sensitive, and a send in the code form is sensitive, so PostHog counts its opens and no clicks. For a template made in PostHog, the template data takes the place of the provider's template variables. For a template brought into the code, the code renders them, and the send has no template data.
 
-When a site turns out to need something `mapping.md` keeps on the provider, undo its change, delete the temporary copy of its template content, set `moves` to `no` with the reason, and go on.
+When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, delete the temporary copy of its template content when no other moving site sends that template, and go on.
 
 ## Write down
 

@@ -25,7 +25,7 @@ Create a `PostHogClient` of its own for email, also when the app registers PostH
 var emailClient = new PostHogClient(new PostHogOptions
 {
     ProjectToken = configuration["POSTHOG_PROJECT_TOKEN"],
-    HostUrl = new Uri(configuration["POSTHOG_HOST"] ?? "https://us.i.posthog.com"),
+    HostUrl = new Uri(string.IsNullOrWhiteSpace(configuration["POSTHOG_HOST"]) ? "https://us.i.posthog.com" : configuration["POSTHOG_HOST"]!),
     SecretKey = configuration["POSTHOG_PROJECT_SECRET_API_KEY"],
     MigratedFrom = "<provider>", // only when PostHogOptions has it
 });
@@ -48,6 +48,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - `SendAsync` keeps to its cancellation token: pass one with the site's deadline, such as from `using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5))`, and set `MaxRetries = 0` on the email options. A token the caller can cancel, such as a request's `HttpContext.RequestAborted`, cancels the send the same way.
 - The client also ends each request at its `EmailRequestTimeout`. A deadline up to that timeout needs no client of its own. A longer one needs a client of its own with `EmailRequestTimeout` set to it, or the send fails before the site's deadline.
+- The client's `HttpClient` also ends each request at 100 seconds, .NET's default. A deadline longer than 100 seconds can't be kept: the site stays, as Step 7 says.
 - `PostHogOptions.EmailRequestTimeout` is the time each email request may take, 15 seconds by default, and `EmailRequestMaxRetries` its retries, 2 by default.
 
 ## The answer

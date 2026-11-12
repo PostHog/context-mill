@@ -25,7 +25,7 @@ These parts keep a template on the provider, unless the provider's table says ho
 
 A template that the app's own code creates, changes, or publishes through the provider's API keeps its sites on the provider too: the code would hold the content of one moment while the app goes on changing it at the provider. The reason is `the app changes this template at <provider name>`.
 
-Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Delete it as soon as its email won't come into the code: when the site stays on the provider, or moves to a template made in PostHog. Otherwise keep it until Step 7 has written the email, then delete it. Step 7 deletes every copy still there before it goes on to Step 8, on every way out of the step. When a copy Step 7 needs is gone by then, ask the person for a copy from the dashboard: the full-access key that an API read needs is deleted at the end of Step 5. Read the person's own copies where they saved them.
+Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Delete it as soon as no site that sends its template will bring the email into the code: when each such site stays on the provider, or moves to a template made in PostHog. Otherwise keep it until Step 7 has written the email, then delete it. Step 7 deletes every copy still there before it goes on to Step 8, on every way out of the step. When a copy Step 7 needs is gone by then, ask the person for a copy from the dashboard: the full-access key that an API read needs is deleted at the end of Step 5. Read the person's own copies where they saved them.
 
 ## Where the email goes
 

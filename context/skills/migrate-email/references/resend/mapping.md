@@ -131,6 +131,8 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 **Suppressed recipients.** Resend takes a send to a suppressed address and drops it later. PostHog refuses it with the error code `recipient_suppressed` (name `validation_error`). When the site throws, retries, or reports a failure on any error, handle that code before that branch, as the rewrite file shows, the way the site handled a send that went out: log it and go on. A suppressed send has no message ID: when the code after the send uses the ID for more than a log line, such as returning it to its callers or storing it, the site stays, and the reason is `uses the message id of a suppressed send`, unless its callers already handle a send without an ID. Note each site that got this branch in the report.
 
+**Error handlers.** The parts below change Resend's error to PostHog's. When the same `try`, `begin`, or error check also covers a call that stays on Resend, such as `resend.Contacts.create`, keep Resend's handler for that call and add PostHog's next to it.
+
 **The Resend client.** Keep Resend's client, its import, and its setup while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the Resend package and its key: the person removes them after the cutover.
 
 ### Node.js
@@ -138,7 +140,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload. A `signal` in it is code around the send, as the table above says.
 - `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
 - An HTTP body's snake_case fields become camelCase: `reply_to` becomes `replyTo`.
-- posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working. `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working, and `error.message` and `error.statusCode` keep their names.
+- posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working for a send that goes out. A suppressed send has none, as "Suppressed recipients" says. `error.name` uses Resend's names, so `if (error.name === 'rate_limit_exceeded')` keeps working, and `error.message` and `error.statusCode` keep their names.
 
 ### Python
 
@@ -169,7 +171,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 ### .NET
 
 - `await resend.EmailSendAsync(message)` and `EmailSendAsync(idempotencyKey, message)` become `await emails.SendAsync(new SendCodeEmailOptions { ... })`. `HtmlBody` becomes `Html`, `TextBody` becomes `Text`, and the idempotency key moves into the options.
-- Resend answers a `ResendResponse<Guid>`, and PostHog a `SendEmailResult`: `response.Content` becomes `result.Id`, a `string`. Where the code keeps the ID as a `Guid` that stays inside the code the site owns, keep it as a `string`. When the `Guid` reaches a database column or another service, the site stays, with the reason `stores the message ID as a Guid`.
+- Resend answers a `ResendResponse<Guid>`, and PostHog a `SendEmailResult`: `response.Content` becomes `result.Id`, a `string`. Where the code keeps the ID as a `Guid` that stays inside the code the site owns, keep it as a `string`, as "Suppressed recipients" allows. When the `Guid` reaches a database column or another service, the site stays, with the reason `stores the message ID as a Guid`.
 - Resend throws `ResendException` unless its options set `ThrowExceptions = false`, and PostHog always throws `EmailException`. `catch (ResendException e)` becomes `catch (EmailException e)`, and a check of `e.ErrorType`, an enum such as `ErrorType.RateLimitExceeded`, becomes a check of `e.Name`, a string such as `"rate_limit_exceeded"`. Code that checked `response.Success` catches `EmailException` instead.
 
 ### Rust
@@ -180,6 +182,6 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 ### Elixir
 
-- `Resend.Emails.send(%{from: ..., to: ..., ...})`, with or without a client as the first argument, becomes `PostHog.Emails.send(from: ..., to: ..., ...)` with a keyword list, with the instance name first when email has its own instance. Resend's Elixir SDK takes no idempotency key, so the site sends none unless the old code set one some other way.
+- `Resend.Emails.send(%{from: ..., to: ..., ...})`, with or without a client as the first argument, becomes `PostHog.Emails.send(MyApp.PostHogEmail, from: ..., to: ..., ...)` with the email instance's name first and a keyword list. Resend's Elixir SDK takes no idempotency key, so the site sends none unless the old code set one some other way.
 - `{:ok, %Resend.Emails.Email{id: id}}` becomes `{:ok, result}` with `result.id`.
 - `{:error, %Resend.Error{}}` becomes `{:error, %PostHog.Emails.Error{}}`. Resend's `name` is a string and PostHog's is an atom: a match on `name: "rate_limit_exceeded"` becomes `name: :rate_limit_exceeded`.
