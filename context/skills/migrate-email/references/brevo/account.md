@@ -49,7 +49,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 Brevo keeps one list of blocked transactional contacts. It skips an address on it for every transactional send, or, for an unsubscribe, for sends from the sender it unsubscribed from. Each entry has a reason code.
 
-**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. The file shows each reason as a label, not as the code below: take a row only when its label names a hard bounce, a spam complaint, or a block by an admin, and leave out the rest. When it is unclear whether a label names one of these three, ask the person. When they have no file, use the API below, or record the import as not done.
+**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. The file shows each reason as a label, not as the code below: take a row only when its label names a hard bounce, a spam complaint, a block by an admin, or an unsubscribe, and leave out the rest. When it is unclear whether a label names one of these, ask the person. When they have no file, use the API below, or record the import as not done.
 
 **Read from the API.** `GET https://api.brevo.com/v3/smtp/blockedContacts` with the header `api-key: $BREVO_MIGRATION_API_KEY`. It answers `{ contacts, count }`, and each contact is `{ email, senderEmail, reason: { code, message }, blockedAt }`. Page with `limit=100` and `offset`, adding 100 each time, until a page has fewer than 100 entries or the offset reaches `count`. Wait and retry on `429`, after the seconds the `Retry-After` header names when it has one. Branch on `reason.code`, never on `reason.message`.
 
@@ -60,21 +60,29 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 | `hardBounce` | bounce | `Imported from Brevo: hard bounce` |
 | `contactFlaggedAsSpam` | complaint | `Imported from Brevo: spam complaint` |
 | `adminBlocked` | manual | `Imported from Brevo: blocked by an admin` |
+| `unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA` | manual | `Imported from Brevo: unsubscribed` |
 
-An admin block can cover one sender only: each entry names its sender, in `senderEmail` or the file's sender column. PostHog's list blocks an address for every send, so import an `adminBlocked` address only when it has an admin block for every sender that sends through PostHog: the senders of the moved sites, and each sender the person already sends from with PostHog, which you ask them for once. When a moved site's sender isn't a fixed value, such as a per-tenant address, the senders are the values the person names, and when they can't name them all, import no admin block. Leave out the others.
+Import every hard bounce and spam complaint. An admin block or an unsubscribe can cover one sender only: each entry names its sender, in `senderEmail` or the file's sender column. PostHog's list blocks an address for every send, so import such an address when Brevo blocks it, by admin blocks, unsubscribes, or both, for every sender that sends through PostHog: the senders of the moved sites, and each sender the person already sends from with PostHog, which you ask them for once. When a moved site's sender isn't a fixed value, such as a per-tenant address, the senders are the values the person names, and when they can't name them all, no address counts as blocked for every sender. The other admin blocks and unsubscribes follow "Blocks for some senders".
 
-**Leave out the other entries.**
+**Blocks for some senders.** An admin block or an unsubscribe that names the sender of a moved site, without blocking the address for every sender that sends through PostHog, would let that site's sends reach an address Brevo skipped for it. PostHog's list can't block an address for one sender. When there are such entries, ask the person once, for all of them together, whether PostHog may block those addresses for every send, which also stops PostHog's emails to them from every other sender, such as a reset link. Yes: import them, as the table says. No, or no answer: set `moves` to `no` for each moved site whose sender such an entry names, with the reason `recipients blocked for its sender at Brevo`, before Step 7 rewrites it. An entry that names no moved site's sender is left out: Brevo keeps applying it to the sites that stay.
 
-- **Unsubscribes** (`unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA`) are preferences, and PostHog's opt-outs apply to marketing messages only. At Brevo they stopped transactional mail from the sender the person unsubscribed from. Once the sends move, these addresses get transactional email again.
-- **Blocked domains** (`GET /v3/smtp/blockedDomains`, in the dashboard next to the blocked contacts) block every address on a domain. PostHog's list takes addresses, not domains, so PostHog sends to those domains again.
-- Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
+**Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
+
+## Blocked domains
+
+Brevo can block every address on a domain. PostHog's list takes addresses, not domains, so a moved site's sends would reach addresses on a blocked domain again. Check this in Step 5, whether or not the import runs. Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
+
+- No blocked domains: nothing changes.
+- Blocked domains: ask the person once, naming them, whether the moved sites may send to those domains again. Yes: the sites move, and the report names the domains. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
+- Nobody can tell whether the account blocks a domain: set `moves` to `no` for each moved site, with the reason `blocked domains not checked`.
+
+A site whose code sends only to fixed addresses, none on a blocked domain, keeps moving in each case.
 
 ## For the report
 
-Count these whether or not the import runs:
+Write these whether or not the import runs:
 
-- the unsubscribes on the list, which get the moved transactional sends again, from the dashboard file or the API, as "Suppression list" says;
-- the admin blocks the import leaves out, because they don't cover every sender that sends through PostHog, the same way;
-- the blocked domains, which PostHog sends to again, from `GET /v3/smtp/blockedDomains`, or from the person, who reads them off the dashboard's blocked domains list when there is no key. The blocked contacts file doesn't hold them.
+- the addresses Brevo blocks for some senders only, by admin blocks and unsubscribes, that name a moved site's sender, and whether the person's yes imported them or the sites they name stayed, from the dashboard file or the API, as "Suppression list" says. When the list isn't read, write that the moved sites can reach addresses Brevo blocked for their sender: the report's "Before cutover" asks the person to add those addresses in PostHog with the rest of the list, knowing PostHog blocks them for every send, or to keep those sites on Brevo;
+- the blocked domains and the person's answer, as "Blocked domains" says.
 
 Write a count you can't get as not known.

@@ -199,8 +199,8 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 Step 5's "Calls that change the provider's list" covers these calls:
 
-- `DELETE /v3/smtp/blockedContacts/{email}`, which the SDKs name `unblockOrResubscribeATransactionalContact`, `smtpBlockedContactsEmailDelete`, or `smtp_blocked_contacts_email_delete`, takes an address off Brevo's list. It counts for the entries the import takes: hard bounces, spam complaints, and admin blocks.
-- `smtpBlacklistSender` on a contact create or update blocks the address for those senders only. It counts as an address added only when, with it, Brevo blocks the address for every sender that sends through PostHog, as `account.md` says for admin blocks. When it doesn't count and names a sender a moved site sends from, add it to the report's "Before cutover" anyway: PostHog's list can't block an address for one sender, so the moved sends from that sender reach the addresses the call blocks.
+- `DELETE /v3/smtp/blockedContacts/{email}`, which the SDKs name `unblockOrResubscribeATransactionalContact`, `smtpBlockedContactsEmailDelete`, or `smtp_blocked_contacts_email_delete`, takes an address off Brevo's list. It counts for the entries the import takes: hard bounces, spam complaints, and the admin blocks and unsubscribes it took, as `account.md` says.
+- `smtpBlacklistSender` on a contact create or update blocks the address for those senders only. It counts as an address added when, with it, Brevo blocks the address for every sender that sends through PostHog, as `account.md` says under "Map each entry". When it can name a sender a moved site sends from, a sender it takes from a variable included, the moved sends from that sender would reach the addresses it blocks: it goes into the question `account.md` asks under "Blocks for some senders". Yes: it counts as an address added. No, or no answer: each moved site whose sender it can name stays, with that section's reason.
 
 ## Rewrite
 
