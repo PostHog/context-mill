@@ -15,7 +15,7 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 
 ## Re-import only
 
-After the migration, while any site still sends through the provider, the provider keeps adding the addresses that bounce or complain to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone. There is no plan file, and no later step checks the run, so:
+After the migration, while any site still sends through a provider that keeps a suppression list, the provider keeps adding the addresses that bounce or complain to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone. There is no plan file, and no later step checks the run, so:
 
 1. Make sure the import lands in the project the deployed app sends from, which may not be the one the local env file names. Read the MCP's active project, its name and `api_token`, with the PostHog MCP `project-get` tool, called without an ID, and ask the person once whether production sends from that project, naming it. When the env file's project token differs from that `api_token`, say so in the question. Read only the token's line of the env file, by searching for the token variable's name: the file also holds secret keys, so never open all of it. When the person says no, ask which project production sends from. When `projects-get` lists it, offer to switch to it with `switch-project`, ask again once switched, and when this step ends, switch back to the project you started from and tell the person. When it isn't listed, such as a project in another organization, or they can't tell or don't want the switch, stop before importing.
 2. Do "Check the import tool", "Get the list", "Import it" and "The full-access key", reading the provider's `account.md` for them, and skip the other sections. When the import tool is missing, tell the person to add the addresses the provider added since the last import in the production project they confirmed, naming it (Workflows, then Messaging, then Suppression list), and go to "The full-access key".
@@ -53,7 +53,7 @@ The import copies the list once. After it, a call in the app that adds an addres
 
 ## Write down
 
-Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
+Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the provider keeps no suppression list at all, as its `account.md` says, write `- [x] suppressions — empty list: <provider name> keeps no suppression list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
 
 ## The full-access key
 
