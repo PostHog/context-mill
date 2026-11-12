@@ -31,15 +31,18 @@ A send that doesn't set a field takes the account's Sending Defaults. Ask the pe
 - open tracking and click tracking, for `track_opens` and `track_clicks`;
 - **Inline CSS Styles In HTML Emails**, for `inline_css`;
 - the box that generates an HTML part for text emails, for `auto_html`;
-- **Add Unsubscribe Footer**. A moved send gets no such footer: when it is on, note it in the report.
+- **Add Unsubscribe Footer**. A moved send gets no such footer: when it is on, note it in the report;
+- **Merge Language**, for `merge_language`.
 
-The API has no read of these settings. Note the click tracking choice as the page names it, such as HTML emails only. When the person can't tell the open tracking setting, a site that leaves out `track_opens` stays, and the reason is `account tracking not checked`, as `mapping.md` says under "Tracking". Keep on Mailchimp Transactional a site that doesn't set `inline_css` and sends HTML with a `<style>` element, and a site that doesn't set `auto_html` and sends no `html`.
+The API has no read of these settings. Note the click tracking choice as the page names it, such as HTML emails only. When the person can't tell the open tracking setting, a site that leaves out `track_opens` stays, and the reason is `account tracking not checked`, as `mapping.md` says under "Tracking". When the person can't tell the inline CSS setting, a site that doesn't set `inline_css` and sends HTML with a `<style>` element stays, and the reason is `account inline CSS not checked`. When they can't tell the HTML setting, a site that doesn't set `auto_html` and sends no `html` stays, and the reason is `account HTML part not checked`. When they can't tell the merge language, "Templates" in `mapping.md` says what decides.
+
+Also ask the person whether the account has rules (the Rules page under Settings), and what each active rule matches and changes. A rule changes each send it matches, such as turning open tracking off, adding tags, or moving the send to a subaccount. Classify a site that a rule matches with the rule's changes, as if the site set them. A site that a rule may match, when the person can't tell what the rule changes, stays, and the reason is `sending rule not checked`.
 
 ## Template content
 
 A site whose template moves needs the content of its published version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, as HTML and text with the merge tags as written.
 
-**Copy from the dashboard.** In Mailchimp Transactional: the Templates page, then the template. Ask the person for the template's slug, its published subject, from address and from name, its HTML, and its text when it has one. Ask them which merge language the account uses by default (Sending Defaults, then Merge Language) when the site doesn't set `merge_language`.
+**Copy from the dashboard.** In Mailchimp Transactional: the Templates page, then the template. Ask the person for the template's slug, its published subject, from address and from name, its HTML, and its text when it has one.
 
 **Read from the API.** `POST https://mandrillapp.com/api/1.4/templates/info` with the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "name": "<template slug>" }`. The answer holds `slug`, `name`, `labels`, the draft fields `code`, `text`, `subject`, `from_email`, and `from_name`, and the published fields `publish_code`, `publish_text`, `publish_subject`, `publish_from_email`, and `publish_from_name`. Take the published fields: sends use them.
 
@@ -68,3 +71,5 @@ Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and 
 - **Soft bounces** are temporary refusals by a receiving server. Mailchimp Transactional lets them expire after a day and sends to the address again.
 - **Expired entries** are addresses Mailchimp Transactional sends to again.
 - **Unsubscribes** come from an unsubscribe link or the recipient's mail program, and block only the one sender address they unsubscribed from. PostHog's opt-outs apply to marketing messages only, so once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
+
+PostHog keeps an imported entry until someone removes it, where Mailchimp Transactional let a hard bounce expire after seven days and a spam complaint after a year. Say so in the report's "Suppression list", so the person knows these addresses stay blocked for the moved sends.
