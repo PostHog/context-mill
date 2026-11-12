@@ -41,7 +41,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Suppression list
 
-<How many addresses were imported, or why none were.>
+<How many addresses were imported, or why none were, and each fact the plan notes from the provider's `account.md` under the phase.>
 
 ## PostHog secret key
 
