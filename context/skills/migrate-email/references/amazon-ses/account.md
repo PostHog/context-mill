@@ -26,7 +26,7 @@ A domain verified at Amazon SES carries these records. Keep all of them until th
 
 The app's AWS credentials, or the role it runs with, often reach other AWS services, and may not be allowed to read templates, configuration sets, or the suppression list. Ask the person to run the AWS CLI commands below with their own credentials and save the output, which needs no key from them.
 
-When the person chooses that you run them, ask them to create an IAM user whose policy allows only `ses:GetEmailTemplate`, `ses:GetTemplate`, `ses:GetEmailIdentity`, `ses:GetConfigurationSet`, `ses:GetConfigurationSetEventDestinations`, `ses:GetAccount`, and `ses:ListSuppressedDestinations`, and an access key for it. Ask them to store its key ID in `SES_READ_ACCESS_KEY_ID` and its secret in `SES_READ_SECRET_ACCESS_KEY` in the git-ignored env file, and note in the plan that the run created it. Run the commands with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` set from those two variables for that command only, `AWS_SESSION_TOKEN` and `AWS_SECURITY_TOKEN` unset for it, and `--region` set. The AWS CLI reads a session token from either of those next to the key pair, and AWS refuses a key sent with another key's token. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the access key and the IAM user in AWS and remove the two variables from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+When the person chooses that you run them, ask them to create an IAM user whose policy allows only `ses:GetEmailTemplate`, `ses:GetTemplate`, `ses:GetEmailIdentity`, `ses:GetConfigurationSet`, `ses:GetConfigurationSetEventDestinations`, `ses:GetAccount`, `ses:GetIdentityNotificationAttributes`, and `ses:ListSuppressedDestinations`, and an access key for it. Ask them to store its key ID in `SES_READ_ACCESS_KEY_ID` and its secret in `SES_READ_SECRET_ACCESS_KEY` in the git-ignored env file, and note in the plan that the run created it. Run the commands with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` set from those two variables for that command only, `AWS_SESSION_TOKEN` and `AWS_SECURITY_TOKEN` unset for it, and `--region` set. The AWS CLI reads a session token from either of those next to the key pair, and AWS refuses a key sent with another key's token. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the access key and the IAM user in AWS and remove the two variables from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -84,6 +84,14 @@ aws sesv2 get-account --region <region> --query VdmAttributes
 ```
 
 The answer holds `VdmEnabled` and `DashboardAttributes.EngagementMetrics`, or is `null` when the account never turned VDM on. VDM engagement tracking tracks the opens and clicks of every send whose set doesn't override it, and of every send with no set. Ask the person to paste the answers, or where they saved them.
+
+Then read where each identity sends its SNS notifications, in each Region, since `get-email-identity` doesn't return them:
+
+```bash
+aws ses get-identity-notification-attributes --identities <domain> --region <region>
+```
+
+The answer's `BounceTopic`, `ComplaintTopic`, and `DeliveryTopic` name the SNS topics that get the identity's bounces, complaints, and deliveries, and a topic left out sends none. A handler subscribed to one of them gets the events of every send from that identity, as `mapping.md` says under "Webhooks". When this can't be read, a handler of SNS notifications that matches by message id or by a tag counts as fed by every identity the sites send from.
 
 **Read from the API.** With the key above, run the same commands yourself.
 
