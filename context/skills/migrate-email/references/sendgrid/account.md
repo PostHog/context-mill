@@ -29,7 +29,9 @@ The steps call this key the full-access provider key.
 
 ## Tracking
 
-A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking). When open tracking is off, the sites that follow it stay, and the reason is `open tracking off`. Each moved site that follows the account's click tracking gets the plan note that section names for its clicks. When the person can't say whether open tracking is on, the sites that follow it stay, and the reason is `account tracking not checked`. When they can't say whether click tracking is on, the sites that follow it count as clicks not known. Note the answer in the plan.
+A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking). When open tracking is off, the sites that follow it stay, and the reason is `open tracking off`. When the person can't say whether open tracking is on, the sites that follow it stay, and the reason is `account tracking not checked`. Note the answer in the plan.
+
+SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. When it sets none and the person can't say whether click tracking is on, nobody knows whether SendGrid tracked them. What either means for a site that moves to a template made in PostHog is in Step 3, under "A template in PostHog".
 
 ## Mail settings
 
