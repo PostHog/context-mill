@@ -17,7 +17,7 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 
 After the migration, while any site still sends through the provider, the provider keeps adding the addresses that bounce or complain to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone. There is no plan file, and no later step checks the run, so:
 
-1. Check that the app sends to the MCP's project, as Step 8 says under "One email on one person". When the projects differ, tell the person which project the app uses, and stop before importing.
+1. Check that the app sends to the MCP's project: compare the project token the app reads with `api_token` from the PostHog MCP `projects-get` tool. Read only the token's line of the env file, by searching for the token variable's name: the file also holds secret keys, so never open all of it. When they differ, tell the person which project the app uses, and stop before importing.
 2. Do "Check the import tool", "Get the list", "Import it" and "The full-access key", reading the provider's `account.md` for them, and skip the other sections. When the import tool is missing, tell the person to add the addresses the provider added since the last import in PostHog (Workflows, then Messaging, then Suppression list), and go to "The full-access key".
 3. Tell the person how many entries you imported, of how many, and stop when this step ends: do not go on to the next step, and change no other file.
 
