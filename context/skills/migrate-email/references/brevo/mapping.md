@@ -19,7 +19,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo` | `replyTo` | It carries a `name` |
 | `contactPixelTrackingConsent`, set to `true` or `false`, or `removeTrackingPixel: true`, on a `to`, `cc`, or `bcc` entry | none | Always, `false` included: with per-contact tracking consent on, `false` makes Brevo count the recipient's opens and clicks without tying them to the recipient, and `removeTrackingPixel: true` sends the email with no open pixel. PostHog adds its open pixel to every email, and its send takes no tracking setting per recipient |
-| Open and click tracking, which the send leaves to the account | none: PostHog adds its open pixel, and counts clicks only as "Tracking" says | Brevo sent it with opens untracked or not tied to the recipient, or its open tracking isn't checked. See "Tracking" below |
+| Open and click tracking, which the send leaves to the account | none: PostHog adds its open pixel, and counts clicks only as "Tracking" says | Brevo tied its opens to no recipient or tracked them by consent, or nobody can tell, or its opens were untracked and the person didn't agree to PostHog's open pixel. See "Tracking" below |
 | `attachment`, with `content` or `url` | none | Always. PostHog's send doesn't take it yet |
 | `headers` with `idempotencyKey` (or `IdempotencyKey`) only | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Brevo keeps a key for 15 minutes, and PostHog keeps it for 24 hours. A key the code can send again for another email within 24 hours, such as one built only from a user id and the email's kind, keeps the site too: PostHog would send no new email for it, or refuse it with `idempotency_key_reused` |
 | `headers`, any other header | none | Always: no PostHog SDK takes headers yet |
@@ -32,11 +32,11 @@ A Brevo send without an idempotency key moves without one.
 
 **Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It counts clicks only for a template made in PostHog that is not marked sensitive: a send in the code form counts none, as Step 7 says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Brevo tracks a transactional send's opens and clicks per recipient, unless an account setting changes that. Ask the person for those settings once, as `account.md` says under "Tracking settings", and work out what Brevo did for a send that sets no `contactPixelTrackingConsent` or `removeTrackingPixel`:
 
-- Brevo turned off open tracking for the account: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 - Anonymous tracking on: the site stays, and the reason is `account tracking anonymized`. Brevo counted opens without tying them to a recipient, and PostHog ties a moved send's opens to the person it names.
 - Per-contact tracking consent on: the site stays, and the reason is `per-contact tracking consent on`. Brevo tracked a recipient's opens only as their consent said, and PostHog adds its open pixel to every email.
-- The person can't say whether Brevo tracked opens, or whether anonymous tracking or per-contact tracking consent is on: the site stays, and the reason is `account tracking not checked`.
-- Otherwise Brevo tracked opens per recipient, and the site moves. When Brevo tracked its clicks too, note in the plan row whether PostHog counts them, as above. When it didn't, or nobody knows, a site that moves to a template made in PostHog follows Step 3 under "A template in PostHog".
+- The person can't say whether anonymous tracking or per-contact tracking consent is on: the site stays, and the reason is `account tracking not checked`.
+- Otherwise, opens follow Step 3 under "Opens the provider didn't track". Brevo turned off open tracking for the account: its emails had no open pixel, so the site moves only when the person agrees to PostHog's, and otherwise stays with the reason `open tracking off`. The person can't say whether Brevo turned it off: the site stays, and the reason is `open tracking not checked`. Open tracking on: Brevo tracked opens per recipient, and the site moves.
+- For a site that moves, when Brevo tracked its clicks too, note in the plan row whether PostHog counts them, as above. When it didn't, or nobody knows, a site that moves to a template made in PostHog follows Step 3 under "A template in PostHog".
 
 ## Calls
 
@@ -129,7 +129,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - A template whose `sender` has an `id` and no `email` stays, as the "Fields" table says for `sender`.
 - Brevo applies the template's sender and subject unless the send sets its own, so a site's `sender` and `subject` next to `templateId` win over the template's. The docs don't say how Brevo treated a site's subject that holds `{{` or `{%`: such a subject keeps the site. The docs don't say whether a site's `replyTo` wins over the template's: the site moves only when the template has no reply-to address, or the site's is the same in every send as the template's. Brevo ignores a site's `htmlContent` and `textContent` next to `templateId`, so the send drops them.
 - Images uploaded to Brevo have URLs on `img.mailinblue.com`, or on another host with `brevo`, `sendinblue`, or `mailinblue` in its name. Keep them, and list them, as `template-to-code.md` says.
-- A template site follows "Tracking" like any other site: it stays when Brevo sent it with opens untracked or not tied to the recipient.
+- A template site follows "Tracking" like any other site.
 
 ### Templates made in PostHog
 
@@ -173,7 +173,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - The bullets above on the old template language, the template's tag, and its attachment hold for a template made in PostHog too.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `sender`, `replyTo`, or `subject` next to `templateId` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
 - A site that sets a recipient's tracking setting next to `templateId` stays, as the "Fields" table says.
-- A template site follows "Tracking" like any other site: it stays when Brevo sent it with opens untracked or not tied to the recipient, or its open tracking isn't checked.
+- A template site follows "Tracking" like any other site.
 
 ## Webhooks
 
