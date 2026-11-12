@@ -69,6 +69,8 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 - [ ] verify
 ```
 
+When the run created a full-access provider key, as `account.md` says, add a line under the checklist: `full-access key — created: <variable name>`. Step 5 adds whether the person deleted it.
+
 A sites table, one row per site, in source tree order:
 
 ```

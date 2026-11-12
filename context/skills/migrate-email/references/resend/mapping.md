@@ -39,6 +39,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | `if (error.name === '...')` | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
+| A `fetch` or axios request with a `signal` the code can abort, such as one a caller passes in or an `AbortController` it aborts | Always: `posthog.emails.send` takes no signal, so an email the old code cancelled would go out. A fixed `AbortSignal.timeout(...)` is a deadline, and moves as "HTTP" below says |
 
 ## Content
 

@@ -92,22 +92,27 @@ describe('migrate-email skill', () => {
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
-    it('runs the rewrite and verify steps between the key and the report', async () => {
+    it('chains the steps from detection through rewrite and verify to the report', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
         const skillDir = await buildSkill('migrate-email-resend', outputDir);
-        const workflow = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/^\d+\. `references\/[^`]+`/gm);
+        const visited = [];
+        for (let step = '1-detect.md'; step && visited.length < 20; ) {
+            visited.push(step);
+            const text = readFileSync(join(skillDir, 'references', step), 'utf8');
+            step = text.match(/\*\*Upon completion, continue with:\*\* \[[^\]]+\]\(([^)]+)\)/)?.[1];
+        }
 
-        expect(workflow.map((step) => step.replace(/^\d+\. /, ''))).toEqual([
-            '`references/1-detect.md`',
-            '`references/2-preflight.md`',
-            '`references/3-inventory.md`',
-            '`references/4-sender.md`',
-            '`references/5-suppressions.md`',
-            '`references/6-key.md`',
-            '`references/7-rewrite.md`',
-            '`references/8-verify.md`',
-            '`references/9-report.md`',
+        expect(visited).toEqual([
+            '1-detect.md',
+            '2-preflight.md',
+            '3-inventory.md',
+            '4-sender.md',
+            '5-suppressions.md',
+            '6-key.md',
+            '7-rewrite.md',
+            '8-verify.md',
+            '9-report.md',
         ]);
     });
 
