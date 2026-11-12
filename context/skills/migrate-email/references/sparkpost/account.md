@@ -26,7 +26,7 @@ A domain set up at SparkPost carries these records. Keep all of them until the c
 
 ## Read-only key
 
-The app's own SparkPost key usually has only the permissions to send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in SparkPost (Configuration, then API Keys) with only the permissions to read the account, subaccounts, templates, and the suppression list, store it in `SPARKPOST_READ_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SparkPost and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own SparkPost key usually has only the permissions to send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in SparkPost (Configuration, then API Keys) with only the permissions to read the account, subaccounts, templates, and the suppression list, store it in `SPARKPOST_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in SparkPost and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -46,7 +46,7 @@ A site whose template moves needs the content of the version it sends: Step 3 ch
 
 **Read from the API.** `GET https://api.sparkpost.com/api/v1/templates/{template_id}?draft=false`, or `?draft=true` for a site that sends the draft, with `Authorization: $SPARKPOST_READ_API_KEY`, the key alone with no `Bearer`. The answer holds `results.id`, `results.published`, `results.options` with `open_tracking`, `click_tracking`, and `transactional`, and `results.content`, with `subject`, `from`, `reply_to`, `html`, `text`, `amp_html`, and `headers`, or `email_rfc822` alone. A snippet reads from `GET https://api.sparkpost.com/api/labs/snippets/{snippet_id}`, whose `results.content` holds `html`, `text`, and `amp_html`. SparkPost's docs don't name the key permission that reads snippets: when the read is refused, ask the person for copies. A site that sends from a subaccount reads its template and snippets with the header `X-MSYS-SUBACCOUNT: <subaccount id>`, as `mapping.md` says under "Subaccounts", and a site of the primary account with `X-MSYS-SUBACCOUNT: 0` when the account has subaccounts: a primary key reads the primary account's templates and snippets when the header is missing. A subaccount's send can also use a template or snippet of the primary account whose `shared_with_subaccounts` is `true`. When the subaccount's read finds none, read it with `X-MSYS-SUBACCOUNT: 0`, and use it only when `results.shared_with_subaccounts` is `true`. Otherwise ask the person for copies.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 
@@ -77,5 +77,14 @@ An address can come back once per type. Repeating it in the import is safe.
 
 **Leave out the other entries.**
 
-- **`List Unsubscribe` and `Unsubscribe Link`** are unsubscribes from non-transactional mail, and so are `Manually Added` and `Compliance` entries of type `non_transactional`, and entries with a `list_id`. They are marketing preferences, and PostHog's opt-outs apply to marketing messages only. SparkPost skipped these addresses on every send it sent as non-transactional. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional. Count them, and tell the person the count in the report.
-- **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Count them for the report. Step 3 asks about them first, as `mapping.md` says under "Tracking".
+- **`List Unsubscribe` and `Unsubscribe Link`** are unsubscribes from non-transactional mail, and so are `Manually Added` and `Compliance` entries of type `non_transactional`, and entries with a `list_id`. They are marketing preferences, and PostHog's opt-outs apply to marketing messages only. SparkPost skipped these addresses on every send it sent as non-transactional. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional.
+- **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Step 3 asks about them first, as `mapping.md` says under "Tracking".
+
+## For the report
+
+When the list was read, from the API or an export file, count from it:
+
+- the entries left out as unsubscribes from non-transactional mail, as "Leave out the other entries" says;
+- the `Tracking Consent Revoked` entries.
+
+When the list wasn't read, write `not counted` for each.
