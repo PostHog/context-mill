@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ph_sdk_installed",
+    "rubric": "PostHog SDK added to dependencies (posthog-js/posthog-node in package.json, posthog in requirements.txt, etc.) or a PostHog HTML `<script>` tag snippet is added. **These are two valid alternatives \u2014 do not require both.** If the app uses a `<script>` tag snippet, PostHog does NOT need to appear in package.json. If the app uses an npm/pip/gem package, it does NOT need a `<script>` tag. Either approach is a YES. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_initialized",
+    "rubric": "PostHog client correctly initialized using framework-appropriate pattern (refer to the PostHog documentation reference section for the correct pattern for this framework) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_api_key_env",
+    "rubric": "API key loaded from environment variable (not hardcoded) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_host_configured",
+    "rubric": "API host correctly configured (points to correct PostHog host or reverse proxy endpoint) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ff_flag_named",
+    "rubric": "One concrete feature flag key is used, and the agent's final message names that key and says the flag must exist in PostHog, or says it created or found it through PostHog tools. A placeholder key with no handoff is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ff_gates_real_feature",
+    "rubric": "The flag gates a real piece of the app's functionality: the code checks the flag and the on and off paths differ. A flag check whose result is unused is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ff_evaluation_pattern",
+    "rubric": "The flag is evaluated with the documented PostHog pattern for this platform (for example `isFeatureEnabled`, `getFeatureFlag`, the React hooks, or the server SDK's flag methods with a distinct ID). Server-side evaluation is used where the gated code runs on the server. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ff_off_path_safe",
+    "rubric": "When the flag is off, undefined, or still loading, the app keeps its existing behavior and does not crash or flicker into the new feature. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ff_key_consistent",
+    "rubric": "The same flag key is used everywhere the flag is read, defined once as a constant or repeated without typos. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

@@ -18,11 +18,12 @@ POSTHOG = PostHog::Client.new({
   api_key: ENV['POSTHOG_PROJECT_TOKEN'],
   host: ENV['POSTHOG_HOST'],
   secret_key: ENV['POSTHOG_PROJECT_SECRET_API_KEY'],
+  feature_flags_async_load: true,
   migrated_from: '<provider>' # only when the client takes it
 })
 ```
 
-- With `secret_key` set, the client loads flag definitions from `host` with it when it starts, and keeps polling. Give the key the feature flag read scope too. Tell the person.
+- With `secret_key` set, the client loads flag definitions from `host` with it, and keeps polling. Give the key the feature flag read scope too. Tell the person. `feature_flags_async_load: true` loads them on the polling thread, so a slow answer never holds the app's boot; set it on any client that gets the key.
 - The app host option is `app_host`.
 - In Rails, create the client once, such as in an initializer.
 
@@ -31,6 +32,14 @@ POSTHOG = PostHog::Client.new({
 - Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a hash with `opens`, `clicks`, and `engagement`. Open tracking off is `tracking: { opens: false }`. `capture_engagement:` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
+
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The client's `email_request_timeout_seconds:` is the time each email request may take, 15 by default, and `email_request_max_retries:` its retries, 2 by default. A send's `max_retries: 0` turns its retries off.
+- The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds:` set to it.
+- The SDK sets `Net::HTTP`'s open, read and write timeouts to that number, which limits each wait on the network, not the whole request. `Net::HTTP`'s own timeouts, and Faraday's `timeout` on its default `net_http` adapter, are the same kind of limit, and the SDK keeps one only when the request sets open, read and write to one number. A request that sets only some of them, such as only `read_timeout: 3`, which leaves the others at `Net::HTTP`'s 60 seconds, or sets them to different numbers, is a mix the SDK can't keep: the site stays. A limit on the whole request, such as Typhoeus's `timeout` or Faraday's `timeout` on another adapter, such as `:typhoeus`, is a deadline the SDK can't keep: the site stays, as Step 7 says. A `Timeout.timeout` the code puts around the call is code around the send and stays around it.
 
 ## The answer
 

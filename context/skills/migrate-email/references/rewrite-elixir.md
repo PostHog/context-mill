@@ -13,18 +13,7 @@ Add `{:posthog, "~> <latest version>"}` to the deps in `mix.exs`, or raise the v
 
 ## The client
 
-When the app doesn't use PostHog yet, set the keys in the `:posthog` config, in `config/runtime.exs` so they come from the environment at run time:
-
-```elixir
-config :posthog,
-  api_host: System.get_env("POSTHOG_HOST", "https://us.i.posthog.com"),
-  api_key: System.get_env("POSTHOG_PROJECT_TOKEN", ""),
-  secret_key: System.get_env("POSTHOG_PROJECT_SECRET_API_KEY"),
-  enable_local_evaluation: false,
-  migrated_from: "<provider>" # only when the config takes it
-```
-
-When the app already uses PostHog, leave its `:posthog` config as it is, and give email its own named instance in the application's children:
+Give email a named instance of its own in the application's children, also when the app doesn't use PostHog yet. When the app has a `:posthog` config, leave it as it is:
 
 ```elixir
 {PostHog.Supervisor,
@@ -45,10 +34,16 @@ When the app already uses PostHog, leave its `:posthog` config as it is, and giv
 
 ## The send
 
-- Code send: `PostHog.Emails.send(to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a map with `:opens`, `:clicks`, and `:engagement`. Open tracking off is `tracking: %{opens: false}`. `capture_engagement:` is deprecated: use `tracking: %{engagement: false}`. Sensitive is `sensitive: true`.
+- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a map with `:opens`, `:clicks`, and `:engagement`. Open tracking off is `tracking: %{opens: false}`. `capture_engagement:` is deprecated: use `tracking: %{engagement: false}`. Sensitive is `sensitive: true`.
 - `reply_to:` takes one address or a list of addresses.
-- Template send: `PostHog.Emails.send(to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
-- With email's own instance, the name comes first: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., ...)`.
+- Template send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
+
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The config's `email_request_timeout_ms` is the time each email request may take, 15000 by default, and `email_request_max_retries` its retries, 2 by default. A send's `max_retries: 0` turns its retries off.
+- The send takes no deadline of its own, so a deadline needs a named instance of its own, as above, with `email_request_timeout_ms` set to it.
 
 ## The answer
 
