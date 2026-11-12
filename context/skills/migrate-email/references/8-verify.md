@@ -19,6 +19,7 @@ Check that the app still builds, its tests still pass, and one moved email reach
 - Run the check that each moved site's rewrite file names under "Check", on the whole project, as Step 7 did. Fix each error or warning that is not in the list Step 7 kept, in any file: the rewrite or the PostHog SDK's install or upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
 - Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks the PostHog SDK's send and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
 - Search the changed files for the provider's calls: a moved site has none left, and each moved site has one PostHog send.
+- Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes. List the project's categories with `message-categories-list`: each key the plan doesn't mark as new must be in it, spelled the same, with the same type. Otherwise the send makes a new category that no recipient opted out of, or fails with `category_mismatch` for the other type. A key the plan marks as new can still belong to a deleted category, which the list leaves out: when its send fails with `category_mismatch`, ask the person for another key and update the plan. Check that the content each marketing site sends holds `{{ unsubscribe_url }}`: in the HTML, or in the text when it sends no HTML. Render the email to check content the code builds. A site with a blank category, or one that sends a template made in PostHog, passes none. Fix each site that fails, then run this step's checks again from the top.
 
 ## One email on one person
 
@@ -46,4 +47,4 @@ Never write the address or the distinct ID into a file.
 
 ## Write down
 
-Tick the phase in the plan: `- [x] verify — check: <passed|failed|none>, tests: <passed|failed|none>, chain: <proven|partly: what showed|not checked: why>`.
+Tick the phase in the plan: `- [x] verify — check: <passed|failed|none>, tests: <passed|failed|none>, category: <kept>/<sites with a category> kept, chain: <proven|partly: what showed|not checked: why>`.

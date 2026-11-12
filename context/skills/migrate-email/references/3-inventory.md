@@ -29,6 +29,7 @@ For each site, read the surrounding code and record:
 - The language of the call, such as `node`, `python`, `go`, `ruby`, `php`, `dotnet`, `rust`, or `elixir`, by the name of its rewrite file in Step 7. A call in any other language, such as Java, is recorded under its own name: `mapping.md` keeps it on the provider.
 - How it sends: `sdk`, `http`, or `smtp`.
 - The content: `template` for a template stored at the provider, `react` for a component the provider renders, `html`, or `text`. A site that sets both `html` and `text` is `html`.
+- The category: blank for no category, or the key of the category its email is filed under in PostHog, as "The category of each site" says.
 - Every field the site sets, including fields set on the payload object after it is created and fields set through options, such as an idempotency key.
 - Where `from` comes from: the literal address, or the name of the environment variable or config value that holds it.
 
@@ -54,7 +55,21 @@ Each template that moves needs its content to be checked. Read the provider's `a
 
 ### A template in PostHog, when the person asks for one
 
-A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
+A template made in PostHog is transactional, and the person makes it: never make one yourself. A marketing email can't become one. Get its content as the paragraph above says, and decide the kind of each template the person wants made in PostHog from it, as "The category of each site" below says. When the person can't give the content, the site stays, and the reason is `template content not checked`. Tell the person once, for every marketing one, and ask whether each moves into the code, with the plan and the check of the paragraphs above, or stays, with the reason `kept on <provider name> for now`.
+
+Each transactional one moves in the template form, by its template ID. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask the person once, for every transactional one, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
+
+## The category of each site
+
+PostHog sends a transactional email to every recipient who isn't suppressed, and a marketing email only to those who also haven't opted out of its message category. A site keeps the kind of email it sent. It is marketing when the provider sent it as marketing, such as with an unsubscribe link the provider fills, or a send that names something the recipient can unsubscribe from that the provider's `mapping.md` moves. Every other site is transactional, with no category.
+
+A category has a key, a type, `marketing` or `transactional`, a name, and an optional description. Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of.
+
+When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it. Ask them for the workflow, or find it with `workflows-list`. The site keeps the category of the workflow's email step: read the step's `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`. A step without a category leaves the site's category blank.
+
+For each other marketing site that moves, list the project's message categories with the PostHog MCP `message-categories-list` tool. Ask the person once which category of type `marketing` each one's email belongs to, and offer each by its name and key. When none fits, they name a new one: its key, its name, and a description if they want one. A new key must not be in that list, whatever its category's type: when it is, ask them for another. The list leaves out deleted categories, and a deleted category keeps its key and type: a new key's first send restores it when the types match, and fails with `category_mismatch` when they don't. When a new key fails that way, ask the person for another. The first send creates a new category, so make none yourself. A marketing site they name no category for stays, and the reason is `no category named`. When the category tools are missing, every marketing site stays, and the reason is `no message category tools`.
+
+A marketing email needs an unsubscribe link, which becomes `{{ unsubscribe_url }}` as `template-to-code.md` says: PostHog refuses to send one without it. A marketing site whose content has none stays, and the reason is `no unsubscribe link`. PostHog also refuses a marketing email with copies: a marketing site that sets `cc` or `bcc` stays, and the reason is `copies_not_allowed`.
 
 ## Write the plan file
 
@@ -75,11 +90,11 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 A sites table, one row per site, in source tree order:
 
 ```
-| site | file | line | language | sends | content | from | moves | reason |
+| site | file | line | language | sends | content | category | from | moves | reason |
 ```
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
 
-Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer.
+Under the table, for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet. For each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer.
 
 A list of the other provider calls, each with its file, line, and what it does.

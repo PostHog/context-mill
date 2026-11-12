@@ -22,7 +22,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `attachments` | none | Always. PostHog's send doesn't take it yet |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
 | `scheduledAt` / `scheduled_at` | none | Always. PostHog's send doesn't take it yet |
-| `topicId` / `topic_id` | none | Always. PostHog's send doesn't take it yet |
+| `topicId` / `topic_id` | none | Always. The contacts who unsubscribed from the topic stay at Resend, and the skill doesn't bring them into PostHog's opt-outs yet |
 
 ## Calls
 
