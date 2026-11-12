@@ -37,7 +37,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Webhook handlers
 
-<Leave this section out when the plan lists no handler. For each handler: its file and line, the <provider name> events it handles, and the PostHog events that take their place for the moved sends, from `mapping.md` under "Webhooks". Say that the handler keeps getting events for the sites that stay, that moved sends no longer reach it, that PostHog records their events on the person only when engagement events are on for the project, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post those events to an endpoint, in PostHog's shape, not the provider's.>
+<Leave this section out when the plan lists no handler. For each handler: its file and line, the <provider name> events it handles, and the PostHog events that take their place for the moved sends, from `mapping.md` under "Webhooks". Say that the handler keeps getting events for the sites that stay, that moved sends no longer reach it, that PostHog records their events on the person only when engagement events are on for the project, that a send in the code form counts no clicks, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post those events to an endpoint, in PostHog's shape, not the provider's.>
 
 ## Sender and DNS
 

@@ -20,7 +20,8 @@ options
     .host(std::env::var("POSTHOG_HOST").unwrap_or_default())
     .secret_key(std::env::var("POSTHOG_PROJECT_SECRET_API_KEY").unwrap_or_default())
     .migrated_from("<provider>"); // only when the builder has it
-let posthog = posthog_rs::client(options.build()?).await;
+let posthog = posthog_rs::client(options.build()?).await; // with `async-client`
+// let posthog = posthog_rs::client(options.build()?); // without it, the blocking client
 ```
 
 - The client loads flag definitions only with `enable_local_evaluation` on, so a client that only sends email needs no other setting.
