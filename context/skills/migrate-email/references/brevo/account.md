@@ -71,10 +71,10 @@ An admin block can cover one sender only: each entry names its sender, in `sende
 
 ## For the report
 
-Count these from the dashboard file or the API, as "Suppression list" says, whether or not the import runs:
+Count these whether or not the import runs:
 
-- the unsubscribes on the list, which get the moved transactional sends again;
-- the admin blocks the import leaves out, because they don't cover every sender that sends through PostHog;
-- the blocked domains, which PostHog sends to again.
+- the unsubscribes on the list, which get the moved transactional sends again, from the dashboard file or the API, as "Suppression list" says;
+- the admin blocks the import leaves out, because they don't cover every sender that sends through PostHog, the same way;
+- the blocked domains, which PostHog sends to again, from `GET /v3/smtp/blockedDomains`, or from the person, who reads them off the dashboard's blocked domains list when there is no key. The blocked contacts file doesn't hold them.
 
-When the person has neither the file nor a key, write that these counts are not known.
+Write a count you can't get as not known.
