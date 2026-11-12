@@ -34,7 +34,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 - Opens tracked: the site moves. When SendGrid tracked its clicks too, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
-- Clicks untracked, on a site that moves to a template made in PostHog: PostHog would send the links of a template that is not marked sensitive through its click redirect, which they never went through. Ask the person to mark that template sensitive when they make it, as Step 3 asks, and note it in the plan row, so the report lists it before cutover.
+- Clicks untracked, or not known, on a site that moves to a template made in PostHog: PostHog sends the links of a template that is not marked sensitive through its click redirect, which they never went through. Ask the person to mark that template sensitive too, and tell them that PostHog then keeps no copy of each sent email's body or filled-in subject. When they don't, the site stays, and the reason is `click tracking off`. Add a check that the template is marked sensitive to the report's "Before cutover" list.
 
 When a site's open tracking follows the account and the person can't say whether it is on, the site stays, and the reason is `account tracking not checked`.
 
@@ -100,7 +100,7 @@ SendGrid templates are Handlebars. In the code:
 
 Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the SendGrid template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on SendGrid.
 
-An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and sends its links as they are, without its click redirect. Templates are not sensitive by default.
 
 SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
