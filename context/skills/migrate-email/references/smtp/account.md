@@ -28,9 +28,7 @@ A domain that sends through an SMTP provider carries that provider's records. Ke
 
 ## Read-only key
 
-A read key is usually not needed. The SMTP password sends mail and reads nothing. The templates are in the app's code, and the suppression list, when the provider keeps one, comes from its dashboard export. Don't ask for a key to the provider's API: this skill has no reference for it, and the steps never need one. Note in the plan `full-access provider key: none created`, so Step 5 and the report have no key to delete.
-
-The steps call this key the full-access provider key.
+A read key is usually not needed. The SMTP password sends mail and reads nothing. The templates are in the app's code, and the suppression list, when the provider keeps one, comes from its dashboard export. Don't ask for a key to the provider's API: this skill has no reference for it, and the steps never need one. The run creates no full-access provider key, so the plan gets no line for one, and Step 5 has no key to delete.
 
 ## Template content
 
@@ -59,4 +57,8 @@ Whether there is a list depends on the provider behind the host.
 **Leave out the other entries.**
 
 - **Soft bounces, deferrals, and blocks** are temporary refusals by a receiving server. The provider retries those addresses, and so does PostHog.
-- **Unsubscribes** are marketing preferences, and PostHog's opt-outs apply to marketing messages only. Some providers also stopped transactional mail to them. Once the sends move, these addresses get transactional email again. Count them, and tell the person the count in the report.
+- **Unsubscribes** are marketing preferences, and PostHog's opt-outs apply to marketing messages only. Some providers also stopped transactional mail to them. Once the sends move, these addresses get transactional email again. Count them, as "For the report" says.
+
+## For the report
+
+- The number of unsubscribes in the export that the import left out, as "Leave out the other entries" says. Write the count, never an address.
