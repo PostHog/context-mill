@@ -32,6 +32,8 @@ A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's sett
 
 **Ask the person.** In Postmark: the server, then Settings. It shows whether open tracking and link tracking are on, and which parts link tracking covers.
 
+**Click tracking.** For a site that moves to a template made in PostHog, Postmark didn't track its clicks when its links were untracked, by the send's own `TrackLinks: None`, a `postmarker` or .NET SDK default, or a server whose link tracking is off, as `mapping.md` says under "Tracking". When its links follow a server whose link tracking setting is not given, nobody knows, as Step 3 says under "A template in PostHog".
+
 **Read from the API.** `GET https://api.postmarkapp.com/server` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of that server. The answer holds `TrackOpens`, a boolean, `TrackLinks`: `None`, `HtmlAndText`, `HtmlOnly`, or `TextOnly`, and `DeliveryType`: `Live`, or `Sandbox` for a server that delivers nothing.
 
 ## Sender signatures
