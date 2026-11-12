@@ -36,6 +36,10 @@ SMTP stores no templates, so there is no template content to read from the provi
 
 A template the provider renders because a header names it stays with its site, so its content needs no check.
 
+## Open tracking
+
+An SMTP server adds no open pixel on its own. A provider behind the host adds one only when its open tracking is on, by its own setting, such as SendGrid's tracking settings, Mailgun's tracking for the sending domain, Postmark's open tracking for the message stream, or an Amazon SES configuration set that records opens and that the sends name. Ask the person once, for each host the moved sites use, whether it tracked the opens of these sends. A host with no provider behind it, such as the company's own mail server, and tracking that was off or never set up mean the site's emails had no open pixel; no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+
 ## Suppression list
 
 Whether there is a list depends on the provider behind the host.
