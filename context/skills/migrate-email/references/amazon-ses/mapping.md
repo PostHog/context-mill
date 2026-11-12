@@ -22,7 +22,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `EmailTags` / `Tags` | none | Always: no PostHog SDK takes tags yet |
 | `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"), or the set's `DeliveryOptions.TlsPolicy` is `REQUIRE`, or its `DeliveryOptions.MaxDeliverySeconds` is below 50400, the most Amazon SES allows: Amazon SES delivered it only over TLS, or gave up after that time, and PostHog's send has no setting for either. Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
-| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel, and counts no clicks for a sensitive send: the code form, or a template made in PostHog that is marked sensitive | Amazon SES sent it with opens untracked, or its open tracking isn't checked. See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
+| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel, and counts no clicks for a sensitive send: the code form, or a template made in PostHog that is marked sensitive | Its emails had no open pixel and the person didn't agree to add one, or nobody can tell whether they had one, as Step 3 says under "Opens the provider didn't track". See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
 | `FromEmailAddressIdentityArn`, `FeedbackForwardingEmailAddressIdentityArn` / `SourceArn`, `ReturnPathArn`, `FromArn` | none | Always: the site sends for an identity another AWS account owns |
@@ -37,9 +37,9 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 A send with neither gets no tracking pixel, and its links stay as written. Read the account's VDM settings and each set the sites use, as `account.md` says under "Configuration sets", and work out, for opens and for clicks, whether Amazon SES tracked them:
 
 - Opens tracked: the site moves. When Amazon SES tracked its clicks too and the site moves in the code form, or to a template made in PostHog that is marked sensitive, note in the plan row that PostHog counts no clicks for it. When Amazon SES didn't track its clicks, or its click tracking isn't checked, and it moves to a template made in PostHog, ask the person to mark that template sensitive, as Step 3 says under "A template in PostHog".
-- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- Opens untracked: the site's emails had no open pixel. It moves only when the person agrees that PostHog may add one, as Step 3 says under "Opens the provider didn't track", and otherwise stays, and the reason is `open tracking off`.
 
-When a site's open tracking depends on a setting the person can't give and the read-only key can't read, the site stays, and the reason is `account tracking not checked` for the account's VDM settings, or `configuration set <name> tracking not checked` for a set's.
+When a site's open tracking depends on a setting the person can't give and the read-only key can't read, such as the account's VDM settings or a set's event destinations, nobody can tell whether its emails had an open pixel: the site stays, and the reason is `open tracking not checked`, as Step 3 says under "Opens the provider didn't track".
 
 An Amazon SES send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
 
@@ -118,7 +118,7 @@ Amazon SES templates are Handlebars. In the code:
 - A template belongs to one Region: a template of the same name in another Region is another template. Read each one in the Region its site sends in, as `account.md` says. A `TemplateArn` names its Region after `arn:aws:ses:` and its name after `template/`. Two sites that send the same name in two Regions share one email only when the two contents are the same.
 - An Amazon SES template holds no sender, reply-to address, or preview text, so the send takes the site's own `FromEmailAddress` / `Source` and `ReplyToAddresses`, as the "Fields" table says. Its subject always comes from the template: a templated send has no subject of its own.
 - Amazon SES hosts no images, so a template's images sit on the person's own hosts, such as an S3 bucket. Keep every URL, and list none as hosted by the provider.
-- A template site follows "Open and click tracking" like any other site: it stays when Amazon SES sent it with opens untracked. Its `ConfigurationSetName` follows the "Fields" table, as for any send.
+- A template site follows "Open and click tracking" like any other site. Its `ConfigurationSetName` follows the "Fields" table, as for any send.
 - `Content.Template.Headers` and `Attachments` keep the site, as the "Fields" table says. `SendBulkTemplatedEmail` and `SendBulkEmail` still stay, as "Calls" says: each sends several emails in one call.
 
 ### Templates made in PostHog
@@ -143,7 +143,7 @@ Only for a template the person asks to make in PostHog, as Step 3 says. The pers
 - Any other helper, such as `{{#with}}`, `{{lookup}}`, or `{{log}}`, keeps the template on Amazon SES. So does an inline partial (`{{#* inline}}` and `{{> name}}`), `{{@index}}`, `{{@key}}`, and a block inside `{{#each}}` that reads a value outside the loop with `../`.
 - `templateData` takes the object `TemplateData` was built from, as above.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `FromEmailAddress` / `Source` or `ReplyToAddresses` next to the template moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A template site follows "Open and click tracking" like any other site: it stays when Amazon SES sent it with opens untracked, or its open tracking isn't checked.
+- A template site follows "Open and click tracking" like any other site.
 
 ## Webhooks
 
@@ -161,7 +161,9 @@ The handlers stop getting events for a site that moves: Amazon SES no longer sen
 
 A bounce to an address on the account-level suppression list comes as a `Bounce` with `bounceSubType` `OnAccountSuppressionList`. PostHog refuses that send instead, with `recipient_suppressed`.
 
-PostHog's events carry no Amazon SES `mail.messageId` and no `mail.tags`. A site whose events a handler matches by message id or by a tag stays on Amazon SES. A handler fed by an identity's default configuration set gets the events of every send from that identity that names no set: a send that names a set uses that set instead. A handler fed by the identity's SNS notifications (`SetIdentityNotificationTopic`) gets the events of every send from that identity, whatever its set. When either matches by message id or by a tag, every site whose sends it gets stays. A handler that finds the user by the recipient's address, such as `bouncedRecipients[].emailAddress`, keeps no site. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+PostHog's events carry no Amazon SES `mail.messageId` and no `mail.tags`. A site whose events a handler matches by message id or by a tag stays on Amazon SES. A handler fed by an identity's default configuration set gets the events of every send from that identity that names no set: a send that names a set uses that set instead. A handler fed by the identity's SNS notifications (`SetIdentityNotificationTopic`) gets the events of every send from that identity, whatever its set. When either matches by message id or by a tag, every site whose sends it gets stays. A handler that finds the user by the recipient's address, such as `bouncedRecipients[].emailAddress`, keeps no site for that, though the event it acts on can, as below. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `DeliveryDelay`, stays, and the reason is `its <event> events feed a webhook handler`.
 
 A site whose clicks Amazon SES tracked, and whose events reach a handler that acts on `Click` events, however it finds its records, moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 

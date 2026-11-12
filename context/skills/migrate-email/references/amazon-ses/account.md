@@ -60,7 +60,7 @@ Read the person's copies where they saved them. Never write the content into the
 
 ## Configuration sets
 
-A configuration set decides, with the account's VDM settings, whether Amazon SES tracks opens and clicks, and it decides where a send's events go and which suppression reasons apply. `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
+A configuration set decides, with the account's VDM settings, whether Amazon SES tracks opens and clicks, and it decides where a send's events go and which suppression reasons apply. The reads below are how to tell whether a site's emails had an open pixel, for Step 3's "Opens the provider didn't track", as `mapping.md` says under "Open and click tracking". `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
 
 **Read with the AWS CLI (preferred).** Ask the person to run, in each Region, for each domain or address the sites send from:
 
