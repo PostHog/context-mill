@@ -20,7 +20,7 @@
     "@angular/platform-server": "^21.0.0",
     "@angular/router": "^21.0.0",
     "@angular/ssr": "^21.0.0",
-    "posthog-js": "^1.200.0",
+    "posthog-js": "^1.447.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.0",
     "zone.js": "~0.15.0"

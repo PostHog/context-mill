@@ -10,7 +10,7 @@
   "dependencies": {
     "@astrojs/node": "^9.2.2",
     "astro": "^5.10.2",
-    "posthog-node": "^5.10.4"
+    "posthog-node": "^5.64.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

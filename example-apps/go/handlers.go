@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/posthog/posthog-go"
 )
 
@@ -17,15 +18,40 @@ type app struct {
 	posthog posthog.Client
 }
 
-// distinctId returns a stable user id for the current request, falling back to
-// "anonymous" before anyone has logged in. This id is the join key for all
-// analytics: it MUST match the id your frontend `posthog.identify(...)` call
-// uses so server- and client-side events land on the same person.
-func distinctId(r *http.Request) string {
+// visitor returns the distinct id for the current request and whether the
+// visitor is anonymous.
+//
+// Signed-in users have a "user_id" cookie; that stable id is the join key for
+// all analytics and MUST match the id your frontend `posthog.identify(...)`
+// call uses so server- and client-side events land on the same person.
+//
+// Signed-out visitors get a random UUID stored in a cookie so it is reused for
+// the rest of the visit. Never share one fixed id across visitors: they would
+// all collapse into a single person.
+func visitor(w http.ResponseWriter, r *http.Request) (id string, anonymous bool) {
 	if c, err := r.Cookie("user_id"); err == nil && c.Value != "" {
-		return c.Value
+		return c.Value, false
 	}
-	return "anonymous"
+	if c, err := r.Cookie("anon_id"); err == nil && c.Value != "" {
+		return c.Value, true
+	}
+	id = uuid.NewString()
+	http.SetCookie(w, &http.Cookie{
+		Name: "anon_id", Value: id, Path: "/",
+		HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode,
+	})
+	return id, true
+}
+
+// properties returns event properties for a capture. Anonymous events set
+// "$process_person_profile" to false so PostHog does not create a person
+// profile for the visitor.
+func properties(anonymous bool) posthog.Properties {
+	props := posthog.NewProperties()
+	if anonymous {
+		props.Set("$process_person_profile", false)
+	}
+	return props
 }
 
 // home renders the login form (or a short greeting once logged in).
@@ -34,8 +60,13 @@ func (a *app) home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	id, anonymous := visitor(w, r)
+	status := "Signed in as"
+	if anonymous {
+		status = "Not signed in, anonymous visitor"
+	}
 	page(w, "Burrito app", fmt.Sprintf(`
-		<p>Signed in as: <strong>%s</strong></p>
+		<p>%s: <strong>%s</strong></p>
 		<form method="POST" action="/login">
 			<label>User id <input name="user_id" value="burrito-fan-42"></label>
 			<label>Email <input name="email" value="fan@example.com"></label>
@@ -45,7 +76,7 @@ func (a *app) home(w http.ResponseWriter, r *http.Request) {
 			<li><a href="/burrito">Consider a burrito</a> (event tracking)</li>
 			<li><a href="/dashboard">Dashboard</a> (feature flag)</li>
 			<li><a href="/profile">Profile</a> (error tracking)</li>
-		</ul>`, html.EscapeString(distinctId(r))))
+		</ul>`, status, html.EscapeString(id)))
 }
 
 // login demonstrates user identification.
@@ -84,7 +115,7 @@ func (a *app) login(w http.ResponseWriter, r *http.Request) {
 // burrito demonstrates event tracking: capture a business event with a stable
 // distinct id and a couple of event properties.
 func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
-	userId := distinctId(r)
+	userId, anonymous := visitor(w, r)
 
 	// Toy per-session counter kept in a cookie — just so the event has a
 	// changing property to show off.
@@ -101,7 +132,7 @@ func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
 	a.posthog.Enqueue(posthog.Capture{
 		DistinctId: userId,
 		Event:      "burrito_considered",
-		Properties: posthog.NewProperties().
+		Properties: properties(anonymous).
 			Set("total_considerations", count),
 	})
 
@@ -117,7 +148,7 @@ func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
 // off the returned snapshot with IsEnabled. This is the current API — avoid the
 // deprecated per-flag IsFeatureEnabled/GetFeatureFlag helpers.
 func (a *app) dashboard(w http.ResponseWriter, r *http.Request) {
-	userId := distinctId(r)
+	userId, _ := visitor(w, r)
 
 	showNewFeature := false
 	flags, err := a.posthog.EvaluateFlags(posthog.EvaluateFlagsPayload{
@@ -147,7 +178,7 @@ func (a *app) dashboard(w http.ResponseWriter, r *http.Request) {
 // enqueued like any other event. We deliberately trigger a failure, catch it,
 // and report it — the app keeps serving.
 func (a *app) profile(w http.ResponseWriter, r *http.Request) {
-	userId := distinctId(r)
+	userId, anonymous := visitor(w, r)
 
 	var caught string
 	if err := riskyOperation(); err != nil {
@@ -162,6 +193,7 @@ func (a *app) profile(w http.ResponseWriter, r *http.Request) {
 			"ProfileDataError",
 			caught,
 		)
+		exception.Properties = properties(anonymous)
 		a.posthog.Enqueue(exception)
 	}
 
