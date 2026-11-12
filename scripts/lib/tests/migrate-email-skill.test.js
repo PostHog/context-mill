@@ -10,7 +10,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid', 'postmark', 'mailgun'];
+const PROVIDERS = ['resend', 'mailgun'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 // Resend's mapping belongs to the base PRs; SMTP stores no templates.
@@ -93,6 +93,7 @@ describe('migrate-email skill', () => {
             DOCS_PAGES['https://posthog.com/docs/workflows/transactional-emails/api.md'],
         );
         expect(existsSync(join(skillDir, 'references', 'resend', 'sdk-reference.md'))).toBe(true);
+        expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
@@ -113,6 +114,47 @@ describe('migrate-email skill', () => {
             '`references/8-verify.md`',
             '`references/9-report.md`',
         ]);
+    });
+
+    describe('a Resend template brought into the code', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+
+        it('makes the code the default in steps 3 and 7, with a template in PostHog only on request', () => {
+            const inventory = read('3-inventory.md');
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(inventory).toMatch(/A `template` site moves by bringing its email into the code/);
+            expect(inventory).toMatch(/### A template in PostHog, when the person asks for one/);
+            expect(inventory).not.toMatch(/A `template` site moves only to a template made in PostHog/);
+            expect(rewriteStep).toMatch(/For a provider template that moves into the code, read the rest of `template-to-code.md` first/);
+            expect(rewriteStep).toMatch(/For a template brought into the code, the code renders them, and the send has no template data/);
+        });
+
+        it('has the Resend mapping bring its templates into the code, with the Liquid form kept for PostHog templates', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toContain('`template-to-code.md`');
+            expect(mapping).toMatch(/### Templates made in PostHog\n\nOnly for a template the person asks to make in PostHog/);
+            expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
+            expect(mapping).toMatch(/`\{\{\{NAME\}\}\}` becomes `\{\{ variables\.NAME \}\}`/);
+            expect(read('resend/account.md')).not.toMatch(/Step 3 deletes once the site is classified/);
+        });
+
+        it('escapes a Resend variable by the shared rule, and applies a fallback only to a missing value', () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toMatch(/\| `\{\{\{NAME\}\}\}` in the HTML \| The value\. Resend inserts it as it is and never escapes it, so it falls under the rule of `template-to-code\.md`/);
+            expect(mapping).toMatch(/\| `\{\{\{NAME\}\}\}` in the subject or the text \| The value as it is, with no escaping \|/);
+            expect(mapping).toMatch(/`""` renders as nothing, not as the fallback/);
+        });
+
+        it("lets the site's own from, reply-to and subject win over the template's", () => {
+            const mapping = read('resend/mapping.md');
+
+            expect(mapping).toMatch(/A subject the site sets next to `template` wins/);
+            expect(mapping).toMatch(/\*\*Templates brought into the code\.\*\*[^\n]*the site's own where it sets them, otherwise the template's/);
+        });
     });
 
     describe('the rewrite for each PostHog SDK', () => {
@@ -216,24 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-
-        it('fills SendGrid substitutions in the code instead of keeping the site', () => {
-            const mapping = read('sendgrid/mapping.md');
-
-            expect(mapping).toMatch(/\| `substitutions` on a send with its own `subject` and `content` \| none: the code puts the values into the subject and the content before the send \|/);
-            expect(mapping).not.toMatch(/\| `substitutions` \| none \| Always/);
-        });
-
-        it('brings a Postmark template into the code with its layout, raw values, and inlined CSS', () => {
-            const mapping = read('postmark/mapping.md');
-            const inCode = mapping.split('### Templates made in PostHog')[0];
-
-            expect(inCode).toMatch(/the layout and the template come into the code as one email/);
-            expect(inCode).toMatch(/\| `\{\{\{name\}\}\}`, `\{\{& name\}\}` \| The value as it is, unescaped/);
-            expect(inCode).toMatch(/With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches/);
-            expect(mapping).not.toMatch(/\| `InlineCss` \| none \| Never on its own\. It only shapes how Postmark renders its template, and the PostHog template holds its own HTML \|/);
-        });
-
         it('fills the recipient variables of a mailgun send to one address in the code instead of keeping the site', () => {
             const mapping = read('mailgun/mapping.md');
 

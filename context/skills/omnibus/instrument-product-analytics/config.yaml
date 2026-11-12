@@ -3,7 +3,7 @@ type: skill
 template: description.md
 category: integration
 description: Add PostHog product analytics events to track user behavior. Use after implementing new features or reviewing PRs to ensure meaningful user actions are captured. Also handles initial PostHog SDK setup if not yet installed.
-tags: []
+tags: [sdk-install]
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
@@ -30,6 +30,15 @@ variants:
       - example-apps/astro-ssr
       - example-apps/astro-hybrid
       - example-apps/angular
+      - example-apps/gatsby
+      - example-apps/docusaurus
+      - example-apps/remix
+      # JavaScript / Server
+      - example-apps/nestjs
+      - example-apps/fastify
+      - example-apps/hono
+      - example-apps/cloudflare-workers
+      - example-apps/convex
       # Python
       - example-apps/django
       - example-apps/flask
@@ -38,12 +47,25 @@ variants:
       # PHP
       - example-apps/laravel
       - example-apps/php
+      - example-apps/wordpress
       # Ruby
       - example-apps/ruby-on-rails
       - example-apps/ruby
+      # Elixir
+      - example-apps/elixir
+      # Go
+      - example-apps/go
+      # Java
+      - example-apps/java-spring-boot
+      # Rust
+      - example-apps/rust
+      # .NET
+      - example-apps/dotnet
       # Mobile
       - example-apps/android
       - example-apps/swift
+      - example-apps/swift-xcodegen
+      - example-apps/flutter
       - example-apps/react-native
       - example-apps/expo
     docs_urls:
@@ -55,11 +77,22 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
       - https://posthog.com/docs/libraries/nuxt-js.md
+      - https://posthog.com/docs/libraries/nuxt-js-2.md
+      - https://posthog.com/docs/libraries/gatsby.md
+      - https://posthog.com/docs/libraries/docusaurus.md
       - https://posthog.com/docs/libraries/vue-js.md
       - https://posthog.com/docs/libraries/tanstack-start.md
       - https://posthog.com/docs/libraries/svelte.md
       - https://posthog.com/docs/libraries/astro.md
       - https://posthog.com/docs/libraries/angular.md
+      # JavaScript / Server
+      - https://posthog.com/docs/libraries/node.md
+      - https://posthog.com/docs/libraries/nestjs.md
+      - https://posthog.com/docs/libraries/fastify.md
+      - https://posthog.com/docs/libraries/hono.md
+      - https://posthog.com/docs/libraries/remix.md
+      - https://posthog.com/docs/libraries/cloudflare-workers.md
+      - https://posthog.com/docs/libraries/convex.md
       # Python
       - https://posthog.com/docs/libraries/django.md
       - https://posthog.com/docs/libraries/flask.md
@@ -69,11 +102,17 @@ variants:
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir
       - https://posthog.com/docs/libraries/elixir.md
+      - https://posthog.com/docs/libraries/phoenix.md
       # Go
       - https://posthog.com/docs/libraries/go.md
+      # Java
+      - https://posthog.com/docs/libraries/java.md
+      # Rust
+      - https://posthog.com/docs/libraries/rust.md
       # PHP
       - https://posthog.com/docs/libraries/laravel.md
       - https://posthog.com/docs/libraries/php.md
+      - https://posthog.com/docs/libraries/wordpress.md
       # Ruby
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
@@ -83,4 +122,9 @@ variants:
       - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/libraries/ios/configuration.md
       - https://posthog.com/docs/libraries/flutter.md
+      - https://posthog.com/docs/libraries/kmp.md
       - https://posthog.com/docs/libraries/react-native.md
+      - https://posthog.com/docs/libraries/capacitor.md
+      - https://posthog.com/docs/libraries/unity.md
+      - https://posthog.com/docs/libraries/godot.md
+      - https://posthog.com/docs/libraries/roblox.md

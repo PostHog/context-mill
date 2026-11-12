@@ -16,12 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
-  - id: sendgrid
-    display_name: SendGrid
-    tags: [sendgrid]
-  - id: postmark
-    display_name: Postmark
-    tags: [postmark]
   - id: mailgun
     display_name: Mailgun
     tags: [mailgun]

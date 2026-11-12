@@ -23,6 +23,10 @@ send them as person properties instead. Fall back to email only when the app tru
 no other stable key, and say so in your handoff — do not invent one by altering the
 app's schema.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target. Workers, queues and shared packages belong to the app. Leave a separately run
+MCP server's files to the `mcp-analytics` task. If the MCP server is the whole project, it is your target.
+
 Work out first what you are in: a client-only app, a fullstack or SSR app, or a
 backend or API. Identification takes a different shape in each, and the shape
 follows from that answer:
