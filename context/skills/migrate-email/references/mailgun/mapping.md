@@ -29,7 +29,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
-| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | none, as Step 7 says | Mailgun sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
+| Open and click tracking: `o:tracking`, `o:tracking-opens`, `o:tracking-clicks`, or none of them | none, as Step 7 says | Its emails had no open pixel and the person doesn't agree to PostHog's, or nobody knows whether they had one. See "Tracking" below. A field set to `no` or `false`, or a setter such as Go's `SetTrackingClicks(false)`, counts as set: it turns that tracking off for the send, whatever the domain's setting |
 | An `Idempotency-Key` request header | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | `o:deliverytime`, `o:deliverytime-optimize-period`, `o:time-zone-localize`, `o:deliver-within` | none | Always. PostHog's send doesn't take it yet |
 | `recipient-variables`, on a send with one address in `to` and its own `subject`, `text`, or `html` | none: the code puts the values into the subject and the content before the send | `to` holds more than one address, or the send sets `template`. Otherwise Mailgun replaced each `%recipient.<name>%` in the subject, the text, and the HTML with the value of `<name>` in the entry of the `to` address. The code does the same with a plain string replace, under the escaping rule of `template-to-code.md`, and sends the result. Mailgun's docs don't say whether it escaped the value, so escape it in the HTML, unless the code builds it as HTML. A name the entry can lack, or a value that can be anything but a string or a whole number, keeps the site: the docs don't say what Mailgun writes for it. Go's `AddRecipientAndVariables` sets `to` and `recipient-variables` together |
@@ -42,10 +42,10 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 
 - Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Clicks, for a site that moves to a template made in PostHog: Mailgun tracked them when the send's `o:tracking-clicks`, else its `o:tracking`, else the domain's click tracking was on. `htmlonly` tracks the links of the HTML part, the part the template sends, so it counts as tracked. When Mailgun didn't track them, or the site sets neither field and the domain's click tracking is not given, Step 3 asks the person to mark the template sensitive, as it says under "A template in PostHog".
-- Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- Opens untracked, because the send's `o:tracking-opens`, else its `o:tracking`, is `no` or `false`, or the site sets neither and the domain's open tracking is off: its emails had no open pixel. Step 3 asks the person about PostHog's, as it says under "Opens the provider didn't track". Without their yes, the site stays, and the reason is `open tracking off`.
 - `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays, and the reason is `conflicting open tracking`.
 
-When a site sets neither `o:tracking-opens` nor `o:tracking`, ask the person once for each sending domain whether its open and click tracking are on, or read them as `account.md` says. When the domain's open tracking is not given, the site stays, and the reason is `domain tracking not checked`.
+When a site sets neither `o:tracking-opens` nor `o:tracking`, ask the person once for each sending domain whether its open and click tracking are on, or read them as `account.md` says. When the domain's open tracking is not given, nobody knows whether the site's emails had an open pixel: the site stays, and the reason is `open tracking not checked`, as Step 3 says under "Opens the provider didn't track".
 
 A domain with unsubscribe tracking on adds an unsubscribe footer to every email Mailgun sends from it, though the site's content holds no unsubscribe link. PostHog adds none, so the moved email would lose it. Ask about it, or read it, with the other tracking settings of each sending domain, for every site. When it is on, the domain's sites stay, and the reason is `Mailgun adds an unsubscribe footer`. When it is not given, they stay too, and the reason is `domain unsubscribe footer not checked`.
 
@@ -80,7 +80,7 @@ The rewrite file says under "The answer" how PostHog's SDK reports an error in i
 |---|---|
 | A `catch` or `rescue` that reads `err.status`, `err.statusCode`, `err.details`, `err.message`, `e.status`, `getResponseCode()`, `getResponseBody()`, or an `UnexpectedResponseError`'s `Actual` or `Data` | It branches on Mailgun's error text. A branch on the HTTP status moves: read PostHog's error name `validation_error` for a `400`, and PostHog's status code for any other status, as the Rewrite section says |
 | A check of `response.status_code`, `response.ok`, `raise_for_status()`, `res.status`, `getStatusCode()`, or `StatusCode` | Never. Read PostHog's error instead, as the Rewrite section says |
-| A client that sends nothing: a Ruby client in test mode, `Mailgun.configure` with `test_mode = true` or `enable_test_mode!` on the client, which keeps the message in `Mailgun::Client.deliveries`, or a Python `Client(..., dry_run=True)`, which answers the request locally | Always, when the app turns it on outside its tests, such as from an env setting. When only the tests turn it on, the site moves: note in the report each place that turns it on and each test that reads `Mailgun::Client.deliveries` or the dry-run answer, since those tests now need the PostHog send stubbed |
+| A client that sends nothing: a Ruby client in test mode, `Mailgun.configure` with `test_mode = true` or `enable_test_mode!` on the client, which keeps the message in `Mailgun::Client.deliveries`, or a Python `Client(..., dry_run=True)`, which answers the request locally | Always, when the app turns it on outside its tests, such as from an env setting. When only the tests turn it on, the site moves: note in the report each place that turns it on and each test that reads `Mailgun::Client.deliveries` or the dry-run answer, since those tests now run the real PostHog SDK and intercept its send request, as Step 8 says |
 | The message `id` stored for a webhook handler or an Events API read | Always, when the handler or the read uses it |
 | The message `id` logged or stored for the app's own use | Never. Use PostHog's message id, for a send that goes out: a suppressed send has none, as the Rewrite section says under "Errors" |
 | A send the code can cancel, such as a `fetch` or axios request with a `signal` a caller passes in or an `AbortController` it aborts, or a Go `context` or .NET cancellation token that a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as "HTTP" in the Rewrite section says |
@@ -121,7 +121,7 @@ Mailgun templates are Handlebars, with the block helpers `if`, `unless`, `each`,
 - A site that sets `text` or `html` next to `template` stays: Mailgun's docs don't say which part it sends then, and the rewrite would drop one.
 - A `from`, `subject`, or `h:Reply-To` that the site sets wins over the version's header, as Mailgun's docs say. When neither the site nor the version sets a sender, Mailgun sent from `postmaster@<sending domain>`: write that address in the site's `from` column.
 - Mailgun's docs don't name a host for images that its template editor uploads. List each image whose URL has `mailgun` in its host, as `template-to-code.md` says.
-- A template site follows "Tracking" like any other site: it stays when Mailgun sent it with opens untracked.
+- A template site follows "Tracking" like any other site.
 
 ### Templates made in PostHog
 
@@ -153,7 +153,7 @@ Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `
 - Any other helper, `{{@index}}`, a partial, a block inside `{{#each}}` that reads a value outside the loop with `../`, and `%recipient.<name>%` or an unsubscribe variable keep the template on Mailgun.
 - The site's values, as "Templates" says, become `templateData`.
 - The PostHog template carries its own sender, reply-to address, and subject. Tell the person to put the version's `From`, `Reply-To`, and `Subject` headers into it, for each one the site doesn't set. A site that sets `from`, `h:Reply-To`, or `subject` next to `template` moves only when the value is the same in every send, and the person puts it into the PostHog template. Otherwise it stays.
-- A template site follows "Tracking" like any other site: it stays when Mailgun sent it with opens untracked, or its open tracking isn't checked.
+- A template site follows "Tracking" like any other site.
 
 ## Webhooks
 
@@ -171,6 +171,8 @@ Mailgun's webhooks stop getting events for a site that moves. PostHog records th
 | `temporary_fail`, `unsubscribed` | none |
 
 PostHog's events carry no Mailgun message id, no `user-variables`, and no Mailgun tags. A site whose events a handler matches by `message.headers["message-id"]`, by a `v:` or `X-Mailgun-Variables` value, or by an `o:tag` stays on Mailgun. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a handler acts on for an event that has no PostHog event in the table, `temporary_fail` or `unsubscribed`, stays, and the reason is `its <event> events feed a webhook handler`.
 
 A site whose emails a `clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 

@@ -54,6 +54,8 @@ A site that sets no open or click tracking field sends with its domain's setting
 
 **Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active`, `tracking.click.active`, and `tracking.unsubscribe.active`.
 
+For a site that sets neither `o:tracking-opens` nor `o:tracking`, open tracking off means the site's emails had no open pixel, and no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+
 For a site that moves to a template made in PostHog, click tracking off means Mailgun didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog". A send's own tracking fields override the domain's setting, as `mapping.md` says under "Tracking".
 
 ## Suppression list
