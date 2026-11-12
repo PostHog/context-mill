@@ -144,6 +144,52 @@ describe('migrate-email skill', () => {
             expect(mapping).toMatch(/`""` renders as nothing, not as the fallback/);
         });
 
+        it('writes a JavaScript or TypeScript email as a React Email component, unless the app runs its source without compiling JSX', () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/1\. \*\*React Email\*\*, for JavaScript or TypeScript\. It is the default there, also when the app has no React Email package yet/);
+            expect(guide).toMatch(/Never add `@react-email\/components`: it is deprecated/);
+            expect(guide).toMatch(/Use the string-built `node` row only when the part that sends can't take React Email: Node\.js runs its source as it is/);
+            expect(guide).toMatch(/`emails\/<Name>Mail\.tsx` in TypeScript, or `emails\/<Name>Mail\.jsx` in JavaScript/);
+            expect(read('rewrite-node.md')).toMatch(/For a site that renders a React Email component, also run the build/);
+        });
+
+        it('renders the HTML and the text part from one component, with a preview of every email on react-email 6', () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/the HTML with `render\(element\)` and the text with `toPlainText\(html\)`/);
+            expect(guide).toMatch(/A React Email package without `toPlainText`, such as `@react-email\/render` before 1\.2, renders the text with `render\(element, \{ plainText: true \}\)`/);
+            expect(guide).toMatch(/Add the preview only with `react-email` 6 or later/);
+            expect(guide).toMatch(/`email dev --dir emails`/);
+            expect(guide).toMatch(/only when it has a default export, and skips every folder whose name starts with `_`/);
+            expect(guide).toMatch(/Set `PreviewProps` on the component/);
+            expect(read('9-report.md')).toMatch(/look at it with the preview script/);
+        });
+
+        it('greets the recipient by name and records the greeting of every email', () => {
+            const guide = read('template-to-code.md');
+
+            expect(guide).toMatch(/Greet the recipient by the name the app knows them by at the site/);
+            expect(guide).toMatch(/The name is a value the render takes, not a field of the send/);
+            expect(guide).toMatch(/each email's greeting: the name it uses, or why it has none/);
+        });
+
+        it('imports render from react-email from version 6 on, and installs a renderer before it', () => {
+            expect(read('resend/mapping.md')).toMatch(/`import \{ render \} from 'react-email'` from version 6 on/);
+            expect(read('rewrite-node.md')).toMatch(/`render` from `react-email` from version 6 on/);
+            expect(read('rewrite-node.md')).toMatch(/Add `@react-email\/render` when the app has an older React Email package that exports no `render`/);
+        });
+
+        it("names each line only the provider's own text part had, so the person decides whether the email needs it", () => {
+            expect(read('template-to-code.md')).toMatch(/When the provider template had its own text part, compare it with the rendered one/);
+            expect(read('9-report.md')).toMatch(/each line only the provider's text part had/);
+        });
+
+        it('lets only a component written for a template brought into the code add the text part', () => {
+            expect(read('resend/mapping.md')).toMatch(/A template without `text` sends `html` only, unless the email is a React Email component/);
+            expect(read('7-rewrite.md')).toMatch(/and the text part of a React Email component written for a template brought into the code/);
+        });
+
         it("lets the site's own from, reply-to and subject win over the template's", () => {
             const mapping = read('resend/mapping.md');
 

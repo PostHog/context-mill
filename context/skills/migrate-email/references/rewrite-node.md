@@ -9,7 +9,7 @@ For a site in JavaScript or TypeScript that runs on a server: Node.js, or an edg
 
 ## Install
 
-Install or upgrade `posthog-node` to its latest release with the project's package manager. Install `@react-email/render` too when a site renders a component and the app doesn't have it.
+Install or upgrade `posthog-node` to its latest release with the project's package manager. A site that sends a component renders it with `render` from `react-email` from version 6 on. Before it, `render` comes from `@react-email/components` or `@react-email/render`, whichever the app has. Add `@react-email/render` when the app has an older React Email package that exports no `render`, such as `react-email` before version 6, which is only the preview tool. Add `react-email` when the app has no React Email package. `template-to-code.md` says what an email brought into the code adds.
 
 ## The client
 
@@ -33,7 +33,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 - Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, and `captureEngagement` optional.
 - `replyTo` takes one address or a list of addresses.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
-- A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
+- A component the provider rendered, such as React Email, is rendered in the app with the `render` that "Install" names, and sent as `html`.
 
 ## The answer
 
@@ -45,4 +45,4 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## Check
 
-The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck.
+The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. For a site that renders a React Email component, also run the build, or the way the app starts the part that sends, so a runtime that can't load JSX fails here.
