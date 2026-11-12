@@ -23,7 +23,7 @@ A sending domain set up at Loops carries these records. Keep all of them until t
 
 ## Migration key
 
-Loops API keys have no permissions to choose: every key can send and change the account. So the run never reads the app's own key. When the person chooses the API over the dashboard for template content, or when the suppression import below checks addresses, whichever comes first, ask them to create a separate key for the migration in Loops (Settings, then API, then Generate key), store it in `LOOPS_MIGRATION_API_KEY` in the git-ignored env file, and note in the plan that the run created it. Use it only for the reads below. Its last use is the suppression check in Step 5. At the end of Step 5, on every way out of it, ask the person to revoke the key in Loops (the trash icon next to it on the API settings page) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+Loops API keys have no permissions to choose: every key can send and change the account. So the run never reads the app's own key. When the person chooses the API over the dashboard for template content, or when the suppression import below checks addresses, whichever comes first, ask them to create a separate key for the migration in Loops (Settings, then API, then Generate key), store it in `LOOPS_MIGRATION_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Use it only for the reads below. Its last use is the suppression check in Step 5. At the end of Step 5, on every way out of it, ask the person to revoke the key in Loops (the trash icon next to it on the API settings page) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 An app with several Loops teams, one per sending domain, needs one migration key per team: each team's emails and contacts are visible only to its own keys. Match each site to its team by the API key variable its client reads. Ask for one key per team, each in its own variable, such as `LOOPS_MIGRATION_API_KEY_MAIL_EXAMPLE_COM`, read each team's emails and audience with its own key, and ask the person to revoke every one at the end of Step 5.
 
@@ -55,7 +55,7 @@ A preview send is also how you read a theme or a social icon that the API doesn'
 
 **An email made from MJML.** The API answers `409`, and the editor shows the **Code** option. Ask for the preview send: its HTML is the MJML that Loops compiled. When the person has the MJML file they uploaded, and it has no `<loops-array>` and no `img` folder, you can instead compile it once with the MJML CLI, in a folder in the system's temporary folder, only when the person allows it. Never add MJML to the app. Without either, the site stays, and the reason is `MJML email not compiled`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 

@@ -31,10 +31,10 @@ The Loops email itself sets the rest, in its sending settings. The template chec
 
 A site with no idempotency key sends none in PostHog either.
 
-**Tracking.** Loops tracks no opens or clicks on a transactional email. PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes neither. Ask the person once, for all Loops sites, whether PostHog may add its open pixel to emails that never had one:
+**Tracking.** Loops tracks no opens or clicks on a transactional email. PostHog adds its open pixel to every email it sends, to count opens. It treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks. A template made in PostHog that is not marked sensitive has its links rewritten, to count clicks. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes none of this. Ask the person once, for all Loops sites, whether PostHog may add this tracking to emails that never had it:
 
-- Yes: the sites move, and the report says that PostHog now counts their opens.
-- No, or no answer: every site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
+- Yes: the sites move, and the report says that PostHog now counts their opens, and the clicks of each template made in PostHog that is not marked sensitive.
+- No, or no answer: every site stays, and the reason is `open tracking off`: PostHog would add tracking the email never had.
 
 ## Calls
 
@@ -64,7 +64,7 @@ Loops' official SDKs throw or raise on an API error, and the Go SDK returns an e
 | A `catch` or a `sendMail` callback that reads a Nodemailer error's `code` or `responseCode`, such as `EAUTH` or `550` | Always. They are SMTP codes, and PostHog's error has none of them. A `catch` or callback that handles every error the same way moves |
 | A loop around the send that tries again on `429`, such as one that waits for the `Retry-After` header | Never. Keep the loop and the code in it. It now tries again when PostHog's error has the status code `429` and a code other than `quota_limited`: a retry doesn't clear a quota. PostHog's error has no headers, so a wait read from `Retry-After` takes the loop's own fallback, or 1 second when the loop has none. Note both changes in the plan row, and that PostHog's SDK already retries a rate limit twice inside each send, so each pass of the loop can make 3 requests. A loop that tries again on a `5xx` keeps its check, which reads PostHog's status code |
 | A read of a message id in Loops' answer | Never happens: Loops answers `{ success: true }` only |
-| A deadline or retry setting on the Loops request, such as `timeout=5`, `AbortSignal.timeout(5000)`, or a retry adapter on the HTTP session | Never. The rewrite file names no way to carry it to PostHog's client, which uses its own timeout and retries, so the send can take longer to fail than the code allowed. Note it in the plan row, with the setting it had |
+| A send the code can cancel, such as a `fetch` or axios request with a `signal` a caller passes in or an `AbortController` it aborts, or a Go request built with `http.NewRequestWithContext` and a context a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` does: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline moves, as "HTTP" says |
 
 An idempotency key that the code sent to Loops and now sends to PostHog can send the email twice when a retry crosses the deploy: the first try went to Loops, the retry goes to PostHog. Note each such key for the report.
 
@@ -147,7 +147,11 @@ When the content is a preview send instead of the API's LMX, as `account.md` say
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Loops email, makes it transactional, and gives you its template ID. Until then the site stays on Loops. Loops' data variables become Liquid in the PostHog template. Values move under `variables`, and each name keeps its case. The editor, MJML, and LMX write a variable three ways:
+Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Loops email and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Loops.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+
+Loops' data variables become Liquid in the PostHog template. Values move under `variables`, and each name keeps its case. The editor, MJML, and LMX write a variable three ways:
 
 | Loops | PostHog |
 |---|---|
@@ -192,10 +196,14 @@ Loops' webhook stops getting events for a site that moves. PostHog records the e
 | `email.hardBounced` | `$workflows_email_bounced` |
 | `email.spamReported` | `$workflows_email_blocked` |
 | `email.softBounced` | none |
-| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops. PostHog never rewrites the links of these sends, so it counts no clicks |
+| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops, and one through a template made in PostHog that is not marked sensitive also gets `$workflows_email_link_clicked` |
 | `email.unsubscribed`, `email.resubscribed`, `campaign.email.sent`, `loop.email.sent`, `contact.*` | none. They are about campaigns, workflows, and contacts, which stay on Loops |
 
 A Loops send sets nothing that comes back in an event apart from its `transactionalId` and the recipient, so no handler keeps a site on Loops. For every handler that reads events with `sourceType` `transactional`, or that does not check `sourceType`, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler keeps working for the sites that stay, and for campaign and workflow events. Never change it.
+
+## Calls that change the suppression list
+
+Step 5 says what to do with each of these calls. They are not sends, and they stay on Loops. Each removes an address from Loops' suppression list: `removeContactSuppression` (Node.js), `RemoveContactSuppression` (Go), `removeSuppression` (PHP), `remove_suppression` (Ruby), and `DELETE /api/v1/contacts/suppression`. Loops has no call that adds one: it suppresses an address only after a hard bounce or a spam complaint. The import takes every address Loops suppressed, so every removal counts.
 
 ## Rewrite
 
@@ -216,10 +224,17 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 By source:
 
 - Node.js `loops.sendTransactionalEmail({ transactionalId, email, dataVariables, headers })`: the fields of that object.
-- Go `client.SendTransactional(loops.SendTransactionalRequest{...})`: `posthog.CodeEmail{To, TemplateKey, Subject, HTML, From, ReplyTo, DistinctID, IdempotencyKey}`, or `posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey}` for a template made in PostHog, sent with `client.Emails().Send(context.Background(), ...)`. Loops' call took no `context.Context`, so its send never stopped when a request ended: never pass the function's own context, which can be cancelled with its request.
+- Go `client.SendTransactional(loops.SendTransactionalRequest{...})`: the fields of that request. Loops' call took no `context.Context`, so its send never stopped when a request ended: pass `context.Background()`, as `rewrite-go.md` says for a site without one, never the function's own context.
 - PHP `$loops->transactional->send(transactional_id:, email:, data_variables:, headers:)` and Ruby `LoopsSdk::Transactional.send(transactional_id:, email:, data_variables:, headers:)`: `to`, `template_key`, `subject`, `html`, `from`, `reply_to`, and `idempotency_key`, or `template_id` and `template_data` for a template made in PostHog.
 - A raw HTTP body or a community package's call: the same fields of its body.
-- Nodemailer `transporter.sendMail({ to, from, subject, text: JSON.stringify(body) })` through `smtp.loops.so`: the fields of `body`, never the message's own `to`, `from`, `subject`, or `text`, which Loops ignored or read as its body. Where `sendMail` returned a promise, throw from PostHog's error as the Node.js bullet below says. Where it took a callback, call the same callback with that error, or with `null` and PostHog's answer. Where the code reads `info.messageId`, from the promise or the callback, it reads PostHog's message id: `data.id`.
+- Nodemailer `transporter.sendMail({ to, from, subject, text: JSON.stringify(body) })` through `smtp.loops.so`: the fields of `body`, never the message's own `to`, `from`, `subject`, or `text`, which Loops ignored or read as its body. Where `sendMail` returned a promise, throw from PostHog's error as the Node.js bullet below says. Where it took a callback, call the same callback with that error, or with `null` and PostHog's answer. Where the code reads `info.messageId`, from the promise or the callback, it reads PostHog's message id: `data.id`. A suppressed send has none: when the code uses it for more than a log line, such as storing it, the site stays, and the reason is `uses the message id of a suppressed send`.
+
+**HTTP.** A request to `https://app.loops.so/api/v1/transactional`, or to the base URL the client sets, becomes the SDK's send in that language. A request with its own deadline keeps it, as Step 7 says under "Set up the client". A deadline is a fixed time limit the site set on its request: `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, `requests.post(..., timeout=5)` or an `httpx` timeout, Faraday's `timeout` or `open_timeout`, Guzzle's `timeout`, a Go `http.Client{Timeout: ...}` or a context from `context.WithTimeout`. Two SDK sites can have one too:
+
+- PHP: a Guzzle client with `timeout`, given to the Loops client with `$loops->setHttpClient(...)`.
+- Go: `loops.WithHTTPClient(&http.Client{Timeout: ...})`. It limits each try, and Loops' Go client retried twice, as PostHog's does: the send gets a client of its own with `EmailRequestTimeout` set to it, as `rewrite-go.md` says under "A deadline", and keeps PostHog's retries. The 5-second timeout of Loops' default Go client is not the site's own, so a site without `WithHTTPClient` sends through the first client.
+
+A retry setting alone, such as urllib3's `Retry` on a `requests` session, is not a deadline. Nor is a signal or context a caller can cancel: see "Code around the send".
 
 **Errors.** Keep the site failing the same way it did, and never widen a catch. Loops' SDKs raise three kinds of error apart: an answer from Loops (`APIError`), a rate limit (`RateLimitExceededError` in Node.js and PHP, `LoopsSdk::RateLimitError` in Ruby), and a network error, which is the HTTP client's own error. PostHog answers all three as its one email error, with the code `network_error` for a network error that is left after its retries. So a branch that handled one kind checks PostHog's `code` or status code, and every other error is thrown, raised, or returned as before. Where a later, broader handler of the same `try`, such as `rescue StandardError` or `catch (\Exception $e)`, took the network error, the merged handler runs that handler's code for `network_error` instead of raising it, as Step 7 says: a raise inside one handler skips the handlers after it. Loops answers an invalid send with `400`. A branch on that status becomes a branch on PostHog's error name `validation_error`, never on a status code, as Step 7 says: PostHog's statuses for invalid sends differ from Loops'. Status checks for other statuses, such as `429` or `401`, stay status checks. When the same `try`, `rescue`, or error check also covers a Loops call that stays, such as a contact call or `sendEvent`, keep its Loops handling for that call next to PostHog's: a second `catch (APIError $e)` in PHP, a second `rescue LoopsSdk::APIError` in Ruby, `err instanceof APIError ||` before the PostHog check in Node.js, or a second `errors.As` on `*loops.APIError` in Go:
 
