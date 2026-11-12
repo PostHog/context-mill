@@ -30,6 +30,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Stable PostHog distinct ID. The primary key, not the email, which can
+     * change and would split one person's history in two.
+     */
+    public function getPostHogDistinctId(): string
+    {
+        return (string) $this->getKey();
+    }
+
+    /**
      * Get PostHog person properties for this user.
      */
     public function getPostHogProperties(): array

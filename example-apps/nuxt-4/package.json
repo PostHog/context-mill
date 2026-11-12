@@ -10,9 +10,9 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@posthog/nuxt": "^1.7.80",
+    "@posthog/nuxt": "^1.9.0",
     "nuxt": "^4.3.0",
-    "posthog-node": "^5.24.7",
+    "posthog-node": "^5.64.0",
     "vue": "^3.5.27",
     "vue-router": "^4.6.4",
     "zod": "^3.23.8"
