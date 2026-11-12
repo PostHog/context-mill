@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Amazon SES account. The agent never changes the account: it reads what the person exports or allows.
 
-Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's Region setting names one, or the environment the app runs with, `AWS_REGION`, or `AWS_DEFAULT_REGION` for boto3. `sdk-reference.md` says under "Regions" which setting each SDK reads. Read each of them. Each Region answers on its own host, `email.<region>.amazonaws.com`, so every command in this file sets `--region` to the Region it reads. `sdk-reference.md` names the setting each SDK picks the Region with. When the client also sets an endpoint, add `--endpoint-url` with that same URL to every command, so it reads the account the app sends with.
+Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's Region setting names one, or the environment the app runs with, `AWS_REGION`, or `AWS_DEFAULT_REGION` for boto3. Read each of them. Each Region answers on its own host, `email.<region>.amazonaws.com`, so every command in this file sets `--region` to the Region it reads. `sdk-reference.md` names the setting each SDK picks the Region with. When the client also sets an endpoint, add `--endpoint-url` with that same URL to every command, so it reads the account the app sends with.
 
 ## DNS records
 
