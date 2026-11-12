@@ -14,7 +14,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `html` | `html` | Never |
 | `text` | `text` | Never |
 | `react` (Node.js only) | `html`, rendered in the app | Never. The app renders the component |
-| `template` | a template made in PostHog, sent by its `templateId` with `templateData` | The person keeps it on Resend for now, its content can't be read, it uses syntax beyond variables and fallbacks, the app fills a variable with HTML, or the site sets `from`, `replyTo`, or `subject` next to it |
+| `template` | the template's email, brought into the code and rendered with the site's `variables`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always. PostHog's send doesn't take it yet |
@@ -45,8 +45,33 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 ## Content
 
 - `html`, `text`, and `react` content is rendered for one recipient before the send. PostHog sends it as it is.
-- A `template` site moves only to a template made in PostHog. This skill never makes one: the person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
-- The check needs the template's content, because the code has only its id. `account.md` says how to get it.
+
+## Templates
+
+A `template` site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its id or alias. `account.md` says how to get it. The code renders the template's HTML, text, and subject with the site's `variables`, and the send sets the rendered `subject`, `html`, and `text`.
+
+Resend templates hold only variables, with an optional fallback. In the code:
+
+| Resend | In the code |
+|---|---|
+| `{{{NAME}}}` in the HTML | The value. Resend inserts it as it is and never escapes it, so it falls under the rule of `template-to-code.md`: escape it, unless the code builds it as HTML itself, such as a link or a list it joins. Then insert it as it is, and name it in the plan row |
+| `{{{NAME}}}` in the subject or the text | The value as it is, with no escaping |
+| `{{{NAME\|there}}}`, and a variable whose definition has a `fallback_value` | The value, or the fallback when the site doesn't pass the variable. Resend inserts an empty string as it is, so `""` renders as nothing, not as the fallback. A fallback is the template's own text: in the HTML it goes in as it is, so a fallback that holds HTML, such as a link, renders as before |
+| A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
+| The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
+| The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way |
+| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only |
+
+Write the `\|` above as a plain `|`. The table escapes it.
+
+- Any other syntax in the template, such as a section, a loop, or a condition, keeps it on Resend: these files say what only variables and fallbacks do. The reason names the syntax.
+- A variable the template reads without a fallback, which the site can leave out, keeps the template on Resend: these files don't say what Resend renders then. The reason is `<NAME> can be missing`. A site that always passes it moves.
+- These files name no host where Resend keeps a template's images. List each image whose host isn't the app's own, and ask the person once whether Resend hosts any of them, so the report can name those, as `template-to-code.md` says.
+
+### Templates made in PostHog
+
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
+
 - In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and the name keeps its case. `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`, and a variable with a `fallback_value` in the template's definition gets the same `default`. Quote every fallback with `'`: a `"` inside the template's JSON body raises `TokenizationError`. Liquid has no escape character in a quoted value, so a fallback that holds a `'` keeps the site on Resend.
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
 - Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output, and such a variable keeps the site on Resend. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
@@ -67,9 +92,11 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - A send with rendered content gets a template key, as Step 7 says.
 - The idempotency key moves into the send, under the PostHog SDK's name for it.
 
+**Templates brought into the code.** The site renders the email from its `variables`, as "Templates" says, and sends the template key, the rendered subject, HTML, and text, and the `from` and reply-to address: the site's own where it sets them, otherwise the template's. It sends no template ID and no template data.
+
 **Templates made in PostHog.** The site sends the template ID the person gave, and the template data with the site's `variables`. It sends no template key, subject, body, `from`, or reply-to address: the template holds them.
 
-**HTTP.** A request to `https://api.resend.com/emails`, through `fetch`, `axios`, `requests`, `httpx`, `net/http`, Faraday, Guzzle, `HttpClient`, `reqwest`, `Req`, or `curl`, becomes the SDK's send in that language. The `Idempotency-Key` header becomes the send's idempotency key. Code that read the response status reads the SDK's error instead.
+**HTTP.** A request to `https://api.resend.com/emails`, through `fetch`, `axios`, `requests`, `httpx`, `net/http`, Faraday, Guzzle, `HttpClient`, `reqwest`, `Req`, or `curl`, becomes the SDK's send in that language. The `Idempotency-Key` header becomes the send's idempotency key. Code that read the response status reads the SDK's error instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, or `requests.post(..., timeout=5)`, keeps it: set the PostHog client's email request timeout to that value, and turn off the send's retries, since the request never retried, such as `emailRequestTimeoutMs` on the client and `maxRetries: 0` on the send in Node.js. The SDK otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. When sites use different deadlines, set the shortest, and note the sites whose deadline it shortens. When the SDK has no such option, the site stays on Resend: `moves: no — the PostHog SDK can't keep the request's deadline`.
 
 **Suppressed recipients.** Resend takes a send to a suppressed address and drops it later. PostHog refuses it with the error code `recipient_suppressed` (name `validation_error`). When the site throws, retries, or reports a failure on any error, handle that code before that branch, as the rewrite file shows, the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 
@@ -106,7 +133,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `client.Emails.Send(params)`, `SendWithContext(ctx, params)`, and `SendWithOptions(ctx, params, &resend.SendEmailOptions{IdempotencyKey: key})` become `client.Emails().Send(ctx, posthog.CodeEmail{...})`. Pass the site's context, or `context.Background()` where the old call had none. `Html` becomes `HTML`, and the options' `IdempotencyKey` moves into the email.
 - Both answer a pointer and an error: `resp.Id` becomes `result.ID`.
-- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names.
+- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names. Every other check of a Resend error, such as one for the rate limit, with its own type or sentinel, becomes `errors.As` with `*posthog.EmailError` and a check of `StatusCode`, such as `StatusCode == 429`.
 
 ### .NET
 

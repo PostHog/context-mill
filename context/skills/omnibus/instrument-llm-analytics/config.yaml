@@ -3,7 +3,7 @@ type: skill
 template: description.md
 category: llm-analytics
 description: Add PostHog AI Observability to trace AI model usage. Use after implementing LLM features or reviewing PRs to ensure all generations are captured with token counts, latency, and costs. Also handles initial PostHog SDK setup if not yet installed.
-tags: [llm-analytics]
+tags: [llm-analytics, sdk-install]
 shared_docs:
   - https://posthog.com/docs/ai-observability/basics.md
   - https://posthog.com/docs/ai-observability/traces.md

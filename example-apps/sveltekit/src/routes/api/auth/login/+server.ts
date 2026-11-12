@@ -21,12 +21,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	// Capture server-side login event with user context
 	const posthog = getPostHogClient();
-	posthog.withContext(
+	posthog?.withContext(
 		{
 			distinctId: username,
-			personProperties: {
-				username,
-				createdAt: isNewUser ? new Date().toISOString() : undefined
+			properties: {
+				$set: {
+					username,
+					createdAt: isNewUser ? new Date().toISOString() : undefined
+				}
 			}
 		},
 		() => {
@@ -41,7 +43,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	);
 
 	// Flush events to ensure they're sent
-	await posthog.flush();
+	await posthog?.flush();
 
 	return json({ success: true, user });
 };
