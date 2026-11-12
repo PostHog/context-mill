@@ -61,7 +61,7 @@ Configure one server-side client for email in each language that has a site that
 
 - Set the secret key from `POSTHOG_PROJECT_SECRET_API_KEY`, which Step 6 set up. Read it, and the token and host, without raising when a variable is missing, as the rewrite file shows: Step 6 can leave the key unset, and an app that can't start takes down the sends that stay on the provider too. A send without the key fails with its own error.
 - Set the provider name to the value the provider's `mapping.md` names under "The PostHog client", when the client options take it. The SDK sends it with every email request, so PostHog knows that the sends moved from that provider.
-- Reuse the app's existing PostHog client in that language when it has one, and add the secret key and the provider name to it, unless its host is a reverse proxy or the rewrite file says to give email its own client.
+- Reuse the app's existing PostHog client in that language when it has one and it sets no key of its own, such as a secret key or a personal API key, and add the secret key and the provider name to it, unless its host is a reverse proxy or the rewrite file says to give email its own client. A client that already sets a key keeps it, and email gets its own client: the SDKs also use that key for local flag evaluation and remote config, so the email key would replace the app's key. Note it in the plan.
 - The rewrite file says whether the client loads feature flag definitions with the secret key, and what to set on a client that only sends email. Keep that setting unless the key also has `feature_flag:read` and the app uses local evaluation.
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
 - When the app's host is a reverse proxy, give email its own client with the host set to PostHog's own host, such as `https://us.i.posthog.com`, and leave the secret key off the app's existing client. A client with the secret key loads flag definitions from its host with it, when it starts or when it evaluates a flag, which would hand the key to the proxy.
@@ -71,7 +71,7 @@ Configure one server-side client for email in each language that has a site that
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events when engagement events are on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its sent, opened and clicked events when engagement capture is on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side PostHog captures.
 - At each site, pass the same ID for the recipient, such as `user.id`. Follow the recipient back through the callers when the site only has the address.
