@@ -32,6 +32,14 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
 
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- `Send` keeps to its context: pass a context with the site's deadline, such as `ctx, cancel := context.WithTimeout(ctx, 5*time.Second)` and `defer cancel()`, and set `MaxRetries: posthog.Ptr(0)` on the email. A context the caller can cancel cancels the send the same way.
+- The client also ends each request at its `EmailRequestTimeout`. A deadline up to that timeout needs no client of its own. A longer one needs a client of its own with `EmailRequestTimeout` set to it, or the send fails before the site's deadline.
+- `posthog.Config`'s `EmailRequestTimeout` is the time each email request may take, 15 seconds by default, and `EmailRequestMaxRetries` its retries, 2 by default.
+
 ## The answer
 
 - The send returns a `*posthog.SendEmailResult` and an error. `ID` is the message ID.
