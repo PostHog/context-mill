@@ -95,12 +95,6 @@ longer exist — only some keep an alias.
 |---|---|
 | `wizard migrate statsig` | `migrate-statsig` |
 | `wizard migrate resend` | `migrate-email-resend` |
-| `wizard migrate sendgrid` | `migrate-email-sendgrid` |
-| `wizard migrate postmark` | `migrate-email-postmark` |
-| `wizard migrate mailgun` | `migrate-email-mailgun` |
-| `wizard migrate loops` | `migrate-email-loops` |
-| `wizard migrate smtp` | `migrate-email-smtp` |
-| `wizard migrate amazon-ses` | `migrate-email-amazon-ses` |
 | `wizard migrate brevo` | `migrate-email-brevo` |
 
 **Commands vs. skills:** those audit subcommands **are** skills, promoted to

@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env*.local
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
