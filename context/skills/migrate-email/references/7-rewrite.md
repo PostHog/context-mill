@@ -48,6 +48,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 - When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
 - When `host` is a reverse proxy or a self-hosted instance, also set `appHost` to the PostHog app URL, such as `https://us.posthog.com`. posthog-node never sends the secret key to a proxy, and without `appHost` the send fails with `missing_app_host`.
 - Put a new client in its own server-only module, next to the provider's client, and import it where the sites send.
+- A site whose request had its own deadline keeps it: the provider's `mapping.md` says how, under "HTTP". Each distinct deadline gets its own client like the one above, with that timeout, in the same module.
 - Use the env variable names the app already uses for the PostHog token and host. Add each new name, without a value, to the env example file.
 
 ## Link emails to your users
