@@ -72,7 +72,7 @@ with smtplib.SMTP(os.environ["SMTP_HOST"], 587) as smtp:
 - They answer a dict of the recipients the server refused, empty when it took every one.
 - `msg.add_attachment(data, maintype=..., subtype=..., filename=...)`, or a `MIMEApplication` part with a `Content-Disposition` header, adds an attachment.
 - `sendmail(from_addr, to_addrs, msg)` takes the envelope apart from the message: `to_addrs` can hold recipients that no header names, which is how such code sends a bcc.
-- `aiosmtplib.send(msg, hostname=..., port=..., username=..., password=...)` is the async client, with the same message classes. Its errors are its own: `aiosmtplib.SMTPException` is not an `OSError`, and covers every failure of the send. Its connection and timeout errors, such as `SMTPConnectError`, `SMTPServerDisconnected`, and `SMTPTimeoutError`, are also `OSError`s, and its refusals, such as `SMTPRecipientRefused`, `SMTPSenderRefused`, and `SMTPDataError`, are not.
+- `aiosmtplib.send(msg, hostname=..., port=..., username=..., password=...)` is the async client, with the same message classes. Its errors are its own: `aiosmtplib.SMTPException` is not an `OSError`, and covers every failure of the send. Its connection errors, such as `SMTPConnectError` and `SMTPServerDisconnected`, are also `ConnectionError`s. Its timeouts, `SMTPTimeoutError` and its subclasses such as `SMTPReadTimeoutError`, are `TimeoutError`s but not `ConnectionError`s; 5.x subclasses the builtin `TimeoutError`, an `OSError`. Its refusals, such as `SMTPRecipientRefused`, `SMTPSenderRefused`, and `SMTPDataError`, are none of these.
 - The refusal classes of both clients carry any reply code: a temporary `4xx` refusal raises `SMTPDataError` or `SMTPSenderRefused` too.
 - smtplib sets no Message-ID. The code sets one with `email.utils.make_msgid()` when it needs it.
 
@@ -96,7 +96,7 @@ Mail.deliver do
 end
 ```
 
-- `deliver` raises the `Net::SMTP` error on a failure, such as `Net::SMTPAuthenticationError`, `Net::SMTPServerBusy`, `Net::SMTPSyntaxError`, `Net::SMTPFatalError`, or `Net::SMTPUnknownError`, unless the message or its `delivery_method` sets `raise_delivery_errors` to `false`: then it raises no error at all.
+- `deliver` raises the `Net::SMTP` error on a failure, such as `Net::SMTPAuthenticationError`, `Net::SMTPServerBusy`, `Net::SMTPSyntaxError`, `Net::SMTPFatalError`, or `Net::SMTPUnknownError`, unless the message's own `raise_delivery_errors` is `false`: then it raises no error at all. A `delivery_method` setting of that name changes nothing. `deliver` sends nothing when the message's `perform_deliveries` is `false`.
 - `Mail.register_interceptor(obj)` runs `obj.delivering_email(message)` on every message before `deliver` sends it, and can change it, such as the recipients of staging mail. `Mail.register_observer(obj)` runs `obj.delivered_email(message)` after each send.
 - `add_file filename:, content:`, `add_file '/path'`, and `attachments['name.pdf'] = data` add attachments.
 - `message_id` is the Message-ID, which the gem sets when the code doesn't.
@@ -172,7 +172,7 @@ await client.DisconnectAsync(true);
 - It throws on an error: `SmtpCommandException` (with `StatusCode`, `ErrorCode`, and `Mailbox`), `SmtpProtocolException`, or `AuthenticationException`.
 - `message.Cc`, `Bcc`, `ReplyTo`, `builder.Attachments.Add(...)`, `builder.LinkedResources`, and `message.Headers` set the rest. `message.MessageId` is the Message-ID.
 
-`System.Net.Mail.SmtpClient` sends a `MailMessage` with `From`, `To`, `CC`, `Bcc`, `ReplyToList`, `Subject`, `Body`, `IsBodyHtml`, `AlternateViews`, `Attachments`, `Headers`, and `Priority`. `Send` and `SendMailAsync` throw `SmtpException` (with `StatusCode`), `SmtpFailedRecipientException`, or `SmtpFailedRecipientsException`.
+`System.Net.Mail.SmtpClient` sends a `MailMessage` with `From`, `To`, `CC`, `Bcc`, `ReplyToList`, `Subject`, `Body`, `IsBodyHtml`, `AlternateViews`, `Attachments`, `Headers`, and `Priority`. `Send` and `SendMailAsync` throw `SmtpException` (with `StatusCode`), `SmtpFailedRecipientException`, or `SmtpFailedRecipientsException`. The older `SendAsync(message, userToken)` returns at once and reports the send's result and its error to a `SendCompleted` event handler instead of throwing them.
 
 **Elixir: `gen_smtp`.** `:gen_smtp_client.send_blocking({from, [to], body}, relay: host, port: 587, username: user, password: password, tls: :always)` sends a message body. The body is a string the code wrote, or the output of `:mimemail.encode({type, subtype, headers, params, parts})`. It answers the server's receipt as a binary on success, and an `{:error, ...}` tuple on a failure. `:gen_smtp_client.send/2` and `send/3` send in a spawned process and answer `{:ok, pid}` at once, and `send/3` calls a callback with the result.
 
