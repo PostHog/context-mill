@@ -11,18 +11,13 @@ class DashboardController < ApplicationController
       properties: { is_staff: user.is_staff }
     )
 
-    # PostHog: Check feature flag
-    @show_new_feature = PostHog.is_feature_enabled(
-      'new-dashboard-feature',
+    # PostHog: Evaluate all flags once for this user, then read from the snapshot
+    flags = PostHog.evaluate_flags(
       user.posthog_distinct_id,
       person_properties: user.posthog_properties
     )
-
-    # PostHog: Get feature flag payload for configuration
-    @feature_config = PostHog.get_feature_flag_payload(
-      'new-dashboard-feature',
-      user.posthog_distinct_id
-    )
+    @show_new_feature = flags.enabled?('new-dashboard-feature')
+    @feature_config = flags.get_flag_payload('new-dashboard-feature')
   end
 
   def enqueue_test_job

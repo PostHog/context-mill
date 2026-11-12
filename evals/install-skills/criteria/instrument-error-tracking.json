@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ph_sdk_installed",
+    "rubric": "PostHog SDK added to dependencies (posthog-js/posthog-node in package.json, posthog in requirements.txt, etc.) or a PostHog HTML `<script>` tag snippet is added. **These are two valid alternatives \u2014 do not require both.** If the app uses a `<script>` tag snippet, PostHog does NOT need to appear in package.json. If the app uses an npm/pip/gem package, it does NOT need a `<script>` tag. Either approach is a YES. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_initialized",
+    "rubric": "PostHog client correctly initialized using framework-appropriate pattern (refer to the PostHog documentation reference section for the correct pattern for this framework) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_api_key_env",
+    "rubric": "API key loaded from environment variable (not hardcoded) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "ph_host_configured",
+    "rubric": "API host correctly configured (points to correct PostHog host or reverse proxy endpoint) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO.\n\n**Architecture-aware rules:**\n\n- **Server-only** apps (Django, Flask, FastAPI, Express, Koa, Fastify, Rails): `ph_identify`, `ph_reverse_proxy`, `ph_screen_views`, and `ph_all_targets_initialized` are N/A. Evaluate server-side patterns only.\n- **Client-only** apps (React SPA, Angular, Svelte, Astro static): `ph_screen_views` and `ph_all_targets_initialized` are N/A \u2014 posthog-js autocaptures pageviews, and there is one target. All other items apply.\n- **Full-stack** apps (Next.js, TanStack Start): `ph_screen_views` and `ph_all_targets_initialized` are N/A, for the same reasons. All other items apply. Evaluate both client and server patterns.\n- **Mobile and desktop** apps (Flutter, React Native, iOS, Android, KMP): `ph_screen_views` applies. `ph_all_targets_initialized` applies only when the project ships more than one platform target.\n\n**Note:** Python SDK v7+ uses a context-based API. Do not flag `new_context()`, `capture()`, `identify_context()`, `tag()` patterns as errors."
+  },
+  {
+    "name": "et_exception_autocapture",
+    "rubric": "Exception autocapture is enabled the way PostHog's documentation for this platform says, so unhandled exceptions are captured without extra code. **N/A** only where the platform's PostHog SDK has no autocapture. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "et_manual_captures",
+    "rubric": "Handled errors are captured explicitly at error boundaries, catch blocks, or critical flows, with `posthog.captureException()` or the platform's equivalent. At least one real call site in the app's own code. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "et_valid_methods",
+    "rubric": "Every error tracking method and option the change uses exists in the PostHog SDK for this platform. Do NOT flag valid SDK methods as invalid or nonexistent. Hallucinated methods or options are NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "et_source_maps",
+    "rubric": "Source map upload is configured so stack traces resolve to original source, following the platform's PostHog documentation (build plugin, CLI step, or CI script). **N/A for server-only apps that ship no minified or compiled bundle.** Where upload needs a secret the agent cannot have, a configured step that reads it from the environment counts. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "et_existing_handling_preserved",
+    "rubric": "Existing error handling keeps its behavior: errors are still rethrown, logged, or shown as before, and any other error reporting tool already in the app is left in place. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

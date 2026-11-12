@@ -16,27 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
-  - id: sendgrid
-    display_name: SendGrid
-    tags: [sendgrid]
-  - id: postmark
-    display_name: Postmark
-    tags: [postmark]
-  - id: mailgun
-    display_name: Mailgun
-    tags: [mailgun]
-  - id: loops
-    display_name: Loops
-    tags: [loops]
-  - id: smtp
-    display_name: SMTP
-    tags: [smtp]
-  - id: amazon-ses
-    display_name: Amazon SES
-    tags: [amazon-ses]
-  - id: brevo
-    display_name: Brevo
-    tags: [brevo]
   - id: mailjet
     display_name: Mailjet
     tags: [mailjet]

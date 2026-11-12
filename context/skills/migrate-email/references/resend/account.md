@@ -24,13 +24,13 @@ The app's own Resend key is usually a sending-only key, and it can't read templa
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
+A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content.
 
 **Copy from the dashboard.** In Resend: Templates, then the template. Ask the person for its alias or name, its HTML, its plain text when it has one, its subject, its `from` and reply-to when they are set, and each variable's fallback.
 
 **Read from the API.** `GET https://api.resend.com/templates/{id or alias}` with `Authorization: Bearer $RESEND_FULL_ACCESS_API_KEY`. The answer holds `alias`, `name`, `subject`, `from`, `reply_to`, `html`, `text`, and `variables`, a list of `{ key, type, fallback_value }`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
 
 ## Suppression list
 
