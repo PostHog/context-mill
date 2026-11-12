@@ -156,9 +156,11 @@ Only for a template the person asks to make in PostHog, as Step 3 says. This ski
 | `{price}` inside the array block, an array item (the default) | `{{ item.price }}`, never `{{ variables.price }}` |
 | A variable inside the array block whose **Array item** option is **No** | `{{ variables.name }}` |
 | A section shown when `name` is not empty, LMX `if="{data.name}"` | `{% if variables.name and variables.name != '' %}…{% endif %}` |
-| A section shown when `name` is empty, `ifOperation="empty"` | `{% unless variables.name and variables.name != '' %}…{% endunless %}` |
-| `ifOperation="equal"` or `"not_equal"` with `ifValue="pro"` | `{% if variables.name == 'pro' %}…{% endif %}`, or `!=` |
-| `ifOperation="contains"` or `"not_contains"` with `ifValue="pro"` | `{% if variables.name contains 'pro' %}…{% endif %}`, or `{% unless … %}…{% endunless %}` |
+| A section shown when `name` is empty, `ifOperation="empty"` | `{% if variables.name == '' %}…{% endif %}`, which is false when `name` is left out |
+| `ifOperation="equal"` with `ifValue="pro"` | `{% if variables.name == 'pro' %}…{% endif %}` |
+| `ifOperation="not_equal"` with `ifValue="pro"` | `{% if variables.name and variables.name != 'pro' %}…{% endif %}` |
+| `ifOperation="contains"` with `ifValue="pro"` | `{% if variables.name contains 'pro' %}…{% endif %}` |
+| `ifOperation="not_contains"` with `ifValue="pro"` | `{% if variables.name %}{% unless variables.name contains 'pro' %}…{% endunless %}{% endif %}` |
 | An optional variable with a fallback value | `{{ variables.name \| default: 'there' }}` |
 | An optional variable without a fallback | `{{ variables.name }}` |
 
@@ -166,7 +168,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 
 - Quote every string in the Liquid with single quotes, as the table does. PostHog's email builder saves the template as JSON, which escapes double quotes, and the template then fails with a Liquid `TokenizationError`. A fallback or an `ifValue` that holds a `'`, or holds HTML such as a link, keeps the template on Loops.
 
-- Loops reads every data variable as text, so a conditional section shows when the value is not an empty string, and Liquid treats `""`, `0`, and `[]` as true. The Liquid for `if` and `empty` above checks for `''` itself, so it converts when the code always sends a string or a number, or leaves the value out. A condition on an array variable keeps the template on Loops.
+- Loops reads every data variable as text, so a conditional section shows when the value is not an empty string, and Liquid treats `""`, `0`, and `[]` as true. The Liquid for `if` and `empty` above checks for `''` itself, so it converts when the code always sends a string or a number, or leaves the value out. Loops leaves a section out when the code leaves its condition variable out, for every operator, so the Liquid above checks that the value is there before `empty`, `not_equal`, or `not_contains` can show it. A condition on an array variable keeps the template on Loops.
 - `equal`, `not_equal`, `contains`, and `not_contains` compare the value as text at Loops. Convert them only when the code always sends a string for that value. A number keeps the template on Loops.
 - An array block walks a list. Loops takes only a list of objects for it, so it always converts as the table says.
 - Inside an array block, a variable reads the current item unless its **Array item** option in the editor is set to **No**. Such an item variable becomes `{{ item.price }}`, never `{{ variables.price }}`. Loops has no variable for the whole item, only its fields.
