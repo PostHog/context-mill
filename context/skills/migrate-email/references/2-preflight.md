@@ -23,6 +23,10 @@ Check which PostHog MCP tools exist.
 
 Do not call a tool that changes anything to find out.
 
+The MCP speaks for one project: the one `project-get`, called without an ID, returns. When the app's project token, read only from its own line as Step 8 says, is not that project's `api_token`, the MCP's answers say nothing about the app's project. Ask the person to switch the MCP to the app's project. When they can't, record `api: not confirmed — the MCP can't see the app's project`, and ask the person, wherever a later step reads the project through the MCP, what that step would read.
+
+When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, and the person says it delivers in production, record `api: on — the app already sends code emails`: the project takes sends with content from the code too.
+
 Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
 
 ## The sending tier
