@@ -32,7 +32,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 - Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `sensitive`, and `tracking` optional. `tracking` takes `true`, `false`, or `{ opens, clicks, engagement }`. Open tracking off is `tracking: { opens: false }`. `captureEngagement` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
 - `replyTo` takes one address or a list of addresses.
-- `attachments` takes a list of up to 10 files, each `{ filename, content, contentType, contentId }`, with `content` as a Buffer, a `Uint8Array`, or a Base64 string, and `contentType` and `contentId` optional. A release whose send types have no `attachments` doesn't take files: upgrade, as Step 7 says.
+- Files: `attachments: [{ filename, content, contentType, contentId }]`, up to 10, with `contentType` and `contentId` optional. `content` is a Buffer, a `Uint8Array`, or a Base64 string: pass a file's text as `Buffer.from(text)`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
 
@@ -50,7 +50,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - A network error that is left after the retries comes back as `error` with the code `network_error`. A bad argument comes back as `error` too, with a code that starts with `invalid_`.
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
 - Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
-- A send with files fails with the code `attachment_upload_failed` when a file's upload failed, and with `field_not_accepted` when PostHog doesn't take files from the project yet. Neither sent an email.
+- A send with files can fail with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 
 ## Check
 

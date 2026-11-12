@@ -31,6 +31,7 @@ POSTHOG = PostHog::Client.new({
 
 - Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a hash with `opens`, `clicks`, and `engagement`. Open tracking off is `tracking: { opens: false }`. `capture_engagement:` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
 - `reply_to:` takes one address or a list of addresses.
+- Files: `attachments: [{ filename:, content:, content_type:, content_id: }]`, up to 10 hashes, with `content_type:` and `content_id:` optional. `content:` is a binary `String`, such as `File.binread(path)` gives, or Base64 text. Any other `String` is read as Base64, so a UTF-8 string, such as `File.read(path)` or a heredoc, fails with `invalid_attachment`: pass it as `text.b`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
 
 ## A deadline
@@ -46,6 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `SendResult`. Its `id` is the message ID.
 - On an API error it raises `PostHog::EmailError`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
 - Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`.
+- A send with files raises `PostHog::EmailError` with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - It raises the same `PostHog::EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
 - A bad argument raises `ArgumentError`, before any request.
 

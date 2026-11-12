@@ -84,7 +84,7 @@ A site that moves to a template made in PostHog keeps its `opens off` note too, 
 
 A site that sends files, which the provider calls attachments, moves only when every file can go through PostHog's send. The provider's `mapping.md` maps each file field to PostHog's, and says which of the provider's own file features keep a site. Whatever the provider, a site with files stays when:
 
-- its language's PostHog SDK has no release that takes files. The reason is `<SDK> has no attachments yet`. Step 7's table names the SDK of each language, and its rewrite file says from which release the send takes files.
+- its language's PostHog SDK has no release that takes files. The reason is `<SDK> has no attachments yet`. Step 7's table names the SDK of each language, and its rewrite file says how to tell whether a release takes files.
 - the list can hold more than 10 files, or the code builds it at run time and you cannot tell that it holds at most 10. The reason is `more than 10 files`.
 - a file can be larger than PostHog takes: the email with all its files must stay under 40 MB after Base64 encoding, about 29 MB of files. When the code reads a file whose size it doesn't bound, such as a user's upload, follow it to where it is made. The reason is `files can pass 40 MB`, unless the code already refuses larger files.
 - the provider fetches a file from a URL or a path: PostHog fetches no file, and only takes its bytes. The reason is `the provider fetches <file>`.

@@ -36,6 +36,7 @@ posthog = Posthog(
 
 - Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, `sensitive`, and `tracking` optional. `tracking` takes `True`, `False`, or a dict with `"opens"`, `"clicks"`, and `"engagement"`. Open tracking off is `tracking={"opens": False}`. `capture_engagement` is deprecated: use `tracking={"engagement": False}`. `from` is a Python keyword, so the argument is `from_`. Sensitive is `sensitive=True`.
 - `reply_to` takes one address or a list of addresses.
+- Files: `attachments=[{"filename": ..., "content": ..., "content_type": ..., "content_id": ...}]`, a list of up to 10 dicts, with `content_type` and `content_id` optional. `content` is `bytes`, or a Base64 `str` on one line with its padding. A `str` is always read as Base64, so pass a file's text as `text.encode()`, never as the `str` itself. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
 
 ## A deadline
@@ -51,6 +52,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `SendEmailResult`. Its `id` is the message ID.
 - On an API error it raises `EmailError`, imported from `posthog.emails`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
 - Suppressed recipient: `except EmailError as error:` with `if error.code == "recipient_suppressed":`.
+- A send with files raises `EmailError` with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - It raises the same `EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
 - A bad argument raises `TypeError` or `ValueError`, before any request.
 
