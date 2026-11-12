@@ -45,7 +45,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 - When the client options take `migratedFrom`, set it to the value that the provider's `mapping.md` names under "The PostHog client". posthog-node sends it with every email request, so PostHog knows that the sends moved from that provider.
 - Never change the app's own `posthog-node` client for email. posthog-node also uses `secretKey` for its flags and remote config, so the email key, or `enableLocalEvaluation: false`, would change how the app's flags evaluate, and a client the app disables answers every send with `client_disabled`.
-- When the project token or the host is not configured yet, get the token from the PostHog MCP `projects-get` tool (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
+- When the project token or the host is not configured yet, get the token from the PostHog MCP `project-get` tool, called without an ID (`api_token`). The host is `https://us.i.posthog.com` for US Cloud and `https://eu.i.posthog.com` for EU Cloud. Ask the person which one when you can't tell.
 - When `host` is a reverse proxy or a self-hosted instance, also set `appHost` to the PostHog app URL, such as `https://us.posthog.com`. posthog-node never sends the secret key to a proxy, and without `appHost` the send fails with `missing_app_host`.
 - Put the client in its own server-only module, next to the provider's client, and import it where the sites send.
 - A site whose request had its own deadline keeps it: the provider's `mapping.md` says how, under "HTTP". Each distinct deadline gets its own client like the one above, with that timeout, in the same module.
