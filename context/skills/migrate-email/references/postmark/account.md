@@ -32,7 +32,7 @@ A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's sett
 
 **Ask the person.** In Postmark: the server, then Settings. It shows whether open tracking and link tracking are on, and which parts link tracking covers.
 
-**Read from the API.** `GET https://api.postmarkapp.com/server` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of that server. The answer holds `TrackOpens`, a boolean, and `TrackLinks`: `None`, `HtmlAndText`, `HtmlOnly`, or `TextOnly`.
+**Read from the API.** `GET https://api.postmarkapp.com/server` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of that server. The answer holds `TrackOpens`, a boolean, `TrackLinks`: `None`, `HtmlAndText`, `HtmlOnly`, or `TextOnly`, and `DeliveryType`: `Live`, or `Sandbox` for a server that delivers nothing.
 
 ## Sender signatures
 

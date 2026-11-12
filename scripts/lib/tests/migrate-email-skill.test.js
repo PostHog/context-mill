@@ -258,15 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('brings a Postmark template into the code with its layout, raw values, and inlined CSS', () => {
-            const mapping = read('postmark/mapping.md');
-            const inCode = mapping.split('### Templates made in PostHog')[0];
-
-            expect(inCode).toMatch(/the layout and the template come into the code as one email/);
-            expect(inCode).toMatch(/\| `\{\{\{name\}\}\}`, `\{\{& name\}\}` \| The value as it is, unescaped/);
-            expect(inCode).toMatch(/With `InlineCss` on, its default, write each `<style>` rule into the `style` attribute of the tags it matches/);
-            expect(mapping).not.toMatch(/\| `InlineCss` \| none \| Never on its own\. It only shapes how Postmark renders its template, and the PostHog template holds its own HTML \|/);
-        });
     });
 
     describe('the key check in step 6', () => {

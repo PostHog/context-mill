@@ -174,7 +174,7 @@ A Postmark send has no idempotency key and no send time.
 A send to `/email/withTemplate`, with `TemplateId` or `TemplateAlias` and `TemplateModel`, renders a template from the Postmark dashboard. Its content is not in the code.
 
 - A template has a `Subject`, an `HtmlBody`, and a `TextBody`, and all three use Mustachio: `{{name}}`, `{{person.first_name}}`, `{{{raw}}}` and `{{& raw}}`, sections `{{#person}}…{{/person}}`, inverted sections `{{^items}}…{{/items}}`, loops `{{#each items}}…{{/each}}`, the current value `{{.}}`, and parent values `{{../name}}`.
-- A section renders when its value is present, and skips when it is missing, false, or empty. Inside it, names are read from that value first.
+- A section renders when its value passes Mustachio's truth test. Inside it, names are read from that value, and `../` reads an outer one. `mapping.md` says under "Templates" what each tag renders, and which templates move.
 - A standard template can name a layout in `LayoutTemplate`. The layout wraps it at `{{{ @content }}}`, and has no subject.
 - `{{{ pm:unsubscribe }}}` inserts Postmark's unsubscribe link.
 - An alias holds letters, digits, `.`, `-`, and `_`, and starts with a letter. `TemplateId` is a number.
