@@ -18,7 +18,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with `posthog-node`
 
 - Change only the sites whose `moves` is `yes`. Never change a site that stays, and never change a line that a site that stays still needs.
 - When no site moves, tick the phase in the plan with `none moved` and go to the next step.
-- Run the project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck, and write each error's file, code, and message, such as `TS2345` and its text, under the rewrite phase in the plan: Step 8 compares with them. Leave out the line: the rewrite moves it.
+- Run the project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck, and write each error's file, code, and message, such as `TS2345` and its text, with how many times it shows, under the rewrite phase in the plan: Step 8 compares with them. Leave out the line: the rewrite moves it.
 
 ## Set up the client
 
