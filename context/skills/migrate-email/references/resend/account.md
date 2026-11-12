@@ -32,6 +32,10 @@ A site whose template moves needs the template's content: Step 3 checks it, and 
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
+## Open tracking
+
+Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking is on. Off means the site's emails had no open pixel, and no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+
 ## Click tracking
 
 Resend tracks clicks per sending domain, only when click tracking is on for it: Domains, then the domain, then Configuration. When a site moves to a template made in PostHog, ask the person once, for each sending domain of such sites, whether click tracking is on. Off means Resend didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog".
