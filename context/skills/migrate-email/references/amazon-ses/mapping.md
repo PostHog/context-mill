@@ -67,15 +67,19 @@ Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The
 | A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, `HTTPStatusCode()`, or `raw_response()` in Rust | Never. A branch on `400` reads PostHog's error name `validation_error`, and also its status code for `429` when the site sends with the v1 API (see "Errors"). A branch on another status, such as `429`, reads PostHog's status code |
 | The `MessageId` stored for a webhook handler or a `GetMessageInsights` read | Always, when a handler or the read uses it |
 | The `MessageId` logged or stored for the app's own use | Never. Use PostHog's message id |
-| A deadline, timeout, or retry setting on the request or its client | A setting of the AWS SDK, as "HTTP" below says. A raw HTTP request keeps its deadline |
+| A deadline, timeout, or retry setting on the request or its client | As "HTTP" below says: a raw request that never retried keeps its deadline and moves |
 
 ## HTTP
 
-A site whose Amazon SES request had its own deadline keeps it, as `7-rewrite.md` says under "Set up the client". Only a raw HTTP request has one that PostHog's SDK can keep: the timeout of its HTTP client, such as `timeout: 5000` in `axios`, `got`, or `ky`, `AbortSignal.timeout(5000)` on `fetch` or `aws4fetch`, `timeout=` in `requests` or `httpx`, `'timeout'` in Guzzle, Faraday's `timeout`, `read_timeout` in `Net::HTTP`, Go's `http.Client` `Timeout` or a context the code gave a deadline, and .NET's `HttpClient.Timeout` or a cancellation token with a timeout.
+A site whose Amazon SES request had its own deadline keeps it, as `7-rewrite.md` says under "Set up the client". Only a raw HTTP request that never retried has one that PostHog's SDK can keep: the timeout of its HTTP client, such as `timeout: 5000` in `axios`, `got`, or `ky`, `AbortSignal.timeout(5000)` on `fetch`, `timeout=` in `requests` or `httpx`, `'timeout'` in Guzzle, Faraday's `timeout`, `read_timeout` in `Net::HTTP`, Go's `http.Client` `Timeout` or a context with a deadline, and .NET's `HttpClient.Timeout` or a cancellation token with a timeout.
 
-An AWS SDK retried inside its deadlines and timeouts, each in its own way, and no option of PostHog's SDK matches that. A site whose AWS SDK call or client sets one stays: `moves: no — the PostHog SDK can't keep the request's deadline`. That is a deadline the code set for the call, such as `{ abortSignal: AbortSignal.timeout(5000) }`, a context from `context.WithTimeout` or `context.WithDeadline` in Go, or a cancellation token with a timeout in .NET, and any timeout or retry setting in the client's config, such as `requestTimeout`, `maxAttempts`, `read_timeout`, `connect_timeout`, `retries`, `http_read_timeout`, `retry_limit`, PHP's `'http' => ['timeout' => ...]`, Rust's `timeout_config` or `retry_config`, or `ex_aws`'s `recv_timeout`.
+The AWS SDKs and `aws4fetch`'s `AwsClient` retried inside their deadlines and timeouts, each in its own way, and a raw request can retry through its HTTP client. The moved send would retry differently, so each of these keeps the site: `moves: no — the PostHog SDK can't keep the request's deadline`.
 
-A context, token, or abort signal that only cancels, such as a request's, is no deadline. Pass it where the send takes one, as Go's context and .NET's token do. Where the send takes none, as in Node.js, the send goes on after a cancel: note it in the plan row.
+- A deadline on an AWS SDK or `AwsClient` call, such as `{ abortSignal: AbortSignal.timeout(5000) }`, a Go context with a deadline, or a .NET cancellation token with a timeout.
+- A timeout or retry setting in the AWS client's config, such as `requestTimeout`, `maxAttempts`, `read_timeout`, `connect_timeout`, `retries`, `http_read_timeout`, `retry_limit`, PHP's `'http' => ['timeout' => ...]`, Rust's `timeout_config` or `retry_config`, `ex_aws`'s `recv_timeout`, or `AwsClient`'s `retries`.
+- A raw request's HTTP client that retries the POST, such as `got` or `ky` with `POST` in `retry.methods`, `axios-retry`, Faraday's `retry` middleware, a Guzzle retry middleware, or a `requests` adapter with a `Retry`.
+
+Follow a context, token, or abort signal back through the callers, as for the distinct ID. One that any caller builds from a timeout, such as `AbortSignal.timeout` or an `AbortSignal.any` that holds one, is a deadline. One that only cancels, such as a request's, is no deadline. Pass it where the send takes one, as Go's context and .NET's token do. Where the send takes none, as in Node.js, the send goes on after a cancel: note it in the plan row.
 
 ## Templates
 
