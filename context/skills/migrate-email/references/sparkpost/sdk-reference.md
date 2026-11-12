@@ -214,7 +214,7 @@ The template language, in templates and in inline content:
 - `{{if paid}}`, `{{elseif ...}}`, `{{else}}`, `{{end}}`, with `==`, `!=`, `<`, `>`, `<=`, `>=`, `and`, `or`, and `not`.
 - `{{each items}}` … `{{end}}` loops, with `loop_var` (`loop_vars.<name>` in nested loops) and `loop_index`. `{{#items}}` is a length, `items[1]` the first item, and `+ - * /` are arithmetic.
 - Macros: `render_dynamic_content(dynamic_html.x)`, `render_snippet(...)`, `empty(...)`, and the brace macros, such as `opening_double_curly()`.
-- Reserved values: `address.name`, `address.email`, `email`, `email_id`, `env_from`, and `return_path`.
+- Reserved values: `address.name`, `address.email`, `email`, `email_id`, `env_from`, and `return_path`. `address.email`, `email`, and `email_id` all hold the recipient's address.
 - Link attributes: `data-msys-linkname`, `data-msys-unsubscribe`, `data-msys-clicktrack`, `data-msys-sublink`, and `data-msys-revoke-tracking`, written as `[[data-msys-...]]` after a link in `text`.
 
 ## Status reads

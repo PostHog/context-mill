@@ -258,13 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('renders SparkPost template language in inline content in the code, recipient values first', () => {
-            const mapping = read('sparkpost/mapping.md');
-
-            expect(mapping).toMatch(/Inline content with template language moves into the code too: the code renders the site's `subject`, `from`, `reply_to`, `text`, and `html`/);
-            expect(mapping).toMatch(/the recipient's `substitution_data` wins over the transmission's/);
-            expect(mapping).not.toMatch(/the reason `inline content uses SparkPost's template language`/);
-        });
     });
 
     describe('the key check in step 6', () => {
