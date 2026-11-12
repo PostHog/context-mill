@@ -13,15 +13,19 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 [STATUS] Importing the suppression list
 ```
 
+## Read the provider's notes
+
+Read the provider's `account.md` first, whether or not the import runs. Its "For the report" section, when it has one, names facts the report carries, such as a count of entries the import leaves out. Find each one as the section says, and write it under the phase in the plan file. Never write an address.
+
 ## Check the import tool
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
 
-When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, do what "Calls that change the provider's list" says, ask about the full-access key as the last section says, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) before cutover.
+When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, do what "Calls that change the provider's list" says, ask about the full-access key as the last section says, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) right before cutover, so the list holds the entries the provider adds until then.
 
 ## Get the list
 
-Read the provider's `account.md`. It says how to export the list, which entries to take, and how each entry maps to PostHog. When the provider has no export or no API that lists it, `account.md` says where else the list comes from.
+The provider's `account.md` says how to export the list, which entries to take, and how each entry maps to PostHog. When the provider has no export or no API that lists it, `account.md` says where else the list comes from.
 
 - Prefer the export the person downloads from the provider's dashboard. Ask them where they saved the file.
 - Read the list from the provider's API only when the person gives you a key that can read it, through an environment variable that `account.md` names. The app's own sending key usually can't, unless `account.md` says it can.
@@ -31,6 +35,7 @@ Read the provider's `account.md`. It says how to export the list, which entries 
 
 - Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
 - Repeating an import is safe: an address already on the list stays on it.
+- The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover.
 - Never print the addresses, and never write them into the plan or the report. Count them.
 - When a call fails, read its error and fix the call. When it fails again, stop the import, record how many entries you imported, and ask the person once whether to repeat it now. Repeat it when they say yes.
 

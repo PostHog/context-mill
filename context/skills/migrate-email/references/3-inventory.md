@@ -48,7 +48,9 @@ When you find no site, stop before you write the plan file:
 
 ## Classify each site
 
-Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets, in a language that `mapping.md` moves. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
+Check what each site sends first. PostHog's transactional send ignores marketing opt-outs, so it is only for an email that a person needs, such as a password reset, a receipt, or an invite. A site that sends marketing, such as a newsletter, a promotion, or a product announcement, stays, and the reason is `marketing email`. When neither the code nor the template's name tells you, ask the person once for every such site. A site they call marketing, or don't answer for, stays with that reason.
+
+Then go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets, in a language that `mapping.md` moves. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
 
 A field set to an empty value, such as `""`, `[]`, `{}`, or `null`, or to its off value, such as `false` for a flag that is off unless set, counts as not set, even where `mapping.md` keeps every site that sets the field, unless its row names that empty or off value. A field that the code sets on some sends only, such as under a condition or from a caller's argument, counts as set.
 
@@ -66,7 +68,7 @@ Each template that moves needs its content to be checked. Read the provider's `a
 
 ### A template in PostHog, when the person asks for one
 
-A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template, make it transactional, and give you its template ID and the address it sends from, usually the provider template's sender. Tell them how its placeholders change, as that part of `mapping.md` says. Quote every Liquid string with single quotes, such as `default: 'there'`: PostHog's email builder saves the template as JSON, which escapes double quotes, and the template then fails with a `TokenizationError`. A fallback or a compared value that holds a `'` keeps the template on the provider. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
+A template the person asks to make in PostHog moves in the template form, by its template ID, and the person makes that template: never make one yourself. Its content needs the same check, against the part of `mapping.md` on templates made in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template and give you its template ID and the address it sends from, usually the provider template's sender. PostHog makes a template transactional only once a verified sender covers its address: ask them to make it transactional now when the project has one, and otherwise once Step 4 verifies the sender. When the email carries a login code, a reset link, or another secret, ask them to mark the template sensitive, as `mapping.md` says. The report lists both before cutover either way. Tell them how its placeholders change, as that part of `mapping.md` says. Quote every Liquid string with single quotes, such as `default: 'there'`: PostHog's email builder saves the template as JSON, which escapes double quotes, and the template then fails with a `TokenizationError`. A fallback or a compared value that holds a `'` keeps the template on the provider. Record each template ID with its site under the sites table, and write the address in the site's `from` column. A template without an ID stays, and the reason is `PostHog template not made yet`.
 
 ## Write the plan file
 
@@ -83,6 +85,8 @@ A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, an
 - [ ] rewrite
 - [ ] verify
 ```
+
+When the run created a full-access provider key, as `account.md` says, add a line under the checklist: `full-access key — created: <variable name>`. Step 5 adds whether the person deleted it.
 
 A sites table, one row per site, in source tree order:
 

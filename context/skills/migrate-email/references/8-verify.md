@@ -16,8 +16,8 @@ Check that the app still builds, its tests still pass, and one moved email reach
 
 ## Build and tests
 
-- Run the check that each moved site's rewrite file names under "Check", on the whole project, as Step 7 did. Fix each error or warning that is not in the list Step 7 kept, in any file: the rewrite or the PostHog SDK's install or upgrade caused it. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
-- Run the tests that cover the files you changed. A test that mocks the provider's client or intercepts its HTTP requests for a moved site now mocks the PostHog SDK's send and asserts on the fields it gets, with the same expected values. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
+- Run the check that each moved site's rewrite file names under "Check", on the whole project, as Step 7 did. Fix each error or warning whose file, code, and message are not in the list Step 7 wrote into the plan, in any file: the rewrite or the PostHog SDK's install or upgrade caused it. When one in the list now shows more times than the list says, the extra ones are new too: fix the ones in lines the rewrite changed. Note each file you fix outside the moved sites for the report. An error in that list was there before: note it, and leave it.
+- Run the tests that cover the files you changed. Keep each test at the boundary it had. A test that intercepts the provider's HTTP requests for a moved site now intercepts PostHog's send request, as `api.md` describes it, with the real PostHog SDK, and asserts on the request PostHog gets and on what the app does, with the same expected values. A test that mocks the provider's client now mocks the PostHog SDK's send and asserts on the fields it gets. Never turn a PostHog send back into the provider's request shape to keep an old assertion. Never delete or skip a test.
 - Search the changed files for the provider's calls: a moved site has none left, and each moved site has one PostHog send.
 
 ## One email on one person
@@ -33,12 +33,12 @@ Skip this part and record `not checked` with the reason when the API is not conf
 5. Find the person's distinct ID: the value the moved site passed as `distinctId`. Run a SQL query through the PostHog MCP `execute-sql` tool for that distinct ID since the start of the test, with a new random string each time you run it:
 
    ```sql
-   SELECT event, timestamp, properties.$workflow_id AS workflow, '<a new random string>' AS run FROM events
+   SELECT event, timestamp, properties.$workflow_invocation_id AS send, properties.$email_template_key AS template_key, properties.$email_template_id AS template_id, '<a new random string>' AS run FROM events
    WHERE distinct_id = '<distinct id>' AND toUnixTimestamp(timestamp) >= <start of the test>
    ORDER BY timestamp
    ```
 
-6. The chain holds when the result has a `$workflows_email_sent`, an engagement event such as `$workflows_email_delivered` or `$workflows_email_opened` with the same `workflow`, and at least one product event of the app. An event from before the start of the test belongs to another email. Delivery events arrive after the provider reports back: when only the send shows, wait a minute and run the query once more.
+6. The chain holds when the result has a `$workflows_email_sent` whose `template_key` or `template_id` is the moved site's, an engagement event such as `$workflows_email_delivered` or `$workflows_email_opened` with the same `send`, and at least one product event of the app. A send of another email to the same person proves nothing about this one. An event from before the start of the test belongs to another email. Delivery events arrive after the provider reports back: when only the send shows, wait a minute and run the query once more.
 
 When the MCP has no SQL tool, ask the person to open their person in PostHog and tell you which of the three they see since they triggered the test email.
 

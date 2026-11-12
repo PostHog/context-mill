@@ -23,6 +23,8 @@ Check which PostHog MCP tools exist.
 
 Do not call a tool that changes anything to find out.
 
+Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
+
 ## The sending tier
 
 PostHog gives each project a sending allowance: how many emails it sends per hour and per day. A new project starts on a low tier, and the tier grows with low bounce and complaint rates. Emails above the allowance are not dropped, they are sent later. So a cutover with more mail than the tier allows delays email, such as password resets.
