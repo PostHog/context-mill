@@ -41,6 +41,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | A branch on Resend's error name: `error.name` in Node.js, Go, and Elixir, `error_type` in Python, `getErrorType()` in PHP, or `ErrorType` in .NET | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
+| A send the code can cancel, such as a request with a `signal` a caller passes in or an `AbortController` it aborts, or a Go `context` or .NET cancellation token that a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as Step 7 says |
 
 ## Content
 
@@ -70,13 +71,15 @@ Write the `\|` above as a plain `|`. The table escapes it.
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Resend template, makes it transactional, and gives you its template ID. Until then the site stays on Resend.
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Resend template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Resend.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
 
 - In the PostHog template, `{{{NAME}}}` becomes `{{ variables.NAME }}`, and the name keeps its case. `{{{NAME|there}}}` becomes `{{ variables.NAME | default: 'there' }}`, and a variable with a `fallback_value` in the template's definition gets the same `default`. Quote every fallback with `'`: a `"` inside the template's JSON body raises `TokenizationError`. Liquid has no escape character in a quoted value, so a fallback that holds a `'` keeps the site on Resend.
 - Liquid's `default` also replaces an empty string, which Resend inserts as it is. When the code can pass an empty string for a variable with a fallback, the email shows the fallback instead. Note it in the report.
 - Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output, and such a variable keeps the site on Resend. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
 - A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds a `'`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
-- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `template` stays on Resend.
+- The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo` / `reply_to`, or `subject` next to `template` stays on Resend.
 
 ## Webhooks
 
@@ -89,7 +92,7 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 | `email.bounced` | `$workflows_email_bounced` |
 | `email.complained` | `$workflows_email_blocked` |
 | `email.opened` | `$workflows_email_opened` |
-| `email.clicked` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `email.clicked` | `$workflows_email_link_clicked`: PostHog sends each link through its click redirect, unless the email is sensitive, such as a template made in PostHog that is marked sensitive. Then it counts no clicks |
 | Every other email event, such as `email.delivery_delayed` | none |
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
@@ -112,7 +115,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 **Templates made in PostHog.** The site sends the template ID the person gave, and the template data with the site's `variables`. It sends no template key, subject, body, `from`, or reply-to address: the template holds them.
 
-**HTTP.** A request to `https://api.resend.com/emails`, through `fetch`, `axios`, `requests`, `httpx`, `net/http`, Faraday, Guzzle, `HttpClient`, `reqwest`, `Req`, or `curl`, becomes the SDK's send in that language. The `Idempotency-Key` header becomes the send's idempotency key. Code that read the response status reads the SDK's error instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, or `requests.post(..., timeout=5)`, keeps it: set the PostHog client's email request timeout to that value, and turn off the send's retries, since the request never retried, such as `emailRequestTimeoutMs` on the client and `maxRetries: 0` on the send in Node.js. The SDK otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. When sites use different deadlines, set the shortest, and note the sites whose deadline it shortens. When the SDK has no such option, the site stays on Resend: `moves: no — the PostHog SDK can't keep the request's deadline`.
+**HTTP.** A request to `https://api.resend.com/emails`, through `fetch`, `axios`, `requests`, `httpx`, `net/http`, Faraday, Guzzle, `HttpClient`, `reqwest`, `Req`, or `curl`, becomes the SDK's send in that language. The `Idempotency-Key` header becomes the send's idempotency key. Code that read the response status reads the SDK's error instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, or `requests.post(..., timeout=5)`, keeps it, as Step 7 says under "Set up the client".
 
 **Suppressed recipients.** Resend takes a send to a suppressed address and drops it later. PostHog refuses it with the error code `recipient_suppressed` (name `validation_error`). When the site throws, retries, or reports a failure on any error, handle that code before that branch, as the rewrite file shows, the way the site handled a send that went out: log it and go on. Note each site that got this branch in the report.
 

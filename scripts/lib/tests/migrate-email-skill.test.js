@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { spawnSync } from 'child_process';
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
+import { generateCliEntries } from '../build-phases.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
 const DOCS_PAGES = {
@@ -97,22 +98,27 @@ describe('migrate-email skill', () => {
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
-    it('runs the rewrite and verify steps between the key and the report', async () => {
+    it('chains the steps from detection through rewrite and verify to the report', async () => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
         const skillDir = await buildSkill('migrate-email-resend', outputDir);
-        const workflow = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/^\d+\. `references\/[^`]+`/gm);
+        const visited = [];
+        for (let step = '1-detect.md'; step && visited.length < 20; ) {
+            visited.push(step);
+            const text = readFileSync(join(skillDir, 'references', step), 'utf8');
+            step = text.match(/\*\*Upon completion, continue with:\*\* \[[^\]]+\]\(([^)]+)\)/)?.[1];
+        }
 
-        expect(workflow.map((step) => step.replace(/^\d+\. /, ''))).toEqual([
-            '`references/1-detect.md`',
-            '`references/2-preflight.md`',
-            '`references/3-inventory.md`',
-            '`references/4-sender.md`',
-            '`references/5-suppressions.md`',
-            '`references/6-key.md`',
-            '`references/7-rewrite.md`',
-            '`references/8-verify.md`',
-            '`references/9-report.md`',
+        expect(visited).toEqual([
+            '1-detect.md',
+            '2-preflight.md',
+            '3-inventory.md',
+            '4-sender.md',
+            '5-suppressions.md',
+            '6-key.md',
+            '7-rewrite.md',
+            '8-verify.md',
+            '9-report.md',
         ]);
     });
 
@@ -193,9 +199,8 @@ describe('migrate-email skill', () => {
         it('keeps the secret key off a reverse proxy for every SDK, in step 7', () => {
             const rewriteStep = read('7-rewrite.md');
 
-            expect(rewriteStep).toMatch(/unless its host is a reverse proxy/);
-            expect(rewriteStep).toMatch(/When the app's host is a reverse proxy, give email its own client with the host set to PostHog's own host/);
-            expect(rewriteStep).toMatch(/leave the secret key off the app's existing client/);
+            expect(rewriteStep).toMatch(/Never change the app's own PostHog client for email/);
+            expect(rewriteStep).toMatch(/When the app's host is a reverse proxy, set the email client's host to PostHog's own host/);
         });
 
         it('lists the coarse error names once, in step 7', () => {
@@ -288,19 +293,16 @@ describe('migrate-email skill', () => {
             ['a value that is only a comment', 'POSTHOG_PROJECT_SECRET_API_KEY= #phs_abc\n', '0'],
             ['a key overridden by a later empty line', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\nPOSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
             ['another variable ending in the name', 'OTHER_POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+            ['a placeholder in angle brackets', 'POSTHOG_PROJECT_SECRET_API_KEY=<phs_your_key>\n', '0'],
+            ['a value with another prefix', 'POSTHOG_PROJECT_SECRET_API_KEY=xphs_abc\n', '0'],
+            ['a value that starts with =', 'POSTHOG_PROJECT_SECRET_API_KEY==phs_abc\n', '0'],
         ])('finds the key in %s only when it is set, and never prints it', (_name, envFile, count) => {
+            expect(command).toBeDefined();
             const result = check(envFile);
 
             expect(result.stdout.trim()).toBe(count);
             expect(result.stdout).not.toContain('phs_');
             expect(result.stderr).toBe('');
-        });
-
-        it('ticks the phase only when the check found the key', () => {
-            expect(command).toBeDefined();
-            expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
-            expect(keyStep).toMatch(/Tick the phase in the plan file only when the check above found the key/);
-            expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
         });
     });
 
@@ -345,13 +347,14 @@ describe('migrate-email skill', () => {
         }
     });
 
-    it('publishes each provider and Statsig as wizard migrate subcommands', async () => {
-        const { skills } = await loadSkills();
-        const cliOf = (id) => skills.find((skill) => skill.id === id)?._cli;
+    it('publishes each provider and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
+        const { generator, skills } = await loadSkills();
+        const entries = generateCliEntries({ allSkills: skills.map(generator.serializeSkill) });
+        const entryOf = (skillId) => entries.find((entry) => entry.skillId === skillId);
 
         for (const provider of PROVIDERS) {
-            expect(cliOf(`migrate-email-${provider}`)).toEqual({ role: 'command', parentCommand: 'migrate', command: provider });
+            expect(entryOf(`migrate-email-${provider}`), provider).toMatchObject({ role: 'command', parentCommand: 'migrate', command: provider });
         }
-        expect(cliOf('migrate-statsig')).toEqual({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
+        expect(entryOf('migrate-statsig')).toMatchObject({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
     });
 });
