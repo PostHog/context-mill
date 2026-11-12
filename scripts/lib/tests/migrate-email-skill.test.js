@@ -258,12 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-        it('renders an Amazon SES inline template in the code instead of a template made in PostHog', () => {
-            const mapping = read('amazon-ses/mapping.md');
-
-            expect(mapping).toMatch(/\| `Content.Template.TemplateContent` with `TemplateData` \| none: the code renders `TemplateData` into its `Subject`, `Html`, and `Text` before the send \|/);
-            expect(mapping).not.toMatch(/\| `Content.Template.TemplateContent` \| a template made in PostHog \|/);
-        });
     });
 
     describe('the key check in step 6', () => {

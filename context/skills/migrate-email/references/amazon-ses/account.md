@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Amazon SES account. The agent never changes the account: it reads what the person exports or allows.
 
-Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's `region`, or `AWS_REGION`, names one. Read each of them. Each Region answers on its own host, `email.<region>.amazonaws.com`, so every command in this file sets `--region` to the Region it reads. `sdk-reference.md` names the setting each SDK picks the Region with. When the client also sets an endpoint, add `--endpoint-url` with that same URL to every command, so it reads the account the app sends with.
+Amazon SES keeps identities, templates, and the suppression list per AWS Region. Ask the person which Regions the app sends from: the client's Region setting names one, or the environment the app runs with, `AWS_REGION`, or `AWS_DEFAULT_REGION` for boto3. `sdk-reference.md` says under "Regions" which setting each SDK reads. Read each of them. Each Region answers on its own host, `email.<region>.amazonaws.com`, so every command in this file sets `--region` to the Region it reads. `sdk-reference.md` names the setting each SDK picks the Region with. When the client also sets an endpoint, add `--endpoint-url` with that same URL to every command, so it reads the account the app sends with.
 
 ## DNS records
 
@@ -54,7 +54,7 @@ Each part is a JSON string: read it decoded, so `\n` is a line break and `\"` a 
 
 Ask the person where they saved each file.
 
-**Read from the API.** With the key above, run the same command yourself and keep the answer only in the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code.
+**Read from the API.** With the key above, run the same command yourself and keep the answer only in the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. The key is deleted at the end of Step 5, so when Step 7 finds that file gone, ask the person to run the AWS CLI command above for that template and tell you where they saved it.
 
 Read the person's copies where they saved them. Never write the content into the plan or the report.
 
@@ -107,7 +107,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 
 **Read from the API.** With the key above, run the same commands yourself, page by page.
 
-**Map each entry.** Work out the reasons that apply to each moved site: the `SuppressedReasons` of its configuration set, the one it names or its identity's default one, when the set's `SuppressionOptions` holds that list, even an empty one, and the account's reasons otherwise. Import the entries whose reason applies to at least one moved site that sends in that Region, and skip the rest. PostHog keeps one suppression list per project and checks it on every moved send. A moved site whose own reasons leave out a reason that another moved site imports, such as a site whose set suppresses only `BOUNCE` next to one whose set suppresses `COMPLAINT` too, or a set that turns suppression off, now has its sends to those addresses refused where Amazon SES sent them: note it in the site's plan row.
+**Map each entry.** Work out the reasons that apply to each moved site: the `SuppressedReasons` of its configuration set, the one it names or its identity's default one, when the set's `SuppressionOptions` holds that list, even an empty one, and the account's reasons otherwise. Import the entries whose reason applies to at least one moved site that sends in that Region, and skip the rest. PostHog keeps one suppression list per project and checks it on every moved send. A moved site whose own reasons leave out a reason that another moved site imports, such as a site whose set suppresses only `BOUNCE` next to one whose set suppresses `COMPLAINT` too, or a set that turns suppression off, now has its sends to those addresses refused where Amazon SES sent them: note it in the site's plan row. So does a moved site in another Region than the list an entry came from, because that Region's list didn't hold the address: when the moved sites send from more than one Region, note it in the plan row of each.
 
 | Amazon SES reason | PostHog source | Reason |
 |---|---|---|
