@@ -32,6 +32,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 - Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, and `captureEngagement` optional.
 - `replyTo` takes one address or a list of addresses.
+- `attachments` takes a list of up to 10 files, each `{ filename, content, contentType, contentId }`, with `content` as a Buffer, a `Uint8Array`, or a Base64 string, and `contentType` and `contentId` optional. A release whose send types have no `attachments` doesn't take files: upgrade, as Step 7 says.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
 
@@ -49,6 +50,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - A network error that is left after the retries comes back as `error` with the code `network_error`. A bad argument comes back as `error` too, with a code that starts with `invalid_`.
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
 - Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
+- A send with files fails with the code `attachment_upload_failed` when a file's upload failed, and with `field_not_accepted` when PostHog doesn't take files from the project yet. Neither sent an email.
 
 ## Check
 
