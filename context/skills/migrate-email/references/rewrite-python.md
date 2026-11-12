@@ -21,13 +21,14 @@ posthog = Posthog(
     os.environ.get("POSTHOG_PROJECT_TOKEN"),
     host=os.environ.get("POSTHOG_HOST"),
     secret_key=os.environ.get("POSTHOG_PROJECT_SECRET_API_KEY"),
+    enable_local_evaluation=False,
     migrated_from="<provider>",  # only when the client takes it
 )
 ```
 
-- With `secret_key` set, the client loads flag definitions from `host` with it the first time it evaluates a flag. A client that only sends email never evaluates one, so it needs no other setting.
+- With `secret_key` set, the client loads flag definitions from `host` with it the first time it evaluates a flag, and a worker forked from a process that made the client, such as under Gunicorn's `preload_app`, starts polling them at once. `enable_local_evaluation=False` stops both, so the key needs no flag scope.
 - The app host option is `app_host`.
-- `AsyncPosthog`, from `posthog[async]`, takes the same options. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
+- `AsyncPosthog`, from `posthog[async]`, takes the same options except `enable_local_evaluation`: it has no such option and never polls flags, so leave it out there, or the constructor raises `TypeError`. Await each call below on it. A synchronous site uses `Posthog`, and an `async` site uses `AsyncPosthog`: a call on `AsyncPosthog` without `await` sends nothing.
 - `AsyncPosthog` binds to the first event loop it runs on, and raises `RuntimeError` on any other. Create it where one loop runs for the app's life, such as an ASGI app's startup, and `await posthog.shutdown()` when it stops. Where each task runs its own loop, such as `asyncio.run` per job or `async` views under WSGI, create it inside that loop and `await posthog.shutdown()` before the loop ends.
 - Without the `async` extra, the first send on `AsyncPosthog` fails before it reaches PostHog.
 
@@ -36,6 +37,13 @@ posthog = Posthog(
 - Code send: `posthog.emails.send(template_key=..., to=..., subject=..., html=..., text=..., distinct_id=..., idempotency_key=...)`, with `from_`, `reply_to`, and `capture_engagement` optional. `from` is a Python keyword, so the argument is `from_`.
 - `reply_to` takes one address or a list of addresses.
 - Template send: `posthog.emails.send(to=..., template_id=..., template_data=..., distinct_id=..., idempotency_key=...)`.
+
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The client's `email_request_timeout_seconds` is the time each email request may take, 15 by default, and it takes a fraction, such as `2.5`. `email_request_max_retries` is its retries, 2 by default. A send's `max_retries=0` turns its retries off. `AsyncPosthog` takes the same.
+- The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds` set to it.
 
 ## The answer
 
