@@ -43,13 +43,13 @@ A site whose template moves needs the template's content: Step 3 checks it, and 
 
 **Read from the API.** `GET https://api.brevo.com/v3/smtp/templates/{templateId}` with the header `api-key: $BREVO_MIGRATION_API_KEY`. The answer holds `id`, `name`, `subject`, `isActive`, `htmlContent`, `sender` (`{ name, email, id }`), `replyTo`, `toField`, and `tag`. It doesn't show the template's attachment: ask the person whether the template has one, as above. On the general rate limit tier Brevo allows 300 requests an hour to this route: read only the templates the sites send.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report. When Step 7 finds that file gone after the person deleted the key, ask them for a copy from the dashboard, as above. Without one, the site stays, and the reason is `template content not checked`.
 
 ## Suppression list
 
 Brevo keeps one list of blocked transactional contacts. It skips an address on it for every transactional send, or, for an unsubscribe, for sends from the sender it unsubscribed from. Each entry has a reason code.
 
-**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. When they have no file, use the API below, or record the import as not done.
+**From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. The file shows each reason as a label, not as the code below: take a row only when its label names a hard bounce, a spam complaint, or a block by an admin, and leave out the rest. When a label could be either, ask the person. When they have no file, use the API below, or record the import as not done.
 
 **Read from the API.** `GET https://api.brevo.com/v3/smtp/blockedContacts` with the header `api-key: $BREVO_MIGRATION_API_KEY`. It answers `{ contacts, count }`, and each contact is `{ email, senderEmail, reason: { code, message }, blockedAt }`. Page with `limit=100` and `offset`, adding 100 each time, until a page has fewer than 100 entries or the offset reaches `count`. Wait and retry on `429`, after the seconds the `Retry-After` header names when it has one. Branch on `reason.code`, never on `reason.message`.
 
@@ -60,6 +60,8 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 | `hardBounce` | bounce | `Imported from Brevo: hard bounce` |
 | `contactFlaggedAsSpam` | complaint | `Imported from Brevo: spam complaint` |
 | `adminBlocked` | manual | `Imported from Brevo: blocked by an admin` |
+
+An admin block can cover one sender only: each entry names its sender, in `senderEmail` or the file's sender column. Import an `adminBlocked` address only when it has an admin block for every sender the moved sites send from. Leave out the others, count them, and tell the person the count in the report: PostHog's list blocks an address for every send.
 
 **Leave out the other entries.**
 
