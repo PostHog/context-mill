@@ -5,7 +5,7 @@ This is an [Axum](https://github.com/tokio-rs/axum) example demonstrating PostHo
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with users via person properties (`$set`)
+- **User identification**: Associate events with users via person properties (`$set`); signed-out visitors get a random id and anonymous events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
 - **Error tracking**: Capture exceptions with `capture_exception`
 - **Server-side tracking**: All tracking happens server-side with the async Rust SDK
@@ -90,11 +90,28 @@ event.insert_prop("login_method", "email")?;
 client.capture(event); // fire-and-forget
 ```
 
+### Signed-out visitors (src/main.rs)
+
+The `visitor` helper returns the cookie jar, the distinct id, and whether the visitor is anonymous. Signed-in users (a `user_id` cookie) keep their stable user id. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and `mark_anonymous` sets `$process_person_profile` to `false` on their events so PostHog does not create a person profile for them. Return the jar from the handler so the cookie reaches the browser.
+
+```rust
+let (jar, user_id, anonymous) = visitor(jar);
+
+let mut event = Event::new("burrito_considered", &user_id);
+if anonymous {
+    event.insert_prop("$process_person_profile", false)?;
+}
+client.capture(event);
+```
+
+Feature flags use the same visitor id, so flag evaluation works for anonymous visitors too.
+
 ### Event tracking (src/main.rs)
 
 ```rust
 let mut event = Event::new("burrito_considered", &user_id);
 event.insert_prop("total_considerations", count)?;
+mark_anonymous(&mut event, anonymous); // sets $process_person_profile=false when anonymous
 client.capture(event);
 ```
 

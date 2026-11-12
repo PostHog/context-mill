@@ -5,6 +5,7 @@ export default [
   route("burrito", "routes/burrito.tsx"),
   route("profile", "routes/profile.tsx"),
   route("error", "routes/error.tsx"),
+  route("ingest/*", "routes/ingest.ts"),
   route("api/auth/login", "routes/api.auth.login.ts"),
   route("api/burrito/consider", "routes/api.burrito.consider.ts"),
 ] satisfies RouteConfig;

@@ -1,0 +1,22 @@
+{
+  "name": "posthog-hono-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hono burrito API on Node.js with PostHog analytics",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "dev": "pnpm build && pnpm start"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "hono": "^4.13.17",
+    "posthog-node": "^5.64.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}

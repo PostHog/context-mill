@@ -1,0 +1,22 @@
+# Data warehouse destination setup - docs-only skill (no example projects)
+# The wizard runs it as `wizard warehouse destination`, a native program, so the skill stays off the CLI surface.
+type: skill
+template: description.md
+description: Send PostHog events to the user's own data warehouse with a batch export
+tags: [data-warehouse, batch-exports, destinations]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/data-pipelines/batch-exports.md
+variants:
+  - id: setup
+    display_name: Data Warehouse Destination Setup
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/data-pipelines/batch-exports/bigquery.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/snowflake.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/redshift.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/databricks.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/postgres.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/s3.md
+      - https://posthog.com/docs/data-pipelines/batch-exports/azureblob.md

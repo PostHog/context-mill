@@ -1,12 +1,20 @@
 import { PostHog } from 'posthog-node';
-import { PUBLIC_POSTHOG_PROJECT_TOKEN, PUBLIC_POSTHOG_HOST } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+import { dev } from '$app/environment';
 
 let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
+	const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+	if (!token) {
+		if (dev) {
+			console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.');
+		}
+		return null;
+	}
 	if (!posthogClient) {
-		posthogClient = new PostHog(PUBLIC_POSTHOG_PROJECT_TOKEN, {
-			host: PUBLIC_POSTHOG_HOST,
+		posthogClient = new PostHog(token, {
+			host: env.PUBLIC_POSTHOG_HOST,
 			flushAt: 1,
 			flushInterval: 0
 		});
