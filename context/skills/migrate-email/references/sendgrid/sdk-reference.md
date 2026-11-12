@@ -40,6 +40,7 @@ await sgMail.send({
 - `sgMail.send(msg)` with a list in `to` sends **one** email that every address sees.
 - `sgMail.send(msg, true)` and `sgMail.sendMultiple(msg)` send one email per address in `to`.
 - `sgMail.send(msg, callback)` sends like `sgMail.send(msg)` and passes `(error, result)` to the callback, and never throws.
+- `sgMail.setTimeout(ms)` sets a deadline on every send, and `sgMail.setSubstitutionWrappers(left, right)` sets the wrappers of every send's `substitutions`. Note both for each send through that client.
 - The Node.js helper turns snake_case keys into camelCase, so `template_id` and `dynamic_template_data` are the same fields as `templateId` and `dynamicTemplateData`.
 - `sgMail.send([msg1, msg2])` sends several emails in one call.
 - `@sendgrid/client`: `client.request({ method: 'POST', url: '/v3/mail/send', body })` sends the HTTP body below.
@@ -153,7 +154,7 @@ Node.js names, with the HTTP names where they differ. The other SDKs use the sam
 | `templateId` | `template_id` | A dynamic template (`d-...`), or a legacy template |
 | `dynamicTemplateData` | `personalizations[].dynamic_template_data` | Object that fills a dynamic template |
 | `substitutions` | `personalizations[].substitutions` | Values for tags in the subject, the content, and the reply-to address, such as `-name-` |
-| `substitutionWrappers` | none: `@sendgrid/mail` wraps each `substitutions` key in it before the request | Two strings, `['{{', '}}']` unless the message sets others |
+| `substitutionWrappers` | none: `@sendgrid/mail` wraps each `substitutions` key in it before the request | Two strings. When the message sets none, the client's from `sgMail.setSubstitutionWrappers(left, right)`, otherwise `['{{', '}}']` |
 | `attachments` | `attachments` | A list of `{ content, filename, type, disposition, contentId }`. `content` is base64 |
 | `categories` | `categories` | A list of strings |
 | `customArgs` | `custom_args` | Object of string values, sent back in webhook events |

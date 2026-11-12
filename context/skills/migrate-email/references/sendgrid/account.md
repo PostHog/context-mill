@@ -33,11 +33,12 @@ A send follows the account's open and click tracking for each of the two that it
 
 ## Mail settings
 
-Three more account settings change every send that doesn't set them, and no send field of PostHog's does the same. In the same question, ask the person whether each one is on in SendGrid:
+More account settings change every send that doesn't set them, and no send field of PostHog's does the same. In the same question, ask the person whether each one is on in SendGrid:
 
 - **Subscription tracking** (Settings, then Tracking): SendGrid added an unsubscribe link to each email, or filled the tag that stands for it. When it is on, every site whose `trackingSettings` doesn't set `subscriptionTracking` stays, and the reason is `account subscription tracking on`.
-- **Plain Content** (Settings, then Mail Settings): SendGrid sent only the text part. When it is on, every site stays, and the reason is `account plain content on`.
-- **Footer** (Settings, then Mail Settings): SendGrid appended the footer's HTML to the HTML part and its text to the text part. When it is on, ask the person for the footer's HTML and text. Each moved site appends them to its `html` and `text`, as SendGrid did, and the plan notes it. When the person can't give them, every site stays, and the reason is `account footer not copied`.
+- **Google Analytics** (Settings, then Tracking): SendGrid added `utm_` parameters to every link. When it is on, every site whose `trackingSettings` doesn't set `ganalytics` stays, and the reason is `account google analytics on`.
+- **Legacy Email Template** (Settings, then Mail Settings, when the account shows it): SendGrid wrapped every email in that template. When it is on, every site stays, and the reason is `account legacy email template on`.
+- **Footer** (Settings, then Mail Settings): SendGrid appended the footer's HTML to the HTML part and its text to the text part. When it is on, ask the person for the footer's HTML and text. Each site that moves in the code form appends them to its `html` and `text`, as SendGrid did, and the plan notes it. A site that moves to a template made in PostHog sends no `html` or `text`: ask the person to put the footer at the end of that template too, and note it in the plan. When the person can't give the footer, every site stays, and the reason is `account footer not copied`.
 
 When the person can't say whether one of these is on, the sites it would change stay, and the reason is `account mail settings not checked`. Note the answers in the plan.
 
