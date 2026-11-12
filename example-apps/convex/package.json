@@ -1,0 +1,28 @@
+{
+  "name": "posthog-convex-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:backend": "convex dev",
+    "build": "tsc && vite build",
+    "codegen": "convex codegen",
+    "typecheck": "tsc && tsc -p convex"
+  },
+  "dependencies": {
+    "@posthog/convex": "^2.1.8",
+    "@posthog/react": "^1.11.3",
+    "convex": "^1.49.0",
+    "posthog-js": "^1.447.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7"
+  }
+}
