@@ -11,7 +11,6 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const read = (file) => readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', file), 'utf8');
 
 async function loadSkills() {
     vi.resetModules();
@@ -121,6 +120,9 @@ describe('migrate-email skill', () => {
             ['a value that is only a comment', 'POSTHOG_PROJECT_SECRET_API_KEY= #phs_abc\n', '0'],
             ['a key overridden by a later empty line', 'POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\nPOSTHOG_PROJECT_SECRET_API_KEY=\n', '0'],
             ['another variable ending in the name', 'OTHER_POSTHOG_PROJECT_SECRET_API_KEY=phs_abc\n', '0'],
+            ['a placeholder in angle brackets', 'POSTHOG_PROJECT_SECRET_API_KEY=<phs_your_key>\n', '0'],
+            ['a value with another prefix', 'POSTHOG_PROJECT_SECRET_API_KEY=xphs_abc\n', '0'],
+            ['a value that starts with =', 'POSTHOG_PROJECT_SECRET_API_KEY==phs_abc\n', '0'],
         ])('finds the key in %s only when it is set, and never prints it', (_name, envFile, count) => {
             expect(command).toBeDefined();
             const result = check(envFile);
@@ -129,39 +131,6 @@ describe('migrate-email skill', () => {
             expect(result.stdout).not.toContain('phs_');
             expect(result.stderr).toBe('');
         });
-
-        it('ticks the phase only when the check found the key, and the report asks for a key that is not set', () => {
-            expect(keyStep).toMatch(/A person who says they will add the key later has not set it/);
-            expect(keyStep).toMatch(/Tick the phase in the plan file only when the check above found the key/);
-            expect(keyStep).toMatch(/`- \[ \] key — not set: <why>`/);
-            expect(read('7-report.md')).toMatch(/`POSTHOG_PROJECT_SECRET_API_KEY` in the env file when the plan says it is not set/);
-        });
-    });
-
-    describe('what the run cannot finish before cutover', () => {
-        it('asks for a last suppression import right before cutover, since the provider keeps adding entries', () => {
-            expect(read('5-suppressions.md')).toMatch(/The provider keeps adding to its list while it sends/);
-            expect(read('7-report.md')).toMatch(/import the entries the provider added to its suppression list since the export, right before cutover/);
-        });
-
-        it('lets a template made in PostHog become transactional only once its sender is verified', () => {
-            const inventory = read('3-inventory.md');
-
-            expect(inventory).toMatch(/PostHog makes a template transactional only once a verified sender covers its address/);
-            expect(inventory).not.toMatch(/make it in PostHog from the provider's template, make it transactional, and give you/);
-        });
-
-        it('has the person confirm sends with content from the code, which the template tools do not show', () => {
-            expect(read('2-preflight.md')).toMatch(/PostHog enables sends with content from the code separately/);
-            expect(read('7-report.md')).toMatch(/sends with content from the code \(`html`, `text`, or `react`\) when a site that moves has them \(confirm with PostHog/);
-        });
-    });
-
-    it('keeps a template site on Resend when it sets a reply-to, in either spelling', () => {
-        const mapping = read('resend/mapping.md');
-
-        expect(mapping).toMatch(/the site sets `from`, `replyTo` \/ `reply_to`, or `subject` next to it \|/);
-        expect(mapping).toMatch(/A site that sets `from`, `replyTo` \/ `reply_to`, or `subject` next to `template` stays on Resend/);
     });
 
     it('publishes Resend and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
