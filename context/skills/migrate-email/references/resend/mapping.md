@@ -59,7 +59,7 @@ Resend templates hold only variables, with an optional fallback. In the code:
 | `{{{NAME\|there}}}`, and a variable whose definition has a `fallback_value` | The value, or the fallback when the site doesn't pass the variable. Resend inserts an empty string as it is, so `""` renders as nothing, not as the fallback. A fallback is the template's own text: in the HTML it goes in as it is, so a fallback that holds HTML, such as a link, renders as before |
 | A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
 | The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
-| The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way |
+| The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way. A value the send takes from the template meets the rules of "Fields" as one the site sets: a reply-to address with a name, such as `Support <support@example.com>`, keeps the site on Resend |
 | The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only |
 
 Write the `\|` above as a plain `|`. The table escapes it.
@@ -77,6 +77,22 @@ Only for a template the person asks to make in PostHog, as Step 3 says. The pers
 - Resend inserts a variable's value as it is. PostHog's Liquid escapes HTML in a value, so `<b>` shows as text. A variable is HTML when the code fills it with markup or with a renderer's output, and such a variable keeps the site on Resend. A variable the app fills with plain values, such as names, numbers, and URLs, renders the same.
 - A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds a `'`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo`, or `subject` next to `template` stays on Resend.
+
+## Webhooks
+
+Resend stops sending email events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
+
+| Resend event | PostHog event |
+|---|---|
+| `email.sent` | `$workflows_email_sent` |
+| `email.delivered` | `$workflows_email_delivered` |
+| `email.bounced` | `$workflows_email_bounced` |
+| `email.complained` | `$workflows_email_blocked` |
+| `email.opened` | `$workflows_email_opened` |
+| `email.clicked` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| Every other email event, such as `email.delivery_delayed` | none |
+
+PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
 ## Rewrite
 
