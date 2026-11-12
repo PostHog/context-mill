@@ -20,15 +20,15 @@ Postmark fields are written in their HTTP names here, such as `HtmlBody`. Python
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `Metadata` | none | Always: no PostHog SDK takes tags yet |
 | `Tag` | none | Always: no PostHog SDK takes tags yet |
-| Open and link tracking: `TrackOpens`, `TrackLinks`, or neither | none: PostHog adds its open pixel and counts no clicks | Postmark sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below |
+| Open and link tracking: `TrackOpens`, `TrackLinks`, or neither | none: PostHog adds its open pixel, and counts clicks only for a template made in PostHog that is not marked sensitive | Postmark sent it with opens untracked, or its open tracking isn't checked. See "Tracking" below |
 | `MessageStream: 'outbound'` | none | Never. `outbound` is the default transactional stream |
 | `MessageStream` naming any other stream | none | Always: the stream has its own settings, suppressions, and webhooks at Postmark |
 
 Count only the fields the code sets.
 
-**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Postmark tracks opens when the send's `TrackOpens` is `true`, or, when the send leaves it out or sets it to `null`, when its server's open tracking is on. It tracks links when the send's `TrackLinks` is anything but `None`, or, when the send leaves it out, when its server's link tracking is on. A new server tracks neither, until the person turns them on in its settings. `postmarker` sends `TrackLinks: "None"` when the code doesn't pass it, from `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)`: links of those sends were not tracked. So does the .NET SDK: the constructor of `PostmarkMessage` and `TemplatedPostmarkMessage` sets `TrackLinks` to `LinkTrackingOptions.None`, so a .NET SDK message whose code never sets `TrackLinks` sends `None`, and its links were not tracked. That includes the positional `SendMessageAsync(from, to, subject, textBody, htmlBody)`, which builds a `PostmarkMessage` and never sets it. A .NET message that sets `TrackLinks = null` sends no value and follows the server, and so does a .NET send through a plain HTTP client that leaves the field out. Work out, for opens and for links, whether Postmark tracked them:
+**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. A send in the code form is sensitive, so PostHog never rewrites its links and counts no clicks for it. A template made in PostHog that is not marked sensitive gets its links rewritten, as "Templates made in PostHog" says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Postmark tracks opens when the send's `TrackOpens` is `true`, or, when the send leaves it out or sets it to `null`, when its server's open tracking is on. It tracks links when the send's `TrackLinks` is anything but `None`, or, when the send leaves it out, when its server's link tracking is on. A new server tracks neither, until the person turns them on in its settings. `postmarker` sends `TrackLinks: "None"` when the code doesn't pass it, from `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)`: links of those sends were not tracked. So does the .NET SDK: the constructor of `PostmarkMessage` and `TemplatedPostmarkMessage` sets `TrackLinks` to `LinkTrackingOptions.None`, so a .NET SDK message whose code never sets `TrackLinks` sends `None`, and its links were not tracked. That includes the positional `SendMessageAsync(from, to, subject, textBody, htmlBody)`, which builds a `PostmarkMessage` and never sets it. A .NET message that sets `TrackLinks = null` sends no value and follows the server, and so does a .NET send through a plain HTTP client that leaves the field out. Work out, for opens and for links, whether Postmark tracked them:
 
-- Opens tracked: the site moves. When Postmark tracked its links too, note in the plan row that PostHog counts no clicks for it.
+- Opens tracked: the site moves. When Postmark tracked its links too, and the site moves in the code form or to a template marked sensitive, note in the plan row that PostHog counts no clicks for it.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
 Link tracking alone never keeps a site, and never adds a field. A template site follows these bullets too, whether it moves into the code or to a template made in PostHog.
@@ -78,6 +78,7 @@ Postmark's SDKs throw on an API error: Node.js, both Python SDKs, Ruby, PHP, and
 | A check of `ErrorCode`, `Message`, or .NET's `Status` in a send's answer | Never. Read PostHog's error instead, as the Rewrite section says |
 | `MessageID` stored for a webhook handler or a status read | Always, when a webhook handler or the Messages or Bounces API uses it |
 | `MessageID` logged or stored for the app's own use | Never. Use PostHog's message id |
+| A send the code can cancel: a raw request with a `signal` a caller passes in or an `AbortController` it aborts, a .NET request with a cancellation token a caller can cancel, or a Go context a caller can cancel, such as the one passed to `SendEmail(ctx, ...)` | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as "HTTP" says under "Rewrite" |
 
 ## Templates
 
@@ -115,7 +116,9 @@ Postmark templates are Mustachio. In the code:
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Postmark template, makes it transactional, and gives you its template ID. Until then the site stays on Postmark.
+Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Postmark template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Postmark.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default. A template that is not marked sensitive sends each link through PostHog's click redirect: when Postmark didn't track the site's links, note in the plan row that its links now go through that redirect.
 
 For a template with a layout, the person makes one PostHog template from both: the layout's HTML with the template's HTML in place of `{{{ @content }}}`, and the same for the text body. Tell them so when you ask them to make it.
 
@@ -155,12 +158,24 @@ Postmark stops sending events for a site that moves. PostHog records the events 
 | `Bounce` | `$workflows_email_bounced` |
 | `SpamComplaint` | `$workflows_email_blocked` |
 | `Open` | `$workflows_email_opened` |
-| `Click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `Click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks |
 | `SubscriptionChange` | none |
 
 Postmark has no event for an accepted send. PostHog records `$workflows_email_sent` for each moved send. A send to an inactive address got a `406` error from Postmark, and Postmark posted no webhook for it. PostHog refuses it with `recipient_suppressed`.
 
 PostHog's events carry no Postmark `MessageID`, no `Metadata`, and no `Tag`. A site whose events a handler matches by message id, by a metadata value, or by tag stays on Postmark. For every other handler, such as one that matches by the recipient's address, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a `Click` handler acts on moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+
+## Calls that change the suppression list
+
+Step 5 says what to do with each of these calls. They are not sends, and they stay on Postmark.
+
+| Adds an address | Removes an address |
+|---|---|
+| `POST /message-streams/{stream}/suppressions`, and each SDK's spelling of it, such as `createSuppressions` in Node.js and PHP, `create_suppressions` in Ruby, or `CreateSuppressions` in .NET | `POST /message-streams/{stream}/suppressions/delete`, and each SDK's spelling of it, such as `deleteSuppressions` in Node.js and PHP, `delete_suppressions` in Ruby, or `DeleteSuppressions` in .NET |
+
+Only a call on the `outbound` stream of a server whose list Step 5 imports counts, as "Servers" says. PHP and .NET use `outbound` when the call names no stream. A call on any other stream changes a list the import leaves out.
 
 ## Rewrite
 
@@ -193,6 +208,18 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `TrackOpens` and `TrackLinks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
+**HTTP.** A request to `https://api.postmarkapp.com/email` or `/email/withTemplate`, through `fetch`, axios, `requests`, `httpx`, `net/http`, Faraday, Guzzle, `HttpClient`, `reqwest`, `Req`, or `curl`, becomes the SDK's send in that language, as "The call" says. A site's own deadline is a timeout that the code sets on that request, or on the Postmark client the site sends through. The site keeps it, as Step 7 says under "Set up the client". These set one:
+
+- A raw request: `signal: AbortSignal.timeout(...)` on `fetch`, axios `timeout`, `timeout=` in `requests` or `httpx`, Guzzle's `timeout`, `HttpClient.Timeout` in .NET, an `http.Client` with a `Timeout` or a context with a deadline in Go, Faraday's `timeout`, and `CURLOPT_TIMEOUT` or `--max-time` in curl.
+- postmark.js: the client option `timeout`, in seconds, such as `new postmark.ServerClient(token, { timeout: 10 })`.
+- `postmark-python`: `ServerClient(token, timeout=...)`, and `postmarker`: `PostmarkClient(server_token=..., timeout=...)`, in seconds.
+- Ruby: `http_open_timeout:` and `http_read_timeout:` on `Postmark::ApiClient.new`, in seconds. The deadline is the two together.
+- PHP: the second argument of `new PostmarkClient($token, $timeout)`, in seconds.
+- .NET: a `PostmarkClientBase.ClientFactory` the code sets, whose client sends through an `HttpClient` with a `Timeout`.
+- Go: a context with a deadline passed to `SendEmail(ctx, ...)`, or a `Timeout` on the client's `HTTPClient`.
+
+A timeout the SDK sets by default is not the site's own, such as postmark.js's 180 seconds, `postmark-python`'s 5, or the 60 seconds of Ruby, PHP, and .NET. Step 7 turns the send's retries off because the request never retried. A Postmark client that retried keeps that count instead: `postmark-python`'s `retries`, 3 unless the code sets it, and the `max_retries` the code sets on `postmarker`'s `PostmarkClient` or on `Postmark::ApiClient.new`. The send's retries take that count, under the rewrite file's name for them under "A deadline".
+
 **Templates brought into the code.** The site renders the email, inside its layout, from `TemplateModel`, as "Templates" says, and sends `templateKey`, the rendered `subject`, `html`, and `text`, and the site's own `from` and `replyTo`. It sends no `templateId` and no `templateData`, and drops `TemplateId`, `TemplateAlias`, `TemplateModel`, and `InlineCss`.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `TemplateModel`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
@@ -207,7 +234,7 @@ Never widen a catch. Where the code caught only one kind of Postmark error, catc
 - **PHP.** `catch (PostmarkException $e)` caught API errors only: Guzzle's network errors went past it. It becomes `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'network_error') throw $e;` first. `getHttpStatusCode()` becomes `getStatusCode()`, a check of it for `422` becomes `getErrorName() === 'validation_error'`, and a check of `getPostmarkApiErrorCode()` for `406` becomes `getErrorCode() === 'recipient_suppressed'`.
 - **.NET.** `catch (PostmarkValidationException ex)` caught API errors only: network errors went past it, such as an `HttpRequestException`. It becomes `catch (PostHog.Emails.EmailException ex) when (ex.Code != "network_error")`. `ex.Response.Message` becomes `ex.Message`, a branch on the `422` answer becomes `ex.Name == "validation_error"`, and a check of `ex.Response.ErrorCode` for `406` becomes `ex.Code == "recipient_suppressed"`.
 - **Go.** Both return an error. Keep `if err != nil`, and read PostHog's `*posthog.EmailError` with `errors.As` where the code read Postmark's. A branch on one `ErrorCode` becomes a check of the error's `Code` or `StatusCode`, a branch on a `422` reads its `Name` for `validation_error`, and every other error goes on as before.
-- **HTTP.** The code read the status or `ErrorCode` of the answer. Read PostHog's error the way the rewrite file says under "The answer", and keep each branch: a status of 400 or more, or an `ErrorCode` other than 0, becomes "there is an error", a branch on `422` reads PostHog's error name `validation_error`, and a branch on another status reads PostHog's status code, with a `429` branch that skips the code `quota_limited`.
+- **A raw HTTP call.** The code read the status or `ErrorCode` of the answer. Read PostHog's error the way the rewrite file says under "The answer", and keep each branch: a status of 400 or more, or an `ErrorCode` other than 0, becomes "there is an error", a branch on `422` reads PostHog's error name `validation_error`, and a branch on another status reads PostHog's status code, with a `429` branch that skips the code `quota_limited`.
 
 **Checks of the answer.** A single send threw on any answer but `200` before the code read it: .NET's `SendMessageAsync` throws `PostmarkValidationException`, and PHP's `sendEmail` throws `PostmarkException`. A check after the call, such as `response.Status != PostmarkStatus.Success` or `getErrorCode() != 0`, only ever saw a sent email. Remove the check, keep the code it guarded on success, and let PostHog's error take the path Postmark's exception took, as the bullets above say.
 
@@ -215,4 +242,4 @@ Never widen a catch. Where the code caught only one kind of Postmark error, catc
 
 **The answer.** The message id of a moved send is PostHog's. Code that logged `MessageID` (`message_id`, `getMessageID()`), or stored it for the app's own use, takes PostHog's message id instead.
 
-**The Postmark client.** Postmark's packages serve Postmark only, but each one also calls Postmark's other APIs, such as templates, suppressions, bounces, and the account API (`sdk-reference.md` lists them under "Other APIs"), and `postmark-rails` needs the `postmark` gem. Keep the package for any such call or mailer. A call that adds addresses to the `outbound` suppressions, `POST /message-streams/outbound/suppressions` or the SDK's call for it, stops only Postmark's sends: an address it adds after the import still gets the moved sends. List it under other calls, and add to the report's "Before cutover" that the person makes that call write to both lists before the deploy: it keeps its Postmark write and also adds the address to PostHog's suppression list. A call that reactivates an address, `POST /message-streams/outbound/suppressions/delete` or the SDK's call for it, works the same way: it also removes the address from PostHog's suppression list where Step 5 allows it, or PostHog keeps refusing the moved sends to it. The Postmark write stays while any send of that server still goes through Postmark, such as a site that stays or a mailer, and goes only once the last of them moves. Keep the Postmark client, its import, and its token while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package and its token: the person removes them after the cutover.
+**The Postmark client.** Postmark's packages serve Postmark only, but each one also calls Postmark's other APIs, such as templates, suppressions, bounces, and the account API (`sdk-reference.md` lists them under "Other APIs"), and `postmark-rails` needs the `postmark` gem. Keep the package for any such call or mailer. Keep the Postmark client, its import, and its token while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the package and its token: the person removes them after the cutover.

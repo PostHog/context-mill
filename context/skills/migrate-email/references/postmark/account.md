@@ -20,9 +20,9 @@ A domain verified at Postmark carries these records. Keep all of them until the 
 
 ## Migration token
 
-Postmark's Server API tokens can't be limited to reads: each one can send mail and change the server's settings, and each one reads only its own server. The app's own token can read templates, tracking settings, and suppressions, but the run doesn't use it. When the person chooses the API over the dashboard, ask them to generate a separate Server API token for the migration on each server the moved sites send from (the server, then API Tokens, then Generate New; a server holds up to three tokens). Store it in the git-ignored env file: `POSTMARK_MIGRATION_SERVER_TOKEN` for one server, or `POSTMARK_MIGRATION_SERVER_TOKEN_<SERVER>`, with the server's name in upper snake case, for each of several. Note in the plan each variable, its server, and that the run created it. Every read below uses the token of the server it reads from.
+Postmark's Server API tokens can't be limited to reads: each one can send mail and change the server's settings, and each one reads only its own server. The app's own token can read templates, tracking settings, and suppressions, but the run doesn't use it. When the person chooses the API over the dashboard, ask them to generate a separate Server API token for the migration on each server the moved sites send from (the server, then API Tokens, then Generate New; a server holds up to three tokens). Store it in the git-ignored env file: `POSTMARK_MIGRATION_SERVER_TOKEN` for one server, or `POSTMARK_MIGRATION_SERVER_TOKEN_<SERVER>`, with the server's name in upper snake case, for each of several. Write each one into the plan as Step 3's plan layout says, with its server. Every read below uses the token of the server it reads from.
 
-A migration token lives from the first read of its server to the end of Step 5. Step 3 reads templates and tracking settings with it, and Step 5 imports the suppression list with it. Ask for each token when the first read of its server needs it, and keep it until then. At the end of Step 5, on every way out of it, ask the person to delete each migration token in Postmark (the server, then API Tokens) and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print a token, and never write it into another file.
+A migration token lives from the first read of its server to the end of Step 5. Step 3 reads templates and tracking settings with it, and Step 5 imports the suppression list with it. Ask for each token when the first read of its server needs it, and keep it until then. When Step 5 asks the person to delete the full-access key, that is each migration token: in Postmark, the server, then API Tokens. The report reminds them of each token they didn't delete. Never print a token, and never write it into another file.
 
 The steps call these keys the full-access provider key.
 
@@ -50,7 +50,7 @@ A site whose template moves needs the content of the template and of its layout:
 
 **Read from the API.** `GET https://api.postmarkapp.com/templates/{templateIdOrAlias}` with `Accept: application/json` and `X-Postmark-Server-Token` set to the migration token of the server the site sends from: each server has its own templates, and an id or alias finds only that server's. The answer holds `TemplateId`, `Alias`, `Name`, `Subject`, `HtmlBody`, `TextBody`, `TemplateType` (`Standard` or `Layout`), `LayoutTemplate`, and `Active`. When `LayoutTemplate` holds an alias, read that layout with the same route and token.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 
