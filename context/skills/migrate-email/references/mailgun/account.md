@@ -54,6 +54,8 @@ A site that sets no open or click tracking field sends with its domain's setting
 
 **Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active`, `tracking.click.active`, and `tracking.unsubscribe.active`.
 
+For a site that moves to a template made in PostHog, click tracking off means Mailgun didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog". A send's own tracking fields override the domain's setting, as `mapping.md` says under "Tracking".
+
 ## Suppression list
 
 Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out.

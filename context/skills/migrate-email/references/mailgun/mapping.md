@@ -41,6 +41,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 **Tracking.** PostHog's side is Step 7's: it adds its open pixel to every email, counts clicks only for a template made in PostHog that is not marked sensitive, and no field changes either. Mailgun tracks opens and clicks only when they are on: a send's `o:tracking-opens` or `o:tracking-clicks`, else its `o:tracking`, else the sending domain's setting, which Mailgun turns off for a new domain. A send that sets one of them to `no` or `false` turns that tracking off, even on a domain with tracking on, such as a password reset with `o:tracking-clicks: 'no'`. Work out, for opens and for clicks, whether Mailgun tracked them:
 
 - Opens tracked: the site moves. When Mailgun tracked its clicks too, `htmlonly` included, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
+- Clicks, for a site that moves to a template made in PostHog: Mailgun tracked them when the send's `o:tracking-clicks`, else its `o:tracking`, else the domain's click tracking was on. `htmlonly` tracks the links of the HTML part, the part the template sends, so it counts as tracked. When Mailgun didn't track them, or the site sets neither field and the domain's click tracking is not given, Step 3 asks the person to mark the template sensitive, as it says under "A template in PostHog".
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 - `o:tracking` that disagrees with `o:tracking-opens` on the same send: the site stays, and the reason is `conflicting open tracking`.
 
@@ -126,7 +127,7 @@ Mailgun templates are Handlebars, with the block helpers `if`, `unless`, `each`,
 
 Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailgun template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Mailgun.
 
-An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and sends its links as they are, without its click redirect. Templates are not sensitive by default.
 
 Mailgun's Handlebars becomes Liquid in the PostHog template. Values move under `variables`, and each name keeps its case:
 
@@ -196,7 +197,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 Drop the domain argument and the Mailgun client of the call.
 
-**HTTP.** A site keeps a deadline that its request or its Mailgun client had, as Step 7 says under "Set up the client". These count as the site's own deadline: a timeout on the request, such as `requests.post(..., timeout=5)`, axios `timeout: 5000`, Guzzle's `'timeout' => 5`, or `signal: AbortSignal.timeout(5000)`; a timeout on the client, such as `timeout` in `mailgun.js`'s client options, or the `Timeout` of an `http.Client` that the code gives a Go client with `SetHTTPClient`; and a Go context from `context.WithTimeout` passed to `mg.Send`. A timeout the library sets on its own, which the code doesn't set, is not one. A limit on connecting alone, or on connecting and reading apart, such as `requests`' `timeout=(1, 10)` or Guzzle's `connect_timeout`, falls under Step 7's rule on such limits; for a Go client given an `http.Client`, its `Transport`'s limits are kept as `rewrite-go.md` says. A `signal` or context that a caller can cancel is not a deadline: see "Code around the send".
+**HTTP.** A site keeps a deadline that its request or its Mailgun client had, as Step 7 says under "Set up the client". Step 7 also says which kinds of limit the SDK can keep. These count as the site's own deadline: a timeout on the request, such as `requests.post(..., timeout=5)`, Guzzle's `'timeout' => 5`, or `signal: AbortSignal.timeout(5000)`; the `Timeout` of an `http.Client` that the code gives a Go client with `SetHTTPClient`; and a Go context from `context.WithTimeout` passed to `mg.Send`. `timeout` in `mailgun.js`'s client options is axios's `timeout`, which `mailgun.js` passes to every request: a limit the SDK can't keep, as Step 7 says for axios, so the site stays. A limit on connecting alone, or on connecting and reading apart, such as `requests`' `timeout=(1, 10)` or Guzzle's `connect_timeout`, falls under Step 7's rule on such limits; for a Go client given an `http.Client`, its `Transport`'s limits are kept as `rewrite-go.md` says. A `signal` or context that a caller can cancel is not a deadline: see "Code around the send".
 
 **The fields.**
 
