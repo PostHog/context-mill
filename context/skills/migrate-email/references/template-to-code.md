@@ -53,7 +53,7 @@ Pick the first that fits the part of the app that sends:
 Write the `\|` above as a plain `|`. The table escapes it.
 
 - The provider's HTML and text go into the template as literal content. Before writing them, escape each sequence the destination reads as its own code, so text from the provider's editor never runs in the app: `<%` as `<%%` in ERB and EEx, `<?` as `<?= '<?' ?>` in a PHP template, `{{` as `{{"{{"}}` in Go's templates, and the delimiters of the app's engine, such as `{{` and `{%` in Jinja2, Twig, Handlebars, and Nunjucks, as that engine documents. A function that replaces markers needs none of this: it inserts only the values.
-- A function that replaces markers raises when a marker is left after the replace, so a misspelled name fails the send instead of mailing the marker.
+- A function that replaces markers first checks that each marker in the template has a value, and raises when one has none, so a misspelled name fails the send instead of mailing the marker. It then replaces every marker in one pass, so a value that itself contains `{{name}}` goes out as written.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no template engine or other dependency. React Email and the app's engine are already in the app, and the table above needs only the language's standard library.
 
