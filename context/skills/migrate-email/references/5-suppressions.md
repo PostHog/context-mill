@@ -29,7 +29,7 @@ Read the provider's `account.md` first, whether or not the import runs. Its "For
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
 
-When Step 2 recorded that the MCP can't see the app's project, the tool would import into another project: never call it. Treat the tool as missing, as below, with `not imported: the MCP can't see the project` in place of `no import tool`.
+When the MCP can't see the app's project, as Step 2 found, whatever it recorded for `api`, the tool would import into another project: never call it. Treat the tool as missing, as below, with `not imported: the MCP can't see the project` in place of `no import tool`.
 
 When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Tick the phase as `- [ ] suppressions — not imported: no import tool`, do what "Calls that change the provider's list" says, ask about the full-access key as the last section says, and continue to the next step. The report tells the person to add the addresses in PostHog (Workflows, then Messaging, then Suppression list) right before cutover, so the list holds the entries the provider adds until then.
 
