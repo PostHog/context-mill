@@ -1,0 +1,54 @@
+[
+  {
+    "name": "fa_changes_relevant",
+    "rubric": "All changes relate to the PostHog setup the user asked for (no unrelated edits) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_correct_files",
+    "rubric": "Correct files modified for this framework (e.g., `apps.py` for Django, `instrumentation-client.ts` for Next.js, provider for React) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_no_unnecessary_changes",
+    "rubric": "No unnecessary modifications (no gratuitous reformatting, no unrelated refactors, no deleted code that should have been preserved) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_code_quality",
+    "rubric": "Code follows existing codebase patterns (naming, structure, indentation, idioms match surrounding code) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_imports_valid",
+    "rubric": "Imports and exports are correct (no missing imports, no importing from wrong packages like posthog-js on server) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_files_complete",
+    "rubric": "All necessary files are included (e.g., env example updated, config file added if needed) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_builds",
+    "rubric": "App builds without errors (no syntax errors, type errors, or missing dependencies that would prevent build) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_preserves_existing",
+    "rubric": "Preserves existing app code and configs (no existing functionality broken, env vars intact, configs unmodified except for PostHog additions) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_minimal_changes",
+    "rubric": "Changes are minimal and focused (only what is needed for the PostHog setup the user asked for, no scope creep) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_no_syntax_errors",
+    "rubric": "No syntax or type errors introduced (valid syntax in all changed files, types match) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_correct_imports",
+    "rubric": "Correct import/export statements (all imports resolve, correct package names) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_env_documented",
+    "rubric": "Environment variables documented (new env vars like API key, host mentioned in .env.example or README or equivalent) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_build_config_valid",
+    "rubric": "Build configuration is valid (package.json scripts work, tsconfig valid, requirements.txt parseable, etc.) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

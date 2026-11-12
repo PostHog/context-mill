@@ -1,0 +1,26 @@
+[
+  {
+    "name": "lg_dependencies_installed",
+    "rubric": "The OpenTelemetry logs SDK and OTLP exporter packages for this platform, or the PostHog SDK where it has native log support, are added with the package manager's install command and appear in the dependency manifest. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "lg_exporter_configured",
+    "rubric": "An OTLP log exporter, or the SDK's native log capture, is configured to send logs to PostHog's log ingest endpoint on the PostHog host, authenticated with the project token, following PostHog's documentation for this platform. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "lg_token_host_env",
+    "rubric": "The project token and host or endpoint are read from environment variables, not hard-coded, and the endpoint is on the same PostHog host as the rest of the app's PostHog configuration. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "lg_existing_logging_preserved",
+    "rubric": "PostHog log export is added alongside the app's existing logging. Existing handlers, transports, and outputs still work, and the app's logger is reused, not replaced. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "lg_structured_properties",
+    "rubric": "Logs the change adds or routes carry structured key-value properties, not only interpolated message strings. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "lg_initialized_once",
+    "rubric": "Log export is set up once at startup, before the app starts handling work, not per request. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]
