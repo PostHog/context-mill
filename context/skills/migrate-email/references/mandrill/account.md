@@ -38,6 +38,10 @@ The API has no read of these settings. Note the click tracking choice as the pag
 
 Also ask the person whether the account has rules (the Rules page under Settings), and what each active rule matches and changes. A rule changes each send it matches, such as turning open tracking off, adding tags, or moving the send to a subaccount. Classify a site that a rule matches with the rule's changes, as if the site set them. A site that a rule may match, when the person can't tell what the rule changes, stays, and the reason is `sending rule not checked`. When the person can't tell whether the account has rules, every site stays for the same reason.
 
+## Click tracking
+
+Mailchimp Transactional tracked a site's clicks when the send's `track_clicks` is `true`, or, when the send leaves it out, when the Sending Defaults' click tracking covers the email's part, as `mapping.md` says under "Tracking", and no rule the person names turns it off. A `track_clicks: false`, click tracking off in the Sending Defaults, or a choice that leaves out the email's part, such as text emails only for an HTML email, means it didn't track the site's clicks. When the site leaves out `track_clicks` and the person can't tell the Sending Defaults' click tracking, nobody knows. Step 3 says under "A template in PostHog" what a site that moves to a template made in PostHog then needs.
+
 ## Template content
 
 A site whose template moves needs the content of its published version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, as HTML and text with the merge tags as written.
