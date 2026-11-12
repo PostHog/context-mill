@@ -48,10 +48,11 @@ Pick the first that fits the part of the app that sends:
 | `php` | `emails/<key>.html.php` and `emails/<key>.txt.php`, plain PHP templates rendered with `ob_start()`, `include`, and `ob_get_clean()` | `htmlspecialchars($value, ENT_QUOTES \| ENT_HTML5, 'UTF-8')` |
 | `dotnet` | A static class, `Emails/<Key>Email.cs`, with the HTML and the text as raw string literals with `{{name}}` markers, and a method that replaces each marker | `System.Net.WebUtility.HtmlEncode` |
 | `rust` | `emails/<key>.html` and `emails/<key>.txt`, read with `include_str!`, and a function that replaces each `{{name}}` marker | a small `escape_html` function next to it that replaces `&`, `<`, `>`, `"`, and `'` |
-| `elixir` | `emails/<key>.html.eex` and `emails/<key>.text.eex`, compiled with `EEx.function_from_file` | `Phoenix.HTML.html_escape/1` with `Phoenix.HTML.safe_to_string/1` when the app has `phoenix_html`, or `Plug.HTML.html_escape/1` when it has `plug` |
+| `elixir` | `emails/<key>.html.eex` and `emails/<key>.text.eex`, compiled with `EEx.function_from_file` | `Phoenix.HTML.html_escape/1` with `Phoenix.HTML.safe_to_string/1` when the app has `phoenix_html`, or `Plug.HTML.html_escape/1` when it has `plug`, otherwise a small `escape_html` function next to it that replaces `&`, `<`, `>`, `"`, and `'` |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
+- The provider's HTML and text go into the template as literal content. Before writing them, escape each sequence the destination reads as its own code, so text from the provider's editor never runs in the app: `<%` as `<%%` in ERB and EEx, `<?` as `<?= '<?' ?>` in a PHP template, `{{` as `{{"{{"}}` in Go's templates, and the delimiters of the app's engine, such as `{{` and `{%` in Jinja2, Twig, Handlebars, and Nunjucks, as that engine documents. A function that replaces markers needs none of this: it inserts only the values.
 - A function that replaces markers raises when a marker is left after the replace, so a misspelled name fails the send instead of mailing the marker.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no template engine or other dependency. React Email and the app's engine are already in the app, and the table above needs only the language's standard library.
