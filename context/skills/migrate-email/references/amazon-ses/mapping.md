@@ -22,7 +22,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `EmailTags` / `Tags` | none | Always: no PostHog SDK takes tags yet |
 | `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"), or the set's `DeliveryOptions.TlsPolicy` is `REQUIRE`, or its `DeliveryOptions.MaxDeliverySeconds` is below 50400, the most Amazon SES allows: Amazon SES delivered it only over TLS, or gave up after that time, and PostHog's send has no setting for either. Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
-| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel and counts no clicks | Amazon SES sent it with opens untracked, or its open tracking isn't checked. See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
+| Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel, and counts no clicks for a send in the code form | Amazon SES sent it with opens untracked, or its open tracking isn't checked. See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
 | `FromEmailAddressIdentityArn`, `FeedbackForwardingEmailAddressIdentityArn` / `SourceArn`, `ReturnPathArn`, `FromArn` | none | Always: the site sends for an identity another AWS account owns |
@@ -36,7 +36,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 A send with neither gets no tracking pixel, and its links stay as written. Read the account's VDM settings and each set the sites use, as `account.md` says under "Configuration sets", and work out, for opens and for clicks, whether Amazon SES tracked them:
 
-- Opens tracked: the site moves. When Amazon SES tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens tracked: the site moves. When Amazon SES tracked its clicks too and the site moves in the code form, note in the plan row that PostHog counts no clicks for it. When Amazon SES didn't track its clicks and it moves to a template made in PostHog that is not marked sensitive, note that PostHog now sends its links through its click redirect.
 - Opens untracked: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
 When a site's open tracking depends on a setting the person can't give and the read-only key can't read, the site stays, and the reason is `account tracking not checked` for the account's VDM settings, or `configuration set <name> tracking not checked` for a set's.
