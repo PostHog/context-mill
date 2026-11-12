@@ -133,7 +133,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `client.Emails.Send(params)`, `SendWithContext(ctx, params)`, and `SendWithOptions(ctx, params, &resend.SendEmailOptions{IdempotencyKey: key})` become `client.Emails().Send(ctx, posthog.CodeEmail{...})`. Pass the site's context, or `context.Background()` where the old call had none. `Html` becomes `HTML`, and the options' `IdempotencyKey` moves into the email.
 - Both answer a pointer and an error: `resp.Id` becomes `result.ID`.
-- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names.
+- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names. Every other check of a Resend error, such as one for the rate limit, with its own type or sentinel, becomes `errors.As` with `*posthog.EmailError` and a check of `StatusCode`, such as `StatusCode == 429`.
 
 ### .NET
 
