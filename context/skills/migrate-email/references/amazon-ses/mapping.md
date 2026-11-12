@@ -38,7 +38,7 @@ A send with neither gets no tracking pixel, and its links stay as written. Read 
 
 - Opens tracked: the site moves.
 - Opens untracked: the site's emails had no open pixel. It moves only when the person agrees that PostHog may add one, as Step 3 says under "Opens the provider didn't track", and otherwise stays, and the reason is `open tracking off`.
-- Clicks, for every site that moves, whatever its opens: when Amazon SES tracked its clicks and the site moves in the code form, or to a template made in PostHog that is marked sensitive, note in the plan row that PostHog counts no clicks for it. When Amazon SES didn't track its clicks, or its click tracking isn't checked, and it moves to a template made in PostHog, ask the person to mark that template sensitive, as Step 3 says under "A template in PostHog".
+- Clicks, for every site that moves, whatever its opens: when Amazon SES tracked its clicks, or its click tracking isn't checked, and the site moves in the code form, or to a template made in PostHog that is marked sensitive, note in the plan row that PostHog counts no clicks for it. When Amazon SES didn't track its clicks, or its click tracking isn't checked, and it moves to a template made in PostHog, ask the person to mark that template sensitive, as Step 3 says under "A template in PostHog".
 
 When a site's open tracking depends on a setting the person can't give and the read-only key can't read, such as the account's VDM settings or a set's event destinations, nobody can tell whether its emails had an open pixel: the site stays, and the reason is `open tracking not checked`, as Step 3 says under "Opens the provider didn't track".
 
