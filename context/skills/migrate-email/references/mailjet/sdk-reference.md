@@ -135,7 +135,7 @@ res, err := client.SendMailV31(&messages)
 
 **.NET.** Two forms:
 
-- `client.SendTransactionalEmailAsync(email)`, with an email built by `new TransactionalEmailBuilder()`, answers a `TransactionalEmailResponse` whose `Messages[0].Status` is `"success"` or `"error"`, with `Errors`. It throws `Mailjet.Client.Exceptions.MailjetServerException`, with `HttpCode`, only when the answer has no `Messages`: an invalid send that Mailjet answers in `Messages`, even with a `400`, comes back as the response. Its second argument, `isSandboxMode`, `false` by default, sets `SandboxMode` for the call: `true` there, by position or by name, makes it a check, not a send. `SendTransactionalEmailsAsync(emails, isSandboxMode)` sends several in one call.
+- `client.SendTransactionalEmailAsync(email)`, with an email built by `new TransactionalEmailBuilder()`, answers a `TransactionalEmailResponse` whose `Messages[0].Status` is `"success"` or `"error"`, with `Errors`. It throws `Mailjet.Client.Exceptions.MailjetServerException`, with `HttpCode`, only for a failed status whose answer has no `Messages`, a `400` among them: an invalid send that Mailjet answers in `Messages`, even with a `400`, comes back as the response. Its second argument, `isSandboxMode`, `false` by default, sets `SandboxMode` for the call: `true` there, by position or by name, makes it a check, not a send. `SendTransactionalEmailsAsync(emails, isSandboxMode)` sends several in one call.
 - `client.PostAsync(request)`, with a `new MailjetRequest { Resource = SendV31.Resource }` whose body is set with `.Property(...)`, answers a `MailjetResponse` with `IsSuccessStatusCode`, `StatusCode`, `GetErrorMessage()`, and `GetData()`. It does not throw on an API error.
 
 ```csharp
