@@ -2,35 +2,30 @@
 
 namespace App\Http\Livewire;
 
-use App\Services\PostHogService;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use PostHog\Laravel\Facades\PostHog;
 
 class Profile extends Component
 {
     public ?string $errorMessage = null;
     public ?string $successMessage = null;
 
-    public function mount(PostHogService $posthog)
+    public function mount()
     {
-        $user = Auth::user();
-
         // PostHog: Track profile view
-        $posthog->capture($user->email, 'profile_viewed');
+        PostHog::capture('profile_viewed');
     }
 
-    public function testErrorWithCapture(PostHogService $posthog)
+    public function testErrorWithCapture()
     {
-        $user = Auth::user();
-
         try {
             // Simulate an error
             throw new \Exception('This is a test error for PostHog tracking');
         } catch (\Exception $e) {
             // Capture the exception in PostHog
-            $errorId = $posthog->captureException($e, $user->email);
+            PostHog::captureException($e);
 
-            $this->successMessage = "Error captured in PostHog! Error ID: {$errorId}";
+            $this->successMessage = 'Error captured in PostHog!';
             $this->errorMessage = null;
         }
     }

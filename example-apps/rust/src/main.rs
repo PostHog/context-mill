@@ -24,6 +24,7 @@ use posthog_rs::{
     CaptureExceptionOptions, Client, ClientOptions, EvaluateFlagsOptions, Event,
 };
 use serde::Deserialize;
+use uuid::Uuid;
 
 /// Shared application state. `Arc<Client>` is cheap to clone and lets every
 /// request handler reuse the single process-wide PostHog client.
@@ -81,26 +82,52 @@ async fn main() {
     client.shutdown().await;
 }
 
-/// Resolve a stable distinct id from the session cookie, or "anonymous".
+/// Resolve the distinct id for this request and whether the visitor is anonymous.
 ///
-/// This id must match the id your frontend `posthog.identify(...)` uses so that
-/// server-side and client-side events attribute to the same person.
-fn distinct_id(jar: &CookieJar) -> String {
-    jar.get("user_id")
-        .map(|c| c.value().to_string())
-        .unwrap_or_else(|| "anonymous".to_string())
+/// Signed-in users have a `user_id` cookie; that stable id must match the id your
+/// frontend `posthog.identify(...)` uses so server-side and client-side events
+/// attribute to the same person.
+///
+/// Signed-out visitors get a random UUID stored in an `anon_id` cookie, so it is
+/// reused for the rest of the visit instead of every visitor sharing one id. Return
+/// the (possibly updated) jar from the handler so the cookie reaches the browser.
+fn visitor(jar: CookieJar) -> (CookieJar, String, bool) {
+    if let Some(c) = jar.get("user_id") {
+        let id = c.value().to_string();
+        return (jar, id, false);
+    }
+    if let Some(c) = jar.get("anon_id") {
+        let id = c.value().to_string();
+        return (jar, id, true);
+    }
+    let id = Uuid::new_v4().to_string();
+    let jar = jar.add(Cookie::new("anon_id", id.clone()));
+    (jar, id, true)
+}
+
+/// Anonymous events set `$process_person_profile` to false so PostHog does not
+/// create a person profile for the visitor.
+fn mark_anonymous(event: &mut Event, anonymous: bool) {
+    if anonymous {
+        let _ = event.insert_prop("$process_person_profile", false);
+    }
 }
 
 // ---------------------------------------------------------------------------
 // Home / login page
 // ---------------------------------------------------------------------------
-async fn home(jar: CookieJar) -> Html<String> {
-    let user = distinct_id(&jar);
+async fn home(jar: CookieJar) -> impl IntoResponse {
+    let (jar, user, anonymous) = visitor(jar);
+    let status = if anonymous {
+        "Not signed in, anonymous visitor"
+    } else {
+        "Signed in as"
+    };
     // Escape user-controlled values before putting them in HTML (prevents XSS).
     let user = html_escape::encode_text(&user);
-    Html(format!(
+    let page = Html(format!(
         r#"<h1>Burrito app</h1>
-<p>Signed in as: <strong>{user}</strong></p>
+<p>{status}: <strong>{user}</strong></p>
 <form method="post" action="/login">
   <input name="user_id" placeholder="user id" required>
   <input name="email" placeholder="email (optional)">
@@ -110,7 +137,8 @@ async fn home(jar: CookieJar) -> Html<String> {
 <form method="post" action="/burrito"><button>Consider a burrito</button></form>
 <p><a href="/dashboard">Dashboard (feature flag)</a> &middot;
    <a href="/profile">Profile (error tracking)</a></p>"#
-    ))
+    ));
+    (jar, page)
 }
 
 #[derive(Deserialize)]
@@ -149,7 +177,7 @@ async fn consider_burrito(
     State(client): State<AppState>,
     jar: CookieJar,
 ) -> impl IntoResponse {
-    let user = distinct_id(&jar);
+    let (jar, user, anonymous) = visitor(jar);
 
     let count: u32 = jar
         .get("burrito_count")
@@ -159,6 +187,7 @@ async fn consider_burrito(
 
     let mut event = Event::new("burrito_considered", &user);
     let _ = event.insert_prop("total_considerations", count);
+    mark_anonymous(&mut event, anonymous);
     client.capture(event);
 
     let jar = jar.add(Cookie::new("burrito_count", count.to_string()));
@@ -176,8 +205,8 @@ async fn consider_burrito(
 // ---------------------------------------------------------------------------
 // Evaluate flags once with `evaluate_flags(...)`, then read individual flags
 // off the returned snapshot. Avoid deprecated per-flag helpers.
-async fn dashboard(State(client): State<AppState>, jar: CookieJar) -> Html<String> {
-    let user = distinct_id(&jar);
+async fn dashboard(State(client): State<AppState>, jar: CookieJar) -> impl IntoResponse {
+    let (jar, user, _) = visitor(jar);
 
     let show_new_feature = match client
         .evaluate_flags(user.clone(), EvaluateFlagsOptions::default())
@@ -198,9 +227,10 @@ async fn dashboard(State(client): State<AppState>, jar: CookieJar) -> Html<Strin
     };
     // Escape the distinct id before rendering it (the raw value went to the SDK above).
     let user = html_escape::encode_text(&user);
-    Html(format!(
+    let page = Html(format!(
         "<h1>Dashboard</h1><p>User: {user}</p>{body}<p><a href=\"/\">Back</a></p>"
-    ))
+    ));
+    (jar, page)
 }
 
 // ---------------------------------------------------------------------------
@@ -208,8 +238,8 @@ async fn dashboard(State(client): State<AppState>, jar: CookieJar) -> Html<Strin
 // ---------------------------------------------------------------------------
 // The Rust SDK CAN capture exceptions. Trigger a failure, then report it with
 // `capture_exception_with`, attaching the distinct id and a bit of context.
-async fn profile(State(client): State<AppState>, jar: CookieJar) -> Html<String> {
-    let user = distinct_id(&jar);
+async fn profile(State(client): State<AppState>, jar: CookieJar) -> impl IntoResponse {
+    let (jar, user, anonymous) = visitor(jar);
 
     let message = match risky_operation() {
         Ok(()) => "no error".to_string(),
@@ -218,13 +248,18 @@ async fn profile(State(client): State<AppState>, jar: CookieJar) -> Html<String>
 
             // `property` returns a Result (serialization can fail); keep the
             // context if it serializes, otherwise send the exception without it.
-            let options = match CaptureExceptionOptions::new()
+            let mut options = match CaptureExceptionOptions::new()
                 .distinct_id(user.clone())
                 .property("source", "profile_view")
             {
                 Ok(o) => o,
                 Err(_) => CaptureExceptionOptions::new().distinct_id(user.clone()),
             };
+            if anonymous {
+                if let Ok(o) = options.clone().property("$process_person_profile", false) {
+                    options = o;
+                }
+            }
             if let Err(e) = client.capture_exception_with(&err, options).await {
                 tracing::warn!("capture_exception failed: {e}");
             }
@@ -235,11 +270,12 @@ async fn profile(State(client): State<AppState>, jar: CookieJar) -> Html<String>
     // Escape user-controlled values before rendering (the raw id went to the SDK above).
     let user = html_escape::encode_text(&user);
     let message = html_escape::encode_text(&message);
-    Html(format!(
+    let page = Html(format!(
         "<h1>Profile</h1><p>User: {user}</p>\
          <p>Triggered error (captured by PostHog): <code>{message}</code></p>\
          <p><a href=\"/\">Back</a></p>"
-    ))
+    ));
+    (jar, page)
 }
 
 /// Stand-in for real work that can fail. Returns a `std::error::Error`, which
