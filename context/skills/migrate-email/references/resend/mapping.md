@@ -7,7 +7,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 | Resend | PostHog | A site stays on Resend when |
 |---|---|---|
 | `from` | `from` | Never. It needs a verified sender (Step 4) |
-| `to` | `to` | `to` can hold more than one address. A list with exactly one address moves as that address |
+| `to` | `to`, one bare address | `to` can hold more than one address, its entry carries a name, such as `Jane <jane@example.com>`, or the code builds it at run time and you cannot tell that it holds a bare address only. A list with exactly one bare address moves as that address |
 | `subject` | `subject` | Never |
 | `html` | `html` | Never |
 | `text` | `text` | Never |
