@@ -43,7 +43,7 @@ A send through SMTP has no idempotency key, so the moved site sends none either.
 
 **Tracking.** Every moved site sends in the code form, so PostHog counts its opens and no clicks, as Step 7 says, and no field changes that. An SMTP server tracks neither opens nor clicks on its own, but the provider behind the host may, by an account, domain or server setting, as `account.md` says under "Open tracking". Whether a site's emails had an open pixel decides the rest, as Step 3 says under "Opens the provider didn't track":
 
-- No open pixel: a host with no tracking provider behind it, such as the company's own mail server, and a provider behind the host whose open tracking was off or never set up, such as Amazon SES with no configuration set that tracks opens, neither named by the sends nor set as the sending identity's default. Step 3 asks the person whether PostHog may add its pixel, and the reason when it may not is `open tracking off`.
+- No open pixel: a host with no tracking provider behind it, such as the company's own mail server, and a provider behind the host whose open tracking was off or never set up, such as Amazon SES with neither a configuration set that records opens nor the account's engagement tracking, as `account.md` says. Step 3 asks the person whether PostHog may add its pixel, and the reason when it may not is `open tracking off`.
 - Nobody knows whether the host tracked opens: the reason is `open tracking not checked`.
 - Opens tracked: the site moves. When the host tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
 
