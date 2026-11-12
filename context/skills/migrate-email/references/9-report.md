@@ -29,7 +29,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 <One row per site. Key is the `templateKey` of a moved site, or its `templateId` for a template made in PostHog. A site whose provider template moved into the code names its email's files. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>".>
 
-<Each note under the plan's sites table: each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, and each idempotency key a retry across the deploy could send twice.>
+<Each note under the plan's sites table: each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site whose plan note says `open pixel added`, whose opens PostHog now counts with a pixel its emails never had, and each idempotency key a retry across the deploy could send twice.>
 
 ## Other <provider name> calls
 
