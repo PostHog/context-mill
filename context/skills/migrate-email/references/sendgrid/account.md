@@ -31,9 +31,9 @@ The steps call this key the full-access provider key.
 
 A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking), and note the answer in the plan.
 
-A site's emails had no open pixel when its `trackingSettings` sets `openTracking` with `enable: false`, or sets no `openTracking` while the account's open tracking is off. When it sets none and the person can't say whether open tracking is on, nobody can tell whether they had one. What either means is in Step 3, under "Opens the provider didn't track".
+A site's emails had no open pixel when its `trackingSettings` sets `openTracking` with `enable: false`, or sets no `openTracking` while the account's open tracking is off. When it sets none and the person can't say whether open tracking is on, nobody can tell whether they had one. Step 3 says under "Opens the provider didn't track" what either means.
 
-SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. When it sets none and the person can't say whether click tracking is on, nobody knows whether SendGrid tracked them. What either means for a site that moves to a template made in PostHog is in Step 3, under "A template in PostHog".
+SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. When it sets none and the person can't say whether click tracking is on, nobody knows whether SendGrid tracked them. Step 3 says under "A template in PostHog" what either means for a site that moves to a template made in PostHog.
 
 ## Mail settings
 
