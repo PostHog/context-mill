@@ -258,7 +258,6 @@ describe('migrate-email skill', () => {
             expect(mapping).not.toMatch(/moves only to a template (made in PostHog|the person makes)/);
             expect(read(`${provider}/account.md`)).not.toMatch(/Step 3 deletes once the site is classified/);
         });
-
         it('fills SendGrid substitutions in the code instead of keeping the site', () => {
             const mapping = read('sendgrid/mapping.md');
 
