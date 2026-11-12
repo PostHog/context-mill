@@ -115,7 +115,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 
 **Read from the API.** With the key above, run the same commands yourself, page by page.
 
-**Map each entry.** Work out the reasons that apply to each moved site: the `SuppressedReasons` of its configuration set, the one it names or its identity's default one, when the set's `SuppressionOptions` holds that list, with no reason when the list is empty or `SuppressionOptions` is `{}`. A set that overrides only `SuppressionScope` keeps the account's reasons, and so does a set whose `SuppressionOptions` is `null`. Import the entries whose reason applies to at least one moved site that sends in that Region, and skip the rest. PostHog keeps one suppression list per project and checks it on every moved send. A moved site whose own reasons leave out a reason that another moved site imports, or that sends in another Region than the list an entry came from, has its sends to those addresses refused where Amazon SES sent them: it moved only with the person's yes, as `mapping.md` says under "Suppressions".
+**Map each entry.** Work out the reasons that apply to each moved site: the `SuppressedReasons` of its configuration set, the one it names or its identity's default one, when the set's `SuppressionOptions` holds that list, with no reason when the list is empty or `SuppressionOptions` is `{}`. A set that overrides only `SuppressionScope` keeps the account's reasons, and so does a set whose `SuppressionOptions` is `null`. Import the entries whose reason applies to at least one moved site that sends in that Region, and skip the rest. A moved send no longer names its Region or configuration set, so a re-import, as Step 5 says under "Re-import only", takes the Regions and reasons the report names from the first import instead of working them out again. PostHog keeps one suppression list per project and checks it on every moved send. A moved site whose own reasons leave out a reason that another moved site imports, or that sends in another Region than the list an entry came from, has its sends to those addresses refused where Amazon SES sent them: it moved only with the person's yes, as `mapping.md` says under "Suppressions".
 
 | Amazon SES reason | PostHog source | Reason |
 |---|---|---|
@@ -128,5 +128,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 - **Contact list unsubscribes** apply only to sends with `ListManagementOptions`, and those sites stay on Amazon SES.
 
 ## For the report
+
+The Regions and the reasons per Region that the import took, so a later re-import takes the same.
 
 Each site whose note says `suppressions widened: the person agreed`: PostHog now refuses its sends to the addresses the import took from another Region's list, or for a reason its configuration set doesn't suppress, where Amazon SES sent them.
