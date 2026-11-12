@@ -48,6 +48,7 @@ const messageId = result.body.Messages[0].To[0].MessageID
 - `.post('send', { version: 'v3.1', host: 'api.us.mailjet.com' })`, or `config: { host }` on the client, sends to the US host.
 - `.post('send')` with no version, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below.
 - `.request(body, params, false)` makes no request: it is a test call, not a send.
+- node-mailjet 3.x makes the client with `require('node-mailjet').connect(key, secret, options)`. `perform_api_call: false` in those options, or in the options of `.post`, makes no request.
 
 **Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or an exact `==` pin in the manifest, names. A range such as `>=1.3.4`, or no version at all, names none unless every version it allows sits in one of the three bands below: before 1.7.0, 1.7.x, or from 1.8.0.
 
@@ -111,7 +112,7 @@ $response = $mj->post(Resources::$Email, ['body' => [
 if (!$response->success()) { /* ... */ }
 ```
 
-The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, the client makes no request and sends nothing, except on a `post` whose options leave out `'call'`, which sends. `'call' => false` in the options of `post` makes no request for that call. In the options of `Client`, `'call'` does nothing.
+The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, the client makes no request and sends nothing, except on a `post` given options that are not empty and leave out `'call'`, which sends. A `post` with no options, or empty ones, keeps the client's `false`. `'call' => false` in the options of `post` makes no request for that call. In the options of `Client`, `'call'` does nothing.
 
 **Go.** `SendMailV31` answers `(*mailjet.ResultsV31, error)`. The error is a `*mailjet.APIFeedbackErrorsV31` on a 400 or 403 answer (`Messages[].Errors[]` with `ErrorCode`, `ErrorMessage`, and `StatusCode`), a `*mailjet.ErrorInfoV31` on any other error answer (`StatusCode`, `Message`), or a network error. `res.ResultsV31[0].To[0].MessageID` is the message id.
 
