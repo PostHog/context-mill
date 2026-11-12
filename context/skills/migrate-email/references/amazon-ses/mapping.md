@@ -21,7 +21,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `Attachments` | none | Always. PostHog's send doesn't take it yet |
 | `Headers` | none | Always: no PostHog SDK takes headers yet |
 | `EmailTags` / `Tags` | none | Always: no PostHog SDK takes tags yet |
-| `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"). Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
+| `ConfigurationSetName`, or the sending identity's default configuration set when the send names none | none | A webhook handler matches the set's events by message id or by a tag (see "Webhooks"), or the set's `DeliveryOptions.TlsPolicy` is `REQUIRE`: Amazon SES delivered it only over TLS, and PostHog's send has no setting that requires it. Otherwise it moves: note the set's name in the plan row, because its event destinations stop getting events for this site. `account.md` says how to read an identity's default set |
 | Open and click tracking: `ConfigurationOverrides.Tracking`, the configuration set's event destinations and VDM options, or the account's VDM settings | none: PostHog adds its open pixel and counts no clicks | Amazon SES sent it with opens untracked, or its open tracking isn't checked. See "Open and click tracking" below. `OpenTrackingEnabled` or `ClickTrackingEnabled` set to `DISABLED` counts as set: it turns that tracking off for the send, whatever the set or the account does |
 | `ListManagementOptions` | none | Always: no PostHog SDK takes it |
 | `FeedbackForwardingEmailAddress` / `ReturnPath` | none | Always: no PostHog SDK takes it |
@@ -67,7 +67,7 @@ Most AWS SDKs throw on an error: Node.js, Python, Ruby, PHP, .NET, and Java. The
 | A branch on the HTTP status, such as `err.$metadata.httpStatusCode`, `e.response['ResponseMetadata']['HTTPStatusCode']`, `getStatusCode()`, `StatusCode`, `HTTPStatusCode()`, or `raw_response()` in Rust | Never. A branch on `400` reads PostHog's error name `validation_error`, and also its status code for `429` when the site sends with the v1 API (see "Errors"). A branch on another status, such as `429`, reads PostHog's status code |
 | The `MessageId` stored for a webhook handler or a `GetMessageInsights` read | Always, when a handler or the read uses it |
 | The `MessageId` logged or stored for the app's own use | Never. Use PostHog's message id |
-| A deadline or retry setting on the send, such as `timeout: 5000`, `AbortSignal.timeout(5000)`, or the AWS client's `requestTimeout` or `maxAttempts` | Never. PostHog's SDK sends with its own timeout and retries, so the moved send can take longer than the caller allowed while the API is down. Note the site and its deadline in the plan row |
+| A deadline or retry setting on the send, such as `timeout: 5000`, `AbortSignal.timeout(5000)`, or the AWS client's `requestTimeout` or `maxAttempts` | Always: PostHog's SDK sends with its own timeout and retries, and the rewrite files name no setting for either, so the moved send could outlive the caller's deadline while the API is down. The reason names the setting |
 
 ## Templates
 
