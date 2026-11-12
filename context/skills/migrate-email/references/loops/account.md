@@ -57,6 +57,10 @@ A preview send is also how you read a theme or a social icon that the API doesn'
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
+## Click tracking
+
+Loops tracks no clicks on a transactional email, at any setting, so there is nothing to ask: a Loops site that moves to a template made in PostHog is one whose clicks the provider didn't track, as Step 3 says under "A template in PostHog".
+
 ## Suppression list
 
 Loops suppresses an address after a hard bounce or a spam complaint, and skips it on every later send. **Loops has no export of its suppression list, and no API route that lists it.** It only answers for one contact at a time. Say this plainly to the person, and offer these ways instead:

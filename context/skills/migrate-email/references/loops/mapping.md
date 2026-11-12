@@ -31,10 +31,10 @@ The Loops email itself sets the rest, in its sending settings. The template chec
 
 A site with no idempotency key sends none in PostHog either.
 
-**Tracking.** Loops tracks no opens or clicks on a transactional email. PostHog adds its open pixel to every email it sends, to count opens. It treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks. A template made in PostHog that is not marked sensitive has its links rewritten, to count clicks. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes none of this. Ask the person once, for all Loops sites, whether PostHog may add this tracking to emails that never had it:
+**Tracking.** Loops tracks no opens or clicks on a transactional email. PostHog adds its open pixel to every email it sends, to count opens. A send in the code form counts no clicks, and a template made in PostHog follows Step 3's rule for a provider that didn't track clicks, as `account.md` says. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes none of this. Ask the person once, for all Loops sites, whether PostHog may add its open pixel to emails that never had one:
 
-- Yes: the sites move, and the report says that PostHog now counts their opens, and the clicks of each template made in PostHog that is not marked sensitive.
-- No, or no answer: every site stays, and the reason is `open tracking off`: PostHog would add tracking the email never had.
+- Yes: the sites move, and the report says that PostHog now counts their opens.
+- No, or no answer: every site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 
 ## Calls
 
@@ -149,7 +149,7 @@ When the content is a preview send instead of the API's LMX, as `account.md` say
 
 Only for a template the person asks to make in PostHog, as Step 3 says. This skill never makes one: the person makes it from the Loops email and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Loops.
 
-An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and sends its links as they are, without its click redirect. Templates are not sensitive by default.
 
 Loops' data variables become Liquid in the PostHog template. Values move under `variables`, and each name keeps its case. The editor, MJML, and LMX write a variable three ways:
 
@@ -196,7 +196,7 @@ Loops' webhook stops getting events for a site that moves. PostHog records the e
 | `email.hardBounced` | `$workflows_email_bounced` with `$bounce_type` `hard`. The same event fires on a soft bounce, so the report tells the person to filter on `$bounce_type` before a handler that acts on a hard bounce, such as one that disables the address |
 | `email.spamReported` | `$workflows_email_blocked` |
 | `email.softBounced` | `$workflows_email_bounced` with `$bounce_type` `soft` |
-| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops, and one through a template made in PostHog that is not marked sensitive also gets `$workflows_email_link_clicked` |
+| `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops |
 | `email.unsubscribed`, `email.resubscribed`, `campaign.email.sent`, `loop.email.sent`, `contact.*` | none. They are about campaigns, workflows, and contacts, which stay on Loops |
 
 A Loops send sets nothing that comes back in an event apart from its `transactionalId` and the recipient, so no handler keeps a site on Loops. For every handler that reads events with `sourceType` `transactional`, or that does not check `sourceType`, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler keeps working for the sites that stay, and for campaign and workflow events. Never change it.
@@ -229,7 +229,7 @@ By source:
 - A raw HTTP body or a community package's call: the same fields of its body.
 - Nodemailer `transporter.sendMail({ to, from, subject, text: JSON.stringify(body) })` through `smtp.loops.so`: the fields of `body`, never the message's own `to`, `from`, `subject`, or `text`, which Loops ignored or read as its body. Where `sendMail` returned a promise, throw from PostHog's error as the Node.js bullet below says. Where it took a callback, call the same callback with that error, or with `null` and PostHog's answer. Where the code reads `info.messageId`, from the promise or the callback, it reads PostHog's message id: `data.id`. A suppressed send has none: when the code uses it for more than a log line, such as storing it, the site stays, and the reason is `uses the message id of a suppressed send`.
 
-**HTTP.** A request to `https://app.loops.so/api/v1/transactional`, or to the base URL the client sets, becomes the SDK's send in that language. A request with its own deadline keeps it, as Step 7 says under "Set up the client". A deadline is a fixed time limit the site set on its request: `signal: AbortSignal.timeout(5000)`, axios `timeout: 5000`, `requests.post(..., timeout=5)` or `httpx` with one `timeout=5`, Faraday's `timeout`, Guzzle's `timeout`, a Go `http.Client{Timeout: ...}` or a context from `context.WithTimeout`. A limit on connecting alone, or connect and read limits apart, is one Step 7 says the SDK can't keep. Two SDK sites can have a deadline too:
+**HTTP.** A request to `https://app.loops.so/api/v1/transactional`, or to the base URL the client sets, becomes the SDK's send in that language. A request with its own deadline keeps it, as Step 7 says under "Set up the client". A deadline is a fixed time limit the site set on its request: `signal: AbortSignal.timeout(5000)`, `requests.post(..., timeout=5)` or `httpx` with one `timeout=5`, Faraday's `timeout` on its default `net_http` adapter, Guzzle's `timeout`, a Go `http.Client{Timeout: ...}` or a context from `context.WithTimeout`. A limit on connecting alone, or connect and read limits apart, an axios `timeout`, and Faraday's `timeout` on another adapter are limits Step 7 says the SDK can't keep. Two SDK sites can have a deadline too:
 
 - PHP: a Guzzle client with `timeout`, given to the Loops client with `$loops->setHttpClient(...)`. A `connect_timeout` on it is a connect limit, as Step 7 says.
 - Go: `loops.WithHTTPClient(&http.Client{Timeout: ...})`. It limits each try, and Loops' Go client retried twice, as PostHog's does: the send gets a client of its own with `EmailRequestTimeout` set to it, as `rewrite-go.md` says under "A deadline", and keeps PostHog's retries. The 5-second timeout of Loops' default Go client is not the site's own, so a site without `WithHTTPClient` sends through the first client. A limit on that `http.Client`'s `Transport` is kept as `rewrite-go.md` says under "A deadline".
