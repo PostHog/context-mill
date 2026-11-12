@@ -50,6 +50,7 @@ A SendGrid send has no idempotency key, so the moved site sends none either. Pos
 | SMTP through `smtp.sendgrid.net` | Always. PostHog has no SMTP relay |
 | A framework mailer (Django, Rails, Laravel, Swoosh, Bamboo) | Always. PostHog has no mailer driver |
 | A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
+| A send through an `@sendgrid/mail` client that sets `sgMail.setSecretRules(...)` | Always. That client refuses a send whose content matches a rule before any request, and PostHog's send has no such check |
 
 ## Code around the send
 
@@ -60,7 +61,7 @@ SendGrid's SDKs report an error in two ways. The Node.js and Python SDKs throw. 
 | A `catch` or `except` that reads `err.code`, `err.response.body.errors`, `e.status_code`, or `e.body` | It branches on a SendGrid error text or `field` value. A branch on the HTTP status moves: read PostHog's status code |
 | A check of `response.statusCode`, `status_code`, `statusCode()`, or `StatusCode` | Never. Read PostHog's error instead, as the Rewrite section says |
 | The `X-Message-Id` header stored for a webhook or a status read | Always, when the Event Webhook or the Email Activity API uses it |
-| The `X-Message-Id` header logged or stored for the app's own use | Never. Use PostHog's message id |
+| The `X-Message-Id` header logged or stored for the app's own use | Never. Use PostHog's message id. When the code after the send can't go on without an id, such as a column that must hold one, the `recipient_suppressed` branch below has none to give: the site stays, and the reason is `needs a message id for a suppressed send`, unless that branch can skip the code that needs it |
 
 ## Templates
 
@@ -84,13 +85,13 @@ SendGrid templates are Handlebars. In the code:
 | `{{#and a b}}`, `{{#or a b}}` | A branch on both, or either, being true. `""`, `0`, and `0.0` are false, and so is a missing value |
 | `(length x)` | The number of characters in a string, the number of entries in a list, and `0` for anything else |
 | `{{formatDate ts "MMMM D, YYYY"}}`, with an optional offset such as `"-0800"` | The time, from epoch milliseconds or ISO 8601, in UTC or at that offset, written with the language's date formatting. The tokens are `YYYY` `YY` `MMMM` `MMM` `MM` `M` `DD` `D` `dddd` `ddd` `HH` `H` `hh` `h` `mm` `m` `ss` `s` `A` `ZZ` `Z`, in English. With no format, the full ISO 8601 time |
-| The version's `subject` | The send's `subject`, rendered with the same conversions. SendGrid escapes HTML in a subject too: `{{name}}` there is the value escaped with the HTML escape of `template-to-code.md`, so `A&B` stays `A&amp;B` as SendGrid sent it, and only `{{{name}}}` is the plain value. This is SendGrid's rule, so it takes the place of `template-to-code.md`'s rule never to escape a subject. Note each such value in the plan row. When the version has no subject, the send takes the site's own `subject` as it is. A site whose version has no subject and that sets none stays: PostHog's send needs a subject |
+| The version's `subject` | The send's `subject`, rendered with the same conversions. SendGrid escapes HTML in a subject too, and a mail client shows the entities as they are, so the subject needs Handlebars' own escape, character for character: `&` as `&amp;`, `<` as `&lt;`, `>` as `&gt;`, `"` as `&quot;`, `'` as `&#x27;`, `` ` `` as `&#x60;`, and `=` as `&#x3D;`. Write it as a small function next to the email, never the HTML escape of `template-to-code.md`, which writes some of these differently. So `{{name}}` with `A&B` stays `A&amp;B` as SendGrid sent it, and only `{{{name}}}` is the plain value. This is SendGrid's rule, so it takes the place of `template-to-code.md`'s rule never to escape a subject. Note each such value in the plan row. When the version has no subject, the send takes the site's own `subject` as it is. A site whose version has no subject and that sets none stays: PostHog's send needs a subject |
 | The version's plain text | The send's `text`, with no escaping. A version without plain text sends `html` only |
 
 - Handlebars truth: `false`, a missing value, `null`, `""`, `0`, and an empty list are false. Everything else is true, including `"0"`, `"false"`, and an empty object. Write that test out in the code, as `template-to-code.md` says.
 - Handlebars `{{name}}` escapes `=` and `` ` `` too, besides `&`, `<`, `>`, `"`, and `'`. So a value in an attribute without quotes, such as `title={{name}}`, stays inside that attribute at SendGrid. In the code's copy, put double quotes around each such attribute value, such as `title="{{name}}"`, so the escape of `template-to-code.md` keeps the value inside it too.
 - Any other helper, a partial (`{{> name}}`), or an `{{unsubscribe}}`, `{{{unsubscribe}}}`, `{{weblink}}`, or `{{{unsubscribe_preferences}}}` tag that SendGrid fills from the account keeps the template on SendGrid. Such tags come from unsubscribe groups, which a transactional send through PostHog doesn't have.
-- A SendGrid template holds no sender, so the send takes the site's own `from` and `replyTo`. A site that sets `subject` next to `templateId` moves only when the version has no subject, or when the site's subject is the same in every send as the version's: which one SendGrid sent can't be told from the code. Otherwise it stays.
+- A SendGrid template holds no sender, so the send takes the site's own `from` and `replyTo`. A `from` or `replyTo` that holds a `{{` keeps the site on SendGrid, with the reason `placeholder in from or reply-to`: these files don't say whether SendGrid fills it from `dynamicTemplateData`. A site that sets `subject` next to `templateId` moves only when the version has no subject, or when the site's subject is the same in every send as the version's: which one SendGrid sent can't be told from the code. Otherwise it stays.
 - Images that the template's editor uploaded to SendGrid have URLs on `marketing-image-production.s3.amazonaws.com` or `mc.sendgrid.com`. Keep them, and list them, as `template-to-code.md` says.
 - A template site follows "Open and click tracking" like any other site: it stays when SendGrid sent it with opens untracked. Its `trackingSettings` follow the "Fields" table, as for any send.
 
