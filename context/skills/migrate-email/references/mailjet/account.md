@@ -24,7 +24,7 @@ A domain set up at Mailjet carries these records. Keep all of them until the cut
 
 Mailjet has no read-only or restricted key. Every API key pair reaches all the data of its own account: the primary key reads the primary account, and a subaccount key reads only its subaccount. Templates and sent messages belong to the key that made them, so a new key cannot read them. When the person chooses the API over the dashboard, use the pair the app already sends with, from its existing env variables, such as `MJ_APIKEY_PUBLIC` and `MJ_APIKEY_PRIVATE`. When the sites use several pairs, read with each pair the data of its own sites.
 
-The steps call this key the full-access provider key. This run creates none, so note in the plan that the run created no provider key, and Step 5 has no key to delete. Never print the keys, and never write them into another file. Pass them to `curl --user "$MJ_APIKEY_PUBLIC:$MJ_APIKEY_PRIVATE"` from the environment.
+That pair reads the templates and the suppression data, so this run creates no provider key. Never print the keys, and never write them into another file. Pass them to `curl --user "$MJ_APIKEY_PUBLIC:$MJ_APIKEY_PRIVATE"` from the environment.
 
 ## Template content
 
@@ -34,7 +34,7 @@ A site whose template moves needs the template's content: Step 3 checks it, and 
 
 **Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, `Reply-to`, and any other header the template sets. Use `Html-part`, not `MJMLContent`: Mailjet renders the HTML part from the MJML. A v3 site can pass the template's name in `Mj-TemplateID` instead of its number: `GET https://api.mailjet.com/v3/REST/template?Name={name}` answers its `ID`. When the API answers no template for the number the site sends, ask the person for the dashboard copy.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 7 deletes once it has brought the email into the code. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Suppression list
 
@@ -47,7 +47,7 @@ Mailjet blocks some addresses on every later send, such as after a bounce that i
 - Hard bounces: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=10&ShowContactAlt=true`. Each entry of `Data` holds the recipient's address in `ContactAlt`.
 - Spam reports: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=6&ShowContactAlt=true`, and `GET https://api.mailjet.com/v3/REST/contact`, whose entries with `IsSpamComplaining: true` hold the address in `Email`.
 
-Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. The message list reaches only the messages Mailjet still keeps, so note in the plan that older bounces may be missing. An address can show up more than once: import it once, with the first source in the table below.
+Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. The message list reaches only the messages Mailjet still keeps, as "For the report" says. An address can show up more than once: import it once, with the first source in the table below.
 
 **Map each entry.**
 
@@ -61,7 +61,12 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 
 - **Soft bounces** (`MessageStatus=9`) are temporary refusals by a receiving server, not a sign that the address is bad.
 - **The campaign exclusion list** (`IsExcludedFromCampaigns`) blocks marketing campaigns only: Mailjet still sends Send API email to those addresses, and so will PostHog.
-- **Unsubscribes** from contact lists are marketing preferences, and PostHog's opt-outs apply to marketing messages only. Count them when the person has them, and tell the person the count in the report.
+- **Unsubscribes** from contact lists are marketing preferences, and PostHog's opt-outs apply to marketing messages only.
+
+## For the report
+
+- When the import read hard bounces from the message list: it reaches only the messages Mailjet still keeps, so older bounces may be missing.
+- The number of contact-list unsubscribes the import left out, when the person has them.
 
 ## Tracking settings
 

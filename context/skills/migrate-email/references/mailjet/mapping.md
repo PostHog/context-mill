@@ -30,13 +30,13 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `DeduplicateCampaign` | none | Always. PostHog's send doesn't take it yet | `Mj-deduplicatecampaign` |
 | `MonitoringCategory` | none | Always. PostHog's send doesn't take it yet | none |
 | `Priority` | none | Always. PostHog's send doesn't take it yet | `Mj-prio` |
-| `TrackOpens` set to `disabled`, `enabled`, or `account_default`, or not set. `TrackClicks` set to any value, or not set | none: PostHog adds its open pixel and counts no clicks | Mailjet sent it with opens untracked or anonymous, a contact refused open tracking, or its open tracking isn't checked. See "Tracking" below. `disabled` counts as set: it turns that tracking off for the send, whatever the account's setting | `Mj-trackopen` set to `1` (`disabled`), `2` (`enabled`), or `0` (`account_default`), or not set. `Mj-trackclick` set to any value, or not set |
+| `TrackOpens` set to `disabled`, `enabled`, or `account_default`, or not set. `TrackClicks` set to any value, or not set | none: PostHog adds its open pixel, as "Tracking" says | Mailjet sent it with opens untracked or anonymous, a contact refused open tracking, or its open tracking isn't checked. See "Tracking" below. `disabled` counts as set: it turns that tracking off for the send, whatever the account's setting | `Mj-trackopen` set to `1` (`disabled`), `2` (`enabled`), or `0` (`account_default`), or not set. `Mj-trackclick` set to any value, or not set |
 | `TrackOpens` set to `anon` | none | Always. PostHog's send has no anonymous open tracking | `Mj-trackopen` set to `3` |
 | `URLTags` | none | Always. PostHog's send doesn't take it yet | none |
 
-**Tracking.** PostHog adds its open pixel to every email it sends, to count opens. It never rewrites a code send's links, so it counts no clicks. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. Mailjet tracks opens as the send's `TrackOpens` says, and clicks as its `TrackClicks` says, within the account's settings. The account sets each one to `Enabled`, `Disabled`, or `Anonymous`, and a send never gets more than that. For each one the send leaves out or sets to `account_default`, use the account's setting: `Enabled` reads as `enabled`, `Disabled` as `disabled`, and `Anonymous` as `anon`. A send that sets `enabled` or `anon` reads as the account's setting when that setting is lower: `Disabled` turns it into `disabled`, and `Anonymous` turns `enabled` into `anon`. A contact can also refuse open tracking, which lowers it for that contact alone: Mailjet tracks their opens anonymously, or not at all where the account has no anonymous tracking. For the clicks note, `TrackClicks` `anon` reads as `enabled`. Then work out, for opens and for clicks, whether Mailjet tracked them:
+**Tracking.** PostHog adds its open pixel to every email it sends, and counts clicks only for a template made in PostHog that is not marked sensitive, as Step 7 says. No field maps to tracking. Mailjet tracks opens as the send's `TrackOpens` says, and clicks as its `TrackClicks` says, within the account's settings. The account sets each one to `Enabled`, `Disabled`, or `Anonymous`, and a send never gets more than that. For each one the send leaves out or sets to `account_default`, use the account's setting: `Enabled` reads as `enabled`, `Disabled` as `disabled`, and `Anonymous` as `anon`. A send that sets `enabled` or `anon` reads as the account's setting when that setting is lower: `Disabled` turns it into `disabled`, and `Anonymous` turns `enabled` into `anon`. A contact can also refuse open tracking, which lowers it for that contact alone: Mailjet tracks their opens anonymously, or not at all where the account has no anonymous tracking. For the clicks note, `TrackClicks` `anon` reads as `enabled`. Then work out, for opens and for clicks, whether Mailjet tracked them:
 
-- Opens `enabled`, and no contact of the account refused open tracking: the site moves. When Mailjet tracked its clicks too, note in the plan row that PostHog counts no clicks for it.
+- Opens `enabled`, and no contact of the account refused open tracking: the site moves. When Mailjet tracked its clicks too, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive.
 - Opens `disabled`: the site stays, and the reason is `open tracking off`: PostHog would add an open pixel the email never had.
 - Opens `anon`: the site stays, and the reason is `anonymous open tracking`: PostHog's send has no anonymous open tracking.
 - Opens `enabled`, and a contact of the account refused open tracking: the site stays, and the reason is `a contact refused open tracking`: PostHog would track that contact's opens.
@@ -129,7 +129,9 @@ Mailjet's template language, in the code:
 
 ### Templates made in PostHog
 
-Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailjet template, makes it transactional, and gives you its template ID. Until then the site stays on Mailjet.
+Only for a template the person asks to make in PostHog, as Step 3 says. The person makes it from the Mailjet template and gives you its template ID, and makes it transactional once a verified sender covers its address, as Step 3 says. Until they give the ID, the site stays on Mailjet.
+
+An email that carries a login code, a reset link, or another secret needs its PostHog template marked sensitive: PostHog then keeps no copy of each sent email's body or filled-in subject, and a clicked link keeps only the site's address. Templates are not sensitive by default.
 
 A site that sends `TemplateID` without `TemplateLanguage: true` gets no `{{...}}` or `{% ... %}` filled in. Its template moves as it is, apart from each `[[var:...]]` tag, which converts as the table below says, with the site's `Variables` as `templateData`, and the plan row notes it, as "Templates" says for the code. A template that holds `{{` or `{%` keeps the site on Mailjet: Mailjet sent them as written, and PostHog's Liquid would read them. A site whose template has no `[[var:...]]` sends no `templateData`.
 
@@ -169,13 +171,19 @@ Mailjet's Event API stops getting events for a site that moves. PostHog records 
 | `bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | none: PostHog never rewrites the links of these sends, so it counts no clicks |
+| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks |
 | `blocked` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `unsub` | none |
 
 PostHog also records `$workflows_email_sent` when it sends, which has no Mailjet event.
 
 PostHog's events carry no Mailjet `MessageID`, `Message_GUID`, `CustomID`, or `Payload`. A site whose events a handler matches by message id, by `CustomID`, or by `Payload` stays on Mailjet. For every other handler, such as one that matches by `email`, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
+
+A site whose emails a `click` handler acts on moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+
+## Calls that change the suppression list
+
+Step 5 names the calls that add an address to the entries the import takes, hard bounces and spam reports, or remove one, as `account.md` says. A call that unsubscribes a contact from a list, or sets `IsExcludedFromCampaigns`, changes a list the import leaves out, so it is not one of them.
 
 ## Rewrite
 
@@ -189,6 +197,16 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - Go `SendMailV31(&mailjet.MessagesV31{Info: []mailjet.InfoMessagesV31{msg}})`: the fields of `msg`. A `*mailjet.RecipientV31` becomes its `Email`, with its `Name` as for `From`.
 - .NET `TransactionalEmailBuilder`: each `With...` call sets the field of its name. A `MailjetRequest` with `SendV31.Resource`: the fields of its one message.
 - The v3 Send API: `FromEmail` and `FromName`, `To` or the one `Recipients` entry, `Subject`, `Text-part`, `Html-part`, and the other fields by their v3 names.
+
+**HTTP.** A raw request to `/v3.1/send` or `/v3/send` becomes the SDK's send in that language, as "The call" says. A request or Mailjet client with its own deadline keeps it, as Step 7 says under "Set up the client". These are the site's own deadline:
+
+- On a raw request: `signal: AbortSignal.timeout(5000)`, axios or got `timeout`, `requests.post(..., timeout=5)`, httpx `timeout=`, Guzzle's `'timeout'`, Faraday's `timeout`, Ruby `Net::HTTP`'s `read_timeout`, a Go `http.Client` `Timeout` or a context with a deadline, .NET's `HttpClient.Timeout`, and curl's `--max-time` or `CURLOPT_TIMEOUT`.
+- On Mailjet's client: `timeout` in Node.js's client `options`, such as `new Mailjet({ apiKey, apiSecret, options: { timeout: 5000 } })`; Python's `timeout=` on `send.create(...)`, or on `Client(...)` from `mailjet-rest` 1.7.0; PHP's `$mj->setTimeout(...)` or `addRequestOption('timeout', ...)`, or the timeout of an HTTP client the code gives its `Client`; Go's `http.Client` with a `Timeout` given to `SetClient`, or `mailjet.WithContext(ctx)` on the send; and .NET's `Timeout` on the `HttpClient` that `MailjetClient` takes, such as one set in `AddHttpClient<IMailjetClient, MailjetClient>`.
+- A client's default that the code never set, such as Python's 60 seconds, PHP's 15, or .NET's 100, is not one.
+- A connect timeout set apart from the request's, such as PHP's `setConnectionTimeout`, a Python `(connect, read)` pair, or Ruby's `open_timeout`, is a deadline PostHog's SDK can't keep: the site stays, as Step 7 says.
+- Mailjet's own retries count with the deadline. Python's client from `mailjet-rest` 1.8.0 retried a send up to three times, and a Node.js client with `maxRetries` in its `options` retried a failed connection that many times. Such a site keeps its timeout for each request and the same number of retries, through the retry option the rewrite file names under "A deadline", instead of none.
+
+A request that a caller can cancel, such as a `signal` a caller passes in or an `AbortController` it aborts, a Go context, or a .NET cancellation token, keeps it only where the PostHog send takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise the site stays, as in Node.js, whose send takes no signal, and the reason is `the code can cancel the send`.
 
 **The fields.**
 
