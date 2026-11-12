@@ -72,7 +72,8 @@ with smtplib.SMTP(os.environ["SMTP_HOST"], 587) as smtp:
 - They answer a dict of the recipients the server refused, empty when it took every one.
 - `msg.add_attachment(data, maintype=..., subtype=..., filename=...)`, or a `MIMEApplication` part with a `Content-Disposition` header, adds an attachment.
 - `sendmail(from_addr, to_addrs, msg)` takes the envelope apart from the message: `to_addrs` can hold recipients that no header names, which is how such code sends a bcc.
-- `aiosmtplib.send(msg, hostname=..., port=..., username=..., password=...)` is the async client, with the same message classes.
+- `aiosmtplib.send(msg, hostname=..., port=..., username=..., password=...)` is the async client, with the same message classes. Its errors are its own: `aiosmtplib.SMTPException` is not an `OSError`, and covers every failure of the send. Its connection and timeout errors, such as `SMTPConnectError`, `SMTPServerDisconnected`, and `SMTPTimeoutError`, are also `OSError`s, and its refusals, such as `SMTPRecipientRefused`, `SMTPSenderRefused`, and `SMTPDataError`, are not.
+- The refusal classes of both clients carry any reply code: a temporary `4xx` refusal raises `SMTPDataError` or `SMTPSenderRefused` too.
 - smtplib sets no Message-ID. The code sets one with `email.utils.make_msgid()` when it needs it.
 
 **Ruby: `mail` and `net-smtp`.** The `mail` gem builds and sends the message. `delivery_method :smtp, address:, port:, user_name:, password:, authentication:, enable_starttls_auto:` sets the server, in `Mail.defaults` or on one message.
@@ -95,7 +96,8 @@ Mail.deliver do
 end
 ```
 
-- `deliver` raises the `Net::SMTP` error on a failure, such as `Net::SMTPAuthenticationError`, `Net::SMTPServerBusy`, `Net::SMTPSyntaxError`, `Net::SMTPFatalError`, or `Net::SMTPUnknownError`, unless the message sets `raise_delivery_errors` to `false`.
+- `deliver` raises the `Net::SMTP` error on a failure, such as `Net::SMTPAuthenticationError`, `Net::SMTPServerBusy`, `Net::SMTPSyntaxError`, `Net::SMTPFatalError`, or `Net::SMTPUnknownError`, unless the message or its `delivery_method` sets `raise_delivery_errors` to `false`: then it raises no error at all.
+- `Mail.register_interceptor(obj)` runs `obj.delivering_email(message)` on every message before `deliver` sends it, and can change it, such as the recipients of staging mail. `Mail.register_observer(obj)` runs `obj.delivered_email(message)` after each send.
 - `add_file filename:, content:`, `add_file '/path'`, and `attachments['name.pdf'] = data` add attachments.
 - `message_id` is the Message-ID, which the gem sets when the code doesn't.
 - `Net::SMTP.start(host, port, user:, secret:, authtype:) { |smtp| smtp.send_message(msgstr, from, to) }` sends a message string the code wrote itself.
@@ -172,7 +174,7 @@ await client.DisconnectAsync(true);
 
 `System.Net.Mail.SmtpClient` sends a `MailMessage` with `From`, `To`, `CC`, `Bcc`, `ReplyToList`, `Subject`, `Body`, `IsBodyHtml`, `AlternateViews`, `Attachments`, `Headers`, and `Priority`. `Send` and `SendMailAsync` throw `SmtpException` (with `StatusCode`), `SmtpFailedRecipientException`, or `SmtpFailedRecipientsException`.
 
-**Elixir: `gen_smtp`.** `:gen_smtp_client.send_blocking({from, [to], body}, relay: host, port: 587, username: user, password: password, tls: :always)` sends a message body. The body is a string the code wrote, or the output of `:mimemail.encode({type, subtype, headers, params, parts})`. It answers the server's receipt as a binary on success, and an `{:error, ...}` tuple on a failure. `:gen_smtp_client.send/2` sends in a spawned process.
+**Elixir: `gen_smtp`.** `:gen_smtp_client.send_blocking({from, [to], body}, relay: host, port: 587, username: user, password: password, tls: :always)` sends a message body. The body is a string the code wrote, or the output of `:mimemail.encode({type, subtype, headers, params, parts})`. It answers the server's receipt as a binary on success, and an `{:error, ...}` tuple on a failure. `:gen_smtp_client.send/2` and `send/3` send in a spawned process and answer `{:ok, pid}` at once, and `send/3` calls a callback with the result.
 
 **Rust: `lettre`.**
 
@@ -205,7 +207,7 @@ Look for the host in transport options, `host` and `service` settings, connectio
 | `smtp.mailgun.org` | Mailgun |
 | `smtp.postmarkapp.com` | Postmark |
 | `smtp.resend.com` | Resend |
-| `smtp.loops.so` | Loops. Its SMTP body is the JSON of a Loops template send, not the email: such a site stays here, and the reason is `Loops SMTP send: run wizard migrate loops` |
+| `smtp.loops.so` | Loops. Its SMTP body is the JSON of a Loops template send, not the email: such a site stays here, and the reason is `Loops SMTP send: run wizard migrate loops, or wizard skill migrate-email-loops on a wizard whose migrate takes no provider` |
 | `smtp-relay.brevo.com` | Brevo |
 | `in-v3.mailjet.com`, `in.mailjet.com` | Mailjet |
 | `smtp.sparkpostmail.com` | SparkPost |
