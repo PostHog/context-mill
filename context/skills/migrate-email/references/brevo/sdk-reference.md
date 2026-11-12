@@ -112,7 +112,7 @@ The struct also takes `Cc`, `Bcc`, `ReplyTo`, `Attachment` (`[]SendSmtpEmailAtta
 
 **.NET.** `Configuration.Default.ApiKey.Add("api-key", key)`, or `AddApiKey`, sets the key. `new TransactionalEmailsApi().SendTransacEmail(sendSmtpEmail)` and `SendTransacEmailAsync` answer a `CreateSmtpEmail` whose `MessageId` is the message id. They throw `brevo_csharp.Client.ApiException` on an answer of 400 or more, with `ErrorCode` (the HTTP status) and `ErrorContent`. A `SendSmtpEmailAttachment` takes `Content` as `byte[]`.
 
-**HTTP.** `POST https://api.brevo.com/v3/smtp/email`, or the older host `api.sendinblue.com`, with the header `api-key: <key>`. The API has one host. A send answers `201` with `{ "messageId": "<...>" }`, and a scheduled send answers `202`. An error answers `{ "code", "message" }`, such as `{ "code": "invalid_parameter", ... }`. Look for `api.brevo.com` and `api.sendinblue.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
+**HTTP.** `POST https://api.brevo.com/v3/smtp/email`, or the older host `api.sendinblue.com`, with the header `api-key: <key>`. The API has one host. A send answers `201` with `{ "messageId": "<...>" }`, and a scheduled send answers `202`. An error answers `{ "code", "message" }`, such as `{ "code": "invalid_parameter", ... }`. Look for `api.brevo.com` and `api.sendinblue.com` in `fetch`, `axios`, `got`, `ky`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
 ```json
 {
