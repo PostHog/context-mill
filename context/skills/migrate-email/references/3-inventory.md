@@ -41,7 +41,9 @@ When you find no site, stop before you write the plan file:
 
 ## Classify each site
 
-Go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field.
+Check what each site sends first. PostHog's transactional send ignores marketing opt-outs, so it is only for an email that a person needs, such as a password reset, a receipt, or an invite. A site that sends marketing, such as a newsletter, a promotion, or a product announcement, stays, and the reason is `marketing email`. When neither the code nor the template's name tells you, ask the person once for every such site. A site they call marketing, or don't answer for, stays with that reason.
+
+Then go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field.
 
 When the code passes a value you can't read, such as a list of recipients built at run time, follow it to its callers. When you still can't tell, the site stays, and the reason says what you could not check.
 
