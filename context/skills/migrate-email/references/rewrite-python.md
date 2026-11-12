@@ -44,6 +44,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The client's `email_request_timeout_seconds` is the time each email request may take, 15 by default, and it takes a fraction, such as `2.5`. `email_request_max_retries` is its retries, 2 by default. A send's `max_retries=0` turns its retries off. `AsyncPosthog` takes the same.
 - The send takes no deadline of its own, so a deadline needs a client of its own with `email_request_timeout_seconds` set to it.
+- The SDK hands that timeout to `requests` or `httpx` as one number, which limits each wait on the network, such as connecting or the next part of the answer, not the whole request. A `requests` or `httpx` `timeout` of one number is the same limit. A limit on the whole request in the HTTP library's options, such as aiohttp's `ClientTimeout(total=5)`, is a deadline the SDK can't keep: the site stays, as Step 7 says. A timer the code puts around the call, such as `asyncio.wait_for(..., 5)`, is code around the send and stays around it.
 
 ## The answer
 
