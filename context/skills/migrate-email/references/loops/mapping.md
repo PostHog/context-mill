@@ -193,9 +193,9 @@ Loops' webhook stops getting events for a site that moves. PostHog records the e
 |---|---|
 | `transactional.email.sent` | `$workflows_email_sent` |
 | `email.delivered` | `$workflows_email_delivered` |
-| `email.hardBounced` | `$workflows_email_bounced`, which also fires on a soft bounce and carries no bounce type. A handler that acts on a hard bounce, such as one that disables the address, would act on a temporary failure too: the report says so |
+| `email.hardBounced` | `$workflows_email_bounced` with `$bounce_type` `hard`. The same event fires on a soft bounce, so the report tells the person to filter on `$bounce_type` before a handler that acts on a hard bounce, such as one that disables the address |
 | `email.spamReported` | `$workflows_email_blocked` |
-| `email.softBounced` | `$workflows_email_bounced`, the same event as a hard bounce |
+| `email.softBounced` | `$workflows_email_bounced` with `$bounce_type` `soft` |
 | `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send gets `$workflows_email_opened`, which it never had at Loops, and one through a template made in PostHog that is not marked sensitive also gets `$workflows_email_link_clicked` |
 | `email.unsubscribed`, `email.resubscribed`, `campaign.email.sent`, `loop.email.sent`, `contact.*` | none. They are about campaigns, workflows, and contacts, which stay on Loops |
 
