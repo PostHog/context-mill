@@ -3,6 +3,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { writeManifestAndMenu } from '../build-phases.js';
+import { loadAndExpandSkills, serializeSkill } from '../skill-generator.js';
+
+const REPO_CONFIG_DIR = path.join(import.meta.dirname, '..', '..', '..', 'context');
 
 const URI_SCHEMA = `
 manifest_version: "1.0"
@@ -90,6 +93,14 @@ describe('writeManifestAndMenu', () => {
             { id: 'integration-v2-capture-django', framework: 'django', title: 'django', description: 'django description', tags: ['capture', 'python', 'framework:django', 'integration-v2-capture'] },
             { id: 'integration-v2-capture-nextjs', framework: 'nextjs', default: true, title: 'nextjs', description: 'nextjs description', tags: ['capture', 'framework:nextjs', 'integration-v2-capture', 'default'] },
         ]);
+    });
+
+    it('carries the tags a bundled group declares in its config onto its menu entry', () => {
+        const { skills } = loadAndExpandSkills({ configDir: REPO_CONFIG_DIR });
+        writeManifestAndMenu({ allSkills: skills.map(serializeSkill), docContents: {}, distDir: distDir(), configDir: REPO_CONFIG_DIR, version: '1.2.3' });
+
+        const capture = menuEntries().find(entry => entry.id === 'integration-v2-capture');
+        expect(capture.tags).toEqual(expect.arrayContaining(['capture', 'integration-v2-capture']));
     });
 
 });

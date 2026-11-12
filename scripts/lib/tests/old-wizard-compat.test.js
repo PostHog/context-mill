@@ -65,10 +65,11 @@ function selectSkills(menu, session, program) {
     return [...groups.values()];
 }
 
+const frontmatterOf = text => text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+
 function agentSkills(flow, id) {
     const text = fs.readFileSync(path.join(CONFIG_DIR, 'agents', flow, `${id}.md`), 'utf8');
-    const frontmatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
-    const list = frontmatter.match(/^skills:\s*\[(.*)\]\s*$/m)?.[1] ?? '';
+    const list = frontmatterOf(text).match(/^skills:\s*\[(.*)\]\s*$/m)?.[1] ?? '';
     return list.split(',').map(s => s.trim()).filter(Boolean);
 }
 
@@ -139,6 +140,19 @@ describe('old wizard compatibility', () => {
         const snapshot = JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8'));
         for (const [key, asset] of Object.entries(snapshot.agents)) {
             expect(current.agents[key], key).toBe(asset);
+        }
+    });
+
+    // A wizard that fetches its prompts fails the run when its flow publishes no planner.
+    it('publishes one planner prompt for every flow', () => {
+        const planners = {};
+        for (const { id, flow, downloadUrl } of agentMenu.agents) {
+            const published = fs.readFileSync(path.join(dir, 'agents', path.basename(downloadUrl)), 'utf8');
+            planners[flow] ??= [];
+            if (/^seed:\s*true\s*$/m.test(frontmatterOf(published))) planners[flow].push(id);
+        }
+        for (const [flow, ids] of Object.entries(planners)) {
+            expect(ids, flow).toHaveLength(1);
         }
     });
 

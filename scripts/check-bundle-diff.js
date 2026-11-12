@@ -2,8 +2,10 @@
 
 /**
  * Fail when a build's output differs from a baseline build in anything but the skill-menu's title/description/tags.
- * Baseline from main: `git worktree add /tmp/cm-main main && (cd /tmp/cm-main && npm install && npm run build)`,
- * then `npm run build && npm run check:bundle-diff -- /tmp/cm-main/dist [dist]`.
+ * Both builds must read the same inputs: a doc edited on posthog.com, or a generated file under example-apps/, shows as a difference.
+ * Build this checkout first, with `git clean -Xn example-apps` listing nothing but `.env` files, then the baseline from a copy of its docs cache:
+ * `npm run build && git worktree add /tmp/cm-main main && cp -R .docs-cache /tmp/cm-main/ && (cd /tmp/cm-main && npm install && npm run build)`,
+ * then `npm run check:bundle-diff -- /tmp/cm-main/dist [dist]`.
  */
 
 import crypto from 'crypto';
