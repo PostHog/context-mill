@@ -55,6 +55,14 @@ A template they move needs its content to be classified. Read the provider's `ac
 
 A template whose content passes the checks moves only once the person has made it in PostHog. Ask them once, for every such template, to make it in PostHog from the provider's template and give you its template ID and the address it sends from, usually the provider template's sender. PostHog makes a template transactional only once a verified sender covers its address: ask them to make it transactional now when the project has one, and otherwise once Step 4 verifies the sender. When the email carries a login code, a reset link, or another secret, ask them to mark the template sensitive, as `mapping.md` says. The report lists both before cutover either way. Tell them how its placeholders change, as `mapping.md` says under "Content". Record each template ID with its site under the sites table, and write the address in the site's `from` column, so Step 4 sets up a sender for its domain. A template without an ID stays, and the reason is `PostHog template not made yet`.
 
+### Opens the provider didn't track
+
+PostHog adds its open pixel to every email it sends, in the code form and from a template made in PostHog alike. Check this for each site that nothing else keeps on the provider, as the provider's `account.md` says: whether the provider tracked the opens of its emails, with an open pixel in each one.
+
+- When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, ask the person once, for all such sites together, whether PostHog may add its open pixel to emails that never had one. Yes: those sites move, and the report says that PostHog now counts their opens. No, or no answer: they stay, and the reason is `open tracking off`.
+- When nobody can tell whether the provider tracked a site's opens, the site stays, and the reason is `open tracking not checked`.
+- For each site that moves with the person's yes, write `open pixel added: the person agreed` in its note under the sites table, so the report names it.
+
 ## Write the plan file
 
 Write `.posthog-email-migration-plan.md` at the project root with three sections. Never write an email address of a recipient into it. A `from` address is fine.

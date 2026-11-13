@@ -32,6 +32,10 @@ A site whose template the person moves to PostHog needs the template's content, 
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
 
+## Open tracking
+
+Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking is on. Off means the site's emails had no open pixel, and no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+
 ## Suppression list
 
 Resend suppresses an address after a hard bounce or a spam complaint, and keeps addresses the team added by hand.
