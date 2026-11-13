@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Fail when a build's output differs from a baseline build in anything but the skill-menu's title/description/tags.
+ * Fail when a build's file contents or executable bits differ from a baseline build in anything but the skill-menu's title/description/tags.
+ * Permissions inside a zip are not compared.
  * Both builds must read the same inputs: a doc edited on posthog.com, or a generated file under example-apps/, shows as a difference.
  * Build this checkout first, with `git clean -Xn example-apps` listing nothing but `.env` files, then the baseline from a copy of its docs cache:
  * `npm run build && git worktree add /tmp/cm-main main && cp -R .docs-cache /tmp/cm-main/ && (cd /tmp/cm-main && npm install && npm run build)`,
@@ -94,12 +95,25 @@ if (!baselineDir) {
     process.exit(2);
 }
 
+for (const dir of [baselineDir, candidateDir]) {
+    if (!fs.existsSync(dir)) {
+        console.error(`No build output at ${dir}`);
+        console.error('Usage: node scripts/check-bundle-diff.js <baseline-dist> [candidate-dist]');
+        process.exit(2);
+    }
+}
+
+const isExecutable = file => (fs.statSync(file).mode & 0o111) !== 0;
+
 const baseline = listFiles(baselineDir);
 const candidate = listFiles(candidateDir);
 const changes = [];
 for (const rel of new Set([...baseline, ...candidate])) {
     if (!baseline.includes(rel)) { changes.push(`${rel} (added)`); continue; }
     if (!candidate.includes(rel)) { changes.push(`${rel} (removed)`); continue; }
+    if (isExecutable(path.join(baselineDir, rel)) !== isExecutable(path.join(candidateDir, rel))) {
+        changes.push(`${rel} (executable bit)`);
+    }
     diff(
         digest(rel, fs.readFileSync(path.join(baselineDir, rel))),
         digest(rel, fs.readFileSync(path.join(candidateDir, rel))),

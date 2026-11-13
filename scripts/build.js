@@ -58,7 +58,7 @@ async function main() {
             version: BUILD_VERSION,
         });
 
-        // Non-blocking: the wizard selects skills by tag, so an untagged skill is only reachable by id.
+        // Non-blocking: a skill with no tags of its own gets only the commandments that apply to every skill.
         for (const skill of skills) {
             if (!skill.tags?.length) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
         }

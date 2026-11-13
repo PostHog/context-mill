@@ -242,8 +242,6 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
                     variants: [],
                     // Bundled variants are absent from the manifest, so the group's URL is built from the base.
                     downloadUrl: `${resolveBaseDownloadUrl(version)}/${group}.json`,
-                    title: skill.name,
-                    description: skill.name,
                     tags: menuTags(skill.groupTags, { group }),
                 };
                 bundleEntries.set(group, entry);

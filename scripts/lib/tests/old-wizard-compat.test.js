@@ -1,5 +1,6 @@
 // Wizard versions already in the field resolve agent-prompt skills with the logic vendored below.
-// Regenerate the snapshot after a deliberate menu change: UPDATE_OLD_WIZARD_SNAPSHOT=1 npm run test:skills
+// Regenerate the snapshot only to add entries: UPDATE_OLD_WIZARD_SNAPSHOT=1 npm run test:skills
+// Never drop or rename one. A released wizard bundles prompts that name these skills, and a missing name fails its run at preflight.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import os from 'os';

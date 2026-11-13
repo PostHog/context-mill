@@ -88,7 +88,8 @@ describe('writeManifestAndMenu', () => {
 
         const [entry] = menuEntries();
         expect(entry.tags).toEqual(['capture', 'integration-v2-capture']);
-        expect(entry.title).toBe('django');
+        expect(entry).not.toHaveProperty('title');
+        expect(entry).not.toHaveProperty('description');
         expect(entry.variants).toEqual([
             { id: 'integration-v2-capture-django', framework: 'django', title: 'django', description: 'django description', tags: ['capture', 'python', 'framework:django', 'integration-v2-capture'] },
             { id: 'integration-v2-capture-nextjs', framework: 'nextjs', default: true, title: 'nextjs', description: 'nextjs description', tags: ['capture', 'framework:nextjs', 'integration-v2-capture', 'default'] },
