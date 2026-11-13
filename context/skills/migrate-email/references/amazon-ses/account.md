@@ -68,14 +68,15 @@ Read the person's copies where they saved them. Never write the content into the
 
 A configuration set decides, with the account's VDM settings, whether Amazon SES tracks opens and clicks, and it decides where a send's events go and which suppression reasons apply. The reads below are how to tell whether a site's emails had an open pixel, for Step 3's "Opens the provider didn't track", as `mapping.md` says under "Open and click tracking". `mapping.md` needs the sets the sites use: each set a site names in `ConfigurationSetName`, and the default set of each identity the sites send from.
 
-**Check the CLI first.** An AWS CLI older than a setting can print `null` for it. In the same request as the set and account reads below, those under "Suppression list" included, have the CLI that runs them, the person's when they run them, print the shape of its answers without sending a request:
+**Check the CLI first.** An AWS CLI older than a setting can print `null` for it. In the same request as the set and account reads below, those under "Suppression list" included, have the CLI that runs them, the person's when they run them, print the input shape of the calls that set those fields, which sends no request:
 
 ```bash
-aws sesv2 get-configuration-set --configuration-set-name <name> --generate-cli-skeleton output
-aws sesv2 get-account --generate-cli-skeleton output
+aws sesv2 create-configuration-set --region <region> --generate-cli-skeleton input
+aws sesv2 put-account-suppression-attributes --region <region> --generate-cli-skeleton input
+aws sesv2 put-account-vdm-attributes --region <region> --generate-cli-skeleton input
 ```
 
-The first must name `VdmOptions`, `MessageSecurityOptions`, `ArchivingOptions`, `ValidationOptions`, and `SuppressionScope`, and the second `VdmAttributes` and `ValidationAttributes`. When one is missing, ask the person to update the AWS CLI, and use none of the reads until it names them all. When the person can't update it, every site stays, and the reason is `its Amazon SES settings not checked`.
+The first must name `VdmOptions`, `MessageSecurityOptions`, `ArchivingOptions`, `ValidationOptions`, and `SuppressionScope`, the second `ValidationAttributes`, and the third `VdmAttributes`. An error that isn't about an unknown option or command is not a missing field: fix what it names, such as a Region, and run it again. When one is missing, ask the person to update the AWS CLI, and use none of the reads until it names them all. When the person can't update it, every site stays, and the reason is `its Amazon SES settings not checked`.
 
 **Read with the AWS CLI (preferred).** Ask the person to run, in each Region, for each domain or address the sites send from:
 
