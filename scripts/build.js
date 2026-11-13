@@ -58,6 +58,11 @@ async function main() {
             version: BUILD_VERSION,
         });
 
+        // Non-blocking: a skill with no tags of its own gets only the commandments that apply to every skill.
+        for (const skill of skills) {
+            if (!skill.tags?.length) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
+        }
+
         const docEntries = loadDocsConfig(configDir);
 
         console.log('\nCreating skill ZIPs...');
