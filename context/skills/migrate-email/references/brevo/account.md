@@ -64,7 +64,7 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 | `adminBlocked` | `manual` |
 | `unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA` | `manual` |
 
-Import every address once, whatever sender its entries name: Brevo keeps an entry per sender, so an address can have several, and PostHog keeps the reason an address is first imported with. Read every page or row first, compare addresses without regard to case, and give each address `bounce` when any of its entries is a hard bounce, else `complaint` when any is a spam complaint, else `manual`. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says. "For the report" counts these entries.
+Import every address once, whatever sender its entries name: Brevo keeps an entry per sender, so an address can have several, and PostHog keeps the reason an address is first imported with. Read every page or row first, compare addresses without regard to case, and give each address `bounce` when any of its entries is a hard bounce, else `complaint` when any is a spam complaint, else `manual`. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says. "For the report" counts these addresses. The order holds within one import only: an address an earlier import took as `complaint` or `manual` keeps that reason when a later import finds a hard bounce for it, so tell the person, with the re-import, that PostHog blocks such an address for moved sends only once a moved send bounces.
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
 
@@ -78,7 +78,7 @@ Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with th
 
 Count these whether or not the import runs, and never write an address or a domain:
 
-- the admin blocks and unsubscribes that name one sender, which the import takes as `manual`: PostHog's marketing email no longer reaches those addresses from any sender, as "Map each entry" says;
+- the addresses the import gives `manual` that have an entry naming a sender and none that names no sender: PostHog's marketing email no longer reaches them from any sender, as "Map each entry" says;
 - the domains Brevo blocks, which the import leaves out: the moved sends reach every address on them, as "Blocked domains" says.
 
 Write a count you can't get as not known.
