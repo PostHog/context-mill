@@ -170,6 +170,7 @@ function generateMarketplace({ skills, tempDir, version, outputDir, configDir })
     // Generate grouped plugins
     for (const [pluginName, groupSkills] of Object.entries(pluginGroups)) {
         const pluginDir = path.join(pluginsDir, pluginName);
+        let copied = 0;
 
         for (const skill of groupSkills) {
             const srcDir = path.join(tempDir, skill.id);
@@ -178,8 +179,10 @@ function generateMarketplace({ skills, tempDir, version, outputDir, configDir })
                 continue;
             }
 
-            const destDir = path.join(pluginDir, 'skills', skill.shortId);
+            // shortId is only unique within a group; a plugin can span several
+            const destDir = path.join(pluginDir, 'skills', skill.id);
             copyDirSync(srcDir, destDir);
+            copied++;
 
             allSkillEntries.push({
                 dirName: skill.id,
@@ -190,7 +193,7 @@ function generateMarketplace({ skills, tempDir, version, outputDir, configDir })
         }
 
         writePluginJson(pluginDir, pluginName, version, maps);
-        console.log(`  ✓ ${pluginName} (${groupSkills.length} skills)`);
+        console.log(`  ✓ ${pluginName} (${copied} skills)`);
     }
 
     // Generate mega-plugin
