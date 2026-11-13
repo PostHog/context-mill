@@ -1,0 +1,14 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/capture/description.md
+description: Instrument the planned events with PostHog capture calls
+category: integration-steps
+tags: [orchestrator, capture]
+cli:
+  role: internal
+replaces: integration-v2-capture
+framework_references: integration
+variants:
+  - id: all
+    display_name: PostHog capture step

@@ -117,6 +117,30 @@ Each pack carries a `variant.json` at its root with the row as built: its
 `match` keys, its rules file, and each product's pages with their titles.
 `integration` is the product for the row's own `docs_urls`.
 
+### Step skills
+
+The orchestrator's step skills live in `context/skills/integration/<step>/`,
+one skill per step, and publish as `integration-<step>`. Each names the skill
+it stands in for under `replaces`, which its menu entry carries. The skills
+under `context/skills/integration-v2/` keep publishing for wizard versions
+that read them, and both read the same template.
+
+Six steps differ by framework: install, init, capture, error tracking, feature
+flags and session replay. Each is written once and sets `framework_references`
+to the product whose pages complete it. Its `SKILL.md` leaves three
+placeholders for the consumer to fill from the framework's pack:
+
+| Placeholder | Filled with |
+|-------------|-------------|
+| `{framework_name}` | The pack's `displayName` |
+| `{framework_docs}`, a line of its own | One line per page of the product, as `variant.json` lists them |
+| `{framework_rules}`, a line of its own | The line for the pack's rules file |
+
+The consumer copies those pages and the rules file into the skill's
+`references/`. `scripts/lib/skill-composition.js` is the reference for that,
+and `npm run check:repackaged-skills` checks a build with it: for every step
+and variant, the completed skill has the files of the skill it replaces.
+
 ### Manifest structure
 
 The manifest describes the built skills — one resource per skill, with `id`,

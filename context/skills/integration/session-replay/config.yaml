@@ -1,0 +1,16 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: ../../replay-vision-enable-replay/description.md
+description: Make session replay record
+category: integration-steps
+tags: [orchestrator, replay-vision, session-replay]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/session-replay/installation.md
+replaces: replay-vision-enable-replay
+framework_references: integration
+variants:
+  - id: all
+    display_name: PostHog session replay step

@@ -270,6 +270,14 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
 
+/**
+ * What a skill with `framework_references` leaves for its consumer to fill from a framework's pack:
+ * the framework's name inline, and one line each where the pack's pages and its rules file are listed.
+ */
+const FRAMEWORK_NAME = '{framework_name}';
+const FRAMEWORK_DOCS = '{framework_docs}';
+const FRAMEWORK_RULES = '{framework_rules}';
+
 /** The product whose pages are a variant's own `docs_urls`. A variant table cannot declare it again. */
 const INTEGRATION_PRODUCT = 'integration';
 
@@ -342,6 +350,45 @@ function validateVariantTable(key, group) {
 }
 
 /**
+ * Validate `replaces` and `framework_references`. A group with either is one skill, written once for
+ * every framework: `replaces` names the group or skill it stands in for, and `framework_references`
+ * names the product whose pages a consumer adds from the framework's pack.
+ */
+function validateReplacements(config) {
+    const dashed = key => key.replace(/\//g, '-');
+    const names = new Set();
+    const products = new Set([INTEGRATION_PRODUCT]);
+    for (const [key, group] of Object.entries(config)) {
+        names.add(dashed(key));
+        for (const variant of group.variants || []) {
+            names.add(variant.id === 'all' ? dashed(key) : `${dashed(key)}-${variant.id}`);
+        }
+        for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
+    }
+    for (const [key, group] of Object.entries(config)) {
+        if (group.replaces === undefined && group.framework_references === undefined) continue;
+        const where = `Skill group "${key}"`;
+        const single = group.variants?.length === 1 && group.variants[0].id === 'all';
+        if (!single) {
+            throw new Error(`${where}: replaces and framework_references need exactly one variant, with id "all"`);
+        }
+        if (group.replaces !== undefined && !names.has(group.replaces)) {
+            throw new Error(`${where}: replaces "${group.replaces}" names no skill group or skill`);
+        }
+        if (group.replaces === dashed(key)) {
+            throw new Error(`${where}: a skill cannot replace itself`);
+        }
+        if (group.framework_references === undefined) continue;
+        if (!products.has(group.framework_references)) {
+            throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
+        }
+        if (group.packaging === 'bundle' || (group.variants[0].docs_urls || []).length > 0) {
+            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs, and is not bundled`);
+        }
+    }
+}
+
+/**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
  * base properties and a variants array (literal or via variants_from).
@@ -349,6 +396,7 @@ function validateVariantTable(key, group) {
 function expandSkillGroups(config, configDir) {
     const skills = [];
     const resolvedConfig = resolveVariantsFrom(config);
+    validateReplacements(resolvedConfig);
 
     for (const [key, group] of Object.entries(resolvedConfig)) {
         if (key === 'shared_docs') continue;
@@ -415,6 +463,9 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _products: group.products || null,
+                _replaces: group.replaces || null,
+                _frameworkReferences: group.framework_references || null,
+                _templatePath: path.join(configDir, 'skills', ...key.split('/'), variation.template || group.template || ''),
                 _group: key,
                 _bundle: bundled,
                 _groupTags: baseTags,
@@ -830,6 +881,11 @@ async function generateSkill({
         return reference;
     }
 
+    // A skill written once for every framework lists the framework's pages where a variant's own would go.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_DOCS });
+    }
+
     // The variant's own pages, kept for the variant table's `integration` product.
     const variantDocs = [];
     if (skill.docs_urls && skill.docs_urls.length > 0) {
@@ -850,7 +906,10 @@ async function generateSkill({
     // Also emit them as a reference file. The orchestrator installs this skill
     // as the framework reference and points its task agents at individual
     // files, so the rules must exist outside the SKILL.md body.
-    if (rules.length > 0) {
+    // A skill written once for every framework takes its rules from the framework's pack.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_RULES });
+    } else if (rules.length > 0) {
         fs.writeFileSync(
             path.join(referencesDir, 'COMMANDMENTS.md'),
             `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
@@ -900,7 +959,7 @@ async function generateSkill({
 
     // Build references list for SKILL.md
     const referencesText = references
-        .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
+        .map(ref => ref.placeholder ?? `- \`references/${ref.filename}\` - ${ref.description}`)
         .join('\n');
 
     // Format workflow steps for skills that use the {workflow} placeholder
@@ -911,7 +970,7 @@ async function generateSkill({
 
     // Apply template substitutions
     let body = skillTemplate
-        .replace(/{display_name}/g, skill.display_name)
+        .replace(/{display_name}/g, skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name)
         .replace(/{references}/g, referencesText)
         .replace(/{commandments}/g, commandmentsText)
         .replace(/{workflow}/g, workflowText);
@@ -948,6 +1007,12 @@ function serializeSkill(s) {
     }
     if (s.match) {
         result.match = s.match;
+    }
+    if (s._replaces) {
+        result.replaces = s._replaces;
+    }
+    if (s._frameworkReferences) {
+        result.frameworkReferences = s._frameworkReferences;
     }
     if (s._bundle) {
         result.bundle = true;
@@ -1077,6 +1142,9 @@ async function generateAllSkills({
 
 export {
     VARIANT_FILE,
+    FRAMEWORK_NAME,
+    FRAMEWORK_DOCS,
+    FRAMEWORK_RULES,
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
