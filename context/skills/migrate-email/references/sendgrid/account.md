@@ -4,7 +4,7 @@ What the migration needs from the person's SendGrid account. The agent never cha
 
 **EU subusers.** An app on an EU subuser sends through `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, as `sdk-reference.md` says. For such an app, use `api.eu.sendgrid.com` in every request of this file instead of `api.sendgrid.com`.
 
-**Subusers.** An app can send with its parent account's key on behalf of a subuser: its requests carry an `on-behalf-of` header, set by hand or by the client's subuser option, such as `setImpersonateSubuser('name')` on `@sendgrid/client` in Node.js or `GetRequestSubuser` in Go. Its sends then use the subuser's suppression lists, templates, and settings. With a key of the parent account, add `on-behalf-of: <subuser>` to every request of this file; a key made in the subuser's own account needs none. Ask the person to switch to that subuser in SendGrid for every question and export of this file. When the sites send for more than one account, such as the parent and a subuser, ask the person which account's lists Step 5 imports: that account's sites move, and every other site stays, with the reason `sends for another SendGrid account`.
+**Subusers.** A send uses the suppression lists, templates, and settings of the account its API key belongs to: the parent account or one of its subusers. SendGrid's `on-behalf-of` header, which a client's subuser option such as `setImpersonateSubuser` in Node.js or `GetRequestSubuser` in Go sets, doesn't work with the Mail Send API, so it never sends for another account. Ask the person which account the app's sending key belongs to, make the read-only key below in that account, and switch to that account in SendGrid for every question and export of this file. When sites send with keys of different accounts, or a site picks its key at run time, such as per tenant, ask the person which account's lists Step 5 imports: the sites that send only with that account's key move, and every other site stays, with the reason `sends for another SendGrid account`. When the person can't say which account a key belongs to, its sites stay, with the reason `SendGrid account not checked`.
 
 ## DNS records
 
@@ -79,6 +79,13 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 | Bounces | bounce | `Imported from SendGrid: bounce` |
 | Invalid Emails | bounce | `Imported from SendGrid: invalid address` |
 | Spam Reports | complaint | `Imported from SendGrid: spam report` |
+
+**Leave out what SendGrid delivered to anyway.** In the Mail settings question, also ask the person whether two more settings are on (Settings, then Mail Settings):
+
+- **Address Allow List**: SendGrid delivered to an address on it, or at a domain on it, whatever its lists said. When it is on, ask for its entries, and leave out every entry of the lists whose address or domain is on it.
+- **Bounce Purge**: SendGrid deleted a bounce once it was older than the days set for hard bounces or for soft bounces. When it is on, ask for both numbers, and leave out each bounce older than its number from its `created` time: a `status` that starts with `5` is a hard bounce, and one that starts with `4` is a soft one. PostHog keeps an entry it imports until someone removes it, so the report says that bounces SendGrid would have purged later stay suppressed in PostHog.
+
+When the person can't say whether one of them is on, import every entry, and the report says before cutover that addresses SendGrid may still have delivered to are suppressed in PostHog.
 
 **Leave out the other lists.**
 
