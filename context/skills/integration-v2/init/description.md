@@ -1,7 +1,5 @@
 # Initialize PostHog
 
-Set up PostHog so the SDK is configured once and available across the app.
-
 ## Environment variables
 
 Set the PostHog keys through the wizard tools (`set_env_values`), never hardcoded.

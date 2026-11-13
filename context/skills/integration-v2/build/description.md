@@ -23,6 +23,9 @@ about most:
   plainly in the handoff `conflict` — the exact failing command and why — and, if
   the failure is pre-existing, that the integration did not cause it. A silent or
   vague build failure is the worst outcome; a clearly-reported one is fine.
+- **It matches the codebase.** The added PostHog code must read like the code
+  around it — import style, naming, quotes, indentation, and the framework's
+  idioms. Fix anything that looks foreign to the file it lives in.
 - **Nothing was mangled.** Confirm each touched file still has its original code
   intact next to the PostHog additions, and that no file unrelated to the
   integration was edited. If a step deleted or rewrote code it shouldn't have, or
