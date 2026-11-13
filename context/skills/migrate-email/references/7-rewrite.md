@@ -29,6 +29,8 @@ Install `posthog-node` with the project's package manager when the app doesn't h
 - a site with rendered content whose email carries a login code, a reset link, or another secret: the send takes `sensitive`;
 - the client: the client options take `migratedFrom`.
 
+Before you install or upgrade `posthog-node`, check that the app runs on a Node.js version the release you install supports: compare the `engines` field the registry lists for it with the version the app runs in production, from its `engines`, `.nvmrc`, `.node-version`, Dockerfile base image, or hosting config. When you can't tell that version, ask the person. When the release doesn't support it, change no site: an older Node lacks what the client needs, such as `crypto.randomUUID()`, and every send fails. Mark each moving row `moves: no — the app runs Node <version>, which posthog-node doesn't support`, tell the person, tick the phase with `none moved`, and go to the next step.
+
 When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — posthog-node has no <capability> yet`, tell the person, and go on with the rest. When the client options lack `migratedFrom`, leave it out of the client. When no site is left, undo the install or upgrade of `posthog-node`, tick the phase with `none moved`, and go to the next step.
 
 Configure a server-side client of its own for email, also when the app already has a `posthog-node` client:
