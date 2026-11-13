@@ -84,7 +84,7 @@ An email that carries a login code, a reset link, or another secret needs its Po
 
 ## Webhooks
 
-Resend stops sending email events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when engagement capture is on:
+Resend stops sending email events for a site that moves. PostHog records the events of a moved send on the person it names with `distinctId`, when the project's **Capture email engagement events** setting is on and the send's tracking doesn't turn engagement off, as Step 7 says under "Sensitive emails and tracking":
 
 | Resend event | PostHog event |
 |---|---|
@@ -93,12 +93,12 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 | `email.bounced` | `$workflows_email_bounced` |
 | `email.complained` | `$workflows_email_blocked` |
 | `email.opened` | `$workflows_email_opened` |
-| `email.clicked` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive when no template saved in PostHog has its key, which Step 7 makes sure: its links go out as they are, and it counts no clicks |
+| `email.clicked` | `$workflows_email_link_clicked`, only when PostHog tracks the email's clicks: for a template made in PostHog that is not marked sensitive, or a code send whose tracking leaves clicks on, as the table in Step 7 under "Sensitive emails and tracking" says. Step 7 marks every code send sensitive and never turns `clicks` on, so its links go out as they are, and PostHog counts no clicks |
 | Every other email event, such as `email.delivery_delayed` | none |
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
-A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `email.delivery_delayed`, stays, and the reason is `its <event> events feed a webhook handler`. A site whose emails an `email.clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive, since a send in the code form counts no clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `email.delivery_delayed`, stays, and the reason is `its <event> events feed a webhook handler`. A site whose emails an `email.clicked` handler acts on moves only to a template made in PostHog that is not marked sensitive, since Step 7 never tracks a code send's clicks: it marks every code send sensitive and never turns `clicks` on. When its plan note says `opens off`, it stays too: a template in PostHog with tracking off counts neither opens nor clicks. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
 
 ## Calls that change the suppression list
 
@@ -123,6 +123,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `from`, `subject`, `html`, `text`, and the reply-to address keep their values, under the PostHog SDK's names.
 - A send with rendered content gets a template key, as Step 7 says.
 - The idempotency key moves into the send, under the PostHog SDK's name for it.
+- Resend sets open and click tracking per domain, not per send, so the call doesn't show it. Step 3 reads the domain's open tracking from the person, as `account.md` says under "Open tracking". A site whose plan note says `opens off` turns off the `opens` switch of tracking, as Step 7 says. Click tracking needs no question: Step 7 marks every code send sensitive, so PostHog doesn't track its clicks, and Step 7 never turns them on. When the domain tracks clicks in Resend, note in the report that PostHog doesn't count these emails' clicks.
 
 **Templates brought into the code.** The site renders the email from its `variables`, as "Templates" says, and sends the template key, the rendered subject, HTML, and text, and the `from` and reply-to address: the site's own where it sets them, otherwise the template's. It sends no template ID and no template data.
 

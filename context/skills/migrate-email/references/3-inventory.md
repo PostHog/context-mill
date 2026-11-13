@@ -74,11 +74,13 @@ A template the person asks to make in PostHog moves in the template form, by its
 
 ### Opens the provider didn't track
 
-PostHog adds its open pixel to every email it sends, in the code form and from a template made in PostHog alike. Check this for each site that nothing else keeps on the provider, as the provider's `account.md` says: whether the provider tracked the opens of its emails, with an open pixel in each one.
+PostHog adds its open pixel to every email it sends unless the send turns its `opens` switch off, as Step 7 says. Check for each site that nothing else keeps on the provider whether the provider tracked the opens of its emails, with an open pixel in each one, as the provider's `account.md` says. Never ask the person whether PostHog may add its pixel: the site moves either way.
 
-- When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, ask the person once, for all such sites together, whether PostHog may add its open pixel to emails that never had one. Yes: those sites move, and the report says that PostHog now counts their opens. No, or no answer: they stay, and the reason is `open tracking off`.
-- When nobody can tell whether the provider tracked a site's opens, the site stays, and the reason is `open tracking not checked`.
-- For each site that moves with the person's yes, write `open pixel added: the person agreed` in its note under the sites table, so the report names it.
+- When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, the site moves with opens off. Write `opens off: <provider name> didn't track its opens` in its note under the sites table.
+- When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note. A site whose emails an `email.opened` webhook handler acts on stays instead, and the reason is `open tracking not checked`: with opens off, PostHog sends no opened events in place of the provider's.
+- When the provider tracked the site's opens, the site moves with nothing to note.
+
+A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it.
 
 ## Write the plan file
 
@@ -106,6 +108,6 @@ A sites table, one row per site, in source tree order:
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
 
-Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with an open pixel its emails never had, note `open pixel added: the person agreed`, as Step 3 says under "Opens the provider didn't track". For each site that stays because it relies on the provider's suppression list, note what would let it move, as Step 3 says after the sender check.
+Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with opens off, note `opens off: <reason>`, as Step 3 says under "Opens the provider didn't track". For each site that stays because it relies on the provider's suppression list, note what would let it move, as Step 3 says after the sender check.
 
 A list of the other provider calls, each with its file, line, and what it does, and a list of the webhook handlers, each with its file, line, the events it handles, and how it finds the send.
