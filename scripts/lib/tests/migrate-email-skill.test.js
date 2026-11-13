@@ -92,6 +92,30 @@ describe('migrate-email skill', () => {
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
+    it('chains the steps from detection through rewrite and verify to the report', async () => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill('migrate-email-resend', outputDir);
+        const visited = [];
+        for (let step = '1-detect.md'; step && visited.length < 20; ) {
+            visited.push(step);
+            const text = readFileSync(join(skillDir, 'references', step), 'utf8');
+            step = text.match(/\*\*Upon completion, continue with:\*\* \[[^\]]+\]\(([^)]+)\)/)?.[1];
+        }
+
+        expect(visited).toEqual([
+            '1-detect.md',
+            '2-preflight.md',
+            '3-inventory.md',
+            '4-sender.md',
+            '5-suppressions.md',
+            '6-key.md',
+            '7-rewrite.md',
+            '8-verify.md',
+            '9-report.md',
+        ]);
+    });
+
     describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
         const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];

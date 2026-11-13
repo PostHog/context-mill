@@ -79,7 +79,18 @@ const { data, error } = await resend.emails.send({
 
 ## Templates stored at Resend
 
-A send with `template: { id: 'tmpl_...', variables: { FIRST_NAME: 'Jane' } }` renders a template from the Resend dashboard. Its content is not in the code. The template reads variables as `{{{FIRST_NAME}}}`, with an optional fallback: `{{{FIRST_NAME|there}}}`.
+A send with `template: { id: '...', variables: { PRODUCT: 'Laptop' } }` renders a template from the Resend dashboard. `id` is the template's id or its alias. Its content is not in the code.
+
+- The template reads variables as `{{{PRODUCT}}}`, with an optional fallback: `{{{PRODUCT|a laptop}}}`. A variable's definition in the template can also carry a `fallback_value`.
+- A variable's type is `string` or `number`.
+- The template can hold a default `from`, `subject`, and `reply_to`. A value the send passes wins over the default.
+- A send with `template` passes no `html`, `text`, or `react`.
+
+## Webhooks
+
+Resend posts each event to an endpoint of the app, signed through Svix. An event has `type`, `created_at`, and `data`, which holds the send's `email_id`, `from`, `to`, `subject`, and `tags`. An email event's `type` is such as `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`, `email.opened`, or `email.clicked`. Resend also sends events on contacts and domains.
+
+Look for routes that read `email_id` or an `email.` event type, `resend.webhooks.verify`, `Webhook` from `svix`, and the `svix-id`, `svix-timestamp`, and `svix-signature` headers.
 
 ## Status reads
 
