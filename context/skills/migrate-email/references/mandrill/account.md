@@ -31,11 +31,12 @@ A send that doesn't set a field takes the account's Sending Defaults. Ask the pe
 - open tracking and click tracking, for `track_opens` and `track_clicks`;
 - **Inline CSS Styles In HTML Emails**, for `inline_css`;
 - the box that generates an HTML part for text emails, for `auto_html`;
+- the box that generates a plain-text part for HTML emails, for `auto_text`;
 - **Add Unsubscribe Footer**, which adds an unsubscribe link to every email;
 - **Merge Language**, for `merge_language`;
 - the BCC address, which gets a copy of every send that sets no `bcc_address`, for `bcc_address`.
 
-The API has no read of these settings. Note the click tracking choice as the page names it, such as HTML emails only. Open tracking off in the Sending Defaults means a site that leaves out `track_opens` had no open pixel, and a person who can't tell the setting means nobody can tell, as `mapping.md` says under "Tracking" and Step 3 under "Opens the provider didn't track". When the person can't tell the inline CSS setting, a site that doesn't set `inline_css` stays when its HTML has a `<style>` element, or the code doesn't show that it has none, and the reason is `account inline CSS not checked`. When they can't tell the HTML setting, a site that doesn't set `auto_html` and sends no `html` stays, and the reason is `account HTML part not checked`. When they can't tell the merge language, a site whose content has a merge tag stays, as "Templates" in `mapping.md` says. When the unsubscribe footer is on, every site stays, and the reason is `account adds an unsubscribe footer`: PostHog's send adds none, and the recipients would lose their way to stop these emails, as with `*|UNSUB:…|*` in `mapping.md`. When they can't tell it, every site stays, and the reason is `account unsubscribe footer not checked`. When the BCC address is set, a site that doesn't set `bcc_address` takes it and stays, as the `bcc_address` row in `mapping.md` says. When they can't tell whether it is set, a site that doesn't set `bcc_address` stays, and the reason is `account BCC address not checked`.
+The API has no read of these settings. Note the click tracking choice as the page names it, such as HTML emails only. Open tracking off in the Sending Defaults means a site that leaves out `track_opens` had no open pixel, and a person who can't tell the setting means nobody can tell, as `mapping.md` says under "Tracking" and Step 3 under "Opens the provider didn't track". When the person can't tell the inline CSS setting, a site that doesn't set `inline_css` stays when its HTML has a `<style>` element, or the code doesn't show that it has none, and the reason is `account inline CSS not checked`. When they can't tell the HTML setting, a site that doesn't set `auto_html` and sends no `html` stays, and the reason is `account HTML part not checked`. When they can't tell the plain-text setting, a site that doesn't set `auto_text` and sends `html` without `text` stays, and the reason is `plain-text part not checked`, as the `html`, `text` row in `mapping.md` says. When they can't tell the merge language, a site whose content has a merge tag stays, as "Templates" in `mapping.md` says. When the unsubscribe footer is on, every site stays, and the reason is `account adds an unsubscribe footer`: PostHog's send adds none, and the recipients would lose their way to stop these emails, as with `*|UNSUB:…|*` in `mapping.md`. When they can't tell it, every site stays, and the reason is `account unsubscribe footer not checked`. When the BCC address is set, a site that doesn't set `bcc_address` takes it and stays, as the `bcc_address` row in `mapping.md` says. When they can't tell whether it is set, a site that doesn't set `bcc_address` stays, and the reason is `account BCC address not checked`.
 
 Also ask the person whether the account has rules (the Rules page under Settings), and what each active rule matches and changes. A rule changes each send it matches, such as turning open tracking off, adding tags, or moving the send to a subaccount. Classify a site that a rule matches with the rule's changes, as if the site set them. A site that a rule may match, when the person can't tell what the rule changes, stays, and the reason is `sending rule not checked`. When the person can't tell whether the account has rules, every site stays for the same reason.
 
@@ -59,17 +60,19 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and a separate one for each subaccount. It rejects an address on the list on every send until the entry expires. A subaccount's entries apply only to that subaccount's sends, and those sends stay on Mailchimp Transactional (see `mapping.md`). So import only the main account's entries: an entry with a subaccount would block a moved send that Mailchimp Transactional let through. A soft bounce expires after 24 hours, a hard bounce after seven days, a spam complaint and an unsubscribe after a year, and a custom entry, one the person added, never.
 
+Step 3 asks which sites rely on this list to stop mailing an address someone added to it. For Mailchimp Transactional, name the list the Rejection Denylist in that question, and ask about both kinds of entry that a moved send would reach: a custom entry, added by hand on the Rejection Denylist page or by a `rejects.add` call the app makes, and an unsubscribe entry, added when a recipient unsubscribes from the sender address, such as with their mail program's unsubscribe button. PostHog blocks neither for a moved send.
+
 **Export from the dashboard (preferred).** In Mailchimp Transactional: the Rejection Denylist page under Settings, then **Export Full Denylist**. The export is queued, and the account's contact address gets an email when it is ready. The person downloads it from that email or from the Exports page under Settings, within seven days. It is a zip file with one `rejects.csv`, with the subaccount entries in their own column. Ask the person where they saved the file. Read the header row to find the address, reason, expiry, and subaccount columns.
 
 **Read from the API.** `POST https://mandrillapp.com/api/1.4/rejects/list` with the JSON body `{ "key": "<MANDRILL_READ_API_KEY>", "include_expired": false }`. It answers a list of `{ email, reason, detail, created_at, last_event_at, expires_at, expired, sender, subaccount }`, and leaves out entries that expired. It has no paging and answers at most 1,000 entries: when it answers 1,000, the list is longer, so stop and ask the person for the dashboard export instead. Wait and retry on `429`.
 
 **Map each entry.** Take only entries that have not expired and have no subaccount.
 
-| Rejection reason | PostHog source | Reason |
-|---|---|---|
-| `hard-bounce` | bounce | `Imported from Mailchimp Transactional: hard bounce` |
-| `spam` | complaint | `Imported from Mailchimp Transactional: spam complaint` |
-| `custom` | manual | `Imported from Mailchimp Transactional: custom rejection` |
+| Rejection reason | PostHog `reason` |
+|---|---|
+| `hard-bounce` | `bounce` |
+| `spam` | `complaint` |
+| `custom` | `manual` |
 
 **Leave out the other entries.**
 
@@ -82,4 +85,4 @@ Mailchimp Transactional keeps one suppression list, the Rejection Denylist, and 
 Step 5 writes these under the phase, whether or not the import runs:
 
 - How many of the main account's unsubscribe entries that have not expired the import leaves out: entries whose reason is `unsub`, counted in the export or the API's answer. When the person has neither, write that the count is not known.
-- That PostHog keeps an imported entry until someone removes it, where Mailchimp Transactional let a hard bounce expire after seven days and a spam complaint after a year, so these addresses stay blocked for the moved sends.
+- That PostHog keeps an imported hard bounce until someone removes it, where Mailchimp Transactional let it expire after seven days, so these addresses stay blocked for the moved sends.
