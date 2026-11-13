@@ -67,7 +67,7 @@ Loops tracks no opens or clicks on a transactional email, at any setting or plan
 
 ## Suppression list
 
-Loops suppresses an address after a hard bounce or a spam complaint, and skips it on every later send. **Loops has no export of its suppression list, and no API route that lists it.** It only answers for one contact at a time. Say this plainly to the person, and offer these ways instead:
+Loops suppresses an address after a hard bounce or a spam complaint, and skips it on every later send. Its API has no call that adds an address to the list, and its docs show no way to add one in the dashboard: when Step 3 asks which sites rely on the list for addresses someone added, tell the person so, and ask whether they added any another way, such as through Loops support. **Loops has no export of its suppression list, and no API route that lists it.** It only answers for one contact at a time. Say this plainly to the person, and offer these ways instead:
 
 **The app's own record (preferred).** When the app keeps the addresses its Loops webhook reported, such as from `email.hardBounced` and `email.spamReported` events, ask the person to export those addresses from the app's database to a CSV outside the repository, with a column that says which event each came from, and tell you where they saved it. Ask whether the app kept those events since its first Loops send. When it didn't, the record misses the older suppressions: import it, and write the phase as `- [ ] suppressions — <imported>/<entries> imported: the app's record starts after its first Loops send`. The record keeps an address after someone removed its suppression in Loops. Before the import, check each address in it with the suppression route below, at the same rate and with the key of the team that sent to it: drop an address whose `isSuppressed` is `false`, and keep one that answers `404`, which is not a contact.
 
@@ -79,11 +79,13 @@ Both ways check addresses with the migration key. When the person has neither, o
 
 **Map each entry.**
 
-| Loops source | PostHog source | Reason |
-|---|---|---|
-| `email.hardBounced` in the app's record | bounce | `Imported from Loops: hard bounce` |
-| `email.spamReported` in the app's record | complaint | `Imported from Loops: spam report` |
-| `isSuppressed: true` from the API | manual | `Imported from Loops: suppressed after a hard bounce or a spam complaint` |
+| Loops source | PostHog `reason` |
+|---|---|
+| `email.hardBounced` in the app's record | `bounce` |
+| `email.spamReported` in the app's record | `complaint` |
+| `isSuppressed: true` from the API | `bounce` |
+
+The API doesn't say whether a hard bounce or a spam complaint suppressed an address. Import it as `bounce`: PostHog then blocks the moved sends to it, as Loops skipped every send to it, and a hard-bounced address is not mailed again. An address that only complained is blocked too, where the app's record would let it get the moved sends.
 
 **Leave out the rest.**
 

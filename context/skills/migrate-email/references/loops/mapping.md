@@ -200,7 +200,7 @@ Every event Loops sends for a transactional email has a PostHog event in the tab
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on Loops. Each removes an address from Loops' suppression list: `removeContactSuppression` (Node.js), `RemoveContactSuppression` (Go), `removeSuppression` (PHP), `remove_suppression` (Ruby), and `DELETE /api/v1/contacts/suppression`. Loops has no call that adds one: it suppresses an address only after a hard bounce or a spam complaint. The import takes every address Loops suppressed, so every removal counts.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Loops. Each removes an address from Loops' suppression list: `removeContactSuppression` (Node.js), `RemoveContactSuppression` (Go), `removeSuppression` (PHP), `remove_suppression` (Ruby), and `DELETE /api/v1/contacts/suppression`. Loops has no call that adds one: it suppresses an address only after a hard bounce or a spam complaint.
 
 ## Rewrite
 
