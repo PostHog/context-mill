@@ -60,6 +60,8 @@ For a template the person asks to make in PostHog, a value that the provider tem
 
 A site stays when no sender can be verified for its `from`: an address on a free mail domain, such as `gmail.com` or `outlook.com`, on the provider's shared or sandbox domain, on a domain whose DNS records the person can't publish, such as a school's or another company's, or taken from a user, a customer, or a tenant at run time. The reason names the address or where it comes from. When a site that is not a `template` site sets no `from`, the provider sent from the account's default sender: ask the person for that address once, and the site stays when they can't name it.
 
+Unless the provider's `account.md` says it keeps no suppression list, ask the person once, for the sites the checks above leave moving, which of them they rely on that list to stop mailing an address someone added to it, by hand in the provider's dashboard or with a call the app makes, such as an unsubscribe handler. PostHog blocks a moved send only to an address that hard-bounced, so a moved send reaches such an address, whenever it was added. Each site they name stays, and the reason is `relies on <provider name>'s suppression list`. When they can't tell or don't answer, every such site stays with that reason. Write `to move: the app keeps its own record of those addresses, the ones added before included, and skips them before the send` in each such site's note under the sites table, for the report.
+
 A `template` site moves by bringing its email into the code: the code renders the provider template's content and sends it in the code form. Read `template-to-code.md` up to "Where the email goes" now, and Step 7 reads the rest. Check the site's other fields first: a site that another field keeps on the provider stays with that reason, and needs no question about its template.
 
 Ask the person once, listing every other template the sites send, with the plan for each: it moves into the code, in a file next to its send, and from then on they change the email there. For each one, they can also say to keep it on the provider for now, or to make it a template in PostHog instead, such as when people who don't change code edit that email. A template they keep stays, and the reason is `kept on <provider name> for now`.
@@ -77,10 +79,6 @@ PostHog adds its open pixel to every email it sends, in the code form and from a
 - When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, ask the person once, for all such sites together, whether PostHog may add its open pixel to emails that never had one. Yes: those sites move, and the report says that PostHog now counts their opens. No, or no answer: they stay, and the reason is `open tracking off`.
 - When nobody can tell whether the provider tracked a site's opens, the site stays, and the reason is `open tracking not checked`.
 - For each site that moves with the person's yes, write `open pixel added: the person agreed` in its note under the sites table, so the report names it.
-
-### Addresses added to the provider's suppression list
-
-Unless the provider's `account.md` says it keeps no suppression list, ask the person once, for the sites that would move otherwise, which of them they rely on that list to stop mailing an address someone added to it, by hand in the provider's dashboard or with a call the app makes, such as an unsubscribe handler. PostHog blocks a moved send only to an address that hard-bounced, so a moved send reaches such an address, whenever it was added. Each site they name stays, and the reason is `relies on <provider name>'s suppression list`. When they can't tell or don't answer, every such site stays with that reason. What would let it move: the app keeps its own record of those addresses, the ones added before included, and skips them before the send.
 
 ## Write the plan file
 
