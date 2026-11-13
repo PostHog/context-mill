@@ -70,11 +70,18 @@ export const onClientEntry: GatsbyBrowser["onClientEntry"] = () => {
 }
 ```
 
-`onClientEntry` runs once in the browser, before the first page renders, so PostHog initializes before any page code calls it. Gatsby changes routes with the History API, so `capture_pageview: "history_change"` captures a `$pageview` on the first page load and on each route change. You do not need an `onRouteUpdate` handler.
+`onClientEntry` runs once in the browser, before the first page renders, so PostHog initializes before any page code calls it. Gatsby changes routes with the History API, so `capture_pageview: "history_change"` captures a `$pageview` on the first page load and on each route change. You do not need an `onRouteUpdate` handler. With `defaults` dated `2025-05-24` or later, `capture_pageview` is already `"history_change"`. This example sets it explicitly to make the behavior clear.
 
 Gatsby inlines `GATSBY_`-prefixed environment variables into the browser bundle at build time. `gatsby-config.ts` loads `.env` with `dotenv`, so the token and host are available to `gatsby-browser.ts`. The token ends up in the generated JavaScript, which is expected for a project token.
 
-> The `gatsby-plugin-posthog` plugin is deprecated. Use `posthog-js` directly, as this example shows.
+### Migrating from gatsby-plugin-posthog
+
+The `gatsby-plugin-posthog` plugin is deprecated. To move to `posthog-js`:
+
+1. Remove `gatsby-plugin-posthog` from the `plugins` array in `gatsby-config` and uninstall it.
+2. Install `posthog-js` and initialize it in `gatsby-browser` as shown above.
+3. Remove any manual `$pageview` captures in `onRouteUpdate`. If you keep them, each route change sends two pageviews.
+4. Import `posthog` from `posthog-js` instead of using `window.posthog`.
 
 ### Identify, capture and reset (src/pages/index.tsx)
 
