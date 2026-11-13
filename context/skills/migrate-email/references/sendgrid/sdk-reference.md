@@ -26,7 +26,7 @@ These are not SendGrid's send SDK, and alone they are not a migration: `@sendgri
 
 ## Clients and sends
 
-**Node.js.** `sgMail.send(msg)` answers `[response, body]`: `response.statusCode` is `202`, and `response.headers['x-message-id']` is the message id. It throws a `ResponseError` on an API error: `err.code` is the HTTP status, and `err.response.body.errors` is a list of `{ message, field, help }`.
+**Node.js.** `sgMail.send(msg)` answers a list whose first entry is the response: the [Node.js quickstart](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs) reads `response[0].statusCode`, `202` on success, and `response[0].headers`, which carry the message id in `X-Message-Id`, and catches an error around the send. The docs don't name the error's class or its fields: read the installed client, as "The installed client" says, and the code's own `catch`, which shows what it reads, such as `err.code` or `err.response.body.errors`, the API's `{ message, field, help }` list.
 
 ```js
 import sgMail from '@sendgrid/mail'
@@ -41,15 +41,13 @@ await sgMail.send({
 })
 ```
 
-- `sgMail.send(msg)` with a list in `to` sends **one** email that every address sees.
-- `sgMail.send(msg, true)` and `sgMail.sendMultiple(msg)` send one email per address in `to`.
-- `sgMail.send(msg, callback)` sends like `sgMail.send(msg)` and passes `(error, result)` to the callback, and never throws.
-- `sgMail.setTimeout(ms)` sets axios's `timeout` on every send, as `mapping.md` says under "HTTP", and `sgMail.setSubstitutionWrappers(left, right)` sets the wrappers of every send's `substitutions`, and `sgMail.setSecretRules(rules)` makes every send fail before its request when the content matches a rule. Note each of them for each send through that client.
-- The Node.js helper turns snake_case keys into camelCase, so `template_id` and `dynamic_template_data` are the same fields as `templateId` and `dynamicTemplateData`.
-- `sgMail.send([msg1, msg2])` sends several emails in one call.
+- `sgMail.send(msg, true)`, `sgMail.sendMultiple(msg)`, and `sgMail.send([msg1, msg2])` send to several addresses or several messages in one call.
+- `sgMail.send(msg, callback)` passes `(error, result)` to the callback: read the installed client for whether it also throws.
+- `sgMail.setTimeout(ms)`, `sgMail.setSubstitutionWrappers(left, right)`, and `sgMail.setSecretRules(rules)` set a timeout, the wrappers of `substitutions`, and rules on the content for every send through that client. SendGrid's docs don't describe them: read the installed client for what each does, as `mapping.md` says under "HTTP", "Fields", and "Calls", and note each of them for each send through that client.
+- Node.js code may write the HTTP names, such as `template_id` and `dynamic_template_data`, in place of `templateId` and `dynamicTemplateData`: read the installed client for whether it sends them as those fields.
 - `@sendgrid/client`: `client.request({ method: 'POST', url: '/v3/mail/send', body })` sends the HTTP body below.
 
-**Python.** It raises `python_http_client.exceptions.HTTPError` and its subclasses, such as `BadRequestsError` and `TooManyRequestsError`, on an API error. `e.status_code` and `e.body` hold the answer. A success answers a response with `status_code` `202` and the message id in `headers['X-Message-Id']`.
+**Python.** The [Python quickstart](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-python) reads the answer's `status_code`, `202` on success, and its headers, which carry the message id in `X-Message-Id`. The docs don't say what the send raises on an API error: read the installed `sendgrid` and `python_http_client`, and the code's own `except`, such as `except HTTPError` reading `e.status_code` and `e.body`.
 
 ```python
 from sendgrid import SendGridAPIClient
@@ -70,7 +68,7 @@ response = SendGridAPIClient(os.environ["SENDGRID_API_KEY"]).send(message)
 - `message.add_cc(...)`, `message.add_bcc(...)`, `message.reply_to = ReplyTo(...)`, `message.attachment = Attachment(FileContent(...), FileName(...), FileType(...), Disposition(...), ContentId(...))`, `message.category = Category(...)`, `message.custom_arg = CustomArg(...)`, `message.header = Header(...)`, `message.send_at = SendAt(...)`, and `message.asm = Asm(...)` set the other fields.
 - `sg.client.mail.send.post(request_body=data)` sends a raw HTTP body.
 
-**Ruby.** The send answers a response with `status_code` (a string, such as `"202"`), `body`, and `headers`. It does not raise on an API error: the code reads `status_code`.
+**Ruby.** The [Ruby quickstart](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-ruby) reads the answer's `status_code`, `body`, and `headers`. The docs don't say whether the send raises on an API error or on a network error: read the installed gem, and the code's own checks.
 
 ```ruby
 require 'sendgrid-ruby'
@@ -87,7 +85,7 @@ response = sg.client.mail._('send').post(request_body: mail.to_json)
 
 A `SendGrid::Personalization` with `add_to`, `add_cc`, `add_bcc`, and `add_dynamic_template_data` builds the recipients, and `mail.template_id`, `mail.reply_to`, `mail.add_attachment`, `mail.add_category`, `mail.add_custom_arg`, `mail.add_header`, `mail.send_at`, and `mail.asm` set the rest.
 
-**PHP.** `send` answers a response with `statusCode()`, `headers()`, and `body()`. It does not throw on an API error, only on a network error.
+**PHP.** The [PHP quickstart](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-php) reads the answer's `statusCode()`, `headers()`, and `body()` inside a `try`, and catches an exception around the send. The docs don't say on which errors `send` throws: read the installed package, and the code's own checks.
 
 ```php
 $email = new \SendGrid\Mail\Mail();
@@ -98,9 +96,9 @@ $email->addContent('text/html', '<p>Welcome</p>');
 $response = (new \SendGrid(getenv('SENDGRID_API_KEY')))->send($email);
 ```
 
-The other setters are `addCc`, `addBcc`, `setReplyTo`, `addAttachment($content, $type, $filename, $disposition, $contentId)`, `setTemplateId`, `addDynamicTemplateDatas`, `addCategory`, `addCustomArg`, `addHeader`, `setSendAt`, and `setAsm`.
+The other setters include `addCc`, `addBcc`, `setReplyTo`, `addAttachment` with an `Attachment` (the [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send)'s sample; read the installed package for the other forms it takes), `setTemplateId`, `addDynamicTemplateDatas`, `addCategory`, `addCustomArg`, `addHeader`, `setSendAt`, and `setAsm`.
 
-**Go.** `Send` answers `(*rest.Response, error)`. `err` is set only for a network error: an API error is a `response.StatusCode` of 400 or more. The message id is in `response.Headers["X-Message-Id"]`.
+**Go.** `Send` answers a response and an error: the [Go quickstart](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-go) checks `err`, and otherwise reads `response.StatusCode` and `response.Headers`, which carry the message id in `X-Message-Id`. The docs don't say whether `err` is set on an API error: read the installed module, and the code's own checks.
 
 ```go
 from := mail.NewEmail("Example", "hello@mail.example.com")
@@ -111,7 +109,7 @@ response, err := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY")).Send(mess
 
 `mail.NewV3Mail()` with `mail.NewPersonalization()` (`AddTos`, `AddCCs`, `AddBCCs`, `SetDynamicTemplateData`) builds the full form, with `SetTemplateID`, `SetReplyTo`, `AddAttachment`, `AddCategories`, `SetCustomArg`, `SetHeader`, `SetSendAt`, and `SetASM`.
 
-**.NET.** `SendEmailAsync` answers a `Response` with `StatusCode`, `IsSuccessStatusCode`, `Headers`, and `Body`. It does not throw on an API error unless the client options set `HttpErrorAsException`. The client options' `ReliabilitySettings`, with `MaximumNumberOfRetries` above 0, retry server errors through `RetryDelegatingHandler` when the client makes its own `HttpClient`; `mapping.md` says under "Errors" which clients retry and what that keeps.
+**.NET.** `SendEmailAsync` answers a `Response`: the [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send)'s sample reads its `StatusCode`, `Headers`, and `Body`. The docs don't say whether it throws on an API error, or which client options make it throw or retry: read the installed package, as `mapping.md` says under "Errors".
 
 ```csharp
 var client = new SendGridClient(Environment.GetEnvironmentVariable("SENDGRID_API_KEY"));
@@ -122,11 +120,11 @@ var msg = MailHelper.CreateSingleEmail(
 var response = await client.SendEmailAsync(msg);
 ```
 
-`MailHelper.CreateSingleEmailToMultipleRecipients` and `CreateMultipleEmailsToMultipleRecipients` send to several addresses. A `SendGridMessage` takes `SetFrom`, `AddTo`, `AddCc`, `AddBcc`, `SetReplyTo`, `AddAttachment(filename, base64Content, type, disposition, contentId)`, `SetTemplateId`, `SetTemplateData`, `AddCategory`, `AddCustomArg`, `AddHeader`, `SetSendAt`, and `SetAsm`. Apps that use dependency injection take an `ISendGridClient`.
+`MailHelper.CreateSingleEmailToMultipleRecipients` and `CreateMultipleEmailsToMultipleRecipients` send to several addresses. A `SendGridMessage` takes `SetFrom`, `AddTo`, `AddCc`, `AddBcc`, `SetReplyTo`, files in `Attachments` (the Mail Send reference's sample; read the installed package for its other attachment methods), `SetTemplateId`, `SetTemplateData`, `AddCategory`, `AddCustomArg`, `AddHeader`, `SetSendAt`, and `SetAsm`. Apps that use dependency injection take an `ISendGridClient`.
 
 **HTTP.** `POST https://api.sendgrid.com/v3/mail/send`, or `api.eu.sendgrid.com` for an EU subuser, with `Authorization: Bearer <key>`. A success answers `202` with no body and the message id in the `X-Message-Id` header. An error answers `{ "errors": [{ "message", "field", "help" }] }`. Look for `api.sendgrid.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
-**EU subusers.** An app on an EU subuser either names `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, such as `client.setDataResidency('eu')` on `@sendgrid/client` in Node.js or `sg.set_sendgrid_data_residency("eu")` in Python. Either one means every API request in `account.md` goes to `api.eu.sendgrid.com`.
+**EU subusers.** The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) sends for an EU regional subuser to `api.eu.sendgrid.com`. An app on an EU subuser either names that host, or sets the client's data residency to `eu`, such as `client.setDataResidency('eu')` in Node.js or `sg.set_sendgrid_data_residency("eu")` in Python: read the installed client for the host such a call sends to. Either one means every API request in `account.md` goes to `api.eu.sendgrid.com`.
 
 ```json
 {
