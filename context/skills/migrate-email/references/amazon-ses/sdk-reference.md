@@ -185,7 +185,7 @@ let out = client
     .await?;
 ```
 
-**Elixir.** `ExAws.request()` answers `{:ok, %{body: body}}`, or `{:error, {:http_error, status, body}}` on an API error.
+**Elixir.** `ExAws.request()` answers `{:ok, result}`, or `{:error, reason}` on an error, as the [`ExAws` docs](https://hexdocs.pm/ex_aws/ExAws.html) say. They don't say what `reason` holds for an API error or a network failure: read the installed `ex_aws` for it, as "The installed client" says.
 
 ```elixir
 ExAws.SES.send_email_v2(
@@ -196,7 +196,7 @@ ExAws.SES.send_email_v2(
 |> ExAws.request()
 ```
 
-- `send_email_v2(destination, content, from, opts)` takes the v2 fields, and its options `:reply_addresses`, `:tags`, `:configuration_set_name`, `:list_management`, `:feedback_forwarding_address`, and `:from_arn`.
+- `send_email_v2(destination, content, from, opts)` takes the v2 fields, and its options `:reply_addresses`, `:tags`, `:configuration_set_name`, `:list_management`, `:feedback_forwarding_address`, `:feedback_forwarding_arn`, and `:from_arn`, as the [`ExAws.SES` docs](https://hexdocs.pm/ex_aws_ses/ExAws.SES.html) list them.
 - `send_email(%{to: [...], cc: [...], bcc: [...]}, ExAws.SES.build_message(html, text, subject), from, opts)` takes the v1 fields, and its options `:reply_to`, `:tags`, `:configuration_set_name`, `:return_path`, `:source_arn`, and `:return_path_arn`.
 - `send_templated_email`, `send_raw_email`, and `send_bulk_templated_email` are the v1 template, raw, and bulk sends.
 
@@ -225,7 +225,7 @@ The v2 names, with the v1 names where they differ. The SDKs use the same names i
 | `Content.Simple.Subject` | `Message.Subject` | `{ Data, Charset }` |
 | `Content.Simple.Body.Html`, `Body.Text` | `Message.Body.Html`, `Body.Text` | `{ Data, Charset }` |
 | `Content.Simple.Headers`, `Content.Template.Headers` | none | A list of `{ Name, Value }`, at most 15 |
-| `Content.Simple.Attachments`, `Content.Template.Attachments` | none | A list of `{ FileName, RawContent, ContentType, ContentId, ContentDisposition, ContentDescription, ContentTransferEncoding }`. `RawContent` is the bytes, and base64 over raw HTTP and in Elixir's `ex_aws_ses`, which sends `Content` as JSON as it is. `ContentDisposition` is `ATTACHMENT` or `INLINE`, and `ContentId` names an `INLINE` file for the HTML |
+| `Content.Simple.Attachments`, `Content.Template.Attachments` | none | A list of `{ FileName, RawContent, ContentType, ContentId, ContentDisposition, ContentDescription, ContentTransferEncoding }`. `RawContent` is the bytes, which an AWS SDK Base64-encodes, and Base64 in a raw HTTP request's body. Elixir's `ex_aws_ses` docs don't say whether it encodes them: read the installed client. `ContentDisposition` is `ATTACHMENT` or `INLINE`, and `ContentId` names an `INLINE` file for the HTML |
 | `Content.Template.TemplateName`, `TemplateArn` | `Template`, `TemplateArn` (`SendTemplatedEmail`) | A template stored at Amazon SES |
 | `Content.Template.TemplateData` | `TemplateData` | A JSON string of the template's values |
 | `Content.Template.TemplateContent` | none | `{ Subject, Html, Text }`: an inline template in the code |
