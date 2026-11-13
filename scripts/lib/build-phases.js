@@ -169,6 +169,35 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
     };
 }
 
+/** The tag naming the framework a variant serves. Prefixed, because content tags such as `python` describe a skill, not what it serves. */
+const FRAMEWORK_TAG_PREFIX = 'framework:';
+
+/**
+ * Menu tags: the skill's own tags plus its served framework, group and `default`.
+ * Added here only, so the tags commandments are selected by stay untouched.
+ */
+function menuTags(tags, { framework, group, isDefault }) {
+    return [
+        ...new Set(
+            [
+                ...(tags || []),
+                framework ? `${FRAMEWORK_TAG_PREFIX}${framework}` : null,
+                group,
+                isDefault ? 'default' : null,
+            ].filter(Boolean),
+        ),
+    ];
+}
+
+/** The title, description and tags a menu entry or bundle variant publishes, matching manifest.json's name/description. */
+function menuMetadata(skill, group) {
+    return {
+        title: skill.displayName ?? skill.name,
+        description: skill.description,
+        tags: menuTags(skill.tags, { framework: skill.framework, group, isDefault: skill.default }),
+    };
+}
+
 /**
  * Compose the manifest + skill-menu and write both to dist/skills/.
  * Returns the manifest object so callers (notably full builds) can pass it
@@ -213,6 +242,9 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
                     variants: [],
                     // Bundled variants are absent from the manifest, so the group's URL is built from the base.
                     downloadUrl: `${resolveBaseDownloadUrl(version)}/${group}.json`,
+                    title: skill.name,
+                    description: skill.name,
+                    tags: menuTags(skill.groupTags, { group }),
                 };
                 bundleEntries.set(group, entry);
                 skillsByCategory[cat].push(entry);
@@ -221,6 +253,7 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
             const variant = { id: skill.id };
             if (skill.framework) variant.framework = skill.framework;
             if (skill.default) variant.default = true;
+            Object.assign(variant, menuMetadata(skill, group));
             entry.variants.push(variant);
             continue;
         }
@@ -228,6 +261,7 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
         const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
         if (skill.framework) entry.framework = skill.framework;
         if (skill.default) entry.default = true;
+        Object.assign(entry, menuMetadata(skill, group));
         skillsByCategory[cat].push(entry);
     }
 
