@@ -25,6 +25,7 @@ capture buys nothing.
   never substitute an email, and never pass a value that can be undefined. An
   identify call built from a missing field is rejected by the SDK, and identity then
   silently never happens for anyone.
+- Attach useful person properties (email, name, plan).
 
 Find the auth flow first: login and signup handlers, session callbacks.
 

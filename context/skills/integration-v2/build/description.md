@@ -51,7 +51,9 @@ it, is unfinished work — do it now. This is the last step that can catch it.
 
 Your task instructions say which checks to run, in what order, and when to stop.
 Where the toolchain ships its own analyzer rather than manifest scripts, run that instead — it is the only thing that will catch a
-lint the project itself enforces. Only errors in the
+lint the project itself enforces. Do not run the test suite — the runtime only
+permits install, build, typecheck, lint, and format commands, so a test command
+is blocked; a build that compiles is sufficient verification. Only errors in the
 files this integration changed are yours to fix — a missing import, a wrong call shape.
 An error in a file the integration never touched is pre-existing: note it and
 move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
@@ -71,6 +73,10 @@ PostHog code — stop fighting it: put a one-line summary in your handoff `confl
 field and the full detail in `did`, then complete the task. The user sees it in
 the outro and the report; reporting it and moving on is the right outcome.
 
-A `failed` status stops later steps that depend on
+Complete this task with status **done** whenever the integration itself is in
+place — even if the build or typecheck still fails on pre-existing errors in files
+you never touched. Note the pre-existing failure in `conflict` and move on. Only
+use status **failed** when your own integration changes are what break the build
+and you cannot resolve them. A `failed` status stops later steps that depend on
 this one (the dashboard and report), so do not fail the task over breakage the
 integration did not cause.

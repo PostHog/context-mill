@@ -87,3 +87,5 @@ Then call `publish_handoff` once, passing the full markdown as `content`:
 ```
 publish_handoff({ "content": "<the full report markdown>" })
 ```
+
+Record its outcome in your final message. Do not call `publish_handoff` again.
