@@ -4,6 +4,8 @@ What the migration needs from the person's SendGrid account. The agent never cha
 
 **EU subusers.** An app on an EU subuser sends through `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, as `sdk-reference.md` says. For such an app, use `api.eu.sendgrid.com` in every request of this file instead of `api.sendgrid.com`.
 
+**Subusers.** An app can send with its parent account's key on behalf of a subuser: its requests carry an `on-behalf-of` header, set by hand or by the client's subuser option, such as `setImpersonateSubuser('name')` on `@sendgrid/client` in Node.js or `GetRequestSubuser` in Go. Its sends then use the subuser's suppression lists, templates, and settings. With a key of the parent account, add `on-behalf-of: <subuser>` to every request of this file; a key made in the subuser's own account needs none. Ask the person to switch to that subuser in SendGrid for every question and export of this file. When the sites send for more than one account, such as the parent and a subuser, ask the person which account's lists Step 5 imports: that account's sites move, and every other site stays, with the reason `sends for another SendGrid account`.
+
 ## DNS records
 
 A domain authenticated at SendGrid carries these records. Keep all of them until the cutover is done. The SendGrid dashboard shows the exact names under Settings, then Sender Authentication.
