@@ -70,13 +70,13 @@ Postmark keeps one suppression list per message stream. It refuses a send to an 
 
 **Map each entry.**
 
-| `SuppressionReason` | PostHog source | Reason |
-|---|---|---|
-| `HardBounce` | bounce | `Imported from Postmark: hard bounce` |
-| `SpamComplaint` | complaint | `Imported from Postmark: spam complaint` |
-| `ManualSuppression` | manual | `Imported from Postmark: manual suppression` |
+| `SuppressionReason` | PostHog `reason` |
+|---|---|
+| `HardBounce` | `bounce` |
+| `SpamComplaint` | `complaint` |
+| `ManualSuppression` | `manual` |
 
-`ManualSuppression` covers an address the app or a person at Postmark suppressed, and a recipient who unsubscribed from the stream. Each one stopped this stream's mail at Postmark, so each one moves.
+`ManualSuppression` covers an address the app or a person at Postmark suppressed, and a recipient who unsubscribed from the stream. Each one stopped this stream's mail at Postmark, so the import takes each one. PostHog blocks a moved send only to a `bounce` entry, as Step 5 says, so a moved send reaches a `complaint` or `manual` one. When Step 3 asks which sites rely on Postmark's suppression list, name the ways an address gets onto the `outbound` list: a recipient who unsubscribed, a person in the dashboard (the server, then its `outbound` stream, then Suppressions), and each call `mapping.md` lists under "Calls that change the suppression list".
 
 **Leave out the other lists.**
 

@@ -11,7 +11,7 @@ Postmark fields are written in their HTTP names here, such as `HtmlBody`. Python
 | `From` | `from` | Never. `Name <address>` moves as it is. It needs a verified sender (Step 4) |
 | `To` | `to` | It holds more than one address: a comma in the string, a list with more than one entry in Ruby, PHP, or `postmarker`, or a value the code builds at run time that you cannot tell holds one address. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name |
 | `Subject` | `subject` | A send that is not a template send leaves it out, or sets a value that can be empty: Postmark sends an email without a subject, and PostHog's send requires one. A template send takes its subject from the template, as "Templates" says |
-| `HtmlBody`, `TextBody` | `html`, `text` | Never |
+| `HtmlBody`, `TextBody` | `html`, `text` | Never. A send with `HtmlBody` and no `TextBody`, or an empty one, moves too: PostHog makes the text part from the HTML whenever a send has no text, and Postmark's docs don't say whether Postmark added one. Note it in the plan row, for the person to compare a test send |
 | `TemplateId` or `TemplateAlias`, with `TemplateModel` | the template's email, with its layout, brought into the code and rendered with `TemplateModel`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `InlineCss` | none | Never on its own. It shapes how Postmark rendered the template's CSS: the email brought into the code carries that CSS, as "Templates" says |
 | `Cc`, `Bcc` | none | Always. PostHog's send doesn't take it yet |
@@ -62,7 +62,7 @@ A Postmark send has no idempotency key, so the moved site sends none either. Pos
 
 Each Postmark server has its own tokens, templates, tracking settings, and suppression lists. A site sends from the server its token belongs to. When the app reads more than one Postmark token, ask the person once which server each one belongs to, and record each site's server under the sites table.
 
-PostHog keeps one suppression list per project. When the sites that move send from more than one server, Step 5 imports the `outbound` list of each of them into that one list. PostHog then refuses a moved send to an address that any of those servers suppressed, even when the site's own server never suppressed it or reactivated it. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one server's sites move. The sites of every other server stay, and the reason is `server <name> keeps its own suppression list`.
+PostHog keeps one suppression list per project. When the sites that move send from more than one server, Step 5 imports the `outbound` list of each of them into that one list. PostHog then refuses a moved send to an address that hard-bounced on any of those servers, even when the site's own server never suppressed it or reactivated it. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one server's sites move. The sites of every other server stay, and the reason is `server <name> keeps its own suppression list`.
 
 ## Code around the send
 
@@ -72,12 +72,13 @@ Postmark's SDKs throw on an API error: Node.js, both Python SDKs, Ruby, PHP, and
 |---|---|
 | A `catch`, `except`, or `rescue` that only logs or rethrows the error | Never |
 | A branch on the HTTP status: `err.statusCode`, `e.http_status`, `e.status_code`, `getHttpStatusCode()` | Never. Read PostHog's status code, or PostHog's error name for a `422`, as the Rewrite section says |
-| A branch on an inactive recipient: `InactiveRecipientsError`, `InactiveRecipientException`, `Postmark::InactiveRecipientError`, or `ErrorCode` `406` | Never. PostHog refuses a suppressed address with the code `recipient_suppressed` |
+| A branch on an inactive recipient: `InactiveRecipientsError`, `InactiveRecipientException`, `Postmark::InactiveRecipientError`, or `ErrorCode` `406` | Never. PostHog refuses a send to an address that hard-bounced with the code `recipient_suppressed`. Step 3 keeps a site that relies on Postmark's list for the other addresses on it |
 | A branch on another Postmark `ErrorCode`, or on the error's message text | Always. A catch of `InvalidEmailRequestError` or Python's `ValidationException` is not such a branch: the Rewrite section maps it |
 | A read of the inactive addresses from the error (`recipients`, `inactive_recipients`) | Always |
 | A check of `ErrorCode`, `Message`, or .NET's `Status` in a send's answer | Never. Read PostHog's error instead, as the Rewrite section says |
 | `MessageID` stored for a webhook handler or a status read | Always, when a webhook handler or the Messages or Bounces API uses it |
 | `MessageID` logged or stored for the app's own use | Never. Use PostHog's message id |
+| Code that reads a header of Postmark's answer, such as `X-PM-ApiErrorCode`, in a raw HTTP call or from a client that hands the headers over | Always: PostHog's answer carries no headers, and its error carries only the retry delay that the rewrite file names under "The answer". The reason is `reads <header> from Postmark's answer`. A header the code reads and never uses goes away |
 | A send the code can cancel: a raw request with a `signal` a caller passes in or an `AbortController` it aborts, a .NET request with a cancellation token a caller can cancel, or a Go context a caller can cancel, such as the one passed to `SendEmail(ctx, ...)` | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as "HTTP" says under "Rewrite" |
 
 ## Templates
@@ -102,7 +103,7 @@ Postmark templates are Mustachio. In the code:
 | `{{! note }}` | Nothing |
 | The layout's `{{{ @content }}}` | The template's HTML, or its text, in its place |
 | The template's `Subject` | The send's `subject`, rendered with the same conversions and no escaping. A layout has no subject. A subject that can render empty keeps the template on Postmark, as the Fields table says |
-| The template's `TextBody`, inside the layout's | The send's `text`, with no escaping. Mustachio keeps every line break around its tags, so keep the lines as they are. A template without a text body sends `html` only |
+| The template's `TextBody`, inside the layout's | The send's `text`, with no escaping. Mustachio keeps every line break around its tags, so keep the lines as they are. A template without a text body sends `html` only, and PostHog makes its text part, as the Fields table says |
 
 - Mustachio's truth test: a missing value, `null`, `false`, `""`, and an empty list fail it. Every other string, including `"0"` and `"false"`, `true`, a number other than `0`, and an object with keys pass it. Write that test out in the code, as `template-to-code.md` says. The docs don't say what `0` or an empty object does: a section or an inverted section whose value can be either keeps the template on Postmark, because which part Postmark sent can't be told.
 - Inside a section or an `each`, a bare name reads only the section's value or the current item. Postmark's docs reach an outer value with `../` only, and don't say whether a bare name looks outside: a bare name that the value or the item doesn't always carry keeps the template on Postmark. So does a bare name inside an inverted section, which has no value to read it from: only `../` reads there.
@@ -161,7 +162,7 @@ Postmark stops sending events for a site that moves. PostHog records the events 
 | `Click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks |
 | `SubscriptionChange` | none |
 
-Postmark has no event for an accepted send. PostHog records `$workflows_email_sent` for each moved send. A send to an inactive address got a `406` error from Postmark, and Postmark posted no webhook for it. PostHog refuses it with `recipient_suppressed`.
+Postmark has no event for an accepted send. PostHog records `$workflows_email_sent` for each moved send. A send to an inactive address got a `406` error from Postmark, and Postmark posted no webhook for it. PostHog refuses one to an address that hard-bounced with `recipient_suppressed`.
 
 PostHog's events carry no Postmark `MessageID`, no `Metadata`, and no `Tag`. A site whose events a handler matches by message id, by a metadata value, or by tag stays on Postmark. For every other handler, such as one that matches by the recipient's address, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
@@ -169,13 +170,11 @@ A site whose emails a `SubscriptionChange` handler acts on stays, since PostHog 
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on Postmark.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Postmark.
 
 | Adds an address | Removes an address |
 |---|---|
 | `POST /message-streams/{stream}/suppressions`, and each SDK's spelling of it, such as `createSuppressions` in Node.js and PHP, `create_suppressions` in Ruby, or `CreateSuppressions` in .NET | `POST /message-streams/{stream}/suppressions/delete`, and each SDK's spelling of it, such as `deleteSuppressions` in Node.js and PHP, `delete_suppressions` in Ruby, or `DeleteSuppressions` in .NET. `PUT /bounces/{bounceid}/activate` too, which reactivates a hard bounce and takes its address off the list: `activateBounce` in Node.js and PHP, `activate_bounce` in Ruby, or `ActivateBounceAsync` in .NET |
-
-Only a call on the `outbound` stream of a server whose list Step 5 imports counts, as "Servers" says. A bounce activation counts when the bounce's `MessageStream` is `outbound`. PHP and .NET use `outbound` when the call names no stream. A call on any other stream changes a list the import leaves out.
 
 ## Rewrite
 
@@ -228,7 +227,7 @@ PostHog's SDK retries a network error, a rate limit, and a server error only whe
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `TemplateModel`. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 
-**Errors.** Postmark refused a send to an inactive address with error code `406`, and the site's error path ran. PostHog refuses it with `recipient_suppressed`, so the same path runs: the site needs no new branch. Keep the site failing the same way it did:
+**Errors.** Postmark refused a send to an inactive address with error code `406`, and the site's error path ran. PostHog refuses a send to an address that hard-bounced with `recipient_suppressed`, so the same path runs for it: the site needs no new branch. A site that relies on Postmark's list for its other addresses stays, as Step 3 says. Keep the site failing the same way it did:
 
 The bullets below change Postmark's error to PostHog's. When the same `try`, `begin`, or error check also covers a Postmark call that stays, such as a template or suppression call, keep Postmark's handler for that call and add PostHog's next to it. A kept branch that tells errors apart by a field PostHog's error also has, such as a status code, first checks that the error is not PostHog's, so PostHog's errors take only PostHog's branches and every other error, from Postmark or from another call in the same block, takes the kept branch as before: `not isinstance(e, EmailError)` in Python, `!e.is_a?(PostHog::EmailError)` in Ruby, `!($e instanceof \PostHog\EmailError)` in PHP, `ex is not PostHog.Emails.EmailException` in .NET, and no `errors.As` match for `*posthog.EmailError` in Go. In Node.js, a branch on a field takes both errors in one check instead, `err.posthog ? (<mapped check>) : (<old check>)`, as the Node.js bullet below says.
 
