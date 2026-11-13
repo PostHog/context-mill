@@ -85,4 +85,4 @@ Postmark keeps one suppression list per message stream. It refuses a send to an 
 
 ## For the report
 
-- The name of each server the moved sites send from, whose `outbound` list Step 5 imports, whether or not the import ran. A later re-import imports the same ones. Write the names when you read this section, and next to each, once "Import it" or "Check the import tool" ends, whether its list is fully in. Never a token.
+- The name of each server the moved sites send from, whose `outbound` list Step 5 imports, whether or not the import ran. A later re-import imports the same ones. Write the names when you read this section, and next to each, when Step 5 reaches "The full-access key", which every way out of the step ends at, whether its list is fully in. Never a token.
