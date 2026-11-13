@@ -14,7 +14,7 @@ Every Loops send renders a transactional email stored at Loops. So every Loops s
 | `transactionalId` | the Loops email, brought into the code and rendered with `dataVariables`, sent as `subject` and `html`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `dataVariables` | the values the code renders into the email, with the same keys | Never in the code: a value that the code builds as HTML goes in as it is, as "Templates" says. For a template made in PostHog, see "Templates made in PostHog" |
 | `addToAudience: true` | none | Always. It adds the recipient to the Loops audience, which Loops' campaigns and workflows send to, so moving the send would stop new contacts reaching it. `false` or no value moves. It moves only when the same code path already creates or updates that recipient as a Loops contact before the send, such as with `createContact` or `updateContact`. A contact call elsewhere in the app doesn't count. Otherwise the report tells the person that such a call would let the site move |
-| `attachments` | none | Always. PostHog's send doesn't take it yet |
+| `attachments` | `attachments` | Step 3 says so under "Files", the site sends through `smtp.loops.so`, or the person asks for a template made in PostHog for it. See "Attachments" |
 | `Idempotency-Key` header (`headers` in Node.js, PHP, and Ruby, `IdempotencyKey` in Go) | `idempotencyKey` | The code can build a key with a space or a character outside visible ASCII. Loops' keys are at most 100 characters, and PostHog takes 1 to 255 visible ASCII characters, so any other Loops key fits. A key built from a value whose characters the code doesn't bound, such as text a user or another service sends, counts as one that can. An ID the app makes, such as a database row ID or a UUID, is bounded, even when it reaches the site as a parameter and only its name, type, or a comment says what it is. The report names that value, so the person can bound the key, such as by hashing that part, and move the site |
 | Any other request header: in an SDK's `headers` option, or in an HTTP send any header but `Authorization`, `Content-Type`, `Accept`, and `User-Agent`, which only carry the request and which PostHog's SDK sets itself | none | Always: no PostHog SDK takes headers yet |
 
@@ -32,6 +32,23 @@ The Loops email itself sets the rest, in its sending settings. The template chec
 A site with no idempotency key sends none in PostHog either.
 
 **Tracking.** Loops tracks no opens or clicks on a transactional email, so every Loops site's emails had no open pixel and no tracked links, as `account.md` says. Step 3 asks about the open pixel under "Opens the provider didn't track", and a template made in PostHog follows its rule for clicks the provider didn't track. A send in the code form counts no clicks. `captureEngagement` decides only whether the email's events land on the recipient's person, so it changes none of this.
+
+## Attachments
+
+Each file of a site that moves keeps its fields, under the PostHog SDK's names, as its rewrite file gives them:
+
+| Loops | PostHog |
+|---|---|
+| `filename` | The filename. Loops requires one on every file |
+| `contentType` (`content_type` in Ruby, which the SDK renames) | The content type, as it is. Loops requires one. Keep its parameters, such as `method=REQUEST` on a calendar invite, as Step 3 says |
+| `data`, a Base64 string | The content: the same Base64 string where the rewrite file says the SDK reads a string as Base64, otherwise its bytes, decoded as the rewrite file says |
+| none | No content ID. A Loops file has none and no disposition, so every file shows as an attachment: set no content ID, and the moved email shows the same |
+
+- Loops takes a file only as Base64 `data`: it fetches none from a URL or a path, and stores none with the email, so the send's list holds every file.
+- Loops takes a request body under 4 MB, Base64 included, so a Loops send's files fit PostHog's 40 MB. Loops' docs name no limit on the count and no refused file type: Step 3's checks of both still apply.
+- Loops sends files only for a team whose attachments Loops support turned on, and answered a send with files from any other team with a `400`. When a site sends files, ask in Step 3, with the template question, whether the team has them on. When it doesn't, or the person can't tell, write it in the site's plan row: those sends failed at Loops, and a moved send delivers its files, so the report asks the person to confirm the files should go out.
+- A site that sends through `smtp.loops.so` with files, in the JSON body's `attachments` or as files of the message itself, stays: Loops' SMTP docs don't say whether it sends either. The reason is `files sent through Loops SMTP`.
+- A template made in PostHog takes no files, as Step 7 says. A site with files moves only by bringing its email into the code: when the person asks for a template in PostHog for it, it stays, and the reason is `files need the code form`.
 
 ## Calls
 
@@ -212,6 +229,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 - `email` becomes `to`.
 - An `Idempotency-Key` header becomes `idempotencyKey`, with the same value.
+- `attachments` keeps its list, each file rewritten as "Attachments" says.
 - Add `distinctId`, as Step 7 says. When a helper has only the address, find it through the helper's callers.
 
 **Templates brought into the code.** The site renders the Loops email from `dataVariables`, as "Templates" says, and sends `templateKey`, the rendered `subject` and `html`, `from` from the email's Name and From, and `replyTo` from its Reply when it has one. It sends no `templateId` and no `templateData`. When the code builds `dataVariables` in a variable, pass that variable to the render. In a helper whose callers pass the `transactionalId`, keep the callers as they are. Add one object in the helper that maps each Loops ID to its email's render and template key, keyed by the Loops ID. When an ID is missing from the map, fail the way the helper failed on a Loops error, with a message that names the ID.
