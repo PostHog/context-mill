@@ -726,16 +726,32 @@ async function generateSkill({
         }
     }
 
-    // Helper to process a doc entry (string URL or {url, title} object).
+    const chosenFilenames = new Set();
+    function checkDocFilename(filename, url, chosen) {
+        const taken = references.some((ref) => ref.filename === filename);
+        const clash = chosen ? taken || filename === 'COMMANDMENTS.md' : chosenFilenames.has(filename);
+        const malformed = chosen && !/^[^/\\]+\.md$/.test(filename);
+        if (clash || malformed) {
+            throw new Error(
+                `${skill.id}: doc ${url} uses filename "${filename}"; a filename must be a plain .md name no other reference uses`
+            );
+        }
+        if (chosen) chosenFilenames.add(filename);
+    }
+
+    // Helper to process a doc entry (string URL or {url, title, filename} object).
     // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
     // are silent.
     async function processDoc(docEntry) {
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
+        const filenameOverride = typeof docEntry === 'object' ? docEntry.filename : null;
+
+        const filename = filenameOverride || urlToFilename(url);
+        checkDocFilename(filename, url, Boolean(filenameOverride));
 
         const result = await fetchDoc(url);
         if (result) {
-            const filename = urlToFilename(url);
             fs.writeFileSync(
                 path.join(referencesDir, filename),
                 result.content,

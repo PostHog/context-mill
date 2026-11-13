@@ -1,0 +1,20 @@
+# PostHog transactional emails - PostHog/posthog's sending-transactional-emails skill, fetched at build time, plus how to run it inside the Wizard
+type: skill
+template: description.md
+category: workflows
+description: Set up PostHog transactional emails, one-off emails that code sends to one person, such as password resets, sign-in codes, magic links, receipts, and invites. Use when asked to send one of those emails with PostHog, or to set up transactional email. It checks for a verified sender, writes the email in the app's code by default or as a PostHog template when the person picks that, hands over the project secret API key, and writes the send with PostHog's SDK for the backend's language (Node.js, Python, Go, Ruby, PHP, .NET, Rust or Elixir) or the HTTP API.
+tags: [workflows]
+shared_docs:
+  - https://posthog.com/docs/workflows/transactional-emails.md
+  - https://posthog.com/docs/workflows/transactional-emails/api.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    docs_urls:
+      - url: https://raw.githubusercontent.com/PostHog/posthog/master/products/messaging/skills/sending-transactional-emails/SKILL.md
+        filename: sending-transactional-emails.md
+        title: The sending-transactional-emails skill. Read it first
+      - url: https://raw.githubusercontent.com/PostHog/posthog/master/products/messaging/skills/sending-transactional-emails/references/moving-from-other-providers.md
+        title: Moving a send from another provider to PostHog
+      - url: https://raw.githubusercontent.com/PostHog/posthog/master/products/messaging/skills/sending-transactional-emails/references/sdks.md
+        title: Each PostHog SDK's client setup, sends and status read
