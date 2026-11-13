@@ -6,6 +6,8 @@ This file says what Mailchimp Transactional, formerly Mandrill, looks like in a 
 
 The API key lives in `MANDRILL_API_KEY` or `MAILCHIMP_TRANSACTIONAL_API_KEY` by convention. The older `mandrill` clients read `MANDRILL_APIKEY` when the code passes no key. Apps also use their own names: take the name the client reads.
 
+Mailchimp Transactional also has test keys, made in its test mode: a send with a test key answers like a real one and delivers nothing. PostHog has no such key, so a PostHog key in the same place delivers real email to whoever that environment sends to. When Step 6 lists the places that set the key, ask the person once which of them, such as staging or CI, set a test key, and note those places under the phase. For each, the report says under "PostHog secret key" that the place's sends delivered nothing before, and that the person sets a PostHog key there only where real delivery is fine: without one, the moved sends there fail on the missing key. When the person can't tell, say this for every place but production.
+
 ## Packages
 
 | Language | Package | Send |
