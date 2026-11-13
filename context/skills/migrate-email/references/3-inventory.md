@@ -50,8 +50,6 @@ When you find no site, stop before you write the plan file:
 
 Check what each site sends first. PostHog's transactional send ignores marketing opt-outs, so it is only for an email that a person needs, such as a password reset, a receipt, or an invite. A site that sends marketing, such as a newsletter, a promotion, or a product announcement, stays, and the reason is `marketing email`. When neither the code nor the template's name tells you, ask the person once for every such site. A site they call marketing, or don't answer for, stays with that reason.
 
-Unless the provider's `account.md` says it keeps no suppression list, ask the person once which sites they rely on that list to stop mailing an address someone added to it, by hand in the provider's dashboard or with a call the app makes, such as an unsubscribe handler. PostHog blocks a moved send only to an address that hard-bounced, so a moved send reaches such an address, whenever it was added. Each site they name stays, and the reason is `relies on <provider name>'s suppression list`. When they can't tell or don't answer, and the list of other calls has one that adds an address to that list, every site stays with that reason.
-
 Then go through `mapping.md` field by field. A site **moves** when PostHog can send every field it sets, in a language that `mapping.md` moves. A site **stays** on the provider when any one field or feature keeps it there: record that field or feature as the reason. Never plan to drop a field, unless `mapping.md` says the site moves without it: then note it in the plan.
 
 A field set to an empty value, such as `""`, `[]`, `{}`, or `null`, or to its off value, such as `false` for a flag that is off unless set, counts as not set, even where `mapping.md` keeps every site that sets the field, unless its row names that empty or off value. A field that the code sets on some sends only, such as under a condition or from a caller's argument, counts as set.
@@ -79,6 +77,10 @@ PostHog adds its open pixel to every email it sends, in the code form and from a
 - When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, ask the person once, for all such sites together, whether PostHog may add its open pixel to emails that never had one. Yes: those sites move, and the report says that PostHog now counts their opens. No, or no answer: they stay, and the reason is `open tracking off`.
 - When nobody can tell whether the provider tracked a site's opens, the site stays, and the reason is `open tracking not checked`.
 - For each site that moves with the person's yes, write `open pixel added: the person agreed` in its note under the sites table, so the report names it.
+
+### Addresses added to the provider's suppression list
+
+Unless the provider's `account.md` says it keeps no suppression list, ask the person once, for the sites that would move otherwise, which of them they rely on that list to stop mailing an address someone added to it, by hand in the provider's dashboard or with a call the app makes, such as an unsubscribe handler. PostHog blocks a moved send only to an address that hard-bounced, so a moved send reaches such an address, whenever it was added. Each site they name stays, and the reason is `relies on <provider name>'s suppression list`. When they can't tell or don't answer, every such site stays with that reason. What would let it move: the app keeps its own record of those addresses, the ones added before included, and skips them before the send.
 
 ## Write the plan file
 
