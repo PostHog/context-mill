@@ -30,7 +30,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## The send
 
-- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, and `captureEngagement` optional.
+- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `captureEngagement`, and `sensitive: true` optional.
 - `replyTo` takes one address or a list of addresses.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
 - A component the provider rendered, such as React Email, is rendered in the app with `render` from `@react-email/render`, and sent as `html`.
@@ -47,6 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
 - `data.id` is the message ID.
 - A network error that is left after the retries comes back as `error` with the code `network_error`. A bad argument comes back as `error` too, with a code that starts with `invalid_`.
+- An error PostHog answered with a wait carries it as `error.retryAfterMs`, in milliseconds; it is unset when PostHog named none.
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
 - Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
 

@@ -1,0 +1,29 @@
+# Aggregated reverse proxy skill - self-hosted where the platform makes it easy, PostHog's managed proxy elsewhere
+type: skill
+template: description.md
+category: integration
+description: Route PostHog's browser traffic through the app's own domain, so ad blockers don't drop events, session replays, and feature flag calls. Use when the user asks for a reverse proxy or agrees to one you suggested, for example after adding posthog-js or when events or recordings seem to be missing. Don't set one up unprompted. Prefers a self-hosted proxy where the app's platform makes it a small change, such as Next.js or Cloudflare, and PostHog's managed reverse proxy elsewhere.
+tags: [reverse-proxy, javascript_web]
+shared_docs:
+  - https://posthog.com/docs/advanced/proxy.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/advanced/proxy/proxy-reference.md
+      - https://posthog.com/docs/advanced/proxy/cloudflare.md
+      - https://posthog.com/docs/advanced/proxy/vercel.md
+      - https://posthog.com/docs/advanced/proxy/nextjs.md
+      - https://posthog.com/docs/advanced/proxy/nextjs-middleware.md
+      - https://posthog.com/docs/advanced/proxy/netlify.md
+      - https://posthog.com/docs/advanced/proxy/nuxt.md
+      - https://posthog.com/docs/advanced/proxy/sveltekit.md
+      - https://posthog.com/docs/advanced/proxy/remix.md
+      - https://posthog.com/docs/advanced/proxy/node.md
+      - https://posthog.com/docs/advanced/proxy/railway.md
+      - https://posthog.com/docs/advanced/proxy/nginx.md
+      - https://posthog.com/docs/advanced/proxy/caddy.md
+      - https://posthog.com/docs/advanced/proxy/cloudfront.md
+      - https://posthog.com/docs/advanced/proxy/kubernetes-ingress-controller.md
+      - https://posthog.com/docs/advanced/proxy/pomerium.md
