@@ -204,6 +204,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - A `ReplyTo` with several addresses becomes a list of bare addresses: split a comma-separated string.
 - A site without `ReplyTo` whose sender signature has a Reply-To address gets it as `replyTo`, as "Fields" says.
 - `HtmlBody` becomes `html`, and `TextBody` becomes `text`.
+- A `postmarker` client built with `inline_css` moved the CSS of each `<style>` block into the `style` attributes of the tags before it sent `HtmlBody`, from `emails.send` and from a message built with `client.emails.Email(...)`, as `postmarker`'s docs say under "CSS inlining". The moved send does the same, with the `css-inline` package that option needs: `html=css_inline.CSSInliner().inline(html_body)` for `inline_css=True`, or `inliner.inline(html_body)` with the `CSSInliner` the code passed as `inline_css`. Keep `css-inline` in the app's dependencies. A template send is not inlined by the client: Postmark inlined it, as "Templates" says.
 - `MessageStream: 'outbound'` is dropped, as the Fields table says.
 - `TrackOpens` and `TrackLinks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
