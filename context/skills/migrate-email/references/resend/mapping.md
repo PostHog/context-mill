@@ -12,7 +12,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `to` | `to`, one bare address | `to` can hold more than one address, its entry carries a name, such as `Jane <jane@example.com>`, or the code builds it at run time and you cannot tell that it holds a bare address only. A list with exactly one bare address moves as that address |
 | `subject` | `subject` | Never |
 | `html` | `html` | Never |
-| `text` | `text` | It is an empty string next to `html` or `react`, or the code builds it at run time and it can be one, such as a helper's default `text = ''` or `input.text ?? ''`: Resend then sends no text part, and PostHog makes one from the HTML whenever a send has no text. The reason is `turns the plain-text part off`. A `text` left out moves: Resend made the text part from the HTML too |
+| `text` | `text` | It is an empty string next to `html` or `react`, or the code builds it at run time and it can be one, such as a helper's default `text = ''` or `input.text ?? ''`: Resend then sends no text part, and PostHog makes one from the HTML whenever a send has no text. The reason is `turns the plain-text part off`. A `text` left out moves: Resend made the text part from the HTML too. So does an empty `Text` in Go, whose SDK leaves an empty `Text` out of the request |
 | `react` (Node.js only) | `html`, rendered in the app | Never. The app renders the component |
 | `template` | the template's email, brought into the code and rendered with the site's `variables`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |

@@ -21,7 +21,8 @@ These parts keep a template on the provider, unless the provider's table says ho
 
 - a tag the provider fills from its own account at send time, such as its unsubscribe link, a view-in-browser link, or a block shared between templates that the content doesn't include;
 - a setting the code form has no field for, such as `cc`, `bcc`, an attachment, or a custom header in the template;
-- a helper whose result the provider computes in a way the table doesn't describe, such as a date format in a locale the table doesn't name.
+- a helper whose result the provider computes in a way the table doesn't describe, such as a date format in a locale the table doesn't name;
+- a template whose emails the provider sent with no text part, as the provider's table says: PostHog makes a text part from the HTML whenever a send has no text, so it would add one. The reason is `turns the plain-text part off`.
 
 A template that the app's own code creates, changes, or publishes through the provider's API keeps its sites on the provider too: the code would hold the content of one moment while the app goes on changing it at the provider. The reason is `the app changes this template at <provider name>`.
 
@@ -86,7 +87,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - The template's sender becomes the send's `from`, such as `'Name <hello@example.com>'`. It needs a verified sender, so Step 3 writes it in the site's `from` column. A sender that holds a variable is rendered too, and Step 3 classifies each address it can take, as it does for any `from`.
 - The template's reply-to address becomes the send's reply-to address.
 - Preview text, such as a preheader, goes into the HTML as a hidden block at the start of the body: `<div style="display:none;max-height:0;overflow:hidden">…</div>`, or `Preview` in React Email.
-- When the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML whenever a send has no text. A template whose emails the provider sent with no text part, as the provider's `mapping.md` says under "Templates", stays on the provider: PostHog would add one. The reason is `turns the plain-text part off`.
+- When the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML whenever a send has no text.
 
 ## Images and links
 
