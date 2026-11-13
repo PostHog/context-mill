@@ -16,3 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
+  - id: mailjet
+    display_name: Mailjet
+    tags: [mailjet]
