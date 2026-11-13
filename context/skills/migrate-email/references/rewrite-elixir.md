@@ -34,7 +34,7 @@ Give email a named instance of its own in the application's children, also when 
 
 ## The send
 
-- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
+- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `capture_engagement:`, and `sensitive: true` optional.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 
