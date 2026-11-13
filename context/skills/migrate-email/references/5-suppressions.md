@@ -25,6 +25,8 @@ After the migration, while any site still sends through a provider that keeps a 
 
 Read the provider's `account.md` first, whether or not the import runs. Its "For the report" section, when it has one, names facts the report carries, such as a count of entries the import leaves out. Find each one as the section says, and write it under the phase in the plan file. Never write an address.
 
+When `account.md` says the provider keeps no suppression list at all, there is nothing to import, now or later. Tick the phase as `- [x] suppressions — empty list: <provider name> keeps no suppression list`, do what "Calls that change the provider's list" and "The full-access key" say, and continue to the next step.
+
 ## Check the import tool
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
@@ -53,7 +55,7 @@ The import copies the list once. After it, a call in the app that adds an addres
 
 ## Write down
 
-Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the provider keeps no suppression list at all, as its `account.md` says, write `- [x] suppressions — empty list: <provider name> keeps no suppression list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
+Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
 
 ## The full-access key
 
