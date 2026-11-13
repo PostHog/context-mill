@@ -29,7 +29,7 @@ POSTHOG = PostHog::Client.new({
 
 ## The send
 
-- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
+- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `capture_engagement:`, and `sensitive: true` optional.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
 
@@ -47,6 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - On an API error it raises `PostHog::EmailError`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
 - Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`.
 - It raises the same `PostHog::EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
+- An error PostHog answered with a wait carries it as `e.retry_after`, in seconds, as a float; it is `nil` when PostHog named none.
 - A bad argument raises `ArgumentError`, before any request.
 
 ## Check

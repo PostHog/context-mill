@@ -5,7 +5,7 @@ next_step: 6-key.md
 
 # Step 5, import the suppression list
 
-The provider keeps a suppression list: addresses that hard-bounced or marked an email as spam. It skips them on every send. PostHog keeps its own list and starts empty, so without an import the first PostHog sends go to these addresses again. That hurts the sending reputation of the project and the domain. Import the list before cutover.
+The provider keeps a suppression list: addresses that hard-bounced or marked an email as spam. It skips them on every send. PostHog keeps its own list and starts empty, so without an import the first PostHog sends go to the addresses that hard-bounced again. That hurts the sending reputation of the project and the domain. Import the list before cutover. PostHog blocks a moved send, which is transactional, only to an address that hard-bounced: an address that complained or was added by hand blocks only PostHog's marketing email, so the moved sends reach it.
 
 ## Status
 
@@ -15,15 +15,18 @@ The provider keeps a suppression list: addresses that hard-bounced or marked an 
 
 ## Re-import only
 
-After the migration, while any site still sends through the provider, the provider keeps adding the addresses that bounce or complain to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone. There is no plan file, and no later step checks the run, so:
+After the migration, while any site still sends through a provider that keeps a suppression list, the provider keeps adding the addresses that bounce to its list, and PostHog never sees them. So the report asks the person to re-import the list weekly. When the person asks only for that re-import, run this step alone. There is no plan file, and no later step checks the run, so:
 
-1. Make sure the import lands in the project the deployed app sends from, which may not be the one the local env file names. Read the MCP's active project, its name and `api_token`, with the PostHog MCP `project-get` tool, called without an ID, and ask the person once whether production sends from that project, naming it. When the env file's project token differs from that `api_token`, say so in the question. Read only the token's line of the env file, by searching for the token variable's name: the file also holds secret keys, so never open all of it. When the person says no, ask which project production sends from. When `projects-get` lists it, offer to switch to it with `switch-project`, ask again once switched, and when this step ends, switch back to the project you started from and tell the person. When it isn't listed, such as a project in another organization, or they can't tell or don't want the switch, stop before importing.
-2. Do "Check the import tool", "Get the list", "Import it" and "The full-access key", reading the provider's `account.md` for them, and skip the other sections. When the import tool is missing, tell the person to add the addresses the provider added since the last import in the production project they confirmed, naming it (Workflows, then Messaging, then Suppression list), and go to "The full-access key".
-3. Tell the person how many entries you imported, of how many, or that the import tool was missing, or why you couldn't get the list, and stop when this step ends: do not go on to the next step, and change no other file.
+1. Start with "Read the provider's notes", writing nothing down, since there is no plan file. When `account.md` says the provider keeps no suppression list at all, tell the person there is nothing to re-import, because <provider name> keeps no suppression list, and stop.
+2. Make sure the import lands in the project the deployed app sends from, which may not be the one the local env file names. Read the MCP's active project, its name and `api_token`, with the PostHog MCP `project-get` tool, called without an ID, and ask the person once whether production sends from that project, naming it. When the env file's project token differs from that `api_token`, say so in the question. Read only the token's line of the env file, by searching for the token variable's name: the file also holds secret keys, so never open all of it. When the person says no, ask which project production sends from. When `projects-get` lists it, offer to switch to it with `switch-project`, ask again once switched, and when this step ends, switch back to the project you started from and tell the person. When it isn't listed, such as a project in another organization, or they can't tell or don't want the switch, stop before importing.
+3. Do "Check the import tool", "Get the list", "Import it" and "The full-access key", reading the provider's `account.md` for them, and skip the other sections. When the import tool is missing, tell the person to add the addresses the provider added since the last import in the production project they confirmed, naming it (Workflows, then Messaging, then Suppression list), and go to "The full-access key".
+4. Tell the person how many entries you imported, of how many, or that the import tool was missing, or why you couldn't get the list, and stop when this step ends: do not go on to the next step, and change no other file.
 
 ## Read the provider's notes
 
 Read the provider's `account.md` first, whether or not the import runs. Its "For the report" section, when it has one, names facts the report carries, such as a count of entries the import leaves out. Find each one as the section says, and write it under the phase in the plan file. Never write an address.
+
+When `account.md` says the provider keeps no suppression list at all, there is nothing to import, now or later. Tick the phase as `- [x] suppressions — empty list: <provider name> keeps no suppression list`, do what "Calls that change the provider's list" and "The full-access key" say, and continue to the next step.
 
 ## Check the import tool
 
@@ -41,7 +44,7 @@ The provider's `account.md` says how to export the list, which entries to take, 
 
 ## Import it
 
-- Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
+- Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the `reason` that `account.md` maps it to: `bounce`, `complaint`, or `manual`. PostHog writes the entry's reason text itself, such as `Imported (bounced)`.
 - Repeating an import is safe: an address already on the list stays on it.
 - The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover, and for the weekly re-import of "Re-import only" while any site stays on the provider after it.
 - Never print the addresses, and never write them into the plan or the report. Count them.
@@ -49,7 +52,9 @@ The provider's `account.md` says how to export the list, which entries to take, 
 
 ## Calls that change the provider's list
 
-The import copies the list once. After it, a call in the app that adds an address to the provider's suppression list, or removes one from it, such as an unsubscribe handler or a reactivation, changes only the provider's list: an address it adds still gets the moved sends, and an address it removes stays blocked in PostHog. For each such call in Step 3's list of other calls, add to the report's "Before cutover" that the person makes the call change PostHog's suppression list too, before the deploy, for the entries the import would take. An address it adds goes on PostHog's list, with a reason that starts with `Synced from <provider name>`. An address it removes comes off PostHog's list only when no other list the import took still holds it, and only when its PostHog entry is one the import or such a call made, with a reason that starts with `Imported from <provider name>` or `Synced from <provider name>`. An entry PostHog recorded itself, such as a bounce of a moved send, stays. The call keeps its provider write while any send still goes through the provider. The provider's `mapping.md` names its calls, and says which entries count when the import takes only some.
+The import copies the list once. After it, a call in the app that adds an address to the provider's suppression list, or removes one from it, such as an unsubscribe handler or a reactivation, changes only the provider's list. Don't make the call change PostHog's list too: PostHog's list records no source the app could check before it removes an entry, and an app can't call the import tool. Every moved send is transactional, and PostHog blocks a transactional send only to an address that hard-bounced. It records that itself when a moved send bounces. Step 3 kept the sites that rely on the addresses added to the provider's list. For each call that removes an address, add an item to the report's "After cutover": an address it removes stays blocked in PostHog when the import took it as a bounce, so a moved send to it fails with `recipient_suppressed`. When that happens for an address the app reactivated, the person removes it from PostHog's list too, in PostHog (Workflows, then Messaging, then Suppression list). A re-import doesn't add back an address removed from PostHog's list. When the address hard-bounces on a moved send again, PostHog blocks it by itself.
+
+The call keeps its provider write while any send still goes through the provider. The provider's `mapping.md` names its calls.
 
 ## Write down
 
