@@ -34,7 +34,7 @@ Give email a named instance of its own in the application's children, also when 
 
 ## The send
 
-- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, and `capture_engagement:` optional.
+- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `capture_engagement:`, and `sensitive: true` optional.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 
@@ -51,6 +51,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", as an atom, such as `:rate_limit_exceeded`.
 - Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
+- An error PostHog answered with a wait carries it as `retry_after_ms`, in milliseconds; it is `nil` when PostHog named none.
 
 ## Check
 
