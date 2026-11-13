@@ -20,7 +20,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `replyTo` | `replyTo` | It carries a `name` |
 | `contactPixelTrackingConsent`, set to `true` or `false`, or `removeTrackingPixel: true`, on a `to`, `cc`, or `bcc` entry | none | Always, `false` included: with per-contact tracking consent on, `false` makes Brevo count the recipient's opens and clicks without tying them to the recipient, and `removeTrackingPixel: true` sends the email with no open pixel. PostHog adds its open pixel to every email, and its send takes no tracking setting per recipient |
 | Open and click tracking, which the send leaves to the account | none: PostHog adds its open pixel, and counts clicks only as "Tracking" says | Brevo tied its opens to no recipient or tracked them by consent, or nobody can tell, or its opens were untracked and the person didn't agree to PostHog's open pixel. See "Tracking" below |
-| `attachment`, with `content` or `url` | none | Always. PostHog's send doesn't take it yet |
+| `attachment` | `attachments` | Step 3 says so under "Files", or a file has a `url`: Brevo fetches it, and PostHog fetches no file. See "Attachments" |
 | `headers` with `idempotencyKey` (or `IdempotencyKey`) only | `idempotencyKey` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Brevo keeps a key for 15 minutes, and PostHog keeps it for 24 hours. A key the code can send again for another email within 24 hours, such as one built only from a user id and the email's kind, keeps the site too: PostHog would send no new email for it, or refuse it with `idempotency_key_reused` |
 | `headers`, any other header | none | Always: no PostHog SDK takes headers yet |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
@@ -69,6 +69,22 @@ Every Brevo SDK reports an API error by throwing, except Go, which answers an er
 | A check of an HTTP status, such as `res.ok`, `res.status`, or Go's `resp.StatusCode` | Never. Read PostHog's error instead, as the Rewrite section says |
 | The `messageId` stored for a webhook or a status read | Always, when a webhook handler or a status read uses it |
 | The `messageId` logged or stored for the app's own use | Never for a log line. Use PostHog's message id. A suppressed send has none: when the code after the send uses the id for more than a log line, such as returning it to its callers or storing it, the site stays, and the reason is `uses the message id of a suppressed send`, unless its callers already handle a send without an id |
+
+## Attachments
+
+Brevo's `attachment` is a list of files. Each has a `name`, its filename, and either `content`, the file's bytes in Base64, or `url`, an absolute URL that Brevo fetches. Brevo requires `name` with `content`. Its send takes no content type, content ID, or disposition for a file. Brevo's API reference, under "Send a transactional email", says so. Step 3 decides under "Files" whether a site with files moves. Each file of a site that moves keeps its fields, under the PostHog SDK's names, as its rewrite file gives them:
+
+| Brevo | PostHog |
+|---|---|
+| `name` | The filename |
+| `content`, the file's bytes in Base64 | The content, as the same bytes, in the form the rewrite file names for its SDK: the Base64 string where the SDK reads one, or the bytes it decodes to where the SDK takes only bytes. Where the code hands a Brevo SDK something other than a Base64 string, such as a byte array, read the installed SDK in the app's dependencies, such as `node_modules`, the virtualenv, `vendor`, the bundle, or the Go module cache, to see what the SDK sends for it. Name the file you read in the plan row. When that file doesn't settle which bytes Brevo got, the site stays, and the reason is `file content not checked` |
+| None: Brevo takes no content type | The content type of the filename's extension, such as `application/pdf` for `.pdf`, `image/png` for `.png`, or `text/calendar` for `.ics`, with no parameters. Brevo's reference doesn't say which content type it sends: note the one you set in the plan row |
+| None: Brevo takes no content ID | None. Brevo's send can't show a file inline, so every file stays an attachment, as it was |
+| `url`, a file Brevo fetches | None: the site stays, as Step 3 says, and the report says to read the file in the app and pass its bytes |
+
+- Brevo's reference lists the extensions it supports: `xlsx`, `xls`, `ods`, `docx`, `docm`, `doc`, `csv`, `pdf`, `txt`, `gif`, `jpg`, `jpeg`, `png`, `tif`, `tiff`, `rtf`, `bmp`, `cgm`, `css`, `shtml`, `html`, `htm`, `zip`, `xml`, `ppt`, `pptx`, `tar`, `ez`, `ics`, `mobi`, `msg`, `pub`, `eps`, `odt`, `mp3`, `m4a`, `m4v`, `wma`, `ogg`, `flac`, `wav`, `aif`, `aifc`, `aiff`, `mp4`, `mov`, `avi`, `mkv`, `mpeg`, `mpg`, `wmv`, `pkpass`, and `xlsm`. PostHog takes each of them. A fixed filename with any other extension may never have gone out through Brevo: the site stays, and the reason is `Brevo doesn't list <extension>`, unless the person confirms, from Brevo's logs or an email the site sent, that its emails go out with the file. A yes moves the site, and its plan row notes it.
+- A send with `templateId` whose template uses Brevo's old template language ignores `attachment`, as the reference says, so its emails went out without the files. A template that reads `{{ params.… }}` uses the new language. Otherwise, ask the person which language the template uses when you ask for its content. For an old-language template, the moved send leaves the files out, as Brevo did, and the plan row notes it. When nobody can tell, the site stays, and the reason is `template language not checked`.
+- Brevo's reference names no limit on a file's size or on the number of files. Step 3's limits, which are PostHog's, decide.
 
 ## Templates
 
@@ -130,7 +146,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - A template in Brevo's old template language reads no `params`. When its placeholders are not `{{ … }}` and `{% … %}`, it stays.
 - A Brevo template has no plain text part and no separate preview text: a preheader is part of its HTML. The send has `html` only. A send with its own `textContent` and no `templateId` sends it as `text`. The docs don't say whether Brevo escaped values in a text part or a subject: the code never does, as `template-to-code.md` says.
 - A template's `tag` is not carried over. When the template has a tag and a webhook handler reads `tags` back, the site stays. When it has a tag and no handler reads it, note in the plan row that the tag is lost.
-- A Brevo template can carry its own attachment, added in its advanced options. The send doesn't name it, and `account.md` says how to find it. A template with an attachment keeps the site on Brevo.
+- A Brevo template can carry its own attachment, added in its advanced options, which Brevo's reference describes as a URL Brevo fetches (`attachmentUrl`). The send doesn't name it, and `account.md` says how to find it. A template with an attachment keeps the site on Brevo, as Step 3 says under "Files" for a file the provider fetches, and the reason is `the provider fetches the template's attachment`. The report says to keep the file in the app and pass its bytes.
 - A template whose `sender` has an `id` and no `email` stays, as the "Fields" table says for `sender`.
 - Brevo applies the template's sender and subject unless the send sets its own, so a site's `sender` and `subject` next to `templateId` win over the template's. The docs don't say how Brevo treated a site's subject that holds `{{` or `{%`: such a subject keeps the site. The docs don't say whether a site's `replyTo` wins over the template's: the site moves only when the template has no reply-to address, or the site's is the same in every send as the template's. Brevo ignores a site's `htmlContent` and `textContent` next to `templateId`, so the send drops them.
 - Images uploaded to Brevo have URLs on `img.mailinblue.com`, or on another host with `brevo`, `sendinblue`, or `mailinblue` in its name. Keep them, and list them, as `template-to-code.md` says.
@@ -229,6 +245,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `replyTo: { email }` becomes `replyTo: email`.
 - `htmlContent` becomes `html`, and `textContent` becomes `text`. With `params`, they are the content the code rendered, as "Templates" says, and the send has no `params`.
 - `headers: { idempotencyKey: key }` becomes `idempotencyKey: key`.
+- `attachment` becomes `attachments`, each file rewritten as "Attachments" says.
 - The send gets no `captureEngagement` for Brevo's tracking, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
