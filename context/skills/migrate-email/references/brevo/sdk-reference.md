@@ -14,9 +14,9 @@ The API key lives in `BREVO_API_KEY` by convention, and in `SENDINBLUE_API_KEY` 
 |---|---|---|
 | Node.js | `@getbrevo/brevo` 4.x and later | `new BrevoClient({ apiKey }).transactionalEmails.sendTransacEmail({...})` |
 | Node.js | `@getbrevo/brevo` 1.x to 3.x | `new TransactionalEmailsApi().sendTransacEmail(sendSmtpEmail)` |
-| Node.js | `sib-api-v3-sdk`, `@sendinblue/client`, `sib-api-v3-typescript` | `new TransactionalEmailsApi().sendTransacEmail(sendSmtpEmail)` |
+| Node.js | `sib-api-v3-sdk`, `@sendinblue/client`, `sib-api-v3-typescript` | `sendTransacEmail` |
 | Python | `brevo-python` 4.x and later (module `brevo`) | `Brevo(api_key=...).transactional_emails.send_transac_email(...)` |
-| Python | `brevo-python` 1.x (module `brevo_python`), `sib-api-v3-sdk` (module `sib_api_v3_sdk`) | `TransactionalEmailsApi(ApiClient(configuration)).send_transac_email(SendSmtpEmail(...))` |
+| Python | `brevo-python` 1.x (module `brevo_python`), `sib-api-v3-sdk` (module `sib_api_v3_sdk`) | `send_transac_email` |
 | PHP | `getbrevo/brevo-php` 4.x and later (namespace `Brevo\`) | `(new Brevo($key))->transactionalEmails->sendTransacEmail(new SendTransacEmailRequest([...]))` |
 | PHP | the legacy `getbrevo/brevo-php` (namespace `Brevo\Client\`), `sendinblue/api-v3-sdk` (namespace `SendinBlue\Client\`) | `(new TransactionalEmailsApi($http, $config))->sendTransacEmail($sendSmtpEmail)` |
 | Ruby | `brevo` gem, and the older `sib-api-v3-sdk` gem (module `SibApiV3Sdk`) | `send_transac_email` |
@@ -32,7 +32,7 @@ These are not a Brevo send, and alone they are not a migration: `nodemailer` sen
 
 Every SDK sends the same body as the HTTP API below. A success answers `messageId`, or `messageIds` for a send with `messageVersions`.
 
-**Node.js, `@getbrevo/brevo` 4.x and later.** `sendTransacEmail` answers `{ messageId }`. It throws a `BrevoError` on an API error, with `statusCode`, `message`, `body` (`{ code, message }`), and `rawResponse`, which holds the headers. Its subclasses are under the `Brevo` export, such as `Brevo.BadRequestError`, `Brevo.UnauthorizedError`, and `Brevo.TooManyRequestsError`. `BrevoTimeoutError` is the other top-level error. The guide doesn't say what the SDK throws on another network failure, or whether `BrevoTimeoutError` is a `BrevoError`: read the installed package. The client retries `408`, `429`, `500`, `502`, `503`, and `504` answers twice by default, and waits up to 60 seconds for a request.
+**Node.js, `@getbrevo/brevo` 4.x and later.** `sendTransacEmail` answers `{ messageId }`. It throws a `BrevoError` on an API error, with `statusCode`, `message`, `body` (`{ code, message }`), and `rawResponse`, which holds the headers. Its subclasses are under the `Brevo` export, such as `Brevo.BadRequestError`, `Brevo.UnauthorizedError`, and `Brevo.TooManyRequestsError`. `BrevoTimeoutError` is the other top-level error. The guide doesn't say what the SDK throws on another network failure, or whether `BrevoTimeoutError` is a `BrevoError`: read the installed package. The guide lists `408`, `429`, `500`, `502`, `503`, and `504` as the answers the client retries, twice by default: read the installed package for whether it retries other `5xx` answers too. It waits up to 60 seconds for a request.
 
 ```js
 import { BrevoClient } from '@getbrevo/brevo'
