@@ -29,11 +29,11 @@ The steps call this key the full-access provider key.
 
 ## Tracking
 
-A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking), and note the answer in the plan.
+A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking), and whether click tracking also covers plain-text emails, and note the answers in the plan.
 
 A site's emails had no open pixel when its `trackingSettings` sets `openTracking` with `enable: false`, or sets no `openTracking` while the account's open tracking is off. When it sets none and the person can't say whether open tracking is on, nobody can tell whether they had one. Step 3 says under "Opens the provider didn't track" what either means.
 
-SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. When it sets none and the person can't say whether click tracking is on, nobody knows whether SendGrid tracked them. Step 3 says under "A template in PostHog" what either means for a site that moves to a template made in PostHog.
+SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. It didn't track the links in a plain-text part either, unless `clickTracking` sets `enableText: true`, or sets no `clickTracking` while the account's click tracking covers plain-text emails: a site whose plain-text part has a link SendGrid didn't track counts as one whose clicks SendGrid didn't track. When it sets no `clickTracking` and the person can't say whether click tracking is on, or whether it covers plain text for a site whose plain-text part has a link, nobody knows whether SendGrid tracked them. Step 3 says under "A template in PostHog" what either means for a site that moves to a template made in PostHog.
 
 ## Mail settings
 
