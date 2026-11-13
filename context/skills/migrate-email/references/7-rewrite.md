@@ -26,6 +26,7 @@ Install `posthog-node` with the project's package manager when the app doesn't h
 
 - a site with `html`, `text`, or a component: `posthog.emails.send` takes `templateKey` with `subject` and `html` or `text`;
 - a site that sets `replyTo`: the send takes `replyTo`;
+- a site with rendered content whose email carries a login code, a reset link, or another secret: the send takes `sensitive`;
 - the client: the client options take `migratedFrom`.
 
 When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — posthog-node has no <capability> yet`, tell the person, and go on with the rest. When the client options lack `migratedFrom`, leave it out of the client. When no site is left, undo the install or upgrade of `posthog-node`, tick the phase with `none moved`, and go to the next step.
@@ -67,12 +68,12 @@ For each site that moves, in plan order:
 
 - Rewrite the call as the provider's `mapping.md` says, for the site's content form: `html` and `text` content, a component the app renders, or a template made in PostHog.
 - Give each send with rendered content a `templateKey` that names the kind of email, such as `welcome` or `password-reset`, with letters, digits, `-`, and `_` only. Two sites that send the same email share a key. A send whose key a template saved in PostHog already has goes out through that template's settings, and fails when that template isn't transactional. The PostHog MCP doesn't list template keys, so ask the person once, for all the keys together, whether a template in the project already has any of them, and give each such send another key.
-- An email that carries a login code, a reset link, or another secret gets `sensitive: true`. Without it, a send whose key matches a template saved in PostHog takes that template's setting, which is off by default, and PostHog then sends the email's links through its click tracking and puts its subject on engagement events.
+- A send with rendered content whose email carries a login code, a reset link, or another secret gets `sensitive: true`. Without it, a send whose key matches a template saved in PostHog takes that template's setting, which is off by default, and PostHog then sends the email's links through its click tracking and puts its subject on engagement events. A send by `templateId` takes no `sensitive`: PostHog refuses it, and the template made in PostHog holds that setting, as Step 3 asks.
 - A site that moves to a template made in PostHog sends the template ID the person gave in Step 3, never one you guess.
 - Install `@react-email/render` with the project's package manager when a site renders a component and the app doesn't have it.
 - Keep the site's idempotency key, error branches, logging, and return value working as before. Keep the code around the send unchanged where you can.
 - `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
-- Never add a field that the old call didn't set, apart from `templateKey`, `templateId`, `distinctId`, `sensitive: true` on an email that carries a secret, and a field the provider's `mapping.md` says to add, such as `maxRetries: 0` on a request that kept its own deadline. `templateData` takes the place of the provider's template variables.
+- Never add a field that the old call didn't set, apart from `templateKey`, `templateId`, `distinctId`, `sensitive: true` on a send with rendered content that carries a secret, and a field the provider's `mapping.md` says to add, such as `maxRetries: 0` on a request that kept its own deadline. `templateData` takes the place of the provider's template variables.
 
 When a site turns out to need something `mapping.md` keeps on the provider, undo its change, set `moves` to `no` with the reason, and go on.
 
