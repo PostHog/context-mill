@@ -132,7 +132,7 @@ The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mai
 
 ## Send fields
 
-Node.js names, with the HTTP names where they differ. The Mail Send reference's Node.js sample and the quickstart show `from`, `to`, `subject`, `text`, `html`, `replyTo`, `content`, `attachments`, `categories`, `sendAt`, `batchId`, `asm`, `ipPoolName`, `mailSettings`, and `trackingSettings`. Each of those is the camelCase of its HTTP name, and the other Node.js names below follow the same rule, such as `templateId` for `template_id`: take each as the HTTP field it spells. A name in another form, such as an HTTP name in snake_case or a name not in this table: read the installed client for the field it sends, as "The installed client" says. The other SDKs set these fields as their own samples show, under "Clients and sends".
+Node.js names, with the HTTP names where they differ. The Mail Send reference's Node.js sample and the quickstart show `from`, `to`, `subject`, `text`, `html`, `replyTo`, `content`, `attachments`, `categories`, `sendAt`, `batchId`, `asm`, `ipPoolName`, `mailSettings`, and `trackingSettings`. Take each of those as the HTTP field this table gives it. SendGrid's docs show no other Node.js name, such as `templateId`, `dynamicTemplateData`, `customArgs`, or `replyToList`, and no HTTP name in snake_case written in Node.js code: for each one a site sets, read the installed client, at the version its lockfile pins, for the field it sends, as "The installed client" says. The names below are what Node.js code writes, not what the client sends. The other SDKs set these fields as their own samples show, under "Clients and sends".
 
 | Node.js field | HTTP field | Value |
 |---|---|---|
@@ -175,7 +175,7 @@ The Email Activity API (`GET https://api.sendgrid.com/v3/messages`) reads a mess
 
 The Event Webhook posts a JSON list of events to an endpoint of the app. Each event has `email`, `timestamp`, `event`, `sg_event_id`, `sg_message_id`, and the send's `custom_args` and `category`. `event` is one of `processed`, `dropped`, `deferred`, `delivered`, `bounce`, `open`, `click`, `spamreport`, `unsubscribe`, `group_unsubscribe`, and `group_resubscribe`.
 
-Look for routes that take a list of events and read `sg_message_id`, `sg_event_id`, or `event` with values such as `dropped` or `bounce`, as the [event reference](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event) shows, the `X-Twilio-Email-Event-Webhook-Signature` and `X-Twilio-Email-Event-Webhook-Timestamp` headers, and imports of the SDK's Event Webhook helper that the [security page](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features) links, whose folder in each SDK is `eventwebhook`, or `EventWebhook` in .NET.
+Look for routes that take a list of events and read `sg_message_id`, `sg_event_id`, or `event` with values such as `dropped` or `bounce`, as the [event reference](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event) shows, the `X-Twilio-Email-Event-Webhook-Signature` and `X-Twilio-Email-Event-Webhook-Timestamp` headers, and imports of the SDK's Event Webhook helper that the [security page](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features) links, whose folder in each SDK is named `eventwebhook` in some case, such as `EventWebhook` in .NET: search for that name in any case, in an import or a class name.
 
 ## Other APIs
 
