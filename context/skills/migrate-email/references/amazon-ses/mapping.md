@@ -85,7 +85,7 @@ Follow a context, token, or abort signal back through the callers, as for the di
 
 ## Templates
 
-A site that sends a stored template moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its name or ARN. `account.md` says how to get it, from the Region the site sends in. The code renders the template's subject, HTML, and text with the values of the site's `TemplateData`, and the send sets the rendered `subject`, `html`, and `text`.
+A site that sends a stored template moves by bringing the template into the code, as `template-to-code.md` says. The check needs the template's content, because the code has only its name or ARN. `account.md` says how to get it, from the account and Region the site sends with. The code renders the template's subject, HTML, and text with the values of the site's `TemplateData`, and the send sets the rendered `subject`, `html`, and `text`.
 
 A site that sends an inline template, `Content.Template.TemplateContent`, already has its content in the code: Amazon SES only filled in the values. It moves the same way, from the content the code passed. Literal strings become the email, as `template-to-code.md` says under "Where the email goes". Content the code reads at run time, such as from a file or a database, stays where it is, and a function next to the send replaces each marker in it. Amazon SES takes only simple substitutions in an inline template, so one that uses anything other than `{{name}}` or a path such as `{{contact.firstName}}` stays: the docs don't say what Amazon SES did with the rest.
 
