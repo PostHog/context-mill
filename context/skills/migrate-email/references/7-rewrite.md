@@ -95,7 +95,7 @@ Configure a server-side client of its own for email in each language that has a 
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events when engagement capture is on, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its sent, opened and clicked events unless tracking turns its `engagement` switch off, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side PostHog captures.
 - At each site, pass the same ID for the recipient, such as `user.id`. The SDKs take the distinct ID as a string, so a numeric ID is passed as its string, such as `String(user.id)` in Node.js and `str(user.id)` in Python, the same string the app's identify call sends. Follow the recipient back through the callers when the site only has the address.
