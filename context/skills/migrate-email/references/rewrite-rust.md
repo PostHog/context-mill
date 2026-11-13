@@ -9,7 +9,7 @@ For a site in Rust.
 
 ## Install
 
-`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app builds without it.
+`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app builds without it. The async client runs only on Tokio: it waits between retries with `tokio::time::sleep`. A site whose async code runs on another runtime, such as async-std or smol, stays, with the reason `posthog-rs's async client needs Tokio`.
 
 ## The client
 
