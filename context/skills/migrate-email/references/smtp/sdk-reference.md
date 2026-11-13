@@ -279,6 +279,7 @@ Calls to the API of the provider behind the host, such as its contacts, lists, s
 These send or handle mail but not through an SMTP client:
 
 - Nodemailer's other transports: `SES: { ... }` sends through the Amazon SES API, `sendmail: true` hands the message to the local `sendmail` binary, `streamTransport: true` and `jsonTransport: true` only build the message, often in tests.
+- A `System.Net.Mail` `SmtpClient` whose `DeliveryMethod` is `SpecifiedPickupDirectory` or `PickupDirectoryFromIis` copies the message to a folder for another program to deliver, instead of sending it to a server. `mapping.md` keeps such a site.
 - Third-party Nodemailer transports passed to `createTransport`, such as `nodemailer-sendgrid` and `nodemailer-mailgun-transport`, send through the provider's HTTP API.
 - `smtp-server` and `aiosmtpd` run an SMTP server that receives mail, and `mailparser` reads mail. Neither sends.
 
