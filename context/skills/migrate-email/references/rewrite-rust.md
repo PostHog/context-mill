@@ -31,7 +31,8 @@ let posthog = posthog_rs::client(options.build()?).await; // with `async-client`
 
 ## The send
 
-- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, and `.capture_engagement(false)` optional.
+- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.sensitive(...)`, and `.tracking(...)` optional. `.tracking(...)` takes `EmailTracking::On`, `EmailTracking::Off`, or `EmailTrackingOptions::new()` with `.opens(...)`, `.clicks(...)`, and `.engagement(...)`. Open tracking off is `.tracking(EmailTrackingOptions::new().opens(false))`. `.capture_engagement(false)` is deprecated: use `.tracking(EmailTrackingOptions::new().engagement(false))`. Sensitive is `.sensitive(true)`.
+- Files: `.attachment(EmailAttachment::new(filename, bytes).content_type(...).content_id(...))`, once per file, up to 10, with `.content_type` and `.content_id` optional. The content is bytes, anything that converts into a `Vec<u8>`: decode a Base64 string first, and pass text as `text.into_bytes()`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.
@@ -48,6 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `Result`. On success, `SendEmailResult`'s `id` is the message ID.
 - An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status()` is the HTTP status.
 - Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`.
+- A send with files returns an `EmailError` with `too_many_attachments` or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing. posthog-rs doesn't check a file's name or content before the request: PostHog refuses a blank filename.
 - A network error that is left after the retries is the same `EmailError`, with the code `network_error`, and so is a bad argument, with a code that starts with `invalid_`.
 
 ## Check

@@ -27,7 +27,8 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 ## The send
 
-- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, and `CaptureEngagement` (`posthog.Ptr(false)`) optional.
+- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `Sensitive`, and `Tracking` optional. `Tracking` takes `posthog.EmailTrackingOn()`, `posthog.EmailTrackingOff()`, or `posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens, Clicks, Engagement})` with `posthog.Ptr` values. Open tracking off is `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens: posthog.Ptr(false)})`. `CaptureEngagement` is deprecated: use `posthog.EmailTrackingOptions{Engagement: posthog.Ptr(false)}`. Sensitive is `Sensitive: posthog.Ptr(true)`.
+- Files: `Attachments: []posthog.EmailAttachment{{Filename: ..., Content: ..., ContentType: ..., ContentID: ...}}`, up to 10, with `ContentType` and `ContentID` optional. `Content` is a `[]byte`: decode a Base64 string first with `base64.StdEncoding.DecodeString`, and pass text as `[]byte(text)`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
@@ -46,6 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `*posthog.SendEmailResult` and an error. `ID` is the message ID.
 - An API error is a `*posthog.EmailError`: read it with `errors.As`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `var emailErr *posthog.EmailError` and `if errors.As(err, &emailErr) && emailErr.Code == "recipient_suppressed"`.
+- A send with files returns an `*posthog.EmailError` with `invalid_attachment` (a blank filename or an empty file), `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - Every error from the send is a `*posthog.EmailError`: also a network error that is left after the retries, with the code `network_error`, and a bad argument, with a code that starts with `invalid_`. `Message` is there too.
 
 ## Check
