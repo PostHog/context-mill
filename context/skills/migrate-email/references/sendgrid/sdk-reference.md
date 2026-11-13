@@ -157,7 +157,7 @@ Node.js names, with the HTTP names where they differ. The Mail Send reference's 
 | `ipPoolName` | `ip_pool_name` | String |
 | `mailSettings` | `mail_settings` | Such as `sandboxMode`, `bypassListManagement`, `footer` |
 | `trackingSettings` | `tracking_settings` | Such as `clickTracking`, `openTracking`, `subscriptionTracking`, `ganalytics` |
-| `personalizations` | `personalizations` | A list of recipient groups, each with its own `to`, `cc`, `bcc`, `subject`, data, and `sendAt` |
+| `personalizations` | `personalizations` | A list of recipient groups, each with its own `to`, `cc`, `bcc`, `from`, `subject`, data, and `sendAt` |
 
 ## Templates stored at SendGrid
 
