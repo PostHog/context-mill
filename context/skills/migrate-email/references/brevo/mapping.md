@@ -188,7 +188,8 @@ A Brevo webhook stops getting events for a site that moves. PostHog records the 
 | `delivered` | `$workflows_email_delivered` |
 | `hard_bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
-| `opened`, `unique_opened` | `$workflows_email_opened` |
+| `opened` | `$workflows_email_opened` |
+| `unique_opened` | `$workflows_email_opened`, which PostHog can record for every opening, while `unique_opened` came only for the first. For a handler of `unique_opened`, the report says it keeps only the first `$workflows_email_opened` of each `send` |
 | `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks, as Step 7 says |
 | `blocked`, `invalid_email` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `soft_bounce`, `deferred`, `unsubscribed`, `proxy_open`, `unique_proxy_open` | none |
@@ -201,7 +202,7 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 Step 5's "Calls that change the provider's list" covers these calls. Each one goes by its name in every SDK's casing, as `sdk-reference.md` says: Python and Ruby use snake case, Go and .NET Pascal case, and .NET adds an `Async` form, such as `BlockNewDomainAsync`. Match the names without regard to case or separators.
 
-- `DELETE /v3/smtp/blockedContacts/{email}`, which the SDKs name `unblockOrResubscribeATransactionalContact`, `smtpBlockedContactsEmailDelete`, or `smtp_blocked_contacts_email_delete`, takes an address off Brevo's list. It counts for the entries the import takes: hard bounces, spam complaints, and the admin blocks and unsubscribes it took, as `account.md` says.
+- `DELETE /v3/smtp/blockedContacts/{email}`, which the SDKs name `unblockOrResubscribeATransactionalContact`, `smtpBlockedContactsEmailDelete`, or `smtp_blocked_contacts_email_delete`, takes an address off Brevo's list. So does `POST /v3/smtp/deleteHardbounces`, `deleteHardbounces` in Brevo's API reference, for the hard bounces of one `contactEmail`, or of every address in a date range when it names none. Each counts for the entries the import takes: the unblock for hard bounces, spam complaints, and the admin blocks and unsubscribes it took, as `account.md` says, and `deleteHardbounces` for hard bounces.
 - `smtpBlacklistSender` on a contact create or update blocks the address for those senders only. It counts as an address added when, with it, Brevo blocks the address for every sender that sends through PostHog, as `account.md` says under "Map each entry". When it can name a sender a moved site sends from, a sender it takes from a variable included, the moved sends from that sender would reach the addresses it blocks: it goes into the question `account.md` asks under "Blocks for some senders", which is asked for it even when no list was read. Yes: it counts as an address added. No, or no answer: each moved site whose sender it can name stays, with that section's reason.
 - `POST /v3/smtp/blockedDomains`, which the SDKs name `blockNewDomain`, `block_new_domain`, or `BlockNewDomain`, blocks every address on a domain. PostHog's list takes addresses, not domains, so the call can't change it: a domain it blocks still gets the moved sends, and the call adds no "Before cutover" item to make it change PostHog's list. It goes into the question `account.md` asks under "Blocked domains", which is asked for it even when the account blocks no domain today. Yes: the sites move, and the report names the call. No, or no answer: the moved sites stay, as that section says. `DELETE /v3/smtp/blockedDomains/{domain}` changes nothing PostHog holds, and adds no item either.
 
