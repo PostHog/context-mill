@@ -34,7 +34,7 @@ A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's sett
 
 **Click tracking.** For a site that moves to a template made in PostHog, Postmark didn't track its clicks unless it tracked every link of the email. It tracked none, or only some:
 
-- When its links were untracked, by the send's own `TrackLinks: None`, a `postmarker` or .NET SDK default, or a server whose link tracking is off, as `mapping.md` says under "Tracking".
+- When its links were untracked, by the send's own `TrackLinks: None`, a value its client sent that the code never set, such as `postmarker`'s default, or a server whose link tracking is off, as `mapping.md` says under "Tracking".
 - When the send's `TrackLinks`, or the server's setting it follows, is `HtmlOnly` and the text body holds a link, or `TextOnly` and the HTML body holds one: each tracks the links of one body only. An email whose links all sit in the tracked body had every link tracked.
 - When a link in the template's HTML carries `data-pm-no-track`: Postmark left that link, and the same link in the text, as it was.
 
