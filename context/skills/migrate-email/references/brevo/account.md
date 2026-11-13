@@ -86,7 +86,7 @@ A call that `mapping.md` names under "Calls that change the blocked list" can bl
 - Blocked domains, or such a call: ask the person once, naming the domains and the calls, whether the moved sites may send to those domains, and to the domains the calls block later. Yes: the sites move, and the report counts the domains and names the calls. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
 - Nobody can tell whether the account blocks a domain: set `moves` to `no` for each moved site, with the reason `blocked domains not checked`.
 
-A site whose code sends only to fixed addresses, none on a blocked domain, keeps moving in each case.
+A site whose code sends only to fixed addresses keeps moving in each case when none of them is on a blocked domain and no call can block one of their domains. A call that takes its domain from a variable can block any domain.
 
 ## For the report
 
