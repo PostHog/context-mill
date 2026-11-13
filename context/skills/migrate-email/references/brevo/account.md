@@ -21,11 +21,11 @@ A domain authenticated at Brevo carries these records. Keep all of them until th
 
 ## Read key
 
-A Brevo API key can't be limited to some APIs: every key has full access to the account. The app's own key can read templates and the blocked contacts list, but the steps never read the app's key from its env file. When the person chooses the API over the dashboard, ask them to generate a new API key for this migration in Brevo (Settings, then SMTP & API, then API keys), store it in `BREVO_MIGRATION_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Brevo and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The steps never read the app's own key from its env file. When the person chooses the API over the dashboard, ask them to generate a new API key for this migration in Brevo (Settings, then SMTP & API, then API keys) with restricted access: Transactional email set to Read, and every other permission set to None. Read lets the key read templates, blocked contacts and blocked domains, and never send, change or delete anything. When Brevo refuses a read for the key's permissions, ask the person to give it Read on the permission the error names, and nothing more. When their account offers no restricted key, a key with full access works the same. Ask them to store it in `BREVO_MIGRATION_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Brevo and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 Brevo can block API calls from IP addresses it doesn't know. It turns this on by itself once no new address has called the API for 30 days. When Brevo refuses a read because of the IP address, ask the person to authorize this machine's address in Brevo (Settings, then Security, then Authorized IPs), and to remove it when they delete the key. Don't retry the read until they have.
 
-The steps call this key the full-access provider key.
+The steps call this key the full-access provider key, even when it is restricted: Step 5 still asks the person to delete it.
 
 ## Tracking settings
 
@@ -80,8 +80,10 @@ When the list isn't read, because there is no file, no key, or no import tool, a
 
 Brevo can block every address on a domain. PostHog's list takes addresses, not domains, so a moved site's sends would reach addresses on a blocked domain again. Check this in Step 5, whether or not the import runs. Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
 
-- No blocked domains: nothing changes.
-- Blocked domains: ask the person once, naming them, whether the moved sites may send to those domains again. Yes: the sites move, and the report counts the domains. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
+A call that `mapping.md` names under "Calls that change the blocked list" can block a domain after the check. Ask about it in the same question, even when the account blocks no domain today.
+
+- No blocked domains, and no call that blocks a domain: nothing changes.
+- Blocked domains, or such a call: ask the person once, naming the domains and the calls, whether the moved sites may send to those domains, and to the domains the calls block later. Yes: the sites move, and the report counts the domains and names the calls. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
 - Nobody can tell whether the account blocks a domain: set `moves` to `no` for each moved site, with the reason `blocked domains not checked`.
 
 A site whose code sends only to fixed addresses, none on a blocked domain, keeps moving in each case.
@@ -91,6 +93,6 @@ A site whose code sends only to fixed addresses, none on a blocked domain, keeps
 Count these whether or not the import runs, and never write an address or a domain:
 
 - the addresses Brevo blocks for a moved site's sender only, by admin blocks and unsubscribes, and whether the person's yes imported them or the sites they name stayed, as "Blocks for some senders" says. When the list isn't read, write the person's answer there instead;
-- the blocked domains, and the person's answer, as "Blocked domains" says.
+- the blocked domains and the calls that block a domain, and the person's answer, as "Blocked domains" says.
 
 Write a count you can't get as not known.
