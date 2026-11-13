@@ -21,8 +21,8 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `TemplateErrorReporting`, `TemplateErrorDeliver` | none: the render keeps what each did, as "Templates" says | Never | `Mj-TemplateErrorReporting`, `Mj-TemplateErrorDeliver` |
 | `Cc`, `Bcc` | none | Always. PostHog's send doesn't take it yet | `Cc`, `Bcc`, one string |
 | `ReplyTo` | `replyTo` | It carries a `Name`, or the code builds the value at run time and you cannot tell that it holds a bare address only | none: v3 sets it in `Headers`, which keeps the site |
-| `Attachments` | none | Always. PostHog's send doesn't take it yet | `Attachments` |
-| `InlinedAttachments` | none | Always. PostHog's send doesn't take it yet | `Inline_attachments` |
+| `Attachments` | `attachments` | Step 3 says so under "Files". See "Attachments" below | `Attachments` |
+| `InlinedAttachments` | `attachments`, each with its content ID | Step 3 says so under "Files". See "Attachments" below | `Inline_attachments` |
 | `Headers` | none | Always: no PostHog SDK takes headers yet | `Headers` |
 | `CustomID` | none | Always: no PostHog SDK takes tags yet. A webhook handler or the message API may also read it back (see "Webhooks") | `Mj-CustomID` |
 | `EventPayload` | none | Always: no PostHog SDK takes tags yet | `Mj-EventPayload` |
@@ -33,6 +33,18 @@ A Mailjet send is a list of messages. A site with more than one entry in `Messag
 | `TrackOpens` set to `disabled`, `enabled`, or `account_default`, or not set. `TrackClicks` set to any value, or not set | none: PostHog adds its open pixel, as "Tracking" says | Mailjet sent it with opens untracked and the person didn't agree to PostHog's open pixel, with opens anonymous, to a contact who refused open tracking, or its open tracking isn't checked. See "Tracking" below. `disabled` counts as set: it turns that tracking off for the send, whatever the account's setting | `Mj-trackopen` set to `1` (`disabled`), `2` (`enabled`), or `0` (`account_default`), or not set. `Mj-trackclick` set to any value, or not set |
 | `TrackOpens` set to `anon` | none | Always. PostHog's send has no anonymous open tracking | `Mj-trackopen` set to `3` |
 | `URLTags` | none | Always. PostHog's send doesn't take it yet | none |
+
+**Attachments.** Mailjet takes a send's files in two lists of `{ ContentType, Filename, Base64Content }`: `Attachments`, the files the email carries, and `InlinedAttachments`, the files its HTML shows inline, which also take an optional `ContentID`. The v3 Send API names them `Attachments` and `Inline_attachments`, each of `{ Content-type, Filename, Content }`, with no content ID. Files in `Globals` are added to the message's. A stored template holds no files: Mailjet's reference divides a template's content among a text part, an HTML part, MJML content, and headers, so a template site's files come only from its message. Each file of a site that moves becomes one entry of PostHog's `attachments`, under the PostHog SDK's names, as its rewrite file gives them:
+
+| Mailjet | PostHog |
+|---|---|
+| `Filename` | The filename, as it is. Mailjet requires one for each file |
+| `ContentType`, or `Content-type` on v3 | The content type, as it is: a type with parameters, such as `text/calendar; method=REQUEST`, follows Step 3 under "Files". Mailjet requires one for each file |
+| `Base64Content`, or `Content` on v3 | The content, in the form the rewrite file gives: the same Base64 string where the SDK reads one, or its decoded bytes where the SDK takes bytes only |
+| `ContentID` of an inline file | The content ID, the same bare ID the HTML shows with `<img src="cid:...">` |
+| An inline file without `ContentID`, and every v3 inline file | The content ID is the file's `Filename`, which the HTML shows with `cid:<Filename>`. It must keep PostHog's rules for a content ID, as Step 3 says under "Files" |
+
+A file in `Attachments` carries no content ID, so it stays a file the email carries, and an inline file stays inline: there is no other disposition to keep. Mailjet fetches no file: the code reads each file and passes its Base64 content, so a site never stays for a fetched file. Mailjet's reference lists no file type it refuses, and PostHog refuses some, as Step 3 says. Mailjet takes a request of up to 15 MB, files and content included, so its files fit under PostHog's 40 MB. Its reference gives no limit on the count, and PostHog takes at most 10 files, inline files included, as Step 3 says. A template made in PostHog takes no files, as Step 7 says: a site with files that the person wants on such a template stays, and the reason is `a template in PostHog takes no files`.
 
 **Tracking.** PostHog adds its open pixel to every email it sends, and counts clicks only for a template made in PostHog that is not marked sensitive, as Step 7 says. No field maps to tracking. Mailjet tracks opens as the send's `TrackOpens` says, and clicks as its `TrackClicks` says, within the account's settings. The account sets each one to `Enabled`, `Disabled`, or `Anonymous`, and a send never gets more than that. For each one the send leaves out or sets to `account_default`, use the account's setting: `Enabled` reads as `enabled`, `Disabled` as `disabled`, and `Anonymous` as `anon`. A send that sets `enabled` or `anon` reads as the account's setting when that setting is lower: `Disabled` turns it into `disabled`, and `Anonymous` turns `enabled` into `anon`. A contact can also refuse open tracking, which lowers it for that contact alone: Mailjet tracks their opens anonymously, or not at all where the account has no anonymous tracking. For the clicks note on a code send, `TrackClicks` `anon` reads as `enabled`. Then work out, for opens and for clicks, whether Mailjet tracked them:
 
@@ -220,6 +232,7 @@ A request that a caller can cancel, such as a `signal` a caller passes in or an 
 - `To` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `TextPart` becomes `text`, and `HTMLPart` becomes `html`, rendered first when the site sets `TemplateLanguage: true`.
 - `ReplyTo: { Email }` becomes `replyTo` with the bare address.
+- `Attachments` and `InlinedAttachments`, with the files of `Globals`, become `attachments`, each file as "Attachments" under "Fields" says.
 - `TrackOpens` and `TrackClicks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
