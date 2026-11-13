@@ -64,7 +64,7 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 | `adminBlocked` | `manual` |
 | `unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA` | `manual` |
 
-Import every entry, whatever sender it names. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says. "For the report" counts these entries.
+Import every address once, whatever sender its entries name: Brevo keeps an entry per sender, so an address can have several, and PostHog keeps the reason an address is first imported with. Read every page or row first, compare addresses without regard to case, and give each address `bounce` when any of its entries is a hard bounce, else `complaint` when any is a spam complaint, else `manual`. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says. "For the report" counts these entries.
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
 
