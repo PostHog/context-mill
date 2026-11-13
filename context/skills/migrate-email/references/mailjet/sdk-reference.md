@@ -4,7 +4,7 @@ This file says what Mailjet looks like in a codebase. It does not describe PostH
 
 ## Key
 
-Mailjet authenticates with two keys: the API key and the secret key. They live in `MJ_APIKEY_PUBLIC` and `MJ_APIKEY_PRIVATE` by convention. `laravel-mailjet` reads `MAILJET_APIKEY` and `MAILJET_APISECRET`, and apps also use their own names, such as `MAILJET_API_KEY` and `MAILJET_SECRET_KEY`: take the names the client reads. Both keys count as the provider key wherever a step names it: search for both names.
+Mailjet authenticates with two keys: the API key and the secret key. They live in `MJ_APIKEY_PUBLIC` and `MJ_APIKEY_PRIVATE` by convention, as Mailjet's SDK pages name them. Framework packages and apps also use their own names, such as `MAILJET_APIKEY` and `MAILJET_APISECRET`, or `MAILJET_API_KEY` and `MAILJET_SECRET_KEY`: take the names the client reads. Both keys count as the provider key wherever a step names it: search for both names.
 
 ## Packages
 
@@ -18,15 +18,19 @@ Mailjet authenticates with two keys: the API key and the secret key. They live i
 | .NET | `Mailjet.Api` (NuGet), namespace `Mailjet.Client` | `client.SendTransactionalEmailAsync(email)`, or `client.PostAsync(request)` |
 | Java | `com.mailjet:mailjet-client` | `client.post(new MailjetRequest(Emailv31.resource)...)`, or `SendEmailsRequest.sendWith(client)` |
 
+The rows are the packages and send calls of Mailjet's SDK pages and Send API guides. Go's module path carries its major version from v3.0 on.
+
 These are not Mailjet's send SDK, and alone they are not a migration: `mjml` renders email markup and sends nothing, `nodemailer` and other SMTP libraries send through any SMTP server, and Mailjet's Parse API (`/v3/REST/parseroute`) receives inbound mail.
 
 ## Clients and sends
 
 Every SDK sends the same JSON body to the Send API: `Messages`, a list of messages with PascalCase fields such as `From`, `To`, `Subject`, `TextPart`, and `HTMLPart`. The SDKs pass that body as it is, except the Go structs and the .NET builder, which name the same fields.
 
-A success answers `Messages`, one entry per message in the same order. Each entry has `Status` (`success` or `error`), `CustomID`, and `To`, `Cc`, and `Bcc`, each a list of `{ Email, MessageUUID, MessageID, MessageHref }`. `MessageID` (a number) and `MessageUUID` are the message ids, one per recipient. An entry whose `Status` is `error` has `Errors`, a list of `{ ErrorIdentifier, ErrorCode, StatusCode, ErrorMessage, ErrorRelatedTo }`.
+A success answers `Messages`, one entry per message in the same order. Each entry has `Status` (`success` or `error`), `CustomID`, and `To`, `Cc`, and `Bcc`, each a list of `{ Email, MessageUUID, MessageID, MessageHref }`. `MessageID` (a number) and `MessageUUID` are the message ids, one per recipient. An entry whose `Status` is `error` has `Errors`, a list of `{ ErrorIdentifier, ErrorCode, StatusCode, ErrorMessage, ErrorRelatedTo }`, whose `StatusCode` follows the HTTP status, such as `400` for an invalid address (`mj-0013`). An error of the whole request, such as malformed JSON, answers one `{ ErrorIdentifier, ErrorCode, ErrorMessage, StatusCode }` without `Messages`. Mailjet's pages don't say which HTTP status the whole call answers when it refuses a message.
 
-**Node.js.** `.request()` answers `{ body, response }`, with the answer above in `body`. It throws on an answer of 400 or more, and on a network error. The error is an `Error` with `statusCode` (the HTTP status, `null` for a network error), `statusText`, `ErrorMessage`, `ErrorCode`, `ErrorIdentifier`, `ErrorRelatedTo`, `originalMessage`, and `response`.
+Mailjet's SDK pages show how each SDK sends and how their samples read a failed send. For most SDKs they don't say what the send does on an API error or a network error: whether it raises or answers, with which class and which attributes, and whether it retries first. Before the rewrite, read the SDK client installed in the person's app, such as in `node_modules`, the virtualenv, `vendor`, the bundle, the Go module cache, or the NuGet packages, and the code's own checks, which show what it expected. Name the file you read in the plan row. When the installed client isn't there to read, or doesn't settle a question this file or `mapping.md` sends you to it for, the site stays, and the reason is `mailjet client not checked`.
+
+**Node.js.** `.request()` answers a result whose `body` holds the answer above. Mailjet's samples `.catch` the error and read `err.statusCode`. Its Node.js page says a `2xx` answer resolves even when some of its messages have `Status: error`. It doesn't say which answers reject, what a network error does, or what else the error carries: read the installed `node-mailjet` for each.
 
 ```js
 import Mailjet from 'node-mailjet'
@@ -44,17 +48,12 @@ const result = await mailjet.post('send', { version: 'v3.1' }).request({
 const messageId = result.body.Messages[0].To[0].MessageID
 ```
 
-- `new Mailjet({ apiKey, apiSecret })` and `new Mailjet.Client({ apiKey, apiSecret })` make the same client. `require('node-mailjet')` works too.
-- `.post('send', { version: 'v3.1', host: 'api.us.mailjet.com' })`, or `config: { host }` on the client, sends to the US host.
-- `.post('send')` with no version, on a client with no version set, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below. A `version` in the options of `connect` or the client's `config` sets it for every `.post` that gives none.
-- `.request(body, params, false)` makes no request: it is a test call, not a send.
-- The client's `options` take `timeout`, in milliseconds, such as `new Mailjet({ apiKey, apiSecret, options: { timeout: 5000 } })`. Newer versions also take `maxRetries`, `0` by default, and `retryDelay`: the client then retries a failed or timed-out connection, never an HTTP status.
-- node-mailjet 3.x makes the client with `require('node-mailjet').connect(key, secret, options)`. `perform_api_call: false` in the options of `.post` makes no request. In the options of `connect`, it makes no request only on a `.post` given no options: `.post`'s options replace the client's, and a `false` left out of them falls back to sending.
+- `new Mailjet({ apiKey, apiSecret })`, `Mailjet.apiConnect(key, secret, { config, options })`, and `new Client({ apiKey, apiSecret })`, with `Client` imported from `node-mailjet`, make the client. `require('node-mailjet')` works too. node-mailjet 3.x and older make it with `require('node-mailjet').connect(key, secret)`, as Mailjet's older samples show.
+- The `config` sets `host`, the API host, `api.mailjet.com` by default, and `version`. It goes on the client or on one `.post(...)`, whose config wins. `.post('send', { version: 'v3.1' })` sends to the v3.1 Send API. `v3` is the default: `.post('send')` with no version, on a client with no version set, or `{ version: 'v3' }`, sends to the v3 Send API, with the v3 body below. On a 3.x client made with options, such as `connect(key, secret, options)`, read the installed client for whether they set the version of a `.post` that gives none.
+- `.request(body, params, false)` makes no request: Mailjet's Node.js page says it builds the request without sending it. It is a test call, not a send. A 3.x client may have its own switch, such as a `perform_api_call` option: read the installed client for whether it has one, and for where it reads it.
+- The client's `options` take `timeout`, the milliseconds before the request is aborted, `30000` by default since v7, such as `new Mailjet({ apiKey, apiSecret, options: { timeout: 5000 } })`. Mailjet's Node.js page says the options pass through to axios, the client's HTTP library. Read the installed client for any retry option it takes, and for how a 3.x client takes a timeout and what it limits.
 
-**Python.** `send.create` answers a `requests.Response`. How it reports an API error depends on the installed `mailjet-rest` version, which the lockfile, or an exact `==` pin in the manifest, names. A range such as `>=1.3.4`, or no version at all, names none unless every version it allows sits in one of the three bands below: before 1.7.0, 1.7.x, or from 1.8.0.
-
-- Before 1.8.0, it does not raise on an API error: the code reads `result.status_code` and `result.json()`. It raises on a network error or a timeout, such as `mailjet_rest.TimeoutError`, `CriticalApiError`, or `ApiError`. From 1.7.0, it also raises `MailjetAuthError`, with `status_code` 401, on a 401; a 403 still answers.
-- From 1.8.0, it also raises on an answer of 400 or more: `ValidationError` for 400, `MailjetAuthError` for 401 and 403, and `DoesNotExistError` for 404, each a `MailjetApiError` with `status_code` and `response_body`. The client retries a 429, 500, 502, 503, or 504 up to three times, a send too, and then raises a plain `ApiError` with no status, as for any other status. So with the client's own adapter, `ApiRateLimitError` never reaches the code. A timeout raises `TimeoutError` and a failed connection `CriticalApiError`, both `MailjetNetworkError`s. Every one of them is an `ApiError`. A `result.status_code` check after the call then sees only successes.
+**Python.** `send.create` answers a `requests.Response`. Mailjet's Python page says an HTTP error such as `400` or `404` doesn't raise: the code reads `result.status_code` and `result.json()`. A network error raises: its sample catches `mailjet_rest.TimeoutError` for a timeout and `CriticalApiError` for a failed connection, and imports `ApiError`. The client retries a `429` and `5xx` answers itself, with backoff, before it answers. The page doesn't say how many times, what a `401`, `403`, `429`, or `5xx` does once the retries run out, which versions behave this way, or which other classes the client raises. Read the installed `mailjet_rest` in the virtualenv, such as its `client.py` and the module that defines its errors, for what the send does on each failed status and on a network error, and for the retries, and name its version and the files in the plan row.
 
 ```python
 from mailjet_rest import Client
@@ -74,10 +73,15 @@ if result.status_code != 200:
 ```
 
 - The client also runs as a context manager: `with Client(...) as mailjet:`.
-- `api_url="https://api.us.mailjet.com/"` sends to the US host. A client without `version="v3.1"` sends to the v3 Send API.
-- `Client(..., dry_run=True)`, from 1.7.0, makes no request: it answers a `200` and sends nothing.
+- `v3` is the default: a client without `version="v3.1"` sends to the v3 Send API, with the v3 body below.
+- `timeout=` sets a timeout on `Client(...)`, or on one call, such as `send.create(data=..., timeout=5)`.
+- `Client(..., dry_run=True)` makes no POST: Mailjet's Python page says it answers a mock `200 OK` for every request that changes state, and sends nothing.
 
-**Ruby.** `Mailjet.configure` sets `api_key`, `secret_key`, `api_version` (`"v3.1"` for the body above), and `end_point`. The gem's `api_version` is `'v3'` by default, so a gem that doesn't set `'v3.1'` sends to the v3 Send API, with the v3 body below. A `version` in the options of `Mailjet::Send.create`, such as `Mailjet::Send.create({ messages: [...] }, version: 'v3.1')`, overrides it for that send. `Mailjet::Send.create(messages: [...])` answers a resource whose `attributes[:messages]` holds the answer. It raises `Mailjet::CommunicationError` on an API error, with `code` (the HTTP status), and its subclasses `Mailjet::Unauthorized` (401) and `Mailjet::BadRequest` (400). One case does not raise: when the v3.1 Send API refuses a recipient as an invalid email address, the send answers the error body instead. With `perform_api_call` set to `false`, such as `config.perform_api_call = false` in `Mailjet.configure`, the gem makes no request and sends nothing.
+**Ruby.** `Mailjet.configure` sets `api_key`, `secret_key`, and `api_version` (`"v3.1"` for the body above). `v3` is the default, as Mailjet's Ruby page says and its v3 sample shows: a gem that doesn't set `'v3.1'` sends to the v3 Send API, with the v3 body below. `Mailjet::Send.create(messages: [...])` answers a resource whose `attributes[:messages]` holds the answer. Mailjet's pages show no error handling for the gem. Read the installed gem in the bundle, such as its `lib/mailjet` files, for:
+
+- What the send does on an API error and on a network error: the class it raises, such as one of its own, the attribute that holds the HTTP status, and any refused send it answers in the body instead of raising.
+- Whether `Mailjet::Send.create` takes options of its own next to the messages, such as a `version:`, and which Send API it then calls.
+- The setting that sets the API host, and any setting that turns the request off, such as a `perform_api_call`.
 
 ```ruby
 require 'mailjet'
@@ -96,7 +100,7 @@ result = Mailjet::Send.create(messages: [{
 }])
 ```
 
-**PHP.** `post` answers a `Mailjet\Response` with `success()` (true for a 2xx status), `getStatus()`, `getReasonPhrase()`, `getBody()`, and `getData()`. It does not throw on an API error, only on a network error: it lets Guzzle's exceptions through, such as `ConnectException` for a failed connection and a plain `RequestException` for a failed send or receive.
+**PHP.** `post` answers a `Mailjet\Response` with `success()` (whether the call succeeded), `getStatus()` (the HTTP status, such as `400`), `getReasonPhrase()`, `getData()`, and `getCount()`, as Mailjet's PHP page lists them. Its samples read `$response->success()`: a failed status comes back as the response. Since 2.0, the client sends through the PSR-18 HTTP client the code gives it, or one it finds, such as Guzzle, and timeouts, proxies, and retries are set on that client. The page doesn't say what the send does on a network error, or how 1.x sends. Read the installed `mailjet/mailjet-apiv3-php` in `vendor`, and its HTTP client and their versions in `composer.lock`, for what reaches the code on a network error, such as Guzzle's `ConnectException` or a PSR-18 `NetworkExceptionInterface`, and for 1.x's own timeout methods.
 
 ```php
 use \Mailjet\Resources;
@@ -113,9 +117,9 @@ $response = $mj->post(Resources::$Email, ['body' => [
 if (!$response->success()) { /* ... */ }
 ```
 
-The options `['url' => 'api.us.mailjet.com']` send to the US host. A client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, the client makes no request and sends nothing, except on a `post` given options that are not empty and leave out `'call'`, which sends. A `post` with no options, or empty ones, keeps the client's `false`. `'call' => false` in the options of `post` makes no request for that call. In the options of `Client`, `'call'` does nothing.
+`v3` is the default: a client without `'version' => 'v3.1'` sends `Resources::$Email` to the v3 Send API. The third argument of `Client` is `$call`: with `false`, the client makes no request, as Mailjet's PHP page says, and sends nothing. Read the installed client for whether a `post`'s own options, such as a `'call'` key, change that for one call, and for the option that sets the API host.
 
-**Go.** `SendMailV31` answers `(*mailjet.ResultsV31, error)`. The error is a `*mailjet.APIFeedbackErrorsV31` on a 400 or 403 answer (`Messages[].Errors[]` with `ErrorCode`, `ErrorMessage`, and `StatusCode`), a `*mailjet.ErrorInfoV31` on any other error answer (`StatusCode`, `Message`), or a network error. `res.ResultsV31[0].To[0].MessageID` is the message id.
+**Go.** `SendMailV31(&messages)` answers the result and an `error`, which Mailjet's samples check with `if err != nil`. The pages don't say which error types it answers, or the result's field names. Read the installed module in the Go module cache, such as `$(go env GOMODCACHE)/github.com/mailjet/mailjet-apiv3-go/v4@<version>`, for the error on an API error, such as a type that holds the answer's `Messages[].Errors`, and the statuses each type stands for, for the error on a network error, and for where the result holds the message id.
 
 ```go
 client := mailjet.NewMailjetClient(os.Getenv("MJ_APIKEY_PUBLIC"), os.Getenv("MJ_APIKEY_PRIVATE"))
@@ -129,14 +133,14 @@ messages := mailjet.MessagesV31{Info: []mailjet.InfoMessagesV31{{
 res, err := client.SendMailV31(&messages)
 ```
 
-- `InfoMessagesV31` holds the fields of one message, with `*RecipientV31` for `From`, `ReplyTo`, and `Sender`, `*RecipientsV31` for `To`, `Cc`, and `Bcc`, and `*AttachmentsV31` and `*InlinedAttachmentsV31` for files. `MessagesV31` holds `Info` (the messages), `SandBoxMode`, and `AdvanceErrorHandling`.
-- `NewMailjetClient(key, secret, "https://api.us.mailjet.com")` sends to the US host.
-- `client.SendMail(&mailjet.InfoSendMail{...})` sends through the v3 Send API, and `client.SendMailSMTP(&mailjet.InfoSMTP{...})` through SMTP.
+- `InfoMessagesV31` holds the fields of one message, as Mailjet's samples show: `From` as a `*mailjet.RecipientV31`, `To` as a `*mailjet.RecipientsV31`, `Subject`, `TextPart`, `HTMLPart`, and `Attachments` and `InlinedAttachments` as `*mailjet.AttachmentsV31` and `*mailjet.InlinedAttachmentsV31`. `MessagesV31` holds `Info` (the messages), and its sandbox sample sets `SandboxMode` next to it. Read the installed module for the names of the other fields.
+- `client.SendMail(&mailjet.InfoSendMail{...})` sends through the v3 Send API, as Mailjet's v3 sample shows. A send of the module through Mailjet's SMTP host, such as a method named `SendMailSMTP`, goes through SMTP.
+- `client.SetClient(httpClient)` gives the client an `*http.Client` of the code's own, for a proxy or a timeout.
 
 **.NET.** Two forms:
 
-- `client.SendTransactionalEmailAsync(email)`, with an email built by `new TransactionalEmailBuilder()`, answers a `TransactionalEmailResponse` whose `Messages[0].Status` is `"success"` or `"error"`, with `Errors`. It throws `Mailjet.Client.Exceptions.MailjetServerException`, with `HttpCode`, only for a failed status whose answer has no `Messages`, a `400` among them: an invalid send that Mailjet answers in `Messages`, even with a `400`, comes back as the response. Its second argument, `isSandboxMode`, `false` by default, sets `SandboxMode` for the call: `true` there, by position or by name, makes it a check, not a send. `SendTransactionalEmailsAsync(emails, isSandboxMode)` sends several in one call.
-- `client.PostAsync(request)`, with a `new MailjetRequest { Resource = SendV31.Resource }` whose body is set with `.Property(...)`, answers a `MailjetResponse` with `IsSuccessStatusCode`, `StatusCode`, `GetErrorMessage()`, and `GetData()`. It does not throw on an API error.
+- `client.SendTransactionalEmailAsync(email)`, with an email built by `new TransactionalEmailBuilder()`, answers a response whose `Messages` holds one entry per message, with `Status` and `Errors` as above. Mailjet's pages show no error handling for it. Read the installed `Mailjet.Api` package for what it does with a failed status: whether it returns the response, throws an exception of its own, such as one with the HTTP status, or does each for some answers, such as by whether the answer holds `Messages`. Read it also for any argument that sets `SandboxMode` for the call, and for any method that sends several emails in one call.
+- `client.PostAsync(request)`, with a `new MailjetRequest { Resource = ... }` whose body is set with `.Property(...)`, answers a `MailjetResponse` with `IsSuccessStatusCode`, `StatusCode`, `GetErrorInfo()`, `GetErrorMessage()`, and `GetData()`. Mailjet's samples read `IsSuccessStatusCode` and then `StatusCode`: a failed status comes back as the response. They send with `Resource = Send.Resource`, to the v3.1 Send API on a client set with `Version = ApiVersion.V3_1`, and to the v3 Send API without it. Since 2.0.0 the client takes the version from the resource: read the installed package for the Send API each send resource calls.
 
 ```csharp
 var client = new MailjetClient(
@@ -152,11 +156,11 @@ var email = new TransactionalEmailBuilder()
 var response = await client.SendTransactionalEmailAsync(email);
 ```
 
-The builder also takes `WithReplyTo`, `WithCc`, `WithBcc`, `WithAttachment`, `WithInlinedAttachment`, `WithTemplateId`, `WithTemplateLanguage`, `WithVariable`, `WithVariables`, `WithTemplateErrorReporting`, `WithTemplateErrorDeliver`, `WithCustomId`, `WithEventPayload`, `WithCustomCampaign`, `WithDeduplicateCampaign`, `WithPriority`, `WithTrackOpens`, `WithTrackClicks`, `WithUrlTags`, `WithHeader`, and `WithSender`. Apps that use dependency injection register `IMailjetClient` with `AddHttpClient<IMailjetClient, MailjetClient>`.
+Mailjet's samples set `From`, `To`, `Subject`, `TextPart`, and `HTMLPart` with `WithFrom`, `WithTo`, `WithSubject`, `WithTextPart`, and `WithHtmlPart`. The builder has a `With...` method for other fields too: read the installed package for their names. Apps that use dependency injection register `IMailjetClient` with `AddHttpClient<IMailjetClient, MailjetClient>`. The client can also take an `HttpClientHandler` as its third argument, such as for a proxy.
 
-**US setup.** An app on Mailjet's US setup either names `api.us.mailjet.com` in a URL, or sets the host on its Mailjet client: `host` in `config` on the Node.js client or in the options of one `.post(...)`, `api_url` on Python's `Client`, `end_point` in Ruby's `Mailjet.configure`, the `'url'` option of PHP's `Client`, the third argument of Go's `NewMailjetClient`, or `SetBaseURL` and `SetURL` on its client, `BaseAdress` on .NET's `MailjetClient` (or the `BaseAddress` of the `HttpClient` it takes), and `baseUrl` in Java's `ClientOptions`. When the setting reads an env variable or a config file, read its value there. Either one means every API request in `account.md` goes to `api.us.mailjet.com`.
+**US setup.** Mailjet's pages name one API host, `api.mailjet.com`. An account on Mailjet's US setup sends to `api.us.mailjet.com` instead. An app on it either names that host in a URL, or sets a host on its Mailjet client: `host` in the `config` of the Node.js client or of one `.post(...)`, as Mailjet's Node.js page shows. For the other clients, find the setting in the code and the installed client, such as an option named `api_url`, `end_point`, `url`, or `baseUrl`, a third argument of Go's `NewMailjetClient`, or the base address of .NET's client or of the `HttpClient` it takes, and read its value. When the setting reads an env variable or a config file, read its value there. Either one means every API request in `account.md` goes to that host.
 
-**HTTP.** `POST https://api.mailjet.com/v3.1/send`, or `api.us.mailjet.com` for an account on Mailjet's US setup, with HTTP Basic auth: the API key as the user and the secret key as the password. An error answer of 400 carries the same `Messages` list with `Status: "error"`. Look for `api.mailjet.com` and `api.us.mailjet.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
+**HTTP.** `POST https://api.mailjet.com/v3.1/send`, or `api.us.mailjet.com` for an account on Mailjet's US setup, with HTTP Basic auth: the API key as the user and the secret key as the password. A message Mailjet refuses comes back in `Messages` with `Status: "error"` and its `Errors`, as "Clients and sends" says. Look for `api.mailjet.com` and `api.us.mailjet.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
 ```json
 {
@@ -174,11 +178,11 @@ The builder also takes `WithReplyTo`, `WithCc`, `WithBcc`, `WithAttachment`, `Wi
 
 **SMTP.** Mailjet takes mail over SMTP at `in-v3.mailjet.com` (older setups name `in.mailjet.com`), on port 25, 80, 465, 587, 588, or 2525, with the API key as the user and the secret key as the password. Look for those hosts in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config. Headers such as `X-MJ-TemplateID`, `X-MJ-Vars`, `X-MJ-CustomID`, `X-MJ-EventPayload`, `X-Mailjet-Campaign`, and `X-MJ-MonitoringCategory` carry Mailjet options over SMTP.
 
-**Frameworks.** Mailers that send every framework mail through Mailjet: `django-anymail` with its Mailjet backend in Django, the `mailjet` gem's `delivery_method = :mailjet` (SMTP) or `:mailjet_api` in Rails, `mailjet/laravel-mailjet` (`MAIL_MAILER=mailjet`, or `MAIL_DRIVER` in Laravel 6 and older) in Laravel, `symfony/mailjet-mailer` in Symfony, and the Mailjet adapter of Swoosh in Elixir. Each mailable or mailer that sends is a site.
+**Frameworks.** Mailers that send every framework mail through Mailjet: `django-anymail` with its Mailjet backend in Django, the `mailjet` gem's `delivery_method = :mailjet` (SMTP) or `:mailjet_api` in Rails, `mailjet/laravel-mailjet` in Laravel, set as the mailer in the mail config or `.env`, such as `MAIL_MAILER=mailjet`, or `MAIL_DRIVER` in Laravel 6 and older, `symfony/mailjet-mailer` in Symfony, and the Mailjet adapter of Swoosh in Elixir. Each mailable or mailer that sends is a site.
 
 ## Send fields
 
-The fields of one message in the v3.1 body, as every SDK sends them. Go names them the same in `InfoMessagesV31`, and the .NET builder has a `With...` method for each.
+The fields of one message in the v3.1 body, as the SDKs that take the JSON body send them. Go's `InfoMessagesV31` and the .NET builder set them under their own names, as "Clients and sends" says.
 
 | Field | Value |
 |---|---|
@@ -201,7 +205,7 @@ The fields of one message in the v3.1 body, as every SDK sends them. Go names th
 | `EventPayload` | String, sent back in webhook events |
 | `CustomCampaign` | A campaign name that groups the sends in Mailjet's statistics |
 | `DeduplicateCampaign` | `true` sends a campaign only once to each contact |
-| `MonitoringCategory` | A category of Mailjet's real-time monitoring. The Go struct has it |
+| `MonitoringCategory` | A category of Mailjet's real-time monitoring. Mailjet's v3.1 reference doesn't list it, but code may still set it |
 | `Priority` | `0` to `3`, the order in the account's sending queue. `2` is the default |
 | `TrackOpens`, `TrackClicks` | `account_default`, `disabled`, `enabled`, or `anon` |
 | `URLTags` | A query string that Mailjet adds to every link |
