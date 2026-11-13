@@ -47,14 +47,14 @@ Mailjet blocks some addresses on every later send, such as after a bounce that i
 - Hard bounces: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=10&ShowContactAlt=true`. Each entry of `Data` holds the recipient's address in `ContactAlt`.
 - Spam reports: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=6&ShowContactAlt=true`, and `GET https://api.mailjet.com/v3/REST/contact`, whose entries with `IsSpamComplaining: true` hold the address in `Email`.
 
-Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. The message list reaches only the messages Mailjet still keeps, as "For the report" says. An address can show up more than once: import it once, with the first source in the table below.
+Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. The message list reaches only the messages Mailjet still keeps, as "For the report" says. An address can show up more than once: import it once, with the first source in the table below that holds it, so an address that hard-bounced keeps `bounce`, the one reason that blocks a moved send.
 
 **Map each entry.**
 
 | Mailjet | PostHog `reason` |
 |---|---|
-| Spam reports, and contacts with `IsSpamComplaining` | `complaint` |
 | Hard bounces | `bounce` |
+| Spam reports, and contacts with `IsSpamComplaining` | `complaint` |
 | Blocked addresses in an export, when the person can't tell why | `manual` |
 
 **Leave out the other lists.**
@@ -63,7 +63,7 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 - **The campaign exclusion list** (`IsExcludedFromCampaigns`) blocks marketing campaigns only: Mailjet still sends Send API email to those addresses, and so will PostHog.
 - **Unsubscribes** from contact lists are marketing preferences, and PostHog's opt-outs apply to marketing messages only.
 
-**Step 3's question.** Mailjet keeps a suppression list: the addresses it blocks, as above. When Step 3 asks which sites rely on that list to stop mailing an address someone added to it, call it the addresses Mailjet blocks. The campaign exclusion list and contact-list unsubscribes don't stop a Send API email, so a site that relies on them only is not one of those sites.
+**Step 3's question.** Mailjet keeps a suppression list: the addresses it blocks, as above. Mailjet adds them itself, after a hard bounce or a spam report, and these files know of no call that adds one. The import takes the hard bounces as `bounce`, which PostHog blocks on a moved send too, so a site that relies on Mailjet only to skip addresses that bounced is not one of the sites Step 3 asks about. When Step 3 asks which sites rely on that list to stop mailing an address someone added to it, ask only about addresses the person or the app had Mailjet block themselves, in whatever way they know of. Spam reports get the moved sends, as Step 5 says, and the report tells the person so. The campaign exclusion list and contact-list unsubscribes don't stop a Send API email, so a site that relies on them only is not one of those sites.
 
 ## For the report
 
