@@ -133,6 +133,16 @@ PostHog's events carry no Message-ID of the SMTP message, no id of the provider 
 
 When the app has no such handler, the report says that SMTP sends no delivery events, and that the moved sends get PostHog's events on the person.
 
+## Calls that change the suppression list
+
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay with the provider behind the host. An SMTP send never changes that provider's list, so these are calls to the provider's own API, which `sdk-reference.md` lists among the other calls. Sort each one by what its API reference says it does:
+
+| Adds an address | Removes an address |
+|---|---|
+| A call that puts an address on the provider's suppression, bounce, complaint or block list, such as one that creates or imports an entry there | A call that deletes an address from such a list, or deletes the whole list, such as a reactivation of a bounced address |
+
+A call that only reads the list adds and removes nothing. When the API reference doesn't say which a call does, list it with the other calls, say so in its note, and treat it as one that removes an address, so the report names it.
+
 ## Rewrite
 
 How a site that moves is written with PostHog's SDK. Step 7 says when to use each part, and the rewrite file for the site's language has the client and the send.
