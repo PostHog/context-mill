@@ -182,7 +182,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - PHP `setFrom`, `addTo`, `setSubject`, `addContent`, and the other setters: the same fields.
 - Go `mail.NewSingleEmail(from, subject, to, plainText, html)`, or `NewV3Mail` with one personalization: the same fields.
 - .NET `MailHelper.CreateSingleEmail(from, to, subject, plainText, html)`, or a `SendGridMessage`: the same fields.
-- A raw HTTP body or a request of the SendGrid client's own request call: the fields of its one personalization, `from`, `subject`, `content`, and each other field it sets, such as `reply_to` and `attachments`, as "The fields" says.
+- A raw HTTP body or a request of the SendGrid client's own request call: the fields of its one personalization, `from`, `subject`, `content`, and each other field it sets, such as `reply_to` and `attachments`, as the "Fields" table and "The fields" below say.
 
 In each, a personalization's own `from` or `subject` takes the place of the message's, as the `personalizations` row under "Fields" says.
 
