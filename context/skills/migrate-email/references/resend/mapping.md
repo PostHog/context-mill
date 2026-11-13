@@ -108,7 +108,7 @@ Step 5 says what to do with each of these calls. They are not sends, and they st
 |---|---|
 | `resend.suppressions.add(...)`, `resend.suppressions.batch.add(...)`, `POST /suppressions`, `POST /suppressions/batch/add`, and each SDK's spelling of them, such as `Resend::Suppressions.add` in Ruby or `client.Suppressions.Add` in Go | `resend.suppressions.remove(...)`, `resend.suppressions.batch.remove(...)`, `DELETE /suppressions/{id or email}`, `POST /suppressions/batch/remove`, and each SDK's spelling of them |
 
-The import takes every entry of Resend's list, so every address these calls add or remove counts. A contact's `unsubscribed` flag is not on this list, as `account.md` says, so a call that sets it is not one of these.
+A contact's `unsubscribed` flag is not on this list, as `account.md` says, so a call that sets it is not one of these.
 
 ## Rewrite
 
