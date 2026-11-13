@@ -108,7 +108,7 @@ framework variant, and the build turns each row into one pack,
 | Key | Meaning |
 |-----|---------|
 | `framework`, `default` | The detection id the row serves, and whether it is its framework's default |
-| `match` | The trait values the pack is written for, published as `key:value` menu tags. `variant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `variant` serves every value its framework's other rows do not name |
+| `match` | The trait values the pack is written for, published as `key:value` menu tags. A key is a trait name as the wizard spells it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name |
 | `docs_urls` | The integration pages, written to `references/` and listed in `SKILL.md` |
 | `docs` | Each other product's pages for the variant, written to `references/<product>/`. `SKILL.md` does not list them |
 | `gaps` | The products a row has no pages for. The build fails when a row neither lists a product in `products` nor names it here |

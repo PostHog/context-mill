@@ -31,7 +31,7 @@ const table = (overrides = {}) => ({
             default: true,
             tags: ['nextjs'],
             docs_urls: [`${PAGE}/libraries/next-js.md`],
-            match: { framework: 'nextjs', variant: 'app-router' },
+            match: { framework: 'nextjs', frameworkVariant: 'app-router' },
             docs: { 'error-tracking': [`${PAGE}/error-tracking/installation/nextjs.md`] },
         },
     ],
@@ -88,7 +88,7 @@ describe('a variant table', () => {
         expect(JSON.parse(files[VARIANT_FILE])).toEqual({
             id: 'app',
             displayName: 'App Router',
-            match: { framework: 'nextjs', variant: 'app-router' },
+            match: { framework: 'nextjs', frameworkVariant: 'app-router' },
             rules: { file: 'references/COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' },
             products: {
                 integration: [{ file: 'references/next-js.md', description: 'Title of next-js.md' }],
@@ -127,7 +127,8 @@ describe('a variant table', () => {
         ['pages for a product the group does not list', { docs: { 'error-tracking': [`${PAGE}/a.md`], surveys: [`${PAGE}/b.md`] } }, /surveys is not in the group's products/],
         ['an empty page list', { docs: { 'error-tracking': [] } }, /non-empty list of pages/],
         ['a match framework that differs from the framework', { match: { framework: 'react' } }, /differs from framework/],
-        ['a match value that is not a string', { match: { variant: 4 } }, /match must map/],
+        ['a match value that is not a string', { match: { frameworkVariant: 4 } }, /match must map/],
+        ['a match key that is not a trait name', { match: { 'framework-variant': 'app-router' } }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
     });
@@ -156,7 +157,7 @@ describe('a variant table', () => {
         const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
         const [entry] = Object.values(menu.categories).flat();
 
-        expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'variant:app-router', 'integration', 'default']);
+        expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'integration', 'default']);
         expect(entry).toMatchObject({ framework: 'nextjs', default: true });
     });
 });
@@ -177,20 +178,20 @@ describe('the integration variant table', () => {
         }
     });
 
-    it('names a variant only within a framework that has several', () => {
+    it('names a framework variant only within a framework that has several', () => {
         const families = {};
         for (const variant of variants) {
             if (variant.framework) (families[variant.framework] ??= []).push(variant);
         }
-        for (const variant of variants.filter(v => v.match?.variant)) {
+        for (const variant of variants.filter(v => v.match?.frameworkVariant)) {
             expect(families[variant.framework].length, variant.id).toBeGreaterThan(1);
         }
     });
 
-    it('gives no two variants of a framework the same variant value', () => {
+    it('gives no two rows of a framework the same framework variant', () => {
         const seen = new Set();
-        for (const variant of variants.filter(v => v.match?.variant)) {
-            const key = `${variant.framework}:${variant.match.variant}`;
+        for (const variant of variants.filter(v => v.match?.frameworkVariant)) {
+            const key = `${variant.framework}:${variant.match.frameworkVariant}`;
             expect(seen.has(key), key).toBe(false);
             seen.add(key);
         }
