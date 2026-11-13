@@ -9,7 +9,7 @@ For a site in Rust.
 
 ## Install
 
-`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app builds without it.
+`cargo add posthog-rs`, also when the app has it: it moves the version requirement to the latest release, which `cargo update` doesn't do across a 0.x minor version. An app that sends from async code uses the crate's `async-client` feature, and a blocking app builds without it. The async client runs only on Tokio with its timers on, as `#[tokio::main]` and `enable_all()` set up: it waits between retries with `tokio::time::sleep`. A site whose async code runs on another runtime, such as async-std or smol, or on a Tokio runtime built without timers, stays, with the reason `posthog-rs's async client needs Tokio with timers`.
 
 ## The client
 
@@ -31,7 +31,7 @@ let posthog = posthog_rs::client(options.build()?).await; // with `async-client`
 
 ## The send
 
-- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, and `.capture_engagement(false)` optional.
+- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.capture_engagement(false)`, and `.sensitive(true)` optional.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.
@@ -49,6 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status()` is the HTTP status.
 - Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`.
 - A network error that is left after the retries is the same `EmailError`, with the code `network_error`, and so is a bad argument, with a code that starts with `invalid_`.
+- An error PostHog answered with a wait carries it as `error.retry_after()`, an `Option<Duration>`; it is `None` when PostHog named none.
 
 ## Check
 
