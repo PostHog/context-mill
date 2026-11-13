@@ -132,14 +132,15 @@ placeholders for the consumer to fill from the framework's pack:
 
 | Placeholder | Filled with |
 |-------------|-------------|
-| `{framework_name}` | The pack's `displayName` |
+| `{framework_name}` | The pack's `displayName`. The build writes it wherever the template or the `description` says `{display_name}` |
 | `{framework_docs}`, a line of its own | One line per page of the product, as `variant.json` lists them |
 | `{framework_rules}`, a line of its own | The line for the pack's rules file |
 
 The consumer copies those pages and the rules file into the skill's
 `references/`. `scripts/lib/skill-composition.js` is the reference for that,
 and `npm run check:repackaged-skills` checks a build with it: for every step
-and variant, the completed skill has the files of the skill it replaces.
+and variant, the completed skill has the files of the skill it replaces, and
+its `SKILL.md` reads the same but for the `name` in its frontmatter.
 
 ### Manifest structure
 

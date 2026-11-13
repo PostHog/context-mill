@@ -12,7 +12,7 @@ import {
     serializeSkill,
 } from '../skill-generator.js';
 import { writeManifestAndMenu } from '../build-phases.js';
-import { composeStepSkill, skillBody } from '../skill-composition.js';
+import { composeStepSkill, skillBody, skillFrontmatter } from '../skill-composition.js';
 
 const REPO_CONFIG_DIR = path.join(import.meta.dirname, '..', '..', '..', 'context');
 const PAGE = 'https://posthog.com/docs';
@@ -46,7 +46,7 @@ const config = (step = {}) => ({
     'flow/init': {
         type: 'docs-only',
         template: 'description.md',
-        description: 'Initialize PostHog',
+        description: 'Initialize PostHog for {display_name}',
         tags: ['orchestrator', 'init'],
         shared_docs: [`${PAGE}/advanced/content-security-policy.md`],
         variants_from: 'integration',
@@ -55,7 +55,7 @@ const config = (step = {}) => ({
     'integration/init': {
         type: 'docs-only',
         template: '../../flow/init/description.md',
-        description: 'Initialize PostHog',
+        description: 'Initialize PostHog for {display_name}',
         category: 'integration-steps',
         tags: ['orchestrator', 'init'],
         shared_docs: [`${PAGE}/advanced/content-security-policy.md`],
@@ -117,6 +117,7 @@ describe('a step skill written once for every framework', () => {
         const step = (await build(config()))['integration-init'];
 
         expect(Object.keys(step).sort()).toEqual(['SKILL.md', 'references/content-security-policy.md']);
+        expect(skillFrontmatter(step['SKILL.md'])).toContain('description: Initialize PostHog for {framework_name}');
         expect(skillBody(step['SKILL.md'])).toBe(
             [
                 '# Initialize PostHog for {framework_name}',
@@ -144,8 +145,10 @@ describe('a step skill written once for every framework', () => {
 
         expect(Object.keys(composed).sort()).toEqual(Object.keys(replaced).sort());
         for (const [file, text] of Object.entries(replaced)) {
-            if (file === 'SKILL.md') expect(skillBody(composed[file])).toBe(skillBody(text));
-            else expect(composed[file], file).toBe(text);
+            if (file === 'SKILL.md') {
+                expect(skillBody(composed[file])).toBe(skillBody(text));
+                expect(skillFrontmatter(composed[file])).toBe(skillFrontmatter(text));
+            } else expect(composed[file], file).toBe(text);
         }
     });
 
@@ -271,6 +274,7 @@ describe('the integration step skills', () => {
 
         expect(templateOf(key, group)).toBe(templateOf(replacedKey, replaced));
         expect(group.shared_docs ?? []).toEqual(replaced.shared_docs ?? []);
+        expect(group.description).toBe(replaced.description);
         expect(group.tags).toEqual(replaced.tags);
         expect(group.category).toBe('integration-steps');
     });

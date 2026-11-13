@@ -431,7 +431,11 @@ function expandSkillGroups(config, configDir) {
             const mergedTags = [...new Set([...baseTags, ...(variation.tags || [])])];
             let description = variation.description;
             if (!description && baseDescription) {
-                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+                // A skill written once for every framework names the framework its consumer fills in.
+                description = baseDescription.replace(
+                    /{display_name}/g,
+                    group.framework_references ? FRAMEWORK_NAME : variation.display_name,
+                );
             }
 
             // Support per-variation template override

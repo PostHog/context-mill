@@ -4,7 +4,7 @@
  * Check a build's repackaged step skills against the skills they replace.
  * A menu entry with `replaces` stands in for a skill, or for every variant of a skill group.
  * For each one, and for each variant, the files a consumer gets must be the files the replaced skill ships:
- * the same paths with the same bytes, and the same SKILL.md after its frontmatter.
+ * the same paths with the same bytes, and the same SKILL.md but for the `name` in its frontmatter.
  * An entry with `frameworkReferences` is first completed from the variant's pack, as its consumer does.
  * Run it after a build: `npm run build && npm run check:repackaged-skills -- [dist]`.
  */
@@ -12,7 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
-import { composeStepSkill, skillBody } from './lib/skill-composition.js';
+import { composeStepSkill, skillBody, skillFrontmatter } from './lib/skill-composition.js';
 
 const USAGE = 'Usage: node scripts/check-repackaged-skills.js [dist]';
 const [distDir = 'dist'] = process.argv.slice(2);
@@ -79,6 +79,7 @@ function compare(label, replaced, replacement) {
         else if (!(file in replaced)) differences.push(`${label}: ${file} is new`);
         else if (file === 'SKILL.md') {
             if (skillBody(replaced[file]) !== skillBody(replacement[file])) differences.push(`${label}: SKILL.md reads differently`);
+            if (skillFrontmatter(replaced[file]) !== skillFrontmatter(replacement[file])) differences.push(`${label}: SKILL.md frontmatter differs`);
         } else if (replaced[file] !== replacement[file]) differences.push(`${label}: ${file} differs`);
     }
 }

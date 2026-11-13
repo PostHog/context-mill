@@ -57,9 +57,19 @@ function composeStepSkill({ stepFiles, packFiles, product }) {
     return files;
 }
 
-/** A SKILL.md without its frontmatter, which names the skill and so differs between a skill and the one it replaces. */
+const FRONTMATTER = /^---\n([\s\S]*?)\n---\n\n?/;
+
+/** A SKILL.md without its frontmatter. */
 function skillBody(text) {
-    return text.replace(/^---\n[\s\S]*?\n---\n\n?/, '');
+    return text.replace(FRONTMATTER, '');
 }
 
-export { composeStepSkill, skillBody };
+/** A SKILL.md's frontmatter without `name`, the one field a skill and the one it replaces must differ in. */
+function skillFrontmatter(text) {
+    return (FRONTMATTER.exec(text)?.[1] ?? '')
+        .split('\n')
+        .filter(line => !line.startsWith('name:'))
+        .join('\n');
+}
+
+export { composeStepSkill, skillBody, skillFrontmatter };
