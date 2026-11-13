@@ -36,7 +36,7 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 
 | Code | A site stays on Resend when |
 |---|---|
-| `if (error.name === '...')` | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
+| `if (error.name === '...')` | The name is not one of posthog-node's, which every site that moves sends through, an HTTP site too: PostHog's HTTP API answers with `type` and `code`, and only posthog-node gives these names: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
 | A `signal` the code can abort, such as one a caller passes in or an `AbortController` it aborts, on a `fetch` or axios request or in the options of `resend.emails.send(payload, { signal })`, which the SDK passes to its request | Always: `posthog.emails.send` takes no signal, so an email the old code cancelled would go out. A fixed `AbortSignal.timeout(...)` is a deadline, and moves as "HTTP" below says, in an SDK send too |
