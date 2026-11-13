@@ -87,7 +87,7 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 - **Address Allow List** on: leave out every entry of the lists whose address or domain is on it.
 - **Bounce Purge** on: leave out each bounce older than its number of days from its `created` time. A `status` that starts with `5` is a hard bounce, and one that starts with `4` is a soft one.
 
-When you take the entries yourself, a setting the person can't say is on, or whose entries or day counts they can't give, leaves out nothing, and the other one still applies. In a re-import, tell the person each setting's rule and how many entries it left out, or that it was not checked.
+When you take the entries yourself, a setting the person can't say is on, or whose entries or day counts they can't give, leaves out nothing, and the other one still applies. In a re-import, tell the person each setting's rule and how many entries it left out, that it was not checked, or, for an Allow List whose entries they couldn't give, `Address Allow List entries not given`.
 
 **Leave out the other lists.**
 
