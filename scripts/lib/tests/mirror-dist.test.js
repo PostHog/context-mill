@@ -75,7 +75,7 @@ function writeDist({ base = GITHUB_BASE } = {}) {
     fs.writeFileSync(path.join(agentsDir(), 'agent-menu.json'), JSON.stringify(agentMenu(base), null, 2));
     fs.writeFileSync(path.join(agentsDir(), 'agents-integration-v2-report.md'), 'agent prompt');
 
-    // Pushed to the skills / ai-plugin repos, never a release asset.
+    // Pushed to the skills repo, never a release asset.
     fs.mkdirSync(path.join(distDir(), 'marketplace'), { recursive: true });
     fs.writeFileSync(path.join(distDir(), 'marketplace', 'plugin.json'), '{}');
 }

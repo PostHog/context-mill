@@ -250,8 +250,8 @@ jobs:
 
       # Fire Slack once the release is genuinely shipped for consumers (draft
       # flipped to --latest, `latest` git tag moved, release-please PR
-      # lifecycle closed). The downstream mirror steps below (PostHog/skills,
-      # PostHog/ai-plugin) are useful side effects but not gating for the
+      # lifecycle closed). The downstream PostHog/skills mirror step below is a
+      # useful side effect but not gating for the
       # wizard, so their failure shouldn't swallow the release announcement.
       - name: Notify Slack of release
         uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
@@ -269,7 +269,7 @@ jobs:
         with:
           app-id: ${{ secrets.SKILLS_PUSH_APP_ID }}
           private-key: ${{ secrets.SKILLS_PUSH_APP_PRIVATE_KEY }}
-          repositories: skills,ai-plugin
+          repositories: skills
 
       - name: Push plugins to skills repo
         id: skills_push
@@ -317,7 +317,7 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Both target repos require signed commits, so the mirrored content is
+      # The target repo requires signed commits, so the mirrored content is
       # committed through the GitHub API instead of pushed with git.
       - name: Commit plugins to skills repo
         if: steps.skills_push.outputs.changed == 'true'
@@ -330,57 +330,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.skills_token.outputs.token }}
 
-      - name: Push omnibus skills to ai-plugin repo
-        id: ai_plugin_push
-        env:
-          SKILLS_REPO_TOKEN: ${{ steps.skills_token.outputs.token }}
-        run: |
-          # Under $GITHUB_WORKSPACE so ghcommit-action can resolve it (see above).
-          WORK_DIR="$GITHUB_WORKSPACE/.ai-plugin-push"
-          rm -rf "$WORK_DIR"
-          MEGA_SKILLS="dist/marketplace/plugins/posthog-all/skills"
-
-          echo "Cloning PostHog/ai-plugin..."
-          git clone "https://x-access-token:${SKILLS_REPO_TOKEN}@github.com/PostHog/ai-plugin.git" "$WORK_DIR"
-          echo "target_branch=$(git -C "$WORK_DIR" rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
-
-          # Sync each omnibus skill, stripping the "omnibus-" prefix to match ai-plugin's layout
-          for src in "$MEGA_SKILLS"/omnibus-*; do
-            SKILL_NAME=$(basename "$src" | sed 's/^omnibus-//')
-            DEST="$WORK_DIR/skills/$SKILL_NAME"
-
-            echo "  Syncing $SKILL_NAME"
-            rm -rf "$DEST/references" "$DEST/SKILL.md"
-            mkdir -p "$DEST"
-            cp -r "$src/references" "$DEST/"
-            cp "$src/SKILL.md" "$DEST/"
-          done
-
-          cd "$WORK_DIR"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to push to PostHog/ai-plugin"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit omnibus skills to ai-plugin repo
-        if: steps.ai_plugin_push.outputs.changed == 'true'
-        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
-        with:
-          commit_message: Update generated skills from context-mill ${{ env.RELEASE_TAG }}
-          repo: PostHog/ai-plugin
-          branch: ${{ steps.ai_plugin_push.outputs.target_branch }}
-          repository: .ai-plugin-push
-        env:
-          GITHUB_TOKEN: ${{ steps.skills_token.outputs.token }}
-
-      # Both clones embed the App token in their remote URL and now live in the
-      # workspace rather than a mktemp dir, so drop them before any later step runs.
-      - name: Remove the mirror clones
+      # The clone embeds the App token in its remote URL and now lives in the
+      # workspace rather than a mktemp dir, so drop it before any later step runs.
+      - name: Remove the mirror clone
         if: always()
-        run: rm -rf "$GITHUB_WORKSPACE/.skills-push" "$GITHUB_WORKSPACE/.ai-plugin-push"
+        run: rm -rf "$GITHUB_WORKSPACE/.skills-push"
 
       # Mirror the release to S3 so consumers have a second origin to fetch from
       # when GitHub Releases is unavailable.
@@ -400,10 +354,10 @@ jobs:
       # It only reads dist/, which nothing above mutates.
       #
       # Running last also means the default "skip if any earlier step failed"
-      # rule would let the PostHog/skills and PostHog/ai-plugin mirrors above
+      # rule would let the PostHog/skills mirror above
       # take S3 down with them — which is exactly what happened in v1.47.0, when
       # a transient 502 from the skills commit skipped this step and the release
-      # shipped with no S3 mirror. Those two mirrors are explicitly NOT gating
+      # shipped with no S3 mirror. That mirror is explicitly NOT gating
       # (see the "Notify Slack" comment above), so the condition below keys off
       # the release actually being published rather than off the whole job's
       # health. `!cancelled()` is what opts out of the default skip-on-failure;

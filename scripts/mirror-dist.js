@@ -144,7 +144,7 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
         return name.endsWith('.json') && !NON_BUNDLE_MEMBER_JSON.has(name);
     });
     copyFlat(agentsDir, name => name.startsWith('agents-') && name.endsWith('.md'));
-    // dist/marketplace/ is pushed to the skills / ai-plugin repos, not released here.
+    // dist/marketplace/ is pushed to the skills repo, not released here.
 
     // Rebuild the bundle around the rewritten manifest. Reusing createBundledArchive
     // keeps one code path for the bundle's shape; its members are every skill zip
