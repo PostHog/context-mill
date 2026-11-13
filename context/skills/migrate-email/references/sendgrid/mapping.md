@@ -17,7 +17,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `substitutions` on a send with its own `subject` and `content` | none: the code puts the values into the subject, the content, and the reply-to address before the send | The message also sets `sections`, or it sends a template, or `@sendgrid/mail` takes its wrappers from a value the code builds at run time. Otherwise SendGrid replaced every occurrence of each tag, as it is written, in the subject, the HTML, the text, and the reply-to address, and inserted the value as it is. The tag is the key as it is written, such as `-name-`, except in `@sendgrid/mail`: it wraps each key in the message's `substitutionWrappers`, or when the message sets none, in the client's, set with `sgMail.setSubstitutionWrappers(left, right)`, and otherwise in `{{` and `}}`. So the key `name` replaces `{{name}}` by default. It also turns each value into a string. The code does the same with a plain string replace of each tag, under the escaping rule of `template-to-code.md`, and sends the result |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `replyTo`, `replyToList` | `replyTo`, one address or a list | An entry carries a name, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
-| `attachments` | none | Always. PostHog's send doesn't take it yet |
+| `attachments` | `attachments` | Step 3 says so under "Files", or "Attachments" below keeps a file there. See "Attachments" |
 | `headers` | none | Always: no PostHog SDK takes headers yet |
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
@@ -38,6 +38,31 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 **Account mail settings.** SendGrid's subscription tracking, Google Analytics, Legacy Email Template, and Footer settings change a send that sets no field for them. `account.md` says under "Mail settings" which sites they keep on SendGrid, and how a moved site keeps the footer.
 
 A SendGrid send has no idempotency key, so the moved site sends none either. PostHog's SDK makes one for each call and reuses it on its own retries.
+
+## Attachments
+
+What SendGrid's docs say about files:
+
+- The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) takes a send's files in `attachments`, a list of `{ content, type, filename, disposition, content_id }`. `content`, the file's bytes as a Base64 string, and `filename` are required. `disposition` is `attachment` or `inline`, and `attachment` when the file sets none. `content_id` is used when the disposition is `inline` and the file is an image, so that the body of the email shows it. The request carries each file's bytes and takes no URL for a file, so SendGrid fetches no file.
+- The same page's samples set a file in every SDK, each with `content` as a Base64 string: Node.js `attachments: [{ content, filename, type, disposition }]`, Python `message.attachment = [Attachment(file_content=FileContent(...), file_name=FileName(...), file_type=FileType(...), disposition=Disposition(...))]`, Ruby `Attachment.new` with `content`, `filename`, `type`, and `disposition`, then `mail.add_attachment(...)`, PHP `new Attachment()` with `setContent`, `setFilename`, `setType`, and `setDisposition`, then `$mail->addAttachment(...)`, Go `mail.NewAttachment()` with `SetContent`, `SetFilename`, `SetType`, and `SetDisposition`, then `m.AddAttachment(...)`, and .NET `message.Attachments` with `new Attachment() { Content, Filename, Type, Disposition }`.
+- The [Mail Send overview](https://www.twilio.com/docs/sendgrid/api-reference/mail-send) takes an email of less than 30 MB with its files, and sets no limit on how many.
+- A [dynamic template version](https://www.twilio.com/docs/sendgrid/api-reference/transactional-templates-versions/create-a-new-transactional-template-version) holds a subject, HTML, and plain text, and no files, so a template site's files come only from its send.
+
+They don't say what an SDK sends for a file the code gives it in another form than a Base64 string, such as raw bytes, a stream, or a path, or which content type SendGrid gives a file that sets none. For those, read the installed client, as `sdk-reference.md` says under "The installed client", and name the file you read in the site's plan row. A site that sends files moves as one entry of PostHog's `attachments` per file, under the PostHog SDK's names, as its rewrite file gives them, after Step 3's checks under "Files":
+
+| SendGrid | PostHog |
+|---|---|
+| `filename` | The filename. SendGrid requires one, so every file has one. Step 3 says under "Files" which filenames PostHog refuses |
+| `content`, a Base64 string | The content, in the form the rewrite file gives: the same Base64 string where the SDK reads a string as Base64, or its decoded bytes where the SDK takes bytes only. Where the code builds the string by encoding bytes it holds, such as `fs.readFileSync(path).toString('base64')`, pass those bytes |
+| `content` in another form, such as raw bytes, a stream, or a path that an SDK's helper takes | The bytes the installed client sends for it: read it for whether it encodes the value, reads the stream or the file, or sends the value as it is. When it reads a file or a stream, read it in the app at the send, to its end. When it sends the value as it is, the value is the Base64 string of the row above. When the installed client doesn't settle it, the site stays, and the reason is `attachment content not checked` |
+| `type` | The content type, as it is: a type with parameters, such as `text/calendar; method=REQUEST`, follows Step 3 under "Files". When the site sets none, read the installed client for a type it fills in, and pass that. When the request carries none, the reference doesn't say what SendGrid sent: set the type the filename's extension names, such as `application/pdf` for `.pdf`, and note `content type set from the filename` in the plan row. When the extension names none, the site stays, and the reason is `a file without a content type` |
+| `content_id` on a file whose `disposition` is `inline` | The content ID: the bare ID that the HTML shows with `<img src="cid:...">`, such as `logo` for `cid:logo`. PostHog sends a file with a content ID inline, so the file stays inline. Leave the HTML as it is |
+| `disposition` `attachment`, or none | No content ID: PostHog sends a file without one as an attachment, as SendGrid did. A `content_id` on such a file is dropped, since the reference says SendGrid uses it only for an inline file, unless the site's HTML names it with `cid:`. Then the site stays, and the reason is `a content ID on a file sent as an attachment`: the docs don't say whether the email showed it |
+| `disposition` `inline` without `content_id` | none. PostHog sends a file without a content ID as an attachment, where SendGrid showed it in the email. The site stays, and the reason is `an inline file without a content ID` |
+
+- **Size and count.** SendGrid takes an email of less than 30 MB with its files, and its docs don't say whether that counts the Base64 encoding, so Step 3's check of PostHog's 40 MB decides each site. Its docs set no count, so Step 3's limit of 10 files still applies.
+- **Refused files.** SendGrid's reference lists no file type it refuses. PostHog refuses some, as Step 3 says under "Files".
+- **Templates.** A dynamic template site sends its files from the send, and they move with it as above. A template made in PostHog takes no files, as Step 7 says: a site with files that the person wants on such a template stays, and the reason is `a template in PostHog takes no files`.
 
 ## Calls
 
@@ -164,6 +189,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - `{ email: 'hello@mail.example.com', name: 'Example' }` in `from` becomes `'Example <hello@mail.example.com>'`. A `from` without a name becomes the bare address.
 - `to` becomes a bare address. A list with one entry becomes that entry. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `content` entries become `text` and `html`.
+- `attachments` keeps its list, each file rewritten as "Attachments" says.
 - `trackingSettings` is dropped, and the send gets no `captureEngagement` for it, as "Open and click tracking" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
