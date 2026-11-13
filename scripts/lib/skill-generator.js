@@ -267,6 +267,9 @@ function resolveVariantsFrom(config) {
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** A match key is a trait name as the wizard spells it, such as `framework` or `frameworkVariant`. */
+const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
+
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
 
@@ -310,8 +313,8 @@ function validateVariantTable(key, group) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
                 : null;
-            if (!entries || entries.some(([k, v]) => !KEBAB.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
-                throw new Error(`${where}: match must map kebab-case keys to non-empty strings`);
+            if (!entries || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
+                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
             }
             if (variant.match.framework !== undefined && variant.match.framework !== variant.framework) {
                 throw new Error(`${where}: match.framework "${variant.match.framework}" differs from framework "${variant.framework}"`);

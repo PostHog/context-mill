@@ -1,8 +1,9 @@
 # Integration skills - example-based (code + docs)
 # The variant table: one row per framework variant, and the build turns each row into one pack.
 # `framework` = the detection id a variant serves; `default: true` marks the family default. Both are emitted into skill-menu.json.
-# `match` = the trait values a pack is written for, published as `key:value` tags. `variant` is the id the wizard's framework
-#   config reports. A row with no `variant` serves every value its family's other rows do not name.
+# `match` = the trait values a pack is written for, published as `key:value` tags. A key is a trait name as the wizard spells
+#   it. `frameworkVariant` is the id the wizard's framework config reports. A row with no `frameworkVariant` serves every
+#   value its family's other rows do not name.
 # `docs` = each product's pages for the variant. The build writes them to `references/<product>/` and lists them in the
 #   pack's `variant.json`. Every row lists every product in `products`, or names it under `gaps`.
 type: skill
@@ -20,7 +21,7 @@ variants:
     tags: [nextjs, react, ssr, app-router, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
-    match: { framework: nextjs, variant: app-router }
+    match: { framework: nextjs, frameworkVariant: app-router }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/nextjs.md
@@ -36,7 +37,7 @@ variants:
     tags: [nextjs, react, ssr, pages-router, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
-    match: { framework: nextjs, variant: pages-router }
+    match: { framework: nextjs, frameworkVariant: pages-router }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/nextjs.md
@@ -53,7 +54,7 @@ variants:
     tags: [react, react-router, v6, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v6.md
-    match: { framework: react-router, variant: v6 }
+    match: { framework: react-router, frameworkVariant: v6 }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -67,7 +68,7 @@ variants:
     tags: [react, react-router, v7, framework, ssr, javascript, javascript_node, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
-    match: { framework: react-router, variant: v7-framework }
+    match: { framework: react-router, frameworkVariant: v7-framework }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -82,7 +83,7 @@ variants:
     tags: [react, react-router, v7, data, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
-    match: { framework: react-router, variant: v7-data }
+    match: { framework: react-router, frameworkVariant: v7-data }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -96,7 +97,7 @@ variants:
     tags: [react, react-router, v7, declarative, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
-    match: { framework: react-router, variant: v7-declarative }
+    match: { framework: react-router, frameworkVariant: v7-declarative }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -141,7 +142,7 @@ variants:
     tags: [nuxt, vue, ssr, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/nuxt-js.md
-    match: { framework: nuxt, variant: 4.x }
+    match: { framework: nuxt, frameworkVariant: 4.x }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
@@ -221,7 +222,7 @@ variants:
     tags: [react, tanstack-router, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-start.md
-    match: { framework: tanstack-router, variant: file-based }
+    match: { framework: tanstack-router, frameworkVariant: file-based }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -239,7 +240,7 @@ variants:
     tags: [react, tanstack-router, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-start.md
-    match: { framework: tanstack-router, variant: code-based }
+    match: { framework: tanstack-router, frameworkVariant: code-based }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react.md
@@ -550,7 +551,7 @@ variants:
     tags: [expo, react-native, javascript, typescript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-native.md
-    match: { framework: react-native, variant: expo }
+    match: { framework: react-native, frameworkVariant: expo }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/react-native.md
@@ -566,7 +567,7 @@ variants:
     tags: [astro, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
-    match: { framework: astro, variant: static }
+    match: { framework: astro, frameworkVariant: static }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/web.md
@@ -583,7 +584,7 @@ variants:
     tags: [astro, astro-view-transitions, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
-    match: { framework: astro, variant: view-transitions }
+    match: { framework: astro, frameworkVariant: view-transitions }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/web.md
@@ -600,7 +601,7 @@ variants:
     tags: [astro, astro-ssr, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
-    match: { framework: astro, variant: ssr }
+    match: { framework: astro, frameworkVariant: ssr }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/web.md
@@ -619,7 +620,7 @@ variants:
     tags: [astro, astro-hybrid, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
-    match: { framework: astro, variant: hybrid }
+    match: { framework: astro, frameworkVariant: hybrid }
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/web.md
