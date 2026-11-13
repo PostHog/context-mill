@@ -111,7 +111,7 @@ Read the account's suppression settings first, in each Region:
 aws sesv2 get-account --region <region> --query SuppressionAttributes
 ```
 
-The answer's `SuppressedReasons` are the account's reasons. Its `ValidationAttributes.ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` when Auto Validation is on for the account, which `mapping.md` covers under "Suppressions".
+The answer's `SuppressedReasons` are the account's reasons. Its `ValidationAttributes.ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` when Auto Validation is on for the account, which `mapping.md` covers under "Auto Validation".
 
 **Read with the AWS CLI (preferred).** Ask the person to run, for each Region:
 
