@@ -80,12 +80,12 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 | Invalid Emails | bounce | `Imported from SendGrid: invalid address` |
 | Spam Reports | complaint | `Imported from SendGrid: spam report` |
 
-**Leave out what SendGrid delivered to anyway.** "For the report" asks the person about the Address Allow List and Bounce Purge. Apply each one on its own:
+**Leave out what SendGrid delivered to anyway.** Before you take the entries, ask the person what "For the report" asks about the Address Allow List and Bounce Purge, unless they answered it in this run. Apply each one on its own:
 
 - **Address Allow List** on: leave out every entry of the lists whose address or domain is on it.
 - **Bounce Purge** on: leave out each bounce older than its number of days from its `created` time. A `status` that starts with `5` is a hard bounce, and one that starts with `4` is a soft one.
 
-A setting the person can't say is on, or whose entries or day counts they can't give, leaves out nothing, and the other one still applies.
+A setting the person can't say is on, or whose entries or day counts they can't give, leaves out nothing, and the other one still applies. In a re-import, tell the person what each setting left out, or that it was not checked.
 
 **Leave out the other lists.**
 
@@ -96,8 +96,8 @@ A setting the person can't say is on, or whose entries or day counts they can't 
 
 The count of global unsubscribes and of group unsubscribes, which the import leaves out. Count the rows of the person's exports (Suppressions, then each of Global Unsubscribes and Group Unsubscribes, then **Export CSV**), or the entries of `GET https://api.sendgrid.com/v3/suppression/unsubscribes`, paged as above, and of `GET https://api.sendgrid.com/v3/asm/suppressions`, with the read-only key. When the person has neither, write `unsubscribes not counted`.
 
-Ask the person once, whether or not the import runs and in a re-import too, whether two settings are on in SendGrid (Settings, then Mail Settings). With the **Address Allow List**, SendGrid delivered to an address on it, or at a domain on it, whatever its lists said. With **Bounce Purge**, SendGrid deleted a bounce once it was older than the days set for hard bounces or for soft bounces. For each one that is on, ask for its entries, or for its two day counts. Then write:
+Ask the person once, whether or not the import runs, whether two settings are on in SendGrid (Settings, then Mail Settings). With the **Address Allow List**, SendGrid delivered to an address on it, or at a domain on it, whatever its lists said. With **Bounce Purge**, SendGrid deleted a bounce once it was older than the days set for hard bounces or for soft bounces. For each one that is on, ask for its entries, or for its two day counts. Then write:
 
+- Each setting that is on, and what it leaves out of the list: the addresses and domains on the Allow List, or the bounces older than the day count for their kind, where a `status` that starts with `5` is a hard bounce and one that starts with `4` is a soft one. When the person adds entries to PostHog's list by hand, tell them to leave out the same entries.
 - When Bounce Purge is on: bounces that SendGrid would have purged later stay suppressed in PostHog until someone removes them.
-- When the person can't say whether one of them is on, or can't give its entries or day counts, a "Before cutover" task: check that setting in SendGrid, and when it is on, remove from PostHog's suppression list the entries that "Leave out what SendGrid delivered to anyway" names for it.
-- When the import tool is missing and the person adds the entries by hand, a "Before cutover" task: leave out the entries that "Leave out what SendGrid delivered to anyway" names.
+- Each setting the person can't say is on, or whose entries or day counts they can't give: `<setting> not checked`, because PostHog may suppress addresses that SendGrid still delivered to.
