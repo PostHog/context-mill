@@ -122,10 +122,10 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 | `BOUNCE` | bounce | `Imported from Amazon SES: bounce` |
 | `COMPLAINT` | complaint | `Imported from Amazon SES: complaint` |
 
-**An earlier import.** A moved send no longer names its Region or configuration set, so once a run has moved sites, the Regions and reasons its import took can't be worked out from the code again. Code that already sends with a PostHog client set to `migratedFrom: 'amazon-ses'` shows such a run, and a re-import, as Step 5 says under "Re-import only", always follows one. Read the Regions and reasons from that run's report, `posthog-migrate-email-amazon-ses-report.md` at the project root, under "Suppression list". When the report is gone or names none, ask the person which Regions and reasons that import took.
+**An earlier import.** A moved send no longer names its Region or configuration set, so once a run has moved sites, the Regions and reasons its import took can't be worked out from the code again. An earlier run shows as its report, `posthog-migrate-email-amazon-ses-report.md` at the project root, or as a PostHog client with the provider name set to `amazon-ses`, under the name the rewrite file gives, such as `migratedFrom: 'amazon-ses'` in Node.js or `migrated_from="amazon-ses"` in Python. When the code sends email with PostHog and shows neither, ask the person whether an earlier run moved Amazon SES sends. A re-import, as Step 5 says under "Re-import only", always follows one. Read the Regions and reasons that run's import took from the report, under "Suppression list". When the report is gone or names none, ask the person which ones it took.
 
 - A re-import takes exactly those. When neither the report nor the person can say, stop before importing and tell the person why.
-- A later run that moves more sites imports those too, alongside its own, and counts them as a moved site's under "Suppressions" in `mapping.md`, since PostHog's list already holds them. When neither the report nor the person can say, every site it moves counts as one whose reasons differ.
+- A later run that moves more sites imports those too, alongside its own, and checks the widening both ways, as `mapping.md` says under "Suppressions": PostHog's list already holds the earlier entries, and the sites the earlier run moved get every entry this run adds. When neither the report nor the person can say which ones the earlier import took, every site this run moves counts as one whose reasons differ, and everything it imports counts as widening the list for the earlier sites.
 
 **Leave out the other lists.**
 
@@ -135,5 +135,7 @@ The answer holds `SuppressedDestinationSummaries`, a list of `{ EmailAddress, Re
 ## For the report
 
 The Regions and the reasons per Region that PostHog's list now holds from Amazon SES, this run's import and any earlier one's, so a later run or re-import takes the same.
+
+The Regions and reasons this run's import added for the sites an earlier run moved, when the person agreed to it.
 
 Each site whose note says `suppressions widened: the person agreed`: PostHog now refuses its sends to the addresses the import took from another Region's list, or for a reason its configuration set doesn't suppress, where Amazon SES sent them.
