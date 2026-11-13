@@ -54,6 +54,8 @@ A SparkPost send without an `Idempotency-Key` header sends no `idempotencyKey` a
 
 When a site leaves open tracking to the account, or sends from a subaccount, ask the person once for each account the moved sites send from, or read the settings as `account.md` says. When the answer is not given, nobody can tell whether the site's emails had an open pixel: the site stays, and the reason is `open tracking not checked`, as Step 3 under "Opens the provider didn't track" says.
 
+These rules read each account's settings as they are today. The app's code can also change them, through `PUT /api/v1/account` or `PUT /api/v1/subaccounts/{id}`, or each SDK's call for them, and that call stays on SparkPost. Search the code for such calls. When one can change a setting this mapping read for an account a moved site sends from, such as its open tracking, its subaccount's `open_tracking_disabled`, its event minimization, or its `transactional_default` or `transactional_unsub`, the site stays, and the reason is `the app can change SparkPost's <setting>`: after the move, a later change would no longer reach its emails. Read what the call sets: a call that changes none of those settings keeps nothing.
+
 ### Cc and bcc
 
 SparkPost has no `cc` or `bcc` field. A cc or bcc is one more entry in `recipients` whose `address.header_to` names the main recipient. A cc is also listed in a `CC` header in `content.headers`, and a bcc is not. The Node.js, PHP, and Python SDKs build this from their own `cc` and `bcc` fields, and the .NET library from `RecipientType.CC` and `RecipientType.BCC`. A site with a cc or bcc recipient stays, as the Fields table says.
