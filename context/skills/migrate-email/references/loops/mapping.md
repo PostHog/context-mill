@@ -40,7 +40,7 @@ Each file of a site that moves keeps its fields, under the PostHog SDK's names, 
 | Loops | PostHog |
 |---|---|
 | `filename` | The filename. Loops requires one on every file |
-| `contentType` (`content_type` in Ruby, which the SDK renames) | The content type, as it is. Loops requires one. Keep its parameters, such as `method=REQUEST` on a calendar invite, as Step 3 says |
+| `contentType` | The content type, as it is. Loops requires one. Keep its parameters, such as `method=REQUEST` on a calendar invite, as Step 3 says |
 | `data`, a Base64 string | The content: the same Base64 string where the rewrite file says the SDK reads a string as Base64, otherwise its bytes, decoded as the rewrite file says |
 | none | No content ID. A Loops file has none and no disposition, so every file shows as an attachment: set no content ID, and the moved email shows the same |
 

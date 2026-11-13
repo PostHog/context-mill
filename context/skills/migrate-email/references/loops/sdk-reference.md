@@ -86,7 +86,7 @@ LoopsSdk::Transactional.send(
 )
 ```
 
-The other parameters are `add_to_audience` and `attachments`. An attachment hash takes `content_type` or `contentType`: the SDK sends either as `contentType`.
+The other parameters are `add_to_audience` and `attachments`.
 
 **HTTP.** `POST https://app.loops.so/api/v1/transactional` with `Authorization: Bearer <key>`. Loops has one host, with no regional host, and no SDK has a region setting. Two SDKs can point the client at another URL, such as a proxy or a test server: the Go option `loops.WithBaseURL(url)` and the Node.js property `apiRoot` on `LoopsClient`. A send through either is still a Loops site. A success answers `200` with `{ "success": true }` and no message id. An error answers `{ "success": false, "message": "..." }`, sometimes with an `error` object of `path` and `message`. A `409` means the `Idempotency-Key` was used in the last 24 hours. A `429` means the rate limit, 10 requests per second per team. Look for `app.loops.so` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
 
