@@ -68,21 +68,18 @@ Mailgun keeps suppression lists per sending domain. It drops a send to an addres
 
 - `GET https://api.mailgun.net/v3/<domain>/bounces?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
 - `GET https://api.mailgun.net/v3/<domain>/complaints?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
+- `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
 
-Each answers `{ items, paging }`. A bounce is `{ address, code, error, created_at }`, and a complaint `{ address, created_at }`. Read the next page from the URL in `paging.next`, until a page has no items. Wait and retry on `429`.
+Each answers `{ items, paging }`, and each item holds the entry's `address`. Read the next page from the URL in `paging.next`, until a page has no items. Wait and retry on `429`.
 
 **Map each entry.**
 
-| Mailgun list | PostHog source | Reason |
-|---|---|---|
-| Bounces | bounce | `Imported from Mailgun: bounce` |
-| Complaints | complaint | `Imported from Mailgun: spam complaint` |
+| Mailgun list | PostHog `reason` |
+|---|---|
+| Bounces | `bounce` |
+| Complaints | `complaint` |
+| Unsubscribes | `manual` |
 
-**Leave out the other lists.**
+**Leave out allowlists.** An allowlist holds addresses and domains that Mailgun never adds to its bounce list. They are not suppressions.
 
-- **Unsubscribes** are recipients who clicked a Mailgun unsubscribe link, for the whole domain or for some tags. PostHog's opt-outs apply to marketing messages only. At Mailgun an unsubscribe also stopped transactional mail from that domain, or with that tag, so once the sends move, these addresses get transactional email again. "For the report" says what Step 5 writes about them.
-- **Allowlists** are addresses and domains that Mailgun never adds to its bounce list. They are not suppressions.
-
-## For the report
-
-**Mailgun unsubscribes left out.** Count the unsubscribes of the domains whose sites move: the rows of the person's Unsubscribes download, or the items of `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain, page by page as "Suppression list" says. Write `Mailgun unsubscribes left out: <count>. Decide before cutover whether these recipients may get the moved emails.` When neither is given, write `Mailgun unsubscribes not counted. Count them in Mailgun, and decide before cutover whether these recipients may get the moved emails.`
+**Unsubscribes and Step 3's question.** An unsubscribe is a recipient who clicked a Mailgun unsubscribe link, or the unsubscribe footer, in an email from the domain, for the whole domain or for the message's tags. Mailgun then skips the address on every send from that domain, or with that tag, transactional ones included. PostHog's `manual` entry blocks only its marketing email, so a moved send reaches the address. When you ask Step 3's question about the suppression list, name these recipients next to the addresses added by hand or by a call: a site relies on the list when it must not mail a recipient who unsubscribed from the domain's emails, or from a tag the site sends.

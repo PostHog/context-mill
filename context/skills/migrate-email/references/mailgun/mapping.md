@@ -65,7 +65,7 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 
 ## Domains
 
-Mailgun keeps its suppression lists per sending domain, and a send uses the lists of the domain it sends from. PostHog keeps one suppression list per project. When the sites that move send from more than one Mailgun domain, Step 5 imports the lists of each of them into that one list. PostHog then refuses a moved send to an address that any of those domains suppressed, even when the site's own domain never did. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one domain's sites move. The sites of every other domain stay, and the reason is `domain <name> keeps its own suppression list`. Step 5 then imports the lists of the chosen domain only.
+Mailgun keeps its suppression lists per sending domain, and a send uses the lists of the domain it sends from. PostHog keeps one suppression list per project. When the sites that move send from more than one Mailgun domain, Step 5 imports the lists of each of them into that one list. PostHog then refuses a moved send to an address that hard-bounced on any of those domains, even when it never bounced on the site's own domain: PostHog blocks a moved send only to an address that hard-bounced, as Step 5 says. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one domain's sites move. The sites of every other domain stay, and the reason is `domain <name> keeps its own suppression list`. Step 5 then imports the lists of the chosen domain only.
 
 ## Code around the send
 
@@ -164,7 +164,7 @@ Mailgun's webhooks stop getting events for a site that moves. PostHog records th
 | `accepted` | `$workflows_email_sent` |
 | `delivered` | `$workflows_email_delivered` |
 | `permanent_fail` (`failed` with `severity: permanent`), for a bounce | `$workflows_email_bounced` |
-| `permanent_fail` for an address on a suppression list | none. PostHog refuses the send instead, with `recipient_suppressed` |
+| `permanent_fail` for an address on a suppression list | none. PostHog refuses a send to an address that hard-bounced, with `recipient_suppressed`, and sends to the others, as Step 5 says |
 | `complained` | `$workflows_email_blocked` |
 | `opened` | `$workflows_email_opened` |
 | `clicked` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks, as Step 7 says |
@@ -178,9 +178,11 @@ A site whose emails a `clicked` handler acts on moves only to a template made in
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on Mailgun.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Mailgun.
 
-A call that adds to or removes from a domain's bounce or complaint list, `POST` or `DELETE` on `/v3/<domain>/bounces` or `/v3/<domain>/complaints`, or the SDK's call for it, such as `mg.suppressions.create(domain, 'bounces', ...)` in Node.js, changes a list the import takes. A call on `/v3/<domain>/unsubscribes` changes a list the import leaves out, and stays a Mailgun write only.
+| Adds an address | Removes an address |
+|---|---|
+| `POST` on `/v3/<domain>/bounces`, `/v3/<domain>/complaints`, or `/v3/<domain>/unsubscribes`, and a Mailgun SDK's call that makes such a request | `DELETE` on those paths, or on an address under them, and a Mailgun SDK's call that makes such a request |
 
 ## Rewrite
 
