@@ -6,7 +6,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 The site's fields are the fields of `message`, plus the top-level `async`, `ip_pool`, and `send_at`. A field set to `null` is not set.
 
-A field the site doesn't set takes the account's Sending Defaults: `track_opens`, `track_clicks`, `inline_css`, `auto_html`, and `merge_language`. Classify the site with that value, as if the site set it. `account.md` says how to read them and what keeps a site when the person can't say.
+A field the site doesn't set takes the account's Sending Defaults: `track_opens`, `track_clicks`, `inline_css`, `auto_html`, `merge_language`, and `bcc_address`. Classify the site with that value, as if the site set it. `account.md` says how to read them and what keeps a site when the person can't say.
 
 ## Fields
 
@@ -16,7 +16,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `to` entries of type `to`, or without a type | `to` | There is more than one, or none, such as a send whose entries are all `cc` or `bcc`: PostHog's send needs one `to`. One entry moves as its bare address: note in the plan row when the To line loses its `name` |
 | `to` entries of type `cc` | none | Always. PostHog's send doesn't take it yet |
 | `to` entries of type `bcc` | none | Always. PostHog's send doesn't take it yet |
-| `bcc_address` | none | Always. PostHog's send doesn't take it yet |
+| `bcc_address`, from the send or the account's Sending Defaults | none | Always. PostHog's send doesn't take it yet |
 | `subject` | `subject` | Never. A merge tag in it is rendered by the code, as the `merge` row says |
 | `html`, `text` | `html`, `text` | Never. A merge tag in them is rendered by the code, as the `merge` row says |
 | `headers` with `Reply-To` | `replyTo`, one address or a list | The value carries a name, there are more than 10 addresses, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
