@@ -39,7 +39,7 @@ A send that sets no `contactPixelTrackingConsent` follows the account's tracking
 
 A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content as HTML, with the subject and the sender, but not the attachment.
 
-**Copy from the dashboard.** In Brevo's list of email templates, the template's id is the number after `#` in its name. Ask the person for the template's id, its subject, its sender and reply-to address, its "To" field when it is not the default, its tag, its HTML from the template's code editor, and whether it has an attachment under "Show Advanced Options".
+**Copy from the dashboard.** In Brevo's list of email templates, the template's id is the number after `#` in its name. Ask the person for the template's id, its subject, its sender and reply-to address, its "To" field when it is not the default, its tag, whether it is active or inactive, its HTML from the template's code editor, and whether it has an attachment under "Show Advanced Options".
 
 **Read from the API.** `GET https://api.brevo.com/v3/smtp/templates/{templateId}` with the header `api-key: $BREVO_MIGRATION_API_KEY`. The answer holds `id`, `name`, `subject`, `isActive`, `htmlContent`, `sender` (`{ name, email, id }`), `replyTo`, `toField`, and `tag`. It doesn't show the template's attachment: ask the person whether the template has one, as above. On the general rate limit tier Brevo allows 300 requests an hour to this route: read only the templates the sites send.
 
