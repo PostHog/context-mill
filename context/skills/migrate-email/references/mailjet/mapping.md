@@ -62,8 +62,9 @@ A Mailjet send has no idempotency key, so the moved site sends none either. Post
 
 | Mailjet call | A site stays on Mailjet when |
 |---|---|
-| `mailjet.post('send', { version: 'v3.1' }).request(...)`, `send.create(data=...)`, `Mailjet::Send.create`, `$mj->post(Resources::$Email, ...)`, `SendMailV31`, `SendTransactionalEmailAsync`, `PostAsync` with `SendV31.Resource`, `POST /v3.1/send` | A field above keeps it |
-| The v3 Send API: `.post('send')` that sets no version on a Node client with no version set, or `{ version: 'v3' }`, a Python client without `version='v3.1'`, Go `SendMail`, `POST /v3/send` | A field above keeps it, by its v3 name. `Recipients` with more than one entry, and `Messages`, keep it |
+| `mailjet.post('send', { version: 'v3.1' }).request(...)`, `send.create(data=...)`, Ruby `Mailjet::Send.create` given `version: 'v3.1'`, or given no `version` on a gem whose `Mailjet.configure` sets `api_version = 'v3.1'`, `$mj->post(Resources::$Email, ...)`, `SendMailV31`, `SendTransactionalEmailAsync`, `PostAsync` with `SendV31.Resource`, `POST /v3.1/send` | A field above keeps it |
+| The v3 Send API: `.post('send')` that sets no version on a Node client with no version set, or `{ version: 'v3' }`, a Python client without `version='v3.1'`, Ruby `Mailjet::Send.create` given `version: 'v3'`, or given no `version` on a gem whose `api_version` is not `'v3.1'`, which the gem sets to `'v3'` by default, Go `SendMail`, `POST /v3/send` | A field above keeps it, by its v3 name. `Recipients` with more than one entry, and `Messages`, keep it |
+| A send whose Send API version the code doesn't show, such as a Ruby `api_version` or a client `version` read from the environment | Always: the v3.1 and v3 rules differ. The reason is `can't tell which Mailjet Send API it calls` |
 | `Messages` with more than one entry, `SendTransactionalEmailsAsync`, Java `SendEmailsRequest` with several messages | Always: each sends several emails in one call |
 | SMTP through `in-v3.mailjet.com` or `in.mailjet.com` | Always. PostHog has no SMTP relay |
 | Go `SendMailSMTP` | Always. It sends through Mailjet's SMTP host from Mailjet's own SDK |
