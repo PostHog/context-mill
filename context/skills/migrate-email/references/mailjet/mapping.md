@@ -148,13 +148,14 @@ With `TemplateLanguage: true`, Mailjet's template language becomes Liquid in the
 | `{% if var:paid %}…{% elseif var:due %}…{% else %}…{% endif %}`, when `paid` and `due` are booleans | `{% if variables.paid %}…{% elsif variables.due %}…{% else %}…{% endif %}` |
 | `{% for item in var:items %}{{ item.name }}{% endfor %}`, when `items` is a list | `{% for item in variables.items %}{{ item.name }}{% endfor %}` |
 | `{{ item }}` inside `{% for item in var:items %}` | `{{ item }}` |
-| `==`, `!=`, `>`, `<`, `>=`, `<=`, `and`, `or` in a condition | The same |
+| `==`, `!=`, `>`, `<`, `>=`, `<=`, `and`, `or` in a condition that joins its tests with only `and` or only `or` | The same, with no parentheses |
 | The template's `Subject` header, or the site's `Subject` | The PostHog template's subject, with the same conversions |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
 - Liquid treats `0`, an empty string, and an empty list as true. Read what the site sends for each value an `if` or `elseif` tests alone. A value that is not always a boolean, `null`, or missing keeps the template on Mailjet. A comparison, such as `var:count > 0`, converts as it is.
 - Inside a loop, the loop's own name reads the current item: `{{ item.name }}` stays `{{ item.name }}`, never `{{ variables.name }}`, and `{{ item }}` stays `{{ item }}`. Mailjet has no bare name that reads the item: a `{{var:name}}` inside the loop still reads the send's value, and becomes `{{ variables.name }}`.
+- Liquid takes no parentheses in a condition: PostHog's renderer refuses `{% if (variables.a == true) and (variables.b == true) %}` with `invalid range syntax`. It also reads `and` and `or` from the right, so `a and b or c` means `a and (b or c)`. Drop parentheses that hold one test, such as `(var:a == true) and (var:b == true)`, which becomes `variables.a == true and variables.b == true`. A condition that mixes `and` with `or`, or whose parentheses hold more than one test, keeps the template on Mailjet.
 - Mailjet's `for` also walks the values of an object, and Liquid's `for` doesn't. A loop over a value that is not always a list keeps the template on Mailjet.
 - PostHog's Liquid escapes HTML in every value. When the code passes a value that holds HTML, such as a rendered block or a link tag, or a default in the template holds HTML, such as `{{var:name:"<b>friend</b>"}}`, the template stays on Mailjet.
 - `{{data:...}}`, `{{mj:...}}`, and `{{segment:...}}` read data stored at Mailjet, so a template that uses them stays on Mailjet.
