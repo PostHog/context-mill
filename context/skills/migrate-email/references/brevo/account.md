@@ -49,11 +49,11 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 Brevo keeps one list of blocked transactional contacts. It skips an address on it for every transactional send, or, for an admin block or an unsubscribe that names a sender, for sends from that sender. Each entry has a reason code.
 
-**What Step 3 asks about.** Brevo keeps a suppression list, so Step 3 asks which sites rely on it. Besides the addresses added by hand in the dashboard and by the calls `mapping.md` names under "Calls that change the blocked list", Brevo adds an address when its recipient unsubscribes through the link in a transactional email or a Brevo automation, and it blocks every address on a domain blocked at Brevo. Name these in Step 3's question too: a moved send reaches each of them, as "Blocked domains" says for the domains.
+**What Step 3 asks about.** Brevo keeps a suppression list, so Step 3 asks which sites rely on it. Besides the addresses added by hand in the dashboard and by the calls `mapping.md` names under "Calls that change the blocked list", Brevo adds an address when its recipient unsubscribes through the link in a transactional email or a Brevo automation, and it blocks every address on a domain blocked at Brevo. Name these in Step 3's question too: a moved send reaches each of them, as "Blocked domains" says for the domains. When the person chose the API and its key is set by then, read the blocked domains as "Blocked domains" says before you ask, and name them in the question. Otherwise ask the person to look at the list in the dashboard as part of the question.
 
 **From the dashboard.** In Brevo: Settings, then Transactional emails, then Blocked or Unsubscribed contacts. The page lists each address with its reason and its sender. Ask the person whether they saved the list to a file from there, and where. Read the header row to find the address and reason columns. The file shows each reason as a label, not as the code below: take a row only when its label names a hard bounce, a spam complaint, a block by an admin, or an unsubscribe, and leave out the rest. When it is unclear whether a label names one of these, ask the person. When they have no file, use the API below, or record the import as not done.
 
-**Read from the API.** `GET https://api.brevo.com/v3/smtp/blockedContacts` with the header `api-key: $BREVO_MIGRATION_API_KEY`. It answers `{ contacts, count }`, and each contact is `{ email, senderEmail, reason: { code, message }, blockedAt }`. Page with `limit=100` and `offset`, adding 100 each time, until a page has fewer than 100 entries or the offset reaches `count`. Wait and retry on `429`, after the seconds the `Retry-After` header names when it has one. Branch on `reason.code`, never on `reason.message`.
+**Read from the API.** `GET https://api.brevo.com/v3/smtp/blockedContacts` with the header `api-key: $BREVO_MIGRATION_API_KEY`. It answers `{ contacts, count }`, and each contact is `{ email, senderEmail, reason: { code, message }, blockedAt }`. Page with `limit=100` and `offset`, adding 100 each time, until a page has fewer than 100 entries or the offset reaches `count`. Wait and retry on `429`, after the seconds the `x-sib-ratelimit-reset` header names, or 60 seconds when it is missing. Branch on `reason.code`, never on `reason.message`.
 
 **Map each entry.**
 
@@ -64,7 +64,7 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 | `adminBlocked` | `manual` |
 | `unsubscribedViaEmail`, `unsubscribedViaApi`, `unsubscribedViaMA` | `manual` |
 
-Import every entry, whatever sender it names. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says.
+Import every entry, whatever sender it names. PostHog's list holds no sender, so an admin block or an unsubscribe for one sender blocks PostHog's marketing email to the address from every sender. A moved send still reaches it, as Step 5 says. "For the report" counts these entries.
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
 
@@ -72,8 +72,13 @@ Import every entry, whatever sender it names. PostHog's list holds no sender, so
 
 Brevo can block every address on a domain, set by hand in the dashboard or by a call that `mapping.md` names under "Calls that change the blocked list". PostHog's list takes addresses, not domains, so the import leaves the domains out, and PostHog's sends reach them. Step 3's question covers the sites that rely on them, as "What Step 3 asks about" says.
 
-In Step 5, read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
+Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
 
 ## For the report
 
-Count this whether or not the import runs, and never write a domain: the domains Brevo blocks, which the import leaves out, as "Blocked domains" says. Write a count you can't get as not known.
+Count these whether or not the import runs, and never write an address or a domain:
+
+- the admin blocks and unsubscribes that name one sender, which the import takes as `manual`: PostHog's marketing email no longer reaches those addresses from any sender, as "Map each entry" says;
+- the domains Brevo blocks, which the import leaves out: the moved sends reach every address on them, as "Blocked domains" says.
+
+Write a count you can't get as not known.
