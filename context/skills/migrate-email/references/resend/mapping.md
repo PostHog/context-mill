@@ -53,6 +53,10 @@ This file decides, field by field, whether PostHog can send a Resend call site. 
 - A template that holds anything other than `{{{VAR}}}` and `{{{VAR|fallback}}}` placeholders, such as a section, a loop, or a condition, stays on Resend. So does a fallback that holds a `'`, and a fallback that holds HTML, such as a link: Liquid escapes the fallback too, so the markup shows as text.
 - The PostHog template carries its own sender, reply-to address, and subject. A site that sets `from`, `replyTo` / `reply_to`, or `subject` next to `template` stays on Resend.
 
+## Webhooks
+
+Resend stops sending email events for a site that moves, and PostHog's events carry no Resend `email_id` and no `tags`. A site whose emails a webhook handler acts on stays, however the handler finds the send an event belongs to: by `email_id`, by a tag, or by anything else, such as the recipient's address. The reason is `its events feed a webhook handler`. When you can't tell which sites' emails a handler acts on, such as one that finds the send by the recipient's address, every site whose emails can reach it stays. The handler itself keeps working for the sites that stay. Never change it.
+
 ## Rewrite
 
 How a site that moves is written with `posthog-node`. Step 7 says when to use each part.
@@ -70,7 +74,7 @@ How a site that moves is written with `posthog-node`. Step 7 says when to use ea
 
 **React.** `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
 
-**HTTP.** A `fetch` or `axios` call to `https://api.resend.com/emails` becomes `posthog.emails.send` with the camelCase fields: `reply_to` becomes `replyTo`, and the `Idempotency-Key` header becomes `idempotencyKey`. Code that read the response status reads `error` instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)` or axios `timeout: 5000`, keeps it: set `emailRequestTimeoutMs` to that value on the client the sends use, and pass `maxRetries: 0` on the send, since the request never retried. posthog-node otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. The timeout belongs to the client, so each distinct deadline gets its own client, set up as Step 7 says with that `emailRequestTimeoutMs`, and its sites send through it. Sites without a deadline keep the shared client. Never give a site a deadline it didn't have.
+**HTTP.** A `fetch` or `axios` call to `https://api.resend.com/emails` becomes `posthog.emails.send` with the camelCase fields: `reply_to` becomes `replyTo`, and the `Idempotency-Key` header becomes `idempotencyKey`. Code that read the response status reads `error` instead. A request with its own deadline, such as `signal: AbortSignal.timeout(5000)` or axios `timeout: 5000`, keeps it: set `emailRequestTimeoutMs` to that value on the client the sends use, and pass `maxRetries: 0` on the send, since the request never retried. posthog-node otherwise waits up to 15 seconds and retries twice, which can run past the site's deadline. The timeout belongs to the client, so each distinct deadline gets its own client, set up as Step 7 says with that `emailRequestTimeoutMs`, and its sites send through it. Sites without a deadline keep the shared client, and with it the SDK's limit: up to 15 seconds per request and two retries with the same idempotency key, so a retry never sends twice, and a send slower than 15 seconds on every try now ends in `network_error` where it used to wait. Never give a site a deadline it didn't have.
 
 **Templates made in PostHog.** The site sends `templateId` with the template ID the person gave, and `templateData` with the site's `variables` object. It sends no `templateKey`, `subject`, `html`, `text`, `from`, or `replyTo`: the template holds them.
 

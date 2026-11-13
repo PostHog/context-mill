@@ -33,6 +33,8 @@ For each site, read the surrounding code and record:
 
 Also list every other call to the provider that is not a send, such as reading an email's status, contacts, or domains. These calls stay on the provider. Note what each one does, because a site whose code reads the status back stays on the provider too.
 
+When `sdk-reference.md` has a "Webhooks" section, also list each webhook handler: a route of the app that receives the provider's delivery events. Note the events it handles, what it does with them, and how it finds the send an event belongs to, such as by the provider's message id, by a value the send set, or by the recipient's address. `mapping.md` says under "Webhooks" which sites a handler keeps on the provider.
+
 When you find no site, stop before you write the plan file:
 
 ```
@@ -79,4 +81,4 @@ A sites table, one row per site, in source tree order:
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
 
-A list of the other provider calls, each with its file, line, and what it does.
+A list of the other provider calls, each with its file, line, and what it does, and a list of the webhook handlers, each with its file, line, the events it handles, and how it finds the send.
