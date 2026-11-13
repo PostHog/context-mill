@@ -26,7 +26,7 @@ The app's own Resend key is usually a sending-only key, and it can't read templa
 
 A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content.
 
-**Copy from the dashboard.** In Resend: Templates, then the template. Ask the person for its alias or name, its HTML, its plain text when it has one, its subject, its `from` and reply-to when they are set, and each variable's fallback.
+**Copy from the dashboard.** In Resend: Templates, then the template. Ask the person for its alias or name, its HTML, its plain text when it has one, its subject, its `from` and reply-to when they are set, and each variable's fallback. A copy can't tell a template without plain text, whose emails get one that Resend makes from the HTML, from one whose plain text is set to an empty string, whose emails go out with none. So when it has no plain text, ask the person which. In Step 3, also offer to make the key that "Full-access key" describes, so you read that template from the API. When neither settles it, the site stays, and the reason is `plain-text part not checked`. However you read a template, from here or from the API, write what its plain text is in its note under the sites table: `text: its own`, `text: made from the HTML`, or `text: none`. A copy made again in Step 7 then needs no new question.
 
 **Read from the API.** `GET https://api.resend.com/templates/{id or alias}` with `Authorization: Bearer $RESEND_FULL_ACCESS_API_KEY`. The answer holds `alias`, `name`, `subject`, `from`, `reply_to`, `html`, `text`, and `variables`, a list of `{ key, type, fallback_value }`.
 
@@ -55,10 +55,10 @@ Resend suppresses an address after a hard bounce or a spam complaint, and keeps 
 
 **Map each entry.**
 
-| Resend `origin` | PostHog source | Reason |
-|---|---|---|
-| `bounce` | bounce | `Imported from Resend: hard bounce` |
-| `complaint` | complaint | `Imported from Resend: spam complaint` |
-| `manual` | manual | `Imported from Resend: added by hand` |
+| Resend `origin` | PostHog `reason` |
+|---|---|
+| `bounce` | `bounce` |
+| `complaint` | `complaint` |
+| `manual` | `manual` |
 
 **Leave out unsubscribed contacts.** A Resend contact with `unsubscribed: true` still gets transactional email, and PostHog's opt-outs apply to marketing messages only. They are not suppressions.
