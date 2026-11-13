@@ -16,3 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
+  - id: sendgrid
+    display_name: SendGrid
+    tags: [sendgrid]
