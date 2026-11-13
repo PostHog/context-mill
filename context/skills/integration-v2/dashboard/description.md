@@ -28,5 +28,4 @@ a reason to hold back.
 
 Emit the dashboard URL on its own line in your final message with this exact
 marker so the wizard surfaces it: `[DASHBOARD_URL] <full https url>`. A URL only
-in prose, without the marker, is dropped. Also record the dashboard URL in your
-handoff so the report step can link it.
+in prose, without the marker, is dropped.

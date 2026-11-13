@@ -15,7 +15,7 @@ npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poet
 poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle). Add the
 client library, plus the server library if the app sends events server-side.
 
-Read the manifest first. If the SDK is already installed, leave it and say so.
+Read the manifest first.
 
 Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
 version — declare the dependency as the library doc shows, taking the version it pins.

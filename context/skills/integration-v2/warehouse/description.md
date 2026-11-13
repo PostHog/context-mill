@@ -84,17 +84,14 @@ behavior.
 4. **Respect the mode.** Send only `in-cli` sources to the connect page. For a
    `deep-link` source, give the URL and stop.
 
-5. **Change no project code.** This step connects external data. It edits
-   nothing in the app.
-
-6. **A decline answers one source, not the run.** If the user cancels, times
+5. **A decline answers one source, not the run.** If the user cancels, times
    out, or skips a source, that source falls back to the deep-link URL. Do not
    re-ask for it. Do ask for the next source: one cancellation says nothing
    about the sources you have not reached yet.
    Stop asking only after two cancellations in a row, and give the rest their
    links.
 
-7. **Report what you created, not what you attempted.** A deep link is a
+6. **Report what you created, not what you attempted.** A deep link is a
    handoff, not a connected source. When you created no source, say so plainly
    in your report section and in your task status. The wording for each case is
    in **Your report section** and **Task status** below.

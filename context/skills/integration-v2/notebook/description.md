@@ -1,7 +1,5 @@
 # Mirror the report into a PostHog notebook
 
-Mirror the setup report into a shareable PostHog notebook, so the user has an
-in-app copy to link and comment on. No report file is written to the project.
 The `publish_handoff` call and the notebook are how the report reaches the user.
 
 The notebook is best effort. The report already reached the user through

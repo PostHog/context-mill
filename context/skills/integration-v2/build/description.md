@@ -1,7 +1,6 @@
 # Install, build, and review
 
-Install the declared dependencies, review the whole integration, then run the chosen
-compile checks. This is the last check before the report — it is where the
+This is the last check before the report — it is where the
 run either earns trust or loses it. Be quick and decisive; this step must not
 spiral.
 

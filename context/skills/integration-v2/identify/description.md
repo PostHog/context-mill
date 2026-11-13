@@ -27,8 +27,7 @@ capture buys nothing.
   silently never happens for anyone.
 - Attach useful person properties (email, name, plan).
 
-Find the auth flow first: login and signup handlers, session callbacks. If the
-app has no concept of a user, there is nothing to identify — report that and stop.
+Find the auth flow first: login and signup handlers, session callbacks.
 
 If the app has both a client and a server, keep them on the same person. Set the
 client SDK's `tracing_headers` to the backend's hostname (hostnames only) and it

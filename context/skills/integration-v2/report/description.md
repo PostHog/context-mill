@@ -1,10 +1,5 @@
 # Compose and publish the setup report
 
-Compose the full setup report as markdown, then publish it in **one**
-`publish_handoff` call. That call is how the report reaches the user's wizard
-session. Do not write a report file. The same call mirrors the markdown into a
-shareable PostHog notebook. The notebook skill says what its result means.
-
 ## Sources
 
 Draw on two sources only:
@@ -93,6 +88,4 @@ Then call `publish_handoff` once, passing the full markdown as `content`:
 publish_handoff({ "content": "<the full report markdown>" })
 ```
 
-Do not fall back to writing a file. Then follow the notebook skill for what
-the result means. The notebook is best effort and never fails this step.
 Record its outcome in your final message. Do not call `publish_handoff` again.
