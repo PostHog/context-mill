@@ -197,7 +197,7 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 ## Calls that change the blocked list
 
-Step 5's "Calls that change the provider's list" covers these calls:
+Step 5's "Calls that change the provider's list" covers these calls. Each one goes by its name in every SDK's casing, as `sdk-reference.md` says: Python and Ruby use snake case, Go and .NET Pascal case, and .NET adds an `Async` form, such as `BlockNewDomainAsync`. Match the names without regard to case or separators.
 
 - `DELETE /v3/smtp/blockedContacts/{email}`, which the SDKs name `unblockOrResubscribeATransactionalContact`, `smtpBlockedContactsEmailDelete`, or `smtp_blocked_contacts_email_delete`, takes an address off Brevo's list. It counts for the entries the import takes: hard bounces, spam complaints, and the admin blocks and unsubscribes it took, as `account.md` says.
 - `smtpBlacklistSender` on a contact create or update blocks the address for those senders only. It counts as an address added when, with it, Brevo blocks the address for every sender that sends through PostHog, as `account.md` says under "Map each entry". When it can name a sender a moved site sends from, a sender it takes from a variable included, the moved sends from that sender would reach the addresses it blocks: it goes into the question `account.md` asks under "Blocks for some senders", which is asked for it even when no list was read. Yes: it counts as an address added. No, or no answer: each moved site whose sender it can name stays, with that section's reason.
