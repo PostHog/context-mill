@@ -30,7 +30,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 |---|---|
 | A send: `resend.emails.send` or `resend.emails.create` (Node.js), `resend.Emails.send` or `send_async` (Python), `Resend::Emails.send` (Ruby), `$resend->emails->send` or `create` (PHP), `client.Emails.Send`, `SendWithContext`, or `SendWithOptions` (Go), `EmailSendAsync` (.NET), `resend.emails.send` (Rust), `Resend.Emails.send` (Elixir), or `POST /emails` | A field above keeps it |
 | A batch: `batch.send`, `Batch.send`, `Batch.Send`, `EmailBatchAsync`, `send_batch`, or `POST /emails/batch` | Always |
-| SMTP through `smtp.resend.com` | Always. PostHog has no SMTP relay |
+| SMTP through `smtp.resend.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer that sends through Resend: Laravel's or Rails' `resend` mailer, the `Resend.Swoosh.Adapter` Swoosh adapter in Elixir, or `Resend.FluentEmail` in .NET | Always. PostHog has no mailer driver |
 | A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 

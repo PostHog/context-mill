@@ -16,3 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
+  - id: smtp
+    display_name: SMTP
+    tags: [smtp]
