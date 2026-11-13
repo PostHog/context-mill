@@ -57,7 +57,7 @@ Before you install or upgrade an SDK, check the release you install against ever
 
 When the app already used the SDK and the upgrade crosses a major version, read the installed package's changelog when it ships one, such as `CHANGELOG.md`, and search the whole repository for the app's other calls into the SDK, such as `capture` and `identify`. Fix each call the new major version changed, and note it for the report. A check that reads only syntax doesn't find these.
 
-When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — <SDK> has no <capability> yet`, tell the person, and go on with the rest. When the client options lack the provider name, leave it out of the client. When no site is left in a language, undo that SDK's install or upgrade. When no site is left at all, delete each temporary copy of template content, tick the phase with `none moved`, and go to the next step.
+When the latest release lacks one of these, change no site that needs it. Mark each such row `moves: no — <SDK> has no <capability> yet`, tell the person, and go on with the rest. When the client options lack the provider name, leave it out of the client. When no site is left in a language, undo that SDK's install or upgrade, with each other change its rewrite file's "Install" made, such as `ext-curl` in `composer.json`, and delete each `before cutover:` note it wrote. When no site is left at all, delete each temporary copy of template content, tick the phase with `none moved`, and go to the next step.
 
 ## Set up the client
 

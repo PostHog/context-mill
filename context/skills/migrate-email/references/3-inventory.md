@@ -108,4 +108,6 @@ A sites table, one row per site, in source tree order:
 
 Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with an open pixel its emails never had, note `open pixel added: the person agreed`, as Step 3 says under "Opens the provider didn't track". For each site that stays because it relies on the provider's suppression list, note what would let it move, as Step 3 says after the sender check.
 
+In any step, when the provider's `mapping.md` or `account.md`, or a rewrite file, says to note something for the report's "Before cutover" list, write it under the table as a note that starts with `before cutover:`, such as `before cutover: enable ext-curl where the app runs`. When a later step undoes what a note is about, such as an SDK install that Step 7 undoes under "Set up the SDK", it deletes the note. Step 9 lists each note left.
+
 A list of the other provider calls, each with its file, line, and what it does, and a list of the webhook handlers, each with its file, line, the events it handles, and how it finds the send.
