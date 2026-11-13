@@ -1,0 +1,16 @@
+type: skill
+template: description.md
+category: side-car
+description: Bridge an existing Amplitude, Mixpanel, Segment or Heap browser integration into PostHog. Adds a side-car plugin that forwards every custom event, identify, person property and group call to posthog-js, and leaves the vendor SDK untouched.
+tags: [migration, side-car]
+cli:
+  role: command
+  command: side-car
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs: []
+variants:
+  - id: all
+    display_name: PostHog side-car
+    tags: [migration, side-car, amplitude, mixpanel, segment, heap]
+    docs_urls: []
