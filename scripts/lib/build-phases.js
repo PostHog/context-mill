@@ -173,15 +173,16 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
 const FRAMEWORK_TAG_PREFIX = 'framework:';
 
 /**
- * Menu tags: the skill's own tags plus its served framework, group and `default`.
+ * Menu tags: the skill's own tags plus its served framework, its other match keys, group and `default`.
  * Added here only, so the tags commandments are selected by stay untouched.
  */
-function menuTags(tags, { framework, group, isDefault }) {
+function menuTags(tags, { framework, match, group, isDefault }) {
     return [
         ...new Set(
             [
                 ...(tags || []),
                 framework ? `${FRAMEWORK_TAG_PREFIX}${framework}` : null,
+                ...Object.entries(match || {}).map(([key, value]) => `${key}:${value}`),
                 group,
                 isDefault ? 'default' : null,
             ].filter(Boolean),
@@ -194,7 +195,7 @@ function menuMetadata(skill, group) {
     return {
         title: skill.displayName ?? skill.name,
         description: skill.description,
-        tags: menuTags(skill.tags, { framework: skill.framework, group, isDefault: skill.default }),
+        tags: menuTags(skill.tags, { framework: skill.framework, match: skill.match, group, isDefault: skill.default }),
     };
 }
 

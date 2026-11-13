@@ -265,6 +265,82 @@ function resolveVariantsFrom(config) {
     return resolved;
 }
 
+const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
+const VARIANT_FILE = 'variant.json';
+
+/** The product whose pages are a variant's own `docs_urls`. A variant table cannot declare it again. */
+const INTEGRATION_PRODUCT = 'integration';
+
+/** A page is a URL, or `{ url, title }` to override the title the build reads from the page. */
+const isDocEntry = entry =>
+    typeof entry === 'string' || (entry && typeof entry === 'object' && typeof entry.url === 'string');
+
+/**
+ * Validate a variant table: a group that declares `products`. Each variant lists
+ * every product's pages under `docs`, or names the product under `gaps`.
+ * `match` is checked on every group, since any variant may declare it.
+ */
+function validateVariantTable(key, group) {
+    const products = group.products;
+    if (products !== undefined) {
+        const valid = Array.isArray(products) && products.every(p => typeof p === 'string' && KEBAB.test(p));
+        if (!valid) {
+            throw new Error(`Skill group "${key}": products must be a list of kebab-case names`);
+        }
+        if (products.includes(INTEGRATION_PRODUCT)) {
+            throw new Error(`Skill group "${key}": "${INTEGRATION_PRODUCT}" is every variant's docs_urls, not a product to list`);
+        }
+        if (new Set(products).size !== products.length) {
+            throw new Error(`Skill group "${key}": products lists a name twice`);
+        }
+    }
+    for (const variant of group.variants || []) {
+        const where = `Skill group "${key}", variant "${variant.id}"`;
+        if (variant.match !== undefined) {
+            const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
+                ? Object.entries(variant.match)
+                : null;
+            if (!entries || entries.some(([k, v]) => !KEBAB.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
+                throw new Error(`${where}: match must map kebab-case keys to non-empty strings`);
+            }
+            if (variant.match.framework !== undefined && variant.match.framework !== variant.framework) {
+                throw new Error(`${where}: match.framework "${variant.match.framework}" differs from framework "${variant.framework}"`);
+            }
+        }
+        if (products === undefined) {
+            if (variant.docs !== undefined || variant.gaps !== undefined) {
+                throw new Error(`${where}: docs and gaps need the group to declare products`);
+            }
+            continue;
+        }
+        const docs = variant.docs ?? {};
+        const gaps = variant.gaps ?? [];
+        if (typeof docs !== 'object' || Array.isArray(docs) || !Array.isArray(gaps)) {
+            throw new Error(`${where}: docs must map products to pages, and gaps must be a list`);
+        }
+        const unknown = [...Object.keys(docs), ...gaps].filter(p => !products.includes(p));
+        if (unknown.length > 0) {
+            throw new Error(`${where}: ${unknown.join(', ')} is not in the group's products`);
+        }
+        for (const product of products) {
+            const pages = docs[product];
+            const listed = Array.isArray(pages) && pages.length > 0 && pages.every(isDocEntry);
+            if (pages !== undefined && !listed) {
+                throw new Error(`${where}: docs.${product} must be a non-empty list of pages`);
+            }
+            if (listed === gaps.includes(product)) {
+                throw new Error(
+                    listed
+                        ? `${where}: ${product} has pages and is also named under gaps`
+                        : `${where}: no ${product} pages. List them under docs, or name ${product} under gaps`,
+                );
+            }
+        }
+    }
+}
+
 /**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
@@ -277,6 +353,7 @@ function expandSkillGroups(config, configDir) {
     for (const [key, group] of Object.entries(resolvedConfig)) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
+        validateVariantTable(key, group);
 
         const baseTemplate = group.template ? loadSkillTemplate(configDir, key, group.template) : null;
         const baseTags = group.tags || [];
@@ -337,6 +414,7 @@ function expandSkillGroups(config, configDir) {
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
+                _products: group.products || null,
                 _group: key,
                 _bundle: bundled,
                 _groupTags: baseTags,
@@ -627,6 +705,7 @@ async function generateSkill({
     commandmentsConfig,
     skillTemplate,
     sharedDocs,
+    fetchDocFn = fetchDoc,
 }) {
     const skillDir = path.join(outputDir, skill.id);
     const referencesDir = path.join(skillDir, 'references');
@@ -734,25 +813,29 @@ async function generateSkill({
         const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
         const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
 
-        const result = await fetchDoc(url);
-        if (result) {
-            const filename = urlToFilename(url);
-            fs.writeFileSync(
-                path.join(referencesDir, filename),
-                result.content,
-                'utf8'
-            );
+        const result = await fetchDocFn(url);
+        if (!result) return null;
+        const filename = urlToFilename(url);
+        fs.writeFileSync(
+            path.join(referencesDir, filename),
+            result.content,
+            'utf8'
+        );
 
-            references.push({
-                filename,
-                description: titleOverride || result.title,
-            });
-        }
+        const reference = {
+            filename,
+            description: titleOverride || result.title,
+        };
+        references.push(reference);
+        return reference;
     }
 
+    // The variant's own pages, kept for the variant table's `integration` product.
+    const variantDocs = [];
     if (skill.docs_urls && skill.docs_urls.length > 0) {
         for (const docEntry of skill.docs_urls) {
-            await processDoc(docEntry);
+            const reference = await processDoc(docEntry);
+            if (reference) variantDocs.push(reference);
         }
     }
 
@@ -777,6 +860,42 @@ async function generateSkill({
             filename: 'COMMANDMENTS.md',
             description: 'Framework-specific rules the integration must follow',
         });
+    }
+
+    // A variant table row also ships each product's pages and a `variant.json` that lists them.
+    // Neither joins `references`, so SKILL.md reads as it did before the row had products.
+    if (skill._products) {
+        const products = {
+            [INTEGRATION_PRODUCT]: variantDocs.map(ref => ({
+                file: `references/${ref.filename}`,
+                description: ref.description,
+            })),
+        };
+        for (const product of skill._products) {
+            products[product] = [];
+            for (const docEntry of skill.docs?.[product] ?? []) {
+                const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
+                const result = await fetchDocFn(url);
+                if (!result) continue;
+                const filename = urlToFilename(url);
+                fs.mkdirSync(path.join(referencesDir, product), { recursive: true });
+                fs.writeFileSync(path.join(referencesDir, product, filename), result.content, 'utf8');
+                products[product].push({
+                    file: `references/${product}/${filename}`,
+                    description: (typeof docEntry === 'object' && docEntry.title) || result.title,
+                });
+            }
+        }
+        const variant = {
+            id: skill._shortId,
+            displayName: skill.display_name,
+            match: { ...(skill.framework ? { framework: skill.framework } : {}), ...(skill.match || {}) },
+            rules: rules.length > 0
+                ? { file: 'references/COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' }
+                : null,
+            products,
+        };
+        fs.writeFileSync(path.join(skillDir, VARIANT_FILE), JSON.stringify(variant, null, 2) + '\n', 'utf8');
     }
 
     // Build references list for SKILL.md
@@ -826,6 +945,9 @@ function serializeSkill(s) {
     }
     if (s.default) {
         result.default = true;
+    }
+    if (s.match) {
+        result.match = s.match;
     }
     if (s._bundle) {
         result.bundle = true;
@@ -954,6 +1076,7 @@ async function generateAllSkills({
 }
 
 export {
+    VARIANT_FILE,
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
