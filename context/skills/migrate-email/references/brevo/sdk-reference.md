@@ -67,7 +67,7 @@ result = client.transactional_emails.send_transac_email(
 
 The other arguments are `cc`, `bcc`, `reply_to`, `attachment` (a list of `SendTransacEmailRequestAttachmentItem(content=, name=, url=)`), `template_id`, `params`, `tags`, `headers`, `scheduled_at`, `batch_id`, and `message_versions`.
 
-**Python, `brevo-python` 1.x and `sib-api-v3-sdk`.** `configuration.api_key['api-key'] = key` sets the key. `send_transac_email(SendSmtpEmail(sender=, to=, subject=, html_content=, text_content=, ...))` answers a `CreateSmtpEmail` whose `message_id` is the message id. It raises `ApiException` from the module's `rest`, with `status`, `reason`, and `body`.
+**Python, `brevo-python` 1.x and `sib-api-v3-sdk`.** `configuration.api_key['api-key'] = key` sets the key. `send_transac_email(SendSmtpEmail(sender=, to=, subject=, html_content=, text_content=, ...))` answers a `CreateSmtpEmail` whose `message_id` is the message id. It raises `ApiException` from the module's `rest`, with `status`, `reason`, and `body`. With `async_req=True` it answers a thread instead, whose `.get()` gives the `CreateSmtpEmail` or raises the error.
 
 **PHP, `getbrevo/brevo-php` 4.x and later.** `sendTransacEmail` answers a `SendTransacEmailResponse` whose `messageId` property is the message id. It throws `Brevo\Exceptions\BrevoApiException` on an API error, with `getCode()` (the HTTP status), `getMessage()`, and `getBody()`.
 
