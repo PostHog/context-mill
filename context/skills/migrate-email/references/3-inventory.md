@@ -75,7 +75,7 @@ A template the person asks to make in PostHog moves in the template form, by its
 PostHog adds its open pixel to every email it sends unless the send turns its `opens` switch off, as Step 7 says. Check for each site that nothing else keeps on the provider whether the provider tracked the opens of its emails, with an open pixel in each one, as the provider's `account.md` says. Never ask the person whether PostHog may add its pixel: the site moves either way.
 
 - When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, the site moves with opens off. Write `opens off: <provider name> didn't track its opens` in its note under the sites table.
-- When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note.
+- When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note. A site whose emails an `email.opened` webhook handler acts on stays instead, and the reason is `open tracking not checked`: with opens off, PostHog sends no opened events in place of the provider's.
 - When the provider tracked the site's opens, the site moves with nothing to note.
 
 A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it.
