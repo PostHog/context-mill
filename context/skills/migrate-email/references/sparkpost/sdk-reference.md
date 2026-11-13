@@ -82,12 +82,13 @@ sp.transmission.send_message('jane@example.com', 'hello@mail.example.com', 'Welc
 - `SparkPost::Client.new(key, 'https://api.eu.sparkpost.com')` sends from an EU account. Without a host argument it reads `SPARKPOST_API_HOST`.
 - `to` can be a list. Each other keyword goes into the HTTP body as it is. `send_payload(body)` sends a raw body.
 
-**PHP.** The client is async by default: `post` answers a `SparkPostPromise`, and `->wait()` answers the response or throws. With `'async' => false` it answers a `SparkPostResponse` directly. An API error throws `SparkPost\SparkPostException`: `getCode()` is the HTTP status, `getMessage()` the raw body, and `getBody()` the decoded body with its `errors`. `getBody()['results']['id']` of a response is the transmission id.
+**PHP.** SparkPost's sample builds `new SparkPost($httpClient, ['key' => ...])`, turns async off with `$sparky->setOptions(['async' => false])`, and sends with `$sparky->transmissions->post([...])`, whose payload takes the HTTP names. A client that doesn't turn async off may answer a promise, which the site settles with `->wait()` or `->then(...)`. SparkPost's docs don't name the library's response or exception classes, or say whether an error answer throws or comes back as a response: that can depend on the HTTP adapter the app passes in. Read which methods the site calls, and the installed package in `vendor` with the app's adapter for which of them gives the HTTP status, the API's `errors`, and `results.id`, and whether an error answer throws. Name the files you read in the plan row. A site stays when they don't settle it, and the reason is `installed SparkPost client doesn't show its error answers`.
 
 ```php
 use SparkPost\SparkPost;
 
-$sparky = new SparkPost($httpClient, ['key' => getenv('SPARKPOST_API_KEY'), 'async' => false]);
+$sparky = new SparkPost($httpClient, ['key' => getenv('SPARKPOST_API_KEY')]);
+$sparky->setOptions(['async' => false]);
 $response = $sparky->transmissions->post([
     'content' => ['from' => 'hello@mail.example.com', 'subject' => 'Welcome', 'html' => '<p>Welcome</p>'],
     'recipients' => [['address' => ['email' => 'jane@example.com']]],
