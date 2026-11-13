@@ -151,7 +151,7 @@ err := mail.NewDialer(host, 587, user, password).DialAndSend(m)
 
 `github.com/wneessen/go-mail` builds it with `m := mail.NewMsg()`, `m.From(...)`, `m.To(...)`, `m.Cc(...)`, `m.Bcc(...)`, `m.ReplyTo(...)`, `m.Subject(...)`, `m.SetBodyString(mail.TypeTextPlain, ...)`, `m.AddAlternativeString(mail.TypeTextHTML, ...)`, `m.AttachFile(path)`, and `m.AttachReader(name, reader)`, and sends with `c, err := mail.NewClient(host, mail.WithPort(587), mail.WithSMTPAuth(mail.SMTPAuthPlain), mail.WithUsername(user), mail.WithPassword(password))` and `c.DialAndSend(m)`.
 
-Every Go client answers an `error` and never panics on an SMTP refusal.
+Every Go client's send answers an `error` on a failure, as its docs show.
 
 **.NET: MailKit and System.Net.Mail.** MailKit sends a MimeKit `MimeMessage`:
 
