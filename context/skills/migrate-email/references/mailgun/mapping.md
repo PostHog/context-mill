@@ -14,7 +14,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | The sending domain of the call | none | Never. Step 4 sets up the sender for the domain of `from`. When the two differ, note it in the plan row |
 | `to` | `to` | It holds more than one address, as a list or a comma-separated string. A list with one entry moves as that entry. `Name <address>` moves as the bare address: note in the plan row that the To line loses the name. A string from one stored address, such as a user's email, holds one address. A string the code joins from several, or takes from input or a mail object that can hold several, counts as several |
 | `subject` | `subject` | Never |
-| `text`, `html` | `text`, `html` | Never |
+| `text`, `html` | `text`, `html` | It sets `html` and no `text`: Mailgun's docs name no text part it makes for such a send, only `t:text` for a template, and PostHog makes one from the HTML whenever a send has no text. The reason is `turns the plain-text part off`, as `template-to-code.md` says for a template |
 | `%recipient.<name>%` in `subject`, `text`, or `html` | none: the code puts the value in, as the `recipient-variables` row says | The send has no `recipient-variables` that holds `<name>` for its `to` address: Mailgun's docs don't say what it renders then. A bare `%recipient%` always stays: the docs don't say what it holds |
 | `%unsubscribe_url%`, `%tag_unsubscribe_url%`, or `%mailing_list_unsubscribe_url%` in `subject`, `text`, or `html` | none | Always: Mailgun fills them at send time from its unsubscribe lists |
 | `amp-html` | none | Always. PostHog's send doesn't take it yet |
