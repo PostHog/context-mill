@@ -14,7 +14,7 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `recipients` | `to` | It holds more than one recipient without `header_to`, or it is `{ list_id }`: a stored list always stays. A list with one entry moves as that entry. `{ email, name }` moves as the bare address: note in the plan row that the To line loses the name |
 | `recipients` with `header_to`, a `CC` header, or the SDK's `cc` and `bcc` | none | Always. PostHog's send doesn't take it yet. "Cc and bcc" says how to spot them |
 | `content.subject` | `subject` | It holds template language that "Templates" doesn't place |
-| `content.text`, `content.html` | `text`, `html` | They hold template language that "Templates" doesn't place |
+| `content.text`, `content.html` | `text`, `html` | They hold template language that "Templates" doesn't place, or there is `html` without `text` and "The plain-text part" under "Content" keeps the site |
 | `content.amp_html` | none | Always. PostHog's send doesn't take it yet |
 | `content.reply_to`, `override.reply_to` | `replyTo` | It carries a name, such as `Sales <sales@example.com>`, or template language that "Templates" doesn't place |
 | `content.headers`, `override.headers` | none | Always: no PostHog SDK takes headers yet |
@@ -103,6 +103,8 @@ SparkPost runs inline content through its template language too, with values fro
 - No template language: the content moves as it is.
 - Inline content with template language moves into the code too: the code renders the site's `subject`, `from`, `reply_to`, `text`, and `html` with the "Templates" table before the send, from the values the site puts into `substitution_data`, and the send carries no `substitution_data`. Where the transmission and its one recipient both set a key, the recipient's `substitution_data` wins over the transmission's. A part the table doesn't place keeps the site, and the reason names it.
 
+**The plain-text part.** PostHog makes a text part from the HTML whenever a send has no text, as `template-to-code.md` says. SparkPost's docs say only that `html` or `text` is required, and not whether SparkPost made a text part for an email without one. So a site whose email has `html` and no `text`, or a `text` the code can leave empty, from inline content or a template version, moves only when SparkPost made one too. Ask the person once, for all such sites, to open the source of one such email they received from SparkPost and check whether it holds a `text/plain` part. When it does, the sites move, and the send has `html` only. When it doesn't, they stay, and the reason is `turns the plain-text part off`. When they can't check, they stay, and the reason is `plain-text part not checked`.
+
 ## Templates
 
 A stored template site moves by bringing the template into the code, as `template-to-code.md` says. The check needs the content of the version the site sends, the published one unless it sets `use_draft_template: true`, because the code has only its id. `account.md` says how to get it, and how to get a snippet the template renders. The code renders the version's `subject`, `from`, `reply_to`, `html`, and `text` with the site's `substitution_data`, the recipient's values winning over the transmission's, and the send sets the rendered `subject`, `html`, `text`, `from`, and `replyTo`. Inline content uses the same language, and moves by the same table, as "Content" says.
@@ -139,7 +141,7 @@ SparkPost's template language, in the code:
 | `data-msys-linkname` | Dropped. PostHog counts no clicks, so it has no use for a link name |
 | `data-msys-clicktrack="0"`, `[[data-msys-clicktrack="0"]]` in `text` | Dropped. PostHog tracks no link of a code send, as "Tracking" says |
 | The version's `subject`, `from`, and `reply_to` | The send's `subject`, `from`, and `replyTo`, rendered with no escaping. A `from` of `{ name, email }` becomes `'Name <email>'`, as the Fields table says |
-| The version's `text` | The send's `text`, with no escaping. A version without `text` sends `html` only |
+| The version's `text` | The send's `text`, with no escaping. A version without `text` sends `html` only, when "The plain-text part" under "Content" lets it move |
 
 - SparkPost's truth test: a block renders for a value that is not `false`, `null`, or missing. The docs don't say how `0`, `""`, or an empty list test. When a value that an `if` tests on its own can be one of them at run time, the template stays. Write the test out, as `template-to-code.md` says, such as `value !== false && value != null` in Node.js.
 - When the transmission and the recipient set one key to two objects, and the template reads a field the recipient's object doesn't have, the template stays: the docs don't say whether the two objects merge.
