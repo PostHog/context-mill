@@ -12,7 +12,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `to` | `to`, one bare address | `to` can hold more than one address, its entry carries a name, such as `Jane <jane@example.com>`, or the code builds it at run time and you cannot tell that it holds a bare address only. A list with exactly one bare address moves as that address |
 | `subject` | `subject` | Never |
 | `html` | `html` | Never |
-| `text` | `text` | Never |
+| `text` | `text` | It is an empty string next to `html` or `react`, or the code builds it at run time and it can be one, such as a helper's default `text = ''` or `input.text ?? ''`: Resend then sends no text part, and PostHog makes one from the HTML whenever a send has no text. The reason is `turns the plain-text part off`. A `text` left out moves: Resend made the text part from the HTML too. So does an empty `Text` in Go, whose SDK leaves an empty `Text` out of the request |
 | `react` (Node.js only) | `html`, rendered in the app | Never. The app renders the component |
 | `template` | the template's email, brought into the code and rendered with the site's `variables`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
@@ -41,6 +41,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | A branch on Resend's error name: `error.name` in Node.js, Go, and Elixir, `error_type` in Python, `getErrorType()` in PHP, or `ErrorType` in .NET | The name is not one of PostHog's: `validation_error`, `missing_api_key`, `invalid_permission`, `not_found`, `concurrent_idempotent_requests`, `invalid_idempotent_request`, `rate_limit_exceeded`, `monthly_quota_exceeded`, `service_unavailable`, `application_error` |
 | `emails.get(id)` and a branch on `last_event` | Always: the send and its status read stay together. PostHog's status is not `last_event` |
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
+| Code that reads what Resend's answer carries from its response headers: `headers` on the answer in Node.js, `http_headers` on the answer or `headers` on an error in Python, `headers` on the answer or an error in Ruby, and `RateLimitExceededError`'s `rate_limit_limit`, `rate_limit_remaining`, `rate_limit_reset`, and `retry_after`, the fields of `*resend.RateLimitError` in Go, `Limits` on the answer or the exception in .NET, the `ratelimit_*` fields of `Error::RateLimit` in Rust, the headers of an HTTP request's answer, and the same in any SDK whose answer or error carries them | When it reads anything but the retry delay of a refused send, such as a `retry-after` header of a `429`: PostHog's answer carries no headers, and its error carries only the retry delay. The reason is `reads <header or field> from Resend's answer`. The retry delay moves as "The retry delay" says. A `headers` the code takes from the answer and never uses goes away |
 | A send the code can cancel, such as a request with a `signal` a caller passes in or an `AbortController` it aborts, on a `fetch` or axios request or in the options of `resend.emails.send(payload, { signal })`, which the SDK passes to its request, or a Go `context` or .NET cancellation token that a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as Step 7 says |
 
 ## Content
@@ -61,7 +62,7 @@ Resend templates hold only variables, with an optional fallback. In the code:
 | A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
 | The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
 | The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way. A value the send takes from the template meets the rules of "Fields" as one the site sets: a reply-to address with a name, such as `Support <support@example.com>`, keeps the site on Resend |
-| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only |
+| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only: Resend made its text part from the HTML, and PostHog does the same. A template whose `text` is an empty string sent no text part, which a PostHog send can't do: it stays on Resend, and the reason is `turns the plain-text part off` |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
@@ -92,7 +93,7 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 | `email.bounced` | `$workflows_email_bounced` |
 | `email.complained` | `$workflows_email_blocked` |
 | `email.opened` | `$workflows_email_opened` |
-| `email.clicked` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks |
+| `email.clicked` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive when no template saved in PostHog has its key, which Step 7 makes sure: its links go out as they are, and it counts no clicks |
 | Every other email event, such as `email.delivery_delayed` | none |
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
@@ -101,13 +102,13 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on Resend.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Resend.
 
 | Adds an address | Removes an address |
 |---|---|
 | `resend.suppressions.add(...)`, `resend.suppressions.batch.add(...)`, `POST /suppressions`, `POST /suppressions/batch/add`, and each SDK's spelling of them, such as `Resend::Suppressions.add` in Ruby or `client.Suppressions.Add` in Go | `resend.suppressions.remove(...)`, `resend.suppressions.batch.remove(...)`, `DELETE /suppressions/{id or email}`, `POST /suppressions/batch/remove`, and each SDK's spelling of them |
 
-The import takes every entry of Resend's list, so every address these calls add or remove counts. A contact's `unsubscribed` flag is not on this list, as `account.md` says, so a call that sets it is not one of these.
+A contact's `unsubscribed` flag is not on this list, as `account.md` says, so a call that sets it is not one of these.
 
 ## Rewrite
 
@@ -132,6 +133,8 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 **Suppressed recipients.** Resend takes a send to a suppressed address and drops it later. PostHog refuses it with the error code `recipient_suppressed` (name `validation_error`). When the site throws, retries, or reports a failure on any error, handle that code before that branch, as the rewrite file shows, the way the site handled a send that went out: log it and go on. A suppressed send has no message ID: when the code after the send uses the ID for more than a log line, such as returning it to its callers or storing it, the site stays, and the reason is `uses the message id of a suppressed send`, unless its callers already handle a send without an ID. Note each site that got this branch in the report.
 
 **Error handlers.** The parts below change Resend's error to PostHog's. When the same `try`, `begin`, or error check also covers a call that stays on Resend, such as `resend.Contacts.create`, keep Resend's handler for that call and add PostHog's next to it. Resend's API names a `503` answer `service_unavailable`, and every PostHog SDK also names a network failure that is left after its retries `service_unavailable`, with the code `network_error`. So a branch on the name `service_unavailable` also checks that the code is not `network_error`, such as `error.name === 'service_unavailable' && error.code !== 'network_error'`, and a network failure takes the path the old code gave it, as Step 7 says under "Rewrite each site", such as Node.js's branch on `application_error` below, wherever that branch stands.
+
+**The retry delay.** A site that reads the retry delay of a refused send reads the PostHog error's instead, under the name and in the unit its rewrite file gives under "The answer". Resend carries it in the `retry-after` header, in seconds: in `headers` on the answer in Node.js, `headers` on the error in Python, `RateLimitExceededError`'s `retry_after`, a whole number, in Ruby, `*resend.RateLimitError`'s `RetryAfter`, a string, in Go, and `Limits.RetryAfter` in .NET. Convert where the units differ. PostHog sets it only when its answer named a wait, so keep the path the old code gave a missing header. A send through a client with retries has already waited and retried a rate limit by itself by then. A site that keeps its own deadline sends with no retries, as Step 7 says under "Set up the client", so its own wait and retry stay as they are.
 
 **The Resend client.** Keep Resend's client, its import, and its setup while any site or other call still uses them. When nothing uses them, remove the import and the client, and keep the Resend package and its key: the person removes them after the cutover.
 
