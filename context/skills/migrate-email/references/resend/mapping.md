@@ -102,7 +102,7 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on Resend.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Resend.
 
 | Adds an address | Removes an address |
 |---|---|
