@@ -52,7 +52,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - On an API error it raises `EmailError`, imported from `posthog.emails`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
 - Suppressed recipient: `except EmailError as error:` with `if error.code == "recipient_suppressed":`.
 - It raises the same `EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
-- An error PostHog answered with a wait carries it as `e.retry_after`, in seconds, as a float; it is `None` when PostHog named none.
+- An error PostHog answered with a wait carries it as `error.retry_after`, in seconds, as a float; it is `None` when PostHog named none.
 - A bad argument raises `TypeError` or `ValueError`, before any request.
 
 ## Check

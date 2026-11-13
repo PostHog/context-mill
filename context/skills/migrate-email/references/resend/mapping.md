@@ -12,7 +12,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `to` | `to`, one bare address | `to` can hold more than one address, its entry carries a name, such as `Jane <jane@example.com>`, or the code builds it at run time and you cannot tell that it holds a bare address only. A list with exactly one bare address moves as that address |
 | `subject` | `subject` | Never |
 | `html` | `html` | Never |
-| `text` | `text` | Never |
+| `text` | `text` | It is an empty string next to `html`: Resend then sends no text part, and PostHog makes one from the HTML whenever a send has no text. The reason is `turns the plain-text part off`. A `text` left out moves: Resend made the text part from the HTML too |
 | `react` (Node.js only) | `html`, rendered in the app | Never. The app renders the component |
 | `template` | the template's email, brought into the code and rendered with the site's `variables`, sent as `subject`, `html`, and `text`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates" |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
@@ -62,7 +62,7 @@ Resend templates hold only variables, with an optional fallback. In the code:
 | A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
 | The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
 | The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way. A value the send takes from the template meets the rules of "Fields" as one the site sets: a reply-to address with a name, such as `Support <support@example.com>`, keeps the site on Resend |
-| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only |
+| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only: Resend made its text part from the HTML, and PostHog does the same. A template whose `text` is an empty string sent no text part, which a PostHog send can't do: it stays on Resend, and the reason is `turns the plain-text part off` |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
