@@ -114,7 +114,7 @@ SendGrid's Handlebars becomes Liquid in the PostHog template. Values move under 
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
-- Handlebars `{{name}}` escapes HTML, and so does PostHog's Liquid, so plain values render the same.
+- Handlebars `{{name}}` escapes HTML, and so does PostHog's Liquid in the HTML part, so plain values render the same there. The subject differs: SendGrid escaped its values too, as the subject row of the table for the code says, and PostHog inserts a subject's values as they are. A template whose subject has a `{{name}}` or `{{insert}}` value that can hold `&`, `<`, `>`, `"`, `'`, `` ` ``, or `=` stays on SendGrid, and the reason is `escaped value in subject`. Read what the site sends for each.
 - Handlebars treats `0`, an empty string, and an empty list as false, and Liquid treats them as true. Read what the site sends for each `if` and `unless` value. A value that is not always a boolean, `null`, or missing keeps the template on SendGrid.
 - Handlebars `{{#each}}` also walks the values of an object, and Liquid's `for` doesn't. An `each` over a value that is not always a list keeps the template on SendGrid.
 - Inside `{{#each}}`, a bare `{{name}}` reads the current item, as `{{this.name}}` does. It becomes `{{ item.name }}`, never `{{ variables.name }}`.
