@@ -94,4 +94,6 @@ The API doesn't say whether a hard bounce or a spam complaint suppressed an addr
 
 ## For the report
 
+When any address came from the API check, write under the phase: `- addresses from the Loops API check are imported as bounces, since Loops doesn't say why it suppressed them: moved sends skip them, ones that only complained included`. The report then says so next to its note that a complained address gets the moved sends, which holds only for the app's record.
+
 The weekly re-import that the report asks for, while a site stays on Loops, gets its list the same way as the first import. The audience check never sees a recipient who is not an audience contact, so its re-imports never bring in that recipient's bounce or complaint, and a moved send can keep mailing them, past the week the report names. When a site stays and the import was `audience contacts only`, write under the phase: `- re-imports from the audience check miss recipients who are not contacts`. The report then says so beside the weekly re-import, and that the app's record covers them: the app keeps every `email.hardBounced` and `email.spamReported` event its Loops webhook reports from now on, and each re-import reads that record.
