@@ -51,6 +51,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", as an atom, such as `:rate_limit_exceeded`.
 - Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
+- An error PostHog answered with a wait carries it as `retry_after_ms`, in milliseconds; it is `nil` when PostHog named none.
 
 ## Check
 

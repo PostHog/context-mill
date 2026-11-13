@@ -49,6 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status()` is the HTTP status.
 - Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`.
 - A network error that is left after the retries is the same `EmailError`, with the code `network_error`, and so is a bad argument, with a code that starts with `invalid_`.
+- An error PostHog answered with a wait carries it as `error.retry_after()`, an `Option<Duration>`; it is `None` when PostHog named none.
 
 ## Check
 

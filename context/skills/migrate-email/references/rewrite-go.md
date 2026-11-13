@@ -47,6 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - An API error is a `*posthog.EmailError`: read it with `errors.As`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `var emailErr *posthog.EmailError` and `if errors.As(err, &emailErr) && emailErr.Code == "recipient_suppressed"`.
 - Every error from the send is a `*posthog.EmailError`: also a network error that is left after the retries, with the code `network_error`, and a bad argument, with a code that starts with `invalid_`. `Message` is there too.
+- An error PostHog answered with a wait carries it as `RetryAfter`, a `time.Duration`; it is `0` when PostHog named none.
 
 ## Check
 
