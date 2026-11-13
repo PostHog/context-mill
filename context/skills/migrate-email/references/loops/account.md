@@ -40,6 +40,7 @@ Every Loops site sends a Loops email, so each site that moves needs the content 
 3. For a `<Style themeId="…" />` in the LMX, `GET https://app.loops.so/api/v1/themes/{themeId}` answers its `styles`, with the names of the `<Style />` attributes.
 4. For each `<Component componentId="…" />`, `GET https://app.loops.so/api/v1/components/{componentId}` answers its `lmx`.
 
+- The API doesn't say which data variable is optional: `dataVariables` lists only names, LMX has no mark for it, and `dataVariablesFallbacks` shows only the variables that have a fallback. An optional variable without a fallback looks the same as a required one, and `mapping.md` treats the two apart. So for each variable in `dataVariables` without a fallback, ask the person whether it is set to **Optional** in the editor, in the selector just below the variable's name. When they can't tell, the site stays, and the reason is `Loops optional data variables not known`.
 - A `401` means the key is wrong, or the content API is not on for the team. Ask for the preview send instead.
 - A `409` means the email was made from MJML, or Loops can't give its content as LMX. Ask for the preview send instead.
 - These routes allow 60 requests per 60 seconds for each team. Wait and retry on `429`.
