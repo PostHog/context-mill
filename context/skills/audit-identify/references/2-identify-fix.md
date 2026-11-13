@@ -40,7 +40,7 @@ You are an audit subagent. Resolve exactly one rule and return: identify-stable-
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`).
 
-Run **one** Grep: `posthog\.identify\(`. Read each file that contains a hit, once. Inspect the first argument passed to identify().
+Run **one** Grep: `posthog\??\.identify(\?\.)?\(`. Read each file that contains a hit, once. Inspect the first argument passed to identify().
 
 Rule:
 - distinct_id must be a stable identifier (auth user id, account id), not a session UUID, ephemeral cookie, or device-only id.
@@ -62,8 +62,8 @@ You are an audit subagent. Resolve exactly one rule and return: identify-not-lat
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`).
 
 Run **two** Greps in parallel:
-- `posthog\.identify\(` — where identity is established
-- `posthog\.capture\(|getFeatureFlag\(|isFeatureEnabled\(` — where captures and flag evals happen
+- `posthog\??\.identify(\?\.)?\(` — where identity is established
+- `posthog\??\.capture(\?\.)?\(|getFeatureFlag\(|isFeatureEnabled\(` — where captures and flag evals happen
 
 Read each file that contains a hit, once. Compare the timing/ordering of identify() against the surrounding capture / flag-eval calls.
 
@@ -130,7 +130,7 @@ Read this skill's bundled `identify-users.md` reference once (typically `.claude
 
 Background: a common identity-merge failure is two `posthog.identify()` calls firing back-to-back in the same auth flow with different first arguments — for example, `posthog.identify(authProviderUid)` followed by `posthog.identify(internalUserId)`. The first call stamps the auth provider id as the device identity. By the time the second call runs, the SDK considers the device already-identified, so the merge from the *anonymous* distinct id to `internalUserId` is blocked. The user is now split across two profiles: the anon profile correctly merged to `authProviderUid`, and `internalUserId` as a brand-new profile with no anonymous activity. This pattern has caused 30k+ blocked merges/day at multi-SDK SaaS customers.
 
-Run **one** Grep: `posthog\.identify\(`. Read each file that contains a hit, once.
+Run **one** Grep: `posthog\??\.identify(\?\.)?\(`. Read each file that contains a hit, once.
 
 For each file, find pairs of `posthog.identify()` calls that:
 1. Live in the same enclosing function, hook, effect, or auth-callback handler (close enough that they reliably execute in one flow), AND

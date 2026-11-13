@@ -39,7 +39,7 @@ You are an audit subagent. Resolve exactly one rule and return: identify-set-dis
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit-identify/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/identify-users.md`). Focus on the `$set` vs `$set_once` guidance: `$set` overwrites every time and should be reserved for properties that genuinely change (plan tier, last_seen_app_version). `$set_once` is for first-touch attributes that should never be overwritten (initial_referrer, signup_date, first_seen_country). Calling `$set` on every `capture()` inflates person-property version count and is the most common form of "person property bloat".
 
 Run **two** Greps in parallel:
-- `posthog\.identify\(` — identify call sites (where $set / $set_once belong).
+- `posthog\??\.identify(\?\.)?\(` — identify call sites (where $set / $set_once belong).
 - `\$set\b|\$set_once\b|setPersonProperties\(|setOnce\(` — every $set / $set_once usage across capture, identify, and standalone calls.
 
 Read each file that contains a hit, once. For every `$set` / `$set_once` usage, classify where it lives:
@@ -84,7 +84,7 @@ Read this skill's bundled `identify-users.md` reference once (typically `.claude
 
 Run **one** Grep: `posthog\.alias\(|posthog\.createAlias\(`. If zero matches, resolve `pass` with `details: "no alias() usage detected"` and return — this is the healthy default.
 
-Otherwise read each file that contains a hit, once. Also run a second Grep `posthog\.identify\(` to know whether the project ever calls `identify()` anywhere (this gates one of the rules below).
+Otherwise read each file that contains a hit, once. Also run a second Grep `posthog\??\.identify(\?\.)?\(` to know whether the project ever calls `identify()` anywhere (this gates one of the rules below).
 
 For each alias() call, determine:
 - **Where it runs** — client-side (browser bundle) or server-side (Node, Python, edge handler, background worker).

@@ -37,7 +37,7 @@ You are an audit subagent. Resolve exactly one rule and return: identify-stable-
 
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit/references/identify-users.md`).
 
-Run **one** Grep: `posthog\.identify\(`. Read each file that contains a hit, once. Inspect the first argument passed to identify().
+Run **one** Grep: `posthog\??\.identify(\?\.)?\(`. Read each file that contains a hit, once. Inspect the first argument passed to identify().
 
 Rule:
 - distinct_id must be a stable identifier (auth user id, account id), not a session UUID, ephemeral cookie, or device-only id.
@@ -59,8 +59,8 @@ You are an audit subagent. Resolve exactly one rule and return: identify-not-lat
 Read this skill's bundled `identify-users.md` reference once (typically `.claude/skills/audit/references/identify-users.md`; otherwise discover with `Glob` `**/skills/audit/references/identify-users.md`).
 
 Run **two** Greps in parallel:
-- `posthog\.identify\(` — where identity is established
-- `posthog\.capture\(|getFeatureFlag\(|isFeatureEnabled\(` — where captures and flag evals happen
+- `posthog\??\.identify(\?\.)?\(` — where identity is established
+- `posthog\??\.capture(\?\.)?\(|getFeatureFlag\(|isFeatureEnabled\(` — where captures and flag evals happen
 
 Read each file that contains a hit, once. Compare the timing/ordering of identify() against the surrounding capture / flag-eval calls.
 

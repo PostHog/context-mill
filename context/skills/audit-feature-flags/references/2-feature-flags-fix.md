@@ -162,7 +162,7 @@ Background: `bootstrap.distinctID` (or `bootstrap: { distinctID: ... }`) lets th
 
 Run **two** Greps in parallel:
 - `bootstrap[\s\S]{0,40}distinctID|bootstrap[\s\S]{0,40}distinct_id|distinctID\s*:` — bootstrap-with-distinctID sites.
-- `posthog\.identify\(` — every identify call (so the subagent can cross-reference).
+- `posthog\??\.identify(\?\.)?\(` — every identify call (so the subagent can cross-reference).
 
 Read each file that contains a bootstrap.distinctID hit, once. For each site, determine:
 - What value is being passed (literal, variable, request-scoped, randomly generated)?
@@ -203,7 +203,7 @@ Background: when `person_profiles: 'identified_only'` is set (the recommended de
 Run **three** Greps in parallel:
 - `person_profiles\s*:|personProfiles\s*:` — locate the person_profiles setting.
 - `getFeatureFlag\(|isFeatureEnabled\(|useFeatureFlag\(|getFeatureFlagPayload\(` — every flag-eval call site.
-- `posthog\.identify\(` — every identify call (used to classify a surface as pre-auth or post-auth).
+- `posthog\??\.identify(\?\.)?\(` — every identify call (used to classify a surface as pre-auth or post-auth).
 
 Step 1 — read the file(s) containing `person_profiles` hits to determine the configured value. If unset, the posthog-js default is `'identified_only'`. Record `mode` as `identified_only`, `always`, `never`, or `unset (defaults to identified_only)`.
 
