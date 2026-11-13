@@ -24,8 +24,8 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `t:text` | `text`, written in the code from the version's content | See "Templates". A site that moves to a template made in PostHog stays, as before: the template form has no `t:text` |
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `h:Reply-To` | `replyTo` | It carries a name, holds more than 10 addresses, or the code builds it at run time and you cannot tell that it holds bare addresses only |
-| `attachment` | none | Always. PostHog's send doesn't take it yet |
-| `inline` | none | Always. PostHog's send doesn't take it yet |
+| `attachment` | `attachments`, each file without a content ID | Step 3 says so under "Files", or as "Attachments" says |
+| `inline` | `attachments`, each file with its filename as its content ID | Step 3 says so under "Files", or as "Attachments" says |
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
@@ -50,6 +50,17 @@ When a site sets neither `o:tracking-opens` nor `o:tracking`, ask the person onc
 A domain with unsubscribe tracking on adds an unsubscribe footer to every email Mailgun sends from it, though the site's content holds no unsubscribe link. PostHog adds none, so the moved email would lose it. Ask about it, or read it, with the other tracking settings of each sending domain, for every site. When it is on, the domain's sites stay, and the reason is `Mailgun adds an unsubscribe footer`. When it is not given, they stay too, and the reason is `domain unsubscribe footer not checked`.
 
 A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header the code passes. A moved site without one sends none either: PostHog's SDK makes one for each call and reuses it on its own retries.
+
+## Attachments
+
+Mailgun takes each file as a part of the request's form body, under `attachment` or `inline`, and never fetches one from a URL: the app or its Mailgun client reads every file. A site that moves sends each file as one entry of PostHog's `attachments`, under the PostHog SDK's names, as its rewrite file gives them, after Step 3's checks under "Files".
+
+- **Content.** Pass the same bytes. A file the Mailgun client read for the code becomes a read in the app, at the send: a path that Ruby's `add_attachment` or `add_inline_image` takes as a string, PHP's `filePath`, Go's `AddAttachment` and `AddInline`, and a string in the older `mailgun-js`, which it reads from disk. A stream or reader, such as a Node.js stream, a Ruby IO, or Go's `AddReaderAttachment`, is read to its end. A string in `mailgun.js` is the file's content, never a path, and PHP's `fileContent` is its content too. A Python `files=` entry, `(field, (filename, data))` or `(field, (filename, data, content_type))`, gives its data.
+- **Filename.** Pass the filename the code gives: the `filename` of a `mailgun.js` file object, the second argument of Ruby's `add_attachment` and `add_inline_image`, PHP's `filename`, Go's `filename` argument, or the filename in a Python entry or a form part. Without one, `mailgun.js` and the older `mailgun-js` name a Buffer or a string `file`, and `mailgun-js` names its `Attachment` object `attached file`: pass that name. A file read from a path that the code gives no filename names after the path in the other clients, which Mailgun's docs don't describe: the site stays, and the reason is `attachment filename not checked`.
+- **Content ID.** An `inline` file's content ID is its filename, which the HTML shows as `<img src="cid:<filename>">`. Pass that filename as the content ID, and leave the HTML as it is. An `attachment` file gets none.
+- **Content type.** Pass the content type the request named, as it is, parameters included, as Step 3 says: the `contentType` of a `mailgun.js` file object when the client got the `form-data` package (given the built-in `FormData`, `mailgun.js` sends the filename only, and drops `contentType`), the `contentType` of a `mailgun-js` `Attachment`, the `content_type` of a Ruby IO, for a Ruby file with a path and no `content_type` the type the `mini_mime` gem gives its filename, else `application/octet-stream`, the third item of a Python entry, or a form part's `Content-Type`. When the request named none, Mailgun's docs don't say which type the email gave the file. Set the type the filename's extension names, such as `application/pdf` for `.pdf`, or `application/octet-stream` for a filename without a known extension, and write `content type not checked: <filename>` in the site's note under the sites table, so the report asks the person to compare it with an email Mailgun sent.
+
+Mailgun takes a message of up to 25 MB, smaller than the 40 MB that PostHog takes, and its docs set no limit on how many files: Step 3's limits decide. Mailgun's templates hold no files.
 
 ## Calls
 
@@ -208,6 +219,7 @@ Drop the domain argument and the Mailgun client of the call.
 - `h:Reply-To` becomes `replyTo`: one address as a string, and a header with several addresses, such as `a@example.com, b@example.com`, as a list of them, split at each comma and trimmed. PostHog checks each entry as one address.
 - The tracking fields, `o:tracking`, `o:tracking-opens`, and `o:tracking-clicks`, and their setters are dropped, and the send gets no `captureEngagement` for them, as Step 7 says.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
+- `attachment` and `inline` become `attachments`, each file as "Attachments" says.
 - `recipient-variables` on a send to one address: replace each `%recipient.<name>%` in the subject, the text, and the HTML with the value of that address's entry before the send, as the "Fields" table says, and drop `recipient-variables`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
