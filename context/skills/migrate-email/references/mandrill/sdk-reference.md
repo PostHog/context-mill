@@ -4,7 +4,7 @@ This file says what Mailchimp Transactional, formerly Mandrill, looks like in a 
 
 ## Key
 
-The API key lives in `MANDRILL_API_KEY` or `MAILCHIMP_TRANSACTIONAL_API_KEY` by convention. The older `mandrill` clients read `MANDRILL_APIKEY` when the code passes no key. Apps also use their own names: take the name the client reads.
+The API key lives in `MANDRILL_API_KEY` or `MAILCHIMP_TRANSACTIONAL_API_KEY` by convention. Apps also use their own names: take the name the code reads. When the code makes a client without a key, read the installed client's source for the name it reads itself.
 
 Mailchimp Transactional also has test keys, made in its test mode: a send with a test key answers like a real one and delivers nothing. PostHog has no such key, so a PostHog key in the same place delivers real email to whoever that environment sends to. When Step 6 lists the places that set the key, ask the person once which of them, such as staging or CI, set a test key, and note those places under the phase. For each, the report says under "PostHog secret key" that the place's sends delivered nothing before, and that the person sets a PostHog key there only where real delivery is fine: without one, the moved sends there fail on the missing key. When the person can't tell, say this for every place but production.
 
@@ -14,14 +14,16 @@ Mailchimp Transactional also has test keys, made in its test mode: a send with a
 |---|---|---|
 | Node.js | `@mailchimp/mailchimp_transactional` | `require('@mailchimp/mailchimp_transactional')(key).messages.send({ message })` |
 | Python | `mailchimp-transactional` (PyPI), imported as `mailchimp_transactional` | `MailchimpTransactional.Client(key).messages.send({"message": message})` |
-| Ruby | `MailchimpTransactional` | `MailchimpTransactional::Client.new(key).messages.send({ message: message })` |
+| Ruby | `MailchimpTransactional` | `MailchimpTransactional::Client.new(key).messages.send(message)`, or with the body `{ message: message }` |
 | PHP | `mailchimp/transactional` | `$mailchimp->messages->send(['message' => $message])` |
-| Node.js, older | `mandrill-api` | `new mandrill.Mandrill(key).messages.send({ message }, onSuccess, onError)` |
-| Python, older | `mandrill` (PyPI) | `mandrill.Mandrill(key).messages.send(message=message)` |
-| Ruby, older | `mandrill-api` | `Mandrill::API.new(key).messages.send(message)` |
-| PHP, older | `mandrill/mandrill` | `messages->send($message)` on a `Mandrill` client |
+| Node.js, older | `mandrill-api` | `messages.send` on its client, with callbacks the code passes |
+| Python, older | `mandrill` (PyPI) | `messages.send` on its client |
+| Ruby, older | `mandrill-api` | `messages.send` on its client |
+| PHP, older | `mandrill/mandrill` | `messages->send` on a `Mandrill` client |
 
-Each official package also has `messages.sendTemplate` (`send_template` in Python and Ruby, `sendTemplate` in PHP) for a stored template, and `messages.sendMcTemplate` (`send_mc_template`) for a template made in Mailchimp. Every send takes one body: `message`, and for a template also `template_name` and `template_content`, plus the top-level `async`, `ip_pool`, and `send_at`.
+The official rows are the calls of Mailchimp Transactional's Quick Start and "Send your first email" guides. Its reference doesn't describe the older clients: read the installed client's source for how its send takes the `message`.
+
+The API sends a stored template through `messages/send-template` and a template made in Mailchimp through `messages/send-mc-template`: find each package's method for them in the installed package, such as one named `sendTemplate` or `send_template`. Every send takes one body: `message`, and for a stored template also `template_name` and `template_content`, or `mc_template_id` for one made in Mailchimp, plus the top-level `async`, `ip_pool`, and `send_at`.
 
 Go, .NET, and Elixir have no official SDK. Sites in them call the HTTP API, or use a community client such as `github.com/keighl/mandrill` (Go), `Mandrill.net` (NuGet), or `mandrill` (Hex). Treat a send through a community client like an HTTP send, with the same fields. The `mandrill` npm package is a third-party Node.js client of the Mailchimp Transactional API: treat it the same way.
 
@@ -29,11 +31,13 @@ These are not Mailchimp Transactional, and alone they are not a migration: `@mai
 
 ## Clients and sends
 
-Every official SDK answers a successful send with a list, one entry per recipient: `{ email, status, _id, reject_reason, queued_reason }`. `status` is `sent`, `queued`, `scheduled`, `rejected`, or `invalid`. A `rejected` or `invalid` recipient is not an API error: the call succeeds, and only the entry says the email did not go out. `reject_reason` is one of `hard-bounce`, `soft-bounce`, `spam`, `unsub`, `custom`, `invalid-sender`, `invalid`, `test-mode-limit`, `unsigned`, or `rule`. `_id` is the message id.
+The API answers a successful send with a list, one entry per recipient: `{ email, status, _id, reject_reason, queued_reason }`. `status` is `sent`, `queued`, `scheduled`, `rejected`, or `invalid`. A `rejected` or `invalid` recipient is not an API error: the call succeeds, and only the entry says the email did not go out. `reject_reason` is one of `hard-bounce`, `soft-bounce`, `spam`, `unsub`, `custom`, `invalid-sender`, `invalid`, `test-mode-limit`, `unsigned`, or `rule`. `_id` is the message id.
 
-An API error has the body `{ status: 'error', code, name, message }`, such as `name: 'Invalid_Key'` with HTTP 401, or `name: 'PaymentRequired'` with HTTP 402.
+Any answer other than HTTP 200 is an API error, with the body `{ status: 'error', code, name, message }`, such as `name: 'Invalid_Key'` with HTTP 401, or `name: 'PaymentRequired'` with HTTP 402.
 
-**Node.js.** The send never throws. On an API error or a network error it answers the `AxiosError` instead of the list: `response.response.status` is the HTTP status, and `response.response.data` is the error body. Code tells the two apart with `Array.isArray(response)`, `response instanceof Error`, `response.isAxiosError`, or a read of `response.response`. A site that never checks the answer never fails on an error.
+Mailchimp Transactional's reference doesn't say what each SDK's send does on an API error or a network error: whether it raises, or answers the error in place of the list, and with which class. Before the rewrite, read the installed SDK's source in the app's dependencies, such as `node_modules`, the virtualenv, `vendor`, or the bundle, and the code's own checks, which show what it expected.
+
+**Node.js.** The guides' samples catch nothing around the send. Code that expected the error in place of the list checks the answer, such as `Array.isArray(response)`, `response instanceof Error`, `response.isAxiosError`, or a read of `response.response`. A site that never checks the answer, around a send that answers its errors, never fails on an error.
 
 ```js
 const mailchimp = require('@mailchimp/mailchimp_transactional')(process.env.MANDRILL_API_KEY)
@@ -48,10 +52,9 @@ const response = await mailchimp.messages.send({
     text: 'Welcome',
   },
 })
-if (!Array.isArray(response)) throw response
 ```
 
-**Python.** It raises `mailchimp_transactional.api_client.ApiClientError` on an API error. `e.status_code` is the HTTP status, and `e.text` is the error body, parsed into a dict when it is JSON. A success answers the list as a list of dicts.
+**Python.** The guides' samples catch `mailchimp_transactional.api_client.ApiClientError` around the send and read the error body as `e.text`. Read the installed package for its other attributes, such as the HTTP status, and for what it raises on a network error.
 
 ```python
 import mailchimp_transactional as MailchimpTransactional
@@ -66,24 +69,28 @@ try:
         "html": "<p>Welcome</p>",
     }})
 except ApiClientError as e:
-    log.error("send failed: %s %s", e.status_code, e.text)
+    log.error("send failed: %s", e.text)
 ```
 
-**Ruby.** It raises `MailchimpTransactional::ApiError` on any answer that is not 200, with `e.status` and `e.response_body`. A success answers the list as a list of hashes.
+**Ruby.** The guides' samples rescue `MailchimpTransactional::ApiError` around the send. Read the installed gem for the error's attributes, such as the HTTP status and the body, and for what it raises on a network error.
 
 ```ruby
 require 'MailchimpTransactional'
 
 client = MailchimpTransactional::Client.new(ENV['MANDRILL_API_KEY'])
-result = client.messages.send({ message: {
-  from_email: 'hello@mail.example.com',
-  to: [{ email: 'jane@example.com' }],
-  subject: 'Welcome',
-  html: '<p>Welcome</p>'
-} })
+begin
+  result = client.messages.send({ message: {
+    from_email: 'hello@mail.example.com',
+    to: [{ email: 'jane@example.com' }],
+    subject: 'Welcome',
+    html: '<p>Welcome</p>'
+  } })
+rescue MailchimpTransactional::ApiError => e
+  log.error("send failed: #{e}")
+end
 ```
 
-**PHP.** The send never throws on an API error. It answers the Guzzle `GuzzleHttp\Exception\RequestException` instead of the list, with `getCode()` for the HTTP status and `getResponse()` for the body. A success answers the list as an array of objects, such as `$response[0]->status`. The package takes Guzzle 6 or 7, and `composer.lock` says which one the app has. A connection error is a `RequestException` in Guzzle 6, so the send answers it like an API error. In Guzzle 7 it is not, so the send throws it.
+**PHP.** The guides' samples wrap the send in `try` with `catch (Error $e)`, PHP's own error class, and read `$e->getMessage()`. Code that expected the error in place of the list checks the answer, such as `$response instanceof \GuzzleHttp\Exception\RequestException`. Read the installed package in `vendor`, and the Guzzle version in `composer.lock`, for what the send does on an API error and on a connection error.
 
 ```php
 $mailchimp = new MailchimpTransactional\ApiClient();
@@ -94,10 +101,9 @@ $response = $mailchimp->messages->send(['message' => [
     'subject' => 'Welcome',
     'html' => '<p>Welcome</p>',
 ]]);
-if ($response instanceof \GuzzleHttp\Exception\RequestException) { /* failed */ }
 ```
 
-**The older clients.** `mandrill-api` for Node.js takes callbacks: `messages.send(params, onSuccess, onError)`. `onError` gets the error body. Without `onError`, the client throws from inside its response handler, which an `await` or a `try` around the call does not catch. The Python `mandrill` package raises `mandrill.Error` and subclasses such as `mandrill.InvalidKeyError` and `mandrill.ValidationError`, and its send is `messages.send(message=..., send_async=False, ip_pool=None, send_at=None)`. Older releases name `send_async` `async`. The Ruby `mandrill-api` gem raises `Mandrill::Error` and its subclasses, and its send is `messages.send(message, async, ip_pool, send_at)`. Both answer the same list as the official SDKs. The source of the PHP `mandrill/mandrill` client is no longer published, so how it reports an error can't be checked. Some PHP apps keep a copy of that client in their own code, sometimes under other class names: treat a class in the app that posts to `mandrillapp.com/api` and has a `messages->send` method as that client.
+**The older clients.** Mailchimp Transactional's reference doesn't describe them. Read the installed client's source for its send's arguments and for how it reports an API error and a network error, such as an error class of its own or a callback. A Node.js `mandrill-api` send takes callbacks for success and for errors, which the call shows. Some PHP apps keep a copy of the PHP client in their own code, sometimes under other class names: treat a class in the app that posts to `mandrillapp.com/api` and has a `messages->send` method as that client. A send through the PHP client stays, as `mapping.md` says.
 
 **HTTP.** `POST https://mandrillapp.com/api/<version>/messages/send`, with a version such as `1.0`, `1.3`, or `1.4`, sometimes with a `.json` suffix. The key goes in the JSON body as `key`, not in a header. There is no regional host. `messages/send-template` and `messages/send-mc-template` send a stored template. A success answers `200` with the list above. Look for `mandrillapp.com/api` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
 
