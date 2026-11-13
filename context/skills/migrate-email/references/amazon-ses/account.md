@@ -81,10 +81,10 @@ The first must name `VdmOptions`, `MessageSecurityOptions`, `ArchivingOptions`, 
 **Read with the AWS CLI (preferred).** Ask the person to run, in each Region, for each domain or address the sites send from:
 
 ```bash
-aws sesv2 get-email-identity --email-identity <domain> --region <region> --query ConfigurationSetName
+aws sesv2 get-email-identity --email-identity <domain> --region <region> --query '{Set: ConfigurationSetName, Policies: Policies}'
 ```
 
-The answer is the identity's default configuration set, or `null` when it has none. Then, for each set the sites name and each default set:
+`Set` is the identity's default configuration set, or `null` when it has none. `Policies` maps each of the identity's sending authorization policies to its JSON, which `mapping.md` reads under "Sending turned off". Then, for each set the sites name and each default set:
 
 ```bash
 aws sesv2 get-configuration-set-event-destinations --configuration-set-name <name> --region <region>
