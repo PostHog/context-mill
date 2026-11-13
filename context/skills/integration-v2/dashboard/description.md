@@ -18,15 +18,10 @@ returned `id` — the insight step attaches every insight to it via
 ```
 
 Then create the insights (see the insight step) and attach each one to this
-dashboard's `id`. Always create the dashboard and its insights based on the
-intended captures, regardless of whether those events have been observed yet —
-an empty dashboard shell is not a success. Fresh insights render empty and fill
-in as events arrive; that is the expected state of a brand-new integration, not
-a reason to hold back.
+dashboard's `id`.
 
 ## Hand off the dashboard
 
 Emit the dashboard URL on its own line in your final message with this exact
 marker so the wizard surfaces it: `[DASHBOARD_URL] <full https url>`. A URL only
-in prose, without the marker, is dropped. Also record the dashboard URL in your
-handoff so the report step can link it.
+in prose, without the marker, is dropped.

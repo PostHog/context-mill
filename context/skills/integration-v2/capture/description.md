@@ -1,8 +1,5 @@
 # Plan and capture events
 
-Decide which custom events are worth capturing, then instrument them — in one
-pass, reading each file once.
-
 ## Choose and record
 
 From the project's files, find the actions that have business value for event
@@ -38,8 +35,7 @@ and it is the source the report reads later.
 
 For each event call the SDK's capture method on the real user action — the click
 or submit handler, the server action — not on render or page load. Use clear
-`lower_snake_case` names and useful properties. Edit each file while it is already
-open.
+`lower_snake_case` names and useful properties.
 
 Server-side, use the authenticated user's id as the distinct id. For a genuinely
 unauthenticated action, emit a personless event — never fabricate a placeholder
