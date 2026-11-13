@@ -1,11 +1,11 @@
 # PostHog Gatsby example
 
-A minimal [Gatsby](https://www.gatsbyjs.com) 5 site that uses the community [`gatsby-plugin-posthog`](https://github.com/PostHog/gatsby-plugin-posthog) plugin to add PostHog analytics, session replay, feature flags and error tracking.
+A minimal [Gatsby](https://www.gatsbyjs.com) 5 site that uses the [PostHog JavaScript SDK](https://posthog.com/docs/libraries/js) (`posthog-js`) to add PostHog analytics, session replay, feature flags and error tracking.
 
 ## Features
 
 - **Product analytics**: pageviews, autocapture and a custom `burrito_considered` event
-- **Session replay**: recordings start with the plugin's posthog-js snippet
+- **Session replay**: recordings start when posthog-js initializes
 - **Feature flags**: `isFeatureEnabled()` gates a tip in the demo page
 - **Error tracking**: `captureException()` from a try/catch
 - **User identification**: a demo sign-in that calls `identify()`, and a sign-out that calls `reset()`
@@ -31,7 +31,7 @@ GATSBY_POSTHOG_HOST=https://us.i.posthog.com
 
 Get your project token from your [PostHog project settings](https://app.posthog.com/project/settings). Use `https://eu.i.posthog.com` as the host for an EU Cloud project.
 
-If the token is missing, the site still builds and runs. `gatsby-config.ts` leaves the plugin out and logs a warning outside production.
+If the token is missing, the site still builds and runs. `gatsby-browser.ts` skips `posthog.init()`, and `gatsby-config.ts` logs a warning outside production.
 
 ### 3. Run the site
 
@@ -44,45 +44,56 @@ pnpm build && pnpm serve
 
 ```
 .
-├── gatsby-config.ts        # Registers gatsby-plugin-posthog with the token and host from env
+├── gatsby-browser.ts       # Initializes posthog-js when the site loads in the browser
+├── gatsby-config.ts        # Loads .env and warns when the token is missing
 └── src/
-    ├── pages/
-    │   └── index.tsx       # Demo page: identify, custom event, feature flag, error capture
-    └── posthog.d.ts        # Types for window.posthog
+    └── pages/
+        └── index.tsx       # Demo page: identify, custom event, feature flag, error capture
 ```
 
 ## Key integration points
 
-### Plugin setup (gatsby-config.ts)
+### SDK setup (gatsby-browser.ts)
 
 ```typescript
-{
-  resolve: "gatsby-plugin-posthog",
-  options: {
-    apiKey: token,
-    apiHost: host,
-    isEnabledDevMode: true,
-    initOptions: {
-      defaults: "2026-08-30",
-      capture_pageview: false,
-    },
-  },
+import posthog from "posthog-js"
+
+export const onClientEntry: GatsbyBrowser["onClientEntry"] = () => {
+  const token = process.env.GATSBY_POSTHOG_PROJECT_TOKEN
+  if (!token) return
+
+  posthog.init(token, {
+    api_host: process.env.GATSBY_POSTHOG_HOST || "https://us.i.posthog.com",
+    defaults: "2026-08-30",
+    capture_pageview: "history_change",
+  })
 }
 ```
 
-The plugin injects the posthog-js snippet into the page head and exposes the client as `window.posthog`. It has no `defaults` option of its own, but `initOptions` is passed through to `posthog.init()`, so `defaults` goes there. The plugin captures its own `$pageview` on every route change, including the first page load, so `capture_pageview: false` stops the SDK from sending a second one.
+`onClientEntry` runs once in the browser, before the first page renders, so PostHog initializes before any page code calls it. Gatsby changes routes with the History API, so `capture_pageview: "history_change"` captures a `$pageview` on the first page load and on each route change. You do not need an `onRouteUpdate` handler. With `defaults` dated `2025-05-24` or later, `capture_pageview` is already `"history_change"`. This example sets it explicitly to make the behavior clear.
 
-The plugin only loads PostHog in production builds unless `isEnabledDevMode` is `true`. The token is read in `gatsby-config.ts` at build time and ends up in the generated HTML, which is expected for a project token.
+Gatsby inlines `GATSBY_`-prefixed environment variables into the browser bundle at build time. `gatsby-config.ts` loads `.env` with `dotenv`, so the token and host are available to `gatsby-browser.ts`. The token ends up in the generated JavaScript, which is expected for a project token.
+
+### Migrating from gatsby-plugin-posthog
+
+The `gatsby-plugin-posthog` plugin is deprecated. To move to `posthog-js`:
+
+1. Remove `gatsby-plugin-posthog` from the `plugins` array in `gatsby-config` and uninstall it.
+2. Install `posthog-js` and initialize it in `gatsby-browser` as shown above.
+3. Remove any manual `$pageview` captures in `onRouteUpdate`. If you keep them, each route change sends two pageviews.
+4. Import `posthog` from `posthog-js` instead of using `window.posthog`.
 
 ### Identify, capture and reset (src/pages/index.tsx)
 
 ```typescript
-window.posthog?.identify(username, { username })
-window.posthog?.capture("user_logged_in")
+import posthog from "posthog-js"
 
-window.posthog?.capture("burrito_considered", { total_considerations: n })
+posthog.identify(username, { username })
+posthog.capture("user_logged_in")
 
-window.posthog?.reset() // on sign-out
+posthog.capture("burrito_considered", { total_considerations: n })
+
+posthog.reset() // on sign-out
 ```
 
 Identify once when the user signs in, with your own stable user id (a primary key or UUID, never an email), and call `reset()` on sign-out.
@@ -90,9 +101,9 @@ Identify once when the user signs in, with your own stable user id (a primary ke
 ### Feature flags and error capture
 
 ```typescript
-window.posthog?.isFeatureEnabled("burrito-tip")
+posthog.isFeatureEnabled("burrito-tip")
 
-window.posthog?.captureException(err)
+posthog.captureException(err)
 ```
 
 ## Reverse proxy
