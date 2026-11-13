@@ -16,3 +16,6 @@ variants:
   - id: resend
     display_name: Resend
     tags: [resend]
+  - id: amazon-ses
+    display_name: Amazon SES
+    tags: [amazon-ses]
