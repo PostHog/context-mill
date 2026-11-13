@@ -36,8 +36,9 @@ $posthog = new Client(
 
 ## The send
 
-- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, and `'capture_engagement'` optional.
+- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, `'sensitive'`, and `'tracking'` optional. `'tracking'` takes `true`, `false`, or an array with `'opens'`, `'clicks'`, and `'engagement'`. Open tracking off is `'tracking' => ['opens' => false]`. `'capture_engagement'` is deprecated: use `'tracking' => ['engagement' => false]`. Sensitive is `'sensitive' => true`.
 - `'reply_to'` takes one address or a list of addresses.
+- Files: `'attachments' => [['filename' => ..., 'content' => ..., 'content_type' => ..., 'content_id' => ...]]`, up to 10, with `'content_type'` and `'content_id'` optional. `'content'` is the file's raw bytes as a string, such as `file_get_contents()` gives. A Base64 string is sent as its text, so decode it first with `base64_decode()`. A release whose send has no attachments field doesn't take files yet: upgrade as Step 7 says, and when the latest release has none either, the site stays.
 - Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
 
 ## A deadline
@@ -52,6 +53,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - The send returns a `SendEmailResult`. `getId()` is the message ID.
 - On an API error it throws `PostHog\EmailError`. `getErrorCode()` is PostHog's error code, a string such as `recipient_suppressed`, `getErrorName()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `getStatusCode()` is the HTTP status.
 - Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`.
+- A send with files throws `PostHog\EmailError` with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing. posthog-php doesn't refuse a blank filename before the request: PostHog does.
 - It throws the same `PostHog\EmailError` for a network error that is left after the retries, with the code `network_error`, and for a bad argument, with a code that starts with `invalid_`. `getMessage()` is there too.
 
 ## Check

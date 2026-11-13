@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Mailgun account. The agent never changes the account: it reads what the person exports or allows.
 
-**Regions.** Mailgun's regions are separate, and every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. An app in the EU region names `api.eu.mailgun.net` in its client, its Rails `mailgun_settings`, or `mailgun.APIBaseEU` in Go, as `sdk-reference.md` says under "EU region". For such an app, use `https://api.eu.mailgun.net` in every request of this file. Each request below names both hosts.
+**Regions.** Mailgun's regions are separate, and every read goes to the region of the sending domain: `api.mailgun.net` for the US, `api.eu.mailgun.net` for the EU. An app in the EU region names `api.eu.mailgun.net` in its client or its config, or `mailgun.APIBaseEU` in Go, as `sdk-reference.md` says under "EU region". For such an app, use `https://api.eu.mailgun.net` in every request of this file. Each request below names both hosts.
 
 ## DNS records
 
