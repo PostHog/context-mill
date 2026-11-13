@@ -68,8 +68,8 @@ Import every hard bounce and spam complaint. An admin block or an unsubscribe ca
 
 When the list isn't read, because there is no file, no key, or no import tool, ask the person once to look in the dashboard (Settings, then Transactional emails, then Blocked or Unsubscribed contacts) for unsubscribes and admin blocks that name a moved site's sender. For a moved site whose sender isn't a fixed value and whose values they can't all name, any unsubscribe or admin block counts as naming it. Before Step 7 rewrites anything:
 
-- None: nothing changes.
-- Some: ask the question above. Yes: the report's "Before cutover" asks them to add those addresses in PostHog by hand. No, or no answer: set `moves` to `no` for each moved site such an entry names, with the reason `recipients blocked for its sender at Brevo`.
+- None, and no call under `mapping.md`'s "Calls that change the blocked list" blocks addresses for a moved site's sender: nothing changes.
+- Some, or such a call: ask the question above. Yes: the report's "Before cutover" asks them to add those addresses in PostHog by hand. No, or no answer: set `moves` to `no` for each moved site such an entry or call names, with the reason `recipients blocked for its sender at Brevo`.
 - They can't look, can't tell which moved sites the entries name, or don't answer: set `moves` to `no` for each moved site, with the reason `sender blocks not checked`.
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
