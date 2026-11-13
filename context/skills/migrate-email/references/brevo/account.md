@@ -64,7 +64,9 @@ Brevo keeps one list of blocked transactional contacts. It skips an address on i
 
 Import every hard bounce and spam complaint. An admin block or an unsubscribe can cover one sender only: each entry names its sender, in `senderEmail` or the file's sender column. PostHog's list blocks an address for every send, so import such an address when Brevo blocks it, by admin blocks, unsubscribes, or both, for every sender that sends through PostHog: the senders of the moved sites, and each sender the person already sends from with PostHog, which you ask them for once. When a moved site's sender isn't a fixed value, such as a per-tenant address, the senders are the values the person names, and when they can't name them all, no address counts as blocked for every sender. The other admin blocks and unsubscribes follow "Blocks for some senders".
 
-**Blocks for some senders.** An admin block or an unsubscribe that names the sender of a moved site, without blocking the address for every sender that sends through PostHog, would let that site's sends reach an address Brevo skipped for it. PostHog's list can't block an address for one sender. When there are such entries, ask the person once, for all of them together, whether PostHog may block those addresses for every send, which also stops PostHog's emails to them from every other sender, such as a reset link. Yes: import them, as the table says. No, or no answer: set `moves` to `no` for each moved site whose sender such an entry names, with the reason `recipients blocked for its sender at Brevo`, before Step 7 rewrites it. An entry that names no moved site's sender is left out: Brevo keeps applying it to the sites that stay.
+**Blocks for some senders.** Do this after "Blocked domains": a no there keeps every moved site, and then nothing here applies. An admin block or an unsubscribe that names the sender of a moved site, without blocking the address for every sender that sends through PostHog, would let that site's sends reach an address Brevo skipped for it. When a moved site's sender isn't a fixed value and the person can't name all its values, every admin block and unsubscribe counts as naming that site's sender. A call that `mapping.md` names under "Calls that change the blocked list" counts too when it blocks addresses for a moved site's sender. PostHog's list can't block an address for one sender. When there are such entries or calls, ask the person once, for all of them together, whether PostHog may block those addresses for every send, which also stops PostHog's emails to them from every other sender, such as a reset link. Yes: import the entries, as the table says. No, or no answer: set `moves` to `no` for each moved site whose sender such an entry or call names, with the reason `recipients blocked for its sender at Brevo`, before Step 7 rewrites it. An entry that names no moved site's sender is left out: Brevo keeps applying it to the sites that stay.
+
+When the list isn't read, because there is no file, no key, or no import tool, ask the person once to look in the dashboard (Settings, then Transactional emails, then Blocked or Unsubscribed contacts) for unsubscribes and admin blocks that name a moved site's sender. None: nothing changes. Some: ask the question above, and a yes puts adding those addresses in PostHog by hand into the report's "Before cutover". No, no answer, or they can't tell: the sites they name stay, every moved site when they can't tell which, with the same reason.
 
 **Leave out the other entries.** Blocked contacts of Brevo's email campaigns, under CRM, then Contacts, are a marketing list, not the transactional one.
 
@@ -75,16 +77,16 @@ Import every hard bounce and spam complaint. An admin block or an unsubscribe ca
 Brevo can block every address on a domain. PostHog's list takes addresses, not domains, so a moved site's sends would reach addresses on a blocked domain again. Check this in Step 5, whether or not the import runs. Read the domains from `GET https://api.brevo.com/v3/smtp/blockedDomains` with the header `api-key: $BREVO_MIGRATION_API_KEY`, which answers `{ domains }`. Without a key, ask the person to read the list in the dashboard, next to the blocked contacts: the blocked contacts file doesn't hold it.
 
 - No blocked domains: nothing changes.
-- Blocked domains: ask the person once, naming them, whether the moved sites may send to those domains again. Yes: the sites move, and the report names the domains. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
+- Blocked domains: ask the person once, naming them, whether the moved sites may send to those domains again. Yes: the sites move, and the report counts the domains. No, or no answer: set `moves` to `no` for each moved site, with the reason `domains blocked at Brevo`, before Step 7 rewrites it.
 - Nobody can tell whether the account blocks a domain: set `moves` to `no` for each moved site, with the reason `blocked domains not checked`.
 
 A site whose code sends only to fixed addresses, none on a blocked domain, keeps moving in each case.
 
 ## For the report
 
-Write these whether or not the import runs:
+Count these whether or not the import runs, and never write an address or a domain:
 
-- the addresses Brevo blocks for some senders only, by admin blocks and unsubscribes, that name a moved site's sender, and whether the person's yes imported them or the sites they name stayed, from the dashboard file or the API, as "Suppression list" says. When the list isn't read, write that the moved sites can reach addresses Brevo blocked for their sender: the report's "Before cutover" asks the person to add those addresses in PostHog with the rest of the list, knowing PostHog blocks them for every send, or to keep those sites on Brevo;
-- the blocked domains and the person's answer, as "Blocked domains" says.
+- the addresses Brevo blocks for a moved site's sender only, by admin blocks and unsubscribes, and whether the person's yes imported them or the sites they name stayed, as "Blocks for some senders" says. When the list isn't read, write the person's answer there instead;
+- the blocked domains, and the person's answer, as "Blocked domains" says.
 
 Write a count you can't get as not known.
