@@ -62,6 +62,8 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 SendGrid keeps several suppression lists. It skips an address on any of them on every send.
 
+**For Step 3's question.** SendGrid's suppression list, in Step 3's question about the sites that rely on it, is Bounces, Spam Reports, Invalid Emails, and Global Unsubscribes together. A person adds to them by hand under Suppressions, and the app with the calls `mapping.md` names under "Calls that change the suppression list", such as an unsubscribe handler that adds a global unsubscribe. A global unsubscribe stopped every send to the address at SendGrid, transactional ones too, unless the send bypassed it, and a moved send reaches it, as "Leave out the other lists" says: name Global Unsubscribes in the question. A site that sets `asm` or `mailSettings` already stays, as `mapping.md` says, so the question leaves out group unsubscribes and the bypass settings.
+
 Whenever the person adds entries to PostHog's list by hand, in the import or a re-import, such as when the import tool is missing, ask only whether the Address Allow List and Bounce Purge are on, as "For the report" says, and for Bounce Purge's two day counts. Tell them the rule of each one that is on: leave out the addresses and domains on the Allow List, which they read in SendGrid themselves, and the bounces older than the day count for their kind, as "Leave out what SendGrid delivered to anyway" says. A setting they can't say is on gets no rule.
 
 **Export from the dashboard (preferred).** In SendGrid: Suppressions, then each of Bounces, Spam Reports, and Invalid Emails, then **Export CSV**. Ask the person where they saved each file. Read the header row to find the address column.
@@ -76,11 +78,11 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 
 **Map each entry.**
 
-| SendGrid list | PostHog source | Reason |
-|---|---|---|
-| Bounces | bounce | `Imported from SendGrid: bounce` |
-| Invalid Emails | bounce | `Imported from SendGrid: invalid address` |
-| Spam Reports | complaint | `Imported from SendGrid: spam report` |
+| SendGrid list | PostHog `reason` |
+|---|---|
+| Bounces | `bounce` |
+| Invalid Emails | `bounce` |
+| Spam Reports | `complaint` |
 
 **Leave out what SendGrid delivered to anyway.** Before you take the entries, ask the person what "For the report" asks about the Address Allow List and Bounce Purge, unless they answered it in this run, and, when the Allow List is on, ask for its entries. Apply each one on its own:
 
