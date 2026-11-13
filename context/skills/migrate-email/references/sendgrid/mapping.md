@@ -28,7 +28,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |
 | `ipPoolName` / `ip_pool_name` | none | Always. PostHog's send doesn't take it yet |
 | `mailSettings` / `mail_settings` | none | Always. Sandbox mode is not a send |
-| `personalizations` | the fields of its one entry | It holds more than one entry. One entry moves when each field in it moves |
+| `personalizations` | the fields of its one entry. An entry's own `from` or `subject` takes the place of the send's, as the [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) says such values override the message's | It holds more than one entry. One entry moves when each field in it moves |
 
 **Open and click tracking.** PostHog adds its open pixel to every email it sends, and a send in the code form counts no clicks, as Step 7 says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. Otherwise the account's setting decides, as `account.md` says under "Tracking".
 
