@@ -18,13 +18,15 @@ The API key lives in `LOOPS_API_KEY` by convention. Apps also use their own name
 | PHP | `loops-so/loops` (Composer) | `(new LoopsClient($key))->transactional->send(...)` |
 | Ruby | `loops_sdk` | `LoopsSdk::Transactional.send(...)` |
 
-Loops has no official SDK for Python, .NET, Java, or Elixir. Apps in those languages call the HTTP API, or use a community package that calls it: `pyloops` (Python), `loops_ex` (Elixir), `tilebox/loops-go` (Go), PlutoLinks' `loops-php` and `laravel-loops` (PHP), `loops_rails` (Rails), and a Java and a .NET package, as Loops' SDK page lists them. A send through a community package posts the same body as the HTTP API below: read the package call for its fields.
+Loops has no official SDK for Python, .NET, Java, or Elixir. Apps in those languages call the HTTP API, or use a community package that calls it: `pyloops` (Python), `loops_ex` (Elixir), `tilebox/loops-go` (Go), PlutoLinks' `loops-php` and `laravel-loops` (PHP), `loops_rails` (Rails), and a Java and a .NET package, as Loops' SDK page lists them. A send through a community package posts the same body as the HTTP API below: read the installed package for the body its call posts.
+
+**Where Loops' docs say nothing.** Read the Loops client installed in the app, such as `node_modules/loops`, `vendor/loops-so/loops`, the `loops_sdk` gem in the bundle, or `github.com/loops-so/loops-go` in the Go module cache, and decide from its source. Name the file you read in the site's plan row. A site stays for a gap in Loops' docs only when the installed client doesn't settle it either, and the reason names what is open.
 
 These are not Loops, and alone they are not a migration: `@loopback/*` and `loopback` are the LoopBack framework, and `nodemailer` sends through any SMTP server. A variable or function named `loops` is not the provider: look for the import, `LoopsClient`, `transactionalId`, or the host `app.loops.so`.
 
 ## Clients and sends
 
-**Node.js.** `sendTransactionalEmail` answers Loops' body, `{ success: true }`. It carries no message id. It throws `APIError` on an API error, with `err.statusCode` and `err.json` (Loops' error body, such as `{ success: false, message }`). Loops' JavaScript SDK page also names `RateLimitExceededError` for rate limits, without its properties. Both come from `loops`.
+**Node.js.** `sendTransactionalEmail` answers Loops' body, `{ success: true }`. It carries no message id. It throws `APIError` on an API error, with `err.statusCode` and `err.json` (Loops' error body, such as `{ success: false, message }`). Loops' JavaScript SDK page also names `RateLimitExceededError` for rate limits: read its other properties in the installed package. Both come from `loops`.
 
 ```js
 import { LoopsClient, APIError } from 'loops'
@@ -43,9 +45,9 @@ await loops.sendTransactionalEmail({
 - `attachments: [{ filename, contentType, data }]` attaches files. `data` is base64.
 - `headers` carries request headers, such as `Idempotency-Key`, as Loops' examples show.
 
-**Go.** Loops' Go SDK page shows `loops.NewClient(key)` and a call that answers an `error`: an API error is a `*loops.APIError` with `StatusCode` and `Message`, read with `errors.As`. Any other error, such as a network error, is not one. Loops' docs show no Go transactional send, and don't say whether the client retries or takes a `context.Context`. Find the send by the `github.com/loops-so/loops-go` import, and read its fields from the call: they carry the HTTP body's fields under Go names.
+**Go.** Loops' Go SDK page shows `loops.NewClient(key)` and a call that answers an `error`: an API error is a `*loops.APIError` with `StatusCode` and `Message`, read with `errors.As`. Any other error, such as a network error, is not one. Loops' docs show no Go transactional send, and don't say whether the client retries or takes a `context.Context`. Find the send by the `github.com/loops-so/loops-go` import, and read the installed module for its method, the body field each request field sets, whether it takes a context, and its retries and default timeout.
 
-**PHP.** `send` answers Loops' body, as Loops' examples read it. It throws `Loops\Exceptions\APIError` on an API error, with `getStatusCode()`, `getJson()`, and `getMessage()`. Loops' PHP SDK page also names `RateLimitExceededError` for rate limits.
+**PHP.** `send` answers Loops' body, as Loops' examples read it. It throws `Loops\Exceptions\APIError` on an API error, with `getStatusCode()`, `getJson()`, and `getMessage()`. Loops' PHP SDK page also names `RateLimitExceededError` for rate limits: read its namespace and methods in the installed package.
 
 ```php
 use Loops\LoopsClient;
@@ -59,9 +61,9 @@ $loops->transactional->send(
 );
 ```
 
-Loops' examples also pass `attachments`, each file with the keys `filename`, `content_type`, and `data`. Read any other parameter from the call.
+Loops' examples also pass `attachments`, each file with the keys `filename`, `content_type`, and `data`. Read the installed client for the body field any other parameter sets.
 
-**Ruby.** `send` answers Loops' body, as Loops' examples read it. It raises `LoopsSdk::APIError` on an API error, with `statusCode` and `json` (Loops' error body). Loops' Ruby SDK page names no class for rate limits.
+**Ruby.** `send` answers Loops' body, as Loops' examples read it. It raises `LoopsSdk::APIError` on an API error, with `statusCode` and `json` (Loops' error body). Loops' Ruby SDK page names no class for rate limits: read the installed gem for the class it raises on a `429`.
 
 ```ruby
 LoopsSdk.configure { |config| config.api_key = ENV['LOOPS_API_KEY'] }
@@ -74,7 +76,7 @@ LoopsSdk::Transactional.send(
 )
 ```
 
-Loops' examples also pass `attachments`, each file with the keys `filename`, `content_type`, and `data`. Read any other parameter from the call.
+Loops' examples also pass `attachments`, each file with the keys `filename`, `content_type`, and `data`. Read the installed client for the body field any other parameter sets.
 
 **HTTP.** `POST https://app.loops.so/api/v1/transactional` with `Authorization: Bearer <key>`. Loops' docs name one host, with no regional host. Code can point an SDK client at another URL, such as a proxy or a test server, where the client takes one: a send through it is still a Loops site. A success answers `200` with `{ "success": true }` and no message id. An error answers `{ "success": false, "message": "..." }`, sometimes with an `error` object of `path` and `message`. A `409` means the `Idempotency-Key` was used in the last 24 hours. A `429` means the rate limit, 10 requests per second per team. Look for `app.loops.so` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
 
@@ -146,7 +148,7 @@ Look for routes that read `eventName`, `contactIdentity`, `sourceType`, or `tran
 
 These are not transactional sends, and they stay on Loops:
 
-- Contacts (`/api/v1/contacts/*`): `createContact`, `updateContact`, and `deleteContact` in Node.js, `LoopsSdk::Contacts` in Ruby, the other contact calls, the suppression check, and its removal, `DELETE /api/v1/contacts/suppression`. Loops' docs show the removal only over HTTP and in its CLI: in an SDK, it is a call whose name says it removes a suppression.
+- Contacts (`/api/v1/contacts/*`): `createContact`, `updateContact`, and `deleteContact` in Node.js, `LoopsSdk::Contacts` in Ruby, the other contact calls, the suppression check, and its removal, `DELETE /api/v1/contacts/suppression`. Loops' docs show the removal only over HTTP and in its CLI: in an SDK, it is the call that the installed client sends as that request.
 - Events: `sendEvent`, `LoopsSdk::Events.send` in Ruby, or `SendEvent` in Go (`POST /api/v1/events/send`) starts Loops workflows, which send Loops' own workflow emails.
 - Mailing lists (`/api/v1/lists`), contact properties, and the content API for campaigns, transactional emails, email messages, themes, components, workflows, and uploads (`/api/v1/campaigns`, `/api/v1/transactional-emails`, `/api/v1/email-messages`, `/api/v1/workflows`, and the others).
 - `GET /api/v1/api-key`, which tests a key.
