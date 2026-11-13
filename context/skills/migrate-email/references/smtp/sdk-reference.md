@@ -169,7 +169,7 @@ await client.SendAsync(message);
 await client.DisconnectAsync(true);
 ```
 
-- It throws on an error: `SmtpCommandException` (with `StatusCode`, `ErrorCode`, and `Mailbox`), `SmtpProtocolException`, or `AuthenticationException`.
+- It throws on an error: `SmtpCommandException` (with `StatusCode`, `ErrorCode`, and `Mailbox`), `SmtpProtocolException`, or `AuthenticationException`. A network failure, such as an `IOException`, a `SocketException` or a failed TLS handshake, throws past `SmtpCommandException`, as "Errors" in `mapping.md` says.
 - `message.Cc`, `Bcc`, `ReplyTo`, `builder.Attachments.Add(...)`, `builder.LinkedResources`, and `message.Headers` set the rest. `message.MessageId` is the Message-ID.
 
 `System.Net.Mail.SmtpClient` sends a `MailMessage` with `From`, `To`, `CC`, `Bcc`, `ReplyToList`, `Subject`, `Body`, `IsBodyHtml`, `AlternateViews`, `Attachments`, `Headers`, and `Priority`. `Send` and `SendMailAsync` throw `SmtpException` (with `StatusCode`), `SmtpFailedRecipientException`, or `SmtpFailedRecipientsException`. The older `SendAsync(message, userToken)` returns at once and reports the send's result and its error to a `SendCompleted` event handler instead of throwing them.
