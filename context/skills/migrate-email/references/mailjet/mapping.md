@@ -115,7 +115,7 @@ Mailjet's template language, in the code:
 | `{{mj:template.ID}}`, `{{mj:template.name}}` | The template's number and name, written as they are |
 | The template's `Headers.Subject`, or the site's `Subject` | The send's `subject`, rendered with the same language and no escaping |
 | The template's `Html-part` | The send's `html`. `MJMLContent` is not used: the HTML part is already rendered from it |
-| The template's `Text-part` | The send's `text`, with no escaping. An empty `Text-part` sends `html` only. The docs don't say what text Mailjet made from the HTML for a template with `IsTextPartGenerationEnabled`: note it in the plan row |
+| The template's `Text-part` | The send's `text`, with no escaping. An empty `Text-part` on a template with `IsTextPartGenerationEnabled` sends `html` only: Mailjet made a text part from the HTML, and PostHog does the same. The docs don't say what text Mailjet made: note it in the plan row. An empty `Text-part` on a template without it, or when you can't tell, sent no text part, which a PostHog send can't do: the template stays, and the reason is `turns the plain-text part off` |
 | The template's `Headers.From`, `Headers.Reply-to` | The send's `from` and `replyTo`, as the "Fields" table writes `From` and `ReplyTo` |
 
 **Escaping.** Mailjet's docs never say it escapes a value, and its `Escape` function is there to escape one, so Mailjet inserted each value as it is. In the HTML part, a value the code builds as HTML itself goes in as it is, under the rule of `template-to-code.md`. Escape every other value, and note each one that carries text from a user, a form, or another service in the plan row. Never escape a value in the text part or the subject, unless the template passes it through `Escape`.
@@ -175,7 +175,7 @@ Mailjet's Event API stops getting events for a site that moves. PostHog records 
 | `bounce` | `$workflows_email_bounced` |
 | `spam` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive: its links go out as they are, and it counts no clicks |
+| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. PostHog treats a send in the code form as sensitive when no template saved in PostHog has its key, which Step 7 makes sure: its links go out as they are, and it counts no clicks |
 | `blocked` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `unsub` | none |
 
@@ -187,7 +187,7 @@ A site whose emails a handler acts on for an event that has no PostHog event in 
 
 ## Calls that change the suppression list
 
-The import takes hard bounces and spam reports, as `account.md` says. Mailjet records both itself, and these files know of no API call that adds one. A call that deletes a contact may remove its spam report: treat it as a call that removes an address, as Step 5 says. A call that unsubscribes a contact from a list, or sets `IsExcludedFromCampaigns`, changes a list the import leaves out, so it is not one of these calls.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on Mailjet. Mailjet records hard bounces and spam reports itself, and these files know of no API call that adds one. A call that deletes a contact may remove its spam report: it is a call that removes an address. A call that unsubscribes a contact from a list, or sets `IsExcludedFromCampaigns`, changes a list that doesn't stop a Send API email, as `account.md` says, so it is not one of these calls.
 
 ## Rewrite
 

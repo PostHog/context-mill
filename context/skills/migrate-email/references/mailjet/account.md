@@ -30,9 +30,9 @@ That pair reads the templates and the suppression data, so this run creates no p
 
 A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, with the template language as it is written. A site with `TemplateLanguage: true` and its own content needs none of this: its content is in the code.
 
-**Copy from the dashboard.** In the Mailjet dashboard, open the template. Ask the person for the template's number, its subject, its sender and reply-to address, any other header it sets, its HTML, and its plain text when it has one. For a template built in the drag-and-drop or MJML editor, ask for the HTML it exports, not the editor's source.
+**Copy from the dashboard.** In the Mailjet dashboard, open the template. Ask the person for the template's number, its subject, its sender and reply-to address, any other header it sets, its HTML, and its plain text when it has one. When it has none, ask whether Mailjet generates a text version of the template, since `mapping.md` says under "Templates" that this decides the site. For a template built in the drag-and-drop or MJML editor, ask for the HTML it exports, not the editor's source.
 
-**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, `Reply-to`, and any other header the template sets. Use `Html-part`, not `MJMLContent`: Mailjet renders the HTML part from the MJML. A v3 site can pass the template's name in `Mj-TemplateID` instead of its number: `GET https://api.mailjet.com/v3/REST/template?Name={name}` answers its `ID`. When the API answers no template for the number the site sends, ask the person for the dashboard copy.
+**Read from the API.** `GET https://api.mailjet.com/v3/REST/template/{template_id}/detailcontent` with Basic auth from the pair above. The answer holds `Data`, a list with one entry of `{ "Html-part", "Text-part", "MJMLContent", Headers }`, and `Headers` holds `From`, `Subject`, `Reply-to`, and any other header the template sets. Use `Html-part`, not `MJMLContent`: Mailjet renders the HTML part from the MJML. A v3 site can pass the template's name in `Mj-TemplateID` instead of its number: `GET https://api.mailjet.com/v3/REST/template?Name={name}` answers its `ID`. When `Text-part` is empty, `GET https://api.mailjet.com/v3/REST/template/{template_id}` answers the template's settings, whose `IsTextPartGenerationEnabled` says whether Mailjet generated a text version. When the API answers no template for the number the site sends, ask the person for the dashboard copy.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
@@ -51,17 +51,19 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 
 **Map each entry.**
 
-| Mailjet | PostHog source | Reason |
-|---|---|---|
-| Spam reports, and contacts with `IsSpamComplaining` | complaint | `Imported from Mailjet: spam report` |
-| Hard bounces | bounce | `Imported from Mailjet: hard bounce` |
-| Blocked addresses in an export, when the person can't tell why | manual | `Imported from Mailjet: blocked` |
+| Mailjet | PostHog `reason` |
+|---|---|
+| Spam reports, and contacts with `IsSpamComplaining` | `complaint` |
+| Hard bounces | `bounce` |
+| Blocked addresses in an export, when the person can't tell why | `manual` |
 
 **Leave out the other lists.**
 
 - **Soft bounces** (`MessageStatus=9`) are temporary refusals by a receiving server, not a sign that the address is bad.
 - **The campaign exclusion list** (`IsExcludedFromCampaigns`) blocks marketing campaigns only: Mailjet still sends Send API email to those addresses, and so will PostHog.
 - **Unsubscribes** from contact lists are marketing preferences, and PostHog's opt-outs apply to marketing messages only.
+
+**Step 3's question.** Mailjet keeps a suppression list: the addresses it blocks, as above. When Step 3 asks which sites rely on that list to stop mailing an address someone added to it, call it the addresses Mailjet blocks. The campaign exclusion list and contact-list unsubscribes don't stop a Send API email, so a site that relies on them only is not one of those sites.
 
 ## For the report
 
