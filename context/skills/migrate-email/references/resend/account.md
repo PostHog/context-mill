@@ -55,10 +55,10 @@ Resend suppresses an address after a hard bounce or a spam complaint, and keeps 
 
 **Map each entry.**
 
-| Resend `origin` | PostHog source | Reason |
-|---|---|---|
-| `bounce` | bounce | `Imported from Resend: hard bounce` |
-| `complaint` | complaint | `Imported from Resend: spam complaint` |
-| `manual` | manual | `Imported from Resend: added by hand` |
+| Resend `origin` | PostHog `reason` |
+|---|---|
+| `bounce` | `bounce` |
+| `complaint` | `complaint` |
+| `manual` | `manual` |
 
 **Leave out unsubscribed contacts.** A Resend contact with `unsubscribed: true` still gets transactional email, and PostHog's opt-outs apply to marketing messages only. They are not suppressions.
