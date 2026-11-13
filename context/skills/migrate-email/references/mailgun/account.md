@@ -58,6 +58,14 @@ For a site that sets neither `o:tracking-opens` nor `o:tracking`, open tracking 
 
 For a site that moves to a template made in PostHog, click tracking off means Mailgun didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog". A send's own tracking fields override the domain's setting, as `mapping.md` says under "Tracking".
 
+## Archive setting
+
+A domain can post a copy of each delivered message to a URL, its `archive_to`, with no field on the send, as `mapping.md` says under "Tracking".
+
+**Ask the person** whether the sending domain posts a copy of each delivered message to a URL.
+
+**Read from the API.** `GET https://api.mailgun.net/v4/domains/<domain>`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer's `domain.archive_to` holds the URL when one is set.
+
 ## Suppression list
 
 Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out.
