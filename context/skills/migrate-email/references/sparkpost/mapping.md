@@ -76,7 +76,11 @@ A site sends from the primary account, or from a subaccount when its API key bel
 
 SparkPost keeps an idempotency key per account, and PostHog per project. When the sites that move send from more than one account, two of them can send the same key for different emails, and PostHog would refuse the second. Then give each moved site's key its account as a prefix, such as `sub-<subaccount id>-` or `primary-`, and note in the plan row that the key changed. A site whose prefixed key can be longer than 255 characters stays, and the reason is `idempotency key can't carry its account`.
 
-PostHog keeps one suppression list per project. When the sites that move send from more than one account, Step 5 imports the list of each of them into that one list. PostHog then refuses a moved send to an address that any of those accounts suppressed, even when the site's own account never suppressed it. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one account's sites move. The sites of every other account stay, and the reason is `SparkPost account <name> keeps its own suppression list`.
+PostHog keeps one suppression list per project. When the sites that move send from more than one account, Step 5 imports the list of each of them into that one list. PostHog then refuses a moved send to an address that bounced in any of those accounts, even when the site's own account never suppressed it. Tell the person so, and ask once whether the moved sites may share one suppression list. When they say no, ask which one account's sites move. The sites of every other account stay, and the reason is `SparkPost account <name> keeps its own suppression list`.
+
+### Suppression list
+
+SparkPost keeps a suppression list, so Step 3 asks which moving sites rely on it to stop mailing an address someone added to it, as it says after the sender check, and the reason is `relies on SparkPost's suppression list`. In SparkPost, those are the `Manually Added` and `Compliance` entries, which someone added in the dashboard, and the addresses the app's calls add, as "Calls that change the suppression list" says. Ask about the list of each account the sites send from, as "Subaccounts" says. `List Unsubscribe` and `Unsubscribe Link` entries are unsubscribes from non-transactional mail, which `options.transactional` already asks about for each site they reach.
 
 ## Code around the send
 
@@ -256,10 +260,10 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 ## Calls that change the suppression list
 
-Step 5 says what to do with each of these calls. They are not sends, and they stay on SparkPost.
+Step 3 and Step 5 say what to do with each of these calls. They are not sends, and they stay on SparkPost.
 
 | Adds an address | Removes an address |
 |---|---|
 | `PUT /api/v1/suppression-list`, `PUT /api/v1/suppression-list/{recipient}`, and each SDK's call for them, such as `client.suppressionList.upsert` in Node.js | `DELETE /api/v1/suppression-list/{recipient}`, and each SDK's call for it, such as `client.suppressionList.delete` in Node.js |
 
-The import takes only some entries, as `account.md` says under "Map each entry", so only a write of type `transactional` without a `list_id` counts. A `DELETE` without `type` removes the address's `transactional` and `non_transactional` entries, so it counts as a removal of a `transactional` one. A write of type `non_transactional`, or with a `list_id`, is a marketing preference, and stays a SparkPost write only. A write of type `open_tracking` blocks no send: "Tracking" says what it does to a site. The account each call writes to is the one "Subaccounts" names for its key or `X-MSYS-SUBACCOUNT` value.
+A write of type `open_tracking` blocks no send: "Tracking" says what it does to a site. The account each call writes to is the one "Subaccounts" names for its key or `X-MSYS-SUBACCOUNT` value.

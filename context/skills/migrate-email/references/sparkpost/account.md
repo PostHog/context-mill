@@ -70,14 +70,14 @@ The answer holds `results`, a list of `{ recipient, type, source, description, l
 
 **Map each entry.**
 
-| SparkPost `source` | Entries to take | PostHog source | Reason |
-|---|---|---|---|
-| `Bounce Rule` | Every type | bounce | `Imported from SparkPost: bounce` |
-| `Spam Complaint` | Every type | complaint | `Imported from SparkPost: spam complaint` |
-| `Manually Added` | `transactional` only | manual | `Imported from SparkPost: added manually` |
-| `Compliance` | `transactional` only | manual | `Imported from SparkPost: compliance` |
+| SparkPost `source` | Entries to take | PostHog `reason` |
+|---|---|---|
+| `Bounce Rule` | Every type | `bounce` |
+| `Spam Complaint` | Every type | `complaint` |
+| `Manually Added` | `transactional` only | `manual` |
+| `Compliance` | `transactional` only | `manual` |
 
-An address can come back once per type. Repeating it in the import is safe.
+An address can come back once per type. Repeating it in the import is safe. PostHog blocks a moved send only to an address imported as `bounce`, as Step 5 says: a `complaint` or `manual` entry blocks only PostHog's marketing email. Step 3 asks which sites rely on the entries someone added, as `mapping.md` says under "Suppression list".
 
 **Leave out the other entries.**
 
