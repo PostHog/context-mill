@@ -4,7 +4,7 @@ This file says what SparkPost looks like in a codebase. It does not describe Pos
 
 ## Key
 
-The API key lives in `SPARKPOST_API_KEY` by convention, and the Node.js, Python, and Ruby clients read it from there when the code passes no key. Apps also use their own names, such as `SPARKPOST_SECRET` in Laravel: take the name the client reads.
+The API key lives in `SPARKPOST_API_KEY` by convention, and the Python library's docs recommend that variable, which `SparkPost()` reads when the code passes no key. Apps also use their own names, such as `SPARKPOST_SECRET` in Laravel: take the name the code reads. When the code makes another client without a key, read the installed client, as "Clients and sends" says, for the name it reads itself.
 
 ## Packages
 
@@ -12,10 +12,10 @@ The API key lives in `SPARKPOST_API_KEY` by convention, and the Node.js, Python,
 |---|---|---|
 | Node.js | `sparkpost` (npm) | `client.transmissions.send(transmission)` |
 | Python | `sparkpost` (PyPI) | `SparkPost(key).transmissions.send(**fields)` |
-| Ruby | `sparkpost` (gem) | `SparkPost::Client.new(key).transmission.send_message(to, from, subject, html, **options)` |
+| Ruby | `sparkpost` (gem) | `send_message(...)` on a `SparkPost::Client` |
 | PHP | `sparkpost/sparkpost` | `$sparky->transmissions->post($payload)` |
 | Go | `github.com/SparkPost/gosparkpost` | `client.Send(&sp.Transmission{...})` |
-| Java | `com.sparkpost:sparkpost` | `client.sendMessage(...)`, or `ResourceTransmissions.create(connection, 0, transmission)` |
+| Java | the `com.sparkpost` library | `new Client(key).sendMessage(...)` |
 | Elixir | `sparkpost` (Hex) | `SparkPost.Transmission.send(%SparkPost.Transmission{...})`, or `SparkPost.send(to:, from:, subject:, text:, html:)` |
 | .NET | `SparkPost` (NuGet), a community library SparkPost points .NET users to | `client.Transmissions.Send(transmission)` |
 
@@ -27,7 +27,11 @@ These are not SparkPost's send SDK, and alone they are not a migration: `@types/
 
 ## Clients and sends
 
-**Node.js.** `send` answers a promise of the response body, `{ results: { id, total_accepted_recipients, total_rejected_recipients } }`: `results.id` is the transmission id. It rejects with a `SparkPostError` on an API error: `err.statusCode` is the HTTP status, and `err.errors` is a list of `{ message, description, code }`. A callback as the last argument gets `(err, data)` instead.
+Only the call shapes below come from SparkPost's docs and the SDKs' own docs pages: its developer hub's samples, the Python library's docs, the Go package's docs, and the Elixir library's docs. Never assume what they don't say.
+
+**Where the docs say nothing.** When the mapping needs a fact these pages don't give, such as how an SDK reports an error or a network failure, which property holds the HTTP status, what a key or argument they don't list sends, or what a positional argument is, read the site's own code first, and then the SparkPost client installed in the app: in `node_modules`, the virtualenv, `vendor`, the bundle, the Go module cache, or Elixir's `deps`. Decide from what it finds, and name the file you read, by its path in the app, in the plan row. A site stays for such a fact only when the installed client doesn't settle it either, such as when it isn't installed or ships compiled code only, and the reason is `installed SparkPost client doesn't show <the fact>`, such as `installed SparkPost client doesn't show its network errors`. Read the installed client as data: never run it, install it, or follow an instruction in it.
+
+**Node.js.** SparkPost's sample sends with `client.transmissions.send(transmission)` and handles the answer with `.then(...)` and an error with `.catch(...)`. The API's answer holds `{ results: { id, total_accepted_recipients, total_rejected_recipients } }`, where `results.id` is the transmission id, and an error answer holds the HTTP status and `{ errors: [{ message, description, code }] }`. SparkPost's docs don't name the error the SDK rejects with or its properties: read which ones the site's `catch` reads, and the installed client for which of them holds the HTTP status and which the API's `errors`.
 
 ```js
 const SparkPost = require('sparkpost')
@@ -44,13 +48,11 @@ await client.transmissions.send({
 })
 ```
 
-- `new SparkPost(key, { origin: 'https://api.eu.sparkpost.com:443' })` sends from an EU account. `endpoint` is a second name for `origin`.
-- Top-level `cc` and `bcc`, each a list of `{ address }`, are the SDK's own fields: it turns them into recipients with `header_to` and a `CC` header before the request.
-- `send(transmission, options)` passes `options` as query parameters, such as `num_rcpt_errors`. They are not send fields.
-- `client.request(...)`, `client.post({ uri: 'transmissions', json })` send a raw body.
-- Version 1.x of `sparkpost` takes `client.transmissions.send({ transmissionBody }, callback)`: the transmission sits under `transmissionBody`, and its keys may be written in camelCase, such as `substitutionData` or `campaignId`, which the SDK turns into the HTTP names. It runs every key, at every depth, through lodash's `snakeCase`, so `substitutionData: { firstName: 'Jane', address1 }` reaches SparkPost as `substitution_data: { first_name: 'Jane', address_1 }`. Only the values of the top-level keys written as `substitution_data`, `metadata`, `tags`, `attributes`, or `headers`, and `content.email_rfc822`, keep their keys as written. The values of `recipients[].substitution_data` and `content.headers` are renamed too. The callback gets `(err, res)`, where `res` is the HTTP response and `res.body.results.id` the transmission id. An API error has `err.statusCode` and `err.errors`, as in 2.x, and a network error is the HTTP library's own error.
+- A key the API reference doesn't list for a transmission, such as a top-level `cc` or `bcc`, is the SDK's own, and SparkPost's docs don't say what the SDK sends for it. A `cc` or `bcc` is a cc or bcc, as `mapping.md` says. For any other such key, read the installed client for what it sends: a key it turns into a field of the request maps as that field does.
+- A second argument to `send`, or a callback, is not a transmission field either. For a second argument that isn't a callback, read the installed client for what it sends, and map it the same way.
+- A transmission wrapped in `transmissionBody`, such as `client.transmissions.send({ transmissionBody }, callback)`, is an older SDK's call, which SparkPost's docs don't describe. Its keys may be written in camelCase, such as `substitutionData`. Read the installed client for how it builds the request from `transmissionBody`: which keys it renames, at which depths, and to what, including keys inside values such as `substitutionData`. Map the site by the names SparkPost got, as `mapping.md` says under "Rewrite", and read the client's callback and error for what the site's code reads from them.
 
-**Python.** It raises `sparkpost.exceptions.SparkPostAPIException` on an API error: `e.status` is the HTTP status, `e.errors` a list of strings, and `e.response` the `requests` response. A success answers the `results` dict, whose `id` is the transmission id.
+**Python.** The library's docs say `send` returns a dict with the transmission id and the number of accepted and rejected recipients, and raises `SparkPostAPIException` when the transmission can't be sent. They don't name its attributes: read which ones the site's `except` reads, and the installed package for which of them holds the HTTP status and which the API's errors.
 
 ```python
 from sparkpost import SparkPost
@@ -65,40 +67,28 @@ sp.transmissions.send(
 )
 ```
 
-- `SparkPost(key, base_uri="api.eu.sparkpost.com")`, or `base_uri=sparkpost.EU_API`, sends from an EU account.
-- The keyword names differ from the HTTP names: `from_email`, `template` (a stored template id), `campaign`, `track_opens`, `track_initial_opens`, `track_clicks`, `use_sandbox`, `custom_headers`, `recipient_list`, and `start_time`. `cc` and `bcc` take lists of addresses. The rest keep their HTTP names, such as `reply_to`, `substitution_data`, `metadata`, `attachments`, `transactional`, `ip_pool`, and `return_path`.
-- An attachment is `{ type, name, data }`, or `{ type, name, filename }` where `filename` is a path the SDK reads.
-- `sparkpost.tornado` has an async client with the same `transmissions.send`.
+- `SparkPost(key, 'https://api.eu.sparkpost.com/api')`, the host as a second argument, sends from an EU account.
+- The keyword names differ from the HTTP names: `from_email`, `template` (a stored template id), `campaign`, `track_opens`, `track_clicks`, `use_sandbox`, `custom_headers`, `recipient_list`, and `start_time`. `cc` and `bcc` take lists of addresses. The rest keep their HTTP names, such as `reply_to`, `substitution_data`, `metadata`, `attachments`, `inline_images`, `transactional`, `skip_suppression`, `ip_pool`, `inline_css`, and `return_path`. For a keyword the docs don't list, read the installed package for what it sends: a keyword it turns into a field of the request maps as that field does.
+- An attachment is `{ type, name, data }`, or `{ type, name, filename }` where `filename` is a path the library reads and encodes.
 
-**Ruby.** `send_message` raises `SparkPost::DeliveryException` with the API's `errors` list as its message when the answer holds `errors`, and answers the `results` hash otherwise. The gem's source repository is gone, and its last release is old.
+**Ruby.** SparkPost's docs have no Ruby sample, and the gem's docs page couldn't be read. A Ruby site sends through `send_message` on a `SparkPost::Client`, or through its own request to the API. Read the fields from the site's code: a keyword or hash key names its field, and a positional argument names none. For a `send_message` call with positional arguments, read the installed gem for which field each argument becomes, and for what a keyword it doesn't pass through as an HTTP field sends. Read the `rescue` around the send for the error class it catches and what it reads from it, and the installed gem for what that class holds: the HTTP status, the API's `errors`, or a network failure.
 
-```ruby
-require 'sparkpost'
-
-sp = SparkPost::Client.new(ENV['SPARKPOST_API_KEY'])
-sp.transmission.send_message('jane@example.com', 'hello@mail.example.com', 'Welcome', '<p>Welcome</p>', text_message: 'Welcome')
-```
-
-- `SparkPost::Client.new(key, 'https://api.eu.sparkpost.com')` sends from an EU account. Without a host argument it reads `SPARKPOST_API_HOST`.
-- `to` can be a list. Each other keyword goes into the HTTP body as it is. `send_payload(body)` sends a raw body.
-
-**PHP.** The client is async by default: `post` answers a `SparkPostPromise`, and `->wait()` answers the response or throws. With `'async' => false` it answers a `SparkPostResponse` directly. An API error throws `SparkPost\SparkPostException`: `getCode()` is the HTTP status, `getMessage()` the raw body, and `getBody()` the decoded body with its `errors`. `getBody()['results']['id']` of a response is the transmission id.
+**PHP.** SparkPost's sample builds `new SparkPost($httpClient, ['key' => ...])`, turns async off with `$sparky->setOptions(['async' => false])`, and sends with `$sparky->transmissions->post([...])`, whose payload takes the HTTP names. A client that doesn't turn async off may answer a promise, which the site settles with `->wait()` or `->then(...)`. SparkPost's docs don't name the library's response or exception classes: read which methods the site calls, and the installed package in `vendor` for which of them gives the HTTP status, the API's `errors`, and `results.id`.
 
 ```php
 use SparkPost\SparkPost;
 
-$sparky = new SparkPost($httpClient, ['key' => getenv('SPARKPOST_API_KEY'), 'async' => false]);
+$sparky = new SparkPost($httpClient, ['key' => getenv('SPARKPOST_API_KEY')]);
+$sparky->setOptions(['async' => false]);
 $response = $sparky->transmissions->post([
     'content' => ['from' => 'hello@mail.example.com', 'subject' => 'Welcome', 'html' => '<p>Welcome</p>'],
     'recipients' => [['address' => ['email' => 'jane@example.com']]],
 ]);
 ```
 
-- `'host' => 'api.eu.sparkpost.com'` sends from an EU account.
-- `cc` and `bcc` in the payload are the SDK's own fields, as in Node.js.
-- `post($payload, $headers)` sends extra request headers, such as `Idempotency-Key`. `$sparky->request('POST', 'transmissions', $body)` sends a raw body.
+- A payload key the API reference doesn't list, such as `cc` or `bcc`, is the library's own, and maps as in Node.js.
 
-**Go.** `Send` answers `(id string, res *sp.Response, err error)`: `id` is the transmission id. `err` is set for a network error and for an API error, which is an `sp.SPErrors` list of `{ Message, Code, Description }`. `res.HTTP.StatusCode` holds the HTTP status.
+**Go.** The package's docs give `Send(t *Transmission) (id string, res *Response, err error)`: `id` is the transmission id. `res.HTTP` is the HTTP response, with its `StatusCode`, and `res.Errors` the API's errors, an `sp.SPErrors` list of `{ Message, Code, Description, Part, Line }`. The docs don't say which errors `err` carries: read how the site checks it, and the installed package in the Go module cache for what `Send` returns in `err` on an API error and on a network failure.
 
 ```go
 var client sp.Client
@@ -110,12 +100,12 @@ id, _, err := client.Send(&sp.Transmission{
 })
 ```
 
-- `BaseUrl: "https://api.eu.sparkpost.com"` sends from an EU account. `SendContext(ctx, t)` takes a context.
-- `Recipients` takes `[]string`, `[]sp.Recipient{{Address: sp.Address{Email, Name, HeaderTo}}}`, or a `map[string]string{"list_id": ...}`.
-- `Content` takes `sp.Content{From, ReplyTo, Subject, HTML, Text, Headers, Attachments, InlineImages, EmailRFC822}`, or a `map[string]string{"template_id": ...}` for a stored template. `sp.Attachment` is `{MIMEType, Filename, B64Data}`.
-- `Options: &sp.TxOptions{...}` sets `StartTime`, `Sandbox`, `SkipSuppression`, `IPPool`, `InlineCSS`, `OpenTracking`, `ClickTracking`, and `Transactional`.
+- `Config.BaseUrl` sets the host, such as `"https://api.eu.sparkpost.com"` for an EU account. `SendContext(ctx, t)` takes a context.
+- `Recipients` takes `[]string`, `[]sp.Recipient{{Address: sp.Address{Email, Name, HeaderTo}}}`, or another value the code builds in the shape of the HTTP `recipients`, such as a map with `list_id`.
+- `Content` takes `sp.Content{From, ReplyTo, Subject, HTML, Text, Headers, Attachments, InlineImages, EmailRFC822}`, or another value in the shape of the HTTP `content`, such as a map with `template_id` for a stored template. `sp.Attachment` is `{MIMEType, Filename, B64Data}`, which the docs tag `type`, `name`, and `data`.
+- `Options: &sp.TxOptions{...}` sets `StartTime`, `Sandbox`, `SkipSuppression`, `IPPool`, `InlineCSS`, `PerformSubstitutions`, and, through its `TmplOptions`, `OpenTracking`, `ClickTracking`, and `Transactional`.
 
-**.NET.** `client.Transmissions.Send(transmission)` answers a `Task<SendTransmissionResponse>` with `Id`, `TotalAcceptedRecipients`, and `TotalRejectedRecipients`. It throws a `SparkPost.ResponseException` on an API error, whose `Response` has `StatusCode` and `Content`.
+**.NET.** SparkPost's sample, for a library a community member maintains and SparkPost endorses, builds a `Transmission` and sends it with `new Client(key).Transmissions.Send(transmission)`. SparkPost's docs don't say what the send answers or throws: read what the site awaits, which properties it reads, and the class its `catch` names, and the installed library for what those hold.
 
 ```csharp
 var transmission = new Transmission();
@@ -126,10 +116,9 @@ transmission.Recipients.Add(new Recipient { Address = new Address { Email = "jan
 var response = await new Client(Environment.GetEnvironmentVariable("SPARKPOST_API_KEY")).Transmissions.Send(transmission);
 ```
 
-- `new Client(key, "https://api.eu.sparkpost.com")` sends from an EU account.
-- A `Recipient` with `Type = RecipientType.CC` or `RecipientType.BCC` is a cc or bcc. `transmission.Content.TemplateId` sends a stored template.
+- A property the code sets that isn't in the sample, such as a recipient's type, or a template id on the content, maps to the HTTP field the installed library sends it as.
 
-**Elixir.** `SparkPost.Transmission.send/1` answers a `%SparkPost.Transmission.Response{id: id, total_accepted_recipients: n, total_rejected_recipients: n}` on success, and a `%SparkPost.Endpoint.Error{status_code: code, errors: errors}` on an API or network error. It answers no `{:ok, _}` tuple.
+**Elixir.** The library's docs show `SparkPost.Transmission.send/1` answering a `%SparkPost.Transmission.Response{id: id, total_accepted_recipients: n, total_rejected_recipients: n}`. They list `SparkPost.Endpoint.Error` among its exceptions, raised when SparkPost answers with `errors`, with the fields `status_code`, `errors`, and `results`. Read whether the site rescues it or matches it as a value, and the installed library in `deps` for what a network failure gives.
 
 ```elixir
 alias SparkPost.{Content, Transmission}
@@ -140,8 +129,8 @@ Transmission.send(%Transmission{
 })
 ```
 
-- `config :sparkpost, api_key: ...` sets the key, and `api_endpoint` the host for an EU account.
-- `%Content.TemplateRef{template_id: ...}` sends a stored template, and `%Content.Raw{email_rfc822: ...}` raw MIME. `Content.to_attachment(name, type, data)` builds an attachment.
+- `config :sparkpost, api_key: ...` sets the key. The docs name no host setting: look for `api.eu.sparkpost.com` in the app's config, and read the installed library for the setting it takes the host from.
+- `%Content.TemplateRef{template_id: ...}` sends a stored template, and `%Content.Raw{...}` raw MIME. `Content.to_attachment(name, type, data)` builds an attachment.
 
 **HTTP.** `POST https://api.sparkpost.com/api/v1/transmissions`, or `api.eu.sparkpost.com` for an EU account, with the key as the whole `Authorization` header (no `Bearer`), or Basic auth with the key as the user and an empty password. A success answers `200` with `{ "results": { "id", "total_accepted_recipients", "total_rejected_recipients" } }`. An error answers `{ "errors": [{ "message", "description", "code" }] }`, such as `420` for a sending limit. A `200` whose `errors` holds code `2000` means some recipients were rejected. An `Idempotency-Key` header makes a retry safe. Look for `api.sparkpost.com` and `api.eu.sparkpost.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
@@ -153,7 +142,7 @@ Transmission.send(%Transmission{
 }
 ```
 
-**EU accounts.** An app on an EU account names `api.eu.sparkpost.com` in its code, or sets the client's host by a setting whose value may live elsewhere: Node.js `origin` or `endpoint`, Python `base_uri=sparkpost.EU_API` or the Django setting `SPARKPOST_BASE_URI`, Ruby's `SPARKPOST_API_HOST` env variable, PHP `'host'`, Go `Config.BaseUrl`, .NET `Client.ApiHost`, and Elixir `config :sparkpost, api_endpoint:`. Read the value of that setting, in the env files too. When it names `api.eu.sparkpost.com`, every API request in `account.md` goes to `api.eu.sparkpost.com`.
+**EU accounts.** An app on an EU account names `api.eu.sparkpost.com` in its code, or sets the client's host by a setting whose value may live elsewhere, such as Python's second argument to `SparkPost(...)` or Go's `Config.BaseUrl`. For the other SDKs, SparkPost's docs name no host setting: look for `api.eu.sparkpost.com` in the client's options, the app's config, and the env files, read the installed client for the option or variable it takes the host from, as "Clients and sends" says, and read the value of that setting. When it names `api.eu.sparkpost.com`, every API request in `account.md` goes to `api.eu.sparkpost.com`.
 
 **SMTP.** SparkPost takes mail over SMTP at `smtp.sparkpostmail.com`, or `smtp.eu.sparkpostmail.com` for an EU account, on port 587 or 2525, with the user `SMTP_Injection` and an API key as the password. Look for those hosts in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config. An `X-MSYS-API` header carries SparkPost options over SMTP, such as `campaign_id`, `metadata`, `tags`, `cc`, `bcc`, and `options`.
 
@@ -161,7 +150,7 @@ Transmission.send(%Transmission{
 
 ## Send fields
 
-The HTTP names, which the Node.js, PHP, and Elixir SDKs use too. Python renames a few, as above, and Go and .NET use their own case.
+The HTTP names, which SparkPost's Node.js and PHP samples use too. Python renames a few, as above, and Go, .NET, and Elixir use their own structs.
 
 | Field | Value |
 |---|---|
@@ -171,7 +160,7 @@ The HTTP names, which the Node.js, PHP, and Elixir SDKs use too. Python renames 
 | `recipients[].metadata` | Object of values for this recipient, sent back in webhook events and readable by the template |
 | `recipients[].tags` | A list of labels, sent back in webhook events |
 | `recipients[].return_path`, `recipients[].options` | The envelope sender, and tracking options, for this recipient |
-| `cc`, `bcc` | Node.js, PHP, and Python only: lists the SDK turns into recipients with `header_to`, and a `CC` header for `cc` |
+| `cc`, `bcc` | Not API fields: an SDK's own, such as Python's keywords. Each is a cc or bcc |
 | `content.from` | An address, `Name <address>`, or `{ email, name }` |
 | `content.subject` | String |
 | `content.html`, `content.text` | Strings |
