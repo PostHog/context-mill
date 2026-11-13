@@ -97,14 +97,14 @@ SparkPost takes files only in inline content: `content.attachments` for files th
 
 | SparkPost | PostHog |
 |---|---|
-| `name` of an attachment | The filename. SparkPost requires it, so every file has one |
-| `name` of an inline image | The content ID, unchanged, so the HTML's `<img src="cid:...">` still finds the image. SparkPost puts the name only into the image's `Content-ID`, and PostHog requires a filename too: use the same name as the filename, and note in the plan row that the image now carries it as its filename |
+| `name` of an attachment | The filename. SparkPost requires it, so every file has one. PostHog refuses a filename with a path, so a name that holds `/` or `\`, such as `invoices/2026-03.pdf`, becomes its part after the last `/` or `\`, taken at the site when the code builds the name at run time, and the plan row notes it |
+| `name` of an inline image | The content ID, unchanged, so the HTML's `<img src="cid:...">` still finds the image. SparkPost puts the name only into the image's `Content-ID`, and PostHog requires a filename too: the filename is the same name, or its part after the last `/` or `\` when it holds one, such as `logo.png` for `images/logo.png`. Note in the plan row that the image now carries a filename |
 | `type` | The content type, as it is. SparkPost applies it as it is, parameters included, and its docs ask for a `charset` parameter where one is needed, such as `text/html; charset="UTF-8"`. A content type with parameters moves as Step 3 says under "Files" |
 | `data`, a Base64 string | The content: the same Base64 string where the rewrite file reads a string as Base64, or its decoded bytes where the SDK takes bytes, as the rewrite file says. Where the code builds `data` by encoding bytes it holds, pass those bytes |
 | Python's `filename`, a file path in place of `data` | The content: the bytes of that file, which the code reads at the site, such as with `open(path, 'rb').read()`. SparkPost's Python library reads the file and encodes it in the app, so SparkPost fetches nothing, and the site moves by Step 3's other rules |
 
 - **Size.** SparkPost takes at most 20 MB for the whole content, text, HTML, and files together, which is under PostHog's 40 MB after Base64 encoding. Its docs set no count, so Step 3's limit of 10 files still applies.
-- **Blocked files.** SparkPost forbids malicious files, naming `.bat` and `.exe`. PostHog refuses the longer list of extensions Step 3 gives under "Files".
+- **Blocked files.** SparkPost forbids malicious files, naming `.bat` and `.exe`. PostHog refuses the longer list of extensions Step 3 gives under "Files", checked on the filename the table above gives. A name that ends with `/` or `\` leaves no filename, so the site stays, as Step 3 says for a file without one.
 - **Templates.** A transmission that sends a stored template takes no `content.attachments` or `content.inline_images`, and a stored template holds no files of its own, except one stored as a whole raw message in `email_rfc822`. Such a template keeps its sites, as the `content.email_rfc822` row says, and the reason is `the template is a raw MIME message`.
 
 ## Content
