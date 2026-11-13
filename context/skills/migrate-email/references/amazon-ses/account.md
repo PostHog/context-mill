@@ -81,7 +81,7 @@ aws sesv2 get-configuration-set-event-destinations --configuration-set-name <nam
 aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query '{Suppression: SuppressionOptions, Vdm: VdmOptions, Delivery: DeliveryOptions}'
 ```
 
-The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. In the second, `Suppression` is the set's own suppression settings, or `null` when it uses the account's, and `{}` or an empty `SuppressedReasons` when the set turns suppression off. A `SuppressionScope` without `SuppressedReasons` overrides only where the addresses are kept, not the reasons. `Delivery.TlsPolicy` is `REQUIRE` when the set delivers only over TLS, and `Delivery.MaxDeliverySeconds`, when below 50400, is how soon it gives up delivery: either keeps its sites, as `mapping.md` says. `Vdm` is the set's own VDM settings, or `null` when it uses the account's. Its `DashboardOptions.EngagementMetrics`, when set, turns VDM engagement tracking on or off for the set's sends.
+The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. In the second, `Suppression` is the set's own suppression settings, or `null` when it uses the account's, and `{}` or an empty `SuppressedReasons` when the set turns suppression off. A `SuppressionScope` without `SuppressedReasons` overrides only where the addresses are kept, not the reasons. `Suppression.ValidationOptions`, when present, overrides the account's Auto Validation for the set's sends, on when its `ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` and off when it is `DISABLED`. `Delivery.TlsPolicy` is `REQUIRE` when the set delivers only over TLS, and `Delivery.MaxDeliverySeconds`, when below 50400, is how soon it gives up delivery: either keeps its sites, as `mapping.md` says. `Vdm` is the set's own VDM settings, or `null` when it uses the account's. Its `DashboardOptions.EngagementMetrics`, when set, turns VDM engagement tracking on or off for the set's sends.
 
 Then read the account's VDM settings, in each Region:
 
@@ -105,11 +105,13 @@ The answer's `BounceTopic`, `ComplaintTopic`, and `DeliveryTopic` name the SNS t
 
 Amazon SES keeps an account-level suppression list in each Region, with a reason of `BOUNCE` or `COMPLAINT` for each address. The account's settings name the reasons it suppresses. A configuration set can override them, for the sends that use it, with its own reasons or with none. Amazon SES accepts a send to an address on the list and doesn't send it only when the entry's reason applies to the send: its set's reasons when the set overrides the account's, and the account's otherwise. An entry with another reason is still sent to. An account that never turned the list on has an empty one.
 
-Read the account's reasons first, in each Region:
+Read the account's suppression settings first, in each Region:
 
 ```bash
-aws sesv2 get-account --region <region> --query SuppressionAttributes.SuppressedReasons
+aws sesv2 get-account --region <region> --query SuppressionAttributes
 ```
+
+The answer's `SuppressedReasons` are the account's reasons. Its `ValidationAttributes.ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` when Auto Validation is on for the account, which `mapping.md` covers under "Suppressions".
 
 **Read with the AWS CLI (preferred).** Ask the person to run, for each Region:
 
