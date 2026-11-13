@@ -57,6 +57,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - On an API error it throws `EmailException`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
 - Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`.
 - It throws the same `EmailException` for a network error that is left after the retries, with the code `network_error`. `Message` is there too.
+- An error PostHog answered with a wait carries it as `e.RetryAfter`, a `TimeSpan?`; it is `null` when PostHog named none.
 - A bad argument throws `ArgumentException`, before any request.
 
 ## Check

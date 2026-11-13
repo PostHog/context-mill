@@ -5,7 +5,7 @@ next_step: 6-key.md
 
 # Step 5, import the suppression list
 
-The provider keeps a suppression list: addresses that hard-bounced or marked an email as spam. It skips them on every send. PostHog keeps its own list and starts empty, so without an import the first PostHog sends go to these addresses again. That hurts the sending reputation of the project and the domain. Import the list before cutover.
+The provider keeps a suppression list: addresses that hard-bounced or marked an email as spam. It skips them on every send. PostHog keeps its own list and starts empty, so without an import the first PostHog sends go to the addresses that hard-bounced again. That hurts the sending reputation of the project and the domain. Import the list before cutover. PostHog blocks a moved send, which is transactional, only to an address that hard-bounced: an address that complained or was added by hand blocks only PostHog's marketing email, so the moved sends reach it.
 
 ## Status
 
@@ -44,7 +44,7 @@ The provider's `account.md` says how to export the list, which entries to take, 
 
 ## Import it
 
-- Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the source and the reason `account.md` names.
+- Send the entries to `email-suppressions-add` in batches of the size its schema allows. Give each entry the `reason` that `account.md` maps it to: `bounce`, `complaint`, or `manual`. PostHog writes the entry's reason text itself, such as `Imported (bounced)`.
 - Repeating an import is safe: an address already on the list stays on it.
 - The provider keeps adding to its list while it sends, so the report asks the person for one last import right before cutover, and for the weekly re-import of "Re-import only" while any site stays on the provider after it.
 - Never print the addresses, and never write them into the plan or the report. Count them.
@@ -52,7 +52,12 @@ The provider's `account.md` says how to export the list, which entries to take, 
 
 ## Calls that change the provider's list
 
-The import copies the list once. After it, a call in the app that adds an address to the provider's suppression list, or removes one from it, such as an unsubscribe handler or a reactivation, changes only the provider's list: an address it adds still gets the moved sends, and an address it removes stays blocked in PostHog. For each such call in Step 3's list of other calls, add to the report's "Before cutover" that the person makes the call change PostHog's suppression list too, before the deploy, for the entries the import would take. An address it adds goes on PostHog's list, with a reason that starts with `Synced from <provider name>`. An address it removes comes off PostHog's list only when no other list the import took still holds it, and only when its PostHog entry is one the import or such a call made, with a reason that starts with `Imported from <provider name>` or `Synced from <provider name>`. An entry PostHog recorded itself, such as a bounce of a moved send, stays. The call keeps its provider write while any send still goes through the provider. The provider's `mapping.md` names its calls, and says which entries count when the import takes only some.
+The import copies the list once. After it, a call in the app that adds an address to the provider's suppression list, or removes one from it, such as an unsubscribe handler or a reactivation, changes only the provider's list. Don't make the call change PostHog's list too: PostHog's list records no source the app could check before it removes an entry, and an app can't call the import tool. Every moved send is transactional, and PostHog blocks a transactional send only to an address that hard-bounced. It records that itself when a moved send bounces. For each such call in Step 3's list of other calls, the report carries an item:
+
+- A call that removes an address, in "After cutover": an address it removes stays blocked in PostHog when the import took it as a bounce, so a moved send to it fails with `recipient_suppressed`. When that happens for an address the app reactivated, the person removes it from PostHog's list too, in PostHog (Workflows, then Messaging, then Suppression list). A re-import doesn't add back an address removed from PostHog's list. When the address hard-bounces on a moved send again, PostHog blocks it by itself.
+- A call that adds an address, in "Before cutover": an address it adds still gets the moved sends until it hard-bounces on one, even after a re-import takes it, unless the provider listed it as a bounce. When the app must not mail such an address, the person makes the app check its own list before each moved send, or keeps the sites that send to it on the provider.
+
+The call keeps its provider write while any send still goes through the provider. The provider's `mapping.md` names its calls.
 
 ## Write down
 
