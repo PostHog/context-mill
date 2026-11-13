@@ -88,3 +88,7 @@ Both ways check addresses with the migration key. When the person has neither, o
 
 - **Soft bounces** (`email.softBounced`) are temporary failures, which Loops retries. They are not suppressions.
 - **Unsubscribed contacts and mailing list unsubscribes** are marketing preferences. Loops sends transactional email to unsubscribed contacts, and so does PostHog, so nothing changes for them. A hard bounce also unsubscribes the contact at Loops, so `subscribed` false in the audience export does not tell a bounce from a choice: never import it.
+
+## For the report
+
+The weekly re-import that the report asks for, while a site stays on Loops, gets its list the same way as the first import. The audience check never sees a recipient who is not an audience contact, so its re-imports never bring in that recipient's bounce or complaint, and a moved send can keep mailing them, past the week the report names. When a site stays and the import was `audience contacts only`, write under the phase: `- re-imports from the audience check miss recipients who are not contacts`. The report then says so beside the weekly re-import, and that the app's record covers them: the app keeps every `email.hardBounced` and `email.spamReported` event its Loops webhook reports from now on, and each re-import reads that record.
