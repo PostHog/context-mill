@@ -88,10 +88,10 @@ The answer is the identity's default configuration set, or `null` when it has no
 
 ```bash
 aws sesv2 get-configuration-set-event-destinations --configuration-set-name <name> --region <region>
-aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query '{Suppression: SuppressionOptions, Vdm: VdmOptions, Delivery: DeliveryOptions, Security: MessageSecurityOptions, Archiving: ArchivingOptions}'
+aws sesv2 get-configuration-set --configuration-set-name <name> --region <region> --query '{Sending: SendingOptions, Suppression: SuppressionOptions, Vdm: VdmOptions, Delivery: DeliveryOptions, Security: MessageSecurityOptions, Archiving: ArchivingOptions}'
 ```
 
-The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. In the second, `Suppression` is the set's own suppression settings, or `null` when it uses the account's, and `{}` or an empty `SuppressedReasons` when the set turns suppression off. A `SuppressionScope` or `ValidationOptions` without `SuppressedReasons` overrides only where the addresses are kept or Auto Validation, not the reasons. `Suppression.ValidationOptions`, when present, overrides the account's Auto Validation for the set's sends, on when its `ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` and off when it is `DISABLED`. `Delivery.TlsPolicy` is `REQUIRE` when the set delivers only over TLS, and `Delivery.MaxDeliverySeconds`, when below 50400, is how soon it gives up delivery. `Security.SigningScheme.SmimeScheme`, when set, has Amazon SES sign the set's sends with S/MIME; `DefaultScheme` adds no signature. `Archiving.ArchiveArn`, when set, archives them in a Mail Manager archive. Each of these keeps its sites, as `mapping.md` says. `Vdm` is the set's own VDM settings, or `null` when it uses the account's. Its `DashboardOptions.EngagementMetrics`, when set, turns VDM engagement tracking on or off for the set's sends.
+The first answer holds `EventDestinations`, each with `Enabled` and `MatchingEventTypes`: a set tracks opens when an enabled destination lists `OPEN`, and clicks when one lists `CLICK`. In the second, `Sending.SendingEnabled` is `false` when sending is turned off for the set: Amazon SES refused its sends, as `mapping.md` says under "Sending turned off". `Suppression` is the set's own suppression settings, or `null` when it uses the account's, and `{}` or an empty `SuppressedReasons` when the set turns suppression off. A `SuppressionScope` or `ValidationOptions` without `SuppressedReasons` overrides only where the addresses are kept or Auto Validation, not the reasons. `Suppression.ValidationOptions`, when present, overrides the account's Auto Validation for the set's sends, on when its `ConditionThreshold.ConditionThresholdEnabled` is `ENABLED` and off when it is `DISABLED`. `Delivery.TlsPolicy` is `REQUIRE` when the set delivers only over TLS, and `Delivery.MaxDeliverySeconds`, when below 50400, is how soon it gives up delivery. `Security.SigningScheme.SmimeScheme`, when set, has Amazon SES sign the set's sends with S/MIME; `DefaultScheme` adds no signature. `Archiving.ArchiveArn`, when set, archives them in a Mail Manager archive. Each of these keeps its sites, as `mapping.md` says. `Vdm` is the set's own VDM settings, or `null` when it uses the account's. Its `DashboardOptions.EngagementMetrics`, when set, turns VDM engagement tracking on or off for the set's sends.
 
 Then read the account's VDM settings, in each Region:
 
@@ -99,7 +99,15 @@ Then read the account's VDM settings, in each Region:
 aws sesv2 get-account --region <region> --query VdmAttributes
 ```
 
-The answer holds `VdmEnabled` and `DashboardAttributes.EngagementMetrics`, or is `null` when the account never turned VDM on. VDM engagement tracking tracks the opens and clicks of every send whose set doesn't override it, and of every send with no set. Ask the person to paste the answers, or where they saved them.
+The answer holds `VdmEnabled` and `DashboardAttributes.EngagementMetrics`, or is `null` when the account never turned VDM on. VDM engagement tracking tracks the opens and clicks of every send whose set doesn't override it, and of every send with no set.
+
+Then read whether the account sends at all, in each Region:
+
+```bash
+aws sesv2 get-account --region <region> --query '{Sending: SendingEnabled, Enforcement: EnforcementStatus, Production: ProductionAccessEnabled}'
+```
+
+`Sending` is `false` when sending is off for the account, turned off by the person or paused by AWS. `Enforcement` is `SHUTDOWN` when AWS stopped the account's sending. `Production` is `false` when the account is in the sandbox, where Amazon SES sends only to verified addresses. Each of these keeps the sites that send in that Region, as `mapping.md` says under "Sending turned off". Ask the person to paste the answers, or where they saved them.
 
 Then read where each identity sends its SNS notifications, in each Region, since `get-email-identity` doesn't return them:
 
