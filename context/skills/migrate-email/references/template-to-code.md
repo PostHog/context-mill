@@ -86,7 +86,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - The template's sender becomes the send's `from`, such as `'Name <hello@example.com>'`. It needs a verified sender, so Step 3 writes it in the site's `from` column. A sender that holds a variable is rendered too, and Step 3 classifies each address it can take, as it does for any `from`.
 - The template's reply-to address becomes the send's reply-to address.
 - Preview text, such as a preheader, goes into the HTML as a hidden block at the start of the body: `<div style="display:none;max-height:0;overflow:hidden">…</div>`, or `Preview` in React Email.
-- When the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML, as the provider's `mapping.md` says under "Templates". A template that turned its text part off stays on the provider, as that part says.
+- When the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML whenever a send has no text. A template whose emails the provider sent with no text part, as the provider's `mapping.md` says under "Templates", stays on the provider: PostHog would add one. The reason is `turns the plain-text part off`.
 
 ## Images and links
 
