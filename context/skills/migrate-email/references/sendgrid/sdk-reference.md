@@ -132,7 +132,7 @@ The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mai
 
 ## Send fields
 
-Node.js names, with the HTTP names where they differ. The Mail Send reference's Node.js sample and the quickstart show `from`, `to`, `subject`, `text`, `html`, `replyTo`, `content`, `attachments`, `categories`, `sendAt`, `batchId`, `asm`, `ipPoolName`, `mailSettings`, and `trackingSettings`. The other names are the camelCase of the HTTP name, as code writes them: SendGrid's docs don't say that the Node.js client sends them as the HTTP field, so read the installed client for each one a site sets, as "The installed client" says. The other SDKs set these fields as their own samples show, under "Clients and sends".
+Node.js names, with the HTTP names where they differ. The Mail Send reference's Node.js sample and the quickstart show `from`, `to`, `subject`, `text`, `html`, `replyTo`, `content`, `attachments`, `categories`, `sendAt`, `batchId`, `asm`, `ipPoolName`, `mailSettings`, and `trackingSettings`. Each of those is the camelCase of its HTTP name, and the other Node.js names below follow the same rule, such as `templateId` for `template_id`: take each as the HTTP field it spells. A name in another form, such as an HTTP name in snake_case or a name not in this table: read the installed client for the field it sends, as "The installed client" says. The other SDKs set these fields as their own samples show, under "Clients and sends".
 
 | Node.js field | HTTP field | Value |
 |---|---|---|
@@ -175,7 +175,7 @@ The Email Activity API (`GET https://api.sendgrid.com/v3/messages`) reads a mess
 
 The Event Webhook posts a JSON list of events to an endpoint of the app. Each event has `email`, `timestamp`, `event`, `sg_event_id`, `sg_message_id`, and the send's `custom_args` and `category`. `event` is one of `processed`, `dropped`, `deferred`, `delivered`, `bounce`, `open`, `click`, `spamreport`, `unsubscribe`, `group_unsubscribe`, and `group_resubscribe`.
 
-Look for routes that read `sg_message_id` or `sg_event_id`, as the [event reference](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event) shows, the `X-Twilio-Email-Event-Webhook-Signature` and `X-Twilio-Email-Event-Webhook-Timestamp` headers, and calls of the SDK's Event Webhook helper that the [security page](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features) links.
+Look for routes that take a list of events and read `sg_message_id`, `sg_event_id`, or `event` with values such as `dropped` or `bounce`, as the [event reference](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event) shows, the `X-Twilio-Email-Event-Webhook-Signature` and `X-Twilio-Email-Event-Webhook-Timestamp` headers, and imports of the SDK's Event Webhook helper that the [security page](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features) links, whose folder in each SDK is `eventwebhook`, or `EventWebhook` in .NET.
 
 ## Other APIs
 
