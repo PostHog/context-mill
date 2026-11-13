@@ -107,7 +107,7 @@ response, err := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY")).Send(mess
 
 `mail.NewV3Mail()` with `mail.NewPersonalization()` (`AddTos`, `AddCCs`, `AddBCCs`, `SetDynamicTemplateData`) builds the full form, with `SetTemplateID`, `SetReplyTo`, `AddAttachment`, `AddCategories`, `SetCustomArg`, `SetHeader`, `SetSendAt`, and `SetASM`.
 
-**.NET.** `SendEmailAsync` answers a `Response` with `StatusCode`, `IsSuccessStatusCode`, `Headers`, and `Body`. It does not throw on an API error unless the client options set `HttpErrorAsException`.
+**.NET.** `SendEmailAsync` answers a `Response` with `StatusCode`, `IsSuccessStatusCode`, `Headers`, and `Body`. It does not throw on an API error unless the client options set `HttpErrorAsException`. Their `ReliabilitySettings` retry server errors through `RetryDelegatingHandler` when the client makes its own `HttpClient`, as `mapping.md` says under "Errors".
 
 ```csharp
 var client = new SendGridClient(Environment.GetEnvironmentVariable("SENDGRID_API_KEY"));
