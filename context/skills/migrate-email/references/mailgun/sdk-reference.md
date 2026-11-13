@@ -167,7 +167,7 @@ The HTTP form fields. The SDKs take the same names as keys, apart from the sette
 | `amp-html` | The AMP part of the message |
 | `message` | A full MIME message, on `/messages.mime` only |
 | `attachment` | A file. Repeats for several files |
-| `inline` | A file with `inline` disposition, such as an image the HTML shows. Repeats |
+| `inline` | A file with `inline` disposition, which the HTML shows as `cid:<filename>`, as Mailgun's attachment guide does. Repeats |
 | `template` | The name, or the id, of a template stored at Mailgun |
 | `t:version` | A version of the template other than the active one |
 | `t:text` | `yes` renders a plain-text part from the template |

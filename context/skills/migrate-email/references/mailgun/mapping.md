@@ -25,7 +25,7 @@ Mailgun fields are written in their HTTP names. The SDK setters in `sdk-referenc
 | `cc`, `bcc` | none | Always. PostHog's send doesn't take it yet |
 | `h:Reply-To` | `replyTo` | It carries a name, holds more than 10 addresses, or the code builds it at run time and you cannot tell that it holds bare addresses only |
 | `attachment` | `attachments`, each file without a content ID | Step 3 says so under "Files", or as "Attachments" says |
-| `inline` | none | Always: Mailgun's docs don't say which content ID an inline file gets, so the HTML's `cid:` reference could lose its image. The reason is `inline content ID not checked` |
+| `inline` | `attachments`, each file with its filename as its content ID | Step 3 says so under "Files", or as "Attachments" says |
 | `h:<Header>`, other than `Reply-To` and `X-Mailgun-Variables` | none | Always: no PostHog SDK takes headers yet |
 | `v:<name>`, or `h:X-Mailgun-Variables` on a send without a template | none | Always: no PostHog SDK takes tags yet |
 | `o:tag` | none | Always: no PostHog SDK takes tags yet |
@@ -53,11 +53,12 @@ A Mailgun send has no idempotency key, apart from an `Idempotency-Key` header th
 
 ## Attachments
 
-Mailgun takes each file's bytes in the request's form body, under `attachment`, and takes no URL for a file: the app or its Mailgun client reads every file. A site that moves sends each `attachment` file as one entry of PostHog's `attachments`, under the PostHog SDK's names, as its rewrite file gives them, after Step 3's checks under "Files". An `inline` file keeps the site, as the "Fields" table says.
+Mailgun takes each file's bytes in the request's form body, under `attachment` or `inline`, and takes no URL for a file: the app or its Mailgun client reads every file. A site that moves sends each file as one entry of PostHog's `attachments`, under the PostHog SDK's names, as its rewrite file gives them, after Step 3's checks under "Files".
 
 - **Content.** Pass the same bytes. A file the code hands its Mailgun client as a path or a stream becomes a read in the app at the send, to the end of the file or stream.
 - **Filename.** Pass the filename the code gives the file. When the code gives none, its client picks one, which Mailgun's docs don't describe: the site stays, and the reason is `attachment filename not checked`.
-- **Content type.** Pass the content type the code gives the file, as it is, parameters included, as Step 3 says. When the code gives none, Mailgun's docs don't say which type the email gave the file. Set the type the filename's extension names, such as `application/pdf` for `.pdf`, or `application/octet-stream` for a filename without a known extension, and write `content type not checked: <filename>` in the site's note under the sites table, so the report asks the person to compare it with an email Mailgun sent.
+- **Content ID.** Mailgun's attachment guide sends `inline=@email.jpg` with HTML that shows `<img src="cid:email.jpg">`: an inline file's content ID is its filename. Pass that filename as the content ID, and leave the HTML as it is. An inline file moves only when each `cid:` value of the site's HTML that names one of its inline files is that file's filename; otherwise the site stays, and the reason is `inline content ID not checked`. An `attachment` file gets no content ID.
+- **Content type.** A form part that the code builds itself, in a plain HTTP request, carries its own `Content-Type`: pass it as it is, parameters included, as Step 3 says. A file that goes through a Mailgun client gets the type the client puts in the request, which Mailgun's docs don't describe, and the client can drop the type the code gives. Pass the type the code gives, as it is, parameters included, else the type the filename's extension names, such as `application/pdf` for `.pdf`, or `application/octet-stream` for a filename without a known extension. Write `content type not checked: <filename>` in the site's note under the sites table, so the report asks the person to compare it with an email Mailgun sent. A plain HTTP form part without a `Content-Type` gets the extension's type and the same note.
 
 Mailgun takes a message of up to 25 MB, smaller than the 40 MB that PostHog takes, and its docs set no limit on how many files: Step 3's limits decide.
 
@@ -218,7 +219,7 @@ Drop the domain argument and the Mailgun client of the call.
 - `h:Reply-To` becomes `replyTo`: one address as a string, and a header with several addresses, such as `a@example.com, b@example.com`, as a list of them, split at each comma and trimmed. PostHog checks each entry as one address.
 - The tracking fields, `o:tracking`, `o:tracking-opens`, and `o:tracking-clicks`, and their setters are dropped, and the send gets no `captureEngagement` for them, as Step 7 says.
 - A Python `headers={"Idempotency-Key": key}` becomes `idempotency_key=key`.
-- `attachment` becomes `attachments`, each file as "Attachments" says.
+- `attachment` and `inline` become `attachments`, each file as "Attachments" says.
 - `recipient-variables` on a send to one address: replace each `%recipient.<name>%` in the subject, the text, and the HTML with the value of that address's entry before the send, as the "Fields" table says, and drop `recipient-variables`.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
