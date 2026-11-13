@@ -32,7 +32,7 @@ import resend
 resend.api_key = os.environ["RESEND_API_KEY"]
 ```
 
-Look for `new Resend(`, `from 'resend'`, `require('resend')`, `import resend`, `Resend::`, and `resend.NewClient(`.
+Look for `new Resend(`, `from 'resend'`, `require('resend')`, `import resend`, `Resend.api_key`, `Resend::`, `Resend::client(`, `resend.NewClient(`, `AddResend(`, `IResend`, `ResendClient`, `Resend::new(` in Rust, and `Resend.client(` or `config :resend` in Elixir.
 
 ## Sends
 
@@ -47,15 +47,29 @@ const { data, error } = await resend.emails.send({
 }, { idempotencyKey: `welcome:${user.id}` })
 ```
 
-**Python.** `resend.Emails.send(params)`, with the same fields in snake_case, and `options={"idempotency_key": ...}`. It raises on API errors.
+**Python.** `resend.Emails.send(params, options)` and `await resend.Emails.send_async(...)`, with the same fields in snake_case in a dict, and `options={"idempotency_key": ...}`. It answers a dict with `"id"`, and raises a `resend.exceptions.ResendError` subclass on an API error, with `code` (the HTTP status) and `error_type` (the error name).
 
-**Batch.** `resend.batch.send([...])` in Node.js and `resend.Batch.send([...])` in Python send up to 100 emails in one call.
+**Ruby.** `Resend::Emails.send(params, options: { idempotency_key: ... })`, with symbol keys in snake_case. It answers a hash-like response with `[:id]`, and raises a `Resend::Error` subclass for the HTTP status, such as `Resend::Error::RateLimitExceededError`.
+
+**PHP.** `$resend = Resend::client($key)`, then `$resend->emails->send([...], ['idempotency_key' => ...])` or its alias `create`, with snake_case keys. Laravel apps use the facade, `Resend\Laravel\Facades\Resend::emails()->send(...)`. It answers a `Resend\Email` with `->id`, and throws `Resend\Exceptions\ErrorException` with `getErrorType()` (the error name) and `getErrorCode()` (the HTTP status).
+
+**Go.** `client := resend.NewClient(key)`, then `client.Emails.Send(params)`, `client.Emails.SendWithContext(ctx, params)`, or `client.Emails.SendWithOptions(ctx, params, &resend.SendEmailOptions{IdempotencyKey: ...})`, with a `*resend.SendEmailRequest{From, To, Subject, Html, Text, ReplyTo, ...}`. It answers a `*resend.SendEmailResponse` with `Id` and an error, which is a `*resend.ResendError` with `StatusCode` and `Name` for an API error.
+
+**.NET.** `IResend`, registered with `services.AddResend(...)` or created as a `ResendClient`, then `await resend.EmailSendAsync(message)` or `EmailSendAsync(idempotencyKey, message)`, with an `EmailMessage { From, To, Subject, HtmlBody, TextBody, ReplyTo, ... }`. It answers a `ResendResponse<Guid>` with `Content`, and throws `ResendException` with `StatusCode` and `ErrorType` on an API error, unless its options set `ThrowExceptions = false`: then the response has `Success` and `Exception`.
+
+**Rust.** `let resend = Resend::new(key)`, then `resend.emails.send(CreateEmailBaseOptions::new(from, to, subject).with_html(...))`, with `.with_text(...)`, `.with_reply(...)`, and `.with_idempotency_key(...)`. It answers a `Result` with a `CreateEmailResponse { id }`, or a `resend_rs::Error`.
+
+**Elixir.** `Resend.Emails.send(%{from: ..., to: ..., subject: ..., html: ...})`, or `Resend.Emails.send(client, %{...})`, with the API key in `config :resend, Resend.Client, api_key: ...`. It takes no idempotency key. It answers `{:ok, %Resend.Emails.Email{id: ...}}` or `{:error, %Resend.Error{name: ..., status_code: ...}}`.
+
+**Java.** `resend.emails().send(...)` in `com.resend:resend-java`. PostHog has no SDK that sends email in Java, so these sends stay.
+
+**Batch.** `resend.batch.send([...])` in Node.js, `resend.Batch.send([...])` in Python, `Resend::Batch.send([...])` in Ruby, `$resend->batch->send([...])` in PHP, `client.Batch.Send(...)` in Go, `EmailBatchAsync(...)` in .NET, `resend.batch.send(...)` in Rust, and `Resend.Emails.send_batch(...)` in Elixir send up to 100 emails in one call.
 
 **HTTP.** `POST https://api.resend.com/emails` with `Authorization: Bearer <key>`, a JSON body with the snake_case fields, and an optional `Idempotency-Key` header. `POST https://api.resend.com/emails/batch` is the batch send. Look for `api.resend.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, and `curl` calls.
 
 **SMTP.** Resend also takes mail over SMTP at `smtp.resend.com`, with the user `resend` and the API key as the password. Look for that host in Nodemailer transports, `MAIL_HOST` or `SMTP_HOST` settings, and framework mail config.
 
-**Frameworks.** Laravel's `resend` mailer (`MAIL_MAILER=resend`) and Rails' `resend` delivery method send every framework mail through Resend: each mailable or mailer that sends is a site.
+**Frameworks.** Laravel's `resend` mailer (`MAIL_MAILER=resend`), Rails' `resend` delivery method, the Swoosh adapter `Resend.Swoosh.Adapter` in Elixir, and the `Resend.FluentEmail` sender in .NET send every framework mail through Resend: each mailable or mailer that sends is a site.
 
 ## Send fields
 

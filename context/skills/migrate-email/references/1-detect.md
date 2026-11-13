@@ -19,8 +19,8 @@ Read the provider's `sdk-reference.md`. It lists the provider's packages, import
 
 The provider is in this project when at least one of these is true:
 
-- Its package is in a dependency manifest, such as `package.json`, `requirements.txt`, `pyproject.toml`, `Gemfile`, `composer.json`, or `go.mod`.
-- Source code imports it or creates its client.
+- Its package is in a dependency manifest, such as `package.json`, `requirements.txt`, `pyproject.toml`, `Gemfile`, `composer.json`, `go.mod`, a `.csproj` file, `mix.exs`, or `Cargo.toml`.
+- Source code imports it or creates its client, including a module of the language's standard library that `sdk-reference.md` names.
 - Source code calls its HTTP host.
 - Source code, mail config, or an example env file names its SMTP host or its framework mailer.
 

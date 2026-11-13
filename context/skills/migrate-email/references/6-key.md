@@ -35,9 +35,9 @@ A person who says they will add the key later has not set it, and neither has on
 
 ## Every other place the provider key lives
 
-The provider's `sdk-reference.md` names its key's environment variable. Search the whole repository for that name, including CI workflows, deploy and hosting config, Docker and compose files, env example files, and docs. Skip `node_modules` and build output.
+The provider's `sdk-reference.md` names the environment variables that hold its key, one or more. Search the whole repository for each name, including CI workflows, deploy and hosting config, Docker and compose files, env example files, and docs. Skip `node_modules` and build output.
 
-List each place with its file and line. Each one needs `POSTHOG_PROJECT_SECRET_API_KEY` too before the cutover, for example as a CI secret or a hosting environment variable. Do not change these files: the person adds the secret where the platform stores it.
+List each place that sets a value for it, with its file and line: env and env example files, CI, deploy and hosting config, Docker and compose files, and docs that tell people to set it. Source code that only reads the variable is not a place. Each place needs `POSTHOG_PROJECT_SECRET_API_KEY` too before the cutover, for example as a CI secret or a hosting environment variable. Do not change these files: the person adds the secret where the platform stores it.
 
 ## Write down
 

@@ -11,6 +11,9 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
+const PROVIDERS = ['resend'];
+const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
+const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 
 async function loadSkills() {
     vi.resetModules();
@@ -47,6 +50,26 @@ function markdownFiles(dir) {
     return readdirSync(dir, { withFileTypes: true, recursive: true })
         .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
         .map((entry) => join(entry.parentPath ?? entry.path, entry.name));
+}
+
+const STEP_SECTION = /(?:Step (\d)|`(\d)-[a-z-]+\.md`)(?: says| does)? under "([^"]+)"/g;
+
+function unresolvedStepSections(skillDir) {
+    const referencesDir = join(skillDir, 'references');
+    const headingsOf = (number) => {
+        const step = readdirSync(referencesDir).find((name) => name.startsWith(`${number}-`) && name.endsWith('.md'));
+        return step ? [...readFileSync(join(referencesDir, step), 'utf8').matchAll(/^#+ (.+)$/gm)].map((match) => match[1].trim()) : [];
+    };
+    const missing = [];
+    for (const file of markdownFiles(skillDir)) {
+        for (const [, stepNumber, fileNumber, section] of readFileSync(file, 'utf8').matchAll(STEP_SECTION)) {
+            const headings = headingsOf(stepNumber ?? fileNumber);
+            if (!headings.some((heading) => heading === section || heading.startsWith(`${section},`))) {
+                missing.push(`${relative(skillDir, file)} → Step ${stepNumber ?? fileNumber}, "${section}"`);
+            }
+        }
+    }
+    return missing;
 }
 
 function unresolvedReferences(skillDir) {
@@ -89,6 +112,7 @@ describe('migrate-email skill', () => {
             DOCS_PAGES['https://posthog.com/docs/workflows/transactional-emails/api.md'],
         );
         expect(existsSync(join(skillDir, 'references', 'resend', 'sdk-reference.md'))).toBe(true);
+        expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
         expect(markdownFiles(skillDir).map((file) => readFileSync(file, 'utf8')).join('\n')).not.toMatch(/\{\{>|\{display_name\}|\{references\}/);
     });
 
@@ -157,12 +181,41 @@ describe('migrate-email skill', () => {
         });
     });
 
-    it('publishes Resend and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
+    it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the rewrite files, and no other provider', async (provider) => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill(`migrate-email-${provider}`, outputDir);
+
+        expect(unresolvedReferences(skillDir)).toEqual([]);
+        for (const file of PROVIDER_FILES) {
+            expect(existsSync(join(skillDir, 'references', provider, file))).toBe(true);
+        }
+        for (const sdk of SDKS) {
+            expect(existsSync(join(skillDir, 'references', `rewrite-${sdk}.md`))).toBe(true);
+        }
+        expect(existsSync(join(skillDir, 'references', 'template-to-code.md'))).toBe(true);
+        const bundledProviders = readdirSync(join(skillDir, 'references'), { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name);
+        expect(bundledProviders).toEqual([provider]);
+    });
+
+    it.each(PROVIDERS)('points each "Step N says under" reference in migrate-email-%s to a section that step has', async (provider) => {
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
+
+        const skillDir = await buildSkill(`migrate-email-${provider}`, outputDir);
+
+        expect(unresolvedStepSections(skillDir)).toEqual([]);
+    });
+
+    it('publishes each provider and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
         const { generator, skills } = await loadSkills();
         const entries = generateCliEntries({ allSkills: skills.map(generator.serializeSkill) });
         const entryOf = (skillId) => entries.find((entry) => entry.skillId === skillId);
 
-        expect(entryOf('migrate-email-resend')).toMatchObject({ role: 'command', parentCommand: 'migrate', command: 'resend' });
+        for (const provider of PROVIDERS) {
+            expect(entryOf(`migrate-email-${provider}`), provider).toMatchObject({ role: 'command', parentCommand: 'migrate', command: provider });
+        }
         expect(entryOf('migrate-statsig')).toMatchObject({ role: 'command', parentCommand: 'migrate', command: 'statsig' });
     });
 });

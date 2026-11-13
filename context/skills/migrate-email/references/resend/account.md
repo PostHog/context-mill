@@ -24,17 +24,21 @@ The app's own Resend key is usually a sending-only key, and it can't read templa
 
 ## Template content
 
-A site whose template the person moves to PostHog needs the template's content, to check it before they make the PostHog template.
+A site whose template moves needs the template's content: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content.
 
-**Copy from the dashboard.** In Resend: Templates, then the template. Ask the person for its alias or name, its HTML, its plain text when it has one, its subject, its `from` and reply-to when they are set, and each variable's fallback.
+**Copy from the dashboard.** In Resend: Templates, then the template. Ask the person for its alias or name, its HTML, its plain text when it has one, its subject, its `from` and reply-to when they are set, and each variable's fallback. A copy can't tell a template without plain text, whose emails get one that Resend makes from the HTML, from one whose plain text is set to an empty string, whose emails go out with none. So when it has no plain text, ask the person which. In Step 3, also offer to make the key that "Full-access key" describes, so you read that template from the API. When neither settles it, the site stays, and the reason is `plain-text part not checked`. However you read a template, from here or from the API, write what its plain text is in its note under the sites table: `text: its own`, `text: made from the HTML`, or `text: none`. A copy made again in Step 7 then needs no new question.
 
 **Read from the API.** `GET https://api.resend.com/templates/{id or alias}` with `Authorization: Bearer $RESEND_FULL_ACCESS_API_KEY`. The answer holds `alias`, `name`, `subject`, `from`, `reply_to`, `html`, `text`, and `variables`, a list of `{ key, type, fallback_value }`.
 
-Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which Step 3 deletes once the site is classified. Never write the content into the plan or the report.
+Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
 ## Open tracking
 
 Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking is on. Off means the site's emails had no open pixel, and no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track".
+
+## Click tracking
+
+Resend tracks clicks per sending domain, only when click tracking is on for it: Domains, then the domain, then Configuration. When a site moves to a template made in PostHog, ask the person once, for each sending domain of such sites, whether click tracking is on. Off means Resend didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog".
 
 ## Suppression list
 
@@ -51,10 +55,10 @@ Resend suppresses an address after a hard bounce or a spam complaint, and keeps 
 
 **Map each entry.**
 
-| Resend `origin` | PostHog source | Reason |
-|---|---|---|
-| `bounce` | bounce | `Imported from Resend: hard bounce` |
-| `complaint` | complaint | `Imported from Resend: spam complaint` |
-| `manual` | manual | `Imported from Resend: added by hand` |
+| Resend `origin` | PostHog `reason` |
+|---|---|
+| `bounce` | `bounce` |
+| `complaint` | `complaint` |
+| `manual` | `manual` |
 
 **Leave out unsubscribed contacts.** A Resend contact with `unsubscribed: true` still gets transactional email, and PostHog's opt-outs apply to marketing messages only. They are not suppressions.
