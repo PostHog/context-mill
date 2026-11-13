@@ -34,14 +34,27 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `async` | none | Never on its own. It changes only when Mailchimp Transactional answers |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
 | `metadata`, `recipient_metadata` | none | Always: no PostHog SDK takes metadata yet |
-| `attachments` | none | Always. PostHog's send doesn't take it yet |
-| `images` | none | Always. PostHog's send doesn't take it yet |
+| `attachments` | `attachments` | Step 3 says so under "Files", or a file has no `type` and its filename's extension names none. See "Attachments" |
+| `images` | `attachments`, each with its content ID | Step 3 says so under "Files", counting the images with the attachments. See "Attachments" |
 | `subaccount` | none | Always. The subaccount has its own reports, quota, and denylist at Mailchimp Transactional |
 | `tracking_domain` | none: dropped | Never. Note in the plan row that PostHog counts no clicks for the site when it moves in the code form |
 | `signing_domain`, `return_path_domain` | none | Always. PostHog's send doesn't take it yet |
 | `google_analytics_domains`, `google_analytics_campaign` | none | Always. PostHog's send doesn't take it yet |
 | `ip_pool` | none | Always. PostHog's send doesn't take it yet |
 | `send_at` | none | Always. PostHog's send doesn't take it yet |
+
+**Attachments.** Mailchimp Transactional takes a send's files in two lists of `{ type, name, content }`: `attachments`, the files the email carries, and `images`, the images its HTML shows inline. `send-template` takes both lists too, and a stored template holds no files, so a template site's files come only from its `message`. Each file of a site that moves becomes one entry of PostHog's `attachments`, under the PostHog SDK's names, as its rewrite file gives them:
+
+| Mailchimp Transactional | PostHog |
+|---|---|
+| `attachments[].name` | The filename. A file without one keeps the site, as Step 3 says |
+| `attachments[].type` | The content type, as it is: a type with parameters, such as `text/calendar; method=REQUEST`, follows Step 3 under "Files". When the site sets none, the reference doesn't say what Mailchimp Transactional sent: set the type the filename's extension names, such as `application/pdf` for `.pdf`, and note `content type set from the filename` in the plan row. When the extension names none, the site stays, and the reason is `a file without a content type` |
+| `attachments[].content`, a Base64 string | The content, in the form the rewrite file gives: the same Base64 string where the SDK reads one, such as Node.js, Python on one line with its padding, and Ruby, or its decoded bytes where the SDK takes bytes only, such as PHP and Go |
+| `images[].name`, the content ID | The content ID, the same bare ID the HTML shows with `<img src="cid:...">`. Mailchimp Transactional takes no filename for an image, and PostHog needs one: name the file after its content ID, with the extension of its `type` added when the ID has none, such as `logo.png` for `logo` and `image/png`, and note it in the plan row |
+| `images[].type`, starting with `image/` | The content type, as it is |
+| `images[].content`, a Base64 string | The content, as for an attachment |
+
+An attachment carries no content ID, so it stays a file the email carries, and an image stays inline: there is no other disposition to keep. Mailchimp Transactional fetches no file: the code reads each file and passes its Base64 content, so a site never stays for a fetched file. It takes any file type, and PostHog refuses some, as Step 3 says. It takes an email of up to 25 MB after Base64 encoding with its files, and a request body under 10 MB, so its files fit under PostHog's 40 MB. It sets no limit on the count, and PostHog takes at most 10 files, images included, as Step 3 says. A template made in PostHog takes no files, as Step 7 says: a site with files that the person wants on such a template stays, and the reason is `a template in PostHog takes no files`.
 
 **Tracking.** PostHog adds its open pixel to every email it sends, and counts no clicks for a send in the code form, as Step 7 says. No field changes this, so tracking never maps to one. Mailchimp Transactional tracks opens when the send's `track_opens` is `true`, and clicks when its `track_clicks` is `true`. A send that leaves either one out takes the account's Sending Defaults for it, as `account.md` says. Click tracking that the account turns on for HTML emails only, or for text emails only, counts as on for an email that has that part, and as off for one that hasn't. Work out whether Mailchimp Transactional tracked the site's opens:
 
@@ -239,6 +252,7 @@ A send the code can cancel, such as a request with a `signal` a caller passes in
 - The one `to` entry of type `to` becomes `to` as a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `headers: { 'Reply-To': 'support@example.com' }` becomes `replyTo: 'support@example.com'`. Several addresses in one value, separated by commas, become a list.
 - `track_opens` and `track_clicks` are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
+- `attachments` and `images` become one `attachments` list, each file rewritten as "Attachments" says.
 - The fields that move as none, such as `async`, `url_strip_qs`, and `preserve_recipients`, are left out.
 - Merge tags in the site's own `subject`, `from_name`, `html`, and `text` are rendered in the code from the merge values, as "Templates" says, and the send carries the result. The content stays where the code builds it: replace each tag with code that inserts its value.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
