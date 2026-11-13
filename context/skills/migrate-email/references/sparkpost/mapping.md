@@ -18,8 +18,8 @@ SparkPost fields are written in their HTTP names. `sdk-reference.md` has the SDK
 | `content.amp_html` | none | Always. PostHog's send doesn't take it yet |
 | `content.reply_to`, `override.reply_to` | `replyTo` | It carries a name, such as `Sales <sales@example.com>`, or template language that "Templates" doesn't place |
 | `content.headers`, `override.headers` | none | Always: no PostHog SDK takes headers yet |
-| `content.attachments` | none | Always. PostHog's send doesn't take it yet |
-| `content.inline_images` | none | Always. PostHog's send doesn't take it yet |
+| `content.attachments` | `attachments` | Step 3 says so under "Files". See "Attachments" |
+| `content.inline_images` | `attachments`, each with a content ID | Step 3 says so under "Files", counting the inline images with the attachments. See "Attachments" |
 | `content.template_id` | the template's email, brought into the code and rendered with `substitution_data`, sent as `subject`, `html`, and `text` with the template's `from` and `reply_to`. A template made in PostHog, by its `templateId` with `templateData`, only when the person asks for one | See "Templates". With `use_draft_template: true`, the draft comes into the code only when the person confirms it, as "Templates" says |
 | `content.ab_test_id` | none | Always. PostHog's send doesn't take it yet |
 | `content.email_rfc822` | none | Always: PostHog takes no raw MIME message |
@@ -90,6 +90,22 @@ SparkPost's SDKs report an error in two ways. The Node.js, Python, Ruby, PHP, an
 | A check of `total_rejected_recipients` or `total_accepted_recipients` | Never. With one recipient, check PostHog's error instead |
 | `results.id`, the transmission id, stored for a webhook, a status read, or a cancel by campaign | Always, when the webhook handler, the Events API, or the cancel uses it |
 | `results.id`, or `res.body.results.id` in Node.js 1.x, logged or stored for the app's own use | SparkPost's id is a decimal number, and PostHog's message id is a UUID, a string of 36 characters, as Step 7 says. Where the code keeps the id as a string, or only logs it, use PostHog's message id. When it parses the id as a number, or the id reaches a numeric column, the site stays, and the reason is `stores the transmission id as a number`. A UUID column takes it, and so does a text column of at least 36 characters. When the id reaches a shorter text column, one whose length the code doesn't show, or another service that expects SparkPost's id, ask the person once, for all such sites, whether PostHog's message id fits it. A site they can't confirm stays, and the reason is `passes the transmission id where PostHog's id may not fit` |
+
+## Attachments
+
+SparkPost takes files only in inline content: `content.attachments` for files the email carries, and `content.inline_images` for images its HTML shows. Each file of a site that moves becomes one entry of the PostHog send's `attachments`, under the PostHog SDK's names, as its rewrite file gives them, and Step 3 counts both lists together under "Files".
+
+| SparkPost | PostHog |
+|---|---|
+| `name` of an attachment | The filename. SparkPost requires it, so every file has one |
+| `name` of an inline image | The content ID, unchanged, so the HTML's `<img src="cid:...">` still finds the image. SparkPost puts the name only into the image's `Content-ID`, and PostHog requires a filename too: use the same name as the filename, and note in the plan row that the image now carries it as its filename |
+| `type` | The content type, as it is. SparkPost applies it as it is, parameters included, and its docs ask for a `charset` parameter where one is needed, such as `text/html; charset="UTF-8"`. A content type with parameters moves as Step 3 says under "Files" |
+| `data`, a Base64 string | The content: the same Base64 string where the rewrite file reads a string as Base64, or its decoded bytes where the SDK takes bytes, as the rewrite file says. Where the code builds `data` by encoding bytes it holds, pass those bytes |
+| Python's `filename`, a file path in place of `data` | The content: the bytes of that file, which the code reads at the site, such as with `open(path, 'rb').read()`. SparkPost's Python library reads the file and encodes it in the app, so SparkPost fetches nothing, and the site moves by Step 3's other rules |
+
+- **Size.** SparkPost takes at most 20 MB for the whole content, text, HTML, and files together, which is under PostHog's 40 MB after Base64 encoding. Its docs set no count, so Step 3's limit of 10 files still applies.
+- **Blocked files.** SparkPost forbids malicious files, naming `.bat` and `.exe`. PostHog refuses the longer list of extensions Step 3 gives under "Files".
+- **Templates.** A transmission that sends a stored template takes no `content.attachments` or `content.inline_images`, and a stored template holds no files of its own, except one stored as a whole raw message in `email_rfc822`. Such a template keeps its sites, as the `content.email_rfc822` row says, and the reason is `the template is a raw MIME message`.
 
 ## Content
 
@@ -222,6 +238,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 - The one recipient's address becomes `to`, as a bare address. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - The tracking fields are dropped, and the send gets no `captureEngagement` for them, as "Tracking" says.
 - The `Idempotency-Key` header becomes `idempotencyKey`, with the same value.
+- `content.attachments` and `content.inline_images` become one `attachments` list, attachments first, each file rewritten as "Attachments" says.
 - A send with rendered content gets a `templateKey`, as Step 7 says.
 
 **Inline content with template language.** Render it in the code before the send, as "Templates" says, from the same values the site put into `substitution_data`, and drop `substitution_data` from the send. A short content renders at the site. A long one, or one with statements, becomes an email file, as `template-to-code.md` says under "Where the email goes":
