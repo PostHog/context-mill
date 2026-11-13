@@ -44,7 +44,7 @@ A code send takes tracking as on, off, or a set of switches named `opens`, `clic
 | Off | Off | Off | Off |
 | Switches | `opens`, on by default | `clicks`, by default as left out | `engagement`, on by default |
 
-- Opens adds PostHog's open pixel to the email. Clicks rewrites the email's links to go through a tracking redirect. Engagement captures the email's engagement events on the recipient's person.
+- Opens adds PostHog's open pixel to the email. Clicks rewrites the email's links to go through a tracking redirect. Engagement captures the email's engagement events on the recipient's person. When the project's **Capture email engagement events** setting is off, PostHog captures none, whatever the send sets.
 - Clicks follow the sensitive flag when tracking doesn't set them, because PostHog can't tell a newsletter from an email with a sign-in or password reset link. A tracked link goes through a redirect, so a token in the link would go through it too. A `clicks` switch that the send sets wins over the sensitive flag.
 - The sensitive flag doesn't change opens or engagement events.
 - Off means PostHog can't count the email's opens and clicks, and captures no engagement events for it.
@@ -95,7 +95,7 @@ Configure a server-side client of its own for email in each language that has a 
 
 ## Link emails to your users
 
-PostHog records each send, and its sent, opened and clicked events unless tracking turns its `engagement` switch off, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
+PostHog records each send, and its engagement events, such as sent, delivered and opened, when the project's **Capture email engagement events** setting is on and the send's tracking doesn't turn engagement off, against the person the send names with its distinct ID. Pass the ID the app already passes to `identify()`:
 
 - Find the app's identify call, such as `posthog.identify(user.id)` in posthog-js, or the distinct ID of its server-side PostHog captures.
 - At each site, pass the same ID for the recipient, such as `user.id`. The SDKs take the distinct ID as a string, so a numeric ID is passed as its string, such as `String(user.id)` in Node.js and `str(user.id)` in Python, the same string the app's identify call sends. Follow the recipient back through the callers when the site only has the address.
