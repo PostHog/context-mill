@@ -46,17 +46,19 @@ Whether there is a list depends on the provider behind the host.
 
 **Providers that keep one.** Sending services keep a list of addresses that hard-bounced or complained, and skip them on every send: SendGrid, Mailgun, Postmark, Resend, Brevo, Mailjet, SparkPost, Mandrill, and Amazon SES. Ask the person to export it from the provider's dashboard as a CSV file, and to tell you where they saved each file. Read the header row to find the address column and the column that says why each address is on the list. Don't read it from the provider's API: this skill has no key for it.
 
-**Providers that keep none.** Gmail, Google Workspace, Microsoft 365, Zoho Mail, and other mailbox providers, and a server the person runs, keep no list to export. When no host's provider keeps a list, record the list as empty: `- [x] suppressions — empty list: <provider> keeps no suppression list`. When another host's provider keeps one, import that list, and note this host only as "For the report" says. When the app keeps its own list of bounced addresses, such as a column it sets from bounce mail, that list stays in the app and its sends keep checking it. Such a host adds nothing to re-import while its sites stay, so the report's weekly re-import leaves it out, as "For the report" says. To tell whether the provider keeps no suppression list at all, as Step 5 asks, in a migration or a re-import alone, find each host from the app's SMTP settings and its provider as `sdk-reference.md` says: it keeps none at all only when no host's provider keeps a list.
+**Providers that keep none.** Gmail, Google Workspace, Microsoft 365, Zoho Mail, and other mailbox providers, and a server the person runs, keep no list to export. When no host's provider keeps a list, record the list as empty: `- [x] suppressions — empty list: <provider> keeps no suppression list`. When another host's provider keeps one, import that list, and note this host only as "For the report" says. When the app keeps its own list of bounced addresses, such as a column it sets from bounce mail, that list stays in the app and its sends keep checking it. Such a host adds nothing to re-import while its sites stay, so the report's weekly re-import leaves it out, as "For the report" says. To tell whether the provider keeps no suppression list at all, as Step 3 and Step 5 ask, in a migration or a re-import alone, find each host from the app's SMTP settings and its provider as `sdk-reference.md` says: it keeps none at all only when no host's provider keeps a list.
+
+**Sites that rely on the list.** Step 3 asks which moving sites rely on the provider's list to stop mailing an address someone added to it. Ask it only about the sites whose host's provider keeps a list, and name that provider in the reason, such as `relies on Mailgun's suppression list`. A site whose host's provider keeps none, such as a mailbox provider or a server the person runs, has no list to rely on, so the question leaves it out. An SMTP send makes no call that adds an address to the provider's list: an address there was added by the provider after a bounce or a complaint, by hand in its dashboard, or by a call to its own API, which `sdk-reference.md` lists among the other calls.
 
 **Map each entry.**
 
-| Entry on the provider's list | PostHog source | Reason |
-|---|---|---|
-| Hard bounce, permanent failure, invalid or unknown address | bounce | `Imported from <Provider>: bounce` |
-| Spam complaint or spam report | complaint | `Imported from <Provider>: spam complaint` |
-| An address the person added by hand | manual | `Imported from <Provider>: manual` |
+| Entry on the provider's list | PostHog `reason` |
+|---|---|
+| Hard bounce, permanent failure, invalid or unknown address | `bounce` |
+| Spam complaint or spam report | `complaint` |
+| An address the person added by hand | `manual` |
 
-`<Provider>` is the provider behind the host, such as `Imported from Mailgun: bounce`. When the export doesn't say why an address is on the list, ask the person which kind the file holds.
+When the export doesn't say why an address is on the list, ask the person which kind the file holds.
 
 **Leave out the other entries.**
 
