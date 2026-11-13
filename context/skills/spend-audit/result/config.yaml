@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: "The spend audit result file the product prices and lists"
+tags: [orchestrator, spend-audit]
+variants:
+  - id: all
+    display_name: "Spend audit — result file"
+    tags: [orchestrator, spend-audit]
+    docs_urls: []
+cli:
+  role: internal
