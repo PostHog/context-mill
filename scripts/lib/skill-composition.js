@@ -8,10 +8,26 @@
  * the skill; this module is the reference for it, and what the build checks use.
  */
 
-import path from 'path';
 import { VARIANT_FILE, FRAMEWORK_NAME, FRAMEWORK_DOCS, FRAMEWORK_RULES } from './skill-generator.js';
 
 const referenceLine = (name, description) => `- \`references/${name}\` - ${description}`;
+
+/** One plain part of a path: it starts with a letter or digit and has no separator. */
+const PLAIN_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+/**
+ * A pack file's name in the skill's `references/`. A consumer scans an installed
+ * skill by lowercase extension and skips dotfiles, so a page that scan would
+ * skip is refused: every part of its path is plain and it ends in `.md`.
+ */
+function referenceName(file) {
+    const parts = String(file).split('/');
+    const name = parts[parts.length - 1];
+    if (!parts.every(part => PLAIN_NAME.test(part)) || !name.endsWith('.md')) {
+        throw new Error(`Unusable reference name: ${file}`);
+    }
+    return name;
+}
 
 /**
  * Complete a step skill's files from a pack's files, both keyed by path.
@@ -37,14 +53,14 @@ function composeStepSkill({ stepFiles, packFiles, product }) {
     const files = {};
     const docLines = [];
     for (const page of pages) {
-        const name = path.posix.basename(page.file);
+        const name = referenceName(page.file);
         files[`references/${name}`] = take(page.file);
         docLines.push(referenceLine(name, page.description));
     }
     Object.assign(files, stepFiles);
     const ruleLines = [];
     if (variant.rules) {
-        const name = path.posix.basename(variant.rules.file);
+        const name = referenceName(variant.rules.file);
         files[`references/${name}`] = take(variant.rules.file);
         ruleLines.push(referenceLine(name, variant.rules.description));
     }

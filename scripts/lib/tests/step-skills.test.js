@@ -237,6 +237,10 @@ describe('composeStepSkill', () => {
         ['has no variant.json', { 'SKILL.md': '' }, /has no variant\.json/],
         ['lists no pages for the product', pack({ products: {} }), /lists no integration pages/],
         ['lists a page it does not ship', pack({ products: { integration: [{ file: 'references/gone.md', description: 'Gone' }] } }), /does not ship it/],
+        // A consumer's install scan reads lowercase extensions and skips dotfiles.
+        ['lists a page with an uppercase extension', pack({ products: { integration: [{ file: 'references/page.MD', description: 'Page' }] } }, { 'references/page.MD': 'x' }), /Unusable reference name/],
+        ['lists a page that is a dotfile', pack({ products: { integration: [{ file: 'references/.page.md', description: 'Page' }] } }, { 'references/.page.md': 'x' }), /Unusable reference name/],
+        ['lists a page outside the pack', pack({ products: { integration: [{ file: '../page.md', description: 'Page' }] } }, { '../page.md': 'x' }), /Unusable reference name/],
     ])('fails when the pack %s', (_, packFiles, message) => {
         expect(() => composeStepSkill({ stepFiles: step('{framework_docs}\n'), packFiles, product: 'integration' })).toThrow(message);
     });
