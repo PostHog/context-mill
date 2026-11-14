@@ -208,8 +208,13 @@ function loadCommandments(configDir) {
 /**
  * Load a skill description template from the directory identified by composite key.
  */
+/** The file a group's template is read from. `templateFile` is relative to the group's folder, and may point into another group's. */
+function skillTemplatePath(configDir, compositeKey, templateFile) {
+    return path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+}
+
 function loadSkillTemplate(configDir, compositeKey, templateFile) {
-    const filePath = path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+    const filePath = skillTemplatePath(configDir, compositeKey, templateFile);
     if (!fs.existsSync(filePath)) {
         throw new Error(`Template "${templateFile}" not found for key "${compositeKey}"`);
     }
@@ -280,6 +285,12 @@ const VARIANT_FILE = 'variant.json';
 const FRAMEWORK_NAME = '{framework_name}';
 const FRAMEWORK_DOCS = '{framework_docs}';
 const FRAMEWORK_RULES = '{framework_rules}';
+
+/** How SKILL.md lists one file of `references/`. A consumer that completes a skill writes its lines the same way. */
+const referenceLine = (filename, description) => `- \`references/${filename}\` - ${description}`;
+
+/** The rules file a skill ships, as SKILL.md and a pack's `variant.json` list it. */
+const RULES_REFERENCE = { filename: 'COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' };
 
 /** The product whose pages are a variant's own `docs_urls`. A variant table cannot declare it again. */
 const INTEGRATION_PRODUCT = 'integration';
@@ -361,11 +372,10 @@ function validateReplacements(config) {
     const dashed = key => key.replace(/\//g, '-');
     const names = new Set();
     const products = new Set([INTEGRATION_PRODUCT]);
+    // A group's name is also the id of a skill with the one variant `all`. A consumer looks a stand-in up by that name,
+    // so one variant of a group has no stand-in of its own.
     for (const [key, group] of Object.entries(config)) {
         names.add(dashed(key));
-        for (const variant of group.variants || []) {
-            names.add(variant.id === 'all' ? dashed(key) : `${dashed(key)}-${variant.id}`);
-        }
         for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
     }
     for (const [key, group] of Object.entries(config)) {
@@ -376,7 +386,7 @@ function validateReplacements(config) {
             throw new Error(`${where}: replaces and framework_references need exactly one variant, with id "all"`);
         }
         if (group.replaces !== undefined && !names.has(group.replaces)) {
-            throw new Error(`${where}: replaces "${group.replaces}" names no skill group or skill`);
+            throw new Error(`${where}: replaces "${group.replaces}" names no skill group. It cannot name one variant of a group`);
         }
         if (group.replaces === dashed(key)) {
             throw new Error(`${where}: a skill cannot replace itself`);
@@ -472,7 +482,7 @@ function expandSkillGroups(config, configDir) {
                 _products: group.products || null,
                 _replaces: group.replaces || null,
                 _frameworkReferences: group.framework_references || null,
-                _templatePath: path.join(configDir, 'skills', ...key.split('/'), variation.template || group.template || ''),
+                _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
                 _bundle: bundled,
                 _groupTags: baseTags,
@@ -938,14 +948,11 @@ async function generateSkill({
         references.push({ placeholder: FRAMEWORK_RULES });
     } else if (rules.length > 0) {
         fs.writeFileSync(
-            path.join(referencesDir, 'COMMANDMENTS.md'),
+            path.join(referencesDir, RULES_REFERENCE.filename),
             `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
             'utf8',
         );
-        references.push({
-            filename: 'COMMANDMENTS.md',
-            description: 'Framework-specific rules the integration must follow',
-        });
+        references.push({ ...RULES_REFERENCE });
     }
 
     // A variant table row also ships each product's pages and a `variant.json` that lists them.
@@ -966,7 +973,7 @@ async function generateSkill({
             displayName: skill.display_name,
             match: { ...(skill.framework ? { framework: skill.framework } : {}), ...(skill.match || {}) },
             rules: rules.length > 0
-                ? { file: 'references/COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' }
+                ? { file: `references/${RULES_REFERENCE.filename}`, description: RULES_REFERENCE.description }
                 : null,
             products,
         };
@@ -975,7 +982,7 @@ async function generateSkill({
 
     // Build references list for SKILL.md
     const referencesText = references
-        .map(ref => ref.placeholder ?? `- \`references/${ref.filename}\` - ${ref.description}`)
+        .map(ref => ref.placeholder ?? referenceLine(ref.filename, ref.description))
         .join('\n');
 
     // Format workflow steps for skills that use the {workflow} placeholder
@@ -1161,6 +1168,7 @@ export {
     FRAMEWORK_NAME,
     FRAMEWORK_DOCS,
     FRAMEWORK_RULES,
+    referenceLine,
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,

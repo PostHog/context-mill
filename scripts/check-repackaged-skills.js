@@ -13,7 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
-import { composeStepSkill, skillBody, skillFrontmatter } from './lib/skill-composition.js';
+import { composeStepSkill, compareSkills } from './lib/skill-composition.js';
 
 const USAGE = 'Usage: node scripts/check-repackaged-skills.js [dist]';
 const [distDir = 'dist'] = process.argv.slice(2);
@@ -85,14 +85,7 @@ let compared = 0;
 
 function compare(label, replaced, replacement) {
     compared++;
-    for (const file of new Set([...Object.keys(replaced), ...Object.keys(replacement)])) {
-        if (!(file in replacement)) differences.push(`${label}: ${file} is missing`);
-        else if (!(file in replaced)) differences.push(`${label}: ${file} is new`);
-        else if (file === 'SKILL.md') {
-            if (skillBody(replaced[file]) !== skillBody(replacement[file])) differences.push(`${label}: SKILL.md reads differently`);
-            if (skillFrontmatter(replaced[file]) !== skillFrontmatter(replacement[file])) differences.push(`${label}: SKILL.md frontmatter differs`);
-        } else if (replaced[file] !== replacement[file]) differences.push(`${label}: ${file} differs`);
-    }
+    for (const difference of compareSkills(replaced, replacement)) differences.push(`${label}: ${difference}`);
 }
 
 const replacements = entries.filter(e => e.replaces);

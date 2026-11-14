@@ -132,8 +132,9 @@ written under one name, since the second would replace the first.
 ### Step skills
 
 The orchestrator's step skills live in `context/skills/integration/<step>/`,
-one skill per step, and publish as `integration-<step>`. Each names the skill
-it stands in for under `replaces`, which its menu entry carries. The skills
+one skill per step, and publish as `integration-<step>`. Each names what it
+stands in for under `replaces`, which its menu entry carries: a skill group or
+a single skill, never one variant of a group. The skills
 under `context/skills/integration-v2/` keep publishing for wizard versions
 that read them, and both read the same template.
 

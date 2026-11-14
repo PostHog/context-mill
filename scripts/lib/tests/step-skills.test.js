@@ -12,7 +12,8 @@ import {
     serializeSkill,
 } from '../skill-generator.js';
 import { writeManifestAndMenu } from '../build-phases.js';
-import { composeStepSkill, skillBody, skillFrontmatter } from '../skill-composition.js';
+import { composeStepSkill, compareSkills, skillBody, skillFrontmatter } from '../skill-composition.js';
+import { buildIndexes, routeChange } from '../change-router.js';
 
 const REPO_CONFIG_DIR = path.join(import.meta.dirname, '..', '..', '..', 'context');
 const PAGE = 'https://posthog.com/docs';
@@ -143,13 +144,23 @@ describe('a step skill written once for every framework', () => {
         });
         const replaced = built['flow-init-next'];
 
-        expect(Object.keys(composed).sort()).toEqual(Object.keys(replaced).sort());
-        for (const [file, text] of Object.entries(replaced)) {
-            if (file === 'SKILL.md') {
-                expect(skillBody(composed[file])).toBe(skillBody(text));
-                expect(skillFrontmatter(composed[file])).toBe(skillFrontmatter(text));
-            } else expect(composed[file], file).toBe(text);
-        }
+        expect(compareSkills(replaced, composed)).toEqual([]);
+        expect(composed['SKILL.md']).not.toBe(replaced['SKILL.md']);
+    });
+
+    it('is rebuilt by the dev server when the template it borrows changes', () => {
+        const skills = expandSkillGroups(config(), dir);
+        const skillsDir = path.join(dir, 'skills');
+        const indexes = buildIndexes({ skills, configDir: dir });
+
+        const decision = routeChange({
+            event: 'change',
+            absPath: path.join(skillsDir, 'flow', 'init', 'description.md'),
+            indexes,
+            paths: { repoRoot: dir, skillsDir, exampleAppsDir: path.join(dir, 'example-apps') },
+        });
+
+        expect([...decision.ids].sort()).toEqual(['flow-init-next', 'integration-init']);
     });
 
     it('takes another product\'s pages from the folder the pack keeps them in', async () => {
@@ -181,13 +192,49 @@ describe('a step skill written once for every framework', () => {
     });
 
     it.each([
-        ['a name nothing on the menu has', { replaces: 'flow-missing' }, /names no skill group or skill/],
+        ['a name nothing on the menu has', { replaces: 'flow-missing' }, /names no skill group/],
+        ['one variant of a group', { replaces: 'flow-init-next' }, /cannot name one variant of a group/],
         ['itself', { replaces: 'integration-init' }, /cannot replace itself/],
         ['a product no variant table has', { framework_references: 'surveys' }, /is no product of a variant table/],
         ['pages of its own beside the framework\'s', { variants: [{ id: 'all', display_name: 'Init', docs_urls: [`${PAGE}/a.md`] }] }, /ships its own pages as shared_docs/],
         ['several variants', { variants: [{ id: 'a', display_name: 'A' }, { id: 'b', display_name: 'B' }] }, /need exactly one variant/],
+        ['one variant that is not named all', { variants: [{ id: 'next', display_name: 'Init' }] }, /need exactly one variant, with id "all"/],
+        ['bundle packaging', { packaging: 'bundle' }, /is not bundled/],
     ])('rejects a step skill that names %s', (_, step, message) => {
         expect(() => expandSkillGroups(config(step), dir)).toThrow(message);
+    });
+});
+
+describe('compareSkills', () => {
+    const skill = (name, body = 'Do the step.', rest = {}) => ({
+        'SKILL.md': `---\nname: ${name}\ndescription: A step\n---\n\n${body}\n`,
+        'references/page.md': 'a page',
+        ...rest,
+    });
+
+    it('finds nothing between a skill and a stand-in that differs only in its name', () => {
+        expect(compareSkills(skill('flow-init-next'), skill('integration-init'))).toEqual([]);
+    });
+
+    it.each([
+        ['a different body', skill('integration-init', 'Do another step.'), ['SKILL.md reads differently']],
+        ['a different description', { ...skill('integration-init'), 'SKILL.md': '---\nname: integration-init\ndescription: Another step\n---\n\nDo the step.\n' }, ['SKILL.md frontmatter differs']],
+        ['a page with other content', skill('integration-init', undefined, { 'references/page.md': 'another page' }), ['references/page.md differs']],
+        ['a page too many', skill('integration-init', undefined, { 'references/extra.md': 'x' }), ['references/extra.md is new']],
+        ['a page too few', { 'SKILL.md': skill('integration-init')['SKILL.md'] }, ['references/page.md is missing']],
+        ['no SKILL.md', { 'references/page.md': 'a page' }, ['SKILL.md is missing']],
+    ])('reports a stand-in with %s', (_, replacement, differences) => {
+        expect(compareSkills(skill('flow-init-next'), replacement)).toEqual(differences);
+    });
+
+    it('reports every difference of a stand-in, not the first alone', () => {
+        const replacement = skill('integration-init', 'Do another step.', { 'references/page.md': 'another page', 'references/extra.md': 'x' });
+
+        expect(compareSkills(skill('flow-init-next'), replacement).sort()).toEqual([
+            'SKILL.md reads differently',
+            'references/extra.md is new',
+            'references/page.md differs',
+        ]);
     });
 });
 

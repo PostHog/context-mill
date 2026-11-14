@@ -8,9 +8,7 @@
  * the skill; this module is the reference for it, and what the build checks use.
  */
 
-import { VARIANT_FILE, FRAMEWORK_NAME, FRAMEWORK_DOCS, FRAMEWORK_RULES } from './skill-generator.js';
-
-const referenceLine = (name, description) => `- \`references/${name}\` - ${description}`;
+import { VARIANT_FILE, FRAMEWORK_NAME, FRAMEWORK_DOCS, FRAMEWORK_RULES, referenceLine } from './skill-generator.js';
 
 /** One plain part of a path: it starts with a letter or digit and has no separator. */
 const PLAIN_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -89,4 +87,22 @@ function skillFrontmatter(text) {
         .join('\n');
 }
 
-export { composeStepSkill, skillBody, skillFrontmatter };
+/**
+ * What differs between a skill and the skill that stands in for it, both keyed by path.
+ * They have the same files with the same bytes, and the same SKILL.md but for the `name` in its frontmatter.
+ * Returns one line per difference, and none when the stand-in reads the same.
+ */
+function compareSkills(replaced, replacement) {
+    const differences = [];
+    for (const file of new Set([...Object.keys(replaced), ...Object.keys(replacement)])) {
+        if (!(file in replacement)) differences.push(`${file} is missing`);
+        else if (!(file in replaced)) differences.push(`${file} is new`);
+        else if (file === 'SKILL.md') {
+            if (skillBody(replaced[file]) !== skillBody(replacement[file])) differences.push('SKILL.md reads differently');
+            if (skillFrontmatter(replaced[file]) !== skillFrontmatter(replacement[file])) differences.push('SKILL.md frontmatter differs');
+        } else if (replaced[file] !== replacement[file]) differences.push(`${file} differs`);
+    }
+    return differences;
+}
+
+export { composeStepSkill, compareSkills, skillBody, skillFrontmatter };
