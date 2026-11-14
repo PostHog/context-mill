@@ -7,12 +7,15 @@
  * Build this checkout first, with `git clean -Xn example-apps` listing nothing but `.env` files, then the baseline from a copy of its docs cache:
  * `npm run build && git worktree add /tmp/cm-main main && cp -R .docs-cache /tmp/cm-main/ && (cd /tmp/cm-main && npm install && npm run build)`,
  * then `npm run check:bundle-diff -- /tmp/cm-main/dist [dist]`.
+ * With `--additive`, a file, a zip entry, a menu entry or a field the baseline lacks is allowed and counted;
+ * anything the baseline has must still be there, unchanged. Use it for a release that only adds.
  */
 
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
+import { contains } from './lib/additive-diff.js';
 
 const MENU_METADATA = ['title', 'description', 'tags'];
 
@@ -51,6 +54,13 @@ function stripMenuMetadata(node) {
     );
 }
 
+/** A parsed JSON file, kept whole so an additive comparison can look inside it. */
+class Json {
+    constructor(value) {
+        this.value = value;
+    }
+}
+
 /** Comparable digest of one file: zips by their entries, manifests without the build timestamp, the menu without its metadata fields. */
 function digest(name, buf) {
     const base = path.basename(name);
@@ -60,12 +70,12 @@ function digest(name, buf) {
     }
     if (base === 'manifest.json') {
         const { buildTimestamp: _ts, ...rest } = JSON.parse(buf.toString('utf8'));
-        return sha(JSON.stringify(rest));
+        return new Json(rest);
     }
     if (base === 'skill-menu.json') {
         const menu = JSON.parse(buf.toString('utf8'));
         menu.categories = stripMenuMetadata(menu.categories);
-        return sha(JSON.stringify(menu));
+        return new Json(menu);
     }
     return sha(buf);
 }
@@ -77,29 +87,41 @@ function listFiles(root) {
         .sort();
 }
 
-function diff(a, b, at, out) {
-    if (typeof a === 'string' || typeof b === 'string') {
-        if (a !== b) out.push(at);
-        return;
-    }
-    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
-        if (!(key in a)) out.push(`${at}!${key} (added)`);
-        else if (!(key in b)) out.push(`${at}!${key} (removed)`);
-        else diff(a[key], b[key], `${at}!${key}`, out);
-    }
-}
-
-const [baselineDir, candidateDir = 'dist'] = process.argv.slice(2);
+const USAGE = 'Usage: node scripts/check-bundle-diff.js [--additive] <baseline-dist> [candidate-dist]';
+const args = process.argv.slice(2);
+const additive = args.includes('--additive');
+const [baselineDir, candidateDir = 'dist'] = args.filter(arg => arg !== '--additive');
 if (!baselineDir) {
-    console.error('Usage: node scripts/check-bundle-diff.js <baseline-dist> [candidate-dist]');
+    console.error(USAGE);
     process.exit(2);
 }
 
 for (const dir of [baselineDir, candidateDir]) {
     if (!fs.existsSync(dir)) {
         console.error(`No build output at ${dir}`);
-        console.error('Usage: node scripts/check-bundle-diff.js <baseline-dist> [candidate-dist]');
+        console.error(USAGE);
         process.exit(2);
+    }
+}
+
+/** What only the candidate has. Counted in an additive comparison, a difference otherwise. */
+const additions = [];
+const add = (what, out) => (additive ? additions.push(what) : out.push(`${what} (added)`));
+
+function diff(a, b, at, out) {
+    if (a instanceof Json && b instanceof Json) {
+        if (additive) contains(a.value, b.value, at, out, additions);
+        else if (JSON.stringify(a.value) !== JSON.stringify(b.value)) out.push(at);
+        return;
+    }
+    if (typeof a === 'string' || typeof b === 'string' || a instanceof Json || b instanceof Json) {
+        if (a !== b) out.push(at);
+        return;
+    }
+    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+        if (!(key in a)) add(`${at}!${key}`, out);
+        else if (!(key in b)) out.push(`${at}!${key} (removed)`);
+        else diff(a[key], b[key], `${at}!${key}`, out);
     }
 }
 
@@ -109,7 +131,7 @@ const baseline = listFiles(baselineDir);
 const candidate = listFiles(candidateDir);
 const changes = [];
 for (const rel of new Set([...baseline, ...candidate])) {
-    if (!baseline.includes(rel)) { changes.push(`${rel} (added)`); continue; }
+    if (!baseline.includes(rel)) { add(rel, changes); continue; }
     if (!candidate.includes(rel)) { changes.push(`${rel} (removed)`); continue; }
     if (isExecutable(path.join(baselineDir, rel)) !== isExecutable(path.join(candidateDir, rel))) {
         changes.push(`${rel} (executable bit)`);
@@ -127,4 +149,8 @@ if (changes.length > 0) {
     for (const change of changes) console.error(`  - ${change}`);
     process.exit(1);
 }
-console.log(`No differences beyond skill-menu ${MENU_METADATA.join('/')} (${candidate.length} files compared).`);
+if (additive) {
+    console.log(`Nothing changed or removed beyond skill-menu ${MENU_METADATA.join('/')}; ${additions.length} additions (${candidate.length} files compared).`);
+} else {
+    console.log(`No differences beyond skill-menu ${MENU_METADATA.join('/')} (${candidate.length} files compared).`);
+}
