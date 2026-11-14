@@ -23,6 +23,18 @@ unnecessary changes, keep the change as lean as possible for an easy review, and
 follow the shape of the examples provided. How call sites reach the client is
 part of the shape: reach it the way the docs and the example project reach it.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target: create its init point there. The
+`mcp-analytics` task creates the client a separately run MCP server needs. If the MCP server is the whole project, it is your target.
+
+The framework reference you were given comes from a static check, and it can be wrong.
+If this project doesn't use that language or framework at all, complete as `failed`,
+not `not needed`, and change nothing. A different version or variant of the same framework,
+such as Pages Router and App Router in Next.js, is not a mismatch: continue, and follow what
+the project actually uses. Put one line in your handoff's `conflict`: what
+the project actually uses, and that rerunning and choosing "Change framework" fixes
+it. Every later task depends on you, so the run should stop here.
+
 ## How you know you succeeded
 
 The init file exists and the PostHog env keys are present. Keys live in the env

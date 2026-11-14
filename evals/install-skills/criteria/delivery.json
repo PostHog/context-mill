@@ -1,0 +1,14 @@
+[
+  {
+    "name": "dv_app_ran",
+    "rubric": "The trace shows the agent started the app after its changes and exercised it, for example by requesting a route or running the flow that captures an event. Reading the code without running it is NO. Judge only what this session did. Answer pass for YES, fail for NO."
+  },
+  {
+    "name": "dv_event_arrived",
+    "rubric": "The trace shows a PostHog query, made through the PostHog tools after the app ran, that returned at least one event sent by this app in this session. The returned event must be identifiable as this run's: its name is one the agent's code captures, and its timestamp falls after the app started. A query that returned nothing, an event from before the app ran, or the agent only claiming delivery without a query result is NO. Answer pass for YES, fail for NO."
+  },
+  {
+    "name": "dv_real_credentials",
+    "rubric": "The app sent events with the project token and host from the POSTHOG_PROJECT_TOKEN and POSTHOG_HOST environment variables the session provided, read from the environment or an env file. A hard-coded or invented token is NO. Answer pass for YES, fail for NO."
+  }
+]

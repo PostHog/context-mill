@@ -14,9 +14,9 @@ dependsOn: [enable-replay]
 
 ## Goal
 
-Create the summary scanner: a rolling sample of plain-language session
-summaries in this product's own vocabulary, so the user sees the breadth of
-what scanners produce. The brief, the locked scaffold, and the create/re-run
+Create the summary scanner: plain-language session summaries in this
+product's own vocabulary, so the user sees the breadth of what scanners
+produce. The brief, the locked scaffold, and the create/re-run
 mechanics are in your skills — you fill the blanks from the repo:
 
 - **`name`** — in this product's own words.
@@ -24,8 +24,8 @@ mechanics are in your skills — you fill the blanks from the repo:
   key flows, so summaries read like the product.
 - **`{{PRODUCT_CONTEXT}}`** — one plain factual sentence.
 
-It samples every recording with no query scope, kept cheap by a low sampling
-rate — **never raise the sampling rate during setup**.
+It has no query scope. Its sampling rate comes from the project's volume
+tier in `replay-vision-scanners-core` — never raise it beyond that.
 
 If the enable-replay handoff says this product has no web surface and no
 recorded web sessions at all, skip creation and say why — that is a correct
@@ -33,5 +33,5 @@ outcome.
 
 ## How you know you succeeded
 
-The scanner exists in PostHog at the brief's sampling rate, or your
-handoff says exactly why it was skipped or deferred.
+The scanner exists in PostHog at its tier's sampling rate, or your handoff
+says exactly why it was skipped or deferred.

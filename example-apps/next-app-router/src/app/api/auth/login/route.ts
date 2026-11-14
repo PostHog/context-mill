@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   // Capture server-side login event
   const posthog = getPostHogClient();
-  posthog.capture({
+  posthog?.capture({
     distinctId: username,
     event: 'server_login',
     properties: {
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   });
 
   // Identify user on server side
-  posthog.identify({
+  posthog?.identify({
     distinctId: username,
     properties: {
       username: username,
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   });
 
   // This handler is short-lived; flush so the enqueued events send before it returns
-  await posthog.flush();
+  await posthog?.flush();
 
   return NextResponse.json({ success: true, user });
 }

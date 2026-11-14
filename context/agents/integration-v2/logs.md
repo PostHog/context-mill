@@ -25,6 +25,11 @@ assumes, an upgrade of a package this integration did not introduce. A
 browser-only app must not receive a server exporter. If no documented setup
 applies, complete as `not needed` and explain why.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target, and MCP analytics owns the MCP server.
+Workers, queues and shared packages belong to the app. Leave a separately run MCP server's files alone, and add no exporter or log lines to the tool
+handlers of an MCP route inside the app. If the MCP server is the whole project, it is your target.
+
 Export only log lines this integration adds. Create a dedicated logger for the
 PostHog exporter and emit a few purpose-written lines at meaningful points the
 app already passes through. Even where the platform reference attaches the
@@ -36,8 +41,15 @@ already configured, report that without adding a second exporter. Preserve any
 tracing provider AIO configured in the previous step. Do not export secrets,
 request bodies, or user data, and do not scatter logs through unrelated code.
 
+On Node, take the logger from the `LoggerProvider` you construct, not from the global
+`logs` API: the global can stay a no-op when OpenTelemetry package versions differ,
+and no build catches that. Never wait on log delivery before the app starts serving,
+because a slow PostHog host would hold up its boot. Emit and move on, and flush only
+at shutdown.
+
 This is the instrumentation part of a larger integration. Instead of the
-standalone skill's install command, name the required packages in your handoff
+standalone skill's install command, name the required packages in your handoff,
+list each one in the handoff's `packages` field,
 and leave installation, manifest and lockfile updates, builds, and lint to
 review. Do not edit dependency manifests or write a version number you
 invented — the package manager resolves real versions when review installs by

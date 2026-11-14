@@ -1,3 +1,7 @@
+if (!process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NODE_ENV === 'development') {
+  console.warn('NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog init.')
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -8,7 +12,7 @@ export default defineNuxtConfig({
       posthog: {
         publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
         host: process.env.NUXT_PUBLIC_POSTHOG_HOST,
-        posthogDefaults: '2026-01-30',
+        posthogDefaults: '2026-08-30',
       },
     },
   },

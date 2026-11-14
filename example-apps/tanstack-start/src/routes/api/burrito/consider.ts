@@ -19,7 +19,7 @@ export const Route = createFileRoute('/api/burrito/consider')({
         const sessionId = request.headers.get('X-PostHog-Session-Id')
 
         const posthog = getPostHogClient()
-        posthog.capture({
+        posthog?.capture({
           distinctId: username,
           event: 'burrito_considered',
           properties: {
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/api/burrito/consider')({
         })
 
         // This handler is short-lived; flush so the enqueued event sends before it returns
-        await posthog.flush()
+        await posthog?.flush()
 
         return json({ success: true })
       },

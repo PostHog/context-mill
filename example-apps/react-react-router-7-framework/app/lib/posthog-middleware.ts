@@ -7,8 +7,16 @@ export interface PostHogContext extends RouterContextProvider {
 }
 
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-    host: process.env.VITE_PUBLIC_POSTHOG_HOST!,
+  const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+  if (!token) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.");
+    }
+    return next();
+  }
+
+  const posthog = new PostHog(token, {
+    host: process.env.VITE_PUBLIC_POSTHOG_HOST,
     flushAt: 1,
     flushInterval: 0,
   });

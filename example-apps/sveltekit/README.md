@@ -32,7 +32,7 @@ PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token_here
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings).
+You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -77,12 +77,22 @@ PostHog is initialized in the SvelteKit client hooks `init` function, which runs
 
 ```typescript
 import posthog from 'posthog-js';
+import { env } from '$env/dynamic/public';
+import { dev } from '$app/environment';
 
 export async function init() {
-  posthog.init(PUBLIC_POSTHOG_PROJECT_TOKEN, {
+  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+  if (!token) {
+    if (dev) {
+      console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
+    }
+    return;
+  }
+
+  posthog.init(token, {
     api_host: '/ingest',
-    ui_host: 'https://us.posthog.com',
-    defaults: '2026-01-30',
+    ui_host: env.PUBLIC_POSTHOG_HOST?.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com',
+    defaults: '2026-08-30',
     capture_exceptions: true
   });
 }
@@ -94,13 +104,18 @@ A singleton pattern ensures one PostHog client instance for server-side tracking
 
 ```typescript
 import { PostHog } from 'posthog-node';
+import { env } from '$env/dynamic/public';
 
 let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
+  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+  if (!token) {
+    return null;
+  }
   if (!posthogClient) {
-    posthogClient = new PostHog(PUBLIC_POSTHOG_PROJECT_TOKEN, {
-      host: PUBLIC_POSTHOG_HOST,
+    posthogClient = new PostHog(token, {
+      host: env.PUBLIC_POSTHOG_HOST,
       flushAt: 1,
       flushInterval: 0
     });
@@ -111,20 +126,20 @@ export function getPostHogClient() {
 
 ### Reverse proxy (`src/hooks.server.ts`)
 
-The server hooks handle proxies requests through `/ingest` to avoid ad blockers:
+Ad blockers drop events sent to PostHog's domain. The server hook in this example sends them through your own domain instead. It forwards `/ingest/static/*` and `/ingest/array/*` to PostHog's assets host and every other `/ingest/*` request to PostHog's ingestion host. It also sets the `host` header, forwards the client IP for geolocation, and removes cookies and non-PostHog credentials from the forwarded request. `src/hooks.client.ts` sets `api_host: '/ingest'` so the SDK uses that path, and `ui_host` keeps toolbar links pointing at PostHog.
 
 ```typescript
 export const handle: Handle = async ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/ingest')) {
-    const pathname = event.url.pathname.replace('/ingest', '');
-    const host = pathname.startsWith('/static')
-      ? 'https://us-assets.i.posthog.com'
-      : 'https://us.i.posthog.com';
     // Proxy to PostHog...
   }
   return resolve(event);
 };
 ```
+
+The proxy follows the region in `PUBLIC_POSTHOG_HOST`: `https://us.i.posthog.com` or `https://eu.i.posthog.com`. It derives the ingestion host, the assets host (`-assets.i.posthog.com`), and `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) from that one value, so an EU project only needs to set `PUBLIC_POSTHOG_HOST`. Pick a proxy path unique to your app rather than a common name such as `/analytics` or `/telemetry`.
+
+The hook only runs with server-side rendering. If you deploy with `adapter-static`, use the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) instead.
 
 ### User identification
 

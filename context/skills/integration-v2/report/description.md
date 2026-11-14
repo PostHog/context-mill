@@ -45,6 +45,15 @@ claim survive into the report.
   app's existing loggers into the same exporter if the user wants more. A
   product whose task was never queued because the run excluded it is not
   skipped work — leave it out of the report entirely.
+- MCP analytics, when its task ran: the server instrumented and the path used,
+  or why it was skipped or failed. Name any other MCP servers its handoff lists,
+  with `npx @posthog/wizard mcp-analytics` as the way to instrument them. When
+  review reverted the instrumentation over a version pin or toolchain, say what
+  to raise before running that command. On a STDIO server, say to set the env
+  variables in the `env` block of the MCP client's server config, because the
+  client starts the server and nothing there reads the env file. For a Ruby or
+  Rust server, say plainly that the SDK is experimental and not officially
+  supported.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.
@@ -68,6 +77,8 @@ code changed this run and drop the ones that don't fit:
 - If Logs was set up: trigger the code path that emits one of the added log
   lines and confirm the entry appears in PostHog Logs with the expected service
   and severity.
+- If MCP analytics was set up: connect an agent, invoke a tool that is safe to
+  run, and confirm a `$mcp_tool_call` event appears in PostHog.
 - If auth exists and identify was wired: the returning-visitor path also calls
   identify, so returning sessions don't fragment onto anonymous distinct IDs.
 

@@ -100,3 +100,54 @@ describe('buildAgents flow frontmatter', () => {
         expect(existsSync(join(distDir, 'agents', 'my-flow', 'README.md'))).toBe(false);
     });
 });
+
+describe('buildAgents wizard frontmatter', () => {
+    let tmpDir;
+    let configDir;
+    let distDir;
+
+    beforeEach(() => {
+        tmpDir = mkdtempSync(join(tmpdir(), 'agents-test-'));
+        configDir = join(tmpDir, 'context');
+        distDir = join(tmpDir, 'dist');
+        mkdirSync(join(configDir, 'agents', 'my-flow'), { recursive: true });
+    });
+
+    afterEach(() => rmSync(tmpDir, { recursive: true, force: true }));
+
+    const build = (frontmatter) => {
+        writeFileSync(
+            join(configDir, 'agents', 'my-flow', 'task.md'),
+            prompt(`type: task\nflow: my-flow\n${frontmatter}`),
+        );
+        return () => buildAgents({ configDir, distDir, baseUrl: 'http://x' });
+    };
+
+    it('accepts one-line values, arrays and comments', () => {
+        expect(
+            build('# a comment\ndependsOn: [a, b]   # why\nlabel: Check [draft]\ndisallowedTools: []'),
+        ).not.toThrow();
+    });
+
+    it.each([
+        ['a wrapped array', 'dependsOn:\n  [install, init]'],
+        ['a block list', 'dependsOn:\n  - install'],
+        ['an array that stays open', 'dependsOn: [install,\n  init]'],
+        ['a nested key', 'model:\n  pi: terra'],
+        ['an indented key', 'model:\n  pi: terra\nlabel: x'],
+    ])('rejects %s', (_name, frontmatter) => {
+        expect(build(frontmatter)).toThrow("frontmatter the wizard can't read");
+    });
+
+    it.each(['continue', 'fail'])('accepts a budget with onTimeout: %s', (onTimeout) => {
+        expect(build(`timeoutSeconds: 600\nonTimeout: ${onTimeout}`)).not.toThrow();
+    });
+
+    it.each(['0', '-1', '0.5', '86401', 'ten', '600s'])('rejects timeoutSeconds: %s', (value) => {
+        expect(build(`timeoutSeconds: ${value}\nonTimeout: continue`)).toThrow('invalid timeoutSeconds');
+    });
+
+    it.each(['', '\nonTimeout: stop'])('requires a valid onTimeout with a budget (%j)', (rest) => {
+        expect(build(`timeoutSeconds: 600${rest}`)).toThrow('needs "onTimeout');
+    });
+});

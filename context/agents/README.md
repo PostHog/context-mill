@@ -1,5 +1,9 @@
 # Agent prompts
 
+> **The wizard has its own copy.** It bundles these prompts in its own repo,
+> at `src/programs/<id>/agent/`. This copy is published for wizard versions
+> that fetch their prompts. Make a prompt change in both places.
+
 One `<flow>/<type>.md` per orchestrator task — the WHAT of the task. The folder
 is the flow: the wizard's registry is scoped per flow, so audit or migration
 agent sets get sibling folders. The frontmatter carries the artifacts the
@@ -18,6 +22,12 @@ The body is intent only — what to do and what done looks like. The client
 injects the basics (project context, how to report, how to surface progress),
 so a prompt never restates them. Frontmatter stays flat: scalars and inline
 `[a, b]` arrays only, the wizard's parser is deliberately not a YAML engine.
+
+Queued tasks may set `timeoutSeconds` to a positive integer up to 86400, along with
+`onTimeout`. At that limit the wizard cancels the task, waits for cleanup, and does
+not retry it. With `onTimeout: continue`, the task completes with a conflict saying
+what is unverified, so later tasks and the report still run. With `onTimeout: fail`,
+the run stops. The build rejects a budget without a valid `onTimeout`.
 
 This README is documentation, not data: the build serves every other `.md`
 under a flow folder as an agent prompt.

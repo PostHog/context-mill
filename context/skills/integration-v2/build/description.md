@@ -1,7 +1,7 @@
 # Install, build, and review
 
-Install the declared dependencies, verify the project builds, then review the
-whole integration. This is the last check before the report — it is where the
+Install the declared dependencies, review the whole integration, then run the chosen
+compile checks. This is the last check before the report — it is where the
 run either earns trust or loses it. Be quick and decisive; this step must not
 spiral.
 
@@ -13,27 +13,9 @@ slow, errors, or can't resolve a package, do not retry with offline flags and do
 not poke the package manager's global store or cache — a failed install is a
 conflict to report (below), not a problem to fight.
 
-## Build and verify
-
-Before building, re-read the framework rules you were given and check each one
-that applies to this project against the diff you are about to verify. A rule
-naming a file or a wiring this project has, with nothing in the diff answering
-it, is unfinished work — do it now. This is the last step that can catch it.
-
-Run the project's build (or typecheck) and lint scripts if they exist
-(check the manifest's scripts). Where the toolchain ships its own analyzer rather
-than manifest scripts, run that instead — it is the only thing that will catch a
-lint the project itself enforces. Do not run the test suite — the runtime only
-permits install, build, typecheck, lint, and format commands, so a test command
-is blocked; a build that compiles is sufficient verification. Only errors in the
-files this integration changed are yours to fix — a missing import, a wrong call shape.
-An error in a file the integration never touched is pre-existing: note it and
-move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
-failure clears — it will not, and each re-run is slow.
-
 ## Review the integration
 
-Before you finish, review everything the earlier steps changed — the queue log's
+Before you build, review everything the earlier steps changed — the queue log's
 handoffs name the files each one touched. This catches the things users complain
 about most:
 
@@ -59,6 +41,23 @@ about most:
   replay is on. A partial CSP is the worst failure shape: events send, so the
   integration looks alive, while replay and surveys silently never load. Fix a
   missing directive; flag anything structural in `conflict`.
+
+## Build and verify
+
+Before building, re-read the framework rules you were given and check each one
+that applies to this project against the diff you are about to verify. A rule
+naming a file or a wiring this project has, with nothing in the diff answering
+it, is unfinished work — do it now. This is the last step that can catch it.
+
+Your task instructions say which checks to run, in what order, and when to stop.
+Where the toolchain ships its own analyzer rather than manifest scripts, run that instead — it is the only thing that will catch a
+lint the project itself enforces. Do not run the test suite — the runtime only
+permits install, build, typecheck, lint, and format commands, so a test command
+is blocked; a build that compiles is sufficient verification. Only errors in the
+files this integration changed are yours to fix — a missing import, a wrong call shape.
+An error in a file the integration never touched is pre-existing: note it and
+move on (below). Do not re-run build, typecheck, or lint hoping a pre-existing
+failure clears — it will not, and each re-run is slow.
 
 ## Flag out-of-scope conflicts and move on
 

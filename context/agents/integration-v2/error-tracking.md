@@ -21,6 +21,12 @@ you a boundary to mount at the app entry. Follow the docs and the reference exam
 for this one, and set it up in one place — never manual capture calls sprinkled
 across files.
 
+Where a web app or other application sits beside an MCP server (the detected facts
+name any MCP server), the app is your target: that one place belongs in the app. An
+MCP route inside the app needs nothing separate. Leave a separately run MCP server's
+files to the `mcp-analytics` task, which runs beside you and enables exception
+capture on its own client. If the MCP server is the whole project, it is your target.
+
 The SDK is already installed and initialized (see the context from previous steps);
 build on that, do not re-check it.
 

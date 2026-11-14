@@ -70,6 +70,42 @@ function assertFlowMatches(sourcePath, flow) {
     }
 }
 
+/**
+ * The wizard reads frontmatter one line at a time, not as YAML. A wrapped list
+ * reads as empty there with no error, while gray-matter reads it correctly, so
+ * reject any line the wizard would read differently. Budgets are checked here too,
+ * because a typo would otherwise reach every released wizard.
+ */
+function assertWizardFrontmatter(sourcePath) {
+    const text = fs.readFileSync(sourcePath, 'utf8');
+    const frontmatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+    const fields = new Map();
+    for (const raw of frontmatter.split(/\r?\n/)) {
+        const line = raw.replace(/\s+#.*$/, '').trim();
+        if (!line || line.startsWith('#')) continue;
+        const kv = raw === raw.trimStart() ? line.match(/^([\w-]+):\s*(.*)$/) : null;
+        if (!kv || kv[2] === '' || (kv[2].startsWith('[') && !kv[2].endsWith(']'))) {
+            throw new Error(
+                `Agent prompt ${sourcePath} has frontmatter the wizard can't read: "${raw.trim()}" — use one "key: value" per line, with arrays on one line`,
+            );
+        }
+        fields.set(kv[1], kv[2]);
+    }
+    const timeoutSeconds = fields.get('timeoutSeconds');
+    if (timeoutSeconds === undefined) return;
+    if (!/^[1-9]\d*$/.test(timeoutSeconds) || Number(timeoutSeconds) > 86400) {
+        throw new Error(
+            `Agent prompt ${sourcePath} has an invalid timeoutSeconds "${timeoutSeconds}" — use a whole number from 1 to 86400`,
+        );
+    }
+    const onTimeout = fields.get('onTimeout');
+    if (onTimeout !== 'continue' && onTimeout !== 'fail') {
+        throw new Error(
+            `Agent prompt ${sourcePath} sets timeoutSeconds, so it needs "onTimeout: continue" or "onTimeout: fail"`,
+        );
+    }
+}
+
 /** Whether a prompt's frontmatter sets a boolean flag such as `seed:` or `sink:`. */
 function declaresFlag(sourcePath, flag) {
     const text = fs.readFileSync(sourcePath, 'utf8');
@@ -113,6 +149,7 @@ export function buildAgents({ configDir, distDir, baseUrl, version = 'dev' }) {
     for (const { flow, id } of entries) {
         const sourcePath = path.join(agentsSourceDir, flow, `${id}.md`);
         assertFlowMatches(sourcePath, flow);
+        assertWizardFrontmatter(sourcePath);
         if (!flows.has(flow)) flows.set(flow, []);
         flows.get(flow).push({
             id,

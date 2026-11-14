@@ -1,15 +1,14 @@
 # Summary scanner (summarizer)
 
-A rolling sample of plain-language session summaries in **this** product's
-vocabulary, so the user sees the breadth of what scanners produce. Kept cheap
-by a low sampling rate — never raise it during setup. Create with
+Plain-language session summaries in **this** product's vocabulary, so the
+user sees the breadth of what scanners produce. Create with
 `vision-scanners-create`. You fill three blanks; the scaffold around them is
-locked, and the query stays unscoped.
+locked, and the query stays unscoped on every tier.
 
 ```jsonc
 {
-  // AGENT FILLS `name`, per the core naming rule - "Shopper session
-  // summaries", "Player session recaps".
+  // AGENT FILLS `name`, per the core naming rule - "Artisan Ceramics
+  // session summaries", "Courtside session recaps".
   "name": "<name>",
   "scanner_type": "summarizer",
   "scanner_config": {
@@ -18,10 +17,17 @@ locked, and the query stays unscoped.
   "query": {
     "kind": "RecordingsQuery"
   },
+  // Per tier, see below.
   "sampling_rate": 0.1,
   "model": "gemini-3-flash-preview"
 }
 ```
+
+**Sampling, per the tiers in `replay-vision-scanners-core`.** Free credit
+share: **0.2**. With no scannable sessions yet or low volume, it is
+`free_only` and sized to its share of the free credits. With high volume it
+keeps a 0.1 sample and `"free_only": false`. On a re-run, the core rules keep
+its rate and `free_only` unless its tier changed.
 
 **`{{VOCABULARY}}`** is a short list of the nouns and verbs this product's
 own UI uses for its key flows, read out of the repo — "courts, slots,

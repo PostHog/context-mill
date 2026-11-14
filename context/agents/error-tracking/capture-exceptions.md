@@ -50,6 +50,8 @@ npm`, look up the tree first: in a workspace package, use the manager whose
 lockfile sits at the workspace root above this directory, and npm only when no
 parent holds a lockfile. Do not run tests or start the app, and do not touch
 the build config: when the flow includes a configure task, it owns those files.
+The exception is a flag the docs say a hook needs to run at all (Next.js 14's
+`experimental.instrumentationHook`).
 Stay inside this project's directory and set up capture in those places; that
 is the whole job.
 
