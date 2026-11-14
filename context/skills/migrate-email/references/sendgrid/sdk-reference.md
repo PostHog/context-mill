@@ -38,11 +38,6 @@ await sgMail.send({
 ```
 
 - `sgMail.send(msg)` with a list in `to` sends **one** email that every address sees.
-- `sgMail.send(msg, true)` and `sgMail.sendMultiple(msg)` send one email per address in `to`.
-- `sgMail.send(msg, callback)` sends like `sgMail.send(msg)` and passes `(error, result)` to the callback, and never throws.
-- `sgMail.setTimeout(ms)` sets axios's `timeout` on every send, as `mapping.md` says under "HTTP", and `sgMail.setSubstitutionWrappers(left, right)` sets the wrappers of every send's `substitutions`, and `sgMail.setSecretRules(rules)` makes every send fail before its request when the content matches a rule. Note each of them for each send through that client.
-- The Node.js helper turns snake_case keys into camelCase, so `template_id` and `dynamic_template_data` are the same fields as `templateId` and `dynamicTemplateData`.
-- `sgMail.send([msg1, msg2])` sends several emails in one call.
 - `@sendgrid/client`: `client.request({ method: 'POST', url: '/v3/mail/send', body })` sends the HTTP body below.
 
 **Python.** It raises `python_http_client.exceptions.HTTPError` and its subclasses, such as `BadRequestsError` and `TooManyRequestsError`, on an API error. `e.status_code` and `e.body` hold the answer. A success answers a response with `status_code` `202` and the message id in `headers['X-Message-Id']`.
@@ -61,7 +56,6 @@ message = Mail(
 response = SendGridAPIClient(os.environ["SENDGRID_API_KEY"]).send(message)
 ```
 
-- `Mail(..., is_multiple=True)` sends one email per address in `to_emails`.
 - `message.template_id` and `message.dynamic_template_data` send a dynamic template.
 - `message.add_cc(...)`, `message.add_bcc(...)`, `message.reply_to = ReplyTo(...)`, `message.attachment = Attachment(FileContent(...), FileName(...), FileType(...), Disposition(...), ContentId(...))`, `message.category = Category(...)`, `message.custom_arg = CustomArg(...)`, `message.header = Header(...)`, `message.send_at = SendAt(...)`, and `message.asm = Asm(...)` set the other fields.
 - `sg.client.mail.send.post(request_body=data)` sends a raw HTTP body.
@@ -107,7 +101,7 @@ response, err := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY")).Send(mess
 
 `mail.NewV3Mail()` with `mail.NewPersonalization()` (`AddTos`, `AddCCs`, `AddBCCs`, `SetDynamicTemplateData`) builds the full form, with `SetTemplateID`, `SetReplyTo`, `AddAttachment`, `AddCategories`, `SetCustomArg`, `SetHeader`, `SetSendAt`, and `SetASM`.
 
-**.NET.** `SendEmailAsync` answers a `Response` with `StatusCode`, `IsSuccessStatusCode`, `Headers`, and `Body`. It does not throw on an API error unless the client options set `HttpErrorAsException`. The client options' `ReliabilitySettings`, with `MaximumNumberOfRetries` above 0, retry server errors through `RetryDelegatingHandler` when the client makes its own `HttpClient`; `mapping.md` says under "Errors" which clients retry and what that keeps.
+**.NET.** `SendEmailAsync` answers a `Response` with `StatusCode`, `IsSuccessStatusCode`, `Headers`, and `Body`. It does not throw on an API error unless the client options set `HttpErrorAsException`.
 
 ```csharp
 var client = new SendGridClient(Environment.GetEnvironmentVariable("SENDGRID_API_KEY"));
@@ -122,7 +116,7 @@ var response = await client.SendEmailAsync(msg);
 
 **HTTP.** `POST https://api.sendgrid.com/v3/mail/send`, or `api.eu.sendgrid.com` for an EU subuser, with `Authorization: Bearer <key>`. A success answers `202` with no body and the message id in the `X-Message-Id` header. An error answers `{ "errors": [{ "message", "field", "help" }] }`. Look for `api.sendgrid.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
-**EU subusers.** An app on an EU subuser either names `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, such as `client.setDataResidency('eu')` on `@sendgrid/client` in Node.js or `sg.set_sendgrid_data_residency("eu")` in Python. Either one means every API request in `account.md` goes to `api.eu.sendgrid.com`.
+**EU subusers.** An app on an EU subuser either names `api.eu.sendgrid.com`, or sets the client's data residency to `eu`, such as `client.setDataResidency('eu')` on `@sendgrid/client` in Node.js or `sg.set_sendgrid_data_residency("eu")` in Python.
 
 ```json
 {
@@ -154,7 +148,6 @@ Node.js names, with the HTTP names where they differ. The other SDKs use the sam
 | `templateId` | `template_id` | A dynamic template (`d-...`), or a legacy template |
 | `dynamicTemplateData` | `personalizations[].dynamic_template_data` | Object that fills a dynamic template |
 | `substitutions` | `personalizations[].substitutions` | Values for tags in the subject, the content, and the reply-to address, such as `-name-` |
-| `substitutionWrappers` | none: `@sendgrid/mail` wraps each `substitutions` key in it before the request | Two strings. When the message sets none, the client's from `sgMail.setSubstitutionWrappers(left, right)`, otherwise `['{{', '}}']` |
 | `attachments` | `attachments` | A list of `{ content, filename, type, disposition, contentId }`. `content` is base64 |
 | `categories` | `categories` | A list of strings |
 | `customArgs` | `custom_args` | Object of string values, sent back in webhook events |
@@ -171,7 +164,6 @@ Node.js names, with the HTTP names where they differ. The other SDKs use the sam
 
 A send with `templateId: 'd-...'` and `dynamicTemplateData` renders a dynamic template from the SendGrid dashboard. Its content is not in the code.
 
-- A dynamic template uses Handlebars: `{{name}}`, `{{user.name}}`, `{{{raw}}}`, `{{#if}}`, `{{#unless}}`, `{{#each}}`, and helpers such as `{{#equals}}`, `{{formatDate}}`, and `{{insert}}`.
 - A template has versions. The active version holds `subject`, `html_content`, and `plain_content`.
 - A legacy template has an id without the `d-` prefix, and reads `substitutions` as `-name-` tags.
 

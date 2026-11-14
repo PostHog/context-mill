@@ -19,9 +19,6 @@ A domain authenticated at SendGrid carries these records. Keep all of them until
 
 - A domain set up without automated security has an `MX` and an SPF `TXT` record on `em<digits>`, and a DKIM `TXT` record at `m1._domainkey`, in place of the CNAMEs.
 - PostHog's sender uses its own label for its MAIL FROM, `feedback` by default. Never give PostHog a label SendGrid uses.
-- PostHog's DKIM records have their own names, so they sit next to `s1._domainkey` and `s2._domainkey`.
-- Keep the one `_dmarc` record. Never add a second one.
-- A domain whose SPF record names `include:sendgrid.net` keeps it. Merge PostHog's include into that record.
 
 ## Read-only key
 
