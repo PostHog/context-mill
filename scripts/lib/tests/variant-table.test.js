@@ -156,6 +156,9 @@ describe('a variant table', () => {
         ['a match framework that differs from the framework', { match: { framework: 'react' } }, /differs from framework/],
         ['a match value that is not a string', { match: { frameworkVariant: 4 } }, /match must map/],
         ['a match key that is not a trait name', { match: { 'framework-variant': 'app-router' } }, /match must map trait names/],
+        // A match pair is published as a `key:value` tag, so a colon in the value would read as another key.
+        ['a match value with a colon', { match: { frameworkVariant: 'app:router' } }, /match must map trait names/],
+        ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
     });
@@ -171,6 +174,14 @@ describe('a variant table', () => {
 
     it('rejects integration as a product, since it is the variant pages', () => {
         expect(() => expand(table({ products: ['integration'] }))).toThrow(/not a product to list/);
+    });
+
+    it.each([
+        ['a product listed twice', ['error-tracking', 'error-tracking'], /products lists a name twice/],
+        ['a product name that is not kebab-case', ['Error Tracking'], /must be a list of kebab-case names/],
+        ['products that are not a list', 'error-tracking', /must be a list of kebab-case names/],
+    ])('rejects %s', (_, products, message) => {
+        expect(() => expand(table({ products }))).toThrow(message);
     });
 
     it('publishes match as key:value menu tags, after the framework tag', () => {
