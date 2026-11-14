@@ -1,0 +1,18 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/feature-flags-step/description.md
+description: Evaluate the example PostHog feature flags, one per side of the app
+category: integration-steps
+tags: [orchestrator, feature-flags]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/feature-flags/adding-feature-flag-code.md
+  - https://posthog.com/docs/feature-flags/best-practices.md
+  - https://posthog.com/docs/feature-flags/local-evaluation.md
+replaces: integration-v2-feature-flags-step
+framework_references: feature-flags
+variants:
+  - id: all
+    display_name: PostHog feature flags step

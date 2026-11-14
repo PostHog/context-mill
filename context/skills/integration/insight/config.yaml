@@ -1,0 +1,14 @@
+# A step skill that reads the same for every framework; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/insight/description.md
+category: integration-steps
+description: Create PostHog insights (trends, funnels) attached to a dashboard
+tags: [orchestrator, insight]
+variants:
+  - id: all
+    display_name: PostHog insight step
+    tags: [orchestrator, insight]
+    docs_urls: []
+cli:
+  role: internal
+replaces: integration-v2-insight

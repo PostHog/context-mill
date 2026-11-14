@@ -1,0 +1,14 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/install/description.md
+description: Install the PostHog SDK with the project's package manager
+category: integration-steps
+tags: [orchestrator, install]
+cli:
+  role: internal
+replaces: integration-v2-install
+framework_references: integration
+variants:
+  - id: all
+    display_name: PostHog install step

@@ -208,8 +208,13 @@ function loadCommandments(configDir) {
 /**
  * Load a skill description template from the directory identified by composite key.
  */
+/** The file a group's template is read from. `templateFile` is relative to the group's folder, and may point into another group's. */
+function skillTemplatePath(configDir, compositeKey, templateFile) {
+    return path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+}
+
 function loadSkillTemplate(configDir, compositeKey, templateFile) {
-    const filePath = path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+    const filePath = skillTemplatePath(configDir, compositeKey, templateFile);
     if (!fs.existsSync(filePath)) {
         throw new Error(`Template "${templateFile}" not found for key "${compositeKey}"`);
     }
@@ -272,6 +277,20 @@ const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
 
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
+
+/**
+ * What a skill with `framework_references` leaves for its consumer to fill from a framework's pack:
+ * the framework's name inline, and one line each where the pack's pages and its rules file are listed.
+ */
+const FRAMEWORK_NAME = '{framework_name}';
+const FRAMEWORK_DOCS = '{framework_docs}';
+const FRAMEWORK_RULES = '{framework_rules}';
+
+/** How SKILL.md lists one file of `references/`. A consumer that completes a skill writes its lines the same way. */
+const referenceLine = (filename, description) => `- \`references/${filename}\` - ${description}`;
+
+/** The rules file a skill ships, as SKILL.md and a pack's `variant.json` list it. */
+const RULES_REFERENCE = { filename: 'COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' };
 
 /** The product whose pages are a variant's own `docs_urls`. A variant table cannot declare it again. */
 const INTEGRATION_PRODUCT = 'integration';
@@ -345,6 +364,44 @@ function validateVariantTable(key, group) {
 }
 
 /**
+ * Validate `replaces` and `framework_references`. A group with either is one skill, written once for
+ * every framework: `replaces` names the group or skill it stands in for, and `framework_references`
+ * names the product whose pages a consumer adds from the framework's pack.
+ */
+function validateReplacements(config) {
+    const dashed = key => key.replace(/\//g, '-');
+    const names = new Set();
+    const products = new Set([INTEGRATION_PRODUCT]);
+    // A group's name is also the id of a skill with the one variant `all`. A consumer looks a stand-in up by that name,
+    // so one variant of a group has no stand-in of its own.
+    for (const [key, group] of Object.entries(config)) {
+        names.add(dashed(key));
+        for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
+    }
+    for (const [key, group] of Object.entries(config)) {
+        if (group.replaces === undefined && group.framework_references === undefined) continue;
+        const where = `Skill group "${key}"`;
+        const single = group.variants?.length === 1 && group.variants[0].id === 'all';
+        if (!single) {
+            throw new Error(`${where}: replaces and framework_references need exactly one variant, with id "all"`);
+        }
+        if (group.replaces !== undefined && !names.has(group.replaces)) {
+            throw new Error(`${where}: replaces "${group.replaces}" names no skill group. It cannot name one variant of a group`);
+        }
+        if (group.replaces === dashed(key)) {
+            throw new Error(`${where}: a skill cannot replace itself`);
+        }
+        if (group.framework_references === undefined) continue;
+        if (!products.has(group.framework_references)) {
+            throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
+        }
+        if (group.packaging === 'bundle' || (group.variants[0].docs_urls || []).length > 0) {
+            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs, and is not bundled`);
+        }
+    }
+}
+
+/**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
  * base properties and a variants array (literal or via variants_from).
@@ -352,6 +409,7 @@ function validateVariantTable(key, group) {
 function expandSkillGroups(config, configDir) {
     const skills = [];
     const resolvedConfig = resolveVariantsFrom(config);
+    validateReplacements(resolvedConfig);
 
     for (const [key, group] of Object.entries(resolvedConfig)) {
         if (key === 'shared_docs') continue;
@@ -383,7 +441,11 @@ function expandSkillGroups(config, configDir) {
             const mergedTags = [...new Set([...baseTags, ...(variation.tags || [])])];
             let description = variation.description;
             if (!description && baseDescription) {
-                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+                // A skill written once for every framework names the framework its consumer fills in.
+                description = baseDescription.replace(
+                    /{display_name}/g,
+                    group.framework_references ? FRAMEWORK_NAME : variation.display_name,
+                );
             }
 
             // Support per-variation template override
@@ -418,6 +480,9 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _products: group.products || null,
+                _replaces: group.replaces || null,
+                _frameworkReferences: group.framework_references || null,
+                _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
                 _bundle: bundled,
                 _groupTags: baseTags,
@@ -860,6 +925,11 @@ async function generateSkill({
         return written;
     }
 
+    // A skill written once for every framework lists the framework's pages where a variant's own would go.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_DOCS });
+    }
+
     // The variant's own pages come first and are kept for the variant table's `integration` product.
     const variantDocUrls = skill.docs_urls || [];
     const pages = await writeDocs([...variantDocUrls, ...sharedDocs], `Skill "${skill.id}"`);
@@ -873,16 +943,16 @@ async function generateSkill({
     // Also emit them as a reference file. The orchestrator installs this skill
     // as the framework reference and points its task agents at individual
     // files, so the rules must exist outside the SKILL.md body.
-    if (rules.length > 0) {
+    // A skill written once for every framework takes its rules from the framework's pack.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_RULES });
+    } else if (rules.length > 0) {
         fs.writeFileSync(
-            path.join(referencesDir, 'COMMANDMENTS.md'),
+            path.join(referencesDir, RULES_REFERENCE.filename),
             `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
             'utf8',
         );
-        references.push({
-            filename: 'COMMANDMENTS.md',
-            description: 'Framework-specific rules the integration must follow',
-        });
+        references.push({ ...RULES_REFERENCE });
     }
 
     // A variant table row also ships each product's pages and a `variant.json` that lists them.
@@ -903,7 +973,7 @@ async function generateSkill({
             displayName: skill.display_name,
             match: { ...(skill.framework ? { framework: skill.framework } : {}), ...(skill.match || {}) },
             rules: rules.length > 0
-                ? { file: 'references/COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' }
+                ? { file: `references/${RULES_REFERENCE.filename}`, description: RULES_REFERENCE.description }
                 : null,
             products,
         };
@@ -912,7 +982,7 @@ async function generateSkill({
 
     // Build references list for SKILL.md
     const referencesText = references
-        .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
+        .map(ref => ref.placeholder ?? referenceLine(ref.filename, ref.description))
         .join('\n');
 
     // Format workflow steps for skills that use the {workflow} placeholder
@@ -923,7 +993,7 @@ async function generateSkill({
 
     // Apply template substitutions
     let body = skillTemplate
-        .replace(/{display_name}/g, skill.display_name)
+        .replace(/{display_name}/g, skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name)
         .replace(/{references}/g, referencesText)
         .replace(/{commandments}/g, commandmentsText)
         .replace(/{workflow}/g, workflowText);
@@ -960,6 +1030,12 @@ function serializeSkill(s) {
     }
     if (s.match) {
         result.match = s.match;
+    }
+    if (s._replaces) {
+        result.replaces = s._replaces;
+    }
+    if (s._frameworkReferences) {
+        result.frameworkReferences = s._frameworkReferences;
     }
     if (s._bundle) {
         result.bundle = true;
@@ -1089,6 +1165,10 @@ async function generateAllSkills({
 
 export {
     VARIANT_FILE,
+    FRAMEWORK_NAME,
+    FRAMEWORK_DOCS,
+    FRAMEWORK_RULES,
+    referenceLine,
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,

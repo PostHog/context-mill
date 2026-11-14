@@ -260,6 +260,9 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
         const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
         if (skill.framework) entry.framework = skill.framework;
         if (skill.default) entry.default = true;
+        // A skill written once for every framework says what it stands in for, and which pack pages complete it.
+        if (skill.replaces) entry.replaces = skill.replaces;
+        if (skill.frameworkReferences) entry.frameworkReferences = skill.frameworkReferences;
         Object.assign(entry, menuMetadata(skill, group));
         skillsByCategory[cat].push(entry);
     }
