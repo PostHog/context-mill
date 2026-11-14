@@ -426,18 +426,19 @@ function expandSkillGroups(config, configDir) {
         }
     }
 
+    skills.forEach(validateDocFilenames);
     return skills;
 }
 
 /**
- * Derive a filename from a URL
- * e.g., https://posthog.com/docs/libraries/next-js.md → next-js.md
+ * Derive a filename from the last `parts` parts of a URL's path
+ * e.g., https://posthog.com/docs/libraries/next-js.md → next-js.md, or libraries-next-js.md from two parts
  */
-function urlToFilename(url) {
+function urlToFilename(url, parts = 1) {
     try {
         const parsed = new URL(url);
         const pathParts = parsed.pathname.split('/').filter(Boolean);
-        let filename = pathParts[pathParts.length - 1] || 'doc';
+        let filename = pathParts.slice(-parts).join('-') || 'doc';
 
         // Ensure .md extension
         if (!filename.endsWith('.md')) {
@@ -447,6 +448,38 @@ function urlToFilename(url) {
         return filename;
     } catch (e) {
         return 'doc.md';
+    }
+}
+
+const docUrl = docEntry => (typeof docEntry === 'string' ? docEntry : docEntry.url);
+
+/**
+ * The file name of each page written to one folder, in the pages' order.
+ * A page takes the last part of its URL. When two pages share it, each takes
+ * its parent part too: `installation/python.md` and `libraries/python.md` become
+ * `installation-python.md` and `libraries-python.md`. Throws when two pages
+ * still share a name, since the second would replace the first.
+ */
+function docFilenames(docEntries, where) {
+    const urls = docEntries.map(docUrl);
+    const short = urls.map(url => urlToFilename(url));
+    const names = urls.map((url, i) =>
+        short.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i]);
+    const written = new Map();
+    names.forEach((name, i) => {
+        if (written.has(name)) {
+            throw new Error(`${where}: ${written.get(name)} and ${urls[i]} would both be written as ${name}`);
+        }
+        written.set(name, urls[i]);
+    });
+    return names;
+}
+
+/** Throws when two pages of a skill would be written under one name, before any page is fetched. */
+function validateDocFilenames(skill) {
+    docFilenames([...(skill.docs_urls || []), ...(skill._sharedDocs || [])], `Skill "${skill.id}"`);
+    for (const product of skill._products || []) {
+        docFilenames(skill.docs?.[product] ?? [], `Skill "${skill.id}", ${product} pages`);
     }
 }
 
@@ -809,42 +842,29 @@ async function generateSkill({
         }
     }
 
-    // Helper to process a doc entry (string URL or {url, title} object).
-    // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
-    // are silent.
-    async function processDoc(docEntry) {
-        const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
-        const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
-
-        const result = await fetchDocFn(url);
-        if (!result) return null;
-        const filename = urlToFilename(url);
-        fs.writeFileSync(
-            path.join(referencesDir, filename),
-            result.content,
-            'utf8'
-        );
-
-        const reference = {
-            filename,
-            description: titleOverride || result.title,
-        };
-        references.push(reference);
-        return reference;
-    }
-
-    // The variant's own pages, kept for the variant table's `integration` product.
-    const variantDocs = [];
-    if (skill.docs_urls && skill.docs_urls.length > 0) {
-        for (const docEntry of skill.docs_urls) {
-            const reference = await processDoc(docEntry);
-            if (reference) variantDocs.push(reference);
+    // Writes the pages of one folder: `references/`, or `subfolder` under it. Each doc entry is a URL
+    // or `{ url, title }`. fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits are silent.
+    async function writeDocs(docEntries, where, subfolder = '') {
+        const names = docFilenames(docEntries, where);
+        const written = [];
+        for (const [i, docEntry] of docEntries.entries()) {
+            const result = await fetchDocFn(docUrl(docEntry));
+            const dir = path.join(referencesDir, subfolder);
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, names[i]), result.content, 'utf8');
+            written.push({
+                filename: path.posix.join(subfolder, names[i]),
+                description: (typeof docEntry === 'object' && docEntry.title) || result.title,
+            });
         }
+        return written;
     }
 
-    for (const docEntry of sharedDocs) {
-        await processDoc(docEntry);
-    }
+    // The variant's own pages come first and are kept for the variant table's `integration` product.
+    const variantDocUrls = skill.docs_urls || [];
+    const pages = await writeDocs([...variantDocUrls, ...sharedDocs], `Skill "${skill.id}"`);
+    references.push(...pages);
+    const variantDocs = pages.slice(0, variantDocUrls.length);
 
     // Collect commandments for this skill's tags.
     const rules = collectCommandments(skill.tags || [], commandmentsConfig);
@@ -875,19 +895,8 @@ async function generateSkill({
             })),
         };
         for (const product of skill._products) {
-            products[product] = [];
-            for (const docEntry of skill.docs?.[product] ?? []) {
-                const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
-                const result = await fetchDocFn(url);
-                if (!result) continue;
-                const filename = urlToFilename(url);
-                fs.mkdirSync(path.join(referencesDir, product), { recursive: true });
-                fs.writeFileSync(path.join(referencesDir, product, filename), result.content, 'utf8');
-                products[product].push({
-                    file: `references/${product}/${filename}`,
-                    description: (typeof docEntry === 'object' && docEntry.title) || result.title,
-                });
-            }
+            const written = await writeDocs(skill.docs?.[product] ?? [], `Skill "${skill.id}", ${product} pages`, product);
+            products[product] = written.map(ref => ({ file: `references/${ref.filename}`, description: ref.description }));
         }
         const variant = {
             id: skill._shortId,
