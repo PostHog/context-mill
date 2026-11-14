@@ -1,6 +1,6 @@
 # Sending transactional emails
 
-This skill publishes PostHog's `sending-transactional-emails` skill, which PostHog keeps next to its product code. Read `references/sending-transactional-emails.md` first, and follow it. Where it links to `references/<file>`, the file is in this skill's `references/` folder. The transactional emails docs are in the same folder: `transactional-emails.md` has every error code, and `api.md` has the HTTP send.
+This skill publishes PostHog's `sending-transactional-emails` skill, which PostHog keeps next to its product code. Read `references/sending-transactional-emails.md` first, and follow it. Where it links to `references/<file>`, the file is in this skill's `references/` folder. The transactional emails docs are in the same folder: `references/transactional-emails.md` has every error code, and `references/api.md` has the HTTP send.
 
 ## Inside the PostHog Wizard
 

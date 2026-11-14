@@ -1,7 +1,3 @@
-/**
- * The Wizard's `transactional-email` program installs this skill by its ID and
- * matches the `[ABORT]` reasons its built SKILL.md tells the agent to emit.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
@@ -70,7 +66,7 @@ describe('the built sending-transactional-emails skill', () => {
 
     it('emits only the [ABORT] reasons the Wizard program matches', async () => {
         const skillDir = await build();
-        const reasons = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(/\[ABORT\] ([^`\n]+)`/g)].map(
+        const reasons = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(/\[ABORT\] ([a-z][a-z ]*[a-z])/g)].map(
             (match) => match[1],
         );
 
