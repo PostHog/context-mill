@@ -93,7 +93,13 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
  */
 function routeChange({ event, absPath, indexes, paths }) {
     const { groupRoots, examplePathIndex } = indexes;
-    const { repoRoot, skillsDir, exampleAppsDir } = paths;
+    const { repoRoot, skillsDir, sharedDir, exampleAppsDir } = paths;
+
+    // Any skill may include a shared partial with `{{> name}}`, and the router
+    // does no I/O to find which ones do, so a partial edit rebuilds them all.
+    if (isUnder(absPath, sharedDir)) {
+        return { ids: groupRoots.flatMap(group => group.variantIds) };
+    }
 
     if (isUnder(absPath, skillsDir)) {
         const isDirEvent = event === 'addDir' || event === 'unlinkDir';

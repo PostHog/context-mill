@@ -3,7 +3,7 @@
 /**
  * Development server for MCP resources
  *
- * Runs one full build at startup, then watches context/skills/
+ * Runs one full build at startup, then watches context/skills/, context/shared/
  * and example-apps/ for changes. A file edit triggers an incremental rebuild of
  * only the skills that own the path; manifest.json and skill-menu.json are
  * regenerated from the in-memory skill list. The bundled
@@ -51,6 +51,7 @@ const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
 const skillsSourceDir = path.join(configDir, 'skills');
+const sharedSourceDir = path.join(configDir, 'shared');
 const agentsSourceDir = path.join(configDir, 'agents');
 const agentsDir = path.join(distDir, 'agents');
 const exampleAppsDir = path.join(repoRoot, 'example-apps');
@@ -213,7 +214,7 @@ function handleEvent(event, absPath) {
         event,
         absPath,
         indexes,
-        paths: { repoRoot, skillsDir: skillsSourceDir, exampleAppsDir },
+        paths: { repoRoot, skillsDir: skillsSourceDir, sharedDir: sharedSourceDir, exampleAppsDir },
     });
 
     const relPath = path.relative(repoRoot, absPath);
@@ -234,7 +235,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, exampleAppsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, sharedSourceDir, agentsSourceDir, exampleAppsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -246,6 +247,7 @@ function setupWatcher() {
 
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
+    console.log(`   📁 ${path.relative(repoRoot, sharedSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, agentsSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, exampleAppsDir)}`);
 
