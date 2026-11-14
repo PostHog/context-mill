@@ -5,8 +5,9 @@
  *
  * Runs one full build at startup, then watches context/skills/, context/shared/
  * and example-apps/ for changes. A file edit triggers an incremental rebuild of
- * only the skills that own the path; manifest.json and skill-menu.json are
- * regenerated from the in-memory skill list. The bundled
+ * only the skills that own the path, or of every skill for an edit under
+ * context/shared/, since any skill may include a partial. manifest.json and
+ * skill-menu.json are regenerated from the in-memory skill list. The bundled
  * skills-mcp-resources.zip and marketplace tree stay at initial-build state
  * until the next manual `npm run build`.
  *

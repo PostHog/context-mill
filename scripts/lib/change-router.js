@@ -81,6 +81,10 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
     return [...ids];
 }
 
+function everySkillId(groupRoots) {
+    return groupRoots.flatMap(group => group.variantIds);
+}
+
 /**
  * Route a chokidar event to skill IDs.
  *
@@ -95,10 +99,8 @@ function routeChange({ event, absPath, indexes, paths }) {
     const { groupRoots, examplePathIndex } = indexes;
     const { repoRoot, skillsDir, sharedDir, exampleAppsDir } = paths;
 
-    // Any skill may include a shared partial with `{{> name}}`, and the router
-    // does no I/O to find which ones do, so a partial edit rebuilds them all.
     if (isUnder(absPath, sharedDir)) {
-        return { ids: groupRoots.flatMap(group => group.variantIds) };
+        return { ids: everySkillId(groupRoots) };
     }
 
     if (isUnder(absPath, skillsDir)) {
