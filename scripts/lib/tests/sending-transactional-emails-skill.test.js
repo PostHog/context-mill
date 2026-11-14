@@ -1,62 +1,79 @@
 /**
- * The Wizard's `transactional-email` program runs this skill by its ID and
- * matches the `[ABORT]` reasons of its Wizard section, so both are pinned here.
+ * The Wizard's `transactional-email` program installs this skill by its ID and
+ * matches the `[ABORT]` reasons its built SKILL.md tells the agent to emit.
  */
-import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 
-import { expandSkillGroups, loadSkillsConfig } from '../skill-generator.js';
+vi.hoisted(() => {
+    process.env.DOCS_CACHE_TTL_MS = '0';
+});
+
+import { expandSkillGroups, generateSkill, loadSkillsConfig } from '../skill-generator.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
-const DESCRIPTION = readFileSync(
-    join(CONFIG_DIR, 'skills', 'sending-transactional-emails', 'description.md'),
-    'utf8',
-);
+const UPSTREAM_SKILL = '---\nname: sending-transactional-emails\n---\n\n# Upstream skill\n';
 
-function skill() {
-    const config = loadSkillsConfig(CONFIG_DIR);
-    return expandSkillGroups(config, CONFIG_DIR).filter(
-        (s) => s._group === 'sending-transactional-emails',
-    );
-}
+describe('the built sending-transactional-emails skill', () => {
+    let outputDir;
 
-describe('sending-transactional-emails skill', () => {
-    it('expands to the one skill ID the Wizard program runs', () => {
-        expect(skill().map((s) => s.id)).toEqual(['sending-transactional-emails']);
-    });
-
-    it('reads the PostHog skill under the name its description points to', () => {
-        expect(skill()[0].docs_urls[0].filename).toBe('sending-transactional-emails.md');
-        expect(DESCRIPTION).toContain('Read `references/sending-transactional-emails.md` first');
-    });
-
-    it('fetches every reference file the PostHog skill links to', () => {
-        const fetched = skill()[0].docs_urls.map((doc) => doc.url.split('/sending-transactional-emails/')[1]);
-
-        expect(fetched).toEqual(
-            expect.arrayContaining(['references/moving-from-other-providers.md', 'references/sdks.md']),
+    beforeEach(() => {
+        outputDir = mkdtempSync(join(tmpdir(), 'sending-transactional-emails-'));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url) =>
+                new Response(String(url).endsWith('/sending-transactional-emails/SKILL.md') ? UPSTREAM_SKILL : `# ${url}\n`),
+            ),
         );
     });
 
-    it('checks for server code before it asks anything', () => {
-        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
-        const firstRule = wizardSection.split('\n- ')[1];
-        expect(firstRule).toContain('emit `[ABORT] no server code found` and stop');
-        expect(firstRule).not.toContain('wizard_ask');
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        rmSync(outputDir, { recursive: true, force: true });
     });
 
-    it.each(['transactional email api not enabled', 'no server code found'])(
-        'keeps the "%s" abort the Wizard program matches',
-        (reason) => {
-            expect(DESCRIPTION).toContain(`emit \`[ABORT] ${reason}\` and stop`);
-        },
-    );
+    async function build() {
+        const config = loadSkillsConfig(CONFIG_DIR);
+        const [skill] = expandSkillGroups(config, CONFIG_DIR).filter((s) => s._group === 'sending-transactional-emails');
+        await generateSkill({
+            skill,
+            version: 'test',
+            repoRoot: process.cwd(),
+            configDir: CONFIG_DIR,
+            outputDir,
+            skipPatterns: { global: [], examples: {} },
+            commandmentsConfig: { commandments: {} },
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
+        });
+        return join(outputDir, 'sending-transactional-emails');
+    }
 
-    it('asks once whether the email stays in code, with code recommended first', () => {
-        const wizardSection = DESCRIPTION.slice(DESCRIPTION.indexOf('## Inside the PostHog Wizard'));
-        const question = '"Keep the email in your code (recommended) or design it in PostHog?"';
-        expect(wizardSection.split(question)).toHaveLength(2);
-        expect(wizardSection).toContain('with code as the first choice. Ask it once.');
+    it('packages the PostHog skill as a reference, not as a second SKILL.md', async () => {
+        const skillDir = await build();
+
+        expect(readFileSync(join(skillDir, 'references', 'sending-transactional-emails.md'), 'utf8')).toBe(UPSTREAM_SKILL);
+        expect(existsSync(join(skillDir, 'references', 'SKILL.md'))).toBe(false);
+    });
+
+    it('names only reference files the package holds', async () => {
+        const skillDir = await build();
+        const named = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/references\/[\w.-]+\.md/g);
+
+        expect(named).toContain('references/sending-transactional-emails.md');
+        for (const reference of new Set(named)) {
+            expect(existsSync(join(skillDir, reference)), reference).toBe(true);
+        }
+    });
+
+    it('emits only the [ABORT] reasons the Wizard program matches', async () => {
+        const skillDir = await build();
+        const reasons = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(/\[ABORT\] ([^`\n]+)`/g)].map(
+            (match) => match[1],
+        );
+
+        expect(new Set(reasons)).toEqual(new Set(['no server code found', 'transactional email api not enabled']));
     });
 });
