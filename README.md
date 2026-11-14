@@ -117,6 +117,18 @@ Each pack carries a `variant.json` at its root with the row as built: its
 `match` keys, its rules file, and each product's pages with their titles.
 `integration` is the product for the row's own `docs_urls`.
 
+A row's `docs` are that framework's own pages for a product. Pages a step
+shares across every framework are the step skill's `shared_docs`, not a row's.
+A run picks a step skill by framework and takes that family's default, so a
+framework's default row lists the pages a run on that framework reads today.
+
+A page is written under the last part of its URL, such as `next-js.md`. When
+two pages of one folder share that part, each takes its parent part too:
+`error-tracking/installation/python.md` and `libraries/python.md` are written
+as `installation-python.md` and `libraries-python.md`. This holds for every
+skill's pages. The build fails when two pages of a folder would still be
+written under one name, since the second would replace the first.
+
 ### Step skills
 
 The orchestrator's step skills live in `context/skills/integration/<step>/`,

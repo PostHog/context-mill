@@ -127,8 +127,9 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
     docs:
+      # A Nuxt run takes this pack, the framework's default, and reads the 3.7 page today: the error tracking step defaults to nuxt-4.
       error-tracking:
-        - https://posthog.com/docs/error-tracking/installation/nuxt-3-6.md
+        - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/web.md
         - https://posthog.com/docs/libraries/nuxt-js.md

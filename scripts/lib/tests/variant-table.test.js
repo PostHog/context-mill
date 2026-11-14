@@ -121,6 +121,33 @@ describe('a variant table', () => {
         expect(files['references/error-tracking/react.md']).toBe(`# ${PAGE}/error-tracking/installation/react.md\n`);
     });
 
+    it('gives two pages of a folder that share a file name their parent part too, so neither replaces the other', async () => {
+        const files = await build(withVariant({
+            docs_urls: [`${PAGE}/error-tracking/installation/python.md`, `${PAGE}/libraries/python.md`, `${PAGE}/libraries/flask.md`],
+            docs: { 'error-tracking': [`${PAGE}/error-tracking/installation/python.md`, `${PAGE}/libraries/python.md`] },
+        }));
+
+        expect(files['references/installation-python.md']).toBe(`# ${PAGE}/error-tracking/installation/python.md\n`);
+        expect(files['references/libraries-python.md']).toBe(`# ${PAGE}/libraries/python.md\n`);
+        expect(files['references/flask.md']).toBe(`# ${PAGE}/libraries/flask.md\n`);
+        expect(files['references/python.md']).toBeUndefined();
+        expect(files['references/error-tracking/installation-python.md']).toBe(`# ${PAGE}/error-tracking/installation/python.md\n`);
+        expect(files['references/error-tracking/libraries-python.md']).toBe(`# ${PAGE}/libraries/python.md\n`);
+        expect(JSON.parse(files[VARIANT_FILE]).products['error-tracking'].map(page => page.file)).toEqual([
+            'references/error-tracking/installation-python.md',
+            'references/error-tracking/libraries-python.md',
+        ]);
+        expect(files['SKILL.md']).toContain('- `references/installation-python.md` - Title of python.md\n- `references/libraries-python.md` - Title of python.md');
+    });
+
+    it.each([
+        ['one page listed twice', [`${PAGE}/libraries/python.md`, `${PAGE}/libraries/python.md`], /would both be written as libraries-python\.md/],
+        ['two pages that share their last two parts', ['https://posthog.com/docs/libraries/python.md', 'https://posthog.com/handbook/libraries/python.md'], /would both be written as libraries-python\.md/],
+    ])('rejects %s, since the second would replace the first', (_, pages, message) => {
+        expect(() => expand(withVariant({ docs_urls: pages }))).toThrow(message);
+        expect(() => expand(withVariant({ docs: { 'error-tracking': pages } }))).toThrow(message);
+    });
+
     it.each([
         ['a product with no pages and no gap', { docs: {} }, /no error-tracking pages/],
         ['a product with pages that is also a gap', { gaps: ['error-tracking'] }, /also named under gaps/],
@@ -165,17 +192,33 @@ describe('a variant table', () => {
 describe('the integration variant table', () => {
     const config = loadSkillsConfig(REPO_CONFIG_DIR);
     const variants = config.integration.variants;
-    const byId = group => Object.fromEntries(config[group].variants.map(variant => [variant.id, variant]));
 
-    // The step skills these pages come from keep shipping them, so a run reads the same pages from either place.
+    /** The row or step variant a run on `framework` takes: the default, or the first when none is marked. */
+    const defaultOf = (rows, framework) => {
+        const family = rows.filter(row => row.framework === framework);
+        return family.find(row => row.default) ?? family[0];
+    };
+
+    // A run picks a step skill by framework and takes that family's default. So a framework's default
+    // row lists the pages of the step's default variant, and every other row lists its own variant's.
+    // A step's shared pages are no row's: they ship in the step skill itself.
     it.each([
         ['error-tracking', 'integration-v2/error-tracking-step'],
         ['feature-flags', 'integration-v2/feature-flags-step'],
-    ])("lists each variant's %s pages as its step skill ships them", (product, group) => {
-        const step = byId(group);
+    ])("lists each row's own %s pages as the step skill a run on it reads today lists them", (product, group) => {
+        const step = config[group].variants;
         for (const variant of variants) {
-            expect(variant.docs[product], variant.id).toEqual(step[variant.id].docs_urls);
+            const isDefault = variant.framework && defaultOf(variants, variant.framework).id === variant.id;
+            const read = isDefault ? defaultOf(step, variant.framework) : step.find(row => row.id === variant.id);
+            expect(variant.docs[product], variant.id).toEqual(read.docs_urls);
         }
+    });
+
+    it('lists the 3.7 error tracking page on the default Nuxt row, the page a Nuxt run reads today', () => {
+        const row = defaultOf(variants, 'nuxt');
+        expect(row.id).toBe('nuxt-3-6');
+        expect(row.docs['error-tracking']).toEqual(defaultOf(config['integration-v2/error-tracking-step'].variants, 'nuxt').docs_urls);
+        expect(row.docs['error-tracking']).toEqual([`${PAGE}/error-tracking/installation/nuxt-3-7.md`]);
     });
 
     it('names a framework variant only within a framework that has several', () => {
