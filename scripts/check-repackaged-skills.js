@@ -5,7 +5,8 @@
  * A menu entry with `replaces` stands in for a skill, or for every variant of a skill group.
  * For each one, and for each variant, the files a consumer gets must be the files the replaced skill ships:
  * the same paths with the same bytes, and the same SKILL.md but for the `name` in its frontmatter.
- * An entry with `frameworkReferences` is first completed from the variant's pack, as its consumer does.
+ * An entry with `frameworkReferences` is first completed from a pack, as its consumer does, and compared with
+ * the skill a run on that pack reads today: for a framework's default pack, the replaced family's default variant.
  * Run it after a build: `npm run build && npm run check:repackaged-skills -- [dist]`.
  */
 
@@ -53,20 +54,30 @@ const menu = JSON.parse(fs.readFileSync(path.join(skillsDir, 'skill-menu.json'),
 const entries = Object.values(menu.categories).flat();
 const zipOf = id => readZip(path.join(skillsDir, `${id}.zip`));
 
-/** The packs, by the variant id they were built from. */
-const packs = new Map();
-for (const entry of entries.filter(e => e.group === 'integration')) {
-    const files = zipOf(entry.id);
-    if (files['variant.json']) packs.set(JSON.parse(files['variant.json']).id, files);
-}
+/** The variant a run on `framework` takes from a family: its default, or its first when none is marked. */
+const defaultOf = (family, framework) => {
+    const rows = family.filter(variant => variant.framework === framework);
+    return rows.find(variant => variant.default) ?? rows[0];
+};
 
-/** The files of every variant a name stands for: one skill under `all`, or each variant of a group by its short id. */
+/** The packs, each with the variant id it was built from and the framework it serves. */
+const packs = entries
+    .filter(e => e.group === 'integration')
+    .map(e => ({ framework: e.framework, default: e.default, files: zipOf(e.id) }))
+    .filter(pack => pack.files['variant.json'])
+    .map(pack => ({ ...pack, shortId: JSON.parse(pack.files['variant.json']).id }));
+
+/** Every variant a name stands for, with its files: one skill under `all`, or each variant of a group under its short id. */
 function replacedVariants(name) {
+    const shortId = id => id.slice(name.length + 1);
     const bundle = entries.find(e => e.bundle && e.id === name);
-    if (bundle) return JSON.parse(fs.readFileSync(path.join(skillsDir, `${name}.json`), 'utf8')).variants;
+    if (bundle) {
+        const files = JSON.parse(fs.readFileSync(path.join(skillsDir, `${name}.json`), 'utf8')).variants;
+        return bundle.variants.map(v => ({ shortId: shortId(v.id), framework: v.framework, default: v.default, files: files[shortId(v.id)] }));
+    }
     const family = entries.filter(e => !e.bundle && e.group === name);
-    if (family.length === 1 && family[0].id === name) return { all: zipOf(name) };
-    return Object.fromEntries(family.map(e => [e.id.slice(name.length + 1), zipOf(e.id)]));
+    if (family.length === 1 && family[0].id === name) return [{ shortId: 'all', files: zipOf(name) }];
+    return family.map(e => ({ shortId: shortId(e.id), framework: e.framework, default: e.default, files: zipOf(e.id) }));
 }
 
 const differences = [];
@@ -88,23 +99,30 @@ const replacements = entries.filter(e => e.replaces);
 for (const entry of replacements) {
     const stepFiles = zipOf(entry.id);
     const variants = replacedVariants(entry.replaces);
-    if (Object.keys(variants).length === 0) {
+    if (variants.length === 0) {
         differences.push(`${entry.id}: nothing on the menu is named ${entry.replaces}`);
         continue;
     }
-    for (const [variant, replaced] of Object.entries(variants)) {
-        const label = `${entry.id} for ${entry.replaces}${variant === 'all' ? '' : `-${variant}`}`;
-        if (!entry.frameworkReferences) {
-            compare(label, replaced, stepFiles);
-            continue;
-        }
-        const packFiles = packs.get(variant);
-        if (!packFiles) {
-            differences.push(`${label}: no pack for the variant`);
+    const named = variant => `${entry.replaces}${variant.shortId === 'all' ? '' : `-${variant.shortId}`}`;
+    if (!entry.frameworkReferences) {
+        for (const variant of variants) compare(`${entry.id} for ${named(variant)}`, variant.files, stepFiles);
+        continue;
+    }
+    for (const variant of variants) {
+        if (!packs.some(pack => pack.shortId === variant.shortId)) differences.push(`${entry.id} for ${named(variant)}: no pack for the variant`);
+    }
+    for (const pack of packs) {
+        // A run picks both by framework and takes each family's default, so a framework's default pack completes the skill
+        // that the replaced family's default variant is today. Any other pack is compared with the variant of its own id.
+        const isDefault = pack.framework && defaultOf(packs, pack.framework) === pack;
+        const read = isDefault ? defaultOf(variants, pack.framework) : variants.find(variant => variant.shortId === pack.shortId);
+        const label = `${entry.id} on the ${pack.shortId} pack`;
+        if (!read) {
+            differences.push(`${label}: ${entry.replaces} has no variant for it`);
             continue;
         }
         try {
-            compare(label, replaced, composeStepSkill({ stepFiles, packFiles, product: entry.frameworkReferences }));
+            compare(`${label} for ${named(read)}`, read.files, composeStepSkill({ stepFiles, packFiles: pack.files, product: entry.frameworkReferences }));
         } catch (error) {
             differences.push(`${label}: ${error.message}`);
         }

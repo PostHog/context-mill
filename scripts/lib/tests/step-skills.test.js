@@ -208,7 +208,7 @@ describe('composeStepSkill', () => {
         expect(skillBody(composed['SKILL.md'])).toBe('## Reference\n\n- `references/own.md` - Own\n');
     });
 
-    it('lets a later file replace an earlier one of the same name, as the build does', () => {
+    it('lets a later file replace an earlier one of the same name', () => {
         const composed = composeStepSkill({
             stepFiles: step('{framework_docs}\n', { 'references/shared.md': 'the step page' }),
             packFiles: pack(

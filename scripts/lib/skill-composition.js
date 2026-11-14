@@ -34,7 +34,8 @@ function referenceName(file) {
  *
  * Files land in the order the build writes a variant: the product's pages,
  * then the step's own files, then the rules. A later file replaces an earlier
- * one of the same name, as it does there.
+ * one of the same name. The build gives two pages of one folder different
+ * names, so that only happens between a pack's page and a step's own file.
  */
 function composeStepSkill({ stepFiles, packFiles, product }) {
     if (!(VARIANT_FILE in packFiles)) {
