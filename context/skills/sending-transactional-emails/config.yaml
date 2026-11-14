@@ -9,7 +9,7 @@ shared_docs:
   - https://posthog.com/docs/workflows/transactional-emails/api.md
 variants:
   - id: all
-    display_name: all supported platforms
+    display_name: Transactional Emails
     docs_urls:
       - url: https://raw.githubusercontent.com/PostHog/posthog/master/products/messaging/skills/sending-transactional-emails/SKILL.md
         filename: sending-transactional-emails.md
