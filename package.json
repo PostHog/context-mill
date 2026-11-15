@@ -1,6 +1,6 @@
 {
   "name": "@posthog/context-mill",
-  "version": "1.64.0",
+  "version": "1.65.0",
   "private": true,
   "type": "module",
   "description": "PostHog Context Mill: assembling and packaging context for AI agents and LLMs",
@@ -15,6 +15,7 @@
     "test:skills": "vitest run scripts/lib/tests",
     "test:skills:watch": "vitest scripts/lib/tests",
     "test": "vitest run scripts/plugins/tests scripts/lib/tests",
+    "check:bundle-diff": "node scripts/check-bundle-diff.js",
     "security-scan": "node scripts/scan-warlock.js",
     "security-scan:skills": "node scripts/scan-warlock.js dist/skills"
   },

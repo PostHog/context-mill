@@ -19,6 +19,14 @@ commandments:
     - "If the app sends a Content-Security-Policy (a meta tag or a response header), extend it for the browser SDK in one change: allow the PostHog hosts, or the reverse proxy, in `script-src` and `connect-src`, and `blob:` in `worker-src` for session replay. A partial change fails silently: the SDK loads, but events or recordings never send"
     - "When one codebase ships several platform targets (Flutter, React Native, Kotlin Multiplatform), initialize PostHog for every target the project ships. One init call often covers only some of them"
 
+  # Routing the browser SDK through a proxy. Skills that set one up carry the `reverse-proxy` tag.
+  reverse-proxy:
+    - "A proxy forwards to the project's own region only: `/static/*` and `/array/*` to the assets host (us-assets.i.posthog.com or eu-assets.i.posthog.com), every other path to the ingestion host (us.i.posthog.com or eu.i.posthog.com). Never mix US and EU hosts"
+    - "Whenever `api_host` points at a proxy, set `ui_host` to the PostHog app host (https://us.posthog.com or https://eu.posthog.com). Without it the toolbar and the recordings player break"
+    - "A self-hosted proxy sets the `Host` header to the PostHog host it forwards to, forwards the visitor's IP in `X-Forwarded-For`, passes `Authorization`, every `PostHog-*` header, `Content-Type`, `Content-Encoding`, and `User-Agent` unchanged, allows GET and POST, keeps the query string, and accepts request bodies up to 64 MB for session recordings"
+    - "Never point `api_host` at a managed proxy before `proxy-get` reports its status as `valid`. Until then every request to it fails"
+    - "Create a managed proxy only after the user confirmed the subdomain. A proxy belongs to the whole organization and counts against its limit"
+
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
