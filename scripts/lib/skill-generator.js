@@ -343,6 +343,7 @@ function expandSkillGroups(config, configDir) {
                 _references: group.references || null,
                 _group: key,
                 _bundle: bundled,
+                _groupTags: baseTags,
                 _cli: cli,
             });
         }
@@ -598,6 +599,14 @@ function generateFrontmatter(skill, version) {
     return '---\n' + yaml.dump(frontmatter) + '---\n\n';
 }
 
+function markdownReferenceNames(dir, prefix) {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+        .map(entry => path.posix.join(prefix, entry.name))
+        .sort((a, b) => a.localeCompare(b));
+}
+
 /**
  * Generate a complete skill package
  *
@@ -671,21 +680,22 @@ async function generateSkill({
     // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
-        const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
-            .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
-            .sort((a, b) => a.name.localeCompare(b.name));
+        const localReferences = [
+            ...markdownReferenceNames(sourceReferencesDir, ''),
+            ...markdownReferenceNames(path.join(sourceReferencesDir, skill._shortId), skill._shortId),
+        ];
 
         const refsConfig = skill._references || {};
 
         for (const reference of localReferences) {
-            const sourcePath = path.join(sourceReferencesDir, reference.name);
+            const sourcePath = path.join(sourceReferencesDir, reference);
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
             let body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
             const headingMatch = body.match(/^#\s+(.+)$/m);
-            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
-            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
@@ -703,20 +713,18 @@ async function generateSkill({
                 ? `---\n${yaml.dump(emittedFrontmatter, { lineWidth: -1 })}---\n\n${body}`
                 : body;
 
-            fs.writeFileSync(
-                path.join(referencesDir, reference.name),
-                fileContent,
-                'utf8'
-            );
+            const targetPath = path.join(referencesDir, reference);
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.writeFileSync(targetPath, fileContent, 'utf8');
 
             references.push({
-                filename: reference.name,
+                filename: reference,
                 description: displayDescription,
             });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
-                    filename: reference.name,
+                    filename: reference,
                     title: displayTitle,
                 });
             }
@@ -825,6 +833,7 @@ function serializeSkill(s) {
     }
     if (s._bundle) {
         result.bundle = true;
+        result.groupTags = s._groupTags || [];
     }
     if (s._cli) {
         result.cli = s._cli;
