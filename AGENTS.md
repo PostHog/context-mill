@@ -95,6 +95,7 @@ longer exist — only some keep an alias.
 |---|---|
 | `wizard migrate statsig` | `migrate-statsig` |
 | `wizard migrate resend` | `migrate-email-resend` |
+| `wizard migrate sparkpost` | `migrate-email-sparkpost` |
 
 **Commands vs. skills:** those audit subcommands **are** skills, promoted to
 commands via `cli: role: command`. A `role: skill` skill is reachable only via
