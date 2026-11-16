@@ -1,0 +1,14 @@
+# A step skill that reads the same for every framework; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/notebook/description.md
+category: integration-steps
+description: Mirror the setup report into a shareable PostHog notebook
+tags: [orchestrator, notebook]
+variants:
+  - id: all
+    display_name: PostHog notebook step
+    tags: [orchestrator, notebook]
+    docs_urls: []
+cli:
+  role: internal
+replaces: integration-v2-notebook

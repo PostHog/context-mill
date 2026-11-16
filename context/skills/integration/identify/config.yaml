@@ -1,0 +1,16 @@
+# A step skill that reads the same for every framework; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/identify/description.md
+category: integration-steps
+description: Identify users at login and signup
+tags: [orchestrator, identify]
+variants:
+  - id: all
+    display_name: PostHog identify step
+    tags: [orchestrator, identify]
+    docs_urls:
+      - https://posthog.com/docs/getting-started/identify-users.md
+      - https://posthog.com/docs/product-analytics/identity-resolution.md
+cli:
+  role: internal
+replaces: integration-v2-identify
