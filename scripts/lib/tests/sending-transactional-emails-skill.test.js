@@ -66,8 +66,8 @@ describe('the built sending-transactional-emails skill', () => {
 
     it('emits only the [ABORT] reasons the Wizard program matches', async () => {
         const skillDir = await build();
-        const reasons = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(/\[ABORT\] ([a-z][a-z ]*[a-z])/g)].map(
-            (match) => match[1],
+        const reasons = [...readFileSync(join(skillDir, 'SKILL.md'), 'utf8').matchAll(/\[ABORT\] ([^`\n]+)/g)].map(
+            (match) => match[1].trim(),
         );
 
         expect(new Set(reasons)).toEqual(new Set(['no server code found', 'transactional email api not enabled']));

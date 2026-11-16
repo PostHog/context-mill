@@ -82,6 +82,15 @@ describe('generateSkill doc filename', () => {
         ).rejects.toThrow('upstream-skill.md');
     });
 
+    it('refuses a filename a local reference already uses, and keeps the local file', async () => {
+        const localStep = join(tmpDir, 'skills', 'sending-email', 'references', '1-presence.md');
+        mkdirSync(join(tmpDir, 'skills', 'sending-email', 'references'), { recursive: true });
+        writeFileSync(localStep, '# Local step\n');
+
+        await expect(generate([{ url: UPSTREAM_SKILL_URL, filename: '1-presence.md' }])).rejects.toThrow('1-presence.md');
+        expect(readFileSync(join(tmpDir, 'out', 'sending-email', 'references', '1-presence.md'), 'utf8')).toContain('# Local step');
+    });
+
     it('refuses a doc whose name from its URL another reference already uses', async () => {
         await expect(
             generate([

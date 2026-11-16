@@ -922,6 +922,12 @@ async function generateSkill({
     // or `{ url, title }`. fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits are silent.
     async function writeDocs(docEntries, where, subfolder = '') {
         const names = docFilenames(docEntries, where);
+        docEntries.forEach((docEntry, i) => {
+            const filename = path.posix.join(subfolder, names[i]);
+            if (chosenFilename(docEntry) !== null && references.some(ref => ref.filename === filename)) {
+                throw new Error(`${where}: ${docUrl(docEntry)} names filename "${names[i]}", which another reference already uses`);
+            }
+        });
         const written = [];
         for (const [i, docEntry] of docEntries.entries()) {
             const result = await fetchDocFn(docUrl(docEntry));
