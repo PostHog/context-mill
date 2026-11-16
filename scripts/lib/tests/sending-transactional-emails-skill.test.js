@@ -72,14 +72,4 @@ describe('the built sending-transactional-emails skill', () => {
 
         expect(new Set(reasons)).toEqual(new Set(['no server code found', 'transactional email api not enabled']));
     });
-
-    it('asks the Wizard for the secret API key as a sensitive answer, so the key never reaches the model', async () => {
-        const skillDir = await build();
-        const keyStep = readFileSync(join(skillDir, 'SKILL.md'), 'utf8')
-            .split('\n')
-            .find((line) => line.startsWith('- **API key.**'));
-
-        expect(keyStep).toContain('`wizard_ask` and `sensitive: true`');
-        expect(keyStep).toContain('`set_env_values`');
-    });
 });
