@@ -7,6 +7,8 @@ import {
     findNearestGroup,
     findExamplesMatching,
     diffSkillIds,
+    sourceDirs,
+    watchedDirs,
 } from '../change-router.js';
 
 const REPO_ROOT = path.join(path.sep, 'repo');
@@ -157,6 +159,31 @@ describe('routeChange — shared partials dir', () => {
         const abs = path.join(SHARED_DIR, 'project-token-and-host.md');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
         expect(decision.ids.sort()).toEqual(['audit', 'instrument-logs-node', 'instrument-logs-python']);
+    });
+});
+
+describe('watchedDirs', () => {
+    const skills = [
+        skill({ id: 'audit', group: 'audit' }),
+        skill({ id: 'error-tracking-django', group: 'error-tracking', examplePaths: ['example-apps/django'] }),
+    ];
+    const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
+    const dirs = sourceDirs(REPO_ROOT);
+
+    it('watches the shared partials dir, so a partial edit reaches the router', () => {
+        expect(watchedDirs(dirs)).toContain(SHARED_DIR);
+    });
+
+    it('watches only dirs whose files the router routes', () => {
+        const fileUnder = {
+            [dirs.skillsDir]: path.join(dirs.skillsDir, 'audit', 'description.md'),
+            [dirs.sharedDir]: path.join(dirs.sharedDir, 'project-token-and-host.md'),
+            [dirs.exampleAppsDir]: path.join(dirs.exampleAppsDir, 'django', 'views.py'),
+        };
+        for (const dir of watchedDirs(dirs)) {
+            const decision = routeChange({ event: 'change', absPath: fileUnder[dir], indexes, paths: dirs });
+            expect(decision?.ids.length, dir).toBeGreaterThan(0);
+        }
     });
 });
 

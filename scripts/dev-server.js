@@ -40,6 +40,8 @@ import {
     buildIndexes,
     routeChange,
     diffSkillIds,
+    sourceDirs,
+    watchedDirs,
 } from './lib/change-router.js';
 
 const PORT = process.env.PORT || 8765;
@@ -50,9 +52,7 @@ const repoRoot = path.join(import.meta.dirname, '..');
 const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
-const skillsSourceDir = path.join(configDir, 'skills');
-const sharedSourceDir = path.join(configDir, 'shared');
-const exampleAppsDir = path.join(repoRoot, 'example-apps');
+const sourcePaths = sourceDirs(repoRoot);
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
 
@@ -190,7 +190,7 @@ function handleEvent(event, absPath) {
         event,
         absPath,
         indexes,
-        paths: { repoRoot, skillsDir: skillsSourceDir, sharedDir: sharedSourceDir, exampleAppsDir },
+        paths: sourcePaths,
     });
 
     const relPath = path.relative(repoRoot, absPath);
@@ -211,7 +211,8 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, sharedSourceDir, exampleAppsDir], {
+    const dirs = watchedDirs(sourcePaths);
+    const watcher = chokidar.watch(dirs, {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -222,9 +223,7 @@ function setupWatcher() {
     watcher.on('error', err => console.error(`Watcher error: ${err.message}`));
 
     console.log('\n👀 Watching:');
-    console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
-    console.log(`   📁 ${path.relative(repoRoot, sharedSourceDir)}`);
-    console.log(`   📁 ${path.relative(repoRoot, exampleAppsDir)}`);
+    for (const dir of dirs) console.log(`   📁 ${path.relative(repoRoot, dir)}`);
 
     return watcher;
 }
