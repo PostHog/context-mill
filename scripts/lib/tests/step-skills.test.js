@@ -12,7 +12,7 @@ import {
     serializeSkill,
 } from '../skill-generator.js';
 import { writeManifestAndMenu } from '../build-phases.js';
-import { composeStepSkill, compareSkills, skillBody, skillFrontmatter } from '../skill-composition.js';
+import { composeStepSkill } from '../skill-composition.js';
 import { buildIndexes, routeChange } from '../change-router.js';
 
 const REPO_CONFIG_DIR = path.join(import.meta.dirname, '..', '..', '..', 'context');
@@ -27,7 +27,15 @@ patterns:
   doc: docs/{id}
 `;
 
-/** A variant table, the step skill that borrows its matrix today, and the same step written once. */
+const FRONTMATTER = /^---\n([\s\S]*?)\n---\n\n?/;
+
+/** A SKILL.md without its frontmatter. */
+const skillBody = text => text.replace(FRONTMATTER, '');
+
+/** A SKILL.md's frontmatter. */
+const skillFrontmatter = text => FRONTMATTER.exec(text)?.[1] ?? '';
+
+/** A variant table and a step skill written once for every framework. */
 const config = (step = {}) => ({
     integration: {
         type: 'skill',
@@ -37,30 +45,20 @@ const config = (step = {}) => ({
             {
                 id: 'next',
                 display_name: 'Next.js',
-                framework: 'nextjs',
+                match: { framework: 'nextjs' },
                 tags: ['nextjs'],
                 docs_urls: [`${PAGE}/libraries/next-js.md`],
                 docs: { 'error-tracking': [`${PAGE}/error-tracking/installation/nextjs.md`] },
             },
         ],
     },
-    'flow/init': {
-        type: 'docs-only',
-        template: 'description.md',
-        description: 'Initialize PostHog for {display_name}',
-        tags: ['orchestrator', 'init'],
-        shared_docs: [`${PAGE}/advanced/content-security-policy.md`],
-        variants_from: 'integration',
-        packaging: 'bundle',
-    },
     'integration/init': {
         type: 'docs-only',
-        template: '../../flow/init/description.md',
+        template: 'description.md',
         description: 'Initialize PostHog for {display_name}',
         category: 'integration-steps',
         tags: ['orchestrator', 'init'],
         shared_docs: [`${PAGE}/advanced/content-security-policy.md`],
-        replaces: 'flow-init',
         framework_references: 'integration',
         variants: [{ id: 'all', display_name: 'PostHog init step' }],
         ...step,
@@ -73,7 +71,7 @@ beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'step-skills-'));
     for (const [folder, template] of [
         ['integration', '# {display_name}\n\n{references}\n'],
-        ['flow/init', '# Initialize PostHog for {display_name}\n\nSet the keys.\n\n## Reference\n\n{references}\n'],
+        ['integration/init', '# Initialize PostHog for {display_name}\n\nSet the keys.\n\n## Reference\n\n{references}\n'],
     ]) {
         fs.mkdirSync(path.join(dir, 'skills', folder), { recursive: true });
         fs.writeFileSync(path.join(dir, 'skills', folder, 'description.md'), template);
@@ -135,32 +133,51 @@ describe('a step skill written once for every framework', () => {
         );
     });
 
-    it('completed from a pack, has the files of the variant it replaces', async () => {
+    it('completed from a pack, names the framework and lists its pages and its rules beside its own', async () => {
         const built = await build(config());
         const composed = composeStepSkill({
             stepFiles: built['integration-init'],
             packFiles: built['integration-next'],
             product: 'integration',
         });
-        const replaced = built['flow-init-next'];
 
-        expect(compareSkills(replaced, composed)).toEqual([]);
-        expect(composed['SKILL.md']).not.toBe(replaced['SKILL.md']);
+        expect(Object.keys(composed).sort()).toEqual([
+            'SKILL.md',
+            'references/COMMANDMENTS.md',
+            'references/content-security-policy.md',
+            'references/next-js.md',
+        ]);
+        expect(composed['references/next-js.md']).toBe(built['integration-next']['references/next-js.md']);
+        expect(composed['references/COMMANDMENTS.md']).toBe(built['integration-next']['references/COMMANDMENTS.md']);
+        expect(skillBody(composed['SKILL.md'])).toBe(
+            [
+                '# Initialize PostHog for Next.js',
+                '',
+                'Set the keys.',
+                '',
+                '## Reference',
+                '',
+                '- `references/next-js.md` - Title of next-js.md',
+                '- `references/content-security-policy.md` - Title of content-security-policy.md',
+                '- `references/COMMANDMENTS.md` - Framework-specific rules the integration must follow',
+                '',
+            ].join('\n'),
+        );
     });
 
-    it('is rebuilt by the dev server when the template it borrows changes', () => {
+    it('is rebuilt by the dev server when its template changes', () => {
         const skills = expandSkillGroups(config(), dir);
         const skillsDir = path.join(dir, 'skills');
         const indexes = buildIndexes({ skills, configDir: dir });
 
         const decision = routeChange({
             event: 'change',
-            absPath: path.join(skillsDir, 'flow', 'init', 'description.md'),
+            absPath: path.join(skillsDir, 'integration', 'init', 'description.md'),
             indexes,
             paths: { repoRoot: dir, skillsDir, exampleAppsDir: path.join(dir, 'example-apps') },
         });
 
-        expect([...decision.ids].sort()).toEqual(['flow-init-next', 'integration-init']);
+        expect([...decision.ids]).toEqual(['integration-init']);
     });
 
     it('takes another product\'s pages from the folder the pack keeps them in', async () => {
@@ -176,7 +193,7 @@ describe('a step skill written once for every framework', () => {
         expect(composed['SKILL.md']).toContain('- `references/nextjs.md` - Title of nextjs.md\n- `references/content-security-policy.md`');
     });
 
-    it('publishes what it replaces and the product that completes it on its menu entry', async () => {
+    it('publishes the product that completes it on its menu entry', async () => {
         writeManifestAndMenu({
             allSkills: expandSkillGroups(config(), dir).map(serializeSkill),
             docContents: {},
@@ -187,54 +204,18 @@ describe('a step skill written once for every framework', () => {
         const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
         const entry = Object.values(menu.categories).flat().find(e => e.id === 'integration-init');
 
-        expect(entry).toMatchObject({ group: 'integration-init', replaces: 'flow-init', frameworkReferences: 'integration' });
+        expect(entry).toMatchObject({ frameworkReferences: 'integration' });
+        expect(entry.tags).toContain('integration-init');
         expect(entry.downloadUrl).toMatch(/\/integration-init\.zip$/);
     });
 
     it.each([
-        ['a name nothing on the menu has', { replaces: 'flow-missing' }, /names no skill group/],
-        ['one variant of a group', { replaces: 'flow-init-next' }, /cannot name one variant of a group/],
-        ['itself', { replaces: 'integration-init' }, /cannot replace itself/],
         ['a product no variant table has', { framework_references: 'surveys' }, /is no product of a variant table/],
         ['pages of its own beside the framework\'s', { variants: [{ id: 'all', display_name: 'Init', docs_urls: [`${PAGE}/a.md`] }] }, /ships its own pages as shared_docs/],
-        ['several variants', { variants: [{ id: 'a', display_name: 'A' }, { id: 'b', display_name: 'B' }] }, /need exactly one variant/],
-        ['one variant that is not named all', { variants: [{ id: 'next', display_name: 'Init' }] }, /need exactly one variant, with id "all"/],
-        ['bundle packaging', { packaging: 'bundle' }, /is not bundled/],
+        ['several variants', { variants: [{ id: 'a', display_name: 'A' }, { id: 'b', display_name: 'B' }] }, /needs exactly one variant/],
+        ['one variant that is not named all', { variants: [{ id: 'next', display_name: 'Init' }] }, /needs exactly one variant, with id "all"/],
     ])('rejects a step skill that names %s', (_, step, message) => {
         expect(() => expandSkillGroups(config(step), dir)).toThrow(message);
-    });
-});
-
-describe('compareSkills', () => {
-    const skill = (name, body = 'Do the step.', rest = {}) => ({
-        'SKILL.md': `---\nname: ${name}\ndescription: A step\n---\n\n${body}\n`,
-        'references/page.md': 'a page',
-        ...rest,
-    });
-
-    it('finds nothing between a skill and a stand-in that differs only in its name', () => {
-        expect(compareSkills(skill('flow-init-next'), skill('integration-init'))).toEqual([]);
-    });
-
-    it.each([
-        ['a different body', skill('integration-init', 'Do another step.'), ['SKILL.md reads differently']],
-        ['a different description', { ...skill('integration-init'), 'SKILL.md': '---\nname: integration-init\ndescription: Another step\n---\n\nDo the step.\n' }, ['SKILL.md frontmatter differs']],
-        ['a page with other content', skill('integration-init', undefined, { 'references/page.md': 'another page' }), ['references/page.md differs']],
-        ['a page too many', skill('integration-init', undefined, { 'references/extra.md': 'x' }), ['references/extra.md is new']],
-        ['a page too few', { 'SKILL.md': skill('integration-init')['SKILL.md'] }, ['references/page.md is missing']],
-        ['no SKILL.md', { 'references/page.md': 'a page' }, ['SKILL.md is missing']],
-    ])('reports a stand-in with %s', (_, replacement, differences) => {
-        expect(compareSkills(skill('flow-init-next'), replacement)).toEqual(differences);
-    });
-
-    it('reports every difference of a stand-in, not the first alone', () => {
-        const replacement = skill('integration-init', 'Do another step.', { 'references/page.md': 'another page', 'references/extra.md': 'x' });
-
-        expect(compareSkills(skill('flow-init-next'), replacement).sort()).toEqual([
-            'SKILL.md reads differently',
-            'references/extra.md is new',
-            'references/page.md differs',
-        ]);
     });
 });
 
@@ -297,12 +278,10 @@ describe('the integration step skills', () => {
     const groups = loadSkillsConfig(REPO_CONFIG_DIR);
     const commandments = loadCommandments(REPO_CONFIG_DIR);
     const dashed = key => key.replace(/\//g, '-');
-    const replacing = Object.entries(groups).filter(([, group]) => group.replaces);
-    const replacedGroup = name => Object.entries(groups).find(([key]) => dashed(key) === name);
-    const templateOf = (key, group) => path.resolve(REPO_CONFIG_DIR, 'skills', ...key.split('/'), group.template);
+    const steps = Object.entries(groups).filter(([, group]) => group.category === 'integration-steps');
 
-    it('replace fourteen skills', () => {
-        expect(replacing.map(([key]) => dashed(key)).sort()).toEqual([
+    it('are fourteen skills, each written once', () => {
+        expect(steps.map(([key]) => dashed(key)).sort()).toEqual([
             'integration-build',
             'integration-capture',
             'integration-dashboard',
@@ -318,32 +297,29 @@ describe('the integration step skills', () => {
             'integration-session-replay',
             'integration-warehouse',
         ]);
+        for (const [key, group] of steps) {
+            expect(group.variants.map(variant => variant.id), key).toEqual(['all']);
+        }
     });
 
-    it.each(replacing)('%s reads from the template, the shared pages and the tags of the skill it replaces', (key, group) => {
-        const [replacedKey, replaced] = replacedGroup(group.replaces);
-
-        expect(templateOf(key, group)).toBe(templateOf(replacedKey, replaced));
-        expect(group.shared_docs ?? []).toEqual(replaced.shared_docs ?? []);
-        expect(group.description).toBe(replaced.description);
-        expect(group.tags).toEqual(replaced.tags);
-        expect(group.category).toBe('integration-steps');
+    it.each(steps)('%s keeps its template in its own folder', (key, group) => {
+        expect(group.template).toBe('description.md');
+        expect(fs.existsSync(path.join(REPO_CONFIG_DIR, 'skills', ...key.split('/'), group.template))).toBe(true);
     });
 
-    it.each(replacing.filter(([, group]) => !group.framework_references))('%s keeps the pages of the skill it replaces', (_, group) => {
-        const [, replaced] = replacedGroup(group.replaces);
-        expect(group.variants).toEqual(replaced.variants);
+    // A step completed from a pack lists the pack's pages where its template says `{references}`.
+    it.each(steps.filter(([, group]) => group.framework_references))('%s lists its references in its template', (key, group) => {
+        const template = fs.readFileSync(path.join(REPO_CONFIG_DIR, 'skills', ...key.split('/'), group.template), 'utf8');
+        expect(template).toContain('{references}');
     });
 
-    // A pack's rules are the variant's alone, so a step's own tags must select none for the two to read the same.
-    it.each(replacing.filter(([, group]) => group.framework_references))('%s has tags that select no rules of their own', (_, group) => {
+    // The menu shows a description as written, so a framework's name in it would stay a placeholder.
+    it.each(steps.filter(([, group]) => group.framework_references))('%s has a description that names no framework', (_, group) => {
+        expect(group.description).not.toContain('{display_name}');
+    });
+
+    // A pack's rules are the variant's alone, so a step's own tags select none.
+    it.each(steps.filter(([, group]) => group.framework_references))('%s has tags that select no rules of their own', (_, group) => {
         expect(collectCommandments(group.tags, commandments)).toEqual(collectCommandments([], commandments));
     });
-
-    it.each(replacing.filter(([, group]) => group.framework_references === 'integration'))(
-        '%s replaces a skill that borrows the integration matrix',
-        (_, group) => {
-            expect(replacedGroup(group.replaces)[1].variants_from).toBe('integration');
-        },
-    );
 });
