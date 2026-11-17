@@ -109,9 +109,7 @@ function resolveBaseDownloadUrl(version) {
  * manifest-builder shape: { id, name, description, tags, type, group, shortId }).
  * Doc entries are detected by `type === 'doc'` and a matching `docContents[id]` —
  * those get inlined under `resource.text`; everything else becomes a skill
- * resource with a download URL. Bundled variants are left out — they ship inside
- * their group's JSON rather than as a zip, and `skill-menu.json` is where the
- * group is published.
+ * resource with a download URL.
  */
 function generateManifest({ resources, uriSchema, version, docContents = {} }) {
     const scheme = uriSchema.scheme;
@@ -124,8 +122,7 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
         version: uriSchema.manifest_version,
         buildVersion: version,
         buildTimestamp: new Date().toISOString(),
-        // A bundled variant ships inside its group's JSON, so it has no zip of its own to point at.
-        resources: resources.filter(skill => !skill.bundle).map(skill => {
+        resources: resources.map(skill => {
             const isGuide = skill.type === 'doc' && docContents[skill.id];
             const uri = isGuide
                 ? `${scheme}${docPattern.replace('{id}', skill.id)}`
@@ -169,19 +166,17 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
     };
 }
 
-/** The tag naming the framework a variant serves. Prefixed, because content tags such as `python` describe a skill, not what it serves. */
-const FRAMEWORK_TAG_PREFIX = 'framework:';
-
 /**
- * Menu tags: the skill's own tags plus its served framework, group and `default`.
+ * Menu tags: the skill's own tags plus its match keys as `key:value`, its group and `default`.
+ * A match key is prefixed, because a content tag such as `python` describes a skill, not what it serves.
  * Added here only, so the tags commandments are selected by stay untouched.
  */
-function menuTags(tags, { framework, group, isDefault }) {
+function menuTags(tags, { match, group, isDefault }) {
     return [
         ...new Set(
             [
                 ...(tags || []),
-                framework ? `${FRAMEWORK_TAG_PREFIX}${framework}` : null,
+                ...Object.entries(match || {}).map(([key, value]) => `${key}:${value}`),
                 group,
                 isDefault ? 'default' : null,
             ].filter(Boolean),
@@ -189,12 +184,12 @@ function menuTags(tags, { framework, group, isDefault }) {
     ];
 }
 
-/** The title, description and tags a menu entry or bundle variant publishes, matching manifest.json's name/description. */
+/** The title, description and tags a menu entry publishes, matching manifest.json's name/description. */
 function menuMetadata(skill, group) {
     return {
         title: skill.displayName ?? skill.name,
         description: skill.description,
-        tags: menuTags(skill.tags, { framework: skill.framework, group, isDefault: skill.default }),
+        tags: menuTags(skill.tags, { match: skill.match, group, isDefault: skill.default }),
     };
 }
 
@@ -224,41 +219,14 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
     fs.writeFileSync(path.join(skillsDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
     const skillsByCategory = {};
-    const bundleEntries = new Map();
     for (const skill of allSkills) {
         const cat = skill.group;
         if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
         const group = skill.group.replace(/\//g, '-');
         const url = manifest.resources.find(r => r.id === skill.id)?.downloadUrl;
-        // A bundled group publishes one entry; the consumer picks the variant inside.
-        if (skill.bundle) {
-            let entry = bundleEntries.get(group);
-            if (!entry) {
-                entry = {
-                    id: group,
-                    name: skill.name,
-                    group,
-                    bundle: true,
-                    variants: [],
-                    // Bundled variants are absent from the manifest, so the group's URL is built from the base.
-                    downloadUrl: `${resolveBaseDownloadUrl(version)}/${group}.json`,
-                    tags: menuTags(skill.groupTags, { group }),
-                };
-                bundleEntries.set(group, entry);
-                skillsByCategory[cat].push(entry);
-            }
-            // Each variant keeps its own id/framework/default so consumers resolve it exactly as they would a per-skill zip.
-            const variant = { id: skill.id };
-            if (skill.framework) variant.framework = skill.framework;
-            if (skill.default) variant.default = true;
-            Object.assign(variant, menuMetadata(skill, group));
-            entry.variants.push(variant);
-            continue;
-        }
-        // group/framework/default let consumers resolve a bare skill id + framework by exact match.
-        const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
-        if (skill.framework) entry.framework = skill.framework;
-        if (skill.default) entry.default = true;
+        const entry = { id: skill.id, name: skill.name, downloadUrl: url };
+        // A skill written once for every framework says which pack pages complete it.
+        if (skill.frameworkReferences) entry.frameworkReferences = skill.frameworkReferences;
         Object.assign(entry, menuMetadata(skill, group));
         skillsByCategory[cat].push(entry);
     }
@@ -356,67 +324,11 @@ function validateDefault(entries) {
  * Delete `dist/skills/<id>.zip` files whose IDs are no longer in `allSkills`.
  * Returns the array of removed filenames.
  */
-/** Read a built skill dir into { relativePath: contents }. */
-function readSkillFiles(dir) {
-    const files = {};
-    for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
-        if (!entry.isFile()) continue;
-        const abs = path.join(entry.parentPath ?? entry.path, entry.name);
-        files[path.relative(dir, abs)] = fs.readFileSync(abs, 'utf8');
-    }
-    return files;
-}
-
-/**
- * Write each bundled group as one `<group>.json` holding every variant's files,
- * read from the built skill dirs under `sourceDir`.
- *
- * `merge` keeps the variants already on disk and replaces only the ones passed
- * in — the dev server rebuilds a single variant at a time and must not drop the
- * other 36. A full build writes fresh so a deleted variant cannot survive.
- *
- * Returns { filename: Buffer } so the caller can add the bundles to the archive.
- */
-function writeBundles({ skills, sourceDir, skillsDir, merge = false, log = () => {} }) {
-    const groups = {};
-    for (const skill of skills) {
-        if (!skill.bundle) continue;
-        (groups[skill.group.replace(/\//g, '-')] ??= []).push(skill);
-    }
-
-    const artifacts = {};
-    for (const [group, variants] of Object.entries(groups)) {
-        const file = path.join(skillsDir, `${group}.json`);
-        const existing =
-            merge && fs.existsSync(file)
-                ? JSON.parse(fs.readFileSync(file, 'utf8')).variants
-                : {};
-        const bundle = { id: group, variants: { ...existing } };
-        const seen = new Set();
-        for (const skill of variants) {
-            // Two variants resolving to one short id would silently overwrite each other.
-            if (seen.has(skill.shortId)) {
-                throw new Error(`Bundle "${group}" has duplicate variant id "${skill.shortId}"`);
-            }
-            seen.add(skill.shortId);
-            bundle.variants[skill.shortId] = readSkillFiles(path.join(sourceDir, skill.id));
-        }
-        const json = JSON.stringify(bundle);
-        fs.writeFileSync(file, json);
-        artifacts[`${group}.json`] = Buffer.from(json);
-        log(
-            `  ✓ ${group}.json (${Object.keys(bundle.variants).length} variants, ${(json.length / 1024).toFixed(1)} KB)`,
-        );
-    }
-    return artifacts;
-}
-
 function reconcileOrphans({ allSkills, distDir, log = () => {} }) {
     const skillsDir = path.join(distDir, 'skills');
     if (!fs.existsSync(skillsDir)) return [];
 
-    // A bundled skill has no zip of its own, so a leftover one from an earlier build is an orphan.
-    const validIds = new Set(allSkills.filter(s => !s.bundle).map(s => s.id));
+    const validIds = new Set(allSkills.map(s => s.id));
     const removed = [];
 
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
@@ -469,16 +381,12 @@ async function partialRebuild({
         });
 
         for (const skill of rebuiltSkills) {
-            if (skill.bundle) continue;
             const skillTempDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillTempDir);
             const filename = `${skill.id}.zip`;
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
-        // Patch the rebuilt variants into their bundle, leaving the group's untouched variants alone.
-        writeBundles({ skills: rebuiltSkills, sourceDir: tempDir, skillsDir, merge: true, log });
-
         writeManifestAndMenu({ allSkills, docContents, distDir, configDir, version });
         reconcileOrphans({ allSkills, distDir, log });
 
@@ -494,7 +402,6 @@ export {
     loadDocContentsFromManifest,
     zipSkillToBuffer,
     createBundledArchive,
-    writeBundles,
     generateManifest,
     generateCliEntries,
     writeManifestAndMenu,
