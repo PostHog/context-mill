@@ -23,7 +23,7 @@ import {
     diffSkillIds,
 } from './change-router.js';
 
-async function watchSkillSources({
+function watchSkillSources({
     repoRoot,
     distDir,
     version,
@@ -168,13 +168,10 @@ async function watchSkillSources({
     });
     watcher.on('all', handleEvent);
     watcher.on('error', err => logError(`Watcher error: ${err.message}`));
-    await new Promise(resolve => {
-        watcher.once('ready', resolve);
-        watcher.once('error', resolve);
-    });
 
     return {
         dirs,
+        ready: new Promise(resolve => watcher.once('ready', resolve)),
         close: () => watcher.close(),
     };
 }

@@ -61,7 +61,8 @@ describe('watchSkillSources', () => {
         await partialRebuild({ ids: ['setup'], repoRoot, configDir: join(repoRoot, 'context'), distDir, version: 'test', docContents: {}, log: () => {} });
         expect(builtSkillMd('setup')).toContain('- Set up environment variables:\n  - Old token bullet.');
 
-        watcher = await watchSkillSources({ repoRoot, distDir, version: 'test', log: () => {} });
+        watcher = watchSkillSources({ repoRoot, distDir, version: 'test', log: () => {} });
+        await watcher.ready;
         write('context/shared/credentials.md', '- New token bullet.\n');
 
         await vi.waitFor(

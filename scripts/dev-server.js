@@ -150,7 +150,7 @@ async function main() {
     await runFullBuildSubprocess();
 
     const server = createServer();
-    const watcher = await watchSkillSources({
+    const watcher = watchSkillSources({
         repoRoot,
         distDir,
         version: BUILD_VERSION,
