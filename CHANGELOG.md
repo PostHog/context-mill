@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.66.0](https://github.com/PostHog/context-mill/compare/v1.65.0...v1.66.0) (2026-11-16)
+
+
+### Features
+
+* **integration:** make the integration config a variant table with per-product pages ([#528](https://github.com/PostHog/context-mill/issues/528)) ([1c25a25](https://github.com/PostHog/context-mill/commit/1c25a25b4d748c1397b0daeee13da645f32af0bf))
+* **integration:** publish each step skill once, completed from the framework's pack ([#529](https://github.com/PostHog/context-mill/issues/529)) ([a2a8df4](https://github.com/PostHog/context-mill/commit/a2a8df465147e9e1bb2eebc695294a0d2d8919ee))
+
+
+### Bug Fixes
+
+* **skills:** read the project token and host from project-get ([#511](https://github.com/PostHog/context-mill/issues/511)) ([d5ba3bb](https://github.com/PostHog/context-mill/commit/d5ba3bb520629b4726155092787f594acb68fbd2))
+
 ## [1.65.0](https://github.com/PostHog/context-mill/compare/v1.64.0...v1.65.0) (2026-11-13)
 
 
