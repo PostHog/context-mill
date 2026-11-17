@@ -149,13 +149,13 @@ async function main() {
     console.log('\n🔨 Running initial full build...');
     await runFullBuildSubprocess();
 
+    const server = createServer();
     const watcher = await watchSkillSources({
         repoRoot,
         distDir,
         version: BUILD_VERSION,
         fullBuild: FORCE_FULL_REBUILD ? runFullBuildSubprocess : null,
     });
-    const server = createServer();
 
     console.log('\n👀 Watching:');
     for (const dir of watcher.dirs) console.log(`   📁 ${path.relative(repoRoot, dir)}`);

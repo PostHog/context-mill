@@ -23,10 +23,6 @@ import {
     diffSkillIds,
 } from './change-router.js';
 
-function toKnownSkill(skill) {
-    return { id: skill.id, _group: skill._group, _examplePaths: skill._examplePaths };
-}
-
 async function watchSkillSources({
     repoRoot,
     distDir,
@@ -59,7 +55,7 @@ async function watchSkillSources({
     }
 
     function loadState() {
-        knownSkills = refreshIndexes().map(toKnownSkill);
+        knownSkills = refreshIndexes().map(s => ({ id: s.id }));
         docContents = loadDocContentsFromManifest(manifestPath);
     }
 
@@ -109,7 +105,7 @@ async function watchSkillSources({
                         log(`↪ removed variants: ${removed.join(', ')}`);
                     }
                     for (const id of added) idsThisRun.add(id);
-                    knownSkills = newSkills.map(toKnownSkill);
+                    knownSkills = newSkills.map(s => ({ id: s.id }));
 
                     // Pure removal — still rewrite manifest + reconcile orphans.
                     if (idsThisRun.size === 0 && removed.length > 0) {
@@ -172,7 +168,10 @@ async function watchSkillSources({
     });
     watcher.on('all', handleEvent);
     watcher.on('error', err => logError(`Watcher error: ${err.message}`));
-    await new Promise(resolve => watcher.once('ready', resolve));
+    await new Promise(resolve => {
+        watcher.once('ready', resolve);
+        watcher.once('error', resolve);
+    });
 
     return {
         dirs,
