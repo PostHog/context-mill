@@ -59,6 +59,11 @@ describe('default integration observability flow', () => {
         expect(ancestors('logs').has('ai-observability')).toBe(true);
         const reviewed = ancestors('review');
         for (const prompt of prompts.filter((p) => p.type !== 'review' && p.allowedTools?.some((t) => ['Write', 'Edit'].includes(t)))) {
+            // A writer that waits for review must not edit the code review verified.
+            if (ancestors(prompt.type).has('review')) {
+                expect(prompt.allowedTools, `${prompt.type} runs after review`).not.toContain('Edit');
+                continue;
+            }
             expect(reviewed.has(prompt.type), `${prompt.type} must finish before review`).toBe(true);
         }
         expect(ancestors('report').has('logs')).toBe(true);
