@@ -64,7 +64,7 @@ function rewriteUrls(text, froms, to) {
  * rewrite. Exported so verify-mirror.js checks published artifacts against the
  * same idea of where URLs live.
  */
-export function collectDownloadUrls({ manifest, skillMenu, agentMenu }) {
+export function collectDownloadUrls({ manifest, skillMenu }) {
     const urls = [];
     for (const resource of manifest?.resources ?? []) {
         if (resource.downloadUrl) urls.push(resource.downloadUrl);
@@ -73,9 +73,6 @@ export function collectDownloadUrls({ manifest, skillMenu, agentMenu }) {
     }
     for (const entries of Object.values(skillMenu?.categories ?? {})) {
         for (const entry of entries) if (entry.downloadUrl) urls.push(entry.downloadUrl);
-    }
-    for (const agent of agentMenu?.agents ?? []) {
-        if (agent.downloadUrl) urls.push(agent.downloadUrl);
     }
     return urls;
 }
@@ -91,14 +88,11 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
     const base = to.replace(/\/+$/, '');
     const froms = githubBaseUrls(version);
     const skillsDir = path.join(distDir, 'skills');
-    const agentsDir = path.join(distDir, 'agents');
 
     fs.rmSync(outDir, { recursive: true, force: true });
     fs.mkdirSync(outDir, { recursive: true });
 
-    // Flattening two source directories into one can collide (an agent asset and
-    // a skill asset sharing a basename). Silently overwriting would drop a
-    // release asset, so refuse instead.
+    // Two files written flat under one name would drop a release asset, so refuse.
     const claimed = new Map();
     const claim = (name, from) => {
         if (claimed.has(name)) {
@@ -134,7 +128,6 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
         rewriteUrls(fs.readFileSync(path.join(skillsDir, 'manifest.json'), 'utf8'), froms, base),
     );
     const skillMenu = rewriteJsonToOut(path.join(skillsDir, 'skill-menu.json'));
-    const agentMenu = rewriteJsonToOut(path.join(agentsDir, 'agent-menu.json'));
 
     // Everything else is copied byte-for-byte. Doc markdown in dist/skills/ is
     // fetched prose that may legitimately mention github.com — never rewrite it.
@@ -143,7 +136,6 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
         if (name.endsWith('.md')) return true;
         return name.endsWith('.json') && !NON_BUNDLE_MEMBER_JSON.has(name);
     });
-    copyFlat(agentsDir, name => name.startsWith('agents-') && name.endsWith('.md'));
     // dist/marketplace/ is pushed to the skills / ai-plugin repos, not released here.
 
     // Rebuild the bundle around the rewritten manifest. Reusing createBundledArchive
@@ -175,7 +167,7 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
     // Guard 2: and every URL that should have moved actually did. This catches
     // the case Guard 1 cannot — a build made with SKILLS_BASE_URL already set,
     // where no github.com URL was ever present to rewrite.
-    const stray = collectDownloadUrls({ manifest, skillMenu, agentMenu }).filter(
+    const stray = collectDownloadUrls({ manifest, skillMenu }).filter(
         url => !url.startsWith(`${base}/`),
     );
     if (stray.length > 0) {
@@ -197,7 +189,7 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
         .join('\n');
     fs.writeFileSync(path.join(outDir, 'SHA256SUMS'), sums + '\n');
 
-    return { files: [...files, 'SHA256SUMS'].sort(), manifest, skillMenu, agentMenu };
+    return { files: [...files, 'SHA256SUMS'].sort(), manifest, skillMenu };
 }
 
 function parseArgs(argv) {

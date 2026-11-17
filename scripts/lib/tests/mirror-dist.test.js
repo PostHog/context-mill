@@ -13,7 +13,6 @@ let dir;
 const distDir = () => path.join(dir, 'dist');
 const outDir = () => path.join(dir, 'dist-s3-flat');
 const skillsDir = () => path.join(distDir(), 'skills');
-const agentsDir = () => path.join(distDir(), 'agents');
 
 const readOut = name => fs.readFileSync(path.join(outDir(), name), 'utf8');
 const readOutJson = name => JSON.parse(readOut(name));
@@ -52,15 +51,8 @@ const skillMenu = (base = GITHUB_BASE) => ({
     cliEntries: [],
 });
 
-const agentMenu = (base = GITHUB_BASE) => ({
-    version: '1.0',
-    buildVersion: VERSION,
-    agents: [{ id: 'report', flow: 'integration-v2', downloadUrl: `${base}/agents-integration-v2-report.md` }],
-});
-
 function writeDist({ base = GITHUB_BASE } = {}) {
     fs.mkdirSync(skillsDir(), { recursive: true });
-    fs.mkdirSync(agentsDir(), { recursive: true });
 
     fs.writeFileSync(path.join(skillsDir(), 'manifest.json'), JSON.stringify(manifest(base), null, 2));
     fs.writeFileSync(path.join(skillsDir(), 'skill-menu.json'), JSON.stringify(skillMenu(base), null, 2));
@@ -71,9 +63,6 @@ function writeDist({ base = GITHUB_BASE } = {}) {
         path.join(skillsDir(), 'cloudflare-workers.md'),
         `Clone it from ${REPO_URL}/releases/download/v1.0.0/thing.zip and go.`,
     );
-
-    fs.writeFileSync(path.join(agentsDir(), 'agent-menu.json'), JSON.stringify(agentMenu(base), null, 2));
-    fs.writeFileSync(path.join(agentsDir(), 'agents-integration-v2-report.md'), 'agent prompt');
 
     // Pushed to the skills / ai-plugin repos, never a release asset.
     fs.mkdirSync(path.join(distDir(), 'marketplace'), { recursive: true });
@@ -100,14 +89,6 @@ describe('mirrorDist', () => {
         ]);
     });
 
-    it('rewrites agent-menu.json download URLs', async () => {
-        await run();
-
-        expect(readOutJson('agent-menu.json').agents[0].downloadUrl).toBe(
-            `${MIRROR_BASE}/agents-integration-v2-report.md`,
-        );
-    });
-
     it('rewrites the manifest but does not emit it — it is not a release asset', async () => {
         const { manifest: rewritten } = await run();
 
@@ -121,8 +102,6 @@ describe('mirrorDist', () => {
 
         expect(outFiles()).toEqual([
             'SHA256SUMS',
-            'agent-menu.json',
-            'agents-integration-v2-report.md',
             'audit-events.zip',
             'cloudflare-workers.md',
             'integration-v2.json',
@@ -187,9 +166,8 @@ describe('mirrorDist', () => {
         await expect(run()).rejects.toThrow(/do not point at/);
     });
 
-    it('throws on a basename collision between skills and agents', async () => {
-        fs.writeFileSync(path.join(agentsDir(), 'agents-collide.md'), 'agent');
-        fs.writeFileSync(path.join(skillsDir(), 'agents-collide.md'), 'doc');
+    it('throws when a skill file would be written under the name of the rebuilt archive', async () => {
+        fs.writeFileSync(path.join(skillsDir(), 'skills-mcp-resources.zip'), 'ZIPBYTES');
 
         await expect(run()).rejects.toThrow(/collision/i);
     });

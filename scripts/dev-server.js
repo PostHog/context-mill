@@ -30,7 +30,6 @@ import { spawn } from 'child_process';
 import chokidar from 'chokidar';
 
 import { loadAndExpandSkills } from './lib/skill-generator.js';
-import { buildAgents } from './lib/agent-generator.js';
 import {
     partialRebuild,
     loadDocContentsFromManifest,
@@ -51,18 +50,13 @@ const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
 const skillsSourceDir = path.join(configDir, 'skills');
-const agentsSourceDir = path.join(configDir, 'agents');
-const agentsDir = path.join(distDir, 'agents');
 const exampleAppsDir = path.join(repoRoot, 'example-apps');
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
-const localAgentsUrl = `http://localhost:${PORT}`;
 
-// `generateManifest` reads SKILLS_BASE_URL from process.env, and the agent build
-// reads AGENTS_BASE_URL. Partial rebuilds run in this process, so set both here —
-// the build subprocess inherits them.
+// `generateManifest` reads SKILLS_BASE_URL from process.env. Partial rebuilds run
+// in this process, so set it here — the build subprocess inherits it.
 process.env.SKILLS_BASE_URL = localSkillsUrl;
-process.env.AGENTS_BASE_URL = localAgentsUrl;
 
 // --- state ---
 
@@ -190,25 +184,6 @@ async function drainQueue() {
 // --- watcher ---
 
 function handleEvent(event, absPath) {
-    // Agent prompts are decoupled from the skill incremental machinery. A change
-    // under context/agents/ just re-copies them wholesale — cheap.
-    if (absPath.startsWith(agentsSourceDir)) {
-        try {
-            const { count } = buildAgents({
-                configDir,
-                distDir,
-                baseUrl: localAgentsUrl,
-                version: BUILD_VERSION,
-            });
-            console.log(
-                `📝 ${event}: ${path.relative(repoRoot, absPath)} → rebuilt ${count} agent prompt(s)`,
-            );
-        } catch (err) {
-            console.error(`❌ Agent rebuild failed: ${err.message}`);
-        }
-        return;
-    }
-
     const decision = routeChange({
         event,
         absPath,
@@ -234,7 +209,7 @@ function handleEvent(event, absPath) {
 
 function setupWatcher() {
     const sep = path.sep;
-    const watcher = chokidar.watch([skillsSourceDir, agentsSourceDir, exampleAppsDir], {
+    const watcher = chokidar.watch([skillsSourceDir, exampleAppsDir], {
         ignoreInitial: true,
         persistent: true,
         followSymlinks: false,
@@ -246,7 +221,6 @@ function setupWatcher() {
 
     console.log('\n👀 Watching:');
     console.log(`   📁 ${path.relative(repoRoot, skillsSourceDir)}`);
-    console.log(`   📁 ${path.relative(repoRoot, agentsSourceDir)}`);
     console.log(`   📁 ${path.relative(repoRoot, exampleAppsDir)}`);
 
     return watcher;
@@ -302,19 +276,6 @@ function createServer() {
             return;
         }
 
-        // The wizard fetches agents under `/agents/…`, mirroring `/skills/…`; the
-        // bare `/agents-…` form is kept for older callers.
-        const agentMatch = req.url?.match(/^\/(?:agents\/)?(agents-[\w-]+\.md)$/);
-        if (agentMatch) {
-            serveFile(res, path.join(agentsDir, agentMatch[1]), 'text/markdown; charset=utf-8');
-            return;
-        }
-
-        if (req.url === '/agent-menu.json') {
-            serveFile(res, path.join(agentsDir, 'agent-menu.json'), 'application/json');
-            return;
-        }
-
         if (req.url === '/skills-mcp-resources.zip' || req.url === '/') {
             serveFile(
                 res,
@@ -326,7 +287,7 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
-        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /skills/{group}.json\n  /agent-menu.json\n  /agents-{flow}-{type}.md');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /skills/{group}.json');
     });
 
     server.listen(PORT, () => {
@@ -335,8 +296,6 @@ function createServer() {
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
         console.log(`📦 Bundled group:    http://localhost:${PORT}/skills/{group}.json`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
-        console.log(`🤖 Agent prompt:     http://localhost:${PORT}/agents-{flow}-{type}.md`);
-        console.log(`📋 Agents menu:      http://localhost:${PORT}/agent-menu.json`);
     });
 
     return server;
