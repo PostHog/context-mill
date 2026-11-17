@@ -2,7 +2,7 @@
 # framework's pack when it installs the skill; see "Step skills" in the README.
 type: docs-only
 template: description.md
-description: Make session replay record for {display_name}
+description: Make session replay record on server and client
 category: integration-steps
 tags: [orchestrator, replay-vision, session-replay]
 cli:

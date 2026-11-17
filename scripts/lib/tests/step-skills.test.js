@@ -307,6 +307,17 @@ describe('the integration step skills', () => {
         expect(fs.existsSync(path.join(REPO_CONFIG_DIR, 'skills', ...key.split('/'), group.template))).toBe(true);
     });
 
+    // A step completed from a pack lists the pack's pages where its template says `{references}`.
+    it.each(steps.filter(([, group]) => group.framework_references))('%s lists its references in its template', (key, group) => {
+        const template = fs.readFileSync(path.join(REPO_CONFIG_DIR, 'skills', ...key.split('/'), group.template), 'utf8');
+        expect(template).toContain('{references}');
+    });
+
+    // The menu shows a description as written, so a framework's name in it would stay a placeholder.
+    it.each(steps.filter(([, group]) => group.framework_references))('%s has a description that names no framework', (_, group) => {
+        expect(group.description).not.toContain('{display_name}');
+    });
+
     // A pack's rules are the variant's alone, so a step's own tags select none.
     it.each(steps.filter(([, group]) => group.framework_references))('%s has tags that select no rules of their own', (_, group) => {
         expect(collectCommandments(group.tags, commandments)).toEqual(collectCommandments([], commandments));
