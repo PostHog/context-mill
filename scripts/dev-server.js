@@ -28,47 +28,22 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import chokidar from 'chokidar';
 
-import { loadAndExpandSkills } from './lib/skill-generator.js';
-import {
-    partialRebuild,
-    loadDocContentsFromManifest,
-    reconcileOrphans,
-} from './lib/build-phases.js';
-import {
-    buildIndexes,
-    routeChange,
-    diffSkillIds,
-    sourceDirs,
-    watchedDirs,
-} from './lib/change-router.js';
+import { watchSkillSources } from './lib/dev-watcher.js';
 
 const PORT = process.env.PORT || 8765;
 const FORCE_FULL_REBUILD = process.env.FORCE_FULL_REBUILD === '1';
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
 const repoRoot = path.join(import.meta.dirname, '..');
-const configDir = path.join(repoRoot, 'context');
 const distDir = path.join(repoRoot, 'dist');
 const skillsDir = path.join(distDir, 'skills');
-const sourcePaths = sourceDirs(repoRoot);
 
 const localSkillsUrl = `http://localhost:${PORT}/skills`;
 
 // `generateManifest` reads SKILLS_BASE_URL from process.env. Partial rebuilds run
 // in this process, so set it here — the build subprocess inherits it.
 process.env.SKILLS_BASE_URL = localSkillsUrl;
-
-// --- state ---
-
-let indexes = { groupRoots: [], examplePathIndex: new Map() };
-let knownSkills = [];
-let docContents = {};
-
-const pendingIds = new Set();
-let needsIndexRebuild = false;
-let isBuilding = false;
 
 // --- build orchestration ---
 
@@ -91,141 +66,6 @@ function runFullBuildSubprocess() {
         });
         buildProcess.on('error', reject);
     });
-}
-
-function refreshIndexesAndState() {
-    const { skills } = loadAndExpandSkills({ configDir });
-    indexes = buildIndexes({ skills, configDir });
-    return skills;
-}
-
-async function runPartialRebuild(ids) {
-    const start = Date.now();
-    const { allSkills } = await partialRebuild({
-        ids,
-        repoRoot,
-        configDir,
-        distDir,
-        version: BUILD_VERSION,
-        docContents,
-        log: console.log,
-    });
-    knownSkills = allSkills.map(s => ({ id: s.id }));
-    const ms = Date.now() - start;
-    console.log(`✅ Rebuilt ${ids.length} skill(s): ${ids.join(', ')} (${ms}ms)\n`);
-}
-
-async function drainQueue() {
-    if (isBuilding) return;
-    if (pendingIds.size === 0 && !needsIndexRebuild) return;
-
-    isBuilding = true;
-    try {
-        while (pendingIds.size > 0 || needsIndexRebuild) {
-            const indexRebuildRequested = needsIndexRebuild;
-            const idsThisRun = new Set(pendingIds);
-            pendingIds.clear();
-            needsIndexRebuild = false;
-
-            if (FORCE_FULL_REBUILD) {
-                try {
-                    await runFullBuildSubprocess();
-                } catch (err) {
-                    console.error(`❌ Full rebuild failed: ${err.message}\n`);
-                    continue;
-                }
-                const skills = refreshIndexesAndState();
-                knownSkills = skills.map(s => ({
-                    id: s.id,
-                    _group: s._group,
-                    _examplePaths: s._examplePaths,
-                }));
-                docContents = loadDocContentsFromManifest(path.join(skillsDir, 'manifest.json'));
-                continue;
-            }
-
-            if (indexRebuildRequested) {
-                const newSkills = refreshIndexesAndState();
-                const { added, removed } = diffSkillIds(knownSkills, newSkills);
-                if (removed.length > 0) {
-                    console.log(`↪ removed variants: ${removed.join(', ')}`);
-                }
-                for (const id of added) idsThisRun.add(id);
-                knownSkills = newSkills.map(s => ({
-                    id: s.id,
-                    _group: s._group,
-                    _examplePaths: s._examplePaths,
-                }));
-
-                // Pure removal — still rewrite manifest + reconcile orphans.
-                if (idsThisRun.size === 0 && removed.length > 0) {
-                    try {
-                        await runPartialRebuild([]);
-                    } catch (err) {
-                        console.error(`❌ Rebuild failed: ${err.message}\n`);
-                    }
-                    continue;
-                }
-            }
-
-            if (idsThisRun.size === 0) continue;
-
-            const ids = [...idsThisRun];
-            console.log(`🔨 Rebuilding ${ids.length} skill(s): ${ids.join(', ')}...`);
-            try {
-                await runPartialRebuild(ids);
-            } catch (err) {
-                console.error(`❌ Rebuild failed: ${err.message}\n`);
-            }
-        }
-    } finally {
-        isBuilding = false;
-    }
-}
-
-// --- watcher ---
-
-function handleEvent(event, absPath) {
-    const decision = routeChange({
-        event,
-        absPath,
-        indexes,
-        paths: sourcePaths,
-    });
-
-    const relPath = path.relative(repoRoot, absPath);
-
-    if (!decision) {
-        console.log(`↪ no skill group owns ${relPath}, skipping`);
-        return;
-    }
-
-    for (const id of decision.ids) pendingIds.add(id);
-    if (decision.needsIndexRebuild) needsIndexRebuild = true;
-
-    const suffix = decision.needsIndexRebuild ? ' (index rebuild)' : '';
-    console.log(`📝 ${event}: ${relPath} → queued ${decision.ids.length} skill(s)${suffix}`);
-
-    drainQueue().catch(err => console.error(`❌ Drain failed: ${err.message}`));
-}
-
-function setupWatcher() {
-    const sep = path.sep;
-    const dirs = watchedDirs(sourcePaths);
-    const watcher = chokidar.watch(dirs, {
-        ignoreInitial: true,
-        persistent: true,
-        followSymlinks: false,
-        awaitWriteFinish: { stabilityThreshold: 75, pollInterval: 25 },
-        ignored: (p) => p.includes(`${sep}node_modules${sep}`) || p.includes(`${sep}.git${sep}`),
-    });
-    watcher.on('all', handleEvent);
-    watcher.on('error', err => console.error(`Watcher error: ${err.message}`));
-
-    console.log('\n👀 Watching:');
-    for (const dir of dirs) console.log(`   📁 ${path.relative(repoRoot, dir)}`);
-
-    return watcher;
 }
 
 // --- HTTP server ---
@@ -309,25 +149,16 @@ async function main() {
     console.log('\n🔨 Running initial full build...');
     await runFullBuildSubprocess();
 
-    const skills = refreshIndexesAndState();
-    knownSkills = skills.map(s => ({
-        id: s.id,
-        _group: s._group,
-        _examplePaths: s._examplePaths,
-    }));
-    docContents = loadDocContentsFromManifest(path.join(skillsDir, 'manifest.json'));
-
-    const removed = reconcileOrphans({
-        allSkills: knownSkills,
+    const watcher = await watchSkillSources({
+        repoRoot,
         distDir,
-        log: console.log,
+        version: BUILD_VERSION,
+        fullBuild: FORCE_FULL_REBUILD ? runFullBuildSubprocess : null,
     });
-    if (removed.length > 0) {
-        console.log(`🗑  Reconciled ${removed.length} orphan ZIP(s) from prior runs`);
-    }
-
     const server = createServer();
-    const watcher = setupWatcher();
+
+    console.log('\n👀 Watching:');
+    for (const dir of watcher.dirs) console.log(`   📁 ${path.relative(repoRoot, dir)}`);
 
     console.log('\n✨ Ready for development!');
     console.log('   Press Ctrl+C to stop\n');

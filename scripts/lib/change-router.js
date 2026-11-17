@@ -87,20 +87,6 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
     return [...ids];
 }
 
-function sourceDirs(repoRoot) {
-    const configDir = path.join(repoRoot, 'context');
-    return {
-        repoRoot,
-        skillsDir: path.join(configDir, 'skills'),
-        sharedDir: path.join(configDir, 'shared'),
-        exampleAppsDir: path.join(repoRoot, 'example-apps'),
-    };
-}
-
-function watchedDirs({ skillsDir, sharedDir, exampleAppsDir }) {
-    return [skillsDir, sharedDir, exampleAppsDir];
-}
-
 function everySkillId(groupRoots) {
     return groupRoots.flatMap(group => group.variantIds);
 }
@@ -176,6 +162,4 @@ export {
     findNearestGroup,
     findExamplesMatching,
     diffSkillIds,
-    sourceDirs,
-    watchedDirs,
 };
