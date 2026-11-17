@@ -1,0 +1,13 @@
+name = "posthog-cloudflare-workers-example"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[observability]
+enabled = true
+
+# Non-secret config. Local overrides go in .dev.vars (see .dev.vars.example).
+# Set ENVIRONMENT to "production" in the deployed Worker to silence the
+# missing-token warning.
+[vars]
+POSTHOG_PROJECT_TOKEN = ""
+POSTHOG_HOST = "https://us.i.posthog.com"

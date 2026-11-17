@@ -9,16 +9,16 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@posthog/react": "^1.5.2",
+    "@posthog/react": "^1.11.3",
     "@react-router/node": "7.10.1",
     "@react-router/serve": "7.10.1",
-    "sqlite3": "^5.1.7",
     "isbot": "^5.1.31",
-    "posthog-js": "^1.406.2",
-    "posthog-node": "^5.18.0",
+    "posthog-js": "^1.447.6",
+    "posthog-node": "^5.64.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router": "7.10.1"
+    "react-router": "7.10.1",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@react-router/dev": "7.10.1",

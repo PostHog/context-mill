@@ -30,7 +30,7 @@ export const Route = createFileRoute('/api/auth/login')({
 
         // Capture server-side login event
         const posthog = getPostHogClient()
-        posthog.capture({
+        posthog?.capture({
           distinctId: username,
           event: 'server_login',
           properties: {
@@ -42,7 +42,7 @@ export const Route = createFileRoute('/api/auth/login')({
         })
 
         // Identify user on server side
-        posthog.identify({
+        posthog?.identify({
           distinctId: username,
           properties: {
             username: username,
@@ -51,7 +51,7 @@ export const Route = createFileRoute('/api/auth/login')({
         })
 
         // This handler is short-lived; flush so the enqueued events send before it returns
-        await posthog.flush()
+        await posthog?.flush()
 
         return json({ success: true, user })
       },

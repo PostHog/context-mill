@@ -9,8 +9,8 @@ Check the project for errors. Read the package.json file for any type checking o
 Ensure that any components created were actually used.
 
 Install any dependencies the AI Observability and Logs steps recorded before
-verification, adding each by bare package name with the project's package
-manager so it resolves real versions — do not guess version pins. The app's
+verification, adding each with the version the reference docs pin, using the project's
+package manager — do not guess version pins. The app's
 existing dependencies are not yours to touch: never upgrade, downgrade, or
 re-add a package this integration did not introduce. On a peer conflict,
 install an older instrumentation version that fits the app's versions — step

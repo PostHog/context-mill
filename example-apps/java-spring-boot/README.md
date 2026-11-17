@@ -5,7 +5,7 @@ This is a [Spring Boot](https://spring.io/projects/spring-boot) example demonstr
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with authenticated users via person properties
+- **User identification**: Associate events with authenticated users via person properties; signed-out visitors get a random id and anonymous events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
 - **Server-side tracking**: All tracking happens server-side with the `posthog-server` SDK
 - **Single client bean**: One PostHog client for the whole app, flushed on shutdown
@@ -104,16 +104,35 @@ posthog.capture(
                 .build());
 ```
 
+### Signed-out visitors (controller/BurritoController.java)
+
+The `visitor` helper returns the distinct id and whether the visitor is anonymous. Signed-in users keep their stable user id from the session. For everyone else it generates a random UUID, stores it in the session (which is cookie-backed) so it is reused for the rest of the visit, and sets `$process_person_profile` to `false` on their events so PostHog does not create a person profile for them.
+
+```java
+Visitor visitor = visitor(session);
+
+PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+        .builder()
+        .property("total_considerations", count);
+if (visitor.anonymous()) {
+    options.property("$process_person_profile", false);
+}
+posthog.capture(visitor.id(), "burrito_considered", options.build());
+```
+
+Feature flags use the same visitor id, so flag evaluation works for anonymous visitors too.
+
 ### Event tracking (controller/BurritoController.java)
 
 ```java
-posthog.capture(
-        userId,
-        "burrito_considered",
-        PostHogCaptureOptions
-                .builder()
-                .property("total_considerations", count)
-                .build());
+Visitor visitor = visitor(session);
+PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+        .builder()
+        .property("total_considerations", count);
+if (visitor.anonymous()) {
+    options.property("$process_person_profile", false);
+}
+posthog.capture(visitor.id(), "burrito_considered", options.build());
 ```
 
 ### Feature flags (controller/BurritoController.java)

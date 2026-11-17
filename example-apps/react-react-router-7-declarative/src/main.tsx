@@ -11,10 +11,16 @@ import Profile from './routes/Profile';
 import posthog from 'posthog-js';
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  defaults: '2026-01-30',
-});
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+
+if (posthogToken) {
+  posthog.init(posthogToken, {
+    api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+    defaults: '2026-08-30',
+  });
+} else if (import.meta.env.DEV) {
+  console.warn('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
+}
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");

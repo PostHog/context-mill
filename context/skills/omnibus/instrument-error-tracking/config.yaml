@@ -2,7 +2,7 @@ type: skill
 template: description.md
 category: error-tracking
 description: Add PostHog error tracking to capture and monitor exceptions. Use after implementing features or reviewing PRs to ensure errors are tracked with stack traces and source maps. Also handles initial PostHog SDK setup if not yet installed.
-tags: [error-tracking]
+tags: [error-tracking, sdk-install]
 shared_docs:
   - https://posthog.com/docs/error-tracking/fingerprints.md
   - https://posthog.com/docs/error-tracking/alerts.md

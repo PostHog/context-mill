@@ -5,7 +5,7 @@ This is a [Go](https://go.dev) example demonstrating PostHog integration with pr
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with a user via person properties (`$set`)
+- **User identification**: Associate events with a user via person properties (`$set`); signed-out visitors get a random id and anonymous events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
 - **Error tracking**: Report exceptions to PostHog error tracking
 - **Server-side tracking**: All tracking happens server-side with the `posthog-go` SDK
@@ -93,15 +93,31 @@ client.Enqueue(posthog.Capture{
 })
 ```
 
+### Signed-out visitors (handlers.go)
+
+The `visitor` helper returns the distinct id and whether the visitor is anonymous. Signed-in users (a `user_id` cookie) keep their stable user id. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and the `properties` helper sets `$process_person_profile` to `false` so PostHog does not create a person profile for them.
+
+```go
+userId, anonymous := visitor(w, r)
+
+client.Enqueue(posthog.Capture{
+    DistinctId: userId,
+    Event:      "burrito_considered",
+    Properties: properties(anonymous), // adds $process_person_profile=false when anonymous
+})
+```
+
+Feature flags use the same visitor id, so flag evaluation works for anonymous visitors too.
+
 ### Event tracking (handlers.go)
 
-Capture a business event with a stable distinct id and a couple of event properties.
+Capture a business event with the visitor's distinct id and a couple of event properties.
 
 ```go
 client.Enqueue(posthog.Capture{
     DistinctId: userId,
     Event:      "burrito_considered",
-    Properties: posthog.NewProperties().
+    Properties: properties(anonymous).
         Set("total_considerations", count),
 })
 ```
