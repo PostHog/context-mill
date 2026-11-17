@@ -374,7 +374,7 @@ Optionally add a temporary, clearly-labeled affordance that captures one test ex
   let error = std::io::Error::new(std::io::ErrorKind::Other, "PostHog source maps test");
   client.capture_exception(&error).await.unwrap();
   ```
-  Mirror how the project already calls the client: with the blocking client (`default-features = false` with `features = ["error-tracking"]` added back), drop the `.await`. On the Rust SDK 1.x.x, `default-features = false` also turns off TLS, so the project needs `"tls"` in that list too, or the test capture never reaches PostHog. If it is missing, add it and say so in the report. The Rust SDK 0.x.x has no `tls` feature and keeps TLS on.
+  Mirror how the project already calls the client: with the blocking client (`default-features = false` with `features = ["error-tracking", "tls"]`), drop the `.await`. On the Rust SDK 1.x.x and later, `default-features = false` turns off TLS. Add `"tls"` to the project's features list. If you can't add it, say so in the report: without it, the app can't send events to PostHog over HTTPS.
   Test flow — the binary you run must be the one whose symbols were uploaded. Use the wired build-and-upload script if one exists; otherwise run both steps explicitly: `cargo build --release && posthog-cli --dotenv-file .env symbol-sets upload --directory target/release`, then run `./target/release/<binary>` and trigger the capture. It's an event, not a crash — the process keeps running. A rebuild changes the build ID, so after any rebuild, re-upload before testing.
 
 ### Verify and hand off
