@@ -280,7 +280,6 @@ const FRAMEWORK_KEY = 'framework';
 
 /** A variant's `match` with `framework` first, the order its tags and its `variant.json` are written in. */
 function orderedMatch(match) {
-    if (!match) return undefined;
     const { [FRAMEWORK_KEY]: framework, ...rest } = match;
     return { [FRAMEWORK_KEY]: framework, ...rest };
 }

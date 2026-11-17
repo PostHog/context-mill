@@ -159,6 +159,8 @@ describe('a variant table', () => {
         // A match pair is published as a `key:value` tag, so a colon in the value would read as another key.
         ['a match value with a colon', { match: { framework: 'nextjs', frameworkVariant: 'app:router' } }, /match must map trait names/],
         ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
+        ['a match that is null', { match: null }, /match must map trait names/],
+        ['an empty match value', { match: { framework: '' } }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
     });
