@@ -15,7 +15,7 @@ shared_docs:
 - https://posthog.com/docs/feature-flags/local-evaluation.md
 variants:
 - id: nextjs-app-router
-  framework: nextjs
+  match: { framework: nextjs }
   default: true
   display_name: Next.js App Router
   tags:
@@ -31,7 +31,7 @@ variants:
   - https://posthog.com/docs/libraries/next-js.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: nextjs-pages-router
-  framework: nextjs
+  match: { framework: nextjs }
   display_name: Next.js Pages Router
   tags:
   - nextjs
@@ -46,7 +46,7 @@ variants:
   - https://posthog.com/docs/libraries/next-js.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: react-react-router-6
-  framework: react-router
+  match: { framework: react-router }
   default: true
   display_name: React Router v6
   tags:
@@ -59,7 +59,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/react.md
 - id: react-react-router-7-framework
-  framework: react-router
+  match: { framework: react-router }
   display_name: React Router v7 - Framework mode
   tags:
   - react
@@ -74,7 +74,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/react.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: react-react-router-7-data
-  framework: react-router
+  match: { framework: react-router }
   display_name: React Router v7 - Data mode
   tags:
   - react
@@ -87,7 +87,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/react.md
 - id: react-react-router-7-declarative
-  framework: react-router
+  match: { framework: react-router }
   display_name: React Router v7 - Declarative mode
   tags:
   - react
@@ -110,7 +110,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/react.md
 - id: nuxt-3-6
-  framework: nuxt
+  match: { framework: nuxt }
   display_name: Nuxt 3.6
   tags:
   - nuxt
@@ -122,7 +122,7 @@ variants:
   - https://posthog.com/docs/libraries/nuxt-js.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: nuxt-4
-  framework: nuxt
+  match: { framework: nuxt }
   default: true
   display_name: Nuxt 4
   tags:
@@ -138,7 +138,7 @@ variants:
   - https://posthog.com/docs/libraries/nuxt-js.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: vue-3
-  framework: vue
+  match: { framework: vue }
   display_name: Vue 3
   tags:
   - vue
@@ -149,7 +149,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/web.md
   - https://posthog.com/docs/libraries/vue-js.md
 - id: django
-  framework: django
+  match: { framework: django }
   display_name: Django
   tags:
   - django
@@ -159,7 +159,7 @@ variants:
   - https://posthog.com/docs/libraries/django.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: flask
-  framework: flask
+  match: { framework: flask }
   display_name: Flask
   tags:
   - flask
@@ -169,7 +169,7 @@ variants:
   - https://posthog.com/docs/libraries/flask.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: fastapi
-  framework: fastapi
+  match: { framework: fastapi }
   display_name: FastAPI
   tags:
   - fastapi
@@ -177,7 +177,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/python.md
 - id: react-tanstack-router-file-based
-  framework: tanstack-router
+  match: { framework: tanstack-router }
   display_name: React with TanStack Router (file-based)
   tags:
   - react
@@ -189,7 +189,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/react.md
   - https://posthog.com/docs/libraries/tanstack-start.md
 - id: react-tanstack-router-code-based
-  framework: tanstack-router
+  match: { framework: tanstack-router }
   default: true
   display_name: React with TanStack Router (code-based)
   tags:
@@ -202,7 +202,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/react.md
   - https://posthog.com/docs/libraries/tanstack-start.md
 - id: tanstack-start
-  framework: tanstack-start
+  match: { framework: tanstack-start }
   display_name: TanStack Start
   tags:
   - react
@@ -216,7 +216,7 @@ variants:
   - https://posthog.com/docs/libraries/tanstack-start.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: laravel
-  framework: laravel
+  match: { framework: laravel }
   display_name: Laravel
   tags:
   - laravel
@@ -233,7 +233,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/php.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: wordpress
-  framework: wordpress
+  match: { framework: wordpress }
   display_name: WordPress
   tags:
   - wordpress
@@ -244,7 +244,7 @@ variants:
   - https://posthog.com/docs/libraries/wordpress.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: ruby-on-rails
-  framework: rails
+  match: { framework: rails }
   display_name: Ruby on Rails
   tags:
   - ruby-on-rails
@@ -254,7 +254,7 @@ variants:
   - https://posthog.com/docs/libraries/ruby-on-rails.md
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: android
-  framework: android
+  match: { framework: android }
   display_name: Android
   tags:
   - android
@@ -263,7 +263,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/android.md
 - id: sveltekit
-  framework: sveltekit
+  match: { framework: sveltekit }
   display_name: SvelteKit
   tags:
   - sveltekit
@@ -276,14 +276,14 @@ variants:
   - https://posthog.com/docs/libraries/svelte.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: python
-  framework: python
+  match: { framework: python }
   display_name: Python
   tags:
   - python
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/python.md
 - id: javascript_node
-  framework: javascript_node
+  match: { framework: javascript_node }
   display_name: JavaScript Node
   tags:
   - javascript_node
@@ -291,7 +291,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: javascript_web
-  framework: javascript_web
+  match: { framework: javascript_web }
   display_name: JavaScript Web
   tags:
   - javascript_web
@@ -299,14 +299,14 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/web.md
 - id: ruby
-  framework: ruby
+  match: { framework: ruby }
   display_name: Ruby
   tags:
   - ruby
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/ruby.md
 - id: elixir
-  framework: elixir
+  match: { framework: elixir }
   display_name: Elixir
   tags:
   - elixir
@@ -315,7 +315,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/libraries/elixir.md
 - id: java
-  framework: java
+  match: { framework: java }
   display_name: Java (Spring Boot)
   tags:
   - java
@@ -323,21 +323,21 @@ variants:
   docs_urls:
   - https://posthog.com/docs/libraries/java.md
 - id: go
-  framework: go
+  match: { framework: go }
   display_name: Go
   tags:
   - go
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/go.md
 - id: rust
-  framework: rust
+  match: { framework: rust }
   display_name: Rust
   tags:
   - rust
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/rust.md
 - id: swift
-  framework: swift
+  match: { framework: swift }
   display_name: Swift (iOS/macOS)
   tags:
   - swift
@@ -349,7 +349,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/ios.md
   - https://posthog.com/docs/libraries/ios/usage.md
 - id: flutter
-  framework: flutter
+  match: { framework: flutter }
   display_name: Flutter
   tags:
   - flutter
@@ -358,7 +358,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/flutter.md
 - id: kmp
-  framework: kmp
+  match: { framework: kmp }
   display_name: Kotlin Multiplatform
   tags:
   - kmp
@@ -368,7 +368,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/kmp.md
 - id: react-native
-  framework: react-native
+  match: { framework: react-native }
   default: true
   display_name: React Native
   tags:
@@ -378,7 +378,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/feature-flags/installation/react-native.md
 - id: expo
-  framework: react-native
+  match: { framework: react-native }
   display_name: Expo
   tags:
   - expo
@@ -388,7 +388,7 @@ variants:
   docs_urls:
   - https://posthog.com/docs/libraries/react-native.md
 - id: astro-static
-  framework: astro
+  match: { framework: astro }
   display_name: Astro (Static)
   tags:
   - astro
@@ -399,7 +399,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/web.md
   - https://posthog.com/docs/libraries/astro.md
 - id: astro-view-transitions
-  framework: astro
+  match: { framework: astro }
   display_name: Astro (View Transitions)
   tags:
   - astro
@@ -411,7 +411,7 @@ variants:
   - https://posthog.com/docs/feature-flags/installation/web.md
   - https://posthog.com/docs/libraries/astro.md
 - id: astro-ssr
-  framework: astro
+  match: { framework: astro }
   display_name: Astro (SSR)
   tags:
   - astro
@@ -425,7 +425,7 @@ variants:
   - https://posthog.com/docs/libraries/astro.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: astro-hybrid
-  framework: astro
+  match: { framework: astro }
   default: true
   display_name: Astro (Hybrid)
   tags:
@@ -440,7 +440,7 @@ variants:
   - https://posthog.com/docs/libraries/astro.md
   - https://posthog.com/docs/feature-flags/installation/nodejs.md
 - id: angular
-  framework: angular
+  match: { framework: angular }
   display_name: Angular
   tags:
   - angular

@@ -233,7 +233,7 @@ function normalizeExamplePaths(value) {
 /**
  * Resolve `variants_from` references: a group may borrow another group's
  * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls, framework, default — never
+ * across — id, display_name, tags, docs_urls, the framework it matches, default — never
  * example paths, templates, cli blocks, or shared docs, which stay the
  * borrowing group's own concern. One level only; a source group must declare
  * its variants literally. Pure — returns a new config, never mutates the input.
@@ -259,7 +259,7 @@ function resolveVariantsFrom(config) {
             const variant = { id: v.id, display_name: v.display_name };
             if (v.tags) variant.tags = [...v.tags];
             if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
-            if (v.framework) variant.framework = v.framework;
+            if (v.match?.framework) variant.match = { framework: v.match.framework };
             if (v.default) variant.default = v.default;
             return variant;
         });
@@ -274,6 +274,16 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** A match key is a trait name as the wizard spells it, such as `framework` or `frameworkVariant`. */
 const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
+
+/** The match key every `match` sets: the framework a variant serves. */
+const FRAMEWORK_KEY = 'framework';
+
+/** A variant's `match` with `framework` first, the order its tags and its `variant.json` are written in. */
+function orderedMatch(match) {
+    if (!match) return undefined;
+    const { [FRAMEWORK_KEY]: framework, ...rest } = match;
+    return { [FRAMEWORK_KEY]: framework, ...rest };
+}
 
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
@@ -302,7 +312,8 @@ const isDocEntry = entry =>
 /**
  * Validate a variant table: a group that declares `products`. Each variant lists
  * every product's pages under `docs`, or names the product under `gaps`.
- * `match` is checked on every group, since any variant may declare it.
+ * `match` is checked on every group, since any variant may declare it. It is
+ * the one place a variant says which projects it serves.
  */
 function validateVariantTable(key, group) {
     const products = group.products;
@@ -320,6 +331,9 @@ function validateVariantTable(key, group) {
     }
     for (const variant of group.variants || []) {
         const where = `Skill group "${key}", variant "${variant.id}"`;
+        if (variant.framework !== undefined) {
+            throw new Error(`${where}: name the framework under match, as match: { framework: ${variant.framework} }`);
+        }
         if (variant.match !== undefined) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
@@ -327,8 +341,8 @@ function validateVariantTable(key, group) {
             if (!entries || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
                 throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
             }
-            if (variant.match.framework !== undefined && variant.match.framework !== variant.framework) {
-                throw new Error(`${where}: match.framework "${variant.match.framework}" differs from framework "${variant.framework}"`);
+            if (variant.match[FRAMEWORK_KEY] === undefined) {
+                throw new Error(`${where}: match must name the framework, as match: { framework: … }`);
             }
         }
         if (products === undefined) {
@@ -469,6 +483,7 @@ function expandSkillGroups(config, configDir) {
 
             skills.push({
                 ...variation,
+                ...(variation.match ? { match: orderedMatch(variation.match) } : {}),
                 id: skillId,
                 _shortId: variation.id,
                 _category: category,
@@ -971,7 +986,7 @@ async function generateSkill({
         const variant = {
             id: skill._shortId,
             displayName: skill.display_name,
-            match: { ...(skill.framework ? { framework: skill.framework } : {}), ...(skill.match || {}) },
+            match: skill.match ?? {},
             rules: rules.length > 0
                 ? { file: `references/${RULES_REFERENCE.filename}`, description: RULES_REFERENCE.description }
                 : null,
@@ -1022,9 +1037,6 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
-    if (s.framework) {
-        result.framework = s.framework;
-    }
     if (s.default) {
         result.default = true;
     }

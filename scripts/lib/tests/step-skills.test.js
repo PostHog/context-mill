@@ -37,7 +37,7 @@ const config = (step = {}) => ({
             {
                 id: 'next',
                 display_name: 'Next.js',
-                framework: 'nextjs',
+                match: { framework: 'nextjs' },
                 tags: ['nextjs'],
                 docs_urls: [`${PAGE}/libraries/next-js.md`],
                 docs: { 'error-tracking': [`${PAGE}/error-tracking/installation/nextjs.md`] },

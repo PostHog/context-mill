@@ -70,8 +70,8 @@ describe('writeManifestAndMenu', () => {
         expect(entry.downloadUrl).toMatch(/\/integration-v2-capture-nextjs\.zip$/);
     });
 
-    it('publishes title, description and tags, adding the served framework, group and default without touching the skill', () => {
-        const rails = skill('rails', { displayName: 'Ruby on Rails', framework: 'rails', default: true, tags: ['ruby-on-rails'] });
+    it('publishes title, description and tags, adding the match keys, group and default without touching the skill', () => {
+        const rails = skill('rails', { displayName: 'Ruby on Rails', match: { framework: 'rails' }, default: true, tags: ['ruby-on-rails'] });
         write([rails]);
 
         const [entry] = menuEntries();
@@ -82,8 +82,8 @@ describe('writeManifestAndMenu', () => {
 
     it('publishes metadata on a bundle entry and on each of its variants', () => {
         write([
-            skill('django', { bundle: true, groupTags: ['capture'], framework: 'django', tags: ['capture', 'python'] }),
-            skill('nextjs', { bundle: true, groupTags: ['capture'], framework: 'nextjs', default: true, tags: ['capture'] }),
+            skill('django', { bundle: true, groupTags: ['capture'], match: { framework: 'django' }, tags: ['capture', 'python'] }),
+            skill('nextjs', { bundle: true, groupTags: ['capture'], match: { framework: 'nextjs' }, default: true, tags: ['capture'] }),
         ]);
 
         const [entry] = menuEntries();
