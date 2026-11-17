@@ -198,7 +198,20 @@ describe('a variant table', () => {
         const [entry] = Object.values(menu.categories).flat();
 
         expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'integration', 'default']);
-        expect(entry).toMatchObject({ framework: 'nextjs', default: true });
+        expect(entry).not.toHaveProperty('framework');
+        expect(entry).not.toHaveProperty('default');
+    });
+});
+
+describe('a skill config', () => {
+    it.each([
+        ['variants_from', 'variants_from: integration\n'],
+        ['packaging', 'packaging: bundle\nvariants:\n  - id: all\n'],
+    ])('is refused when it still sets %s', (key, yaml) => {
+        fs.mkdirSync(path.join(dir, 'skills', 'old-step'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'skills', 'old-step', 'config.yaml'), yaml);
+
+        expect(() => loadSkillsConfig(dir)).toThrow(`${key} is no longer read`);
     });
 });
 

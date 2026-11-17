@@ -17,7 +17,6 @@ import {
     loadDocsConfig,
     zipSkillToBuffer,
     createBundledArchive,
-    writeBundles,
     writeManifestAndMenu,
 } from './lib/build-phases.js';
 
@@ -67,8 +66,6 @@ async function main() {
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
         for (const skill of skills) {
-            // A bundled variant ships inside its group's JSON, not as its own zip.
-            if (skill.bundle) continue;
             const skillDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillDir);
             const filename = `${skill.id}.zip`;
@@ -77,13 +74,6 @@ async function main() {
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
-        const bundleFiles = writeBundles({
-            skills,
-            sourceDir: tempDir,
-            skillsDir,
-            log: console.log,
-        });
-
         console.log('\nGenerating marketplace plugins...');
         const marketplaceResult = generateMarketplace({
             skills,
@@ -133,10 +123,7 @@ async function main() {
 
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
-        const bundleSize = await createBundledArchive(bundlePath, manifest, {
-            ...skillZips,
-            ...bundleFiles,
-        });
+        const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
         console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
 
         console.log('\n' + '='.repeat(50));

@@ -235,13 +235,13 @@ const NO_CACHE_HEADERS = {
 };
 
 function serveFile(res, filePath, contentType, attachmentName = null) {
-    if (!fs.existsSync(filePath)) {
+    const stat = fs.statSync(filePath, { throwIfNoEntry: false });
+    if (!stat?.isFile()) {
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
         res.end(`Not found: ${path.basename(filePath)}. Run build first.`);
         return;
     }
 
-    const stat = fs.statSync(filePath);
     const headers = {
         'Content-Type': contentType,
         'Content-Length': stat.size,
@@ -257,17 +257,11 @@ function serveFile(res, filePath, contentType, attachmentName = null) {
 function createServer() {
     const server = http.createServer((req, res) => {
         console.log(`→ ${req.method} ${req.url}`);
-        // A skill is served as its own zip, or — for a bundled group — as one JSON of every variant.
-        const skillMatch = req.url?.match(/^\/skills\/(.+\.(zip|json))$/);
+        // A skill is asked for by its file name alone, so no request reaches outside the skills folder.
+        const skillMatch = req.url?.match(/^\/skills\/([A-Za-z0-9][A-Za-z0-9._-]*\.zip)$/);
         if (skillMatch) {
-            const [skillFile, ext] = [skillMatch[1], skillMatch[2]];
-            const isZip = ext === 'zip';
-            serveFile(
-                res,
-                path.join(skillsDir, skillFile),
-                isZip ? 'application/zip' : 'application/json',
-                isZip ? skillFile : undefined,
-            );
+            const skillFile = skillMatch[1];
+            serveFile(res, path.join(skillsDir, skillFile), 'application/zip', skillFile);
             return;
         }
 
@@ -287,14 +281,13 @@ function createServer() {
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
-        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip\n  /skills/{group}.json');
+        res.end('Not found. Available endpoints:\n  /skill-menu.json\n  /skills-mcp-resources.zip\n  /skills/{id}.zip');
     });
 
     server.listen(PORT, () => {
         console.log('\n🚀 Development server started!');
         console.log(`\n📍 Skills bundle:   http://localhost:${PORT}/skills-mcp-resources.zip`);
         console.log(`📍 Individual skill: http://localhost:${PORT}/skills/{id}.zip`);
-        console.log(`📦 Bundled group:    http://localhost:${PORT}/skills/{group}.json`);
         console.log(`📋 Skills menu:      http://localhost:${PORT}/skill-menu.json`);
     });
 

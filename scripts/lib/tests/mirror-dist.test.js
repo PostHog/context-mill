@@ -44,8 +44,8 @@ const skillMenu = (base = GITHUB_BASE) => ({
     buildVersion: VERSION,
     categories: {
         audit: [
-            { id: 'audit-events', name: 'Audit events', group: 'audit', downloadUrl: `${base}/audit-events.zip` },
-            { id: 'integration-v2', name: 'Integration', group: 'integration-v2', bundle: true, downloadUrl: `${base}/integration-v2.json` },
+            { id: 'audit-events', name: 'Audit events', downloadUrl: `${base}/audit-events.zip` },
+            { id: 'audit-identify', name: 'Audit identify', downloadUrl: `${base}/audit-identify.zip` },
         ],
     },
     cliEntries: [],
@@ -57,7 +57,7 @@ function writeDist({ base = GITHUB_BASE } = {}) {
     fs.writeFileSync(path.join(skillsDir(), 'manifest.json'), JSON.stringify(manifest(base), null, 2));
     fs.writeFileSync(path.join(skillsDir(), 'skill-menu.json'), JSON.stringify(skillMenu(base), null, 2));
     fs.writeFileSync(path.join(skillsDir(), 'audit-events.zip'), 'ZIPBYTES');
-    fs.writeFileSync(path.join(skillsDir(), 'integration-v2.json'), JSON.stringify({ id: 'integration-v2', variants: {} }));
+    fs.writeFileSync(path.join(skillsDir(), 'audit-identify.zip'), 'ZIPBYTES');
     // A release-asset doc whose prose mentions github.com on purpose.
     fs.writeFileSync(
         path.join(skillsDir(), 'cloudflare-workers.md'),
@@ -85,7 +85,7 @@ describe('mirrorDist', () => {
         const entries = readOutJson('skill-menu.json').categories.audit;
         expect(entries.map(e => e.downloadUrl)).toEqual([
             `${MIRROR_BASE}/audit-events.zip`,
-            `${MIRROR_BASE}/integration-v2.json`,
+            `${MIRROR_BASE}/audit-identify.zip`,
         ]);
     });
 
@@ -103,8 +103,8 @@ describe('mirrorDist', () => {
         expect(outFiles()).toEqual([
             'SHA256SUMS',
             'audit-events.zip',
+            'audit-identify.zip',
             'cloudflare-workers.md',
-            'integration-v2.json',
             'skill-menu.json',
             'skills-mcp-resources.zip',
         ]);
