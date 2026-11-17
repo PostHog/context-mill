@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.67.0](https://github.com/PostHog/context-mill/compare/v1.66.0...v1.67.0) (2026-11-17)
+
+
+### Features
+
+* **agents:** stop publishing the orchestrator prompts ([#536](https://github.com/PostHog/context-mill/issues/536)) ([33b6cf2](https://github.com/PostHog/context-mill/commit/33b6cf278049fd2300deb88d7e66797d0f35cc02))
+* **integration:** publish each orchestrator step as one skill ([#537](https://github.com/PostHog/context-mill/issues/537)) ([333072f](https://github.com/PostHog/context-mill/commit/333072f629625524c702ba59e2f04c8fe87ff8dd))
+* **menu:** say which projects a skill serves in its tags alone ([#538](https://github.com/PostHog/context-mill/issues/538)) ([4a9250f](https://github.com/PostHog/context-mill/commit/4a9250fb9fb27df7f4efec967f0e9f5c9a9b0d23))
+* **skills:** move SendGrid sends to PostHog in every SDK language ([#459](https://github.com/PostHog/context-mill/issues/459)) ([45e6e07](https://github.com/PostHog/context-mill/commit/45e6e070b9928a6c8b2777c83954b788db02aa4a))
+* **skills:** publish sending-transactional-emails for the Wizard ([#456](https://github.com/PostHog/context-mill/issues/456)) ([8594917](https://github.com/PostHog/context-mill/commit/8594917edaac20cdc052175ecac20deab5c5f263))
+
+
+### Bug Fixes
+
+* **migrate-email:** collect before-cutover plan notes in Step 9 ([#525](https://github.com/PostHog/context-mill/issues/525)) ([24ee0ea](https://github.com/PostHog/context-mill/commit/24ee0ea2b5ae7fe82324c544f06c2e3527cde278))
+
 ## [1.66.0](https://github.com/PostHog/context-mill/compare/v1.65.0...v1.66.0) (2026-11-16)
 
 
