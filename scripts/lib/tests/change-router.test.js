@@ -12,9 +12,8 @@ import {
 const REPO_ROOT = path.join(path.sep, 'repo');
 const CONFIG_DIR = path.join(REPO_ROOT, 'context');
 const SKILLS_DIR = path.join(CONFIG_DIR, 'skills');
-const SHARED_DIR = path.join(CONFIG_DIR, 'shared');
 const EXAMPLE_APPS_DIR = path.join(REPO_ROOT, 'example-apps');
-const PATHS = { repoRoot: REPO_ROOT, skillsDir: SKILLS_DIR, sharedDir: SHARED_DIR, exampleAppsDir: EXAMPLE_APPS_DIR };
+const PATHS = { repoRoot: REPO_ROOT, skillsDir: SKILLS_DIR, exampleAppsDir: EXAMPLE_APPS_DIR };
 
 function skill({ id, group, examplePaths = [] }) {
     return { id, _group: group, _examplePaths: examplePaths };
@@ -142,21 +141,6 @@ describe('routeChange — example-apps dir', () => {
         const abs = path.join(EXAMPLE_APPS_DIR, 'unused-fixture', 'main.go');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
         expect(decision).toBeNull();
-    });
-});
-
-describe('routeChange — shared partials dir', () => {
-    const skills = [
-        skill({ id: 'audit', group: 'audit' }),
-        skill({ id: 'instrument-logs-node', group: 'omnibus/instrument-logs' }),
-        skill({ id: 'instrument-logs-python', group: 'omnibus/instrument-logs' }),
-    ];
-    const indexes = buildIndexes({ skills, configDir: CONFIG_DIR });
-
-    it('rebuilds every skill when a shared partial changes, since any skill may include it', () => {
-        const abs = path.join(SHARED_DIR, 'project-token-and-host.md');
-        const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
-        expect(decision.ids.sort()).toEqual(['audit', 'instrument-logs-node', 'instrument-logs-python']);
     });
 });
 

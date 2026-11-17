@@ -87,10 +87,6 @@ function findExamplesMatching(relPathPosix, examplePathIndex) {
     return [...ids];
 }
 
-function everySkillId(groupRoots) {
-    return groupRoots.flatMap(group => group.variantIds);
-}
-
 /**
  * Route a chokidar event to skill IDs.
  *
@@ -103,11 +99,7 @@ function everySkillId(groupRoots) {
  */
 function routeChange({ event, absPath, indexes, paths }) {
     const { groupRoots, examplePathIndex } = indexes;
-    const { repoRoot, skillsDir, sharedDir, exampleAppsDir } = paths;
-
-    if (isUnder(absPath, sharedDir)) {
-        return { ids: everySkillId(groupRoots) };
-    }
+    const { repoRoot, skillsDir, exampleAppsDir } = paths;
 
     if (isUnder(absPath, skillsDir)) {
         const isDirEvent = event === 'addDir' || event === 'unlinkDir';
