@@ -90,7 +90,7 @@ Run `npm run build` to generate the release artifacts:
 |--------|-------------|
 | `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
 | `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL. It ships inside `skills-mcp-resources.zip`, not as its own release asset |
-| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each skill entry and bundle variant carries `title`, `description` and `tags`, and a bundle's own entry carries `tags` only; the tags add a `key:value` tag for each `match` key, such as `framework:<framework>`, its `group` and (when set) `default` to the skill's own |
+| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each skill entry carries `id`, `name`, `downloadUrl`, `title`, `description` and `tags`. The tags say which projects a skill serves: they add a `key:value` tag for each `match` key, such as `framework:<framework>`, its group and (when set) `default` to the skill's own |
 | `dist/skills-mcp-resources.zip` | One bundle of `manifest.json` and every skill ZIP, for the MCP server |
 
 Releases are cut as GitHub releases and mirrored to `context-mill.posthog.com`.

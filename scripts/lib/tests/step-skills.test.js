@@ -204,7 +204,8 @@ describe('a step skill written once for every framework', () => {
         const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
         const entry = Object.values(menu.categories).flat().find(e => e.id === 'integration-init');
 
-        expect(entry).toMatchObject({ group: 'integration-init', frameworkReferences: 'integration' });
+        expect(entry).toMatchObject({ frameworkReferences: 'integration' });
+        expect(entry.tags).toContain('integration-init');
         expect(entry.downloadUrl).toMatch(/\/integration-init\.zip$/);
     });
 
@@ -213,7 +214,6 @@ describe('a step skill written once for every framework', () => {
         ['pages of its own beside the framework\'s', { variants: [{ id: 'all', display_name: 'Init', docs_urls: [`${PAGE}/a.md`] }] }, /ships its own pages as shared_docs/],
         ['several variants', { variants: [{ id: 'a', display_name: 'A' }, { id: 'b', display_name: 'B' }] }, /needs exactly one variant/],
         ['one variant that is not named all', { variants: [{ id: 'next', display_name: 'Init' }] }, /needs exactly one variant, with id "all"/],
-        ['bundle packaging', { packaging: 'bundle' }, /is not bundled/],
     ])('rejects a step skill that names %s', (_, step, message) => {
         expect(() => expandSkillGroups(config(step), dir)).toThrow(message);
     });

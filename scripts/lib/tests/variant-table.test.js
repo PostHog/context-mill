@@ -196,7 +196,8 @@ describe('a variant table', () => {
         const [entry] = Object.values(menu.categories).flat();
 
         expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'integration', 'default']);
-        expect(entry).toMatchObject({ framework: 'nextjs', default: true });
+        expect(entry).not.toHaveProperty('framework');
+        expect(entry).not.toHaveProperty('default');
     });
 });
 

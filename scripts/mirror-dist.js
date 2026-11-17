@@ -33,13 +33,6 @@ import { REPO_URL } from './lib/constants.js';
 import { createBundledArchive } from './lib/build-phases.js';
 
 /**
- * Files in `dist/skills/` that are not part of the release asset namespace.
- * `manifest.json` ships only inside the bundle; `skill-menu.json` is uploaded
- * explicitly by the release workflow and rewritten separately here.
- */
-const NON_BUNDLE_MEMBER_JSON = new Set(['manifest.json', 'skill-menu.json']);
-
-/**
  * Every GitHub release base URL a build could have baked in.
  *
  * `resolveBaseDownloadUrl` (build-phases.js) emits the pinned form when
@@ -131,23 +124,17 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
 
     // Everything else is copied byte-for-byte. Doc markdown in dist/skills/ is
     // fetched prose that may legitimately mention github.com — never rewrite it.
-    copyFlat(skillsDir, name => {
-        if (name.endsWith('.zip')) return true;
-        if (name.endsWith('.md')) return true;
-        return name.endsWith('.json') && !NON_BUNDLE_MEMBER_JSON.has(name);
-    });
+    copyFlat(skillsDir, name => name.endsWith('.zip') || name.endsWith('.md'));
     // dist/marketplace/ is pushed to the skills / ai-plugin repos, not released here.
 
     // Rebuild the bundle around the rewritten manifest. Reusing createBundledArchive
-    // keeps one code path for the bundle's shape; its members are every skill zip
-    // plus every bundled-group JSON, exactly as scripts/build.js assembles them.
+    // keeps one code path for the bundle's shape; its members are every skill zip,
+    // exactly as scripts/build.js assembles them.
     const bundleMembers = {};
     for (const name of fs.readdirSync(skillsDir).sort()) {
         const src = path.join(skillsDir, name);
         if (!fs.statSync(src).isFile()) continue;
-        const isMember =
-            name.endsWith('.zip') || (name.endsWith('.json') && !NON_BUNDLE_MEMBER_JSON.has(name));
-        if (isMember) bundleMembers[name] = fs.readFileSync(src);
+        if (name.endsWith('.zip')) bundleMembers[name] = fs.readFileSync(src);
     }
     await createBundledArchive(
         claim('skills-mcp-resources.zip', 'rebuilt from the rewritten manifest'),

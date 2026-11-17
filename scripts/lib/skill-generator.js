@@ -176,7 +176,7 @@ function loadSkillsConfig(configDir) {
         const configFile = path.join(dir, 'config.yaml');
         if (fs.existsSync(configFile)) {
             const localConfig = loadYaml(configFile);
-            if (localConfig?.variants || localConfig?.variants_from) {
+            if (localConfig?.variants) {
                 config[keyParts.join('/')] = localConfig;
             }
         }
@@ -228,46 +228,6 @@ function loadSkillTemplate(configDir, compositeKey, templateFile) {
 function normalizeExamplePaths(value) {
     if (!value) return [];
     return Array.isArray(value) ? value : [value];
-}
-
-/**
- * Resolve `variants_from` references: a group may borrow another group's
- * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls, the framework it matches, default — never
- * example paths, templates, cli blocks, or shared docs, which stay the
- * borrowing group's own concern. One level only; a source group must declare
- * its variants literally. Pure — returns a new config, never mutates the input.
- */
-function resolveVariantsFrom(config) {
-    const resolved = {};
-    for (const [key, group] of Object.entries(config)) {
-        if (!group.variants_from) {
-            resolved[key] = group;
-            continue;
-        }
-        if (group.variants) {
-            throw new Error(`Skill group "${key}": declare either variants or variants_from, not both`);
-        }
-        const source = config[group.variants_from];
-        if (!source) {
-            throw new Error(`Skill group "${key}": variants_from "${group.variants_from}" does not name a skill group`);
-        }
-        if (source.variants_from) {
-            throw new Error(`Skill group "${key}": variants_from cannot chain ("${group.variants_from}" also uses variants_from)`);
-        }
-        const variants = source.variants.map(v => {
-            const variant = { id: v.id, display_name: v.display_name };
-            if (v.tags) variant.tags = [...v.tags];
-            if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
-            if (v.match?.framework) variant.match = { framework: v.match.framework };
-            if (v.default) variant.default = v.default;
-            return variant;
-        });
-        // Drop the reference key — the resolved copy declares variants literally.
-        const { variants_from: _from, ...rest } = group;
-        resolved[key] = { ...rest, variants };
-    }
-    return resolved;
 }
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -396,8 +356,8 @@ function validateFrameworkReferences(config) {
         if (!products.has(group.framework_references)) {
             throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
         }
-        if (group.packaging === 'bundle' || (group.variants[0].docs_urls || []).length > 0) {
-            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs, and is not bundled`);
+        if ((group.variants[0].docs_urls || []).length > 0) {
+            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs`);
         }
     }
 }
@@ -405,14 +365,13 @@ function validateFrameworkReferences(config) {
 /**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
- * base properties and a variants array (literal or via variants_from).
+ * base properties and a variants array.
  */
 function expandSkillGroups(config, configDir) {
     const skills = [];
-    const resolvedConfig = resolveVariantsFrom(config);
-    validateFrameworkReferences(resolvedConfig);
+    validateFrameworkReferences(config);
 
-    for (const [key, group] of Object.entries(resolvedConfig)) {
+    for (const [key, group] of Object.entries(config)) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
         validateVariantTable(key, group);
@@ -423,8 +382,6 @@ function expandSkillGroups(config, configDir) {
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
         const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
-        // `packaging: bundle` ships the group as one JSON whose variants live inside.
-        const bundled = group.packaging === 'bundle';
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -485,8 +442,6 @@ function expandSkillGroups(config, configDir) {
                 _frameworkReferences: group.framework_references || null,
                 _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
-                _bundle: bundled,
-                _groupTags: baseTags,
                 _cli: cli,
             });
         }
@@ -1031,10 +986,6 @@ function serializeSkill(s) {
     }
     if (s._frameworkReferences) {
         result.frameworkReferences = s._frameworkReferences;
-    }
-    if (s._bundle) {
-        result.bundle = true;
-        result.groupTags = s._groupTags || [];
     }
     if (s._cli) {
         result.cli = s._cli;
