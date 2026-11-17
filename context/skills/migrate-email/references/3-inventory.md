@@ -80,7 +80,7 @@ PostHog adds its open pixel to every email it sends unless the send turns its `o
 - When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note. A site whose emails a webhook handler acts on for the provider's open event, such as `email.opened` in Resend or `open` in SendGrid, stays instead, and the reason is `open tracking not checked`: with opens off, PostHog sends no opened events in place of the provider's.
 - When the provider tracked the site's opens, the site moves with nothing to note.
 
-A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it. When another site sends with the same template and has no `opens off` note, one setting can't serve both: add `template shared with <the other site>` to the note, so the report names both sites and the person picks the template's setting, or makes a second template.
+A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it. When another site that moves to the same template made in PostHog has no `opens off` note, one setting can't serve both: add `template shared with <the other site>` to the note, so the report names both sites and the person picks the template's setting, or makes a second template.
 
 ## Write the plan file
 
@@ -108,7 +108,7 @@ A sites table, one row per site, in source tree order:
 
 `moves` is `yes` or `no`. `reason` is empty when the site moves.
 
-Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with opens off, note `opens off: <reason>`, as Step 3 says under "Opens the provider didn't track". For each site that stays because it relies on the provider's suppression list, note what would let it move, as Step 3 says after the sender check.
+Under the table, for each `template` site that moves, note its provider template's ID or name, whether it moves into the code or to a template made in PostHog, and where its content is: the person's copy, or the temporary file of the API answer. For a template made in PostHog, add its template ID, and `must be marked sensitive: <reason>` when Step 3 says it must be. For any site that moves with opens off, note `opens off: <reason>`, as Step 3 says under "Opens the provider didn't track", with `template shared with <the other site>` when Step 3 says so. For each site that stays because it relies on the provider's suppression list, note what would let it move, as Step 3 says after the sender check.
 
 In any step, when the provider's `mapping.md` or `account.md`, or a rewrite file, says to note something for the report's "Before cutover" list, write it under the table as a note that starts with `before cutover:`, such as `before cutover: enable ext-curl where the app runs`. When a later step undoes what a note is about, such as an SDK install that Step 7 undoes under "Set up the SDK", it deletes the note. Step 9 lists each note left.
 
