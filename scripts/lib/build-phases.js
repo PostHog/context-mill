@@ -169,19 +169,16 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
     };
 }
 
-/** The tag naming the framework a variant serves. Prefixed, because content tags such as `python` describe a skill, not what it serves. */
-const FRAMEWORK_TAG_PREFIX = 'framework:';
-
 /**
- * Menu tags: the skill's own tags plus its served framework, its other match keys, group and `default`.
+ * Menu tags: the skill's own tags plus its match keys as `key:value`, its group and `default`.
+ * A match key is prefixed, because a content tag such as `python` describes a skill, not what it serves.
  * Added here only, so the tags commandments are selected by stay untouched.
  */
-function menuTags(tags, { framework, match, group, isDefault }) {
+function menuTags(tags, { match, group, isDefault }) {
     return [
         ...new Set(
             [
                 ...(tags || []),
-                framework ? `${FRAMEWORK_TAG_PREFIX}${framework}` : null,
                 ...Object.entries(match || {}).map(([key, value]) => `${key}:${value}`),
                 group,
                 isDefault ? 'default' : null,
@@ -195,7 +192,7 @@ function menuMetadata(skill, group) {
     return {
         title: skill.displayName ?? skill.name,
         description: skill.description,
-        tags: menuTags(skill.tags, { framework: skill.framework, match: skill.match, group, isDefault: skill.default }),
+        tags: menuTags(skill.tags, { match: skill.match, group, isDefault: skill.default }),
     };
 }
 
@@ -250,7 +247,7 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
             }
             // Each variant keeps its own id/framework/default so consumers resolve it exactly as they would a per-skill zip.
             const variant = { id: skill.id };
-            if (skill.framework) variant.framework = skill.framework;
+            if (skill.match?.framework) variant.framework = skill.match.framework;
             if (skill.default) variant.default = true;
             Object.assign(variant, menuMetadata(skill, group));
             entry.variants.push(variant);
@@ -258,7 +255,7 @@ function writeManifestAndMenu({ allSkills, docContents, distDir, configDir, vers
         }
         // group/framework/default let consumers resolve a bare skill id + framework by exact match.
         const entry = { id: skill.id, name: skill.name, group, downloadUrl: url };
-        if (skill.framework) entry.framework = skill.framework;
+        if (skill.match?.framework) entry.framework = skill.match.framework;
         if (skill.default) entry.default = true;
         // A skill written once for every framework says what it stands in for, and which pack pages complete it.
         if (skill.replaces) entry.replaces = skill.replaces;

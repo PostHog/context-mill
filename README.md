@@ -90,7 +90,7 @@ Run `npm run build` to generate the release artifacts:
 |--------|-------------|
 | `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
 | `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL. It ships inside `skills-mcp-resources.zip`, not as its own release asset |
-| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each skill entry and bundle variant carries `title`, `description` and `tags`, and a bundle's own entry carries `tags` only; the tags add `framework:<framework>` for the framework it serves, a `key:value` tag for each other `match` key, its `group` and (when set) `default` to the skill's own |
+| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each skill entry and bundle variant carries `title`, `description` and `tags`, and a bundle's own entry carries `tags` only; the tags add a `key:value` tag for each `match` key, such as `framework:<framework>`, its `group` and (when set) `default` to the skill's own |
 | `dist/agents/agent-menu.json` | Orchestrator flows and the task prompts in each one |
 | `dist/skills-mcp-resources.zip` | One bundle of `manifest.json` and every skill ZIP, for the MCP server |
 
@@ -107,8 +107,8 @@ framework variant, and the build turns each row into one pack,
 
 | Key | Meaning |
 |-----|---------|
-| `framework`, `default` | The detection id the row serves, and whether it is its framework's default |
-| `match` | The trait values the pack is written for, published as `key:value` menu tags. A key is a trait name as the wizard spells it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name |
+| `match` | The trait values the pack is written for, published as `key:value` menu tags. A key is a trait name as the wizard spells it. `framework` is the detection id the row serves, and every `match` names it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name. A row with no `match` serves no detected framework |
+| `default` | Whether the row is its framework's default |
 | `docs_urls` | The integration pages, written to `references/` and listed in `SKILL.md` |
 | `docs` | Each other product's pages for the variant, written to `references/<product>/`. `SKILL.md` does not list them |
 | `gaps` | The products a row has no pages for. The build fails when a row neither lists a product in `products` nor names it here |

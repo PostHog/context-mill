@@ -14,7 +14,7 @@ describe.each(['integration-v2/error-tracking-step', 'integration-v2/feature-fla
     (stepSkillGroup) => {
         it('declares every integration variant, with the same framework', () => {
             const config = loadSkillsConfig(CONFIG_DIR);
-            const keys = (group) => config[group].variants.map((v) => `${v.id}:${v.framework}`);
+            const keys = (group) => config[group].variants.map((v) => `${v.id}:${v.match?.framework}`);
 
             expect(keys(stepSkillGroup)).toEqual(expect.arrayContaining(keys('integration')));
         });

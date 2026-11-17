@@ -40,7 +40,7 @@ describe('variants_from', () => {
             {
                 id: 'django',
                 display_name: 'Django',
-                framework: 'django',
+                match: { framework: 'django', frameworkVariant: 'drf' },
                 default: true,
                 tags: ['django', 'python'],
                 docs_urls: ['https://posthog.com/docs/libraries/django.md'],
@@ -79,11 +79,11 @@ describe('variants_from', () => {
         expect(step._examplePaths).toEqual([]);
     });
 
-    it('borrows framework and default so variant steps resolve like the source', () => {
+    it('borrows the framework it matches and default, and no other match key, so variant steps resolve like the source', () => {
         const config = { integration: integrationGroup(), 'flow-x/install': borrowingGroup() };
         const skills = expandSkillGroups(config, tmpDir);
         const step = skills.find(s => s.id === 'flow-x-install-django');
-        expect(step.framework).toBe('django');
+        expect(step.match).toEqual({ framework: 'django' });
         expect(step.default).toBe(true);
     });
 
