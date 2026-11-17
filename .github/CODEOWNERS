@@ -19,7 +19,6 @@
 /context/skills/revenue-analytics/                      @PostHog/team-web-analytics
 /context/skills/web-analytics/                          @PostHog/team-web-analytics
 /context/skills/integration/                            @PostHog/team-growth
-/context/skills/integration-v2/                         @PostHog/team-growth
 /context/skills/migrate/                                @PostHog/team-fde
 /context/skills/audit*/                                 @PostHog/team-fde
 /context/skills/events-audit/                           @PostHog/team-fde

@@ -118,8 +118,8 @@ Each pack carries a `variant.json` at its root with the row as built: its
 
 A row's `docs` are that framework's own pages for a product. Pages a step
 shares across every framework are the step skill's `shared_docs`, not a row's.
-A run picks a step skill by framework and takes that family's default, so a
-framework's default row lists the pages a run on that framework reads today.
+A run takes its framework's default pack, so a framework's default row lists
+the pages a run on that framework reads.
 
 A page is written under the last part of its URL, such as `next-js.md`. When
 two pages of one folder share that part, each takes its parent part too:
@@ -131,11 +131,8 @@ written under one name, since the second would replace the first.
 ### Step skills
 
 The orchestrator's step skills live in `context/skills/integration/<step>/`,
-one skill per step, and publish as `integration-<step>`. Each names what it
-stands in for under `replaces`, which its menu entry carries: a skill group or
-a single skill, never one variant of a group. The skills
-under `context/skills/integration-v2/` keep publishing for wizard versions
-that read them, and both read the same template.
+one skill per step, and publish as `integration-<step>`. Each is written once,
+with one variant named `all`.
 
 Six steps differ by framework: install, init, capture, error tracking, feature
 flags and session replay. Each is written once and sets `framework_references`
@@ -149,10 +146,7 @@ placeholders for the consumer to fill from the framework's pack:
 | `{framework_rules}`, a line of its own | The line for the pack's rules file |
 
 The consumer copies those pages and the rules file into the skill's
-`references/`. `scripts/lib/skill-composition.js` is the reference for that,
-and `npm run check:repackaged-skills` checks a build with it: for every step
-and variant, the completed skill has the files of the skill it replaces, and
-its `SKILL.md` reads the same but for the `name` in its frontmatter.
+`references/`. `scripts/lib/skill-composition.js` is the reference for that.
 
 ### Manifest structure
 
@@ -221,7 +215,7 @@ build; the team-owned skills below route review to their owning team instead.
 | Path | Owning team |
 |---|---|
 | `*` (everything else, including all other skills) | `@PostHog/team-wizard-docs` |
-| `context/skills/integration/`, `context/skills/integration-v2/` | `@PostHog/team-growth` |
+| `context/skills/integration/` | `@PostHog/team-growth` |
 | `context/skills/migrate/`, `context/skills/audit*/`, `context/skills/events-audit/` | `@PostHog/team-fde` |
 | `context/skills/error-tracking/`, `context/skills/error-tracking-upload-source-maps/`, `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
 | `context/skills/revenue-analytics/`, `context/skills/web-analytics/` | `@PostHog/team-web-analytics` |
