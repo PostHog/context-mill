@@ -125,7 +125,7 @@ The Event Webhook stops getting events for a site that moves. PostHog records th
 | `bounce` | `$workflows_email_bounced` |
 | `spamreport` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. Step 7 marks every code send sensitive and never turns `clicks` on, so a code send counts no clicks |
+| `click` | `$workflows_email_link_clicked`, only when PostHog tracks the email's clicks: for a template made in PostHog that is not marked sensitive, or a code send whose tracking leaves clicks on, as the table in Step 7 under "Sensitive emails and tracking" says. Step 7 marks every code send sensitive and never turns `clicks` on, so its links go out as they are, and PostHog counts no clicks |
 | `dropped` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `deferred`, `unsubscribe`, `group_unsubscribe`, `group_resubscribe` | none |
 

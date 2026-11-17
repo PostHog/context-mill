@@ -29,7 +29,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 <One row per site. Key is the `templateKey` of a moved site, or its `templateId` for a template made in PostHog. A site whose provider template moved into the code names its email's files. Status is "Moved", "Moved without distinctId: <why>", or "Stays on <provider name>: <reason>".>
 
-<Each note under the plan's sites table, except a note that starts with `before cutover:`: each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site that sends with `opens` off, with its plan note's reason, so the person can turn opens on for an email whose provider did track them, each site whose provider tracked clicks that PostHog now doesn't count, and each idempotency key a retry across the deploy could send twice. Say that every send in the code form is marked sensitive, so its links go out unchanged and PostHog counts no clicks, and that the person can mark an email without secrets as not sensitive.>
+<Each note under the plan's sites table, except a note that starts with `before cutover:`: each fallback that an empty string now replaces, each site that got a branch for a suppressed recipient, each site that sends with `opens` off, with its plan note's reason, so the person can turn opens on for an email whose provider, once they check it, did track them, each site whose provider tracked clicks that PostHog now doesn't count, and each idempotency key a retry across the deploy could send twice. Say that every send in the code form is marked sensitive, so its links go out unchanged and PostHog counts no clicks, and that the person can mark an email without secrets as not sensitive.>
 
 ## Other <provider name> calls
 
@@ -37,7 +37,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Webhook handlers
 
-<Leave this section out when the plan lists no handler. For each handler: its file and line, the <provider name> events it handles, and the PostHog events that take their place for the moved sends, from `mapping.md` under "Webhooks". Say that the handler keeps getting events for the sites that stay, that moved sends no longer reach it, that PostHog records their events on the person only when engagement events are on for the project, that a moved send in the code form counts no clicks until the person marks it not sensitive or turns its `clicks` switch on, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post those events to an endpoint, in PostHog's shape, not the provider's.>
+<Leave this section out when the plan lists no handler. For each handler: its file and line, the <provider name> events it handles, and the PostHog events that take their place for the moved sends, from `mapping.md` under "Webhooks". Say that the handler keeps getting events for the sites that stay, that moved sends no longer reach it, that PostHog records their events on the person only when engagement events are on for the project, that a moved send in the code form counts no clicks until the person marks it not sensitive or turns its `clicks` switch on, and, for a send with `opens` off, turns opens on too, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post those events to an endpoint, in PostHog's shape, not the provider's.>
 
 ## Sender and DNS
 
