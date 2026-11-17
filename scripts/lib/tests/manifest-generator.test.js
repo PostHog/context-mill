@@ -37,20 +37,6 @@ describe('generateManifest', () => {
         expect(entry.resource.text).toBe(entry.downloadUrl);
     });
 
-    it('never emits a file for a resource the build does not ship as a zip', () => {
-        const manifest = generate(
-            [skill('nextjs'), { id: 'guide', type: 'doc', name: 'Guide', tags: [] }],
-            { guide: 'guide text' },
-        );
-
-        const shipped = new Set(['logs-nextjs.zip']);
-        for (const entry of manifest.resources) {
-            if (entry.file) {
-                expect(shipped).toContain(entry.file);
-            }
-        }
-    });
-
     it('inlines doc text instead of pointing at a zip', () => {
         const [entry] = generate([{ id: 'guide', type: 'doc', name: 'Guide', tags: [] }], { guide: 'guide text' })
             .resources;

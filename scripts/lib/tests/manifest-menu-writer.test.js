@@ -61,6 +61,12 @@ describe('writeManifestAndMenu', () => {
         expect(rails.tags).toEqual(['ruby-on-rails']);
     });
 
+    it('adds no default tag to a skill that is not its group\'s default', () => {
+        write([skill('django', { match: { framework: 'django' } })]);
+
+        expect(menuEntries()[0].tags).toEqual(['framework:django', 'logs']);
+    });
+
     it('says which projects a skill serves in its tags alone', () => {
         write([skill('rails', { match: { framework: 'rails' }, default: true })]);
 
