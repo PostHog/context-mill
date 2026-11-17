@@ -235,13 +235,13 @@ const NO_CACHE_HEADERS = {
 };
 
 function serveFile(res, filePath, contentType, attachmentName = null) {
-    if (!fs.existsSync(filePath)) {
+    const stat = fs.statSync(filePath, { throwIfNoEntry: false });
+    if (!stat?.isFile()) {
         res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_CACHE_HEADERS });
         res.end(`Not found: ${path.basename(filePath)}. Run build first.`);
         return;
     }
 
-    const stat = fs.statSync(filePath);
     const headers = {
         'Content-Type': contentType,
         'Content-Length': stat.size,
@@ -257,7 +257,8 @@ function serveFile(res, filePath, contentType, attachmentName = null) {
 function createServer() {
     const server = http.createServer((req, res) => {
         console.log(`→ ${req.method} ${req.url}`);
-        const skillMatch = req.url?.match(/^\/skills\/(.+\.zip)$/);
+        // A skill is asked for by its file name alone, so no request reaches outside the skills folder.
+        const skillMatch = req.url?.match(/^\/skills\/([A-Za-z0-9][A-Za-z0-9._-]*\.zip)$/);
         if (skillMatch) {
             const skillFile = skillMatch[1];
             serveFile(res, path.join(skillsDir, skillFile), 'application/zip', skillFile);
