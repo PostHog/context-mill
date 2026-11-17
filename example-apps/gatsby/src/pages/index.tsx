@@ -1,5 +1,6 @@
 import * as React from "react"
 import type { HeadFC, PageProps } from "gatsby"
+import posthog from "posthog-js"
 
 // Stands in for your auth system: each username gets a stable user id, the way a user
 // record's primary key would. Identify with that id, never with the username or email.
@@ -22,31 +23,31 @@ const IndexPage: React.FC<PageProps> = () => {
     e.preventDefault()
     if (!username) return
 
-    window.posthog?.identify(getUserId(username), { username })
-    window.posthog?.capture("user_logged_in")
+    posthog.identify(getUserId(username), { username })
+    posthog.capture("user_logged_in")
     setUser(username)
     setUsername("")
   }
 
   const handleLogout = () => {
-    window.posthog?.reset()
+    posthog.reset()
     setUser(null)
     setConsiderations(0)
   }
 
   const handleConsider = () => {
-    window.posthog?.capture("burrito_considered", {
+    posthog.capture("burrito_considered", {
       total_considerations: considerations + 1,
     })
     setConsiderations(considerations + 1)
-    setShowTip(window.posthog?.isFeatureEnabled("burrito-tip") === true)
+    setShowTip(posthog.isFeatureEnabled("burrito-tip") === true)
   }
 
   const handleError = () => {
     try {
       throw new Error("Demo burrito error")
     } catch (err) {
-      window.posthog?.captureException(err)
+      posthog.captureException(err)
     }
   }
 

@@ -11,7 +11,7 @@ For a site in PHP, such as in a Laravel or Symfony app. A site that sends throug
 
 `composer require posthog/posthog-php`, which installs or upgrades it to the latest release that the project's constraints allow. Raise the constraint in `composer.json` when it holds the package back.
 
-The send needs PHP's curl extension, which Composer doesn't ask for: without it every send fails with the code `missing_curl`. Add `"ext-curl": "*"` to `require` in `composer.json`, so an install where it's missing fails instead. When the app's Dockerfile, buildpack, or server setup doesn't show that it installs the extension, such as the official `php` Docker image, which has it built in, or a `php-curl` or `php8.3-curl` package, note it for the report's "Before cutover" list: enable ext-curl where the app runs.
+The send needs PHP's curl extension, which Composer doesn't ask for: without it every send fails with the code `missing_curl`. Add `"ext-curl": "*"` to `require` in `composer.json`, so an install where it's missing fails instead. When the app's Dockerfile, buildpack, or server setup doesn't show that it installs the extension, such as the official `php` Docker image, which has it built in, or a `php-curl` or `php8.3-curl` package, note it for the report's "Before cutover" list: `before cutover: enable ext-curl where the app runs`.
 
 ## The client
 

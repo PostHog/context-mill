@@ -1,5 +1,9 @@
 # Agent prompts
 
+> **Frozen.** The wizard reads its own copy of these prompts, at
+> `src/programs/<id>/agent/` in its repo. Edit a prompt there. This copy stays
+> published, unchanged, for wizard versions that fetch their prompts.
+
 One `<flow>/<type>.md` per orchestrator task — the WHAT of the task. The folder
 is the flow: the wizard's registry is scoped per flow, so audit or migration
 agent sets get sibling folders. The frontmatter carries the artifacts the

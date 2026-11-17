@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.66.0](https://github.com/PostHog/context-mill/compare/v1.65.0...v1.66.0) (2026-11-16)
+
+
+### Features
+
+* **integration:** make the integration config a variant table with per-product pages ([#528](https://github.com/PostHog/context-mill/issues/528)) ([1c25a25](https://github.com/PostHog/context-mill/commit/1c25a25b4d748c1397b0daeee13da645f32af0bf))
+* **integration:** publish each step skill once, completed from the framework's pack ([#529](https://github.com/PostHog/context-mill/issues/529)) ([a2a8df4](https://github.com/PostHog/context-mill/commit/a2a8df465147e9e1bb2eebc695294a0d2d8919ee))
+
+
+### Bug Fixes
+
+* **skills:** read the project token and host from project-get ([#511](https://github.com/PostHog/context-mill/issues/511)) ([d5ba3bb](https://github.com/PostHog/context-mill/commit/d5ba3bb520629b4726155092787f594acb68fbd2))
+
+## [1.65.0](https://github.com/PostHog/context-mill/compare/v1.64.0...v1.65.0) (2026-11-13)
+
+
+### Features
+
+* **menu:** describe skills with title, description and tags ([#447](https://github.com/PostHog/context-mill/issues/447)) ([8a38619](https://github.com/PostHog/context-mill/commit/8a38619670b30ddc07828912fb524f43885ef565))
+* **migrate-email:** move Resend sends in every PostHog SDK's language ([#472](https://github.com/PostHog/context-mill/issues/472)) ([8cd7381](https://github.com/PostHog/context-mill/commit/8cd73810fa6ece1d62744b07e8acc80fe1708e9d))
+* **skills:** add instrument-reverse-proxy skill ([#512](https://github.com/PostHog/context-mill/issues/512)) ([66175c2](https://github.com/PostHog/context-mill/commit/66175c221ba18209619c931811efd9925e2bb752))
+* **skills:** add the migrate-email skill with a Resend variant ([#450](https://github.com/PostHog/context-mill/issues/450)) ([ff49233](https://github.com/PostHog/context-mill/commit/ff492334f81220b4010aad4c40655a578c1a4b4c))
+* **skills:** move Resend sends to posthog-node in migrate-email ([#451](https://github.com/PostHog/context-mill/issues/451)) ([a66a9fe](https://github.com/PostHog/context-mill/commit/a66a9fe79281c3ba51e788cf07ed9fc5c76d49aa))
+
+
+### Bug Fixes
+
+* use posthog-js directly in the Gatsby example ([#520](https://github.com/PostHog/context-mill/issues/520)) ([cdcd9e3](https://github.com/PostHog/context-mill/commit/cdcd9e3104c81e177f067133ed5d5cc39220bf5b))
+
 ## [1.64.0](https://github.com/PostHog/context-mill/compare/v1.63.0...v1.64.0) (2026-11-11)
 
 

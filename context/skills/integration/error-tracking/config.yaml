@@ -1,0 +1,14 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: ../../integration-v2/error-tracking-step/description.md
+description: Capture exceptions with PostHog around critical flows
+category: integration-steps
+tags: [orchestrator, error-tracking]
+cli:
+  role: internal
+replaces: integration-v2-error-tracking-step
+framework_references: error-tracking
+variants:
+  - id: all
+    display_name: PostHog error tracking step

@@ -39,6 +39,9 @@ jobs:
     - name: Build
       run: pnpm build
 
+    - name: Check repackaged step skills
+      run: pnpm check:repackaged-skills
+
     - name: Write gateway token
       run: printf '%s' "$GATEWAY_TOKEN" > "$RUNNER_TEMP/gateway-token"
       env:
