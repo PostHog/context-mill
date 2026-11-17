@@ -517,19 +517,30 @@ function urlToFilename(url, parts = 1) {
 }
 
 const docUrl = docEntry => (typeof docEntry === 'string' ? docEntry : docEntry.url);
+const chosenFilename = docEntry => (typeof docEntry === 'object' && docEntry.filename) || null;
 
 /**
  * The file name of each page written to one folder, in the pages' order.
- * A page takes the last part of its URL. When two pages share it, each takes
- * its parent part too: `installation/python.md` and `libraries/python.md` become
- * `installation-python.md` and `libraries-python.md`. Throws when two pages
- * still share a name, since the second would replace the first.
+ * A page whose entry names a `filename` takes it: a plain `.md` name other than
+ * `COMMANDMENTS.md`. Any other page takes the last part of its URL. When two such
+ * pages share it, each takes its parent part too: `installation/python.md` and
+ * `libraries/python.md` become `installation-python.md` and `libraries-python.md`.
+ * Throws when two pages still share a name, since the second would replace the first.
  */
 function docFilenames(docEntries, where) {
     const urls = docEntries.map(docUrl);
+    const chosen = docEntries.map(chosenFilename);
+    chosen.forEach((name, i) => {
+        if (name !== null && (!/^[^/\\]+\.md$/.test(name) || name === RULES_REFERENCE.filename)) {
+            throw new Error(`${where}: ${urls[i]} names filename "${name}"; it must be a plain .md name other than ${RULES_REFERENCE.filename}`);
+        }
+    });
     const short = urls.map(url => urlToFilename(url));
-    const names = urls.map((url, i) =>
-        short.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i]);
+    const derived = short.filter((_, i) => chosen[i] === null);
+    const names = urls.map((url, i) => {
+        if (chosen[i] !== null) return chosen[i];
+        return derived.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i];
+    });
     const written = new Map();
     names.forEach((name, i) => {
         if (written.has(name)) {
@@ -911,6 +922,12 @@ async function generateSkill({
     // or `{ url, title }`. fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits are silent.
     async function writeDocs(docEntries, where, subfolder = '') {
         const names = docFilenames(docEntries, where);
+        docEntries.forEach((docEntry, i) => {
+            const filename = path.posix.join(subfolder, names[i]);
+            if (chosenFilename(docEntry) !== null && references.some(ref => ref.filename === filename)) {
+                throw new Error(`${where}: ${docUrl(docEntry)} names filename "${names[i]}", which another reference already uses`);
+            }
+        });
         const written = [];
         for (const [i, docEntry] of docEntries.entries()) {
             const result = await fetchDocFn(docUrl(docEntry));
