@@ -210,26 +210,9 @@ describe('the integration variant table', () => {
         return family.find(row => row.default) ?? family[0];
     };
 
-    // A run picks a step skill by framework and takes that family's default. So a framework's default
-    // row lists the pages of the step's default variant, and every other row lists its own variant's.
-    // A step's shared pages are no row's: they ship in the step skill itself.
-    it.each([
-        ['error-tracking', 'integration-v2/error-tracking-step'],
-        ['feature-flags', 'integration-v2/feature-flags-step'],
-    ])("lists each row's own %s pages as the step skill a run on it reads today lists them", (product, group) => {
-        const step = config[group].variants;
-        for (const variant of variants) {
-            const framework = variant.match?.framework;
-            const isDefault = framework && defaultOf(variants, framework).id === variant.id;
-            const read = isDefault ? defaultOf(step, framework) : step.find(row => row.id === variant.id);
-            expect(variant.docs[product], variant.id).toEqual(read.docs_urls);
-        }
-    });
-
-    it('lists the 3.7 error tracking page on the default Nuxt row, the page a Nuxt run reads today', () => {
+    it('lists the 3.7 error tracking page on the default Nuxt row, the page a Nuxt run reads', () => {
         const row = defaultOf(variants, 'nuxt');
         expect(row.id).toBe('nuxt-3-6');
-        expect(row.docs['error-tracking']).toEqual(defaultOf(config['integration-v2/error-tracking-step'].variants, 'nuxt').docs_urls);
         expect(row.docs['error-tracking']).toEqual([`${PAGE}/error-tracking/installation/nuxt-3-7.md`]);
     });
 

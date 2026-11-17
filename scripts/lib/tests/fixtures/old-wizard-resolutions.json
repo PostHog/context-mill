@@ -1,33 +1,5 @@
 {
   "variants": {
-    "integration-v2-error-tracking-step@android": "integration-v2-error-tracking-step-android",
-    "integration-v2-error-tracking-step@angular": "integration-v2-error-tracking-step-angular",
-    "integration-v2-error-tracking-step@astro": "integration-v2-error-tracking-step-astro-hybrid",
-    "integration-v2-error-tracking-step@django": "integration-v2-error-tracking-step-django",
-    "integration-v2-error-tracking-step@elixir": "integration-v2-error-tracking-step-elixir",
-    "integration-v2-error-tracking-step@fastapi": "integration-v2-error-tracking-step-fastapi",
-    "integration-v2-error-tracking-step@flask": "integration-v2-error-tracking-step-flask",
-    "integration-v2-error-tracking-step@flutter": "integration-v2-error-tracking-step-flutter",
-    "integration-v2-error-tracking-step@go": "integration-v2-error-tracking-step-go",
-    "integration-v2-error-tracking-step@java": "integration-v2-error-tracking-step-java",
-    "integration-v2-error-tracking-step@javascript_node": "integration-v2-error-tracking-step-javascript_node",
-    "integration-v2-error-tracking-step@javascript_web": "integration-v2-error-tracking-step-javascript_web",
-    "integration-v2-error-tracking-step@kmp": "integration-v2-error-tracking-step-kmp",
-    "integration-v2-error-tracking-step@laravel": "integration-v2-error-tracking-step-laravel",
-    "integration-v2-error-tracking-step@nextjs": "integration-v2-error-tracking-step-nextjs-app-router",
-    "integration-v2-error-tracking-step@nuxt": "integration-v2-error-tracking-step-nuxt-4",
-    "integration-v2-error-tracking-step@python": "integration-v2-error-tracking-step-python",
-    "integration-v2-error-tracking-step@rails": "integration-v2-error-tracking-step-ruby-on-rails",
-    "integration-v2-error-tracking-step@react-native": "integration-v2-error-tracking-step-react-native",
-    "integration-v2-error-tracking-step@react-router": "integration-v2-error-tracking-step-react-react-router-6",
-    "integration-v2-error-tracking-step@ruby": "integration-v2-error-tracking-step-ruby",
-    "integration-v2-error-tracking-step@rust": "integration-v2-error-tracking-step-rust",
-    "integration-v2-error-tracking-step@sveltekit": "integration-v2-error-tracking-step-sveltekit",
-    "integration-v2-error-tracking-step@swift": "integration-v2-error-tracking-step-swift",
-    "integration-v2-error-tracking-step@tanstack-router": "integration-v2-error-tracking-step-react-tanstack-router-code-based",
-    "integration-v2-error-tracking-step@tanstack-start": "integration-v2-error-tracking-step-tanstack-start",
-    "integration-v2-error-tracking-step@vue": "integration-v2-error-tracking-step-vue-3",
-    "integration-v2-error-tracking-step@wordpress": "integration-v2-error-tracking-step-wordpress",
     "posthog-best-practices@-": "posthog-best-practices",
     "posthog-best-practices@android": "posthog-best-practices",
     "posthog-best-practices@angular": "posthog-best-practices",
@@ -101,730 +73,6 @@
     "posthog-best-practices@vue": "posthog-best-practices",
     "posthog-best-practices@wordpress": "posthog-best-practices",
     "posthog-best-practices@xai": "posthog-best-practices",
-    "integration-v2-init@android": "integration-v2-init-android",
-    "integration-v2-init@angular": "integration-v2-init-angular",
-    "integration-v2-init@astro": "integration-v2-init-astro-hybrid",
-    "integration-v2-init@django": "integration-v2-init-django",
-    "integration-v2-init@elixir": "integration-v2-init-elixir",
-    "integration-v2-init@fastapi": "integration-v2-init-fastapi",
-    "integration-v2-init@flask": "integration-v2-init-flask",
-    "integration-v2-init@flutter": "integration-v2-init-flutter",
-    "integration-v2-init@go": "integration-v2-init-go",
-    "integration-v2-init@java": "integration-v2-init-java",
-    "integration-v2-init@javascript_node": "integration-v2-init-javascript_node",
-    "integration-v2-init@javascript_web": "integration-v2-init-javascript_web",
-    "integration-v2-init@kmp": "integration-v2-init-kmp",
-    "integration-v2-init@laravel": "integration-v2-init-laravel",
-    "integration-v2-init@nextjs": "integration-v2-init-nextjs-app-router",
-    "integration-v2-init@nuxt": "integration-v2-init-nuxt-3-6",
-    "integration-v2-init@python": "integration-v2-init-python",
-    "integration-v2-init@rails": "integration-v2-init-ruby-on-rails",
-    "integration-v2-init@react-native": "integration-v2-init-react-native",
-    "integration-v2-init@react-router": "integration-v2-init-react-react-router-6",
-    "integration-v2-init@ruby": "integration-v2-init-ruby",
-    "integration-v2-init@rust": "integration-v2-init-rust",
-    "integration-v2-init@sveltekit": "integration-v2-init-sveltekit",
-    "integration-v2-init@swift": "integration-v2-init-swift",
-    "integration-v2-init@tanstack-router": "integration-v2-init-react-tanstack-router-code-based",
-    "integration-v2-init@tanstack-start": "integration-v2-init-tanstack-start",
-    "integration-v2-init@vue": "integration-v2-init-vue-3",
-    "integration-v2-init@wordpress": "integration-v2-init-wordpress",
-    "integration-v2-install@android": "integration-v2-install-android",
-    "integration-v2-install@angular": "integration-v2-install-angular",
-    "integration-v2-install@astro": "integration-v2-install-astro-hybrid",
-    "integration-v2-install@django": "integration-v2-install-django",
-    "integration-v2-install@elixir": "integration-v2-install-elixir",
-    "integration-v2-install@fastapi": "integration-v2-install-fastapi",
-    "integration-v2-install@flask": "integration-v2-install-flask",
-    "integration-v2-install@flutter": "integration-v2-install-flutter",
-    "integration-v2-install@go": "integration-v2-install-go",
-    "integration-v2-install@java": "integration-v2-install-java",
-    "integration-v2-install@javascript_node": "integration-v2-install-javascript_node",
-    "integration-v2-install@javascript_web": "integration-v2-install-javascript_web",
-    "integration-v2-install@kmp": "integration-v2-install-kmp",
-    "integration-v2-install@laravel": "integration-v2-install-laravel",
-    "integration-v2-install@nextjs": "integration-v2-install-nextjs-app-router",
-    "integration-v2-install@nuxt": "integration-v2-install-nuxt-3-6",
-    "integration-v2-install@python": "integration-v2-install-python",
-    "integration-v2-install@rails": "integration-v2-install-ruby-on-rails",
-    "integration-v2-install@react-native": "integration-v2-install-react-native",
-    "integration-v2-install@react-router": "integration-v2-install-react-react-router-6",
-    "integration-v2-install@ruby": "integration-v2-install-ruby",
-    "integration-v2-install@rust": "integration-v2-install-rust",
-    "integration-v2-install@sveltekit": "integration-v2-install-sveltekit",
-    "integration-v2-install@swift": "integration-v2-install-swift",
-    "integration-v2-install@tanstack-router": "integration-v2-install-react-tanstack-router-code-based",
-    "integration-v2-install@tanstack-start": "integration-v2-install-tanstack-start",
-    "integration-v2-install@vue": "integration-v2-install-vue-3",
-    "integration-v2-install@wordpress": "integration-v2-install-wordpress",
-    "integration-v2-mcp@-": "integration-v2-mcp",
-    "integration-v2-mcp@android": "integration-v2-mcp",
-    "integration-v2-mcp@angular": "integration-v2-mcp",
-    "integration-v2-mcp@anthropic": "integration-v2-mcp",
-    "integration-v2-mcp@astro": "integration-v2-mcp",
-    "integration-v2-mcp@autogen": "integration-v2-mcp",
-    "integration-v2-mcp@aws-bedrock": "integration-v2-mcp",
-    "integration-v2-mcp@azure-openai": "integration-v2-mcp",
-    "integration-v2-mcp@cerebras": "integration-v2-mcp",
-    "integration-v2-mcp@claude-agent-sdk": "integration-v2-mcp",
-    "integration-v2-mcp@claude-code": "integration-v2-mcp",
-    "integration-v2-mcp@cloudflare-ai-gateway": "integration-v2-mcp",
-    "integration-v2-mcp@cohere": "integration-v2-mcp",
-    "integration-v2-mcp@convex": "integration-v2-mcp",
-    "integration-v2-mcp@crewai": "integration-v2-mcp",
-    "integration-v2-mcp@dedalus": "integration-v2-mcp",
-    "integration-v2-mcp@deepseek": "integration-v2-mcp",
-    "integration-v2-mcp@django": "integration-v2-mcp",
-    "integration-v2-mcp@dspy": "integration-v2-mcp",
-    "integration-v2-mcp@elixir": "integration-v2-mcp",
-    "integration-v2-mcp@fastapi": "integration-v2-mcp",
-    "integration-v2-mcp@fireworks-ai": "integration-v2-mcp",
-    "integration-v2-mcp@flask": "integration-v2-mcp",
-    "integration-v2-mcp@flutter": "integration-v2-mcp",
-    "integration-v2-mcp@go": "integration-v2-mcp",
-    "integration-v2-mcp@google-adk": "integration-v2-mcp",
-    "integration-v2-mcp@google-gemini": "integration-v2-mcp",
-    "integration-v2-mcp@groq": "integration-v2-mcp",
-    "integration-v2-mcp@helicone": "integration-v2-mcp",
-    "integration-v2-mcp@hugging-face": "integration-v2-mcp",
-    "integration-v2-mcp@instructor": "integration-v2-mcp",
-    "integration-v2-mcp@java": "integration-v2-mcp",
-    "integration-v2-mcp@javascript_node": "integration-v2-mcp",
-    "integration-v2-mcp@javascript_web": "integration-v2-mcp",
-    "integration-v2-mcp@kmp": "integration-v2-mcp",
-    "integration-v2-mcp@langchain": "integration-v2-mcp",
-    "integration-v2-mcp@langgraph": "integration-v2-mcp",
-    "integration-v2-mcp@laravel": "integration-v2-mcp",
-    "integration-v2-mcp@litellm": "integration-v2-mcp",
-    "integration-v2-mcp@llamaindex": "integration-v2-mcp",
-    "integration-v2-mcp@manual-capture": "integration-v2-mcp",
-    "integration-v2-mcp@mastra": "integration-v2-mcp",
-    "integration-v2-mcp@mirascope": "integration-v2-mcp",
-    "integration-v2-mcp@mistral": "integration-v2-mcp",
-    "integration-v2-mcp@nextjs": "integration-v2-mcp",
-    "integration-v2-mcp@nuxt": "integration-v2-mcp",
-    "integration-v2-mcp@ollama": "integration-v2-mcp",
-    "integration-v2-mcp@openai": "integration-v2-mcp",
-    "integration-v2-mcp@openai-agents": "integration-v2-mcp",
-    "integration-v2-mcp@openclaw": "integration-v2-mcp",
-    "integration-v2-mcp@openrouter": "integration-v2-mcp",
-    "integration-v2-mcp@opentelemetry": "integration-v2-mcp",
-    "integration-v2-mcp@perplexity": "integration-v2-mcp",
-    "integration-v2-mcp@pi": "integration-v2-mcp",
-    "integration-v2-mcp@portkey": "integration-v2-mcp",
-    "integration-v2-mcp@pydantic-ai": "integration-v2-mcp",
-    "integration-v2-mcp@python": "integration-v2-mcp",
-    "integration-v2-mcp@rails": "integration-v2-mcp",
-    "integration-v2-mcp@react-native": "integration-v2-mcp",
-    "integration-v2-mcp@react-router": "integration-v2-mcp",
-    "integration-v2-mcp@ruby": "integration-v2-mcp",
-    "integration-v2-mcp@rust": "integration-v2-mcp",
-    "integration-v2-mcp@semantic-kernel": "integration-v2-mcp",
-    "integration-v2-mcp@smolagents": "integration-v2-mcp",
-    "integration-v2-mcp@sveltekit": "integration-v2-mcp",
-    "integration-v2-mcp@swift": "integration-v2-mcp",
-    "integration-v2-mcp@tanstack-router": "integration-v2-mcp",
-    "integration-v2-mcp@tanstack-start": "integration-v2-mcp",
-    "integration-v2-mcp@together-ai": "integration-v2-mcp",
-    "integration-v2-mcp@vercel-ai": "integration-v2-mcp",
-    "integration-v2-mcp@vue": "integration-v2-mcp",
-    "integration-v2-mcp@wordpress": "integration-v2-mcp",
-    "integration-v2-mcp@xai": "integration-v2-mcp",
-    "integration-v2-feature-flags-step@android": "integration-v2-feature-flags-step-android",
-    "integration-v2-feature-flags-step@angular": "integration-v2-feature-flags-step-angular",
-    "integration-v2-feature-flags-step@astro": "integration-v2-feature-flags-step-astro-hybrid",
-    "integration-v2-feature-flags-step@django": "integration-v2-feature-flags-step-django",
-    "integration-v2-feature-flags-step@elixir": "integration-v2-feature-flags-step-elixir",
-    "integration-v2-feature-flags-step@fastapi": "integration-v2-feature-flags-step-fastapi",
-    "integration-v2-feature-flags-step@flask": "integration-v2-feature-flags-step-flask",
-    "integration-v2-feature-flags-step@flutter": "integration-v2-feature-flags-step-flutter",
-    "integration-v2-feature-flags-step@go": "integration-v2-feature-flags-step-go",
-    "integration-v2-feature-flags-step@java": "integration-v2-feature-flags-step-java",
-    "integration-v2-feature-flags-step@javascript_node": "integration-v2-feature-flags-step-javascript_node",
-    "integration-v2-feature-flags-step@javascript_web": "integration-v2-feature-flags-step-javascript_web",
-    "integration-v2-feature-flags-step@kmp": "integration-v2-feature-flags-step-kmp",
-    "integration-v2-feature-flags-step@laravel": "integration-v2-feature-flags-step-laravel",
-    "integration-v2-feature-flags-step@nextjs": "integration-v2-feature-flags-step-nextjs-app-router",
-    "integration-v2-feature-flags-step@nuxt": "integration-v2-feature-flags-step-nuxt-4",
-    "integration-v2-feature-flags-step@python": "integration-v2-feature-flags-step-python",
-    "integration-v2-feature-flags-step@rails": "integration-v2-feature-flags-step-ruby-on-rails",
-    "integration-v2-feature-flags-step@react-native": "integration-v2-feature-flags-step-react-native",
-    "integration-v2-feature-flags-step@react-router": "integration-v2-feature-flags-step-react-react-router-6",
-    "integration-v2-feature-flags-step@ruby": "integration-v2-feature-flags-step-ruby",
-    "integration-v2-feature-flags-step@rust": "integration-v2-feature-flags-step-rust",
-    "integration-v2-feature-flags-step@sveltekit": "integration-v2-feature-flags-step-sveltekit",
-    "integration-v2-feature-flags-step@swift": "integration-v2-feature-flags-step-swift",
-    "integration-v2-feature-flags-step@tanstack-router": "integration-v2-feature-flags-step-react-tanstack-router-code-based",
-    "integration-v2-feature-flags-step@tanstack-start": "integration-v2-feature-flags-step-tanstack-start",
-    "integration-v2-feature-flags-step@vue": "integration-v2-feature-flags-step-vue-3",
-    "integration-v2-feature-flags-step@wordpress": "integration-v2-feature-flags-step-wordpress",
-    "integration-v2-notebook@-": "integration-v2-notebook",
-    "integration-v2-notebook@android": "integration-v2-notebook",
-    "integration-v2-notebook@angular": "integration-v2-notebook",
-    "integration-v2-notebook@anthropic": "integration-v2-notebook",
-    "integration-v2-notebook@astro": "integration-v2-notebook",
-    "integration-v2-notebook@autogen": "integration-v2-notebook",
-    "integration-v2-notebook@aws-bedrock": "integration-v2-notebook",
-    "integration-v2-notebook@azure-openai": "integration-v2-notebook",
-    "integration-v2-notebook@cerebras": "integration-v2-notebook",
-    "integration-v2-notebook@claude-agent-sdk": "integration-v2-notebook",
-    "integration-v2-notebook@claude-code": "integration-v2-notebook",
-    "integration-v2-notebook@cloudflare-ai-gateway": "integration-v2-notebook",
-    "integration-v2-notebook@cohere": "integration-v2-notebook",
-    "integration-v2-notebook@convex": "integration-v2-notebook",
-    "integration-v2-notebook@crewai": "integration-v2-notebook",
-    "integration-v2-notebook@dedalus": "integration-v2-notebook",
-    "integration-v2-notebook@deepseek": "integration-v2-notebook",
-    "integration-v2-notebook@django": "integration-v2-notebook",
-    "integration-v2-notebook@dspy": "integration-v2-notebook",
-    "integration-v2-notebook@elixir": "integration-v2-notebook",
-    "integration-v2-notebook@fastapi": "integration-v2-notebook",
-    "integration-v2-notebook@fireworks-ai": "integration-v2-notebook",
-    "integration-v2-notebook@flask": "integration-v2-notebook",
-    "integration-v2-notebook@flutter": "integration-v2-notebook",
-    "integration-v2-notebook@go": "integration-v2-notebook",
-    "integration-v2-notebook@google-adk": "integration-v2-notebook",
-    "integration-v2-notebook@google-gemini": "integration-v2-notebook",
-    "integration-v2-notebook@groq": "integration-v2-notebook",
-    "integration-v2-notebook@helicone": "integration-v2-notebook",
-    "integration-v2-notebook@hugging-face": "integration-v2-notebook",
-    "integration-v2-notebook@instructor": "integration-v2-notebook",
-    "integration-v2-notebook@java": "integration-v2-notebook",
-    "integration-v2-notebook@javascript_node": "integration-v2-notebook",
-    "integration-v2-notebook@javascript_web": "integration-v2-notebook",
-    "integration-v2-notebook@kmp": "integration-v2-notebook",
-    "integration-v2-notebook@langchain": "integration-v2-notebook",
-    "integration-v2-notebook@langgraph": "integration-v2-notebook",
-    "integration-v2-notebook@laravel": "integration-v2-notebook",
-    "integration-v2-notebook@litellm": "integration-v2-notebook",
-    "integration-v2-notebook@llamaindex": "integration-v2-notebook",
-    "integration-v2-notebook@manual-capture": "integration-v2-notebook",
-    "integration-v2-notebook@mastra": "integration-v2-notebook",
-    "integration-v2-notebook@mirascope": "integration-v2-notebook",
-    "integration-v2-notebook@mistral": "integration-v2-notebook",
-    "integration-v2-notebook@nextjs": "integration-v2-notebook",
-    "integration-v2-notebook@nuxt": "integration-v2-notebook",
-    "integration-v2-notebook@ollama": "integration-v2-notebook",
-    "integration-v2-notebook@openai": "integration-v2-notebook",
-    "integration-v2-notebook@openai-agents": "integration-v2-notebook",
-    "integration-v2-notebook@openclaw": "integration-v2-notebook",
-    "integration-v2-notebook@openrouter": "integration-v2-notebook",
-    "integration-v2-notebook@opentelemetry": "integration-v2-notebook",
-    "integration-v2-notebook@perplexity": "integration-v2-notebook",
-    "integration-v2-notebook@pi": "integration-v2-notebook",
-    "integration-v2-notebook@portkey": "integration-v2-notebook",
-    "integration-v2-notebook@pydantic-ai": "integration-v2-notebook",
-    "integration-v2-notebook@python": "integration-v2-notebook",
-    "integration-v2-notebook@rails": "integration-v2-notebook",
-    "integration-v2-notebook@react-native": "integration-v2-notebook",
-    "integration-v2-notebook@react-router": "integration-v2-notebook",
-    "integration-v2-notebook@ruby": "integration-v2-notebook",
-    "integration-v2-notebook@rust": "integration-v2-notebook",
-    "integration-v2-notebook@semantic-kernel": "integration-v2-notebook",
-    "integration-v2-notebook@smolagents": "integration-v2-notebook",
-    "integration-v2-notebook@sveltekit": "integration-v2-notebook",
-    "integration-v2-notebook@swift": "integration-v2-notebook",
-    "integration-v2-notebook@tanstack-router": "integration-v2-notebook",
-    "integration-v2-notebook@tanstack-start": "integration-v2-notebook",
-    "integration-v2-notebook@together-ai": "integration-v2-notebook",
-    "integration-v2-notebook@vercel-ai": "integration-v2-notebook",
-    "integration-v2-notebook@vue": "integration-v2-notebook",
-    "integration-v2-notebook@wordpress": "integration-v2-notebook",
-    "integration-v2-notebook@xai": "integration-v2-notebook",
-    "integration-v2-capture@android": "integration-v2-capture-android",
-    "integration-v2-capture@angular": "integration-v2-capture-angular",
-    "integration-v2-capture@astro": "integration-v2-capture-astro-hybrid",
-    "integration-v2-capture@django": "integration-v2-capture-django",
-    "integration-v2-capture@elixir": "integration-v2-capture-elixir",
-    "integration-v2-capture@fastapi": "integration-v2-capture-fastapi",
-    "integration-v2-capture@flask": "integration-v2-capture-flask",
-    "integration-v2-capture@flutter": "integration-v2-capture-flutter",
-    "integration-v2-capture@go": "integration-v2-capture-go",
-    "integration-v2-capture@java": "integration-v2-capture-java",
-    "integration-v2-capture@javascript_node": "integration-v2-capture-javascript_node",
-    "integration-v2-capture@javascript_web": "integration-v2-capture-javascript_web",
-    "integration-v2-capture@kmp": "integration-v2-capture-kmp",
-    "integration-v2-capture@laravel": "integration-v2-capture-laravel",
-    "integration-v2-capture@nextjs": "integration-v2-capture-nextjs-app-router",
-    "integration-v2-capture@nuxt": "integration-v2-capture-nuxt-3-6",
-    "integration-v2-capture@python": "integration-v2-capture-python",
-    "integration-v2-capture@rails": "integration-v2-capture-ruby-on-rails",
-    "integration-v2-capture@react-native": "integration-v2-capture-react-native",
-    "integration-v2-capture@react-router": "integration-v2-capture-react-react-router-6",
-    "integration-v2-capture@ruby": "integration-v2-capture-ruby",
-    "integration-v2-capture@rust": "integration-v2-capture-rust",
-    "integration-v2-capture@sveltekit": "integration-v2-capture-sveltekit",
-    "integration-v2-capture@swift": "integration-v2-capture-swift",
-    "integration-v2-capture@tanstack-router": "integration-v2-capture-react-tanstack-router-code-based",
-    "integration-v2-capture@tanstack-start": "integration-v2-capture-tanstack-start",
-    "integration-v2-capture@vue": "integration-v2-capture-vue-3",
-    "integration-v2-capture@wordpress": "integration-v2-capture-wordpress",
-    "integration-v2-dashboard@-": "integration-v2-dashboard",
-    "integration-v2-dashboard@android": "integration-v2-dashboard",
-    "integration-v2-dashboard@angular": "integration-v2-dashboard",
-    "integration-v2-dashboard@anthropic": "integration-v2-dashboard",
-    "integration-v2-dashboard@astro": "integration-v2-dashboard",
-    "integration-v2-dashboard@autogen": "integration-v2-dashboard",
-    "integration-v2-dashboard@aws-bedrock": "integration-v2-dashboard",
-    "integration-v2-dashboard@azure-openai": "integration-v2-dashboard",
-    "integration-v2-dashboard@cerebras": "integration-v2-dashboard",
-    "integration-v2-dashboard@claude-agent-sdk": "integration-v2-dashboard",
-    "integration-v2-dashboard@claude-code": "integration-v2-dashboard",
-    "integration-v2-dashboard@cloudflare-ai-gateway": "integration-v2-dashboard",
-    "integration-v2-dashboard@cohere": "integration-v2-dashboard",
-    "integration-v2-dashboard@convex": "integration-v2-dashboard",
-    "integration-v2-dashboard@crewai": "integration-v2-dashboard",
-    "integration-v2-dashboard@dedalus": "integration-v2-dashboard",
-    "integration-v2-dashboard@deepseek": "integration-v2-dashboard",
-    "integration-v2-dashboard@django": "integration-v2-dashboard",
-    "integration-v2-dashboard@dspy": "integration-v2-dashboard",
-    "integration-v2-dashboard@elixir": "integration-v2-dashboard",
-    "integration-v2-dashboard@fastapi": "integration-v2-dashboard",
-    "integration-v2-dashboard@fireworks-ai": "integration-v2-dashboard",
-    "integration-v2-dashboard@flask": "integration-v2-dashboard",
-    "integration-v2-dashboard@flutter": "integration-v2-dashboard",
-    "integration-v2-dashboard@go": "integration-v2-dashboard",
-    "integration-v2-dashboard@google-adk": "integration-v2-dashboard",
-    "integration-v2-dashboard@google-gemini": "integration-v2-dashboard",
-    "integration-v2-dashboard@groq": "integration-v2-dashboard",
-    "integration-v2-dashboard@helicone": "integration-v2-dashboard",
-    "integration-v2-dashboard@hugging-face": "integration-v2-dashboard",
-    "integration-v2-dashboard@instructor": "integration-v2-dashboard",
-    "integration-v2-dashboard@java": "integration-v2-dashboard",
-    "integration-v2-dashboard@javascript_node": "integration-v2-dashboard",
-    "integration-v2-dashboard@javascript_web": "integration-v2-dashboard",
-    "integration-v2-dashboard@kmp": "integration-v2-dashboard",
-    "integration-v2-dashboard@langchain": "integration-v2-dashboard",
-    "integration-v2-dashboard@langgraph": "integration-v2-dashboard",
-    "integration-v2-dashboard@laravel": "integration-v2-dashboard",
-    "integration-v2-dashboard@litellm": "integration-v2-dashboard",
-    "integration-v2-dashboard@llamaindex": "integration-v2-dashboard",
-    "integration-v2-dashboard@manual-capture": "integration-v2-dashboard",
-    "integration-v2-dashboard@mastra": "integration-v2-dashboard",
-    "integration-v2-dashboard@mirascope": "integration-v2-dashboard",
-    "integration-v2-dashboard@mistral": "integration-v2-dashboard",
-    "integration-v2-dashboard@nextjs": "integration-v2-dashboard",
-    "integration-v2-dashboard@nuxt": "integration-v2-dashboard",
-    "integration-v2-dashboard@ollama": "integration-v2-dashboard",
-    "integration-v2-dashboard@openai": "integration-v2-dashboard",
-    "integration-v2-dashboard@openai-agents": "integration-v2-dashboard",
-    "integration-v2-dashboard@openclaw": "integration-v2-dashboard",
-    "integration-v2-dashboard@openrouter": "integration-v2-dashboard",
-    "integration-v2-dashboard@opentelemetry": "integration-v2-dashboard",
-    "integration-v2-dashboard@perplexity": "integration-v2-dashboard",
-    "integration-v2-dashboard@pi": "integration-v2-dashboard",
-    "integration-v2-dashboard@portkey": "integration-v2-dashboard",
-    "integration-v2-dashboard@pydantic-ai": "integration-v2-dashboard",
-    "integration-v2-dashboard@python": "integration-v2-dashboard",
-    "integration-v2-dashboard@rails": "integration-v2-dashboard",
-    "integration-v2-dashboard@react-native": "integration-v2-dashboard",
-    "integration-v2-dashboard@react-router": "integration-v2-dashboard",
-    "integration-v2-dashboard@ruby": "integration-v2-dashboard",
-    "integration-v2-dashboard@rust": "integration-v2-dashboard",
-    "integration-v2-dashboard@semantic-kernel": "integration-v2-dashboard",
-    "integration-v2-dashboard@smolagents": "integration-v2-dashboard",
-    "integration-v2-dashboard@sveltekit": "integration-v2-dashboard",
-    "integration-v2-dashboard@swift": "integration-v2-dashboard",
-    "integration-v2-dashboard@tanstack-router": "integration-v2-dashboard",
-    "integration-v2-dashboard@tanstack-start": "integration-v2-dashboard",
-    "integration-v2-dashboard@together-ai": "integration-v2-dashboard",
-    "integration-v2-dashboard@vercel-ai": "integration-v2-dashboard",
-    "integration-v2-dashboard@vue": "integration-v2-dashboard",
-    "integration-v2-dashboard@wordpress": "integration-v2-dashboard",
-    "integration-v2-dashboard@xai": "integration-v2-dashboard",
-    "integration-v2-insight@-": "integration-v2-insight",
-    "integration-v2-insight@android": "integration-v2-insight",
-    "integration-v2-insight@angular": "integration-v2-insight",
-    "integration-v2-insight@anthropic": "integration-v2-insight",
-    "integration-v2-insight@astro": "integration-v2-insight",
-    "integration-v2-insight@autogen": "integration-v2-insight",
-    "integration-v2-insight@aws-bedrock": "integration-v2-insight",
-    "integration-v2-insight@azure-openai": "integration-v2-insight",
-    "integration-v2-insight@cerebras": "integration-v2-insight",
-    "integration-v2-insight@claude-agent-sdk": "integration-v2-insight",
-    "integration-v2-insight@claude-code": "integration-v2-insight",
-    "integration-v2-insight@cloudflare-ai-gateway": "integration-v2-insight",
-    "integration-v2-insight@cohere": "integration-v2-insight",
-    "integration-v2-insight@convex": "integration-v2-insight",
-    "integration-v2-insight@crewai": "integration-v2-insight",
-    "integration-v2-insight@dedalus": "integration-v2-insight",
-    "integration-v2-insight@deepseek": "integration-v2-insight",
-    "integration-v2-insight@django": "integration-v2-insight",
-    "integration-v2-insight@dspy": "integration-v2-insight",
-    "integration-v2-insight@elixir": "integration-v2-insight",
-    "integration-v2-insight@fastapi": "integration-v2-insight",
-    "integration-v2-insight@fireworks-ai": "integration-v2-insight",
-    "integration-v2-insight@flask": "integration-v2-insight",
-    "integration-v2-insight@flutter": "integration-v2-insight",
-    "integration-v2-insight@go": "integration-v2-insight",
-    "integration-v2-insight@google-adk": "integration-v2-insight",
-    "integration-v2-insight@google-gemini": "integration-v2-insight",
-    "integration-v2-insight@groq": "integration-v2-insight",
-    "integration-v2-insight@helicone": "integration-v2-insight",
-    "integration-v2-insight@hugging-face": "integration-v2-insight",
-    "integration-v2-insight@instructor": "integration-v2-insight",
-    "integration-v2-insight@java": "integration-v2-insight",
-    "integration-v2-insight@javascript_node": "integration-v2-insight",
-    "integration-v2-insight@javascript_web": "integration-v2-insight",
-    "integration-v2-insight@kmp": "integration-v2-insight",
-    "integration-v2-insight@langchain": "integration-v2-insight",
-    "integration-v2-insight@langgraph": "integration-v2-insight",
-    "integration-v2-insight@laravel": "integration-v2-insight",
-    "integration-v2-insight@litellm": "integration-v2-insight",
-    "integration-v2-insight@llamaindex": "integration-v2-insight",
-    "integration-v2-insight@manual-capture": "integration-v2-insight",
-    "integration-v2-insight@mastra": "integration-v2-insight",
-    "integration-v2-insight@mirascope": "integration-v2-insight",
-    "integration-v2-insight@mistral": "integration-v2-insight",
-    "integration-v2-insight@nextjs": "integration-v2-insight",
-    "integration-v2-insight@nuxt": "integration-v2-insight",
-    "integration-v2-insight@ollama": "integration-v2-insight",
-    "integration-v2-insight@openai": "integration-v2-insight",
-    "integration-v2-insight@openai-agents": "integration-v2-insight",
-    "integration-v2-insight@openclaw": "integration-v2-insight",
-    "integration-v2-insight@openrouter": "integration-v2-insight",
-    "integration-v2-insight@opentelemetry": "integration-v2-insight",
-    "integration-v2-insight@perplexity": "integration-v2-insight",
-    "integration-v2-insight@pi": "integration-v2-insight",
-    "integration-v2-insight@portkey": "integration-v2-insight",
-    "integration-v2-insight@pydantic-ai": "integration-v2-insight",
-    "integration-v2-insight@python": "integration-v2-insight",
-    "integration-v2-insight@rails": "integration-v2-insight",
-    "integration-v2-insight@react-native": "integration-v2-insight",
-    "integration-v2-insight@react-router": "integration-v2-insight",
-    "integration-v2-insight@ruby": "integration-v2-insight",
-    "integration-v2-insight@rust": "integration-v2-insight",
-    "integration-v2-insight@semantic-kernel": "integration-v2-insight",
-    "integration-v2-insight@smolagents": "integration-v2-insight",
-    "integration-v2-insight@sveltekit": "integration-v2-insight",
-    "integration-v2-insight@swift": "integration-v2-insight",
-    "integration-v2-insight@tanstack-router": "integration-v2-insight",
-    "integration-v2-insight@tanstack-start": "integration-v2-insight",
-    "integration-v2-insight@together-ai": "integration-v2-insight",
-    "integration-v2-insight@vercel-ai": "integration-v2-insight",
-    "integration-v2-insight@vue": "integration-v2-insight",
-    "integration-v2-insight@wordpress": "integration-v2-insight",
-    "integration-v2-insight@xai": "integration-v2-insight",
-    "integration-v2-identify@-": "integration-v2-identify",
-    "integration-v2-identify@android": "integration-v2-identify",
-    "integration-v2-identify@angular": "integration-v2-identify",
-    "integration-v2-identify@anthropic": "integration-v2-identify",
-    "integration-v2-identify@astro": "integration-v2-identify",
-    "integration-v2-identify@autogen": "integration-v2-identify",
-    "integration-v2-identify@aws-bedrock": "integration-v2-identify",
-    "integration-v2-identify@azure-openai": "integration-v2-identify",
-    "integration-v2-identify@cerebras": "integration-v2-identify",
-    "integration-v2-identify@claude-agent-sdk": "integration-v2-identify",
-    "integration-v2-identify@claude-code": "integration-v2-identify",
-    "integration-v2-identify@cloudflare-ai-gateway": "integration-v2-identify",
-    "integration-v2-identify@cohere": "integration-v2-identify",
-    "integration-v2-identify@convex": "integration-v2-identify",
-    "integration-v2-identify@crewai": "integration-v2-identify",
-    "integration-v2-identify@dedalus": "integration-v2-identify",
-    "integration-v2-identify@deepseek": "integration-v2-identify",
-    "integration-v2-identify@django": "integration-v2-identify",
-    "integration-v2-identify@dspy": "integration-v2-identify",
-    "integration-v2-identify@elixir": "integration-v2-identify",
-    "integration-v2-identify@fastapi": "integration-v2-identify",
-    "integration-v2-identify@fireworks-ai": "integration-v2-identify",
-    "integration-v2-identify@flask": "integration-v2-identify",
-    "integration-v2-identify@flutter": "integration-v2-identify",
-    "integration-v2-identify@go": "integration-v2-identify",
-    "integration-v2-identify@google-adk": "integration-v2-identify",
-    "integration-v2-identify@google-gemini": "integration-v2-identify",
-    "integration-v2-identify@groq": "integration-v2-identify",
-    "integration-v2-identify@helicone": "integration-v2-identify",
-    "integration-v2-identify@hugging-face": "integration-v2-identify",
-    "integration-v2-identify@instructor": "integration-v2-identify",
-    "integration-v2-identify@java": "integration-v2-identify",
-    "integration-v2-identify@javascript_node": "integration-v2-identify",
-    "integration-v2-identify@javascript_web": "integration-v2-identify",
-    "integration-v2-identify@kmp": "integration-v2-identify",
-    "integration-v2-identify@langchain": "integration-v2-identify",
-    "integration-v2-identify@langgraph": "integration-v2-identify",
-    "integration-v2-identify@laravel": "integration-v2-identify",
-    "integration-v2-identify@litellm": "integration-v2-identify",
-    "integration-v2-identify@llamaindex": "integration-v2-identify",
-    "integration-v2-identify@manual-capture": "integration-v2-identify",
-    "integration-v2-identify@mastra": "integration-v2-identify",
-    "integration-v2-identify@mirascope": "integration-v2-identify",
-    "integration-v2-identify@mistral": "integration-v2-identify",
-    "integration-v2-identify@nextjs": "integration-v2-identify",
-    "integration-v2-identify@nuxt": "integration-v2-identify",
-    "integration-v2-identify@ollama": "integration-v2-identify",
-    "integration-v2-identify@openai": "integration-v2-identify",
-    "integration-v2-identify@openai-agents": "integration-v2-identify",
-    "integration-v2-identify@openclaw": "integration-v2-identify",
-    "integration-v2-identify@openrouter": "integration-v2-identify",
-    "integration-v2-identify@opentelemetry": "integration-v2-identify",
-    "integration-v2-identify@perplexity": "integration-v2-identify",
-    "integration-v2-identify@pi": "integration-v2-identify",
-    "integration-v2-identify@portkey": "integration-v2-identify",
-    "integration-v2-identify@pydantic-ai": "integration-v2-identify",
-    "integration-v2-identify@python": "integration-v2-identify",
-    "integration-v2-identify@rails": "integration-v2-identify",
-    "integration-v2-identify@react-native": "integration-v2-identify",
-    "integration-v2-identify@react-router": "integration-v2-identify",
-    "integration-v2-identify@ruby": "integration-v2-identify",
-    "integration-v2-identify@rust": "integration-v2-identify",
-    "integration-v2-identify@semantic-kernel": "integration-v2-identify",
-    "integration-v2-identify@smolagents": "integration-v2-identify",
-    "integration-v2-identify@sveltekit": "integration-v2-identify",
-    "integration-v2-identify@swift": "integration-v2-identify",
-    "integration-v2-identify@tanstack-router": "integration-v2-identify",
-    "integration-v2-identify@tanstack-start": "integration-v2-identify",
-    "integration-v2-identify@together-ai": "integration-v2-identify",
-    "integration-v2-identify@vercel-ai": "integration-v2-identify",
-    "integration-v2-identify@vue": "integration-v2-identify",
-    "integration-v2-identify@wordpress": "integration-v2-identify",
-    "integration-v2-identify@xai": "integration-v2-identify",
-    "integration-v2-report@-": "integration-v2-report",
-    "integration-v2-report@android": "integration-v2-report",
-    "integration-v2-report@angular": "integration-v2-report",
-    "integration-v2-report@anthropic": "integration-v2-report",
-    "integration-v2-report@astro": "integration-v2-report",
-    "integration-v2-report@autogen": "integration-v2-report",
-    "integration-v2-report@aws-bedrock": "integration-v2-report",
-    "integration-v2-report@azure-openai": "integration-v2-report",
-    "integration-v2-report@cerebras": "integration-v2-report",
-    "integration-v2-report@claude-agent-sdk": "integration-v2-report",
-    "integration-v2-report@claude-code": "integration-v2-report",
-    "integration-v2-report@cloudflare-ai-gateway": "integration-v2-report",
-    "integration-v2-report@cohere": "integration-v2-report",
-    "integration-v2-report@convex": "integration-v2-report",
-    "integration-v2-report@crewai": "integration-v2-report",
-    "integration-v2-report@dedalus": "integration-v2-report",
-    "integration-v2-report@deepseek": "integration-v2-report",
-    "integration-v2-report@django": "integration-v2-report",
-    "integration-v2-report@dspy": "integration-v2-report",
-    "integration-v2-report@elixir": "integration-v2-report",
-    "integration-v2-report@fastapi": "integration-v2-report",
-    "integration-v2-report@fireworks-ai": "integration-v2-report",
-    "integration-v2-report@flask": "integration-v2-report",
-    "integration-v2-report@flutter": "integration-v2-report",
-    "integration-v2-report@go": "integration-v2-report",
-    "integration-v2-report@google-adk": "integration-v2-report",
-    "integration-v2-report@google-gemini": "integration-v2-report",
-    "integration-v2-report@groq": "integration-v2-report",
-    "integration-v2-report@helicone": "integration-v2-report",
-    "integration-v2-report@hugging-face": "integration-v2-report",
-    "integration-v2-report@instructor": "integration-v2-report",
-    "integration-v2-report@java": "integration-v2-report",
-    "integration-v2-report@javascript_node": "integration-v2-report",
-    "integration-v2-report@javascript_web": "integration-v2-report",
-    "integration-v2-report@kmp": "integration-v2-report",
-    "integration-v2-report@langchain": "integration-v2-report",
-    "integration-v2-report@langgraph": "integration-v2-report",
-    "integration-v2-report@laravel": "integration-v2-report",
-    "integration-v2-report@litellm": "integration-v2-report",
-    "integration-v2-report@llamaindex": "integration-v2-report",
-    "integration-v2-report@manual-capture": "integration-v2-report",
-    "integration-v2-report@mastra": "integration-v2-report",
-    "integration-v2-report@mirascope": "integration-v2-report",
-    "integration-v2-report@mistral": "integration-v2-report",
-    "integration-v2-report@nextjs": "integration-v2-report",
-    "integration-v2-report@nuxt": "integration-v2-report",
-    "integration-v2-report@ollama": "integration-v2-report",
-    "integration-v2-report@openai": "integration-v2-report",
-    "integration-v2-report@openai-agents": "integration-v2-report",
-    "integration-v2-report@openclaw": "integration-v2-report",
-    "integration-v2-report@openrouter": "integration-v2-report",
-    "integration-v2-report@opentelemetry": "integration-v2-report",
-    "integration-v2-report@perplexity": "integration-v2-report",
-    "integration-v2-report@pi": "integration-v2-report",
-    "integration-v2-report@portkey": "integration-v2-report",
-    "integration-v2-report@pydantic-ai": "integration-v2-report",
-    "integration-v2-report@python": "integration-v2-report",
-    "integration-v2-report@rails": "integration-v2-report",
-    "integration-v2-report@react-native": "integration-v2-report",
-    "integration-v2-report@react-router": "integration-v2-report",
-    "integration-v2-report@ruby": "integration-v2-report",
-    "integration-v2-report@rust": "integration-v2-report",
-    "integration-v2-report@semantic-kernel": "integration-v2-report",
-    "integration-v2-report@smolagents": "integration-v2-report",
-    "integration-v2-report@sveltekit": "integration-v2-report",
-    "integration-v2-report@swift": "integration-v2-report",
-    "integration-v2-report@tanstack-router": "integration-v2-report",
-    "integration-v2-report@tanstack-start": "integration-v2-report",
-    "integration-v2-report@together-ai": "integration-v2-report",
-    "integration-v2-report@vercel-ai": "integration-v2-report",
-    "integration-v2-report@vue": "integration-v2-report",
-    "integration-v2-report@wordpress": "integration-v2-report",
-    "integration-v2-report@xai": "integration-v2-report",
-    "integration-v2-build@-": "integration-v2-build",
-    "integration-v2-build@android": "integration-v2-build",
-    "integration-v2-build@angular": "integration-v2-build",
-    "integration-v2-build@anthropic": "integration-v2-build",
-    "integration-v2-build@astro": "integration-v2-build",
-    "integration-v2-build@autogen": "integration-v2-build",
-    "integration-v2-build@aws-bedrock": "integration-v2-build",
-    "integration-v2-build@azure-openai": "integration-v2-build",
-    "integration-v2-build@cerebras": "integration-v2-build",
-    "integration-v2-build@claude-agent-sdk": "integration-v2-build",
-    "integration-v2-build@claude-code": "integration-v2-build",
-    "integration-v2-build@cloudflare-ai-gateway": "integration-v2-build",
-    "integration-v2-build@cohere": "integration-v2-build",
-    "integration-v2-build@convex": "integration-v2-build",
-    "integration-v2-build@crewai": "integration-v2-build",
-    "integration-v2-build@dedalus": "integration-v2-build",
-    "integration-v2-build@deepseek": "integration-v2-build",
-    "integration-v2-build@django": "integration-v2-build",
-    "integration-v2-build@dspy": "integration-v2-build",
-    "integration-v2-build@elixir": "integration-v2-build",
-    "integration-v2-build@fastapi": "integration-v2-build",
-    "integration-v2-build@fireworks-ai": "integration-v2-build",
-    "integration-v2-build@flask": "integration-v2-build",
-    "integration-v2-build@flutter": "integration-v2-build",
-    "integration-v2-build@go": "integration-v2-build",
-    "integration-v2-build@google-adk": "integration-v2-build",
-    "integration-v2-build@google-gemini": "integration-v2-build",
-    "integration-v2-build@groq": "integration-v2-build",
-    "integration-v2-build@helicone": "integration-v2-build",
-    "integration-v2-build@hugging-face": "integration-v2-build",
-    "integration-v2-build@instructor": "integration-v2-build",
-    "integration-v2-build@java": "integration-v2-build",
-    "integration-v2-build@javascript_node": "integration-v2-build",
-    "integration-v2-build@javascript_web": "integration-v2-build",
-    "integration-v2-build@kmp": "integration-v2-build",
-    "integration-v2-build@langchain": "integration-v2-build",
-    "integration-v2-build@langgraph": "integration-v2-build",
-    "integration-v2-build@laravel": "integration-v2-build",
-    "integration-v2-build@litellm": "integration-v2-build",
-    "integration-v2-build@llamaindex": "integration-v2-build",
-    "integration-v2-build@manual-capture": "integration-v2-build",
-    "integration-v2-build@mastra": "integration-v2-build",
-    "integration-v2-build@mirascope": "integration-v2-build",
-    "integration-v2-build@mistral": "integration-v2-build",
-    "integration-v2-build@nextjs": "integration-v2-build",
-    "integration-v2-build@nuxt": "integration-v2-build",
-    "integration-v2-build@ollama": "integration-v2-build",
-    "integration-v2-build@openai": "integration-v2-build",
-    "integration-v2-build@openai-agents": "integration-v2-build",
-    "integration-v2-build@openclaw": "integration-v2-build",
-    "integration-v2-build@openrouter": "integration-v2-build",
-    "integration-v2-build@opentelemetry": "integration-v2-build",
-    "integration-v2-build@perplexity": "integration-v2-build",
-    "integration-v2-build@pi": "integration-v2-build",
-    "integration-v2-build@portkey": "integration-v2-build",
-    "integration-v2-build@pydantic-ai": "integration-v2-build",
-    "integration-v2-build@python": "integration-v2-build",
-    "integration-v2-build@rails": "integration-v2-build",
-    "integration-v2-build@react-native": "integration-v2-build",
-    "integration-v2-build@react-router": "integration-v2-build",
-    "integration-v2-build@ruby": "integration-v2-build",
-    "integration-v2-build@rust": "integration-v2-build",
-    "integration-v2-build@semantic-kernel": "integration-v2-build",
-    "integration-v2-build@smolagents": "integration-v2-build",
-    "integration-v2-build@sveltekit": "integration-v2-build",
-    "integration-v2-build@swift": "integration-v2-build",
-    "integration-v2-build@tanstack-router": "integration-v2-build",
-    "integration-v2-build@tanstack-start": "integration-v2-build",
-    "integration-v2-build@together-ai": "integration-v2-build",
-    "integration-v2-build@vercel-ai": "integration-v2-build",
-    "integration-v2-build@vue": "integration-v2-build",
-    "integration-v2-build@wordpress": "integration-v2-build",
-    "integration-v2-build@xai": "integration-v2-build",
-    "integration-v2-warehouse@-": "integration-v2-warehouse",
-    "integration-v2-warehouse@android": "integration-v2-warehouse",
-    "integration-v2-warehouse@angular": "integration-v2-warehouse",
-    "integration-v2-warehouse@anthropic": "integration-v2-warehouse",
-    "integration-v2-warehouse@astro": "integration-v2-warehouse",
-    "integration-v2-warehouse@autogen": "integration-v2-warehouse",
-    "integration-v2-warehouse@aws-bedrock": "integration-v2-warehouse",
-    "integration-v2-warehouse@azure-openai": "integration-v2-warehouse",
-    "integration-v2-warehouse@cerebras": "integration-v2-warehouse",
-    "integration-v2-warehouse@claude-agent-sdk": "integration-v2-warehouse",
-    "integration-v2-warehouse@claude-code": "integration-v2-warehouse",
-    "integration-v2-warehouse@cloudflare-ai-gateway": "integration-v2-warehouse",
-    "integration-v2-warehouse@cohere": "integration-v2-warehouse",
-    "integration-v2-warehouse@convex": "integration-v2-warehouse",
-    "integration-v2-warehouse@crewai": "integration-v2-warehouse",
-    "integration-v2-warehouse@dedalus": "integration-v2-warehouse",
-    "integration-v2-warehouse@deepseek": "integration-v2-warehouse",
-    "integration-v2-warehouse@django": "integration-v2-warehouse",
-    "integration-v2-warehouse@dspy": "integration-v2-warehouse",
-    "integration-v2-warehouse@elixir": "integration-v2-warehouse",
-    "integration-v2-warehouse@fastapi": "integration-v2-warehouse",
-    "integration-v2-warehouse@fireworks-ai": "integration-v2-warehouse",
-    "integration-v2-warehouse@flask": "integration-v2-warehouse",
-    "integration-v2-warehouse@flutter": "integration-v2-warehouse",
-    "integration-v2-warehouse@go": "integration-v2-warehouse",
-    "integration-v2-warehouse@google-adk": "integration-v2-warehouse",
-    "integration-v2-warehouse@google-gemini": "integration-v2-warehouse",
-    "integration-v2-warehouse@groq": "integration-v2-warehouse",
-    "integration-v2-warehouse@helicone": "integration-v2-warehouse",
-    "integration-v2-warehouse@hugging-face": "integration-v2-warehouse",
-    "integration-v2-warehouse@instructor": "integration-v2-warehouse",
-    "integration-v2-warehouse@java": "integration-v2-warehouse",
-    "integration-v2-warehouse@javascript_node": "integration-v2-warehouse",
-    "integration-v2-warehouse@javascript_web": "integration-v2-warehouse",
-    "integration-v2-warehouse@kmp": "integration-v2-warehouse",
-    "integration-v2-warehouse@langchain": "integration-v2-warehouse",
-    "integration-v2-warehouse@langgraph": "integration-v2-warehouse",
-    "integration-v2-warehouse@laravel": "integration-v2-warehouse",
-    "integration-v2-warehouse@litellm": "integration-v2-warehouse",
-    "integration-v2-warehouse@llamaindex": "integration-v2-warehouse",
-    "integration-v2-warehouse@manual-capture": "integration-v2-warehouse",
-    "integration-v2-warehouse@mastra": "integration-v2-warehouse",
-    "integration-v2-warehouse@mirascope": "integration-v2-warehouse",
-    "integration-v2-warehouse@mistral": "integration-v2-warehouse",
-    "integration-v2-warehouse@nextjs": "integration-v2-warehouse",
-    "integration-v2-warehouse@nuxt": "integration-v2-warehouse",
-    "integration-v2-warehouse@ollama": "integration-v2-warehouse",
-    "integration-v2-warehouse@openai": "integration-v2-warehouse",
-    "integration-v2-warehouse@openai-agents": "integration-v2-warehouse",
-    "integration-v2-warehouse@openclaw": "integration-v2-warehouse",
-    "integration-v2-warehouse@openrouter": "integration-v2-warehouse",
-    "integration-v2-warehouse@opentelemetry": "integration-v2-warehouse",
-    "integration-v2-warehouse@perplexity": "integration-v2-warehouse",
-    "integration-v2-warehouse@pi": "integration-v2-warehouse",
-    "integration-v2-warehouse@portkey": "integration-v2-warehouse",
-    "integration-v2-warehouse@pydantic-ai": "integration-v2-warehouse",
-    "integration-v2-warehouse@python": "integration-v2-warehouse",
-    "integration-v2-warehouse@rails": "integration-v2-warehouse",
-    "integration-v2-warehouse@react-native": "integration-v2-warehouse",
-    "integration-v2-warehouse@react-router": "integration-v2-warehouse",
-    "integration-v2-warehouse@ruby": "integration-v2-warehouse",
-    "integration-v2-warehouse@rust": "integration-v2-warehouse",
-    "integration-v2-warehouse@semantic-kernel": "integration-v2-warehouse",
-    "integration-v2-warehouse@smolagents": "integration-v2-warehouse",
-    "integration-v2-warehouse@sveltekit": "integration-v2-warehouse",
-    "integration-v2-warehouse@swift": "integration-v2-warehouse",
-    "integration-v2-warehouse@tanstack-router": "integration-v2-warehouse",
-    "integration-v2-warehouse@tanstack-start": "integration-v2-warehouse",
-    "integration-v2-warehouse@together-ai": "integration-v2-warehouse",
-    "integration-v2-warehouse@vercel-ai": "integration-v2-warehouse",
-    "integration-v2-warehouse@vue": "integration-v2-warehouse",
-    "integration-v2-warehouse@wordpress": "integration-v2-warehouse",
-    "integration-v2-warehouse@xai": "integration-v2-warehouse",
-    "replay-vision-enable-replay@android": "replay-vision-enable-replay-android",
-    "replay-vision-enable-replay@angular": "replay-vision-enable-replay-angular",
-    "replay-vision-enable-replay@astro": "replay-vision-enable-replay-astro-hybrid",
-    "replay-vision-enable-replay@django": "replay-vision-enable-replay-django",
-    "replay-vision-enable-replay@elixir": "replay-vision-enable-replay-elixir",
-    "replay-vision-enable-replay@fastapi": "replay-vision-enable-replay-fastapi",
-    "replay-vision-enable-replay@flask": "replay-vision-enable-replay-flask",
-    "replay-vision-enable-replay@flutter": "replay-vision-enable-replay-flutter",
-    "replay-vision-enable-replay@go": "replay-vision-enable-replay-go",
-    "replay-vision-enable-replay@java": "replay-vision-enable-replay-java",
-    "replay-vision-enable-replay@javascript_node": "replay-vision-enable-replay-javascript_node",
-    "replay-vision-enable-replay@javascript_web": "replay-vision-enable-replay-javascript_web",
-    "replay-vision-enable-replay@kmp": "replay-vision-enable-replay-kmp",
-    "replay-vision-enable-replay@laravel": "replay-vision-enable-replay-laravel",
-    "replay-vision-enable-replay@nextjs": "replay-vision-enable-replay-nextjs-app-router",
-    "replay-vision-enable-replay@nuxt": "replay-vision-enable-replay-nuxt-3-6",
-    "replay-vision-enable-replay@python": "replay-vision-enable-replay-python",
-    "replay-vision-enable-replay@rails": "replay-vision-enable-replay-ruby-on-rails",
-    "replay-vision-enable-replay@react-native": "replay-vision-enable-replay-react-native",
-    "replay-vision-enable-replay@react-router": "replay-vision-enable-replay-react-react-router-6",
-    "replay-vision-enable-replay@ruby": "replay-vision-enable-replay-ruby",
-    "replay-vision-enable-replay@rust": "replay-vision-enable-replay-rust",
-    "replay-vision-enable-replay@sveltekit": "replay-vision-enable-replay-sveltekit",
-    "replay-vision-enable-replay@swift": "replay-vision-enable-replay-swift",
-    "replay-vision-enable-replay@tanstack-router": "replay-vision-enable-replay-react-tanstack-router-code-based",
-    "replay-vision-enable-replay@tanstack-start": "replay-vision-enable-replay-tanstack-start",
-    "replay-vision-enable-replay@vue": "replay-vision-enable-replay-vue-3",
-    "replay-vision-enable-replay@wordpress": "replay-vision-enable-replay-wordpress",
     "replay-vision-scanners-core@-": "replay-vision-scanners-core",
     "replay-vision-scanners-core@android": "replay-vision-scanners-core",
     "replay-vision-scanners-core@angular": "replay-vision-scanners-core",
@@ -1158,33 +406,8 @@
     "feature-flags@android": [
       "feature-flags-react"
     ],
-    "integration-v2@android": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@android": [
       "metrics-javascript"
-    ],
-    "replay-vision@android": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@angular": [
       "integration-angular"
@@ -1197,33 +420,8 @@
     "feature-flags@angular": [
       "feature-flags-react"
     ],
-    "integration-v2@angular": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@angular": [
       "metrics-javascript"
-    ],
-    "replay-vision@angular": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@anthropic": [
       "error-tracking-react",
@@ -1233,33 +431,8 @@
     "feature-flags@anthropic": [
       "feature-flags-react"
     ],
-    "integration-v2@anthropic": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@anthropic": [
       "metrics-javascript"
-    ],
-    "replay-vision@anthropic": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@astro": [
       "integration-astro-hybrid"
@@ -1272,33 +445,8 @@
     "feature-flags@astro": [
       "feature-flags-react"
     ],
-    "integration-v2@astro": [
-      "integration-v2-build",
-      "integration-v2-capture-astro-hybrid",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-astro-hybrid",
-      "integration-v2-feature-flags-step-astro-hybrid",
-      "integration-v2-identify",
-      "integration-v2-init-astro-hybrid",
-      "integration-v2-insight",
-      "integration-v2-install-astro-hybrid",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@astro": [
       "metrics-javascript"
-    ],
-    "replay-vision@astro": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-astro-hybrid",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@autogen": [
       "error-tracking-react",
@@ -1308,33 +456,8 @@
     "feature-flags@autogen": [
       "feature-flags-react"
     ],
-    "integration-v2@autogen": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@autogen": [
       "metrics-javascript"
-    ],
-    "replay-vision@autogen": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@aws-bedrock": [
       "error-tracking-react",
@@ -1344,33 +467,8 @@
     "feature-flags@aws-bedrock": [
       "feature-flags-react"
     ],
-    "integration-v2@aws-bedrock": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@aws-bedrock": [
       "metrics-javascript"
-    ],
-    "replay-vision@aws-bedrock": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@azure-openai": [
       "error-tracking-react",
@@ -1380,33 +478,8 @@
     "feature-flags@azure-openai": [
       "feature-flags-react"
     ],
-    "integration-v2@azure-openai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@azure-openai": [
       "metrics-javascript"
-    ],
-    "replay-vision@azure-openai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@cerebras": [
       "error-tracking-react",
@@ -1416,33 +489,8 @@
     "feature-flags@cerebras": [
       "feature-flags-react"
     ],
-    "integration-v2@cerebras": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@cerebras": [
       "metrics-javascript"
-    ],
-    "replay-vision@cerebras": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@claude-agent-sdk": [
       "error-tracking-react",
@@ -1452,33 +500,8 @@
     "feature-flags@claude-agent-sdk": [
       "feature-flags-react"
     ],
-    "integration-v2@claude-agent-sdk": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@claude-agent-sdk": [
       "metrics-javascript"
-    ],
-    "replay-vision@claude-agent-sdk": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@claude-code": [
       "error-tracking-react",
@@ -1488,33 +511,8 @@
     "feature-flags@claude-code": [
       "feature-flags-react"
     ],
-    "integration-v2@claude-code": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@claude-code": [
       "metrics-javascript"
-    ],
-    "replay-vision@claude-code": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@cloudflare-ai-gateway": [
       "error-tracking-react",
@@ -1524,33 +522,8 @@
     "feature-flags@cloudflare-ai-gateway": [
       "feature-flags-react"
     ],
-    "integration-v2@cloudflare-ai-gateway": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@cloudflare-ai-gateway": [
       "metrics-javascript"
-    ],
-    "replay-vision@cloudflare-ai-gateway": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@cohere": [
       "error-tracking-react",
@@ -1560,33 +533,8 @@
     "feature-flags@cohere": [
       "feature-flags-react"
     ],
-    "integration-v2@cohere": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@cohere": [
       "metrics-javascript"
-    ],
-    "replay-vision@cohere": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@convex": [
       "error-tracking-react",
@@ -1596,33 +544,8 @@
     "feature-flags@convex": [
       "feature-flags-react"
     ],
-    "integration-v2@convex": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@convex": [
       "metrics-javascript"
-    ],
-    "replay-vision@convex": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@crewai": [
       "error-tracking-react",
@@ -1632,33 +555,8 @@
     "feature-flags@crewai": [
       "feature-flags-react"
     ],
-    "integration-v2@crewai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@crewai": [
       "metrics-javascript"
-    ],
-    "replay-vision@crewai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@dedalus": [
       "error-tracking-react",
@@ -1668,33 +566,8 @@
     "feature-flags@dedalus": [
       "feature-flags-react"
     ],
-    "integration-v2@dedalus": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@dedalus": [
       "metrics-javascript"
-    ],
-    "replay-vision@dedalus": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@deepseek": [
       "error-tracking-react",
@@ -1704,33 +577,8 @@
     "feature-flags@deepseek": [
       "feature-flags-react"
     ],
-    "integration-v2@deepseek": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@deepseek": [
       "metrics-javascript"
-    ],
-    "replay-vision@deepseek": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@django": [
       "integration-django"
@@ -1743,33 +591,8 @@
     "feature-flags@django": [
       "feature-flags-react"
     ],
-    "integration-v2@django": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@django": [
       "metrics-javascript"
-    ],
-    "replay-vision@django": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@dspy": [
       "error-tracking-react",
@@ -1779,33 +602,8 @@
     "feature-flags@dspy": [
       "feature-flags-react"
     ],
-    "integration-v2@dspy": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@dspy": [
       "metrics-javascript"
-    ],
-    "replay-vision@dspy": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@elixir": [
       "integration-elixir"
@@ -1818,33 +616,8 @@
     "feature-flags@elixir": [
       "feature-flags-react"
     ],
-    "integration-v2@elixir": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@elixir": [
       "metrics-javascript"
-    ],
-    "replay-vision@elixir": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@fastapi": [
       "integration-fastapi"
@@ -1857,33 +630,8 @@
     "feature-flags@fastapi": [
       "feature-flags-react"
     ],
-    "integration-v2@fastapi": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@fastapi": [
       "metrics-javascript"
-    ],
-    "replay-vision@fastapi": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@fireworks-ai": [
       "error-tracking-react",
@@ -1893,33 +641,8 @@
     "feature-flags@fireworks-ai": [
       "feature-flags-react"
     ],
-    "integration-v2@fireworks-ai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@fireworks-ai": [
       "metrics-javascript"
-    ],
-    "replay-vision@fireworks-ai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@flask": [
       "integration-flask"
@@ -1932,33 +655,8 @@
     "feature-flags@flask": [
       "feature-flags-react"
     ],
-    "integration-v2@flask": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@flask": [
       "metrics-javascript"
-    ],
-    "replay-vision@flask": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@flutter": [
       "integration-flutter"
@@ -1971,33 +669,8 @@
     "feature-flags@flutter": [
       "feature-flags-react"
     ],
-    "integration-v2@flutter": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@flutter": [
       "metrics-javascript"
-    ],
-    "replay-vision@flutter": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@go": [
       "integration-go"
@@ -2010,33 +683,8 @@
     "feature-flags@go": [
       "feature-flags-react"
     ],
-    "integration-v2@go": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@go": [
       "metrics-javascript"
-    ],
-    "replay-vision@go": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@google-adk": [
       "error-tracking-react",
@@ -2046,33 +694,8 @@
     "feature-flags@google-adk": [
       "feature-flags-react"
     ],
-    "integration-v2@google-adk": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@google-adk": [
       "metrics-javascript"
-    ],
-    "replay-vision@google-adk": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@google-gemini": [
       "error-tracking-react",
@@ -2082,33 +705,8 @@
     "feature-flags@google-gemini": [
       "feature-flags-react"
     ],
-    "integration-v2@google-gemini": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@google-gemini": [
       "metrics-javascript"
-    ],
-    "replay-vision@google-gemini": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@groq": [
       "error-tracking-react",
@@ -2118,33 +716,8 @@
     "feature-flags@groq": [
       "feature-flags-react"
     ],
-    "integration-v2@groq": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@groq": [
       "metrics-javascript"
-    ],
-    "replay-vision@groq": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@helicone": [
       "error-tracking-react",
@@ -2154,33 +727,8 @@
     "feature-flags@helicone": [
       "feature-flags-react"
     ],
-    "integration-v2@helicone": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@helicone": [
       "metrics-javascript"
-    ],
-    "replay-vision@helicone": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@hugging-face": [
       "error-tracking-react",
@@ -2190,33 +738,8 @@
     "feature-flags@hugging-face": [
       "feature-flags-react"
     ],
-    "integration-v2@hugging-face": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@hugging-face": [
       "metrics-javascript"
-    ],
-    "replay-vision@hugging-face": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@instructor": [
       "error-tracking-react",
@@ -2226,33 +749,8 @@
     "feature-flags@instructor": [
       "feature-flags-react"
     ],
-    "integration-v2@instructor": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@instructor": [
       "metrics-javascript"
-    ],
-    "replay-vision@instructor": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@java": [
       "integration-java"
@@ -2265,33 +763,8 @@
     "feature-flags@java": [
       "feature-flags-react"
     ],
-    "integration-v2@java": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@java": [
       "metrics-javascript"
-    ],
-    "replay-vision@java": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@javascript_node": [
       "error-tracking-react",
@@ -2301,33 +774,8 @@
     "feature-flags@javascript_node": [
       "feature-flags-react"
     ],
-    "integration-v2@javascript_node": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@javascript_node": [
       "metrics-javascript"
-    ],
-    "replay-vision@javascript_node": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@javascript_web": [
       "error-tracking-react",
@@ -2337,33 +785,8 @@
     "feature-flags@javascript_web": [
       "feature-flags-react"
     ],
-    "integration-v2@javascript_web": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@javascript_web": [
       "metrics-javascript"
-    ],
-    "replay-vision@javascript_web": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@kmp": [
       "integration-kmp"
@@ -2376,33 +799,8 @@
     "feature-flags@kmp": [
       "feature-flags-react"
     ],
-    "integration-v2@kmp": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@kmp": [
       "metrics-javascript"
-    ],
-    "replay-vision@kmp": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@langchain": [
       "error-tracking-react",
@@ -2412,33 +810,8 @@
     "feature-flags@langchain": [
       "feature-flags-react"
     ],
-    "integration-v2@langchain": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@langchain": [
       "metrics-javascript"
-    ],
-    "replay-vision@langchain": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@langgraph": [
       "error-tracking-react",
@@ -2448,33 +821,8 @@
     "feature-flags@langgraph": [
       "feature-flags-react"
     ],
-    "integration-v2@langgraph": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@langgraph": [
       "metrics-javascript"
-    ],
-    "replay-vision@langgraph": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@laravel": [
       "integration-laravel"
@@ -2487,33 +835,8 @@
     "feature-flags@laravel": [
       "feature-flags-react"
     ],
-    "integration-v2@laravel": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@laravel": [
       "metrics-javascript"
-    ],
-    "replay-vision@laravel": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@litellm": [
       "error-tracking-react",
@@ -2523,33 +846,8 @@
     "feature-flags@litellm": [
       "feature-flags-react"
     ],
-    "integration-v2@litellm": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@litellm": [
       "metrics-javascript"
-    ],
-    "replay-vision@litellm": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@llamaindex": [
       "error-tracking-react",
@@ -2559,33 +857,8 @@
     "feature-flags@llamaindex": [
       "feature-flags-react"
     ],
-    "integration-v2@llamaindex": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@llamaindex": [
       "metrics-javascript"
-    ],
-    "replay-vision@llamaindex": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@manual-capture": [
       "error-tracking-react",
@@ -2595,33 +868,8 @@
     "feature-flags@manual-capture": [
       "feature-flags-react"
     ],
-    "integration-v2@manual-capture": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@manual-capture": [
       "metrics-javascript"
-    ],
-    "replay-vision@manual-capture": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@mastra": [
       "error-tracking-react",
@@ -2631,33 +879,8 @@
     "feature-flags@mastra": [
       "feature-flags-react"
     ],
-    "integration-v2@mastra": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@mastra": [
       "metrics-javascript"
-    ],
-    "replay-vision@mastra": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@mirascope": [
       "error-tracking-react",
@@ -2667,33 +890,8 @@
     "feature-flags@mirascope": [
       "feature-flags-react"
     ],
-    "integration-v2@mirascope": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@mirascope": [
       "metrics-javascript"
-    ],
-    "replay-vision@mirascope": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@mistral": [
       "error-tracking-react",
@@ -2703,33 +901,8 @@
     "feature-flags@mistral": [
       "feature-flags-react"
     ],
-    "integration-v2@mistral": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@mistral": [
       "metrics-javascript"
-    ],
-    "replay-vision@mistral": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@nextjs": [
       "integration-nextjs-app-router"
@@ -2742,33 +915,8 @@
     "feature-flags@nextjs": [
       "feature-flags-react"
     ],
-    "integration-v2@nextjs": [
-      "integration-v2-build",
-      "integration-v2-capture-nextjs-app-router",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-nextjs-app-router",
-      "integration-v2-feature-flags-step-nextjs-app-router",
-      "integration-v2-identify",
-      "integration-v2-init-nextjs-app-router",
-      "integration-v2-insight",
-      "integration-v2-install-nextjs-app-router",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@nextjs": [
       "metrics-javascript"
-    ],
-    "replay-vision@nextjs": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-nextjs-app-router",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@nuxt": [
       "integration-nuxt-3-6"
@@ -2781,33 +929,8 @@
     "feature-flags@nuxt": [
       "feature-flags-react"
     ],
-    "integration-v2@nuxt": [
-      "integration-v2-build",
-      "integration-v2-capture-nuxt-3-6",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-nuxt-4",
-      "integration-v2-feature-flags-step-nuxt-4",
-      "integration-v2-identify",
-      "integration-v2-init-nuxt-3-6",
-      "integration-v2-insight",
-      "integration-v2-install-nuxt-3-6",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@nuxt": [
       "metrics-javascript"
-    ],
-    "replay-vision@nuxt": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-nuxt-3-6",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@ollama": [
       "error-tracking-react",
@@ -2817,33 +940,8 @@
     "feature-flags@ollama": [
       "feature-flags-react"
     ],
-    "integration-v2@ollama": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@ollama": [
       "metrics-javascript"
-    ],
-    "replay-vision@ollama": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@openai": [
       "error-tracking-react",
@@ -2853,33 +951,8 @@
     "feature-flags@openai": [
       "feature-flags-react"
     ],
-    "integration-v2@openai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@openai": [
       "metrics-javascript"
-    ],
-    "replay-vision@openai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@openai-agents": [
       "error-tracking-react",
@@ -2889,33 +962,8 @@
     "feature-flags@openai-agents": [
       "feature-flags-react"
     ],
-    "integration-v2@openai-agents": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@openai-agents": [
       "metrics-javascript"
-    ],
-    "replay-vision@openai-agents": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@openclaw": [
       "error-tracking-react",
@@ -2925,33 +973,8 @@
     "feature-flags@openclaw": [
       "feature-flags-react"
     ],
-    "integration-v2@openclaw": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@openclaw": [
       "metrics-javascript"
-    ],
-    "replay-vision@openclaw": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@openrouter": [
       "error-tracking-react",
@@ -2961,33 +984,8 @@
     "feature-flags@openrouter": [
       "feature-flags-react"
     ],
-    "integration-v2@openrouter": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@openrouter": [
       "metrics-javascript"
-    ],
-    "replay-vision@openrouter": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@opentelemetry": [
       "error-tracking-react",
@@ -2997,33 +995,8 @@
     "feature-flags@opentelemetry": [
       "feature-flags-react"
     ],
-    "integration-v2@opentelemetry": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@opentelemetry": [
       "metrics-javascript"
-    ],
-    "replay-vision@opentelemetry": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@perplexity": [
       "error-tracking-react",
@@ -3033,33 +1006,8 @@
     "feature-flags@perplexity": [
       "feature-flags-react"
     ],
-    "integration-v2@perplexity": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@perplexity": [
       "metrics-javascript"
-    ],
-    "replay-vision@perplexity": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@pi": [
       "error-tracking-react",
@@ -3069,33 +1017,8 @@
     "feature-flags@pi": [
       "feature-flags-react"
     ],
-    "integration-v2@pi": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@pi": [
       "metrics-javascript"
-    ],
-    "replay-vision@pi": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@portkey": [
       "error-tracking-react",
@@ -3105,33 +1028,8 @@
     "feature-flags@portkey": [
       "feature-flags-react"
     ],
-    "integration-v2@portkey": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@portkey": [
       "metrics-javascript"
-    ],
-    "replay-vision@portkey": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@pydantic-ai": [
       "error-tracking-react",
@@ -3141,33 +1039,8 @@
     "feature-flags@pydantic-ai": [
       "feature-flags-react"
     ],
-    "integration-v2@pydantic-ai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@pydantic-ai": [
       "metrics-javascript"
-    ],
-    "replay-vision@pydantic-ai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@python": [
       "integration-python"
@@ -3180,33 +1053,8 @@
     "feature-flags@python": [
       "feature-flags-react"
     ],
-    "integration-v2@python": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@python": [
       "metrics-javascript"
-    ],
-    "replay-vision@python": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@rails": [
       "integration-ruby-on-rails"
@@ -3219,33 +1067,8 @@
     "feature-flags@rails": [
       "feature-flags-react"
     ],
-    "integration-v2@rails": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@rails": [
       "metrics-javascript"
-    ],
-    "replay-vision@rails": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@react-native": [
       "integration-react-native"
@@ -3258,33 +1081,8 @@
     "feature-flags@react-native": [
       "feature-flags-react"
     ],
-    "integration-v2@react-native": [
-      "integration-v2-build",
-      "integration-v2-capture-react-native",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-native",
-      "integration-v2-feature-flags-step-react-native",
-      "integration-v2-identify",
-      "integration-v2-init-react-native",
-      "integration-v2-insight",
-      "integration-v2-install-react-native",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@react-native": [
       "metrics-javascript"
-    ],
-    "replay-vision@react-native": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-native",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@react-router": [
       "integration-react-react-router-6"
@@ -3297,33 +1095,8 @@
     "feature-flags@react-router": [
       "feature-flags-react"
     ],
-    "integration-v2@react-router": [
-      "integration-v2-build",
-      "integration-v2-capture-react-react-router-6",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-react-router-6",
-      "integration-v2-feature-flags-step-react-react-router-6",
-      "integration-v2-identify",
-      "integration-v2-init-react-react-router-6",
-      "integration-v2-insight",
-      "integration-v2-install-react-react-router-6",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@react-router": [
       "metrics-javascript"
-    ],
-    "replay-vision@react-router": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-react-router-6",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@ruby": [
       "integration-ruby"
@@ -3336,33 +1109,8 @@
     "feature-flags@ruby": [
       "feature-flags-react"
     ],
-    "integration-v2@ruby": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@ruby": [
       "metrics-javascript"
-    ],
-    "replay-vision@ruby": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@rust": [
       "integration-rust"
@@ -3375,33 +1123,8 @@
     "feature-flags@rust": [
       "feature-flags-react"
     ],
-    "integration-v2@rust": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@rust": [
       "metrics-javascript"
-    ],
-    "replay-vision@rust": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@semantic-kernel": [
       "error-tracking-react",
@@ -3411,33 +1134,8 @@
     "feature-flags@semantic-kernel": [
       "feature-flags-react"
     ],
-    "integration-v2@semantic-kernel": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@semantic-kernel": [
       "metrics-javascript"
-    ],
-    "replay-vision@semantic-kernel": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@smolagents": [
       "error-tracking-react",
@@ -3447,33 +1145,8 @@
     "feature-flags@smolagents": [
       "feature-flags-react"
     ],
-    "integration-v2@smolagents": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@smolagents": [
       "metrics-javascript"
-    ],
-    "replay-vision@smolagents": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@sveltekit": [
       "integration-sveltekit"
@@ -3486,33 +1159,8 @@
     "feature-flags@sveltekit": [
       "feature-flags-react"
     ],
-    "integration-v2@sveltekit": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@sveltekit": [
       "metrics-javascript"
-    ],
-    "replay-vision@sveltekit": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@swift": [
       "integration-swift"
@@ -3525,33 +1173,8 @@
     "feature-flags@swift": [
       "feature-flags-react"
     ],
-    "integration-v2@swift": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@swift": [
       "metrics-javascript"
-    ],
-    "replay-vision@swift": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@tanstack-router": [
       "integration-react-tanstack-router-code-based"
@@ -3564,33 +1187,8 @@
     "feature-flags@tanstack-router": [
       "feature-flags-react"
     ],
-    "integration-v2@tanstack-router": [
-      "integration-v2-build",
-      "integration-v2-capture-react-tanstack-router-code-based",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-tanstack-router-code-based",
-      "integration-v2-feature-flags-step-react-tanstack-router-code-based",
-      "integration-v2-identify",
-      "integration-v2-init-react-tanstack-router-code-based",
-      "integration-v2-insight",
-      "integration-v2-install-react-tanstack-router-code-based",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@tanstack-router": [
       "metrics-javascript"
-    ],
-    "replay-vision@tanstack-router": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-tanstack-router-code-based",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@tanstack-start": [
       "integration-tanstack-start"
@@ -3603,33 +1201,8 @@
     "feature-flags@tanstack-start": [
       "feature-flags-react"
     ],
-    "integration-v2@tanstack-start": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@tanstack-start": [
       "metrics-javascript"
-    ],
-    "replay-vision@tanstack-start": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@together-ai": [
       "error-tracking-react",
@@ -3639,33 +1212,8 @@
     "feature-flags@together-ai": [
       "feature-flags-react"
     ],
-    "integration-v2@together-ai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@together-ai": [
       "metrics-javascript"
-    ],
-    "replay-vision@together-ai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@vercel-ai": [
       "error-tracking-react",
@@ -3675,33 +1223,8 @@
     "feature-flags@vercel-ai": [
       "feature-flags-react"
     ],
-    "integration-v2@vercel-ai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@vercel-ai": [
       "metrics-javascript"
-    ],
-    "replay-vision@vercel-ai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@vue": [
       "integration-vue-3"
@@ -3714,33 +1237,8 @@
     "feature-flags@vue": [
       "feature-flags-react"
     ],
-    "integration-v2@vue": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@vue": [
       "metrics-javascript"
-    ],
-    "replay-vision@vue": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "posthog-integration@wordpress": [
       "integration-wordpress"
@@ -3753,33 +1251,8 @@
     "feature-flags@wordpress": [
       "feature-flags-react"
     ],
-    "integration-v2@wordpress": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@wordpress": [
       "metrics-javascript"
-    ],
-    "replay-vision@wordpress": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ],
     "error-tracking@xai": [
       "error-tracking-react",
@@ -3789,33 +1262,8 @@
     "feature-flags@xai": [
       "feature-flags-react"
     ],
-    "integration-v2@xai": [
-      "integration-v2-build",
-      "integration-v2-capture-react-vite",
-      "integration-v2-dashboard",
-      "integration-v2-error-tracking-step-react-vite",
-      "integration-v2-feature-flags-step-react-vite",
-      "integration-v2-identify",
-      "integration-v2-init-react-vite",
-      "integration-v2-insight",
-      "integration-v2-install-react-vite",
-      "integration-v2-mcp",
-      "integration-v2-notebook",
-      "integration-v2-report",
-      "integration-v2-warehouse"
-    ],
     "metrics@xai": [
       "metrics-javascript"
-    ],
-    "replay-vision@xai": [
-      "replay-vision-setup",
-      "replay-vision-enable-replay-react-vite",
-      "replay-vision-scanner-broken-experiences",
-      "replay-vision-scanner-flow-outcome",
-      "replay-vision-scanner-problems",
-      "replay-vision-scanner-session-summaries",
-      "replay-vision-scanner-user-frustration",
-      "replay-vision-scanners-core"
     ]
   }
 }

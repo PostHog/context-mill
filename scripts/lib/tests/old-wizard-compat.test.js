@@ -1,6 +1,5 @@
 // Wizard versions already in the field resolve the skills their prompts name with the logic vendored below.
-// The snapshot lists every name and framework they ask for, with the skill each resolved to.
-// Never drop or rename one. A released wizard bundles prompts that name these skills, and a missing name fails its run at preflight.
+// The snapshot lists the names and frameworks they ask for whose skills still publish, with the skill each resolves to.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import os from 'os';

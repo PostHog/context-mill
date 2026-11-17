@@ -378,34 +378,21 @@ function validateVariantTable(key, group) {
 }
 
 /**
- * Validate `replaces` and `framework_references`. A group with either is one skill, written once for
- * every framework: `replaces` names the group or skill it stands in for, and `framework_references`
- * names the product whose pages a consumer adds from the framework's pack.
+ * Validate `framework_references`. A group with it is one skill, written once for every framework:
+ * it names the product whose pages a consumer adds from the framework's pack.
  */
-function validateReplacements(config) {
-    const dashed = key => key.replace(/\//g, '-');
-    const names = new Set();
+function validateFrameworkReferences(config) {
     const products = new Set([INTEGRATION_PRODUCT]);
-    // A group's name is also the id of a skill with the one variant `all`. A consumer looks a stand-in up by that name,
-    // so one variant of a group has no stand-in of its own.
-    for (const [key, group] of Object.entries(config)) {
-        names.add(dashed(key));
+    for (const group of Object.values(config)) {
         for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
     }
     for (const [key, group] of Object.entries(config)) {
-        if (group.replaces === undefined && group.framework_references === undefined) continue;
+        if (group.framework_references === undefined) continue;
         const where = `Skill group "${key}"`;
         const single = group.variants?.length === 1 && group.variants[0].id === 'all';
         if (!single) {
-            throw new Error(`${where}: replaces and framework_references need exactly one variant, with id "all"`);
+            throw new Error(`${where}: framework_references needs exactly one variant, with id "all"`);
         }
-        if (group.replaces !== undefined && !names.has(group.replaces)) {
-            throw new Error(`${where}: replaces "${group.replaces}" names no skill group. It cannot name one variant of a group`);
-        }
-        if (group.replaces === dashed(key)) {
-            throw new Error(`${where}: a skill cannot replace itself`);
-        }
-        if (group.framework_references === undefined) continue;
         if (!products.has(group.framework_references)) {
             throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
         }
@@ -423,7 +410,7 @@ function validateReplacements(config) {
 function expandSkillGroups(config, configDir) {
     const skills = [];
     const resolvedConfig = resolveVariantsFrom(config);
-    validateReplacements(resolvedConfig);
+    validateFrameworkReferences(resolvedConfig);
 
     for (const [key, group] of Object.entries(resolvedConfig)) {
         if (key === 'shared_docs') continue;
@@ -495,7 +482,6 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _products: group.products || null,
-                _replaces: group.replaces || null,
                 _frameworkReferences: group.framework_references || null,
                 _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
@@ -1042,9 +1028,6 @@ function serializeSkill(s) {
     }
     if (s.match) {
         result.match = s.match;
-    }
-    if (s._replaces) {
-        result.replaces = s._replaces;
     }
     if (s._frameworkReferences) {
         result.frameworkReferences = s._frameworkReferences;
