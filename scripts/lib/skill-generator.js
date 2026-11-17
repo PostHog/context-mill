@@ -176,6 +176,12 @@ function loadSkillsConfig(configDir) {
         const configFile = path.join(dir, 'config.yaml');
         if (fs.existsSync(configFile)) {
             const localConfig = loadYaml(configFile);
+            // A config that kept one of these would list no variants of its own and build nothing.
+            for (const key of ['variants_from', 'packaging']) {
+                if (localConfig?.[key] !== undefined) {
+                    throw new Error(`${configFile}: ${key} is no longer read; list the skill's variants under variants`);
+                }
+            }
             if (localConfig?.variants) {
                 config[keyParts.join('/')] = localConfig;
             }

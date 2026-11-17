@@ -203,6 +203,18 @@ describe('a variant table', () => {
     });
 });
 
+describe('a skill config', () => {
+    it.each([
+        ['variants_from', 'variants_from: integration\n'],
+        ['packaging', 'packaging: bundle\nvariants:\n  - id: all\n'],
+    ])('is refused when it still sets %s', (key, yaml) => {
+        fs.mkdirSync(path.join(dir, 'skills', 'old-step'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'skills', 'old-step', 'config.yaml'), yaml);
+
+        expect(() => loadSkillsConfig(dir)).toThrow(`${key} is no longer read`);
+    });
+});
+
 describe('the integration variant table', () => {
     const config = loadSkillsConfig(REPO_CONFIG_DIR);
     const variants = config.integration.variants;
