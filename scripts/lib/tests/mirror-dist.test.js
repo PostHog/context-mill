@@ -64,7 +64,7 @@ function writeDist({ base = GITHUB_BASE } = {}) {
         `Clone it from ${REPO_URL}/releases/download/v1.0.0/thing.zip and go.`,
     );
 
-    // Pushed to the skills / ai-plugin repos, never a release asset.
+    // Pushed to the skills repo, never a release asset.
     fs.mkdirSync(path.join(distDir(), 'marketplace'), { recursive: true });
     fs.writeFileSync(path.join(distDir(), 'marketplace', 'plugin.json'), '{}');
 }

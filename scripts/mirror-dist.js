@@ -125,7 +125,7 @@ export async function mirrorDist({ distDir, outDir, to, version }) {
     // Everything else is copied byte-for-byte. Doc markdown in dist/skills/ is
     // fetched prose that may legitimately mention github.com — never rewrite it.
     copyFlat(skillsDir, name => name.endsWith('.zip') || name.endsWith('.md'));
-    // dist/marketplace/ is pushed to the skills / ai-plugin repos, not released here.
+    // dist/marketplace/ is pushed to the skills repo, not released here.
 
     // Rebuild the bundle around the rewritten manifest. Reusing createBundledArchive
     // keeps one code path for the bundle's shape; its members are every skill zip,
