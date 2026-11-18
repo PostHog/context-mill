@@ -150,14 +150,14 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `resend.Emails.send(params, options={"idempotency_key": key})` becomes `posthog.emails.send(...)` with keyword arguments: `params["from"]` becomes `from_=`, and the options' `idempotency_key` becomes `idempotency_key=`. `resend.Emails.send_async` becomes the same call on `AsyncPosthog`, awaited.
 - Resend answers a dict, and PostHog a `SendEmailResult`: `response["id"]` becomes `result.id`.
-- Both raise on an API error. `except resend.exceptions.ResendError` becomes `except EmailError`, from `posthog.emails`. A class that stands for an HTTP status, such as `resend.exceptions.RateLimitError` for `429`, becomes `EmailError` with a check of `error.status_code`, such as `error.status_code == 429`, because one status covers more than one PostHog name.
+- Both raise on an API error. `except resend.exceptions.ResendError` becomes `except EmailError`, from `posthog.emails`. A class that stands for an HTTP status becomes `EmailError` with a check of `error.status_code`, because one status covers more than one PostHog name, except `RateLimitError`, which Step 7 removes.
 - Resend's `error.code` is the HTTP status, and PostHog's is a string error code. Code that read `error.code` reads `error.status_code`, and code that read `error.error_type` reads `error.name`.
 
 ### Ruby
 
 - `Resend::Emails.send(params, options: { idempotency_key: key })` becomes `POSTHOG.emails.send(...)` with keyword arguments, and the options' `idempotency_key` becomes `idempotency_key:`.
 - Resend answers a hash-like response, and PostHog a `SendResult`: `response[:id]` becomes `result.id`.
-- Both raise on an API error. `rescue Resend::Error` becomes `rescue PostHog::EmailError`. A class that stands for an HTTP status, such as `Resend::Error::RateLimitExceededError` for `429`, becomes `PostHog::EmailError` with a check of `e.status_code`, such as `e.status_code == 429`, because one status covers more than one PostHog name.
+- Both raise on an API error. `rescue Resend::Error` becomes `rescue PostHog::EmailError`. A class that stands for an HTTP status becomes `PostHog::EmailError` with a check of `e.status_code`, because one status covers more than one PostHog name, except `RateLimitExceededError`, which Step 7 removes.
 
 ### PHP
 
@@ -170,13 +170,13 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `client.Emails.Send(params)`, `SendWithContext(ctx, params)`, and `SendWithOptions(ctx, params, &resend.SendEmailOptions{IdempotencyKey: key})` become `client.Emails().Send(ctx, posthog.CodeEmail{...})`. Pass the site's context, or `context.Background()` where the old call had none. `Html` becomes `HTML`, and the options' `IdempotencyKey` moves into the email.
 - Both answer a pointer and an error: `resp.Id` becomes `result.ID`.
-- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names. Every other check of a Resend error, such as one for the rate limit, with its own type or sentinel, becomes `errors.As` with `*posthog.EmailError` and a check of `StatusCode`, such as `StatusCode == 429`.
+- `*resend.ResendError` becomes `*posthog.EmailError`, read with `errors.As`. `StatusCode` and `Name` keep their names. Every other check of a Resend error, with its own type or sentinel, becomes `errors.As` with `*posthog.EmailError` and a check of `StatusCode`, except one for the rate limit, which Step 7 removes.
 
 ### .NET
 
 - `await resend.EmailSendAsync(message)` and `EmailSendAsync(idempotencyKey, message)` become `await emails.SendAsync(new SendCodeEmailOptions { ... })`. `HtmlBody` becomes `Html`, `TextBody` becomes `Text`, and the idempotency key moves into the options.
 - Resend answers a `ResendResponse<Guid>`, and PostHog a `SendEmailResult`: `response.Content` becomes `result.Id`, a `string` that holds a UUID, as Step 7 says. Where the code keeps the ID as a `Guid`, it becomes `Guid.Parse(result.Id)`, for a send that goes out, as "Suppressed recipients" says.
-- Resend throws `ResendException` unless its options set `ThrowExceptions = false`, and PostHog always throws `EmailException`. `catch (ResendException e)` becomes `catch (EmailException e)`, and a check of `e.ErrorType`, an enum such as `ErrorType.RateLimitExceeded`, becomes a check of `e.Name`, a string such as `"rate_limit_exceeded"`. Code that checked `response.Success` catches `EmailException` instead.
+- Resend throws `ResendException` unless its options set `ThrowExceptions = false`, and PostHog always throws `EmailException`. `catch (ResendException e)` becomes `catch (EmailException e)`, and a check of `e.ErrorType`, an enum, becomes a check of `e.Name`, a string such as `"validation_error"`. Code that checked `response.Success` catches `EmailException` instead.
 
 ### Rust
 
@@ -188,4 +188,4 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 
 - `Resend.Emails.send(%{from: ..., to: ..., ...})`, with or without a client as the first argument, becomes `PostHog.Emails.send(MyApp.PostHogEmail, from: ..., to: ..., ...)` with the email instance's name first and a keyword list. Resend's Elixir SDK takes no idempotency key, so the site sends none unless the old code set one some other way.
 - `{:ok, %Resend.Emails.Email{id: id}}` becomes `{:ok, result}` with `result.id`.
-- `{:error, %Resend.Error{}}` becomes `{:error, %PostHog.Emails.Error{}}`. Resend's `name` is a string and PostHog's is an atom: a match on `name: "rate_limit_exceeded"` becomes `name: :rate_limit_exceeded`.
+- `{:error, %Resend.Error{}}` becomes `{:error, %PostHog.Emails.Error{}}`. Resend's `name` is a string and PostHog's is an atom: a match on `name: "validation_error"` becomes `name: :validation_error`.
