@@ -81,7 +81,7 @@ commandments:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
     - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
-    - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
+    - Add posthog.captureException(...) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error')), matching the active posthog-node major (options form `(err, { distinctId, properties })` in 6.x; positional `(err, distinctId, additionalProperties)` in 5.x)
     - The SDK batches events and flushes asynchronously. await flush() or await shutdown() before letting that process exit. If unsure, set flushAt 1 and flushInterval 0.
     - '`posthog.capture()` enqueues synchronously and returns; the batched HTTP send happens afterwards. Treat every per-request handler as short-lived even when the framework feels like a server: Next.js / Nuxt / SvelteKit / Remix route handlers, serverless and edge functions, and Lambda are torn down per invocation before the send runs. Create the client with flushAt 1, flushInterval 0, requestTimeout 2000 and fetchRetryCount 0, then await the send before returning. Always use `await posthog.flush().catch(() => {})` for a shared/singleton client, `await posthog.shutdown()` for a per-request client. Never skip the awaited flush or risk the enqueued event being silently dropped.'
     - 'Never leave a flush uncaught or on default timeouts where the app waits on it. With defaults, `await posthog.flush()` rejects when PostHog is down, which fails a handler whose own work succeeded, and holds it for about 50 seconds when PostHog hangs. A long-running server or queue worker needs no flush per capture at all. Let it batch on the SDK default timeout and retries, and flush only at shutdown with a bounded wait such as `posthog.shutdown(3000)`. A module both of them load follows the handler rule'
@@ -90,18 +90,18 @@ commandments:
   python:
     - Remember that source code is available in the venv/site-packages directory
     - posthog is the Python SDK package name
-    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt`, at the version the Python SDK docs pin, and do NOT use unquoted version specifiers like `>=` directly in shell commands. To keep the docs' range, write it into `requirements.txt` and run `pip install -r requirements.txt`
+    - Install dependencies with `pip install posthog` or `pip install -r requirements.txt`, keeping the installed SDK major on existing PostHog setups or using the default docs pin on new setups, and do NOT use unquoted version specifiers like `>=` directly in shell commands. To keep a range, write it into `requirements.txt` and run `pip install -r requirements.txt`
     - 'In CLIs and scripts: MUST call posthog.shutdown() before exit or all events are lost'
     - Always use the Posthog() class constructor (instance-based API) instead of module-level posthog.api_key config
     - Always include enable_exception_autocapture=True in the Posthog() constructor to automatically track exceptions
-    - PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later - when you add one, require at least that version
+    - PosthogFlaskIntegration (posthog.integrations.flask), PosthogASGIMiddleware (posthog.integrations.asgi), and the Django REST Framework exception handler (posthog.integrations.drf) need posthog 7.69.0 or later - when adding one to an existing 7.x setup, require >=7.69.0,<8 (or keep a hard pin and use manual capture_exception); on new installs follow the default major docs pin
     - NEVER send PII in capture() event properties — no emails, full names, phone numbers, physical addresses, IP addresses, or user-generated content
     - PII belongs in identify() person properties, NOT in capture() event properties. Safe event properties are metadata like message_length, form_type, boolean flags.
     - Register posthog_client.shutdown with atexit.register() to ensure all events are flushed on exit
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
 
   go:
-    - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
+    - posthog-go is the Go SDK package; use `github.com/posthog/posthog-go/v2` (2.x) for new installs and stay on `github.com/posthog/posthog-go` (1.x) when already installed
     - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
     - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
     - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
@@ -113,7 +113,7 @@ commandments:
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
   rust:
-    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
+    - On new Rust setups use the `posthog` 1.x crate (`cargo add posthog@1` and `use posthog::...`); when `posthog-rs` (`0.x` or `1.x` forwarding) is already installed, keep `posthog-rs` (`use posthog_rs::...`) and reuse its existing client
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
     - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
@@ -122,6 +122,51 @@ commandments:
     - For feature flags, call `client.evaluate_flags(distinct_id, EvaluateFlagsOptions::default()).await` once per user/request, then read values from the returned snapshot with `is_enabled(...)`
     - For error tracking, use `client.capture_exception_with(&err, CaptureExceptionOptions::new()...)`; the `error-tracking` feature is enabled by default in recent versions
     - The Rust SDK has no surveys or session replay support; do not promise or scaffold those features
+
+  # Exact-major SDK rules loaded by sdk/posthog-* skills
+  sdk-python-7:
+    - "Supported Python 7.x range: `posthog>=7,<8`. Reuse existing client initialization and never upgrade to `8.x`."
+    - "Feature floor — MCP analytics (`posthog.mcp`): requires `posthog>=7.62.0,<8`. If range-bounded below 7.62.0, raise floor to `>=7.62.0,<8`; if hard-pinned below 7.62.0, keep pin and hand off naming `>=7.62.0`."
+    - "Feature floor — Framework exception middleware (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`): requires `posthog>=7.69.0,<8`. If range-bounded below 7.69.0, raise floor to `>=7.69.0,<8`; if hard-pinned below 7.69.0, keep pin and fall back to manual `capture_exception(...)`."
+    - "Feature floor — `openfeature-provider-posthog`: `0.1.x` supports Python `7.x` (`<8.0.0`); `0.2.x` supports `>=7.0.0,<9.0.0`."
+    - "AI events: `Client.capture_ai()` and `posthog.capture_ai()` exist in recent `7.x` releases. Use them instead of `capture()` for AI events over 900 KiB. `AsyncPosthog` lacks `capture_ai()` in `7.x`, while `capture()` with `$ai_*` or `posthog.ai` works across `7.x`. Keep existing `Client(api_key, host=...)` positional/keyword call sites, and check `references/7.x.x.md` and the installed version."
+
+  sdk-python-8:
+    - "Default Python 8.x range: `posthog>=8,<9` (or exact pin shown in `references/8.x.x.md`)."
+    - "Constructor & options: use keyword arguments after `host` (`Client`/`AsyncPosthog`), event options rather than `$process_person_profile` properties, and `openfeature-provider-posthog>=0.2.0` when using OpenFeature."
+    - "AI events: use `capture_ai()` for `$ai_*` events when instrumenting 8.x manually (`references/8.x.x.md`)."
+    - "Framework integrations (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`, `posthog.mcp`) are all included in `8.x`."
+
+  sdk-node-5:
+    - "Supported Node.js 5.x range: `posthog-node@^5` (`>=5.0.0 <6.0.0`). Stay on `5.x`, reuse existing `new PostHog(...)`, and never upgrade to `6.x`."
+    - "Exception capture signature: on 5.x, call positional `client.captureException(error, distinctId, additionalProperties)` and `captureExceptionImmediate(error, distinctId, additionalProperties)` — never pass an options object `{ distinctId }` as the second argument (it fails TypeScript on 5.x or sends the object as `distinctId`)."
+    - "Companion packages: both `@posthog/mcp@^1.3.0` (floor `>=0.18.0`) and `@posthog/ai@^8.21.0` declare `peerDependencies: { \"posthog-node\": \"^5.0.0 || ^6.0.0\" }` and work cleanly with `posthog-node@^5` without crossing majors. Note `@posthog/convex`, `@posthog/next`, and `@posthog/nuxt` also target 5.x."
+
+  sdk-node-6:
+    - "Default Node.js 6.x range: `posthog-node@^6`."
+    - "Exception capture signature: on 6.x, TypeScript requires the options object form `client.captureException(error, { distinctId, properties, ... })` (`captureException(err, distinctId)` positional fails TS compilation on 6.x)."
+    - "Companion packages: `@posthog/mcp@^1.3.0` and `@posthog/ai@^8.21.0` both support `posthog-node@^6` (`^5.0.0 || ^6.0.0`)."
+    - "Event options & AI lane: use event options (`process_person_profile`, etc.) and `captureAi()` / `captureAiImmediate()` for `$ai_*` events per `references/6.x.x.md`."
+
+  sdk-go-1:
+    - "Supported Go 1.x module: `github.com/posthog/posthog-go` (`< v2.0.0`). Stay on `v1`, reuse existing `posthog.NewWithConfig(...)`, and keep `import \"github.com/posthog/posthog-go\"`."
+    - "Feature floor — MCP analytics (`posthogmcpsdk`): requires `github.com/posthog/posthog-go/posthogmcpsdk >= v1.34.0` (`< v2`)."
+    - "Do NOT use `v2` module paths (`/v2`, `/posthogmcpsdk/v2`, `/otel/v2`) or the 2.x `(Client, error)` return signature on `posthog.New(...)` when staying on `v1`."
+
+  sdk-go-2:
+    - "Default Go 2.x module: `github.com/posthog/posthog-go/v2` (`go get github.com/posthog/posthog-go/v2`). Import `\"github.com/posthog/posthog-go/v2\"` (package name remains `posthog`)."
+    - "Companion modules move in lockstep on v2: `github.com/posthog/posthog-go/v2/posthogmcp`, `github.com/posthog/posthog-go/posthogmcpsdk/v2`, `github.com/posthog/posthog-go/posthogmcpgo/v2`, `github.com/posthog/posthog-go/otel/v2`."
+    - "`posthog.New(...)` returns `(Client, error)` in 2.x — always check `err`."
+
+  sdk-rust-0:
+    - "Supported Rust 0.x crate: `posthog-rs` (`< 1.0.0`). Import `posthog_rs` and stay on `0.x`."
+    - "TLS & features: `0.x` enables TLS by default and has NO `tls` Cargo feature — do NOT pass `--features tls` on `0.x`."
+    - "Feature floor — MCP analytics (`posthog_rs::mcp`): requires `posthog-rs >= 0.29.0, < 1.0.0` with `--features mcp` (and `rmcp >= 3.7`)."
+
+  sdk-rust-1:
+    - "Default Rust 1.x crate: `posthog = \"1\"` (`cargo add posthog@1`, `use posthog::...`). When keeping existing `posthog-rs = \"1\"` (which forwards to `posthog` 1.x), keep `use posthog_rs::...` unless `Cargo.toml` depends directly on `posthog`."
+    - "TLS & async features: on `1.x`, sync/blocking clients using `--no-default-features` MUST include `--features tls` to send over HTTPS (`capture-v1` feature is gone in `1.x`)."
+    - "MCP & AI lanes: `posthog::mcp` (or `posthog_rs::mcp` when keeping `posthog-rs = \"1\"`) is enabled via `--features mcp`; use `capture_ai*` for `$ai_*` events and `Event::insert_option` for event options per `references/1.x.x.md`."
 
   dotnet:
     - posthog-dotnet package names are `PostHog` for general .NET apps and `PostHog.AspNetCore` for ASP.NET Core apps

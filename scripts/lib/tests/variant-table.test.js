@@ -179,6 +179,14 @@ describe('a variant table', () => {
     });
 
     it.each([
+        ['an empty match object without products', { type: 'skill', template: 'description.md', variants: [{ id: 'v7', match: {} }] }, /match must map trait names/],
+        ['a products group omitting framework in match', table({ variants: [{ ...table().variants[0], match: { sdkPython: '7' } }] }), /match must name the framework/],
+        ['frameworkVariant without products or another framework variant', { type: 'skill', template: 'description.md', variants: [{ id: 'app', match: { frameworkVariant: 'app-router' } }] }, /match must name the framework/],
+    ])('rejects %s', (_, group, message) => {
+        expect(() => expand(group)).toThrow(message);
+    });
+
+    it.each([
         ['a product listed twice', ['error-tracking', 'error-tracking'], /products lists a name twice/],
         ['a product name that is not kebab-case', ['Error Tracking'], /must be a list of kebab-case names/],
         ['products that are not a list', 'error-tracking', /must be a list of kebab-case names/],

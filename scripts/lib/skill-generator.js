@@ -247,8 +247,9 @@ const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
 /** The match key every `match` sets: the framework a variant serves. */
 const FRAMEWORK_KEY = 'framework';
 
-/** A variant's `match` with `framework` first, the order its tags and its `variant.json` are written in. */
+/** A variant's `match` with `framework` first when present, the order its tags and `variant.json` are written in. */
 function orderedMatch(match) {
+    if (!(FRAMEWORK_KEY in match)) return { ...match };
     const { [FRAMEWORK_KEY]: framework, ...rest } = match;
     return { [FRAMEWORK_KEY]: framework, ...rest };
 }
@@ -297,6 +298,9 @@ function validateVariantTable(key, group) {
             throw new Error(`Skill group "${key}": products lists a name twice`);
         }
     }
+    const groupUsesFramework = (group.variants || []).some(
+        v => v.match && typeof v.match === 'object' && v.match[FRAMEWORK_KEY] !== undefined,
+    );
     for (const variant of group.variants || []) {
         const where = `Skill group "${key}", variant "${variant.id}"`;
         if (variant.framework !== undefined) {
@@ -306,10 +310,11 @@ function validateVariantTable(key, group) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
                 : null;
-            if (!entries || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
+            if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
                 throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
             }
-            if (variant.match[FRAMEWORK_KEY] === undefined) {
+            const needsFramework = products !== undefined || groupUsesFramework || variant.match.frameworkVariant !== undefined;
+            if (needsFramework && variant.match[FRAMEWORK_KEY] === undefined) {
                 throw new Error(`${where}: match must name the framework, as match: { framework: … }`);
             }
         }
@@ -635,22 +640,64 @@ async function fetchDocOnce(url) {
 }
 
 /**
- * Fetch markdown content from a URL, with an on-disk cache and retries.
- * Returns both content and inferred metadata. Logs `Fetching doc:` only
- * on a real network fetch — cache hits are silent.
+ * Rewrite `https://posthog.com` origin to `POSTHOG_DOCS_BASE_URL` when set,
+ * so local doc previews never touch the production URL or cache.
  */
-async function fetchDoc(url) {
-    const cached = readDocCache(url);
+function resolveDocUrl(url) {
+    const override = process.env.POSTHOG_DOCS_BASE_URL?.trim();
+    if (!override) return { fetchUrl: url, overridden: false };
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return { fetchUrl: url, overridden: false };
+    }
+    if (parsed.origin !== 'https://posthog.com') return { fetchUrl: url, overridden: false };
+    const normalized = override.replace(/\/+$/, '');
+    return {
+        fetchUrl: `${normalized}${parsed.pathname}${parsed.search}${parsed.hash}`,
+        overridden: true,
+    };
+}
+
+/**
+ * Extract the top `## Checklist` section from a migration guide markdown document.
+ * Drops leading intro text so the non-default SKILL.md receives only the checklist items.
+ * Returns null when the heading or bullet items are absent so callers fall back cleanly.
+ */
+function extractMigrationChecklist(markdown) {
+    const match = markdown.match(/^## Checklist[ \t]*\r?\n([\s\S]*?)(?=\r?\n##\s|(?![\s\S]))/m);
+    if (!match) return null;
+    const lines = match[1]
+        .split(/\r?\n/)
+        .map(line => line.trimEnd())
+        .filter(line => /^\*\*[^*]+\*\*$|^-\s+/.test(line.trim()));
+    return lines.some(line => /^\s*-\s+/.test(line)) ? lines.join('\n') : null;
+}
+
+/**
+ * Fetch markdown content from a URL, with an on-disk cache and retries.
+ * When `POSTHOG_DOCS_BASE_URL` overrides the origin, bypasses `.docs-cache`
+ * and reuses `memoryCache` (when provided) so repeated doc refs fetch once per run.
+ * Logs `Fetching doc:` only on a real network fetch — cache hits are silent.
+ */
+async function fetchDoc(url, { memoryCache } = {}) {
+    const { fetchUrl, overridden } = resolveDocUrl(url);
+    if (overridden && memoryCache?.has(fetchUrl)) {
+        return memoryCache.get(fetchUrl);
+    }
+    const cached = overridden ? null : readDocCache(url);
     if (cached?.fresh) {
         return { content: cached.content, title: cached.title };
     }
 
-    console.log(`  Fetching doc: ${url}`);
+    console.log(`  Fetching doc: ${fetchUrl}`);
     let lastError;
     for (let attempt = 1; attempt <= FETCH_RETRIES; attempt++) {
         try {
-            const result = await fetchDocOnce(url);
-            writeDocCache(url, result);
+            const result = await fetchDocOnce(fetchUrl);
+            if (overridden) memoryCache?.set(fetchUrl, result);
+            else writeDocCache(url, result);
             return result;
         } catch (error) {
             lastError = error;
@@ -901,6 +948,7 @@ async function generateSkill({
             written.push({
                 filename: path.posix.join(subfolder, names[i]),
                 description: (typeof docEntry === 'object' && docEntry.title) || result.title,
+                content: result.content,
             });
         }
         return written;
@@ -969,6 +1017,21 @@ async function generateSkill({
     // Format workflow steps for skills that use the {workflow} placeholder
     const workflowText = formatWorkflowSteps(workflowSteps);
 
+    let migrationChecklistText = '';
+    if (skillTemplate.includes('{migration_checklist}')) {
+        const migrationPage = pages.find(page => page.filename === 'migration.md');
+        if (!migrationPage) {
+            throw new Error(`Skill "${skill.id}" uses {migration_checklist} but does not fetch migration.md`);
+        }
+        const checklist = extractMigrationChecklist(migrationPage.content);
+        if (checklist) {
+            migrationChecklistText = checklist;
+        } else {
+            console.warn(`  [WARN] Skill "${skill.id}": migration checklist not found in migration.md; linking references/migration.md`);
+            migrationChecklistText = '_See `references/migration.md` for the breaking-change checklist._';
+        }
+    }
+
     // Build SKILL.md content
     let skillContent = generateFrontmatter(skill, version);
 
@@ -977,7 +1040,8 @@ async function generateSkill({
         .replace(/{display_name}/g, skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name)
         .replace(/{references}/g, referencesText)
         .replace(/{commandments}/g, commandmentsText)
-        .replace(/{workflow}/g, workflowText);
+        .replace(/{workflow}/g, workflowText)
+        .replace(/{migration_checklist}/g, migrationChecklistText);
     body = expandPartials(body, configDir);
 
     skillContent += body;
@@ -1040,8 +1104,10 @@ async function runGenerate({
     outputDir,
     skipPatterns,
     commandmentsConfig,
+    memoryCache = new Map(),
 }) {
     fs.mkdirSync(outputDir, { recursive: true });
+    const fetchDocFn = url => fetchDoc(url, { memoryCache });
 
     for (const skill of skills) {
         console.log(`\nGenerating skill: ${skill.id}`);
@@ -1056,6 +1122,7 @@ async function runGenerate({
             commandmentsConfig,
             skillTemplate: skill._template,
             sharedDocs: skill._sharedDocs || [],
+            fetchDocFn,
         });
 
         console.log(`  ✓ ${skill.id}`);
@@ -1073,6 +1140,7 @@ async function generateSkillsByIds({
     configDir,
     outputDir,
     version,
+    memoryCache,
 }) {
     const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
     const idSet = new Set(ids);
@@ -1090,6 +1158,7 @@ async function generateSkillsByIds({
         outputDir,
         skipPatterns,
         commandmentsConfig,
+        memoryCache,
     });
 
     return {
@@ -1106,12 +1175,14 @@ async function generateSkillsByIds({
  * @param {string} options.configDir - Config directory path (context)
  * @param {string} options.outputDir - Output directory for generated skills
  * @param {string} options.version - Build version
+ * @param {Map} [options.memoryCache] - Optional per-run cache for overridden doc URLs
  */
 async function generateAllSkills({
     repoRoot,
     configDir,
     outputDir,
     version,
+    memoryCache,
 }) {
     console.log('Loading configuration...');
 
@@ -1127,6 +1198,7 @@ async function generateAllSkills({
         outputDir,
         skipPatterns,
         commandmentsConfig,
+        memoryCache,
     });
 
     console.log(`\n✓ Generated ${skills.length} skills to ${outputDir}`);
@@ -1151,7 +1223,10 @@ export {
     runGenerate,
     generateSkillsByIds,
     serializeSkill,
+    docCachePath,
+    resolveDocUrl,
     fetchDoc,
+    extractMigrationChecklist,
     parseCliBlock,
     resolveVariantCli,
     expandPartials,
