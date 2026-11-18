@@ -80,7 +80,7 @@ PostHog adds its open pixel to every email it sends unless the send turns its `o
 - When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note. A site whose emails a webhook handler acts on for the provider's open event, such as `email.opened` in Resend or `open` in SendGrid, stays instead, and the reason is `open tracking not checked`: with opens off, PostHog sends no opened events in place of the provider's.
 - When the provider tracked the site's opens, the site moves with nothing to note.
 
-A site that moves to a template made in PostHog keeps its `opens off` note too, but its send takes no tracking: the template uses its own setting, so the report asks the person to check it. When another site that moves to the same template made in PostHog has no `opens off` note, one setting can't serve both: the site with `opens off` stays, and the reason is `template shared with a tracked site`.
+A site with opens off never moves to a template made in PostHog: its send takes no tracking there, and the template adds PostHog's open pixel. When the person asks for one, the site moves into the code instead, where `tracking` turns `opens` off, as Step 7 says. When it can't move into the code, it stays, and the reason is `opens off needs a code send`.
 
 ## Write the plan file
 
