@@ -21,7 +21,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `customArgs` | none | Always: no PostHog SDK takes tags yet |
 | `categories` | none | Always: no PostHog SDK takes tags yet |
 | No `trackingSettings` | none, as "Open and click tracking" says | Opens and clicks follow the account, as "Open and click tracking" below and `account.md` under "Tracking" say |
-| `trackingSettings` with `openTracking` or `clickTracking` | none, as "Open and click tracking" says | Opens and clicks follow "Open and click tracking" below. It stays when the settings do anything else, such as `subscriptionTracking`, `ganalytics`, or an `openTracking` `substitutionTag`: PostHog places its own pixel, so the tag would stay in the email as text |
+| `trackingSettings` with `openTracking` or `clickTracking` | none, as "Open and click tracking" says | Opens and clicks follow "Open and click tracking" below. It stays when the settings do anything else, such as `subscriptionTracking`, `ganalytics`, or an `openTracking` `substitutionTag`: PostHog never fills the tag, so it would stay in the email as text |
 | `sendAt` / `send_at` | none | Always. PostHog's send doesn't take it yet |
 | `batchId` / `batch_id` | none | Always. PostHog's send doesn't take it yet |
 | `asm` | none | Always: PostHog has no unsubscribe groups on a transactional send |
@@ -29,10 +29,10 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 | `mailSettings` / `mail_settings` | none | Always. Sandbox mode is not a send |
 | `personalizations` | the fields of its one entry | It holds more than one entry. One entry moves when each field in it moves |
 
-**Open and click tracking.** PostHog adds its open pixel to every email it sends, and a send in the code form counts no clicks, as Step 7 says. No field changes this: `captureEngagement` decides only whether the email's events land on the recipient's person, so tracking never maps to it. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. Otherwise the account's setting decides, as `account.md` says under "Tracking".
+**Open and click tracking.** No SendGrid field maps directly in the call to PostHog's tracking: Step 7 sets `tracking` from the plan, as it says under "Sensitive emails and tracking", and never writes the deprecated `captureEngagement` field. SendGrid decides opens and clicks one at a time. When the send's `trackingSettings` sets `openTracking` or `clickTracking`, that setting's `enable` decides for it. When `openTracking`'s `enable` changes from send to send, the site stays, as Step 3 says under "Opens the provider didn't track". Otherwise the account's setting decides, as `account.md` says under "Tracking".
 
-- Opens: `account.md` says under "Tracking" which sites' emails had no open pixel, and for which nobody can tell. Those sites follow Step 3 under "Opens the provider didn't track".
-- Clicks: when SendGrid tracked a moved site's clicks, or nobody knows whether it did, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive. When SendGrid didn't track them, or nobody knows, as `account.md` says under "Tracking", a site that moves to a template made in PostHog follows Step 3 under "A template in PostHog".
+- Opens: `account.md` says under "Tracking" which sites' emails had no open pixel, and for which nobody can tell. Those sites move with opens off, as Step 3 says under "Opens the provider didn't track". Never ask the person whether PostHog may add its pixel.
+- Clicks: Step 7 marks every code send sensitive and never turns `clicks` on, so PostHog counts no clicks for a code send. When SendGrid tracked a moved site's clicks, or nobody knows whether it did, note in the plan row that PostHog counts no clicks for it, unless it moves to a template made in PostHog that is not marked sensitive. When SendGrid didn't track them, or nobody knows, as `account.md` says under "Tracking", a site that moves to a template made in PostHog follows Step 3 under "A template in PostHog".
 
 **Account mail settings.** SendGrid's subscription tracking, Google Analytics, Legacy Email Template, and Footer settings change a send that sets no field for them. `account.md` says under "Mail settings" which sites they keep on SendGrid, and how a moved site keeps the footer.
 
@@ -125,13 +125,13 @@ The Event Webhook stops getting events for a site that moves. PostHog records th
 | `bounce` | `$workflows_email_bounced` |
 | `spamreport` | `$workflows_email_blocked` |
 | `open` | `$workflows_email_opened` |
-| `click` | `$workflows_email_link_clicked`, only for a template made in PostHog that is not marked sensitive. A send in the code form counts no clicks |
+| `click` | `$workflows_email_link_clicked`, only when PostHog tracks the email's clicks: for a template made in PostHog that is not marked sensitive and with tracking on, or a code send whose tracking leaves clicks on, as the table in Step 7 under "Sensitive emails and tracking" says. Step 7 marks every code send sensitive and never turns `clicks` on, so its links go out as they are, and PostHog counts no clicks |
 | `dropped` | none. PostHog refuses the send instead, such as with `recipient_suppressed` |
 | `deferred`, `unsubscribe`, `group_unsubscribe`, `group_resubscribe` | none |
 
 PostHog's events carry no SendGrid `sg_message_id` and no `custom_args`. A site whose events a handler matches by message id or by a custom arg stays on SendGrid. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
 
-A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `dropped` or `deferred`, stays, and the reason is `its <event> events feed a webhook handler`. SendGrid sends `unsubscribe`, `group_unsubscribe`, and `group_resubscribe` only for emails with subscription tracking or `asm`, which keep their sites on SendGrid already, so a handler on those events keeps no other site. A site whose emails a `click` handler acts on moves only to a template made in PostHog that is not marked sensitive. Otherwise it stays, and the reason is `its clicks feed a webhook handler`.
+A site whose emails a handler acts on for an event that has no PostHog event in the table, such as `dropped` or `deferred`, stays, and the reason is `its <event> events feed a webhook handler`. SendGrid sends `unsubscribe`, `group_unsubscribe`, and `group_resubscribe` only for emails with subscription tracking or `asm`, which keep their sites on SendGrid already, so a handler on those events keeps no other site. A site whose emails a `click` handler acts on stays, and the reason is `its clicks feed a webhook handler`, as Step 3 says under "Opens the provider didn't track".
 
 ## Rewrite
 
