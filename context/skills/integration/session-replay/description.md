@@ -47,3 +47,7 @@ the env vars, and both counts with `window_days`.
 
 The framework docs below show what this framework's init looks like, so you
 can find it and read its options confidently.
+
+## Reference
+
+{references}

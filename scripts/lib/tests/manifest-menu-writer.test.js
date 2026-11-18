@@ -3,9 +3,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { writeManifestAndMenu } from '../build-phases.js';
-import { loadAndExpandSkills, serializeSkill } from '../skill-generator.js';
-
-const REPO_CONFIG_DIR = path.join(import.meta.dirname, '..', '..', '..', 'context');
 
 const URI_SCHEMA = `
 manifest_version: "1.0"
@@ -16,10 +13,10 @@ patterns:
 `;
 
 const skill = (shortId, extra = {}) => ({
-    id: `integration-v2-capture-${shortId}`,
+    id: `logs-${shortId}`,
     shortId,
     name: shortId,
-    group: 'integration-v2/capture',
+    group: 'logs',
     description: `${shortId} description`,
     tags: [],
     ...extra,
@@ -44,64 +41,35 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 describe('writeManifestAndMenu', () => {
-    it('gives a bundled group one menu entry whose download url names the group JSON', () => {
-        write([skill('django', { bundle: true }), skill('nextjs', { bundle: true })]);
+    it('lists every skill in the manifest and on the menu, each pointing at its own zip', () => {
+        write([skill('django'), skill('nextjs')]);
 
-        const [entry] = menuEntries();
-        expect(entry.bundle).toBe(true);
-        expect(entry.downloadUrl).toMatch(/\/integration-v2-capture\.json$/);
-    });
-
-    it('keeps bundled variants out of the manifest while the menu still lists every one', () => {
-        write([skill('django', { bundle: true }), skill('nextjs', { bundle: true })]);
-
-        expect(read('manifest.json').resources).toEqual([]);
-        expect(menuEntries()[0].variants.map(v => v.id).sort()).toEqual([
-            'integration-v2-capture-django',
-            'integration-v2-capture-nextjs',
+        expect(read('manifest.json').resources.map(r => r.id)).toEqual(['logs-django', 'logs-nextjs']);
+        expect(menuEntries().map(entry => entry.downloadUrl)).toEqual([
+            expect.stringMatching(/\/logs-django\.zip$/),
+            expect.stringMatching(/\/logs-nextjs\.zip$/),
         ]);
     });
 
-    it('still points an unbundled skill at its own zip', () => {
-        write([skill('nextjs')]);
-
-        const [entry] = menuEntries();
-        expect(entry.bundle).toBeUndefined();
-        expect(entry.downloadUrl).toMatch(/\/integration-v2-capture-nextjs\.zip$/);
-    });
-
-    it('publishes title, description and tags, adding the served framework, group and default without touching the skill', () => {
-        const rails = skill('rails', { displayName: 'Ruby on Rails', framework: 'rails', default: true, tags: ['ruby-on-rails'] });
+    it('publishes title, description and tags, adding the match keys, group and default without touching the skill', () => {
+        const rails = skill('rails', { displayName: 'Ruby on Rails', match: { framework: 'rails' }, default: true, tags: ['ruby-on-rails'] });
         write([rails]);
 
         const [entry] = menuEntries();
-        expect(entry).toMatchObject({ title: 'Ruby on Rails', description: 'rails description', framework: 'rails', default: true });
-        expect(entry.tags).toEqual(['ruby-on-rails', 'framework:rails', 'integration-v2-capture', 'default']);
+        expect(entry).toMatchObject({ title: 'Ruby on Rails', description: 'rails description' });
+        expect(entry.tags).toEqual(['ruby-on-rails', 'framework:rails', 'logs', 'default']);
         expect(rails.tags).toEqual(['ruby-on-rails']);
     });
 
-    it('publishes metadata on a bundle entry and on each of its variants', () => {
-        write([
-            skill('django', { bundle: true, groupTags: ['capture'], framework: 'django', tags: ['capture', 'python'] }),
-            skill('nextjs', { bundle: true, groupTags: ['capture'], framework: 'nextjs', default: true, tags: ['capture'] }),
-        ]);
+    it('adds no default tag to a skill that is not its group\'s default', () => {
+        write([skill('django', { match: { framework: 'django' } })]);
 
-        const [entry] = menuEntries();
-        expect(entry.tags).toEqual(['capture', 'integration-v2-capture']);
-        expect(entry).not.toHaveProperty('title');
-        expect(entry).not.toHaveProperty('description');
-        expect(entry.variants).toEqual([
-            { id: 'integration-v2-capture-django', framework: 'django', title: 'django', description: 'django description', tags: ['capture', 'python', 'framework:django', 'integration-v2-capture'] },
-            { id: 'integration-v2-capture-nextjs', framework: 'nextjs', default: true, title: 'nextjs', description: 'nextjs description', tags: ['capture', 'framework:nextjs', 'integration-v2-capture', 'default'] },
-        ]);
+        expect(menuEntries()[0].tags).toEqual(['framework:django', 'logs']);
     });
 
-    it('carries the tags a bundled group declares in its config onto its menu entry', () => {
-        const { skills } = loadAndExpandSkills({ configDir: REPO_CONFIG_DIR });
-        writeManifestAndMenu({ allSkills: skills.map(serializeSkill), docContents: {}, distDir: distDir(), configDir: REPO_CONFIG_DIR, version: '1.2.3' });
+    it('says which projects a skill serves in its tags alone', () => {
+        write([skill('rails', { match: { framework: 'rails' }, default: true })]);
 
-        const capture = menuEntries().find(entry => entry.id === 'integration-v2-capture');
-        expect(capture.tags).toEqual(expect.arrayContaining(['capture', 'integration-v2-capture']));
+        expect(Object.keys(menuEntries()[0]).sort()).toEqual(['description', 'downloadUrl', 'id', 'name', 'tags', 'title']);
     });
-
 });

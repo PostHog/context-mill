@@ -176,7 +176,13 @@ function loadSkillsConfig(configDir) {
         const configFile = path.join(dir, 'config.yaml');
         if (fs.existsSync(configFile)) {
             const localConfig = loadYaml(configFile);
-            if (localConfig?.variants || localConfig?.variants_from) {
+            // A config that kept one of these would list no variants of its own and build nothing.
+            for (const key of ['variants_from', 'packaging']) {
+                if (localConfig?.[key] !== undefined) {
+                    throw new Error(`${configFile}: ${key} is no longer read; list the skill's variants under variants`);
+                }
+            }
+            if (localConfig?.variants) {
                 config[keyParts.join('/')] = localConfig;
             }
         }
@@ -230,50 +236,19 @@ function normalizeExamplePaths(value) {
     return Array.isArray(value) ? value : [value];
 }
 
-/**
- * Resolve `variants_from` references: a group may borrow another group's
- * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls, framework, default — never
- * example paths, templates, cli blocks, or shared docs, which stay the
- * borrowing group's own concern. One level only; a source group must declare
- * its variants literally. Pure — returns a new config, never mutates the input.
- */
-function resolveVariantsFrom(config) {
-    const resolved = {};
-    for (const [key, group] of Object.entries(config)) {
-        if (!group.variants_from) {
-            resolved[key] = group;
-            continue;
-        }
-        if (group.variants) {
-            throw new Error(`Skill group "${key}": declare either variants or variants_from, not both`);
-        }
-        const source = config[group.variants_from];
-        if (!source) {
-            throw new Error(`Skill group "${key}": variants_from "${group.variants_from}" does not name a skill group`);
-        }
-        if (source.variants_from) {
-            throw new Error(`Skill group "${key}": variants_from cannot chain ("${group.variants_from}" also uses variants_from)`);
-        }
-        const variants = source.variants.map(v => {
-            const variant = { id: v.id, display_name: v.display_name };
-            if (v.tags) variant.tags = [...v.tags];
-            if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
-            if (v.framework) variant.framework = v.framework;
-            if (v.default) variant.default = v.default;
-            return variant;
-        });
-        // Drop the reference key — the resolved copy declares variants literally.
-        const { variants_from: _from, ...rest } = group;
-        resolved[key] = { ...rest, variants };
-    }
-    return resolved;
-}
-
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** A match key is a trait name as the wizard spells it, such as `framework` or `frameworkVariant`. */
 const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
+
+/** The match key every `match` sets: the framework a variant serves. */
+const FRAMEWORK_KEY = 'framework';
+
+/** A variant's `match` with `framework` first, the order its tags and its `variant.json` are written in. */
+function orderedMatch(match) {
+    const { [FRAMEWORK_KEY]: framework, ...rest } = match;
+    return { [FRAMEWORK_KEY]: framework, ...rest };
+}
 
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
@@ -302,7 +277,8 @@ const isDocEntry = entry =>
 /**
  * Validate a variant table: a group that declares `products`. Each variant lists
  * every product's pages under `docs`, or names the product under `gaps`.
- * `match` is checked on every group, since any variant may declare it.
+ * `match` is checked on every group, since any variant may declare it. It is
+ * the one place a variant says which projects it serves.
  */
 function validateVariantTable(key, group) {
     const products = group.products;
@@ -320,6 +296,9 @@ function validateVariantTable(key, group) {
     }
     for (const variant of group.variants || []) {
         const where = `Skill group "${key}", variant "${variant.id}"`;
+        if (variant.framework !== undefined) {
+            throw new Error(`${where}: name the framework under match, as match: { framework: ${variant.framework} }`);
+        }
         if (variant.match !== undefined) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
@@ -327,8 +306,8 @@ function validateVariantTable(key, group) {
             if (!entries || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
                 throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
             }
-            if (variant.match.framework !== undefined && variant.match.framework !== variant.framework) {
-                throw new Error(`${where}: match.framework "${variant.match.framework}" differs from framework "${variant.framework}"`);
+            if (variant.match[FRAMEWORK_KEY] === undefined) {
+                throw new Error(`${where}: match must name the framework, as match: { framework: … }`);
             }
         }
         if (products === undefined) {
@@ -364,39 +343,26 @@ function validateVariantTable(key, group) {
 }
 
 /**
- * Validate `replaces` and `framework_references`. A group with either is one skill, written once for
- * every framework: `replaces` names the group or skill it stands in for, and `framework_references`
- * names the product whose pages a consumer adds from the framework's pack.
+ * Validate `framework_references`. A group with it is one skill, written once for every framework:
+ * it names the product whose pages a consumer adds from the framework's pack.
  */
-function validateReplacements(config) {
-    const dashed = key => key.replace(/\//g, '-');
-    const names = new Set();
+function validateFrameworkReferences(config) {
     const products = new Set([INTEGRATION_PRODUCT]);
-    // A group's name is also the id of a skill with the one variant `all`. A consumer looks a stand-in up by that name,
-    // so one variant of a group has no stand-in of its own.
-    for (const [key, group] of Object.entries(config)) {
-        names.add(dashed(key));
+    for (const group of Object.values(config)) {
         for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
     }
     for (const [key, group] of Object.entries(config)) {
-        if (group.replaces === undefined && group.framework_references === undefined) continue;
+        if (group.framework_references === undefined) continue;
         const where = `Skill group "${key}"`;
         const single = group.variants?.length === 1 && group.variants[0].id === 'all';
         if (!single) {
-            throw new Error(`${where}: replaces and framework_references need exactly one variant, with id "all"`);
+            throw new Error(`${where}: framework_references needs exactly one variant, with id "all"`);
         }
-        if (group.replaces !== undefined && !names.has(group.replaces)) {
-            throw new Error(`${where}: replaces "${group.replaces}" names no skill group. It cannot name one variant of a group`);
-        }
-        if (group.replaces === dashed(key)) {
-            throw new Error(`${where}: a skill cannot replace itself`);
-        }
-        if (group.framework_references === undefined) continue;
         if (!products.has(group.framework_references)) {
             throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
         }
-        if (group.packaging === 'bundle' || (group.variants[0].docs_urls || []).length > 0) {
-            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs, and is not bundled`);
+        if ((group.variants[0].docs_urls || []).length > 0) {
+            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs`);
         }
     }
 }
@@ -404,14 +370,13 @@ function validateReplacements(config) {
 /**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
- * base properties and a variants array (literal or via variants_from).
+ * base properties and a variants array.
  */
 function expandSkillGroups(config, configDir) {
     const skills = [];
-    const resolvedConfig = resolveVariantsFrom(config);
-    validateReplacements(resolvedConfig);
+    validateFrameworkReferences(config);
 
-    for (const [key, group] of Object.entries(resolvedConfig)) {
+    for (const [key, group] of Object.entries(config)) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
         validateVariantTable(key, group);
@@ -422,8 +387,6 @@ function expandSkillGroups(config, configDir) {
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
         const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
-        // `packaging: bundle` ships the group as one JSON whose variants live inside.
-        const bundled = group.packaging === 'bundle';
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -469,6 +432,7 @@ function expandSkillGroups(config, configDir) {
 
             skills.push({
                 ...variation,
+                ...(variation.match ? { match: orderedMatch(variation.match) } : {}),
                 id: skillId,
                 _shortId: variation.id,
                 _category: category,
@@ -480,12 +444,9 @@ function expandSkillGroups(config, configDir) {
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
                 _products: group.products || null,
-                _replaces: group.replaces || null,
                 _frameworkReferences: group.framework_references || null,
                 _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
-                _bundle: bundled,
-                _groupTags: baseTags,
                 _cli: cli,
             });
         }
@@ -517,19 +478,30 @@ function urlToFilename(url, parts = 1) {
 }
 
 const docUrl = docEntry => (typeof docEntry === 'string' ? docEntry : docEntry.url);
+const chosenFilename = docEntry => (typeof docEntry === 'object' && docEntry.filename) || null;
 
 /**
  * The file name of each page written to one folder, in the pages' order.
- * A page takes the last part of its URL. When two pages share it, each takes
- * its parent part too: `installation/python.md` and `libraries/python.md` become
- * `installation-python.md` and `libraries-python.md`. Throws when two pages
- * still share a name, since the second would replace the first.
+ * A page whose entry names a `filename` takes it: a plain `.md` name other than
+ * `COMMANDMENTS.md`. Any other page takes the last part of its URL. When two such
+ * pages share it, each takes its parent part too: `installation/python.md` and
+ * `libraries/python.md` become `installation-python.md` and `libraries-python.md`.
+ * Throws when two pages still share a name, since the second would replace the first.
  */
 function docFilenames(docEntries, where) {
     const urls = docEntries.map(docUrl);
+    const chosen = docEntries.map(chosenFilename);
+    chosen.forEach((name, i) => {
+        if (name !== null && (!/^[^/\\]+\.md$/.test(name) || name === RULES_REFERENCE.filename)) {
+            throw new Error(`${where}: ${urls[i]} names filename "${name}"; it must be a plain .md name other than ${RULES_REFERENCE.filename}`);
+        }
+    });
     const short = urls.map(url => urlToFilename(url));
-    const names = urls.map((url, i) =>
-        short.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i]);
+    const derived = short.filter((_, i) => chosen[i] === null);
+    const names = urls.map((url, i) => {
+        if (chosen[i] !== null) return chosen[i];
+        return derived.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i];
+    });
     const written = new Map();
     names.forEach((name, i) => {
         if (written.has(name)) {
@@ -911,6 +883,12 @@ async function generateSkill({
     // or `{ url, title }`. fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits are silent.
     async function writeDocs(docEntries, where, subfolder = '') {
         const names = docFilenames(docEntries, where);
+        docEntries.forEach((docEntry, i) => {
+            const filename = path.posix.join(subfolder, names[i]);
+            if (chosenFilename(docEntry) !== null && references.some(ref => ref.filename === filename)) {
+                throw new Error(`${where}: ${docUrl(docEntry)} names filename "${names[i]}", which another reference already uses`);
+            }
+        });
         const written = [];
         for (const [i, docEntry] of docEntries.entries()) {
             const result = await fetchDocFn(docUrl(docEntry));
@@ -971,7 +949,7 @@ async function generateSkill({
         const variant = {
             id: skill._shortId,
             displayName: skill.display_name,
-            match: { ...(skill.framework ? { framework: skill.framework } : {}), ...(skill.match || {}) },
+            match: skill.match ?? {},
             rules: rules.length > 0
                 ? { file: `references/${RULES_REFERENCE.filename}`, description: RULES_REFERENCE.description }
                 : null,
@@ -1022,24 +1000,14 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
-    if (s.framework) {
-        result.framework = s.framework;
-    }
     if (s.default) {
         result.default = true;
     }
     if (s.match) {
         result.match = s.match;
     }
-    if (s._replaces) {
-        result.replaces = s._replaces;
-    }
     if (s._frameworkReferences) {
         result.frameworkReferences = s._frameworkReferences;
-    }
-    if (s._bundle) {
-        result.bundle = true;
-        result.groupTags = s._groupTags || [];
     }
     if (s._cli) {
         result.cli = s._cli;

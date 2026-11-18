@@ -27,7 +27,6 @@ const table = (overrides = {}) => ({
         {
             id: 'app',
             display_name: 'App Router',
-            framework: 'nextjs',
             default: true,
             tags: ['nextjs'],
             docs_urls: [`${PAGE}/libraries/next-js.md`],
@@ -153,12 +152,15 @@ describe('a variant table', () => {
         ['a product with pages that is also a gap', { gaps: ['error-tracking'] }, /also named under gaps/],
         ['pages for a product the group does not list', { docs: { 'error-tracking': [`${PAGE}/a.md`], surveys: [`${PAGE}/b.md`] } }, /surveys is not in the group's products/],
         ['an empty page list', { docs: { 'error-tracking': [] } }, /non-empty list of pages/],
-        ['a match framework that differs from the framework', { match: { framework: 'react' } }, /differs from framework/],
-        ['a match value that is not a string', { match: { frameworkVariant: 4 } }, /match must map/],
-        ['a match key that is not a trait name', { match: { 'framework-variant': 'app-router' } }, /match must map trait names/],
+        ['a framework key beside match', { framework: 'nextjs' }, /name the framework under match/],
+        ['a match that names no framework', { match: { frameworkVariant: 'app-router' } }, /match must name the framework/],
+        ['a match value that is not a string', { match: { framework: 'nextjs', frameworkVariant: 4 } }, /match must map/],
+        ['a match key that is not a trait name', { match: { framework: 'nextjs', 'framework-variant': 'app-router' } }, /match must map trait names/],
         // A match pair is published as a `key:value` tag, so a colon in the value would read as another key.
-        ['a match value with a colon', { match: { frameworkVariant: 'app:router' } }, /match must map trait names/],
+        ['a match value with a colon', { match: { framework: 'nextjs', frameworkVariant: 'app:router' } }, /match must map trait names/],
         ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
+        ['a match that is null', { match: null }, /match must map trait names/],
+        ['an empty match value', { match: { framework: '' } }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
     });
@@ -184,9 +186,9 @@ describe('a variant table', () => {
         expect(() => expand(table({ products }))).toThrow(message);
     });
 
-    it('publishes match as key:value menu tags, after the framework tag', () => {
+    it('publishes match as key:value menu tags, the framework first however the row orders them', () => {
         writeManifestAndMenu({
-            allSkills: expand(table()).map(serializeSkill),
+            allSkills: expand(withVariant({ match: { frameworkVariant: 'app-router', framework: 'nextjs' } })).map(serializeSkill),
             docContents: {},
             distDir: path.join(dir, 'dist'),
             configDir: dir,
@@ -196,7 +198,20 @@ describe('a variant table', () => {
         const [entry] = Object.values(menu.categories).flat();
 
         expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'integration', 'default']);
-        expect(entry).toMatchObject({ framework: 'nextjs', default: true });
+        expect(entry).not.toHaveProperty('framework');
+        expect(entry).not.toHaveProperty('default');
+    });
+});
+
+describe('a skill config', () => {
+    it.each([
+        ['variants_from', 'variants_from: integration\n'],
+        ['packaging', 'packaging: bundle\nvariants:\n  - id: all\n'],
+    ])('is refused when it still sets %s', (key, yaml) => {
+        fs.mkdirSync(path.join(dir, 'skills', 'old-step'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'skills', 'old-step', 'config.yaml'), yaml);
+
+        expect(() => loadSkillsConfig(dir)).toThrow(`${key} is no longer read`);
     });
 });
 
@@ -206,46 +221,30 @@ describe('the integration variant table', () => {
 
     /** The row or step variant a run on `framework` takes: the default, or the first when none is marked. */
     const defaultOf = (rows, framework) => {
-        const family = rows.filter(row => row.framework === framework);
+        const family = rows.filter(row => row.match?.framework === framework);
         return family.find(row => row.default) ?? family[0];
     };
 
-    // A run picks a step skill by framework and takes that family's default. So a framework's default
-    // row lists the pages of the step's default variant, and every other row lists its own variant's.
-    // A step's shared pages are no row's: they ship in the step skill itself.
-    it.each([
-        ['error-tracking', 'integration-v2/error-tracking-step'],
-        ['feature-flags', 'integration-v2/feature-flags-step'],
-    ])("lists each row's own %s pages as the step skill a run on it reads today lists them", (product, group) => {
-        const step = config[group].variants;
-        for (const variant of variants) {
-            const isDefault = variant.framework && defaultOf(variants, variant.framework).id === variant.id;
-            const read = isDefault ? defaultOf(step, variant.framework) : step.find(row => row.id === variant.id);
-            expect(variant.docs[product], variant.id).toEqual(read.docs_urls);
-        }
-    });
-
-    it('lists the 3.7 error tracking page on the default Nuxt row, the page a Nuxt run reads today', () => {
+    it('lists the 3.7 error tracking page on the default Nuxt row, the page a Nuxt run reads', () => {
         const row = defaultOf(variants, 'nuxt');
         expect(row.id).toBe('nuxt-3-6');
-        expect(row.docs['error-tracking']).toEqual(defaultOf(config['integration-v2/error-tracking-step'].variants, 'nuxt').docs_urls);
         expect(row.docs['error-tracking']).toEqual([`${PAGE}/error-tracking/installation/nuxt-3-7.md`]);
     });
 
     it('names a framework variant only within a framework that has several', () => {
         const families = {};
         for (const variant of variants) {
-            if (variant.framework) (families[variant.framework] ??= []).push(variant);
+            if (variant.match) (families[variant.match.framework] ??= []).push(variant);
         }
         for (const variant of variants.filter(v => v.match?.frameworkVariant)) {
-            expect(families[variant.framework].length, variant.id).toBeGreaterThan(1);
+            expect(families[variant.match.framework].length, variant.id).toBeGreaterThan(1);
         }
     });
 
     it('gives no two rows of a framework the same framework variant', () => {
         const seen = new Set();
         for (const variant of variants.filter(v => v.match?.frameworkVariant)) {
-            const key = `${variant.framework}:${variant.match.frameworkVariant}`;
+            const key = `${variant.match.framework}:${variant.match.frameworkVariant}`;
             expect(seen.has(key), key).toBe(false);
             seen.add(key);
         }
