@@ -36,10 +36,12 @@ and it is the source the report reads later.
 
 ## Instrument
 
-For each event call the SDK's capture method on the real user action — the click
-or submit handler, the server action — not on render or page load. Use clear
-`lower_snake_case` names and useful properties. Edit each file while it is already
-open.
+For each event call the SDK's capture method on the real user action, where it
+completes, not on render or page load. An action that finishes on the server — a
+server action, an API route, a webhook — is captured there with the server SDK;
+the click or submit handler that started it only shows the attempt. An action that
+lives in the browser is captured in its handler. Use clear `lower_snake_case`
+names and useful properties. Edit each file while it is already open.
 
 Server-side, use the authenticated user's id as the distinct id. For a genuinely
 unauthenticated action, emit a personless event — never fabricate a placeholder
