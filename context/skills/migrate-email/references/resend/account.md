@@ -34,11 +34,11 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 ## Open tracking
 
-Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking is on: this asks about Resend's setting, never whether PostHog may add its pixel. Off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track".
+Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking and click tracking are on, in one question: this asks about Resend's settings, never whether PostHog may add its pixel. For opens, off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track".
 
 ## Click tracking
 
-Resend tracks clicks per sending domain, only when click tracking is on for it: Domains, then the domain, then Configuration. When a site moves to a template made in PostHog, ask the person once, for each sending domain of such sites, whether click tracking is on. Off means Resend didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog".
+Resend tracks clicks per sending domain, only when click tracking is on for it: Domains, then the domain, then Configuration. The question under "Open tracking" asks about it too. Off means Resend didn't track the site's clicks, and no answer means nobody knows. A site that moves to a template made in PostHog uses the answer as Step 3 says under "A template in PostHog". A code send counts no clicks in PostHog, so when the domain tracks clicks, note in the plan and the report that PostHog doesn't count these emails' clicks, as `mapping.md` says.
 
 ## Suppression list
 
