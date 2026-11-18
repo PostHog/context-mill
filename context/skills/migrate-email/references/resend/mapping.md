@@ -93,7 +93,7 @@ Resend stops sending email events for a site that moves. PostHog records the eve
 | `email.bounced` | `$workflows_email_bounced` |
 | `email.complained` | `$workflows_email_blocked` |
 | `email.opened` | `$workflows_email_opened` |
-| `email.clicked` | `$workflows_email_link_clicked`, only when PostHog tracks the email's clicks: for a template made in PostHog that is not marked sensitive, or a code send whose tracking leaves clicks on, as the table in Step 7 under "Sensitive emails and tracking" says. Step 7 marks every code send sensitive and never turns `clicks` on, so its links go out as they are, and PostHog counts no clicks |
+| `email.clicked` | `$workflows_email_link_clicked`, only when PostHog tracks the email's clicks: for a template made in PostHog that is not marked sensitive and with tracking on, or a code send whose tracking leaves clicks on, as the table in Step 7 under "Sensitive emails and tracking" says. Step 7 marks every code send sensitive and never turns `clicks` on, so its links go out as they are, and PostHog counts no clicks |
 | Every other email event, such as `email.delivery_delayed` | none |
 
 PostHog's events carry no Resend `email_id` and no `tags`. A site whose events a handler matches by `email_id` or by a tag stays on Resend. For every other handler, the report tells the person which events it handles, which PostHog events take their place, and that a webhook destination in PostHog (Data pipelines, then Destinations) can post them to an endpoint. The handler itself keeps working for the sites that stay. Never change it.
