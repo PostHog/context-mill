@@ -19,19 +19,11 @@ const skillMenu = (base = VERSIONED, version = VERSION) => ({
     cliEntries: [],
 });
 
-const agentMenu = (base = VERSIONED, version = VERSION) => ({
-    version: '1.0',
-    buildVersion: version,
-    agents: [{ id: 'report', flow: 'integration-v2', downloadUrl: `${base}/agents-report.md` }],
-});
-
 /** An in-memory mirror over a fake fetch. `origin` is where requests must arrive. */
 function makeMirror({ origin = HOST, menus = {}, overrides = {}, omitFromSums = [] } = {}) {
     const bodies = {
         'skill-menu.json': JSON.stringify(menus.skill ?? skillMenu()),
-        'agent-menu.json': JSON.stringify(menus.agent ?? agentMenu()),
         'audit-events.zip': 'ZIPBYTES',
-        'agents-report.md': '# report',
     };
     const sums = Object.entries(bodies)
         .filter(([name]) => !omitFromSums.includes(name))
@@ -77,7 +69,7 @@ describe('verifyMirror', () => {
         const result = await run({ fetchImpl });
         expect(result.failures).toEqual([]);
         expect(result.ok).toBe(true);
-        expect(result.checked).toBe(4);
+        expect(result.checked).toBe(2);
     });
 
     it('probes every object in SHA256SUMS, not just the ones a menu references', async () => {
@@ -113,14 +105,6 @@ describe('verifyMirror', () => {
         ]);
     });
 
-    it('fails when the two menus disagree about the version', async () => {
-        const { fetchImpl } = makeMirror({
-            menus: { agent: agentMenu(VERSIONED, '1.49.0') },
-        });
-        const result = await run({ fetchImpl });
-        expect(result.failures.join(' ')).toContain('menus disagree on version');
-    });
-
     it('fails when a referenced file is absent from SHA256SUMS', async () => {
         const { fetchImpl } = makeMirror({ omitFromSums: ['audit-events.zip'] });
         const result = await run({ fetchImpl });
@@ -141,11 +125,11 @@ describe('verifyMirror', () => {
         expect(result.failures.join(' ')).toContain('checksum mismatch for audit-events.zip');
     });
 
-    it('fails loudly when a menu is missing rather than reporting success', async () => {
-        const { fetchImpl } = makeMirror({ overrides: { 'agent-menu.json': { status: 404 } } });
+    it('fails loudly when the menu is missing rather than reporting success', async () => {
+        const { fetchImpl } = makeMirror({ overrides: { 'skill-menu.json': { status: 404 } } });
         const result = await run({ fetchImpl });
         expect(result.ok).toBe(false);
-        expect(result.failures.join(' ')).toContain('agent-menu.json: expected 200, got 404');
+        expect(result.failures.join(' ')).toContain('skill-menu.json: expected 200, got 404');
     });
 
     it('fails when a menu is served but is not valid JSON', async () => {
@@ -170,7 +154,7 @@ describe('verifyMirror', () => {
     it('verifies a dry-run prefix, where the prefix and the version differ on purpose', async () => {
         const dryRunBase = `${HOST}/v0.0.0-dryrun-42`;
         const { fetchImpl } = makeMirror({
-            menus: { skill: skillMenu(dryRunBase), agent: agentMenu(dryRunBase) },
+            menus: { skill: skillMenu(dryRunBase) },
         });
         // URLs declare the dry-run prefix while the fake serves the versioned one.
         const result = await verifyMirror({

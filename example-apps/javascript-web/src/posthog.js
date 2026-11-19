@@ -10,13 +10,13 @@ const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 if (!projectToken) {
-  console.warn(
-    'PostHog not configured (VITE_POSTHOG_PROJECT_TOKEN not set).',
-    'App will work but analytics will not be tracked.',
-  );
+  if (import.meta.env.DEV) {
+    console.warn('VITE_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
+  }
 } else {
   posthog.init(projectToken, {
     api_host: apiHost,
+    defaults: '2026-08-30',
     // Autocapture is ON by default — tracks clicks, form submissions, pageviews
     // capture_pageview: true (default) — captures $pageview on init
     // For SPAs with History API routing, use: capture_pageview: 'history_change'

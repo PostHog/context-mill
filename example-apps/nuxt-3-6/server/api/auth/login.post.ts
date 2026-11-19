@@ -32,8 +32,9 @@ export default defineEventHandler(async (event) => {
 
   const posthog = new PostHog(
     runtimeConfig.public.posthog.publicKey,
-    { 
-      host: runtimeConfig.public.posthog.host, 
+    {
+      host: runtimeConfig.public.posthog.host,
+      disabled: !runtimeConfig.public.posthog.publicKey,
     }
   )
 

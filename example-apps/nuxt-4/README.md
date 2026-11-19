@@ -39,7 +39,7 @@ PROJECT_ID=your_project_id
 PERSONAL_API_KEY=your_personal_api_key
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and boots: in development `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, and the server-side client is disabled.
 
 For source map uploads, get your project ID from [PostHog environment variables](https://app.posthog.com/settings/environment#variables) and your personal API key from [PostHog user API keys](https://app.posthog.com/settings/user-api-keys) (requires `organization:read` and `error_tracking:write` scopes).
 
@@ -79,6 +79,9 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 │   │   │   └── login.post.ts     # Login API with server-side tracking
 │   │   └── burrito/
 │   │       └── consider.post.ts  # Burrito consideration API with server-side tracking
+│   ├── routes/
+│   │   └── burrito-relay/
+│   │       └── [...path].ts      # Reverse proxy to PostHog
 │   └── utils/
 │       ├── posthog.ts            # Server-side PostHog utility
 │       └── users.ts              # In-memory user storage utilities
@@ -107,6 +110,9 @@ export default defineNuxtConfig({
     publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '',
     host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
     clientConfig: {
+      api_host: '/burrito-relay', // Reverse proxy, see below
+      ui_host: 'https://us.posthog.com',
+      defaults: '2026-08-30',
       capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)
       tracing_headers: ['localhost', 'yourdomain.com'], // Add your domain here
     },
@@ -114,7 +120,7 @@ export default defineNuxtConfig({
       enableExceptionAutocapture: true, // Enables automatic exception capture on the server side (Nitro)
     },
     sourcemaps: {
-      enabled: true,
+      enabled: Boolean(process.env.PERSONAL_API_KEY),
       envId: process.env.PROJECT_ID || '',
       personalApiKey: process.env.PERSONAL_API_KEY || '',
       project: 'my-application',
@@ -353,6 +359,12 @@ This ensures a single PostHog client instance is reused across all server reques
 - **Simplified API**: Uses `usePostHog()` composable instead of `useNuxtApp().$posthog`
 - **Shared server client**: Reuses PostHog Node client across requests instead of creating per-request
 - **Automatic imports**: In Nuxt 4 server routes, h3 functions (`defineEventHandler`, `readBody`, `createError`, `getHeader`, etc.) are auto-imported - no need to import them explicitly
+
+## Reverse proxy
+
+Ad blockers drop events sent to PostHog's domain. This example sends events to its own domain instead: the server route in `server/routes/burrito-relay/[...path].ts` forwards them to PostHog, and the client sets `api_host` to `/burrito-relay` and `ui_host` to your PostHog app URL so toolbar links still work. The route and `ui_host` follow the region in `NUXT_PUBLIC_POSTHOG_HOST`, so setting it to `https://eu.i.posthog.com` sends events to EU Cloud through `eu.i.posthog.com` and `eu-assets.i.posthog.com`. The proxy path is arbitrary, so pick your own and avoid names like `/posthog` or `/analytics`.
+
+Server routes don't exist with `nuxt generate`, and all PostHog traffic passes through your deployment. If your app can't proxy itself, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), which is free for PostHog Cloud users.
 
 ## Learn More
 

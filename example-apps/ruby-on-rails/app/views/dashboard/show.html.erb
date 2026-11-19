@@ -42,18 +42,15 @@
 
 <div class="card">
     <h3>How feature flags work</h3>
-    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># Check if a feature flag is enabled
-show_feature = PostHog.is_feature_enabled(
-  'new-dashboard-feature',
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># Evaluate flags once, then read from the snapshot
+flags = PostHog.evaluate_flags(
   user.posthog_distinct_id,
   person_properties: user.posthog_properties
 )
+show_feature = flags.enabled?('new-dashboard-feature')
 
 # Get feature flag payload for configuration
-config = PostHog.get_feature_flag_payload(
-  'new-dashboard-feature',
-  user.posthog_distinct_id
-)</code></pre>
+config = flags.get_flag_payload('new-dashboard-feature')</code></pre>
 </div>
 
 <% content_for :scripts do %>

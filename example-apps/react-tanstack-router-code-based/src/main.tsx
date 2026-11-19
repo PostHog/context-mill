@@ -25,37 +25,51 @@ const rootRoute = createRootRoute({
   component: RootComponent,
 })
 
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+
+if (!posthogToken && import.meta.env.DEV) {
+  console.warn(
+    'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.',
+  )
+}
+
 function RootComponent() {
-  return (
+  const app = (
+    <AuthProvider>
+      <Header />
+      <main>
+        <Outlet />
+      </main>
+      <TanStackDevtools
+        config={{
+          position: 'bottom-right',
+        }}
+        plugins={[
+          {
+            name: 'Tanstack Router',
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
+      />
+    </AuthProvider>
+  )
+
+  return posthogToken ? (
     <PostHogProvider
-      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!}
+      apiKey={posthogToken}
       options={{
-        api_host: '/ingest',
-        ui_host:
-          import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
-        defaults: '2026-01-30',
+        api_host:
+          import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
+          'https://us.i.posthog.com',
+        defaults: '2026-08-30',
         capture_exceptions: true,
         debug: import.meta.env.DEV,
       }}
     >
-      <AuthProvider>
-        <Header />
-        <main>
-          <Outlet />
-        </main>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
-      </AuthProvider>
+      {app}
     </PostHogProvider>
+  ) : (
+    app
   )
 }
 
@@ -231,7 +245,8 @@ function BurritoPage() {
 
         {hasConsidered && (
           <p className="success">
-            Thank you for your consideration! Count: {user.burritoConsiderations}
+            Thank you for your consideration! Count:{' '}
+            {user.burritoConsiderations}
           </p>
         )}
       </div>
@@ -324,7 +339,11 @@ function ProfilePage() {
 // Route Tree & Router Setup
 // ============================================================================
 
-const routeTree = rootRoute.addChildren([indexRoute, burritoRoute, profileRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  burritoRoute,
+  profileRoute,
+])
 
 const router = createRouter({
   routeTree,

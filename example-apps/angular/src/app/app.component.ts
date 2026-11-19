@@ -25,12 +25,18 @@ export class AppComponent implements OnInit {
   private readonly posthogService = inject(PostHogService);
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (environment.posthogKey) {
       this.posthogService.init(environment.posthogKey, {
-        api_host: '/ingest',
-        ui_host: environment.posthogHost || 'https://us.posthog.com',
+        api_host: environment.posthogHost,
+        defaults: '2026-08-30',
         capture_exceptions: true,
       });
+    } else if (!environment.production) {
+      console.warn('NG_APP_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
     }
   }
 }

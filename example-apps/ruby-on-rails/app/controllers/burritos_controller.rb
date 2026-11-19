@@ -11,12 +11,7 @@ class BurritosController < ApplicationController
 
     user = current_user
 
-    # PostHog: Track custom event
-    PostHog.identify(
-      distinct_id: user.posthog_distinct_id,
-      properties: user.posthog_properties
-    )
-
+    # PostHog: Track custom event. The user was identified at login or signup.
     PostHog.capture(
       distinct_id: user.posthog_distinct_id,
       event: 'burrito_considered',

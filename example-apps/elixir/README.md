@@ -5,7 +5,7 @@ This is a [Phoenix](https://www.phoenixframework.org/) example demonstrating Pos
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with users via the `distinct_id` on capture
+- **User identification**: Associate events with users via the `distinct_id` on capture; signed-out visitors get a per-visit random id and personless events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
 - **Error tracking**: Automatic exception + `Logger.error` capture (built into the SDK)
 - **Server-side tracking**: All tracking happens server-side with the Elixir SDK
@@ -70,6 +70,28 @@ elixir/
             └── error_html.ex         # Error pages
 ```
 
+## What the integration sets up for you
+
+From the SDK docs (https://posthog.com/docs/libraries/elixir):
+
+**Automatic**
+
+- The SDK starts and supervises its own client when `config :posthog, enable: true`, and attaches a logger handler. You add nothing to your supervision tree.
+- Events are batched and sent by a background job.
+- Error tracking is on by default: uncaught exceptions and `Logger.error` calls are captured (turn it off with `enable_error_tracking: false`).
+- `PostHog.Integrations.Plug` adds `$current_url`, `$host`, `$pathname`, `$request_method`, `$user_agent` and `$ip` to events captured during a request, and reads the `X-PostHog-Distinct-Id` and `X-PostHog-Session-Id` headers as default context.
+- Context set with `PostHog.set_context/1` is stored in `Logger` metadata and attached to events captured in the same process.
+
+**Still done by the app**
+
+- Capturing every event with `PostHog.capture/2`; the plug captures nothing by itself.
+- Choosing the `distinct_id` (signed-in id, or a per-visitor UUID) and passing it or putting it in context.
+- Evaluating feature flags with `PostHog.FeatureFlags.evaluate_flags/1`.
+- Reading the token and host from the environment in `config/runtime.exs`.
+- A missing token: the SDK itself logs a warning and starts in disabled/no-op mode, and `application.ex` adds a warning naming `POSTHOG_PROJECT_TOKEN`. The app still boots.
+
+This example loads no browser SDK, so there is no `posthog-js` or reverse proxy setup here. If you add `posthog-js`, set `defaults: '2026-08-30'` and see the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md).
+
 ## Key integration points
 
 ### Configuration from the environment (config/runtime.exs)
@@ -103,9 +125,9 @@ plug PostHog.Integrations.Plug
 plug PostHogExampleWeb.Router
 ```
 
-### User identification (lib/posthog_example_web/controllers/burrito_controller.ex)
+### User identification and signed-out visitors (lib/posthog_example_web/controllers/burrito_controller.ex)
 
-The Elixir SDK has no separate server-side `identify` step — you identify a user by passing their `distinct_id` on `capture`. It must match the id your frontend `posthog.identify(...)` uses so both sides attach to the same person.
+The Elixir SDK has no separate server-side `identify` step. You identify a user by passing their `distinct_id` on `capture`. It must match the id your frontend `posthog.identify(...)` uses so both sides attach to the same person.
 
 ```elixir
 PostHog.capture("user_logged_in", %{
@@ -113,6 +135,13 @@ PostHog.capture("user_logged_in", %{
   login_method: "email"
 })
 ```
+
+A `plug :assign_identity` in the controller picks the id for every request:
+
+- **Signed in**: the stable id stored in the session at login.
+- **Signed out**: a random UUID generated once and kept in the session (`:visitor_id`), so it is reused for the whole visit. Each visitor gets their own id; a shared literal such as `"anonymous"` would merge every signed-out visitor into one person.
+
+Events from signed-out visitors carry `$process_person_profile: false`, so PostHog stores them without creating a person profile ([anonymous vs identified events](https://posthog.com/docs/data/anonymous-vs-identified-events.md)). The plug also calls `PostHog.set_context/1` with the same `distinct_id` (and the personless flag), so events and errors the SDK captures later in the request use it too. Feature-flag checks use the same id, signed in or not.
 
 ### Event tracking (lib/posthog_example_web/controllers/burrito_controller.ex)
 
