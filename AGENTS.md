@@ -20,6 +20,7 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 | Skill descriptor / CLI role declarations | `context/skills/<name>/config.yaml` |
 | Build pipeline | `scripts/lib/` (skill generator, build phases, change router) |
 | Build entrypoints | `scripts/build.js` (full) and `scripts/dev-server.js` (partial / watch) |
+| What the wizard picks skills with (detected frameworks, task-named skills) | `scripts/lib/wizard-skill-picks.js`, read by the [resolvability check](README.md#the-resolvability-check) |
 | Tests | `scripts/lib/tests/` and `scripts/plugins/tests/` (vitest) |
 | Manifest output | `dist/skills/manifest.json`, `dist/skills/skill-menu.json` (CLI entries live under `cliEntries`) |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |

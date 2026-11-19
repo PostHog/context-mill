@@ -148,6 +148,34 @@ placeholders for the consumer to fill from the framework's pack:
 The consumer copies those pages and the rules file into the skill's
 `references/`. `scripts/lib/skill-composition.js` is the reference for that.
 
+### The resolvability check
+
+The wizard picks a run's skill by menu id or by skill family, a category key
+with `/` as `-`. A family pick takes the run's match keys, such as
+`framework:nextjs`. It keeps the family's entries that carry a `framework:` tag,
+drops any whose `key:value` tag disagrees with the run, and takes the entry
+with the most agreeing tags, then the `default` tag, then menu order. A key
+the run has no value for never disagrees.
+
+`npm run build` runs that pick over the built `skill-menu.json`:
+
+- The build fails when a framework the wizard detects resolves no skill in a
+  family a run picks from. The error names every such family and framework.
+- The build warns for each entry of such a family that no pick reaches: it has
+  no `framework:` tag, it names a framework the wizard does not detect, or
+  another entry outranks it on every run. A run is a detected framework with
+  any value, or none, for each other match key the family's tags name. The
+  entry is still served by its id.
+
+The families a run picks from are the skills a wizard task names that are no
+menu id, and `integration`, the family a step skill's framework pack comes
+from.
+
+`scripts/lib/wizard-skill-picks.js` states what the wizard picks with: the
+frameworks it detects, the skills its tasks name and the pack family. Update
+it when the wizard adds a framework or a task names another skill. The check
+is `scripts/lib/skill-resolvability.js`.
+
 ### Manifest structure
 
 The manifest describes the built skills — one resource per skill, with `id`,
