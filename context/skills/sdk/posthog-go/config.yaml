@@ -9,7 +9,7 @@ variants:
     display_name: 1.x.x
     template: ../non-default-major.md
     tags: [sdk-go-1]
-    match: { sdkGo: "1" }
+    match: { sdkGo: ["1"] }
     docs_urls:
       - https://posthog.com/docs/libraries/go/1.x.x.md
       - https://posthog.com/docs/libraries/go/migration.md
@@ -19,6 +19,6 @@ variants:
     display_name: 2.x.x
     template: ../default-major.md
     tags: [sdk-go-2]
-    match: { sdkGo: "2" }
+    match: { sdkGo: ["2"] }
     docs_urls:
       - https://posthog.com/docs/libraries/go/2.x.x.md

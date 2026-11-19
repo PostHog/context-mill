@@ -161,8 +161,22 @@ describe('a variant table', () => {
         ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
         ['a match that is null', { match: null }, /match must map trait names/],
         ['an empty match value', { match: { framework: '' } }, /match must map trait names/],
+        ['an empty list of match values', { match: { framework: 'nextjs', frameworkVariant: [] } }, /match must map trait names/],
+        ['a match list with a member that is not a string', { match: { framework: 'nextjs', frameworkVariant: ['app-router', 4] } }, /match must map trait names/],
+        ['a match list with an empty member', { match: { framework: 'nextjs', frameworkVariant: ['app-router', ''] } }, /match must map trait names/],
+        ['a match list with a member that has a colon', { match: { framework: 'nextjs', frameworkVariant: ['app-router', 'pages:router'] } }, /match must map trait names/],
+        ['a match list that holds a list', { match: { framework: 'nextjs', frameworkVariant: [['app-router']] } }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
+    });
+
+    it('accepts a list of match values and keeps it through expansion and variant.json', async () => {
+        const match = { framework: 'nextjs', frameworkVariant: ['app-router', 'pages-router'] };
+        const [skill] = expand(withVariant({ match }));
+        expect(skill.match).toEqual(match);
+        expect(serializeSkill(skill).match).toEqual(match);
+        const files = await build(withVariant({ match }));
+        expect(JSON.parse(files[VARIANT_FILE]).match).toEqual(match);
     });
 
     it('accepts a product a variant declares as a gap', () => {
@@ -192,6 +206,21 @@ describe('a variant table', () => {
         ['products that are not a list', 'error-tracking', /must be a list of kebab-case names/],
     ])('rejects %s', (_, products, message) => {
         expect(() => expand(table({ products }))).toThrow(message);
+    });
+
+    it('publishes one menu tag per value of a match list, in order, beside single-string keys', () => {
+        writeManifestAndMenu({
+            allSkills: expand(withVariant({ match: { frameworkVariant: ['app-router', 'pages-router'], framework: 'nextjs' } })).map(serializeSkill),
+            docContents: {},
+            distDir: path.join(dir, 'dist'),
+            configDir: dir,
+            version: '1.2.3',
+        });
+        const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
+        const [entry] = Object.values(menu.categories).flat();
+
+        expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'frameworkVariant:pages-router', 'integration', 'default']);
+        expect(entry.tags.some(tag => tag.includes('['))).toBe(false);
     });
 
     it('publishes match as key:value menu tags, the framework first however the row orders them', () => {

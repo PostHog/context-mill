@@ -254,6 +254,12 @@ function orderedMatch(match) {
     return { [FRAMEWORK_KEY]: framework, ...rest };
 }
 
+/** The majors a variant's `match` serves, as the skill text says them: "major 1" or "majors 3, 4, 5, 6, 7". */
+function supportedVersionsText(match) {
+    const values = Object.values(match || {}).flat();
+    return `${values.length === 1 ? 'major' : 'majors'} ${values.join(', ')}`;
+}
+
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
 const VARIANT_FILE = 'variant.json';
 
@@ -310,8 +316,9 @@ function validateVariantTable(key, group) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
                 : null;
-            if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
-                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
+            const validValue = v => typeof v === 'string' && v.length > 0 && !v.includes(':');
+            if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || !(Array.isArray(v) ? v.length > 0 && v.every(validValue) : validValue(v)))) {
+                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings or non-empty lists of strings`);
             }
             const needsFramework = products !== undefined || groupUsesFramework || variant.match.frameworkVariant !== undefined;
             if (needsFramework && variant.match[FRAMEWORK_KEY] === undefined) {
@@ -1038,6 +1045,7 @@ async function generateSkill({
     // Apply template substitutions
     let body = skillTemplate
         .replace(/{display_name}/g, skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name)
+        .replace(/{supported_versions}/g, supportedVersionsText(skill.match))
         .replace(/{references}/g, referencesText)
         .replace(/{commandments}/g, commandmentsText)
         .replace(/{workflow}/g, workflowText)

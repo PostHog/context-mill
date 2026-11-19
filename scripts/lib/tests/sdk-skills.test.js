@@ -421,7 +421,7 @@ describe('non-framework SDK skill groups', () => {
                 display_name: '7.x.x',
                 template: '../non-default-major.md',
                 tags: ['sdk-python-7'],
-                match: { sdkPython: '7' },
+                match: { sdkPython: ['6', '7'] },
                 docs_urls: [
                     'https://posthog.com/docs/libraries/python/7.x.x.md',
                     'https://posthog.com/docs/libraries/python/migration.md',
@@ -443,7 +443,7 @@ describe('non-framework SDK skill groups', () => {
         fs.mkdirSync(path.join(dir, 'skills', 'sdk', 'posthog-python'), { recursive: true });
         fs.writeFileSync(
             path.join(dir, 'skills', 'sdk', 'non-default-major.md'),
-            '# {display_name}\n\n{references}\n\n## Rules\n{commandments}\n\n## Watchlist\n{migration_checklist}\n',
+            '# {display_name}\n\nSupports {supported_versions}.\n\n{references}\n\n## Rules\n{commandments}\n\n## Watchlist\n{migration_checklist}\n',
         );
         fs.writeFileSync(
             path.join(dir, 'skills', 'sdk', 'default-major.md'),
@@ -454,7 +454,8 @@ describe('non-framework SDK skill groups', () => {
     it('accepts exact-major match keys without requiring framework and preserves match order without framework: undefined', () => {
         const skills = expandSkillGroups({ 'sdk/posthog-python': sdkGroup }, dir);
         expect(skills.map((s) => s.id)).toEqual(['sdk-posthog-python-v7', 'sdk-posthog-python-v8']);
-        expect(skills[0].match).toEqual({ sdkPython: '7' });
+        expect(skills[0].match).toEqual({ sdkPython: ['6', '7'] });
+        expect(skills[1].match).toEqual({ sdkPython: '8' });
         expect('framework' in skills[0].match).toBe(false);
     });
 
@@ -513,7 +514,7 @@ describe('non-framework SDK skill groups', () => {
         const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
         const entries = menu.categories['sdk/posthog-python'];
         expect(entries.map((e) => e.tags)).toEqual([
-            ['sdk-python-7', 'sdkPython:7', 'sdk-posthog-python'],
+            ['sdk-python-7', 'sdkPython:6', 'sdkPython:7', 'sdk-posthog-python'],
             ['sdk-python-8', 'sdkPython:8', 'sdk-posthog-python', 'default'],
         ]);
     });
@@ -569,7 +570,7 @@ describe('non-framework SDK skill groups', () => {
 function assertTagRules(text, tag) {
     switch (tag) {
         case 'sdk-python-7':
-            expect(text).toContain('posthog>=7,<8');
+            expect(text).toContain('posthog>=3,<8');
             expect(text).toContain('never upgrade to `8.x`');
             expect(text).toContain('posthog>=7.62.0,<8');
             expect(text).toContain('posthog.mcp');
@@ -583,9 +584,9 @@ function assertTagRules(text, tag) {
             expect(text).toContain('900 KiB');
             expect(text).toContain('references/7.x.x.md');
             expect(text).toContain('Client(api_key, host=...)');
-            expect(text).toContain('Supported Python 7.x range: `posthog>=7,<8`. Reuse existing client initialization and never upgrade');
-            expect(text).toContain('MCP analytics (`posthog.mcp`): requires `posthog>=7.62.0,<8`. If range-bounded below 7.62.0, raise floor to `>=7.62.0,<8`; if hard-pinned below 7.62.0, keep pin and hand off naming `>=7.62.0`');
-            expect(text).toContain('Framework exception middleware (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`): requires `posthog>=7.69.0,<8`. If range-bounded below 7.69.0, raise floor to `>=7.69.0,<8`; if hard-pinned below 7.69.0, keep pin and fall back to manual `capture_exception(...)`');
+            expect(text).toContain('Supported Python range: `posthog>=3,<8`. Reuse existing client initialization, stay on the installed major and never upgrade to `8.x`.');
+            expect(text).toContain('MCP analytics (`posthog.mcp`): requires `posthog>=7.62.0,<8`. If the installed major is below 7, keep it and hand off naming `>=7.62.0`; if on 7.x range-bounded below 7.62.0, raise floor to `>=7.62.0,<8`; if hard-pinned below 7.62.0, keep pin and hand off naming `>=7.62.0`');
+            expect(text).toContain('Framework exception middleware (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`): requires `posthog>=7.69.0,<8`. If the installed major is below 7, keep it and fall back to manual `capture_exception(...)`; if on 7.x range-bounded below 7.69.0, raise floor to `>=7.69.0,<8`; if hard-pinned below 7.69.0, keep pin and fall back to manual `capture_exception(...)`');
             expect(text).toContain('Feature floor — `openfeature-provider-posthog`: `0.1.x` supports');
             expect(text).toContain('exist in recent `7.x` releases. Use them instead of `capture()` for AI events over 900 KiB');
             expect(text).toContain('`capture()` with `$ai_*` or `posthog.ai` works across `7.x`');
@@ -624,11 +625,11 @@ function assertTagRules(text, tag) {
             expect(text).not.toMatch(/captureException\(err,\s*distinctId\)[^.\n]*fails/i);
             expect(text).toContain('@posthog/mcp@^1.3.0');
             expect(text).toContain('>=0.18.0');
-            expect(text).toContain('Supported Node.js 5.x range: `posthog-node@^5` (`>=5.0.0 <6.0.0`). Stay on `5.x`, reuse existing `new PostHog(...)`');
+            expect(text).toContain('Supported Node.js range: `posthog-node` 4.x or 5.x (`>=4.0.0 <6.0.0`). Stay on the installed major, reuse existing `new PostHog(...)`, and never upgrade to `6.x`.');
             expect(text).toContain('Exception capture signature: on 5.x, call positional `client.captureException(error, distinctId, additionalProperties)`');
             expect(text).toContain('(it fails TypeScript on 5.x or sends the object as `distinctId`)');
             expect(text).toContain('both `@posthog/mcp@^1.3.0` (floor `>=0.18.0`) and `@posthog/ai@^8.21.0` declare `peerDependencies: { "posthog-node": "^5.0.0 || ^6.0.0" }`');
-            expect(text).toContain('work cleanly with `posthog-node@^5` without crossing majors');
+            expect(text).toContain('work cleanly with `posthog-node@^5` without crossing majors; on `4.x` do not install them, and report `posthog-node@^5` as their minimum.');
             expect(text).toContain('`@posthog/convex`, `@posthog/next`, and `@posthog/nuxt` also target 5.x');
             expect(text).toContain('@posthog/ai@^8.21.0');
             break;
@@ -752,8 +753,8 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             'sdkPython',
             '/docs/libraries/python/',
             [
-                { shortId: 'v7', major: '7', tag: 'sdk-python-7', isDefault: false },
-                { shortId: 'v8', major: '8', tag: 'sdk-python-8', isDefault: true },
+                { shortId: 'v7', major: '7', supported: ['3', '4', '5', '6', '7'], tag: 'sdk-python-7', isDefault: false },
+                { shortId: 'v8', major: '8', supported: ['8'], tag: 'sdk-python-8', isDefault: true },
             ],
         ],
         [
@@ -761,8 +762,8 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             'sdkNode',
             '/docs/libraries/node/',
             [
-                { shortId: 'v5', major: '5', tag: 'sdk-node-5', isDefault: false },
-                { shortId: 'v6', major: '6', tag: 'sdk-node-6', isDefault: true },
+                { shortId: 'v5', major: '5', supported: ['4', '5'], tag: 'sdk-node-5', isDefault: false },
+                { shortId: 'v6', major: '6', supported: ['6'], tag: 'sdk-node-6', isDefault: true },
             ],
         ],
         [
@@ -770,8 +771,8 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             'sdkGo',
             '/docs/libraries/go/',
             [
-                { shortId: 'v1', major: '1', tag: 'sdk-go-1', isDefault: false },
-                { shortId: 'v2', major: '2', tag: 'sdk-go-2', isDefault: true },
+                { shortId: 'v1', major: '1', tag: 'sdk-go-1', supported: ['1'], isDefault: false },
+                { shortId: 'v2', major: '2', tag: 'sdk-go-2', supported: ['2'], isDefault: true },
             ],
         ],
         [
@@ -779,8 +780,8 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             'sdkRust',
             '/docs/libraries/rust/',
             [
-                { shortId: 'v0', major: '0', tag: 'sdk-rust-0', isDefault: false },
-                { shortId: 'v1', major: '1', tag: 'sdk-rust-1', isDefault: true },
+                { shortId: 'v0', major: '0', supported: ['0'], tag: 'sdk-rust-0', isDefault: false },
+                { shortId: 'v1', major: '1', tag: 'sdk-rust-1', supported: ['1'], isDefault: true },
             ],
         ],
     ])('%s defines exact majors with tags, one default, docs_urls, and rendered SKILL.md output', async (groupKey, matchKey, docsPathPrefix, expectedVariants) => {
@@ -797,7 +798,8 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             const s = groupSkills[index];
             expect(s._cli).toEqual({ role: 'internal' });
             expect(Boolean(s.default)).toBe(spec.isDefault);
-            expect(s.match).toEqual({ [matchKey]: spec.major });
+            expect(s.match).toEqual({ [matchKey]: spec.supported });
+            expect(s.match[matchKey]).toContain(spec.major);
             expect(s.tags).toContain(spec.tag);
             expect(s.id).not.toMatch(/\b(old|new|prev|current)\b/);
 
@@ -841,7 +843,12 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             } else {
                 expect(rendered).not.toContain('references/migration.md');
             }
-            expect(rendered).not.toMatch(/\{(display_name|references|commandments|migration_checklist)\}/);
+            expect(rendered).not.toMatch(/\{(display_name|supported_versions|references|commandments|migration_checklist)\}/);
+            if (!spec.isDefault) {
+                const label = spec.supported.length === 1 ? 'major' : 'majors';
+                expect(rendered).toContain(`This skill supports ${label} ${spec.supported.join(', ')}.`);
+                expect(rendered).toContain(`The bundled reference is written for the newest of them, **${spec.major}.x.x**.`);
+            }
         }
     });
 
@@ -882,5 +889,38 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
         expect(nonDefaultMd).not.toContain('<<M+1>');
         expect(nonDefaultMd).toContain('`<M+1`');
         expect(nonDefaultMd).toContain('`"=X.Y.Z"` in `Cargo.toml`');
+    });
+
+    it('states the supported versions and the lower-major rule in non-default-major.md', () => {
+        const nonDefaultMd = fs.readFileSync(path.join(REPO_CONFIG_DIR, 'skills', 'sdk', 'non-default-major.md'), 'utf8');
+        expect(nonDefaultMd).toContain('This skill supports {supported_versions}. The bundled reference is written for the newest of them, **{display_name}**.');
+        expect(nonDefaultMd).toContain('never raise the dependency across a major version');
+        expect(nonDefaultMd).toContain('## Projects on a lower major than the reference');
+        expect(nonDefaultMd).toContain('signatures can differ');
+        expect(nonDefaultMd).toContain('read the installed package\'s own source or types (`site-packages/posthog`, `node_modules/posthog-node`');
+        expect(nonDefaultMd).toContain('When a feature\'s minimum version is above the installed major, use the fallback or report the minimum version. Do not upgrade to reach it.');
+    });
+
+    it('renders every checked-in older SDK skill with its supported majors and reference version', async () => {
+        const python = allSkills.find((s) => s.id === 'sdk-posthog-python-v7');
+        expect(python.match).toEqual({ sdkPython: ['3', '4', '5', '6', '7'] });
+        const node = allSkills.find((s) => s.id === 'sdk-posthog-node-v5');
+        expect(node.match).toEqual({ sdkNode: ['4', '5'] });
+        const outputDir = path.join(dir, 'supported-out');
+        await generateSkill({
+            skill: python,
+            version: 'test',
+            repoRoot: REPO_ROOT,
+            configDir: REPO_CONFIG_DIR,
+            outputDir,
+            skipPatterns,
+            commandmentsConfig,
+            skillTemplate: python._template,
+            sharedDocs: [],
+            fetchDocFn: (url) => Promise.resolve({ content: url.endsWith('migration.md') ? SAMPLE_MIGRATION : '# x\n', title: 'x' }),
+        });
+        const rendered = fs.readFileSync(path.join(outputDir, python.id, 'SKILL.md'), 'utf8');
+        expect(rendered).toContain('This skill supports majors 3, 4, 5, 6, 7. The bundled reference is written for the newest of them, **7.x.x**.');
+
     });
 });

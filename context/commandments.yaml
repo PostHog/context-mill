@@ -125,9 +125,9 @@ commandments:
 
   # Exact-major SDK rules loaded by sdk/posthog-* skills
   sdk-python-7:
-    - "Supported Python 7.x range: `posthog>=7,<8`. Reuse existing client initialization and never upgrade to `8.x`."
-    - "Feature floor — MCP analytics (`posthog.mcp`): requires `posthog>=7.62.0,<8`. If range-bounded below 7.62.0, raise floor to `>=7.62.0,<8`; if hard-pinned below 7.62.0, keep pin and hand off naming `>=7.62.0`."
-    - "Feature floor — Framework exception middleware (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`): requires `posthog>=7.69.0,<8`. If range-bounded below 7.69.0, raise floor to `>=7.69.0,<8`; if hard-pinned below 7.69.0, keep pin and fall back to manual `capture_exception(...)`."
+    - "Supported Python range: `posthog>=3,<8`. Reuse existing client initialization, stay on the installed major and never upgrade to `8.x`."
+    - "Feature floor — MCP analytics (`posthog.mcp`): requires `posthog>=7.62.0,<8`. If the installed major is below 7, keep it and hand off naming `>=7.62.0`; if on 7.x range-bounded below 7.62.0, raise floor to `>=7.62.0,<8`; if hard-pinned below 7.62.0, keep pin and hand off naming `>=7.62.0`."
+    - "Feature floor — Framework exception middleware (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`): requires `posthog>=7.69.0,<8`. If the installed major is below 7, keep it and fall back to manual `capture_exception(...)`; if on 7.x range-bounded below 7.69.0, raise floor to `>=7.69.0,<8`; if hard-pinned below 7.69.0, keep pin and fall back to manual `capture_exception(...)`."
     - "Feature floor — `openfeature-provider-posthog`: `0.1.x` supports Python `7.x` (`<8.0.0`); `0.2.x` supports `>=7.0.0,<9.0.0`."
     - "AI events: `Client.capture_ai()` and `posthog.capture_ai()` exist in recent `7.x` releases. Use them instead of `capture()` for AI events over 900 KiB. `AsyncPosthog` lacks `capture_ai()` in `7.x`, while `capture()` with `$ai_*` or `posthog.ai` works across `7.x`. Keep existing `Client(api_key, host=...)` positional/keyword call sites, and check `references/7.x.x.md` and the installed version."
 
@@ -138,9 +138,9 @@ commandments:
     - "Framework integrations (`PosthogFlaskIntegration`, `PosthogASGIMiddleware`, `posthog.integrations.drf`, `posthog.mcp`) are all included in `8.x`."
 
   sdk-node-5:
-    - "Supported Node.js 5.x range: `posthog-node@^5` (`>=5.0.0 <6.0.0`). Stay on `5.x`, reuse existing `new PostHog(...)`, and never upgrade to `6.x`."
+    - "Supported Node.js range: `posthog-node` 4.x or 5.x (`>=4.0.0 <6.0.0`). Stay on the installed major, reuse existing `new PostHog(...)`, and never upgrade to `6.x`."
     - "Exception capture signature: on 5.x, call positional `client.captureException(error, distinctId, additionalProperties)` and `captureExceptionImmediate(error, distinctId, additionalProperties)` — never pass an options object `{ distinctId }` as the second argument (it fails TypeScript on 5.x or sends the object as `distinctId`)."
-    - "Companion packages: both `@posthog/mcp@^1.3.0` (floor `>=0.18.0`) and `@posthog/ai@^8.21.0` declare `peerDependencies: { \"posthog-node\": \"^5.0.0 || ^6.0.0\" }` and work cleanly with `posthog-node@^5` without crossing majors. Note `@posthog/convex`, `@posthog/next`, and `@posthog/nuxt` also target 5.x."
+    - "Companion packages: both `@posthog/mcp@^1.3.0` (floor `>=0.18.0`) and `@posthog/ai@^8.21.0` declare `peerDependencies: { \"posthog-node\": \"^5.0.0 || ^6.0.0\" }` and work cleanly with `posthog-node@^5` without crossing majors; on `4.x` do not install them, and report `posthog-node@^5` as their minimum. Note `@posthog/convex`, `@posthog/next`, and `@posthog/nuxt` also target 5.x."
 
   sdk-node-6:
     - "Default Node.js 6.x range: `posthog-node@^6`."

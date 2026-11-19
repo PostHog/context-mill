@@ -9,7 +9,7 @@ variants:
     display_name: 5.x.x
     template: ../non-default-major.md
     tags: [sdk-node-5]
-    match: { sdkNode: "5" }
+    match: { sdkNode: ["4", "5"] }
     docs_urls:
       - https://posthog.com/docs/libraries/node/5.x.x.md
       - https://posthog.com/docs/libraries/node/migration.md
@@ -19,6 +19,6 @@ variants:
     display_name: 6.x.x
     template: ../default-major.md
     tags: [sdk-node-6]
-    match: { sdkNode: "6" }
+    match: { sdkNode: ["6"] }
     docs_urls:
       - https://posthog.com/docs/libraries/node/6.x.x.md

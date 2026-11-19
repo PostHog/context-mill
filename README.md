@@ -106,7 +106,7 @@ framework variant, and the build turns each row into one pack,
 
 | Key | Meaning |
 |-----|---------|
-| `match` | The trait values the pack is written for, published as `key:value` menu tags. A key is a trait name as the wizard spells it. `framework` is the detection id the row serves, and every `match` names it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name. A row with no `match` serves no detected framework |
+| `match` | The trait values the pack is written for, published as `key:value` menu tags. A value is a string, or a list of strings for a pack that serves several (`sdkPython: ["3", "4"]` publishes `sdkPython:3` and `sdkPython:4`). A key is a trait name as the wizard spells it. `framework` is the detection id the row serves, and every `match` names it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name. A row with no `match` serves no detected framework |
 | `default` | Whether the row is its framework's default |
 | `docs_urls` | The integration pages, written to `references/` and listed in `SKILL.md` |
 | `docs` | Each other product's pages for the variant, written to `references/<product>/`. `SKILL.md` does not list them |
