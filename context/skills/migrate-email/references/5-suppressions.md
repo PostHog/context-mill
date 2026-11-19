@@ -32,6 +32,8 @@ When `account.md` says the provider keeps no suppression list at all, there is n
 
 Look for the PostHog MCP tool `email-suppressions-add`, and read its schema with `info`.
 
+When the MCP can't see the app's project, as Step 2 found, whatever it recorded for `api`, the tool would import into another project: never call it. Treat the tool as missing, as below, with `not imported: the MCP can't see the project` in place of `no import tool`.
+
 When it is missing, the import is not available to this person yet. Do not try other tools, and do not use the opt-out tools: opt-outs are marketing preferences, and transactional email ignores them. Adding the addresses by hand doesn't take the import's place: PostHog's Suppression list page adds an address only as a manual entry, which blocks marketing email but not the moved sends. So, outside a re-import, ask the person once whether the provider's list has any entries and, when it does, which sites that move rely on it to skip addresses that bounced, and set each one's `moves` to `no` with Step 3's reason `relies on <provider name>'s suppression list` and the note `to move: import the suppression list once PostHog's import tool is available`. When they can't tell or don't answer, every site that moves stays with that reason. Update the count in the plan's `inventory` line. Then tick the phase as `- [x] suppressions — empty list: no import tool` when the list has no entries, and as `- [ ] suppressions — not imported: no import tool` otherwise, do what "Calls that change the provider's list" says, ask about the full-access key as the last section says, and continue to the next step.
 
 ## Get the list
@@ -58,7 +60,7 @@ The call keeps its provider write while any send still goes through the provider
 
 ## Write down
 
-Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
+Tick the phase in the plan file only when every entry is imported: `- [x] suppressions — <entries>/<entries> imported`. When the list is empty, write `- [x] suppressions — empty list`. When the provider keeps no suppression list at all, as its `account.md` says, write `- [x] suppressions — empty list: <provider name> keeps no suppression list`. When the import stopped partway, write `- [ ] suppressions — <imported>/<entries> imported: <the error>`. When the person has no export and no key, write `- [ ] suppressions — not imported: <why>`.
 
 ## The full-access key
 

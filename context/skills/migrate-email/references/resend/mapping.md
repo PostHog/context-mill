@@ -19,7 +19,7 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `replyTo` / `reply_to` | `replyTo`, one address or a list | An entry carries a name, such as `Jane <jane@example.com>`, there are more than 10, or the code builds the value at run time and you cannot tell that it holds bare addresses only |
 | `headers` | none | Always. PostHog's send doesn't take it yet |
 | `tags` | none | Always. PostHog's send doesn't take it yet |
-| `attachments` | none | Always. PostHog's send doesn't take it yet |
+| `attachments` | `attachments` | Step 3 says so under "Files", or a file has a `path`: Resend fetches it, and PostHog fetches no file. See "Attachments" |
 | `idempotencyKey` / `Idempotency-Key` | `idempotencyKey` / `Idempotency-Key` | The key can hold anything but visible ASCII characters, such as a space, or be longer than 255 characters. PostHog takes 1 to 255 visible ASCII characters. A key built from a value whose length or characters the code doesn't bound, such as a URL or text from a caller, counts as one that can. The report names that value, so the person can bound the key, such as by hashing that part, and move the site. Otherwise the key keeps its value, and PostHog keeps it for 24 hours as Resend does. The two providers don't share keys: a retry that runs after the deploy, of a send Resend already took, sends a second email. Note it in the report |
 | `scheduledAt` / `scheduled_at` | none | Always. PostHog's send doesn't take it yet |
 | `topicId` / `topic_id` | none | Always. PostHog's send doesn't take it yet |
@@ -43,6 +43,20 @@ The field names below are Node.js's. Every Resend SDK sends the same fields unde
 | `data.id` stored for a webhook or a status read | Always, when Resend webhooks or status reads use the id |
 | Code that reads what Resend's answer carries from its response headers: `headers` on the answer in Node.js, `http_headers` on the answer or `headers` on an error in Python, `headers` on the answer or an error in Ruby, and `RateLimitExceededError`'s `rate_limit_limit`, `rate_limit_remaining`, `rate_limit_reset`, and `retry_after`, the fields of `*resend.RateLimitError` in Go, `Limits` on the answer or the exception in .NET, the `ratelimit_*` fields of `Error::RateLimit` in Rust, the headers of an HTTP request's answer, and the same in any SDK whose answer or error carries them | When it reads anything but the retry delay of a refused send, such as a `retry-after` header of a `429`: PostHog's answer carries no headers, and its error carries only the retry delay. The reason is `reads <header or field> from Resend's answer`. The retry delay moves as "The retry delay" says. A `headers` the code takes from the answer and never uses goes away |
 | A send the code can cancel, such as a request with a `signal` a caller passes in or an `AbortController` it aborts, on a `fetch` or axios request or in the options of `resend.emails.send(payload, { signal })`, which the SDK passes to its request, or a Go `context` or .NET cancellation token that a caller can cancel | Unless the PostHog send in that language takes the same cancellation, as Go's `Send(ctx, ...)` and .NET's `SendAsync(..., cancellationToken)` do: pass it there. Otherwise always, as in Node.js, whose send takes no signal: an email the old code cancelled would go out. A fixed deadline, such as `AbortSignal.timeout(...)`, moves as Step 7 says |
+
+## Attachments
+
+Each file of a site that moves keeps its fields, under the PostHog SDK's names, as its rewrite file gives them:
+
+| Resend | PostHog |
+|---|---|
+| `filename` | The filename. Resend can name a file from its `path`, and PostHog can't: a file without `filename` keeps the site, as Step 3 says |
+| `content`, a Buffer or a Base64 string | The content, as the same bytes or the same Base64 string |
+| `contentType` / `content_type` | The content type. When the site sets none, Resend derived it from the filename's extension: set that type, such as `application/pdf` for `.pdf` or `text/calendar` for `.ics`, and note it in the plan row |
+| `contentId` / `content_id` | The content ID, the same bare ID that the HTML shows with `<img src="cid:...">` |
+| `path`, a URL or a path that Resend fetches | none: the site stays, and the report says to read the file in the app and pass its bytes |
+
+Resend takes an email of up to 40 MB after Base64 encoding with its files, as PostHog does. PostHog also takes at most 10 files, as Step 3 says.
 
 ## Content
 
@@ -123,6 +137,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 - `from`, `subject`, `html`, `text`, and the reply-to address keep their values, under the PostHog SDK's names.
 - A send with rendered content gets a template key, as Step 7 says.
 - The idempotency key moves into the send, under the PostHog SDK's name for it.
+- `attachments` keeps its list, each file rewritten as "Attachments" says.
 - Resend sets open and click tracking per domain, not per send, so the call doesn't show it. Step 3 reads the domain's open and click tracking from the person in one question, as `account.md` says under "Open tracking" and "Click tracking". A site whose plan note says `opens off` turns off the `opens` switch of tracking, as Step 7 says. Step 7 marks every code send sensitive and never turns `clicks` on, so when the domain tracks clicks in Resend, note in the plan and the report that PostHog doesn't count these emails' clicks.
 
 **Templates brought into the code.** The site renders the email from its `variables`, as "Templates" says, and sends the template key, the rendered subject, HTML, and text, and the `from` and reply-to address: the site's own where it sets them, otherwise the template's. It sends no template ID and no template data.

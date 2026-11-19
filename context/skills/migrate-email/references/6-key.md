@@ -15,6 +15,12 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## The PostHog key
 
+When the app already reads a PostHog project secret key, such as for code sends it already makes, under any name, that is the key: Step 7's email client reads it under the app's name, and you ask for no new one. Write its name into the plan where this step writes `POSTHOG_PROJECT_SECRET_API_KEY`, and in every later step read that name in its place. Check that the key has the `transactional_email:write` or `hog_flow:write` scope only by asking the person.
+
+When the app reads its provider key from its hosting platform's environment and not from a file, such as a Convex deployment's environment variables, a Vercel or Netlify project's, or a Worker's secrets, the PostHog key goes there too: ask the person to set it with the platform's command or dashboard, in every deployment that sends email. Check it, where the platform's command line can list the variables, with a command that prints a count and never the value, such as `convex env list | grep -c '^POSTHOG_PROJECT_SECRET_API_KEY=phs_'`. When it can't, the person's word that they set it is the check.
+
+Otherwise:
+
 - Ask the person to create a project secret API key (it starts with `phs_`) with the `transactional_email:write` scope in their PostHog project settings. A key that already has `hog_flow:write` works too.
 - The key goes into `POSTHOG_PROJECT_SECRET_API_KEY`, in the env file the app loads its provider key from, such as `.env` or `.env.local`. Check that git ignores that file. When it doesn't, ask the person where the key goes.
 - Ask the person to add the key to that file themselves. Inside the Wizard, ask for it and store it as the "Inside the PostHog Wizard" section of `SKILL.md` says.
@@ -41,4 +47,4 @@ List each place that sets a value for it, with its file and line: env and env ex
 
 ## Write down
 
-Tick the phase in the plan file only when the check above found the key: `- [x] key — POSTHOG_PROJECT_SECRET_API_KEY set in <file>`. Otherwise write `- [ ] key — not set: <why>`, such as `the person adds it to .env`. Under the phase list, add the places of the provider key.
+Tick the phase in the plan file only when the check above found the key: `- [x] key — <variable name> set in <file or platform>`, such as `POSTHOG_PROJECT_SECRET_API_KEY set in .env`. Otherwise write `- [ ] key — not set: <why>`, such as `the person adds it to .env`. Under the phase list, add the places of the provider key.
