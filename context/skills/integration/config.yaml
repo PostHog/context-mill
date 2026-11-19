@@ -1,60 +1,103 @@
 # Integration skills - example-based (code + docs)
-# `framework` = the detection id a variant serves; `default: true` marks the family default. Both are emitted into skill-menu.json.
+# The variant table: one row per framework variant, and the build turns each row into one pack.
+# `match` = the trait values a pack is written for, published as `key:value` tags. A key is a trait name as the wizard spells
+#   it. `framework` is the detection id a variant serves, and a row that sets `match` names it. `frameworkVariant` is the id
+#   the wizard's framework config reports. A row with no `frameworkVariant` serves every value its family's other rows do not
+#   name. A row with no `match` serves no detected framework.
+# `default: true` marks the pack a framework's projects take when no other row is picked.
+# `docs` = each product's pages for the variant. The build writes them to `references/<product>/` and lists them in the
+#   pack's `variant.json`. Every row lists every product in `products`, or names it under `gaps`.
 type: skill
+products: [error-tracking, feature-flags]
 template: description.md
 description: PostHog integration for {display_name} applications
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
   - id: nextjs-app-router
-    framework: nextjs
+    match: { framework: nextjs, frameworkVariant: app-router }
     default: true
     example_paths: example-apps/next-app-router
     display_name: Next.js App Router
     tags: [nextjs, react, ssr, app-router, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/nextjs.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/libraries/next-js.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: nextjs-pages-router
-    framework: nextjs
+    match: { framework: nextjs, frameworkVariant: pages-router }
     example_paths: example-apps/next-pages-router
     display_name: Next.js Pages Router
     tags: [nextjs, react, ssr, pages-router, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/next-js.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/nextjs.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/libraries/next-js.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: react-react-router-6
-    framework: react-router
+    match: { framework: react-router, frameworkVariant: v6 }
     default: true
     example_paths: example-apps/react-react-router-6
     display_name: React Router v6
     tags: [react, react-router, v6, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v6.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
 
   - id: react-react-router-7-framework
-    framework: react-router
+    match: { framework: react-router, frameworkVariant: v7-framework }
     example_paths: example-apps/react-react-router-7-framework
     display_name: React Router v7 - Framework mode
     tags: [react, react-router, v7, framework, ssr, javascript, javascript_node, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: react-react-router-7-data
-    framework: react-router
+    match: { framework: react-router, frameworkVariant: v7-data }
     example_paths: example-apps/react-react-router-7-data
     display_name: React Router v7 - Data mode
     tags: [react, react-router, v7, data, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
 
   - id: react-react-router-7-declarative
-    framework: react-router
+    match: { framework: react-router, frameworkVariant: v7-declarative }
     example_paths: example-apps/react-react-router-7-declarative
     display_name: React Router v7 - Declarative mode
     tags: [react, react-router, v7, declarative, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
 
   - id: react-vite
     example_path: example-apps/react-vite
@@ -63,9 +106,14 @@ variants:
     tags: [react, vite, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/react.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
 
   - id: nuxt-3-6
-    framework: nuxt
+    match: { framework: nuxt }
     default: true
     example_paths: example-apps/nuxt-3-6
     display_name: Nuxt 3.6
@@ -73,61 +121,112 @@ variants:
     tags: [nuxt, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/nuxt-js-3-6.md
+    docs:
+      # A Nuxt run takes this pack, the framework's default, so it lists the page for Nuxt 3.7 and later.
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/nuxt-js.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: nuxt-4
-    framework: nuxt
+    match: { framework: nuxt, frameworkVariant: 4.x }
     example_paths: example-apps/nuxt-4
     display_name: Nuxt 4
     description: PostHog integration for Nuxt 4 applications
     tags: [nuxt, vue, ssr, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/nuxt-js.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/nuxt-3-7.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/nuxt-js.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: vue-3
-    framework: vue
+    match: { framework: vue }
     example_paths: example-apps/vue-3
     display_name: Vue 3
     description: PostHog integration for Vue 3 applications
     tags: [vue, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/vue-js.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+        - https://posthog.com/docs/libraries/vue-js.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/vue-js.md
 
   - id: django
-    framework: django
+    match: { framework: django }
     example_paths: example-apps/django
     display_name: Django
     tags: [django, python]
     docs_urls:
       - https://posthog.com/docs/libraries/django.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/python.md
+        - https://posthog.com/docs/libraries/django.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/python.md
+        - https://posthog.com/docs/libraries/django.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: flask
-    framework: flask
+    match: { framework: flask }
     example_paths: example-apps/flask
     display_name: Flask
     tags: [flask, python]
     docs_urls:
       - https://posthog.com/docs/libraries/flask.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/python.md
+        - https://posthog.com/docs/libraries/flask.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/python.md
+        - https://posthog.com/docs/libraries/flask.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: fastapi
-    framework: fastapi
+    match: { framework: fastapi }
     example_paths: example-apps/fastapi
     display_name: FastAPI
     description: PostHog integration for FastAPI applications
     tags: [fastapi, python]
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/python.md
+        - https://posthog.com/docs/libraries/python.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/python.md
 
   - id: react-tanstack-router-file-based
-    framework: tanstack-router
+    match: { framework: tanstack-router, frameworkVariant: file-based }
     example_paths: example-apps/react-tanstack-router-file-based
     display_name: React with TanStack Router (file-based)
     description: PostHog integration for React applications using TanStack Router with file-based routing
     tags: [react, tanstack-router, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-start.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: react-tanstack-router-code-based
-    framework: tanstack-router
+    match: { framework: tanstack-router, frameworkVariant: code-based }
     default: true
     example_paths: example-apps/react-tanstack-router-code-based
     display_name: React with TanStack Router (code-based)
@@ -135,23 +234,46 @@ variants:
     tags: [react, tanstack-router, spa, javascript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-start.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
 
   - id: tanstack-start
-    framework: tanstack-start
+    match: { framework: tanstack-start }
     example_paths: example-apps/tanstack-start
     display_name: TanStack Start
     description: PostHog integration for TanStack Start full-stack applications
     tags: [react, tanstack-start, tanstack-router, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/tanstack-start.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react.md
+        - https://posthog.com/docs/libraries/tanstack-start.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: laravel
-    framework: laravel
+    match: { framework: laravel }
     example_paths: example-apps/laravel
     display_name: Laravel
     tags: [laravel, php]
     docs_urls:
       - https://posthog.com/docs/libraries/laravel.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/php.md
+        - https://posthog.com/docs/libraries/laravel.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/php.md
+        - https://posthog.com/docs/libraries/laravel.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: php
     example_paths: example-apps/php
@@ -160,9 +282,15 @@ variants:
     tags: [php]
     docs_urls:
       - https://posthog.com/docs/libraries/php.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/php.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/php.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: wordpress
-    framework: wordpress
+    match: { framework: wordpress }
     example_paths: example-apps/wordpress
     display_name: WordPress
     description: PostHog integration for self-hosted WordPress sites and plugins, combining client-side autocapture with server-side PHP SDK capture
@@ -170,37 +298,66 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/wordpress.md
       - https://posthog.com/docs/libraries/php.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/php.md
+        - https://posthog.com/docs/libraries/wordpress.md
+        - https://posthog.com/docs/libraries/php.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/php.md
+        - https://posthog.com/docs/libraries/wordpress.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: ruby-on-rails
-    framework: rails
+    match: { framework: rails }
     example_paths: example-apps/ruby-on-rails
     display_name: Ruby on Rails
     tags: [ruby-on-rails, ruby]
     docs_urls:
       - https://posthog.com/docs/libraries/ruby-on-rails.md
       - https://posthog.com/docs/libraries/ruby.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/ruby-on-rails.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/ruby.md
+        - https://posthog.com/docs/libraries/ruby-on-rails.md
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: android
-    framework: android
+    match: { framework: android }
     example_paths: example-apps/android
     display_name: Android
     description: PostHog integration for Android applications
     tags: [android, java, kotlin]
     docs_urls:
       - https://posthog.com/docs/libraries/android.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/android.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/android.md
       
   - id: sveltekit
-    framework: sveltekit
+    match: { framework: sveltekit }
     example_paths: example-apps/sveltekit
     display_name: SvelteKit
     description: PostHog integration for SvelteKit applications
     tags: [sveltekit, svelte, javascript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/svelte.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/svelte.md
+        - https://posthog.com/docs/libraries/svelte.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/svelte.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   # Language fallback skills, used when no specific framework is detected
   - id: python
-    framework: python
+    match: { framework: python }
     example_paths: example-apps/python
     display_name: Python
     description: PostHog integration for any Python application using the Python SDK
@@ -208,9 +365,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
       - https://posthog.com/docs/references/posthog-python.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/python.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/python.md
 
   - id: javascript_node
-    framework: javascript_node
+    match: { framework: javascript_node }
     example_path: example-apps/javascript-node
     display_name: JavaScript Node
     description: PostHog integration for server-side Node.js applications using posthog-node
@@ -218,9 +380,14 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/node.md
       - https://posthog.com/docs/references/posthog-node.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/node.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
  
   - id: javascript_web
-    framework: javascript_web
+    match: { framework: javascript_web }
     example_path: example-apps/javascript-web
     display_name: JavaScript Web
     description: PostHog integration for client-side web JavaScript applications using posthog-js
@@ -228,54 +395,84 @@ variants:
     docs_urls:
       - https://posthog.com/docs/libraries/js.md
       - https://posthog.com/docs/references/posthog-js.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
 
   - id: ruby
-    framework: ruby
+    match: { framework: ruby }
     example_paths: example-apps/ruby
     display_name: Ruby
     description: PostHog integration for any Ruby application using the Ruby SDK
     tags: [ruby]
     docs_urls:
       - https://posthog.com/docs/libraries/ruby.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/ruby.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/ruby.md
 
   - id: elixir
-    framework: elixir
+    match: { framework: elixir }
     example_paths: example-apps/elixir
     display_name: Elixir
     description: PostHog integration for Elixir and Phoenix applications using the posthog SDK
     tags: [elixir, phoenix, plug]
     docs_urls:
       - https://posthog.com/docs/libraries/elixir.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/elixir.md
+      feature-flags:
+        - https://posthog.com/docs/libraries/elixir.md
 
   - id: java
-    framework: java
+    match: { framework: java }
     example_paths: example-apps/java-spring-boot
     display_name: Java (Spring Boot)
     description: PostHog integration for Java and Spring Boot applications using the posthog-server SDK
     tags: [java, java-server]
     docs_urls:
       - https://posthog.com/docs/libraries/java.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/libraries/java.md
+      feature-flags:
+        - https://posthog.com/docs/libraries/java.md
 
   - id: go
-    framework: go
+    match: { framework: go }
     example_paths: example-apps/go
     display_name: Go
     description: PostHog integration for Go applications using the posthog-go SDK
     tags: [go]
     docs_urls:
       - https://posthog.com/docs/libraries/go.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/go.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/go.md
 
   - id: rust
-    framework: rust
+    match: { framework: rust }
     example_paths: example-apps/rust
     display_name: Rust
     description: PostHog integration for Rust applications using the posthog-rs SDK
     tags: [rust]
     docs_urls:
       - https://posthog.com/docs/libraries/rust.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/rust.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/rust.md
 
   - id: swift
-    framework: swift
+    match: { framework: swift }
     example_paths:
       - example-apps/swift
       - example-apps/swift-xcodegen
@@ -286,27 +483,46 @@ variants:
       - https://posthog.com/docs/libraries/ios.md
       - https://posthog.com/docs/libraries/ios/usage.md
       - https://posthog.com/docs/libraries/ios/configuration.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/ios.md
+        - https://posthog.com/docs/libraries/ios.md
+        - https://posthog.com/docs/libraries/ios/usage.md
+        - https://posthog.com/docs/libraries/ios/configuration.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/ios.md
+        - https://posthog.com/docs/libraries/ios/usage.md
 
   - id: flutter
-    framework: flutter
+    match: { framework: flutter }
     example_paths: example-apps/flutter
     display_name: Flutter
     description: PostHog integration for Flutter applications using the posthog_flutter SDK
     tags: [flutter, dart, mobile]
     docs_urls:
       - https://posthog.com/docs/libraries/flutter.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/flutter.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/flutter.md
 
   - id: kmp
-    framework: kmp
+    match: { framework: kmp }
     template: description-kmp-docs-only.md
     display_name: Kotlin Multiplatform
     description: PostHog integration for Kotlin Multiplatform (KMP) shared code targeting Android, iOS, and web using the posthog-kmp SDK
     tags: [kmp, kotlin, multiplatform, mobile]
     docs_urls:
       - https://posthog.com/docs/libraries/kmp.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/kmp.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/kmp.md
   
   - id: react-native
-    framework: react-native
+    match: { framework: react-native }
     default: true
     example_paths: example-apps/react-native
     display_name: React Native
@@ -314,45 +530,78 @@ variants:
     tags: [react-native, javascript, typescript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-native.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react-native.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/react-native.md
 
   - id: expo
-    framework: react-native
+    match: { framework: react-native, frameworkVariant: expo }
     example_paths: example-apps/expo
     display_name: Expo
     description: PostHog integration for Expo applications
     tags: [expo, react-native, javascript, typescript]
     docs_urls:
       - https://posthog.com/docs/libraries/react-native.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/react-native.md
+        - https://posthog.com/docs/libraries/react-native.md
+      feature-flags:
+        - https://posthog.com/docs/libraries/react-native.md
 
   - id: astro-static
-    framework: astro
+    match: { framework: astro, frameworkVariant: static }
     example_paths: example-apps/astro-static
     display_name: Astro (Static)
     description: PostHog integration for static Astro sites using SSG
     tags: [astro, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-view-transitions
-    framework: astro
+    match: { framework: astro, frameworkVariant: view-transitions }
     example_paths: example-apps/astro-view-transitions
     display_name: Astro (View Transitions)
     description: PostHog integration for Astro with ClientRouter view transitions
     tags: [astro, astro-view-transitions, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
 
   - id: astro-ssr
-    framework: astro
+    match: { framework: astro, frameworkVariant: ssr }
     example_paths: example-apps/astro-ssr
     display_name: Astro (SSR)
     description: PostHog integration for server-rendered Astro applications with API routes
     tags: [astro, astro-ssr, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
 
   - id: astro-hybrid
-    framework: astro
+    match: { framework: astro, frameworkVariant: hybrid }
     default: true
     example_paths: example-apps/astro-hybrid
     display_name: Astro (Hybrid)
@@ -360,12 +609,26 @@ variants:
     tags: [astro, astro-hybrid, javascript, typescript, javascript_web, javascript_node]
     docs_urls:
       - https://posthog.com/docs/libraries/astro.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/astro.md
+        - https://posthog.com/docs/feature-flags/installation/nodejs.md
     
   - id: angular
-    framework: angular
+    match: { framework: angular }
     example_paths: example-apps/angular
     display_name: Angular
     description: PostHog integration for Angular applications
     tags: [angular, javascript, typescript, javascript_web]
     docs_urls:
       - https://posthog.com/docs/libraries/angular.md
+    docs:
+      error-tracking:
+        - https://posthog.com/docs/error-tracking/installation/angular.md
+      feature-flags:
+        - https://posthog.com/docs/feature-flags/installation/web.md
+        - https://posthog.com/docs/libraries/angular.md

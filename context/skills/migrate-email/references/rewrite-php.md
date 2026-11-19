@@ -11,7 +11,7 @@ For a site in PHP, such as in a Laravel or Symfony app. A site that sends throug
 
 `composer require posthog/posthog-php`, which installs or upgrades it to the latest release that the project's constraints allow. Raise the constraint in `composer.json` when it holds the package back.
 
-The send needs PHP's curl extension, which Composer doesn't ask for: without it every send fails with the code `missing_curl`. Add `"ext-curl": "*"` to `require` in `composer.json`, so an install where it's missing fails instead. When the app's Dockerfile, buildpack, or server setup doesn't show that it installs the extension, such as the official `php` Docker image, which has it built in, or a `php-curl` or `php8.3-curl` package, note it for the report's "Before cutover" list: enable ext-curl where the app runs.
+The send needs PHP's curl extension, which Composer doesn't ask for: without it every send fails with the code `missing_curl`. Add `"ext-curl": "*"` to `require` in `composer.json`, so an install where it's missing fails instead. When the app's Dockerfile, buildpack, or server setup doesn't show that it installs the extension, such as the official `php` Docker image, which has it built in, or a `php-curl` or `php8.3-curl` package, note it for the report's "Before cutover" list: `before cutover: enable ext-curl where the app runs`.
 
 ## The client
 
@@ -55,6 +55,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`.
 - A send with files throws `PostHog\EmailError` with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing. posthog-php doesn't refuse a blank filename before the request: PostHog does.
 - It throws the same `PostHog\EmailError` for a network error that is left after the retries, with the code `network_error`, and for a bad argument, with a code that starts with `invalid_`. `getMessage()` is there too.
+- An error PostHog answered with a wait carries it as `$e->getRetryAfterMs()`, in milliseconds; it is `null` when PostHog named none.
 
 ## Check
 

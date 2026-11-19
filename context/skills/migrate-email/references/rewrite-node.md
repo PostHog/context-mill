@@ -55,6 +55,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - `posthog.emails.send` never throws on an API error: it returns `{ data, error }`. When the old call threw on an error, or the code checked an HTTP status, check `error` so the site fails the same way.
 - `data.id` is the message ID.
 - A network error that is left after the retries comes back as `error` with the code `network_error`. A bad argument comes back as `error` too, with a code that starts with `invalid_`.
+- An error PostHog answered with a wait carries it as `error.retryAfterMs`, in milliseconds; it is unset when PostHog named none.
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
 - Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
 - A send with files can fail with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.

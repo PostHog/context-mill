@@ -59,6 +59,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - Suppressed recipient: `catch (EmailException e) when (e.Code == "recipient_suppressed")`.
 - A send with files throws `ArgumentException` for a missing file, a blank `Filename`, or an empty `Content`, and `EmailException` with `too_many_attachments` or `message_too_large`, all before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - It throws the same `EmailException` for a network error that is left after the retries, with the code `network_error`. `Message` is there too.
+- An error PostHog answered with a wait carries it as `e.RetryAfter`, a `TimeSpan?`; it is `null` when PostHog named none.
 - A bad argument throws `ArgumentException`, before any request.
 
 ## Check

@@ -53,6 +53,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
 - A send with files returns `{:error, %PostHog.Emails.Error{}}` with the code `"invalid_attachment"`, `"too_many_attachments"`, or `"message_too_large"` before any request, and with `"attachment_upload_failed"` when a file's upload failed, also when the storage can't be reached. Each sends nothing.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
+- An error PostHog answered with a wait carries it as `retry_after_ms`, in milliseconds; it is `nil` when PostHog named none.
 
 ## Check
 

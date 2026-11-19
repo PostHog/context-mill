@@ -49,6 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`.
 - A send with files raises `PostHog::EmailError` with `invalid_attachment`, `too_many_attachments`, or `message_too_large` before any request, and with `attachment_upload_failed` when a file's upload failed. Each sends nothing.
 - It raises the same `PostHog::EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
+- An error PostHog answered with a wait carries it as `e.retry_after`, in seconds, as a float; it is `nil` when PostHog named none.
 - A bad argument raises `ArgumentError`, before any request.
 
 ## Check
