@@ -34,7 +34,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 ## Open tracking
 
-Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking and click tracking are on, in one question: this asks about Resend's settings, never whether PostHog may add its pixel. For opens, off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, unless a webhook handler acts on its open events, as Step 3 says under "Opens the provider didn't track".
+Resend tracks opens per sending domain, only when open tracking is on for it: Domains, then the domain, then Configuration. Ask the person once, for each sending domain of the sites that move, whether open tracking and click tracking are on, in one question: this asks about Resend's settings, never whether PostHog may add its pixel. For opens, off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track", except that a site nobody can tell about stays when a webhook handler acts on its open events.
 
 ## Click tracking
 

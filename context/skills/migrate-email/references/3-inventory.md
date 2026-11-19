@@ -78,7 +78,7 @@ A send by template ID can't set tracking, so a site where tracking matters never
 
 - A site with opens off moves into the code, where `tracking` turns `opens` off, as Step 7 says. When it can't, it stays, and the reason is `opens off needs a code send`.
 - A site whose open tracking changes from send to send, such as SendGrid's `openTracking` with `enable: !recipient.optedOut`, stays, and the reason is `open tracking set at run time`.
-- A site whose click tracking changes from send to send, such as SendGrid's `clickTracking` with `enable: !recipient.optedOut`, moves into the code, where Step 7 tracks no clicks. When it can't, it stays, and the reason is `click tracking set at run time`.
+- A site whose click tracking changes from send to send, such as SendGrid's `clickTracking` with `enable: !recipient.optedOut`, moves into the code, where Step 7 tracks no clicks. Write `clicks off for some recipients: <the condition>` in its note under the sites table, so the report tells the person to keep `clicks` off unless the code turns it on only under that condition. When it can't move into the code, it stays, and the reason is `click tracking set at run time`.
 - A site whose emails a webhook handler acts on for the provider's click event stays, and the reason is `its clicks feed a webhook handler`: Step 7 never tracks a code send's clicks.
 
 ### A template in PostHog, when the person asks for one
