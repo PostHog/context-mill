@@ -7,7 +7,7 @@ There are five SDKs and this skill handles all of them:
 - **Python** — `posthog.mcp`, which ships inside the [`posthog`](https://posthog.com/docs/libraries/python) package (like `posthog.ai`).
 - **Go** — `posthogmcpsdk`, a module in the [`posthog-go`](https://posthog.com/docs/libraries/go) repository, for servers built on the official `github.com/modelcontextprotocol/go-sdk`.
 - **Ruby** — `PostHog::MCP`, which ships inside the [`posthog-ruby`](https://posthog.com/docs/libraries/ruby) gem, for servers built on the official `mcp` gem. Experimental (see the guardrail below).
-- **Rust** — `posthog_rs::mcp`, which ships inside the [`posthog-rs`](https://posthog.com/docs/libraries/rust) crate behind its `mcp` feature, for servers built on `rmcp`, the official Rust MCP SDK. Experimental (see the guardrail below).
+- **Rust** — `posthog::mcp` (or `posthog_rs::mcp` on the `posthog-rs` crate, `0.x` or `1.x` forwarding), which ships inside the [`posthog`](https://posthog.com/docs/libraries/rust) crate (`posthog-rs` for `0.x` or `1.x` forwarding) behind its `mcp` feature, for servers built on `rmcp`, the official Rust MCP SDK. Experimental (see the guardrail below).
 
 This is **not** about adding the PostHog MCP *server* to a coding agent (that's `wizard mcp add`). This skill instruments the user's *own* MCP server code so it reports analytics about itself.
 
@@ -17,7 +17,7 @@ This is **not** about adding the PostHog MCP *server* to a coding agent (that's 
 - **This must be an MCP server.** Search thoroughly before concluding there isn't one: check dependency manifests *and* source for the STEP 1 signals across the whole project, including monorepo workspace packages and subdirectories — a server is often under `packages/*`, `apps/*`, `server/`, or `src/`, not the repo root. Only after an exhaustive search finds nothing, **stop**: emit `[ABORT] no mcp server found` on its own line, and in the same message tell the user where you looked and to re-run the command from inside the package or directory that actually defines their MCP server. Do nothing else.
 - **Beta SDKs.** The TypeScript, Python, and Go SDKs are in beta and may ship breaking changes in minor releases. Pin a version (see STEP 3).
 - **The Ruby SDK is experimental and not officially supported.** The MCP Analytics team doesn't maintain `PostHog::MCP`, and its API and `$mcp_*` events may change in a minor `posthog-ruby` release. Still instrument Ruby servers. Say so plainly in `posthog-mcp-analytics-report.md` and in your closing summary, and never describe the Ruby setup as production-ready.
-- **The Rust SDK is experimental and not officially supported.** `posthog_rs::mcp` may change its API, options, and `$mcp_*` events in any `posthog-rs` release. Still instrument Rust servers. Say so plainly in `posthog-mcp-analytics-report.md` and in your closing summary, and never describe the Rust setup as production-ready.
+- **The Rust SDK is experimental and not officially supported.** `posthog::mcp` / `posthog_rs::mcp` may change its API, options, and `$mcp_*` events in any `posthog` / `posthog-rs` release. Still instrument Rust servers. Say so plainly in `posthog-mcp-analytics-report.md` and in your closing summary, and never describe the Rust setup as production-ready.
 - **Minimal, additive changes only.** Add instrumentation alongside the existing server; do not restructure tool handlers or change their behavior. The wrapper is designed to be one line.
 
 ### Abort cases
@@ -33,8 +33,9 @@ If anything blocks instrumentation, **always** emit exactly one `[ABORT] <reason
 - `[ABORT] ruby older than 3.0` — the project's Ruby is older than `posthog-ruby` supports (STEP 3).
 - `[ABORT] ruby mcp gem older than 1.4` — `PostHog::MCP.instrument` needs `mcp` 1.4 or later (STEP 3).
 - `[ABORT] rust mcp server is not built on rmcp` — a Rust server on another MCP library, or with no `rmcp` `ServerHandler` to wrap (STEP 1).
-- `[ABORT] rmcp older than 3.7` — `posthog_rs::mcp` needs `rmcp` 3.7 or later (STEP 3).
-- `[ABORT] rust toolchain older than 1.88` — `posthog-rs` with the `mcp` feature can't build (STEP 3).
+- `[ABORT] rmcp older than 3.7` — `posthog::mcp` / `posthog_rs::mcp` needs `rmcp` 3.7 or later (STEP 3).
+- `[ABORT] rust toolchain older than 1.88` — `posthog` / `posthog-rs` with the `mcp` feature can't build (STEP 3).
+- `[ABORT] posthog package pinned below required floor` — an existing `posthog` / SDK dependency is hard-pinned below the minimum version needed for MCP analytics (STEP 3).
 - `[ABORT] <short specific reason>` — anything else that blocks the run (e.g. no readable project, or no PostHog credentials and no MCP server connected to fetch them). Keep it short and specific so it's useful when aggregated across runs.
 
 Inside the main wizard run, the `mcp-analytics` task's instructions replace these stops: it completes as not needed with the same reason, and the rest of the run goes on.
@@ -47,7 +48,7 @@ Follow these steps IN ORDER. Each step has a **TypeScript / JavaScript** part, a
 
 Determine the language first, then route to the matching instructions throughout:
 
-- **TypeScript / JavaScript** — there's a `package.json`. Look for MCP signals in dependencies and source:
+- **TypeScript / JavaScript** — there's a `package.json`. Look for existing `posthog-node` major declarations too (`major 5` vs `major 6`, never cross majors on an existing install). Look for MCP signals in dependencies and source:
   - `@modelcontextprotocol/sdk` — the official SDK, **v1** (most common).
   - `@modelcontextprotocol/server` / `@modelcontextprotocol/core` / `@modelcontextprotocol/client` — the official SDK, **v2**. A v2 project has no `@modelcontextprotocol/sdk` at all, so never read that one package's absence as "no MCP server here".
   - `mcp-handler` — the Next.js / Vercel adapter.
@@ -80,7 +81,7 @@ Determine the language first, then route to the matching instructions throughout
 
 - If it's none of TS/JS, Python, Go, Ruby, or Rust, apply the guardrail above and stop.
 
-Then identify the file and the exact place where the server is constructed or where MCP requests are dispatched, and read it before editing. If PostHog MCP analytics is already wired in (an `instrument(` call, or a `PostHogMCP` client in TypeScript or Python, `posthogmcpsdk.Instrument(` in Go, or `PostHog::MCP.instrument(` or a `PostHog::MCP::Client` in Ruby, `posthog_rs::mcp::instrument(` or `McpAnalytics` in Rust), don't duplicate it. Verify the existing setup against STEP 4, add supported modern options that are missing, then continue through STEP 7.
+Then identify the file and the exact place where the server is constructed or where MCP requests are dispatched, and read it before editing. If PostHog MCP analytics is already wired in (an `instrument(` call, or a `PostHogMCP` client in TypeScript or Python, `posthogmcpsdk.Instrument(` in Go, or `PostHog::MCP.instrument(` or a `PostHog::MCP::Client` in Ruby, `posthog::mcp::instrument(`, `posthog_rs::mcp::instrument(`, or `McpAnalytics` in Rust), don't duplicate it. Verify the existing setup against STEP 4, add supported modern options that are missing, then continue through STEP 7.
 
 ### STEP 2: Choose the instrumentation path
 
@@ -121,13 +122,19 @@ Read `ruby.md` before editing.
 
 #### Rust
 
-- **Path RS1 — `rmcp` server** (a `ServerHandler` served over stdio or `StreamableHttpService`): wrap it with `posthog_rs::mcp::instrument(server, posthog.clone())` and serve the wrapped server in place of yours. One call. Read `rust.md` before editing.
+- **Path RS1 — `rmcp` server** (a `ServerHandler` served over stdio or `StreamableHttpService`): wrap it with `posthog::mcp::instrument(server, posthog.clone())` (or `posthog_rs::mcp::instrument(...)` when keeping the `posthog-rs` crate, whether `0.x` or `1.x` forwarding) and serve the wrapped server in place of yours. One call. Read `rust.md` before editing.
 
 ### STEP 3: Install the SDK
 
 #### TypeScript / JavaScript
 
-Install `@posthog/mcp` and `posthog-node` with the project's package manager and the install command in `typescript.md`, keeping the `@` version it puts on each name. Translate it to the project's manager (with pnpm, `pnpm add -E` followed by the same package specs) and add `-E` / `--save-exact`, which pins `@posthog/mcp` to the current release of that major. The `@` version also raises an already-declared older version, which a bare name leaves in place. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
+Look for an existing `posthog-node` declaration in `package.json` first:
+- **No existing `posthog-node` declaration (greenfield):** install `@posthog/mcp` and `posthog-node` with the project's package manager and the install command in `typescript.md`, keeping the `@` version it puts on each name.
+- **Already declared on `5.x` or `6.x`:** **stay on that existing `posthog-node` major** (never upgrade `posthog-node` across majors) and install only `@posthog/mcp` with the `@` version from `typescript.md`, since its latest releases support both `5.x` and `6.x`.
+- **Hard-pinned below `5.0.0`** (for example an exact `"4.2.0"` or `"=4.2.0"` pin): keep the pin untouched and emit `[ABORT] posthog package pinned below required floor`, telling the user MCP analytics needs `posthog-node` `5.x` or later.
+- **Range below `5.0.0`** (such as `"^4.0.0"` or `"~4.1.0"`): never silently upgrade across majors; ask the user before moving to `posthog-node@^5` (or `^6` per `typescript.md`), or emit `[ABORT] posthog package pinned below required floor` if they cannot upgrade. (If a wide range such as `>=4` or `*` already allows `5.x` or `6.x`, keep that declaration and install `@posthog/mcp`.)
+
+Translate the install command to the project's manager (with pnpm, `pnpm add -E` followed by the same package specs) and add `-E` / `--save-exact`, which pins `@posthog/mcp` to the current release of that major. The `@` version also raises an already-declared older version, which a bare name leaves in place. Read the installed version back from `package.json` / the lockfile rather than guessing: it must be `@posthog/mcp>=0.18.0`, the first release with model capture and conversation IDs on by default on both paths, including `prepareToolResult` for custom dispatchers. Upgrade an older installed version.
 
 **Never install an MCP SDK.** Both majors are *optional* peer dependencies of `@posthog/mcp`, and the project already has the one it uses. Adding the other pulls in a whole SDK the code never imports.
 
@@ -141,11 +148,21 @@ No extra constraint beyond the floor above. Upgrading an old install matters mos
 
 #### Python
 
-The SDK ships inside `posthog`, so first look for an existing `posthog` declaration (`requirements*.txt`, `pyproject.toml`, `setup.py`). If one doesn't already require 7.62.0 or later (unversioned, a lower floor, or a pin or cap below it), raise that declaration to `posthog>=7.62.0` by editing the file, keeping the upper bound from the install command in `python.md`, then install the way the project does (`pip install -r requirements.txt`, `uv sync`, or `poetry install`). If there is none, write that floor and the upper bound from `python.md` into the project's manifest (`requirements.txt`, `pyproject.toml`) and install from it the same way. Read the resolved version back from the lockfile or environment: it must be `posthog>=7.62.0`. Never put a version constraint in a shell command; the wizard reads `>` as a redirect and refuses it. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
+The SDK ships inside `posthog`, so first look for an existing `posthog` declaration (`requirements*.txt`, `pyproject.toml`, `setup.py`):
+- **Already declared on major 8:** keep the `8.x` declaration (staying within `<9`) and install/update so the resolved package satisfies `posthog>=7.62.0`.
+- **Already declared on major 7:**
+  - If it already requires `7.62.0` or later within major 7 (e.g. `>=7.69,<8` or exact `==` pin at/above that floor), keep it as declared (staying within `<8` rather than jumping across majors).
+  - If it uses a range below `7.62.0` (`posthog>=7.40,<8`, `posthog~=7.0`, or unpinned floor within major 7), raise that declaration to `posthog>=7.62.0` by editing the file and keep `<8` as the upper bound (never upgrade across majors to `8.x`).
+  - If it hard-pins an exact version below that floor (for example `==` at an earlier patch release), keep the pin untouched and emit `[ABORT] posthog package pinned below required floor`, telling the user that MCP analytics needs `posthog>=7.62.0`.
+- **Already declared unversioned or on an earlier major (`<7`):**
+  - If hard-pinned with `==` below `7.62.0`, keep the pin untouched and emit `[ABORT] posthog package pinned below required floor`, telling the user that MCP analytics needs `posthog>=7.62.0`.
+  - If it is unversioned (`posthog`) or uses a non-pinned range below `7`, write `python.md`'s range (`posthog>=8,<9`) when safe (or ask before crossing majors if `<7` was intentionally capped) and install (`pip install -r requirements.txt`, `uv sync`, or `poetry install`).
+- **No existing `posthog` declaration (greenfield):** write `python.md`'s range (`posthog>=8,<9`) into the project's manifest (`requirements.txt`, `pyproject.toml`) and install (`pip install -r requirements.txt`, `uv sync`, or `poetry install`).
+Read the resolved version back from the lockfile or environment: it must be `posthog>=7.62.0`. Never put a version constraint in a shell command; the wizard reads `>` as a redirect and refuses it. It's the first release with model capture and conversation IDs on by default on both paths, including `prepare_tool_result` for custom dispatchers. The MCP SDK is a peer dependency tested across `mcp>=1.26,<3`; don't add or change it as part of this command. jlowin's standalone `fastmcp` package is also supported. A custom-dispatcher (path P2) project needs nothing beyond `posthog`.
 
 #### Go
 
-Run `go get github.com/posthog/posthog-go/posthogmcpsdk@latest` in the module that contains the server, then read the version back from `go.mod`: `posthogmcpsdk` must be `v1.34.0` or later, the first release with `WithIntentFallback`. It pulls in `posthog-go` and raises the `go-sdk` requirement to the supported minimum if needed. The package needs Go 1.25 or later; if the installed toolchain is older and `go get` can't switch to a newer one, emit `[ABORT] go toolchain older than 1.25`. Never add or change anything else in `go.mod` by hand. In the report, say whether `go get` raised the `go` directive (to `1.25.0`) or bumped go-sdk, and tell the user to check the Go version in their Dockerfiles and CI. Serving the `2026-07-28` revision needs go-sdk `v1.8.0` or later; if the project's go-sdk is older, leave it and say so in the report.
+Stay on the project's existing PostHog Go module major when already present (`v1` `github.com/posthog/posthog-go` vs `v2` `github.com/posthog/posthog-go/v2`), and use `/v2` on greenfield installs. On `v1`, run `go get github.com/posthog/posthog-go/posthogmcpsdk@latest` (on `v2`, `github.com/posthog/posthog-go/posthogmcpsdk/v2@latest`) in the module that contains the server, then read the version back from `go.mod`: `posthogmcpsdk` must be `v1.34.0` or later, the first release with `WithIntentFallback`. It pulls in the matching `posthog-go` major and raises the `go-sdk` requirement to the supported minimum if needed. The package needs Go 1.25 or later; if the installed toolchain is older and `go get` can't switch to a newer one, emit `[ABORT] go toolchain older than 1.25`. Never add or change anything else in `go.mod` by hand. In the report, say whether `go get` raised the `go` directive (to `1.25.0`) or bumped go-sdk, and tell the user to check the Go version in their Dockerfiles and CI. Serving the `2026-07-28` revision needs go-sdk `v1.8.0` or later; if the project's go-sdk is older, leave it and say so in the report.
 
 #### Ruby
 
@@ -155,7 +172,12 @@ The gem needs Ruby 3.0 or later; on an older Ruby, emit `[ABORT] ruby older than
 
 #### Rust
 
-Run the `cargo add` command from `rust.md`, with its version and `--features mcp`, in the crate that contains the server, then read the version back from `Cargo.lock`: `posthog-rs` must be `0.29.0` or later. The `mcp` feature turns on the async client and pulls in `rmcp` with its `server` feature. `posthog_rs::mcp` needs `rmcp` 3.7 or later. If the project's `Cargo.toml` allows it (for example `"3.6"`), `cargo add` moves the lock forward on its own; say in the report that `cargo add` raised `rmcp`, from the version you recorded in STEP 1. If the project pins an older one exactly (`"=3.6.0"`) so `cargo add` fails, emit `[ABORT] rmcp older than 3.7`. Never edit the `rmcp` requirement yourself. It also needs Rust 1.88 or later; if the pinned toolchain is older, or `cargo build` fails because the compiler is too old, emit `[ABORT] rust toolchain older than 1.88`. The server already runs on `tokio`; never change its features or the `rmcp` transport features.
+Check whether `Cargo.toml` already declares `posthog` (`1.x`), `posthog-rs = "1"` (the `1.x` forwarding crate), or `posthog-rs` (`0.x`), and stay on the declared major:
+- **Neither `posthog` nor `posthog-rs` is declared (greenfield):** run `cargo add` for `posthog` `1.x` per `rust.md` with `--features mcp`.
+- **`posthog` (`1.x`) or `posthog-rs = "1"` is already declared:** stay on `1.x` and ensure `--features mcp` is enabled (`cargo add posthog@1 --features mcp`, or `posthog-rs@1 --features mcp` if `Cargo.toml` already declares `posthog-rs` `1.x`). If an exact `=` pin sits below `1.0`, keep the pin untouched and emit `[ABORT] posthog package pinned below required floor`. Read the version back from `Cargo.lock`: it must be `1.0` or later.
+- **`posthog-rs` (`0.x`) is already declared:** keep `posthog-rs` within `0.x` and add `--features mcp`. If `Cargo.toml` hard-pins `posthog-rs` with an exact `=` requirement below the `0.29.0` floor (for example `"=0.28.0"`), keep the pin untouched and emit `[ABORT] posthog package pinned below required floor`, telling the user MCP analytics needs `posthog-rs` `0.29.0` or later. Otherwise read the version back from `Cargo.lock`: `posthog-rs` must be `0.29.0` or later (`posthog` crate on `1.x` already includes MCP behind `--features mcp`).
+
+The `mcp` feature turns on the async client and pulls in `rmcp` with its `server` feature. `mcp` integration needs `rmcp` 3.7 or later. If the project's `Cargo.toml` allows it (for example `"3.6"`), `cargo add` moves the lock forward on its own; say in the report that `cargo add` raised `rmcp`, from the version you recorded in STEP 1. If the project pins an older one exactly (`"=3.6.0"`) so `cargo add` fails, emit `[ABORT] rmcp older than 3.7`. Never edit the `rmcp` requirement yourself. It also needs Rust 1.88 or later; if the pinned toolchain is older, or `cargo build` fails because the compiler is too old, emit `[ABORT] rust toolchain older than 1.88`. The server already runs on `tokio`; never change its features or the `rmcp` transport features.
 
 ### STEP 4: Instrument the server
 
@@ -367,9 +389,9 @@ import (
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	posthog "github.com/posthog/posthog-go"
-	"github.com/posthog/posthog-go/posthogmcp"
-	"github.com/posthog/posthog-go/posthogmcpsdk"
+	"github.com/posthog/posthog-go/posthogmcpsdk/v2" // omit /v2 when staying on v1
+	posthog "github.com/posthog/posthog-go/v2"        // omit /v2 when staying on v1
+	"github.com/posthog/posthog-go/v2/posthogmcp"     // omit /v2 when staying on v1
 )
 
 client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog.Config{
@@ -457,16 +479,16 @@ use rmcp::ServiceExt;
 
 let token = std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default();
 let posthog = Arc::new(
-    posthog_rs::client((token.as_str(), "https://us.i.posthog.com")).await, // or https://eu.i.posthog.com
+    posthog::client((token.as_str(), "https://us.i.posthog.com")).await, // or https://eu.i.posthog.com
 );
 
-let server = posthog_rs::mcp::instrument(MyServer, posthog.clone());
+let server = posthog::mcp::instrument(MyServer, posthog.clone());
 server.serve(rmcp::transport::stdio()).await?.waiting().await?;
 
 posthog.shutdown().await;
 ```
 
-Keep the server's existing error handling: if `main` doesn't return a `Result`, handle the `serve` errors the way it already does instead of using `?`. Read the token with `unwrap_or_default()`, never `?` or `expect`: a blank token makes a disabled client that sends nothing, while a missing variable must never stop the server. Keep the server's existing transport. For Streamable HTTP, hand the wrapped server to `StreamableHttpService::new(move || Ok(server.clone()), ...)` in place of yours; the server must implement `Clone`. Use the default options. Build `McpOptions` with `McpOptionsBuilder` and `McpAnalytics::new(...).instrument(...)` only if the user asks for an option (`rust.md` lists them). `identify` is optional; add it only if the server already authenticates callers on HTTP.
+When staying on the `posthog-rs` crate (`0.x` or `1.x` forwarding) from STEP 3, use `posthog_rs::client(...)` and `posthog_rs::mcp::instrument(...)` (or `posthog_rs::mcp::{McpOptionsBuilder, McpAnalytics}`). Only use `posthog::client(...)` and `posthog::mcp::...` when `Cargo.toml` depends on the `posthog` crate. Keep the server's existing error handling: if `main` doesn't return a `Result`, handle the `serve` errors the way it already does instead of using `?`. Read the token with `unwrap_or_default()`, never `?` or `expect`: a blank token makes a disabled client that sends nothing, while a missing variable must never stop the server. Keep the server's existing transport. For Streamable HTTP, hand the wrapped server to `StreamableHttpService::new(move || Ok(server.clone()), ...)` in place of yours; the server must implement `Clone`. Use the default options. Build `McpOptions` with `McpOptionsBuilder` and `McpAnalytics::new(...).instrument(...)` only if the user asks for an option (`rust.md` lists them). `identify` is optional; add it only if the server already authenticates callers on HTTP.
 
 ### STEP 5: Wire up credentials
 
@@ -477,7 +499,7 @@ Keep the server's existing error handling: if `main` doesn't return a `Result`, 
 - **TypeScript / JavaScript and Python:** a missing token must never stop the server. Both clients run disabled without one, so read it optionally and never throw on it, in development either: on STDIO the client launches the server, and a crash only shows up as a failed connection. Warn on stderr instead. Nothing loads an env file on its own, and an MCP client may start the server from another directory, so tell the user to set the variables in the `env` block of their MCP client's server config. For a start script, use the loader the project already has; if it has none, use Node's `--env-file-if-exists=.env` (Node 22.9 or later). Don't add `dotenv` to a STDIO server without `quiet: true`: by default it prints to stdout, which corrupts the stream.
 - **Go:** write only `POSTHOG_PROJECT_TOKEN` and read it with `os.Getenv`; the host goes in `posthog.Config.Endpoint` as in STEP 4. Go doesn't load `.env` files on its own, so tell the user to export the variable (or load it the way the project already loads config).
 - **Ruby:** write only `POSTHOG_PROJECT_TOKEN` and read it with `ENV["POSTHOG_PROJECT_TOKEN"]` (a missing token disables the client instead of raising); the host goes in the client's `host:` option as in STEP 4. Ruby loads `.env` only through a gem such as `dotenv`, so if the project has none, tell the user to export the variable.
-- **Rust:** write only `POSTHOG_PROJECT_TOKEN` and read it with `std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default()`; the host goes in the `posthog_rs::client` call as in STEP 4. Rust loads `.env` only through a crate such as `dotenvy`, so if the project has none, tell the user to export the variable.
+- **Rust:** write only `POSTHOG_PROJECT_TOKEN` and read it with `std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default()`; the host goes in the `posthog::client` (or `posthog_rs::client` when keeping the `posthog-rs` crate) call as in STEP 4. Rust loads `.env` only through a crate such as `dotenvy`, so if the project has none, tell the user to export the variable.
 
 ### STEP 6: Ensure events get flushed
 
@@ -569,7 +591,7 @@ The PostHog client batches events; the user owns the client's lifecycle.
 ## Key principles
 
 - **One server, one wrapper.** `instrument()` is idempotent; don't call it twice on the same server.
-- **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` / `PostHog::Client` / `posthog_rs` client once, not per request.
+- **Module-scope client.** Construct the `PostHog` / `Posthog` / `PostHogMCP` / `PostHog::Client` / `posthog` (`posthog_rs`) client once, not per request.
 - **Env, never hardcode.** The project token comes from an environment variable; so does the host, except in Go, Ruby, and Rust, where it's set in code.
 - **Additive only.** Don't change tool behavior or restructure the server — just wrap/capture.
 - **Don't break STDIO.** No `console.*` (JS), `print()` (Python), stdout writes (Go), `puts` (Ruby), or `println!` (Rust) on STDIO transports; use a `logger` (or stderr in Go, Ruby, and Rust) instead.

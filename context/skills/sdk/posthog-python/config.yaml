@@ -1,0 +1,24 @@
+# PostHog Python SDK — exact-major reference & migration skills
+type: docs-only
+category: sdk
+cli:
+  role: internal
+description: PostHog Python SDK {display_name} reference
+variants:
+  - id: v7
+    display_name: 7.x.x
+    template: ../non-default-major.md
+    tags: [sdk-python-7]
+    match: { sdkPython: ["3", "4", "5", "6", "7"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/python/7.x.x.md
+      - https://posthog.com/docs/libraries/python/migration.md
+
+  - id: v8
+    default: true
+    display_name: 8.x.x
+    template: ../default-major.md
+    tags: [sdk-python-8]
+    match: { sdkPython: ["8"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/python/8.x.x.md
