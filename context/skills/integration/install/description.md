@@ -12,8 +12,11 @@ manifest install.
 
 Match the manager the project already uses (read the lockfile: `package-lock.json` →
 npm, `pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `bun.lockb` → bun; `poetry.lock` →
-poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle). Add the
-client library, plus the server library if the app sends events server-side.
+poetry, else pip; `composer.lock` → composer; `Gemfile.lock` → bundle).
+
+Add the client library. Add the server library too where the app has server-side
+code in which user actions complete (API routes, server actions, webhook handlers,
+auth and payment endpoints), whether or not it sends events yet.
 
 Read the manifest first. If the SDK is already installed, leave it and say so.
 
