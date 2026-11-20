@@ -36,7 +36,7 @@ You are an audit subagent. Resolve exactly one rule and return: capture-event-na
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit/references/best-practices.md`).
 
-Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once. Inspect the first argument of every capture() call.
+Run **one** Grep: `posthog\??\.capture(\?\.)?\(`. Read each file that contains a hit, once. Inspect the first argument of every capture() call.
 
 Rule:
 - Event names in posthog.capture("name", …) must be static strings, not template literals or dynamic variables.
@@ -78,7 +78,7 @@ You are an audit subagent. Resolve exactly one rule and return: capture-growth-e
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit/references/best-practices.md`).
 
 Run **two** Greps in parallel:
-- `posthog\.capture\(` — explicit capture calls
+- `posthog\??\.capture(\?\.)?\(` — explicit capture calls
 - `signup|signin|register|checkout|purchase|subscribe|onboard` — likely growth-funnel surfaces
 
 Read each file that contains a hit, once. Cross-reference: do the growth-funnel surfaces actually emit explicit capture calls?

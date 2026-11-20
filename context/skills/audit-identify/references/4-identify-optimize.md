@@ -92,7 +92,7 @@ You are an audit subagent. Resolve exactly one rule and return: identify-isident
 Read this skill's bundled `cutting-costs.md` reference once (typically `.claude/skills/audit-identify/references/cutting-costs.md`; otherwise discover with `Glob` `**/skills/audit-identify/references/cutting-costs.md`). Focus on the section that recommends guarding `identify()` with `_isIdentified()` to avoid emitting a `$identify` event on every page load / re-render.
 
 Run **two** Greps in parallel:
-- `posthog\.identify\(` — every identify call site.
+- `posthog\??\.identify(\?\.)?\(` — every identify call site.
 - `_isIdentified\(|isIdentified\(` — any guard usage.
 
 Read each file that contains a `posthog.identify(` hit, once. For each identify call, determine whether it is guarded by an `_isIdentified()` check in its enclosing function, hook, or effect.

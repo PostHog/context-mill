@@ -125,7 +125,7 @@ Read this skill's bundled `identify-users.md` reference once (typically `.claude
 Background: first-touch attribution properties — `$initial_referrer`, `$initial_referring_domain`, `$initial_utm_*`, `signup_date`, `first_seen_*`, `original_*` — should be written with `$set_once`, not `$set`. PostHog's own `$initial_*` properties are managed by the SDK and use `$set_once` automatically; the risk is project-defined first-touch attrs (e.g. `original_partner_id`, `signup_landing_page`, `first_seen_plan_intent`) being written with `$set`, which overwrites the first-touch value on every subsequent identify and corrupts attribution analytics.
 
 Run **two** Greps in parallel:
-- `posthog\.identify\(|setPersonProperties\(` — identify and person-property-setter call sites.
+- `posthog\??\.identify(\?\.)?\(|setPersonProperties\(` — identify and person-property-setter call sites.
 - `\$set\b|\$set_once\b|setOnce\(|setPersonPropertiesOnce` — every $set / $set_once usage in the project.
 
 Read each file that contains a `$set` or `$set_once` hit, once. For each usage, classify the property keys being passed:
@@ -206,7 +206,7 @@ Read this skill's bundled `utm-segmentation.md` reference once (typically `.clau
 Background: PostHog's auto-captured `$initial_utm_*` and `$initial_referrer` person properties get set on the first pageview and persist on the person profile. But the signup / activation / purchase EVENT itself — the conversion event used in funnel analytics and revenue attribution — does not automatically carry those values. Without explicit attribution properties on the conversion event, you can't slice "signups by utm_campaign" or "MRR by referring_domain" in event-side insights; you can only do it via person-property breakdown, which loses event-time fidelity.
 
 Run **two** Greps in parallel:
-- `posthog\.capture\(` — every capture call site.
+- `posthog\??\.capture(\?\.)?\(` — every capture call site.
 - `(?i)(sign.?up|signed.?up|user.?registered|user.?created|account.?created|trial.?started|subscribe|purchase|checkout.?completed|payment.?completed|activated|onboarded)` — conversion-event name and surface signals.
 
 Read files matching the conversion-event signals once. For each `posthog.capture()` call whose first argument names a conversion event (signup, signed_up, user_registered, subscription_started, purchase_completed, etc.), inspect the properties object.

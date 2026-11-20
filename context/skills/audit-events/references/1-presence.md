@@ -20,7 +20,7 @@ Emit:
 Run **two `Grep` calls in parallel**, both with `output_mode: "files_with_matches"`:
 
 1. `posthog\.init\(|new PostHog\(|posthog\.Posthog\(|Posthog\(` — any PostHog initialization across runtimes (web, server, mobile, wrapper utils).
-2. `posthog\.capture\(|analytics\.capture\(` — any explicit capture call site.
+2. `posthog\??\.capture(\?\.)?\(|analytics\??\.capture(\?\.)?\(` — any explicit capture call site.
 
 ## Decision
 
