@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.68.0](https://github.com/PostHog/context-mill/compare/v1.67.0...v1.68.0) (2026-11-20)
+
+
+### Features
+
+* **migrate-email:** map provider tracking settings to tracking and sensitive ([#486](https://github.com/PostHog/context-mill/issues/486)) ([ee1402d](https://github.com/PostHog/context-mill/commit/ee1402d1fa3ae759e902c69664cb7c8a17542ff3))
+* **spend-audit:** add the spend audit agent flow ([#474](https://github.com/PostHog/context-mill/issues/474)) ([76a2515](https://github.com/PostHog/context-mill/commit/76a2515524ae9ac8882204d336792b2892883f23))
+
+
+### Bug Fixes
+
+* **error-tracking-upload-source-maps:** require the tls feature on the Rust blocking client ([#542](https://github.com/PostHog/context-mill/issues/542)) ([44f8572](https://github.com/PostHog/context-mill/commit/44f85725edb7f037bc8e8f5a487f048c044b8838))
+* **migrate-email:** leave send retries to PostHog's SDK ([#541](https://github.com/PostHog/context-mill/issues/541)) ([b4d7cd9](https://github.com/PostHog/context-mill/commit/b4d7cd95ace947803285f7f29757f2cef727db03))
+* **revenue-analytics:** preserve Stripe checkout references ([#543](https://github.com/PostHog/context-mill/issues/543)) ([e16d485](https://github.com/PostHog/context-mill/commit/e16d485fe4a15b344a700a19f4d5bba5416b9eed))
+
 ## [1.67.0](https://github.com/PostHog/context-mill/compare/v1.66.0...v1.67.0) (2026-11-17)
 
 
