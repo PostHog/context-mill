@@ -30,6 +30,11 @@ capture buys nothing.
 Find the auth flow first: login and signup handlers, session callbacks. If the
 app has no concept of a user, there is nothing to identify — report that and stop.
 
+When the auth flow is Supabase Auth, such as calls to `supabase.auth.signUp`,
+`signInWithPassword` or `signInWithOtp`, write `Auth provider: Supabase Auth` in
+your handoff. The report step uses that line to point the user at sending
+Supabase's auth emails through PostHog.
+
 If the app has both a client and a server, keep them on the same person. Set the
 client SDK's `tracing_headers` to the backend's hostname (hostnames only) and it
 adds the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` request headers on its

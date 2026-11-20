@@ -57,6 +57,11 @@ claim survive into the report.
 - The dashboard link.
 - Any build conflict, in full.
 - Clear next steps for the user.
+- When the identify handoff says `Auth provider: Supabase Auth`, one more next
+  step: "Send your Supabase sign-up, magic link and password reset emails from
+  PostHog email templates. Follow the
+  [Supabase auth emails guide](https://posthog.com/docs/workflows/supabase-auth-emails)."
+  Leave it out for any other auth provider.
 
 End with a "Before you merge" checklist as GitHub-style checkboxes (`- [ ] …`),
 including only the items that apply to what was set up — judge each against the

@@ -104,6 +104,8 @@ We've built some insights and a dashboard for you to keep an eye on user behavio
 
 [links]
 
+[Only if the app signs users in with Supabase Auth: "Send your Supabase sign-up, magic link and password reset emails from PostHog email templates. Follow the [Supabase auth emails guide](https://posthog.com/docs/workflows/supabase-auth-emails)."]
+
 ## Verify before merging
 
 [checklist]
