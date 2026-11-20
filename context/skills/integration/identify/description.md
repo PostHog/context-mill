@@ -32,8 +32,8 @@ app has no concept of a user, there is nothing to identify — report that and s
 
 When the auth flow is Supabase Auth, such as calls to `supabase.auth.signUp`,
 `signInWithPassword` or `signInWithOtp`, write `Auth provider: Supabase Auth` in
-your handoff. The report step uses that line to point the user at sending
-Supabase's auth emails through PostHog.
+your handoff. The report step uses that line to point the user at the skill
+that sends Supabase's auth emails through PostHog.
 
 If the app has both a client and a server, keep them on the same person. Set the
 client SDK's `tracing_headers` to the backend's hostname (hostnames only) and it

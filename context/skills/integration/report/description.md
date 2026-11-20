@@ -59,7 +59,9 @@ claim survive into the report.
 - Clear next steps for the user.
 - When the identify handoff says `Auth provider: Supabase Auth`, one more next
   step: "Send your Supabase sign-up, magic link and password reset emails from
-  PostHog email templates. Follow the
+  PostHog email templates. Ask a coding agent connected to the PostHog MCP
+  server to set up Supabase auth emails, and it loads PostHog's
+  `setting-up-supabase-auth-emails` skill. To do it by hand, follow the
   [Supabase auth emails guide](https://posthog.com/docs/workflows/supabase-auth-emails)."
   Leave it out for any other auth provider.
 
