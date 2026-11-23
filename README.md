@@ -10,7 +10,7 @@ We'd love your pull request!
 
 The context mill gathers up-to-date content from multiple sources, packaging PostHog developer docs, prompts, and working example code into versioned skills which can be shipped anywhere as zip files. 
 
-The PostHog [wizard](https://github.com/PostHog/wizard) downloads skills and menus from the latest release. The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) fetches the `skills-mcp-resources.zip` bundle and exposes it to any MCP-compatible client as resources. The [AI plugin](https://github.com/PostHog/ai-plugin) packages skills from here too.
+The PostHog [wizard](https://github.com/PostHog/wizard) downloads skills and menus from the latest release. The [PostHog MCP server](https://github.com/PostHog/posthog/tree/master/services/mcp) fetches the `skills-mcp-resources.zip` bundle and exposes it to any MCP-compatible client as resources.
 
 The context mill is a stopgap. The goal is to retire it once the docs themselves package cleanly into skills. See the [handbook](https://posthog.com/handbook/wizard-and-docs/context-mill).
 
@@ -90,14 +90,63 @@ Run `npm run build` to generate the release artifacts:
 |--------|-------------|
 | `dist/skills/<id>.zip` | Per-skill bundles (SKILL.md + references + shared docs) |
 | `dist/skills/manifest.json` | Versioned manifest of every bundled skill and its download URL. It ships inside `skills-mcp-resources.zip`, not as its own release asset |
-| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table |
-| `dist/agents/agent-menu.json` | Orchestrator flows and the task prompts in each one |
+| `dist/skills/skill-menu.json` | Category groupings and `cliEntries` — the wizard's command lookup table. Each skill entry carries `id`, `name`, `downloadUrl`, `title`, `description` and `tags`. The tags say which projects a skill serves: they add a `key:value` tag for each `match` key, such as `framework:<framework>`, its group and (when set) `default` to the skill's own |
 | `dist/skills-mcp-resources.zip` | One bundle of `manifest.json` and every skill ZIP, for the MCP server |
 
 Releases are cut as GitHub releases and mirrored to `context-mill.posthog.com`.
-The wizard fetches `skill-menu.json` and `agent-menu.json` from the latest
-release and downloads the per-skill ZIPs on demand. The MCP server fetches
+The wizard fetches `skill-menu.json` from the latest release and downloads
+the per-skill ZIPs on demand. The MCP server fetches
 `skills-mcp-resources.zip`.
+
+### The variant table
+
+`context/skills/integration/config.yaml` is the variant table: one row per
+framework variant, and the build turns each row into one pack,
+`integration-<variant>.zip`.
+
+| Key | Meaning |
+|-----|---------|
+| `match` | The trait values the pack is written for, published as `key:value` menu tags. A key is a trait name as the wizard spells it. `framework` is the detection id the row serves, and every `match` names it. `frameworkVariant` is the id the wizard's framework config reports, such as `pages-router`. A row with no `frameworkVariant` serves every value its framework's other rows do not name. A row with no `match` serves no detected framework |
+| `default` | Whether the row is its framework's default |
+| `docs_urls` | The integration pages, written to `references/` and listed in `SKILL.md` |
+| `docs` | Each other product's pages for the variant, written to `references/<product>/`. `SKILL.md` does not list them |
+| `gaps` | The products a row has no pages for. The build fails when a row neither lists a product in `products` nor names it here |
+
+Each pack carries a `variant.json` at its root with the row as built: its
+`match` keys, its rules file, and each product's pages with their titles.
+`integration` is the product for the row's own `docs_urls`.
+
+A row's `docs` are that framework's own pages for a product. Pages a step
+shares across every framework are the step skill's `shared_docs`, not a row's.
+A run takes its framework's default pack, so a framework's default row lists
+the pages a run on that framework reads.
+
+A page is written under the last part of its URL, such as `next-js.md`. When
+two pages of one folder share that part, each takes its parent part too:
+`error-tracking/installation/python.md` and `libraries/python.md` are written
+as `installation-python.md` and `libraries-python.md`. This holds for every
+skill's pages. The build fails when two pages of a folder would still be
+written under one name, since the second would replace the first.
+
+### Step skills
+
+The orchestrator's step skills live in `context/skills/integration/<step>/`,
+one skill per step, and publish as `integration-<step>`. Each is written once,
+with one variant named `all`.
+
+Six steps differ by framework: install, init, capture, error tracking, feature
+flags and session replay. Each is written once and sets `framework_references`
+to the product whose pages complete it. Its `SKILL.md` leaves three
+placeholders for the consumer to fill from the framework's pack:
+
+| Placeholder | Filled with |
+|-------------|-------------|
+| `{framework_name}` | The pack's `displayName`. The build writes it wherever the template or the `description` says `{display_name}` |
+| `{framework_docs}`, a line of its own | One line per page of the product, as `variant.json` lists them |
+| `{framework_rules}`, a line of its own | The line for the pack's rules file |
+
+The consumer copies those pages and the rules file into the skill's
+`references/`. `scripts/lib/skill-composition.js` is the reference for that.
 
 ### Manifest structure
 
@@ -166,15 +215,15 @@ build; the team-owned skills below route review to their owning team instead.
 | Path | Owning team |
 |---|---|
 | `*` (everything else, including all other skills) | `@PostHog/team-wizard-docs` |
-| `context/skills/integration/`, `context/skills/integration-v2/`, `context/agents/integration-v2/` | `@PostHog/team-growth` |
+| `context/skills/integration/` | `@PostHog/team-growth` |
 | `context/skills/migrate/`, `context/skills/audit*/`, `context/skills/events-audit/` | `@PostHog/team-fde` |
-| `context/skills/error-tracking/`, `context/agents/error-tracking/`, `context/skills/error-tracking-upload-source-maps/`, `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
+| `context/skills/error-tracking/`, `context/skills/error-tracking-upload-source-maps/`, `context/skills/error-tracking-link-releases/` | `@PostHog/team-error-tracking` |
 | `context/skills/revenue-analytics/`, `context/skills/web-analytics/` | `@PostHog/team-web-analytics` |
-| `context/skills/data-warehouse-source/` | `@PostHog/team-warehouse-sources` |
+| `context/skills/data-warehouse-source/`, `context/skills/data-warehouse-destination/` | `@PostHog/team-warehouse-sources` |
 | `context/skills/self-driving/` | `@PostHog/team-self-driving` |
 | `context/skills/mcp-analytics/` | `@PostHog/mcp-analytics` |
-| `context/skills/metrics/`, `context/agents/metrics/` | `@PostHog/team-apm` |
-| `context/skills/replay-vision*/`, `context/agents/replay-vision/` | `@PostHog/team-replay` |
+| `context/skills/metrics/` | `@PostHog/team-apm` |
+| `context/skills/replay-vision*/` | `@PostHog/team-replay` |
 | `context/skills/ai-observability/`, `context/skills/llm-analytics/` | `@PostHog/team-ai-observability` |
 
 Ownership is by directory. Skills not listed above (`creating-product-tours`,

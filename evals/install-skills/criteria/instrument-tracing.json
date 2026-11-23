@@ -1,0 +1,38 @@
+[
+  {
+    "name": "tr_dependencies_installed",
+    "rubric": "The OpenTelemetry SDK, the OTLP HTTP trace exporter, and auto-instrumentation for this stack are added with the package manager's install command. **N/A** when the app already exported OpenTelemetry traces. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_exporter_endpoint",
+    "rubric": "Spans go over OTLP HTTP to the `/i/v1/traces` path on the PostHog host, with the project token in an `Authorization: Bearer` header. Using `/i/v0/ai/otel`, or setting only a base OTLP endpoint that would send other signals to the traces path, is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_protocol",
+    "rubric": "The exporter uses HTTP/protobuf, set explicitly where the SDK or agent defaults to gRPC. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_service_name",
+    "rubric": "A service name is set through `service.name` or `OTEL_SERVICE_NAME`. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_provider_starts_first",
+    "rubric": "The tracer provider starts before the application loads its frameworks, so auto-instrumentation can patch them, in the place PostHog's documentation for this stack names. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_auto_instrumentation",
+    "rubric": "Auto-instrumentation is enabled, so HTTP server requests and outbound calls produce spans without hand-written spans around them. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_span_naming",
+    "rubric": "Manual spans use low-cardinality names with variable values in attributes. **N/A** when the change adds no manual spans. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_token_host_env",
+    "rubric": "The project token and host or endpoint are read from environment variables, not hard-coded. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "tr_existing_preserved",
+    "rubric": "An existing tracer provider or exporter is reused. Replacing or removing another tracing backend without the user asking is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

@@ -1,0 +1,12 @@
+# Orchestrator step-skill: The key flow outcome classifier brief for replay vision.
+type: docs-only
+template: description.md
+description: The key flow outcome classifier brief for Replay vision
+tags: [orchestrator, replay-vision]
+cli:
+  role: internal
+variants:
+  - id: all
+    display_name: Key flow outcome scanner
+    tags: [orchestrator, replay-vision]
+    docs_urls: []

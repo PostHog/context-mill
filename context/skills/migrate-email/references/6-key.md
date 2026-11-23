@@ -23,10 +23,10 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## Check that the key is set
 
-The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value starts with `phs_`:
+The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value, after an optional quote, starts with `phs_`:
 
 ```bash
-grep -E '^[[:space:]]*(export[[:space:]]+)?POSTHOG_PROJECT_SECRET_API_KEY[[:space:]]*=' .env | tail -n 1 | grep -cE '^[^=]*=[[:space:]]*[^#[:space:]]?phs_'
+grep -E '^[[:space:]]*(export[[:space:]]+)?POSTHOG_PROJECT_SECRET_API_KEY[[:space:]]*=' .env | tail -n 1 | grep -cE "^[^=]*=[[:space:]]*[\"']?phs_"
 ```
 
 Use the env file the key went into in place of `.env`. A count of `0` means the key is not set.
@@ -35,9 +35,9 @@ A person who says they will add the key later has not set it, and neither has on
 
 ## Every other place the provider key lives
 
-The provider's `sdk-reference.md` names its key's environment variable. Search the whole repository for that name, including CI workflows, deploy and hosting config, Docker and compose files, env example files, and docs. Skip `node_modules` and build output.
+The provider's `sdk-reference.md` names the environment variables that hold its key, one or more. Search the whole repository for each name, including CI workflows, deploy and hosting config, Docker and compose files, env example files, and docs. Skip `node_modules` and build output.
 
-List each place with its file and line. Each one needs `POSTHOG_PROJECT_SECRET_API_KEY` too before the cutover, for example as a CI secret or a hosting environment variable. Do not change these files: the person adds the secret where the platform stores it.
+List each place that sets a value for it, with its file and line: env and env example files, CI, deploy and hosting config, Docker and compose files, and docs that tell people to set it. Source code that only reads the variable is not a place. Each place needs `POSTHOG_PROJECT_SECRET_API_KEY` too before the cutover, for example as a CI secret or a hosting environment variable. Do not change these files: the person adds the secret where the platform stores it.
 
 ## Write down
 
