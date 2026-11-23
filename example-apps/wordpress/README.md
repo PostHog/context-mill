@@ -105,6 +105,10 @@ PostHog::flush();
 
 A web request has no single exit point like a CLI script does, so flush where you capture.
 
+## Reverse proxy
+
+Ad blockers often drop browser requests sent to PostHog's own domain, so the client-side snippet loses events. Point `POSTHOG_HOST` at a reverse proxy to keep them. The quickest option is PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md). You can also proxy through your host or CDN, such as [Cloudflare](https://posthog.com/docs/advanced/proxy/cloudflare.md) or [nginx](https://posthog.com/docs/advanced/proxy/nginx.md). Server-side calls from PHP aren't affected by ad blockers and don't need the proxy.
+
 ## Running Without PostHog
 
 The plugin works fine without PostHog configured. If the `POSTHOG_PROJECT_TOKEN` constant is undefined — or still holds the `phc_your_...` placeholder — the plugin skips initialization, prints no snippet, and captures nothing. WordPress is unaffected.

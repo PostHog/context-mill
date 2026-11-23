@@ -7,5 +7,5 @@ gem 'bcrypt', '~> 3.1'
 gem 'dotenv-rails', '~> 3.0'
 
 # PostHog
-gem 'posthog-ruby', '~> 3.0'
+gem 'posthog-ruby', '~> 3.0', require: 'posthog'
 gem 'posthog-rails'

@@ -4,6 +4,7 @@ import com.posthog.server.PostHogCaptureOptions;
 import com.posthog.server.PostHogFeatureFlagEvaluations;
 import com.posthog.server.PostHogInterface;
 import jakarta.servlet.http.HttpSession;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -33,6 +34,7 @@ public class BurritoController {
     /** Home / login page. */
     @GetMapping("/")
     public String home(HttpSession session, Model model) {
+        // Only signed-in users have a "userId"; anonymous visitors see the login form.
         model.addAttribute("userId", session.getAttribute("userId"));
         return "home";
     }
@@ -70,23 +72,20 @@ public class BurritoController {
     /**
      * Event tracking.
      *
-     * <p>Capture a meaningful business event with a stable distinct id and a couple of
+     * <p>Capture a meaningful business event with the visitor's distinct id and a couple of
      * event properties. Keep PII in person properties (see {@link #login}), not here.
      */
     @PostMapping("/burrito")
     public String considerBurrito(HttpSession session, Model model) {
-        String userId = distinctId(session);
+        Visitor visitor = visitor(session);
         Object previous = session.getAttribute("burritoCount");
         int count = (previous == null ? 0 : (int) previous) + 1;
         session.setAttribute("burritoCount", count);
 
-        posthog.capture(
-                userId,
-                "burrito_considered",
-                PostHogCaptureOptions
-                        .builder()
-                        .property("total_considerations", count)
-                        .build());
+        PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+                .builder()
+                .property("total_considerations", count);
+        posthog.capture(visitor.id(), "burrito_considered", withPersonProfile(options, visitor).build());
 
         model.addAttribute("count", count);
         return "burrito";
@@ -100,7 +99,7 @@ public class BurritoController {
      */
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        String userId = distinctId(session);
+        String userId = visitor(session).id();
 
         // evaluateFlags makes a network call; if PostHog is slow or down it can throw.
         // Never let flag evaluation take the page down — fall back to the flag being off.
@@ -126,20 +125,18 @@ public class BurritoController {
      */
     @GetMapping("/profile")
     public String profile(HttpSession session, Model model) {
-        String userId = distinctId(session);
+        Visitor visitor = visitor(session);
+        String userId = visitor.id();
         try {
             riskyOperation();
         } catch (RuntimeException e) {
             log.warn("profile risky_operation failed", e);
-            posthog.capture(
-                    userId,
-                    "error_occurred",
-                    PostHogCaptureOptions
-                            .builder()
-                            .property("error_type", e.getClass().getSimpleName())
-                            .property("error_message", e.getMessage())
-                            .property("source", "profile_view")
-                            .build());
+            PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+                    .builder()
+                    .property("error_type", e.getClass().getSimpleName())
+                    .property("error_message", e.getMessage())
+                    .property("source", "profile_view");
+            posthog.capture(userId, "error_occurred", withPersonProfile(options, visitor).build());
             model.addAttribute("error", e.getMessage());
         }
         model.addAttribute("userId", userId);
@@ -150,9 +147,33 @@ public class BurritoController {
         throw new IllegalStateException("profile data source is temporarily unavailable");
     }
 
-    /** Falls back to "anonymous" when no one has logged in yet. */
-    private String distinctId(HttpSession session) {
+    /** The distinct id for the current request and whether the visitor is anonymous. */
+    private record Visitor(String id, boolean anonymous) {}
+
+    /**
+     * Resolves the distinct id. Signed-in users keep their stable user id (it must match
+     * your frontend {@code identify} call). Signed-out visitors get a random UUID kept in
+     * the session, so it is reused for the rest of the visit instead of every visitor
+     * sharing one id.
+     */
+    private Visitor visitor(HttpSession session) {
         Object userId = session.getAttribute("userId");
-        return userId == null ? "anonymous" : userId.toString();
+        if (userId != null) {
+            return new Visitor(userId.toString(), false);
+        }
+        Object anonymousId = session.getAttribute("anonymousId");
+        if (anonymousId == null) {
+            anonymousId = UUID.randomUUID().toString();
+            session.setAttribute("anonymousId", anonymousId);
+        }
+        return new Visitor(anonymousId.toString(), true);
+    }
+
+    /**
+     * Anonymous events set {@code $process_person_profile} to false so PostHog does not
+     * create a person profile for the visitor.
+     */
+    private PostHogCaptureOptions.Builder withPersonProfile(PostHogCaptureOptions.Builder options, Visitor visitor) {
+        return visitor.anonymous() ? options.property("$process_person_profile", false) : options;
     }
 }

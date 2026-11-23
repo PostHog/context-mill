@@ -11,6 +11,8 @@ For a site in PHP, such as in a Laravel or Symfony app. A site that sends throug
 
 `composer require posthog/posthog-php`, which installs or upgrades it to the latest release that the project's constraints allow. Raise the constraint in `composer.json` when it holds the package back.
 
+The send needs PHP's curl extension, which Composer doesn't ask for: without it every send fails with the code `missing_curl`. Add `"ext-curl": "*"` to `require` in `composer.json`, so an install where it's missing fails instead. When the app's Dockerfile, buildpack, or server setup doesn't show that it installs the extension, such as the official `php` Docker image, which has it built in, or a `php-curl` or `php8.3-curl` package, note it for the report's "Before cutover" list: `before cutover: enable ext-curl where the app runs`.
+
 ## The client
 
 ```php
@@ -34,9 +36,16 @@ $posthog = new Client(
 
 ## The send
 
-- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, `'capture_engagement'`, and `'category'` optional. A category: `'category' => ['key' => ..., 'type' => 'marketing', 'name' => ..., 'description' => ...]`, with `'transactional'` as the type of a transactional one, and the description left out when it has none.
+- Code send: `$posthog->emails()->send(['to' => ..., 'template_key' => ..., 'subject' => ..., 'html' => ..., 'text' => ..., 'distinct_id' => ..., 'idempotency_key' => ...])`, with `'from'`, `'reply_to'`, `'sensitive'`, `'tracking'`, and `'category'` optional. `'tracking'` takes `true`, `false`, or an array with `'opens'`, `'clicks'`, and `'engagement'`. Open tracking off is `'tracking' => ['opens' => false]`. `'capture_engagement'` is deprecated: use `'tracking' => ['engagement' => false]`. Sensitive is `'sensitive' => true`. A category: `'category' => ['key' => ..., 'type' => 'marketing', 'name' => ..., 'description' => ...]`, with `'transactional'` as the type of a transactional one, and the description left out when it has none.
 - `'reply_to'` takes one address or a list of addresses.
 - Template send: `$posthog->emails()->send(['to' => ..., 'template_id' => ..., 'template_data' => [...], 'distinct_id' => ..., 'idempotency_key' => ...])`.
+
+## A deadline
+
+For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
+
+- The client option `'email_request_timeout_ms'` is the time each email request may take, 15000 by default, and `'email_request_max_retries'` its retries, 2 by default. A send's `'max_retries' => 0` turns its retries off.
+- The send takes no deadline of its own, so a deadline needs a client of its own with `'email_request_timeout_ms'` set to it.
 
 ## The answer
 
@@ -44,6 +53,7 @@ $posthog = new Client(
 - On an API error it throws `PostHog\EmailError`. `getErrorCode()` is PostHog's error code, a string such as `recipient_suppressed`, `getErrorName()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `getStatusCode()` is the HTTP status.
 - Suppressed recipient: `catch (\PostHog\EmailError $e)` with `if ($e->getErrorCode() === 'recipient_suppressed')`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - It throws the same `PostHog\EmailError` for a network error that is left after the retries, with the code `network_error`, and for a bad argument, with a code that starts with `invalid_`. `getMessage()` is there too.
+- An error PostHog answered with a wait carries it as `$e->getRetryAfterMs()`, in milliseconds; it is `null` when PostHog named none.
 
 ## Check
 

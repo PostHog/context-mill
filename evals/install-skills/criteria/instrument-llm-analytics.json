@@ -1,0 +1,114 @@
+[
+  {
+    "name": "fa_changes_relevant",
+    "rubric": "All changes relate to instrumenting LLM calls for AI observability (no unrelated edits) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_correct_files",
+    "rubric": "Correct files modified (the app's entry point / LLM client module; dependency manifest; env example) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_no_unnecessary_changes",
+    "rubric": "No unnecessary modifications. In particular the app's **tool-dispatch loop and LLM request shape are unchanged** \u2014 same messages/input construction, same tool schema, same control flow. Restructuring the tool loop to suit the instrumentation is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_code_quality",
+    "rubric": "Code follows existing codebase patterns (naming, structure, indentation, idioms match surrounding code) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_imports_valid",
+    "rubric": "Imports and exports are correct, and instrumentation setup is ordered correctly relative to the vendor SDK import (on the OTel path, the instrumentor must be applied before the vendor SDK is used). **N/A** for the manual-capture path. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "fa_files_complete",
+    "rubric": "All necessary files included (new modules actually imported where used; `.env.example` updated with any new variables) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_builds",
+    "rubric": "App builds without errors (no syntax errors, type errors, or missing dependencies) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_preserves_existing",
+    "rubric": "Preserves existing app behaviour: the LLM calls still do what they did, tools still dispatch, and any pre-existing PostHog product-analytics client is **reused rather than duplicated**. Creating a second PostHog client when one already exists is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_minimal_changes",
+    "rubric": "Changes are minimal and focused (no scope creep into feature flags, session replay, or other PostHog products) Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_no_syntax_errors",
+    "rubric": "No syntax or type errors introduced Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_correct_imports",
+    "rubric": "Correct import/export statements; all imports resolve to real modules and real symbols. Hallucinated module paths or symbols that do not exist in the installed SDK version are NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_env_documented",
+    "rubric": "Any new environment variables are documented in `.env.example` or README, and **no credentials are hardcoded**. The project token and host must be read from the environment. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_dependency_version_valid",
+    "rubric": "Declared dependency versions can actually resolve to a release containing the APIs the code uses. If the PR uses a module (e.g. `posthog.ai.otel`) that the pinned/declared version range cannot provide, mark NO. If the PR's own report claims a package or module \"is not published\" or \"does not exist\", treat that claim as suspect \u2014 it is usually a stale resolved version rather than a real gap \u2014 and mark NO unless the PR verified it against the registry's latest release. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "as_flushes_before_exit",
+    "rubric": "For scripts and CLIs, buffered events are flushed before the process exits (`posthog.shutdown()`, `atexit` registration, or `TracerProvider.shutdown()`). Batching means a short-lived process that exits without flushing loses everything. **N/A** for long-running servers. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_instrumentation_initialized_once",
+    "rubric": "Instrumentation is set up exactly once, at module scope or app startup \u2014 not inside a request handler or per-call function. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_generations_captured",
+    "rubric": "The app's LLM calls will actually produce `$ai_generation` events: either an instrumentor is attached to the SDK in use, or the client is swapped for the PostHog wrapper, or explicit `$ai_generation` captures exist. An OTel provider configured but never attached to an instrumentor is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_trace_groups_the_request",
+    "rubric": "All LLM calls belonging to one logical request land in **one** trace. On the wrapper path this requires a shared `posthog_trace_id` passed to every call \u2014 a call that omits it gets a freshly generated UUID, splitting one request into several single-generation traces. If each call in a multi-call request would get its own trace, mark NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_session_id_set",
+    "rubric": "`$ai_session_id` is set, using the app's own conversation/thread identifier where one exists (see the README). Not set at all is NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_session_id_correct_key",
+    "rubric": "The session is carried by the literal property key **`$ai_session_id`**. Keys like `posthog.session_id`, `session_id`, or `ai_session_id` are silently dropped by ingest \u2014 they look plausible and record nothing. Mark NO for any variant spelling. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_session_cardinality_correct",
+    "rubric": "One session id is shared by all traces that belong together. A session id generated fresh per call or per trace gives every trace its own session, which groups nothing and is worse than omitting it \u2014 mark NO. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_identity_scope_correct",
+    "rubric": "User/session identity is supplied at the right scope. Process-global Resource attributes are correct only when one process is one conversation (a CLI or worker). If the app serves multiple users or conversations per process (any server, or a per-request thread id), identity must be per call \u2014 mark NO if a per-request value is placed on the Resource. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_no_hand_authored_spans",
+    "rubric": "The PR does not wrap ordinary helper functions in hand-authored spans to fabricate structure. Spans should come from the app's registered tools, or from explicit `$ai_span` capture for a genuinely non-LLM step. **N/A** if the app registers no tools and no span was added. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "ph_additive_only",
+    "rubric": "Existing PostHog initialization, `identify` calls, and product-analytics captures are untouched. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "eq_events_would_render_as_tree",
+    "rubric": "Taken together, the emitted events form the hierarchy the README describes: the expected number of sessions, traces per session, and events per trace. Walk the code and count what a single run would emit. If the result is flat generations with no grouping, mark NO regardless of how much instrumentation code is present. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "eq_person_attribution",
+    "rubric": "Events carry a real user identifier from the app (not a hardcoded placeholder, not a random UUID per run, not left to an anonymous fallback). Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "eq_span_parenting",
+    "rubric": "Any explicitly captured `$ai_span` sets `$ai_trace_id` and links to its parent via `$ai_parent_id`. **N/A** if no manual spans were captured. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "eq_no_fabricated_structure",
+    "rubric": "The PR does not invent structure the app does not have: no synthetic session id where the app has no conversation concept and none can be inferred, no spans around code that does nothing meaningful. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  },
+  {
+    "name": "eq_privacy_respected",
+    "rubric": "No credentials, API keys, or secrets are placed in event properties. Note that LLM prompts and completions **are** expected content for `$ai_input` / `$ai_output_choices` \u2014 capturing them is correct, not a privacy violation. Judge only the changes this session made. Answer pass for YES or N/A, fail for NO."
+  }
+]

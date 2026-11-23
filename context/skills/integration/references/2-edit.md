@@ -59,7 +59,7 @@ Inspect and change environment files only through `check_env_keys` and
 `set_env_values`, reusing existing variable names. Do not ask for credentials or
 guess a region. Follow this runtime's tool restrictions; defer any dependency
 installation or verification still needed to the revise step, recording the
-package names — never write a version number you invented into a manifest; the
+package names and the versions the reference docs pin — never write a version number you invented into a manifest; the
 package manager resolves real versions at install. Write against the versions
 of packages the app already has: never upgrade, or write code that assumes
 upgrading, a dependency this integration did not introduce. Do not make paid

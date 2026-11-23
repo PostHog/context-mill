@@ -1,0 +1,7 @@
+node_modules
+build
+.docusaurus
+.env
+.env*.local
+!.env.example
+.DS_Store

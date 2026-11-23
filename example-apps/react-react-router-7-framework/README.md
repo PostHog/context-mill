@@ -10,6 +10,7 @@ This is a [React Router 7](https://reactrouter.com) Framework example demonstrat
 - **User Authentication**: Demo login system with PostHog user identification
 - **Server-side & Client-side Tracking**: Examples of both tracking methods
 - **SSR Support**: Server-side rendering with React Router 7 Framework
+- **Reverse Proxy**: PostHog ingestion through a React Router resource route
 
 ## Getting Started
 
@@ -30,7 +31,7 @@ VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
 
 ### 3. Run the Development Server
 
@@ -57,6 +58,7 @@ app/
 │   ├── home.tsx             # Home/Login page
 │   ├── burrito.tsx          # Demo feature page with event tracking
 │   ├── profile.tsx          # User profile with error tracking demo
+│   ├── ingest.ts            # Reverse proxy to PostHog
 │   ├── api.auth.login.ts    # Login API with server-side tracking
 │   └── api.burrito.consider.ts # Burrito API with server-side tracking
 ├── entry.client.tsx         # Client entry with PostHog initialization
@@ -72,11 +74,18 @@ app/
 import posthog from 'posthog-js';
 import { PostHogProvider } from '@posthog/react'
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  defaults: '2026-01-30',
-  tracing_headers: [ window.location.hostname ],
-});
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+
+if (posthogToken) {
+  posthog.init(posthogToken, {
+    api_host: '/ingest',
+    ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST?.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com',
+    defaults: '2026-08-30',
+    tracing_headers: [ window.location.hostname ],
+  });
+} else if (import.meta.env.DEV) {
+  console.warn('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
+}
 
 <PostHogProvider client={posthog}>
   <HydratedRouter />
@@ -106,8 +115,11 @@ The PostHog middleware creates a server-side PostHog client for each request and
 
 ```typescript
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const posthog = new PostHog(process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-    host: process.env.VITE_PUBLIC_POSTHOG_HOST!,
+  const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+  if (!token) return next();
+
+  const posthog = new PostHog(token, {
+    host: process.env.VITE_PUBLIC_POSTHOG_HOST,
     flushAt: 1,
     flushInterval: 0,
   });
@@ -128,11 +140,17 @@ export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, con
 ```
 
 **Key Points:**
-- Creates a new PostHog Node client for each request
+- Creates a new PostHog Node client for each request, or skips PostHog when the token is missing
 - Extracts `sessionId` and `distinctId` from request headers (automatically set by the client-side SDK)
 - Sets the PostHog client on the request context for use in route handlers
 - Uses `withContext()` to associate server-side events with the correct session/user
 - Properly shuts down the client after each request
+
+### Reverse proxy (ingest.ts)
+
+Ad blockers drop events sent to PostHog's domain. This example sends them through your own domain instead. A splat resource route at `/ingest/*` forwards `/ingest/static/*` and `/ingest/array/*` to PostHog's assets host and every other `/ingest/*` request to PostHog's ingestion host. It sets the `host` header, removes cookies and non-PostHog credentials from the forwarded request, and strips content encoding so compressed responses are not double-decoded. The route exports a `loader` for GET requests and an `action` for POST requests.
+
+The proxy follows the region in `VITE_PUBLIC_POSTHOG_HOST`: `https://us.i.posthog.com` or `https://eu.i.posthog.com`. It derives the ingestion host, the assets host (`-assets.i.posthog.com`), and `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) from that one value, so an EU project only needs to set `VITE_PUBLIC_POSTHOG_HOST`. Pick a proxy path unique to your app rather than a common name such as `/analytics` or `/telemetry`. If you deploy somewhere that can't run server routes, use the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) instead.
 
 ### Event tracking (burrito.tsx)
 
