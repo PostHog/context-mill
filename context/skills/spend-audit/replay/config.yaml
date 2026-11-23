@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: "Session replay settings checks for the spend audit"
+tags: [orchestrator, spend-audit]
+variants:
+  - id: all
+    display_name: "Spend audit — session replay"
+    tags: [orchestrator, spend-audit]
+    docs_urls: []
+cli:
+  role: internal

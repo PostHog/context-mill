@@ -27,9 +27,15 @@ function isUnder(absPath, parent) {
 function buildIndexes({ skills, configDir }) {
     const groupsByKey = new Map();
     const examplePathIndex = new Map();
+    // A group may name a template in another group's folder, so templates are indexed by their own path.
+    const templateIndex = new Map();
 
     for (const skill of skills) {
         const compositeKey = skill._group;
+        if (skill._templatePath) {
+            if (!templateIndex.has(skill._templatePath)) templateIndex.set(skill._templatePath, []);
+            templateIndex.get(skill._templatePath).push(skill.id);
+        }
         if (!groupsByKey.has(compositeKey)) {
             const absPath = path.join(configDir, 'skills', ...compositeKey.split('/'));
             groupsByKey.set(compositeKey, {
@@ -53,7 +59,7 @@ function buildIndexes({ skills, configDir }) {
         (a, b) => b.absPath.length - a.absPath.length,
     );
 
-    return { groupRoots, examplePathIndex };
+    return { groupRoots, examplePathIndex, templateIndex };
 }
 
 /**
@@ -108,7 +114,8 @@ function routeChange({ event, absPath, indexes, paths }) {
         }
 
         const group = findNearestGroup(absPath, groupRoots);
-        if (group) return { ids: group.variantIds };
+        const ids = [...new Set([...(group?.variantIds ?? []), ...(indexes.templateIndex?.get(absPath) ?? [])])];
+        if (ids.length > 0) return { ids };
         return null;
     }
 
