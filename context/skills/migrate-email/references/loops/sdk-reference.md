@@ -45,48 +45,11 @@ await loops.sendTransactionalEmail({
 
 **Go.** `SendTransactional` answers only an `error`. An API error is a `*loops.APIError` with `StatusCode` and `Message`: read it with `errors.As`. A network error is a plain error. The client retries a network error, a `429` and a `5xx` on its own, twice. The call takes no `context.Context`.
 
-```go
-client := loops.NewClient(os.Getenv("LOOPS_API_KEY"))
-err := client.SendTransactional(loops.SendTransactionalRequest{
-	TransactionalID: "clfq6dinn000yl70fgwwyp82l",
-	Email:           "jane@example.com",
-	DataVariables:   map[string]any{"name": "Jane"},
-	IdempotencyKey:  "welcome-123",
-})
-```
-
 `AddToAudience` is a `*bool`, and `Attachments` is a list of `loops.Attachment{Filename, ContentType, Data}`.
 
 **PHP.** `send` answers the decoded body. It throws `Loops\Exceptions\APIError` on an API error, with `getStatusCode()`, `getJson()`, and `getMessage()`, and `Loops\Exceptions\RateLimitExceededError` on a `429`.
 
-```php
-use Loops\LoopsClient;
-
-$loops = new LoopsClient(getenv('LOOPS_API_KEY'));
-$loops->transactional->send(
-    transactional_id: 'clfq6dinn000yl70fgwwyp82l',
-    email: 'jane@example.com',
-    data_variables: ['name' => 'Jane'],
-    headers: ['Idempotency-Key' => 'welcome-123'],
-);
-```
-
-The other parameters are `add_to_audience` and `attachments`.
-
 **Ruby.** `send` answers the parsed body. It raises `LoopsSdk::APIError` on an API error, with `statusCode` and `json` (the raw body), and `LoopsSdk::RateLimitError` on a `429`.
-
-```ruby
-LoopsSdk.configure { |config| config.api_key = ENV['LOOPS_API_KEY'] }
-
-LoopsSdk::Transactional.send(
-  transactional_id: 'clfq6dinn000yl70fgwwyp82l',
-  email: 'jane@example.com',
-  data_variables: { name: 'Jane' },
-  headers: { 'Idempotency-Key' => 'welcome-123' }
-)
-```
-
-The other parameters are `add_to_audience` and `attachments`.
 
 **HTTP.** `POST https://app.loops.so/api/v1/transactional` with `Authorization: Bearer <key>`. Loops has one host, with no regional host, and no SDK has a region setting. Two SDKs can point the client at another URL, such as a proxy or a test server: the Go option `loops.WithBaseURL(url)` and the Node.js property `apiRoot` on `LoopsClient`. A send through either is still a Loops site. A success answers `200` with `{ "success": true }` and no message id. An error answers `{ "success": false, "message": "..." }`, sometimes with an `error` object of `path` and `message`. A `409` means the `Idempotency-Key` was used in the last 24 hours. A `429` means the rate limit, 10 requests per second per team. Look for `app.loops.so` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, `HttpClient`, and `curl` calls.
 
@@ -97,8 +60,6 @@ The other parameters are `add_to_audience` and `attachments`.
   "dataVariables": { "name": "Jane", "items": [{ "name": "Plan", "price": "20" }] }
 }
 ```
-
-In Python, an app reads `response.status_code`, `response.ok`, `response.json()["success"]`, or calls `response.raise_for_status()`, which raises `requests.HTTPError`.
 
 **SMTP.** Loops takes mail over SMTP at `smtp.loops.so`, port `587`, with the user `loops` and an API key as the password. The body of each email is not its content: it is the JSON of the HTTP body above, as a string. Look for that host in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, `SMTP_HOST`, or `LOOPS_SMTP_HOST` settings, Rails `smtp_settings`, and Laravel `MAIL_HOST`. Each mailer or mailable that sends through it is a site.
 
@@ -129,10 +90,6 @@ The person builds each transactional email in the Loops editor, or uploads MJML,
 - **Conditional sections:** a section shows only when a data variable matches. In LMX: `<Section if="{data.plan}" ifOperation="equal" ifValue="pro">`. The operators for data variables are `not_empty` (the default), `empty`, `equal`, `not_equal`, `contains`, and `not_contains`.
 - Variables can also sit in a button or link URL, and in a dynamic image source.
 
-## Status reads
-
-Loops has no read of one email's status. `GET https://app.loops.so/api/v1/transactional-emails/{transactionalId}/metrics` reads all-time counts of one transactional email: sends, deliveries, spam reports, and hard and soft bounces. Code that reads it reads Loops' counts.
-
 ## Webhooks
 
 Loops posts events to one endpoint per account, set in Settings, then Webhooks. Each event is JSON with `eventName`, `eventTime`, `webhookSchemaVersion`, and `contactIdentity` (`id`, `email`, `userId`). Email events also carry `email` (`id`, `emailMessageId`, `subject`), `sourceType` (`transactional`, `campaign`, or `loop` for a workflow), and `transactionalId`, `campaignId`, or `loopId`.
@@ -141,16 +98,7 @@ Loops posts events to one endpoint per account, set in Settings, then Webhooks. 
 - Only for campaign and workflow emails: `email.opened`, `email.clicked`, `email.unsubscribed`, and `email.resubscribed`. Loops tracks no opens or clicks on transactional emails.
 - Not about sends: `campaign.email.sent`, `loop.email.sent`, `contact.created`, `contact.unsubscribed`, `contact.deleted`, `contact.mailingList.subscribed`, `contact.mailingList.unsubscribed`, and `testing.testEvent`.
 
-Each request carries the headers `webhook-id`, `webhook-timestamp`, and `webhook-signature`. The signature is `v1,<base64>`: an HMAC-SHA256 of `<id>.<timestamp>.<raw body>`, keyed with the signing secret (it starts with `whsec_`) after its prefix is removed and the rest is base64-decoded. Apps keep the secret in a variable such as `LOOPS_SIGNING_SECRET`. The Go SDK checks it with `loops.VerifyWebhook(secret, r.Header, body)` and parses with `loops.ParseWebhook(body)`.
-
-```ts
-router.post('/webhooks/loops', express.raw({ type: 'application/json' }), (req, res) => {
-  if (!verifyLoopsSignature(req)) return res.sendStatus(401) // the app's own check of the three headers
-  const event = JSON.parse(req.body.toString())
-  if (event.eventName === 'email.hardBounced') markEmailBounced(event.contactIdentity.email)
-  res.sendStatus(200)
-})
-```
+Each request carries the headers `webhook-id`, `webhook-timestamp`, and `webhook-signature`. The Go SDK checks it with `loops.VerifyWebhook(secret, r.Header, body)` and parses with `loops.ParseWebhook(body)`.
 
 Look for routes that read `eventName`, `contactIdentity`, `sourceType`, or `transactionalId`, and for the `webhook-signature` header.
 
