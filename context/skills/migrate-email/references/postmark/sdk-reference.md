@@ -67,7 +67,7 @@ async with postmark.ServerClient(os.environ["POSTMARK_SERVER_TOKEN"]) as client:
 - `client.outbound.send_batch([...])` and `send_batch_with_template([...])` send up to 500 emails and answer one `SendResponse` per email: a failed email has `success` false and raises nothing.
 - `client.outbound.send_bulk({...})` sends one message to many recipients.
 
-**Python, `postmarker`.** `PostmarkClient(server_token=...)` with `client.emails.send(From=, To=, Subject=, HtmlBody=, TextBody=, ...)`, `client.emails.send_with_template(TemplateId=, TemplateModel=, ...)`, and `client.emails.send_batch(...)`. `To`, `Cc`, and `Bcc` take a string or a list. `send` answers the API's dict, with `MessageID`. It raises `postmarker.exceptions.ClientError` on an API error, with `error_code`. `emails.send`, `emails.send_with_template`, and a message built with `client.emails.Email(...)` or `client.emails.EmailTemplate(...)` send `TrackLinks: "None"` when the code doesn't pass it, and `TrackOpens: null`, which follows the server, when the code doesn't pass that. A client built with `inline_css=True`, or with a `css_inline.CSSInliner` as `inline_css`, moves the CSS of `HtmlBody`'s `<style>` blocks into `style` attributes before it sends, with the `postmarker[css-inline]` extra. With `inline_css=True`, it loads no stylesheet from a `<link>` tag.
+**Python, `postmarker`.** `PostmarkClient(server_token=...)` with `client.emails.send(From=, To=, Subject=, HtmlBody=, TextBody=, ...)`, `client.emails.send_with_template(TemplateId=, TemplateModel=, ...)`, and `client.emails.send_batch(...)`. `To`, `Cc`, and `Bcc` take a string or a list. `send` answers the API's dict, with `MessageID`. It raises `postmarker.exceptions.ClientError` on an API error, with `error_code`.
 
 **Ruby.** `deliver` takes a hash with snake case keys and answers a hash: `:message_id`, `:error_code`, `:message`, `:to`, and `:submitted_at`. It raises on an API error. Every error is a `Postmark::Error`. API errors are `Postmark::HttpServerError`, with `status_code`, `message`, and `full_response` (the parsed body): its subclasses are `Postmark::InvalidApiKeyError` (401), `Postmark::ApiInputError` (422, with `error_code`) and its subclasses `Postmark::InactiveRecipientError` (code 406, with `recipients`) and `Postmark::InvalidEmailRequestError` (code 300), and `Postmark::InternalServerError`. `Postmark::TimeoutError` covers a timeout.
 
@@ -141,7 +141,7 @@ The other send routes are `POST /email/withTemplate`, `POST /email/batch` and `P
 
 The API error codes a send can answer include `10` (bad or missing token), `300` (invalid email request, such as a bad address or too many recipients), `406` (inactive recipient: the address is on the stream's suppression list, so Postmark refuses the send), `1101` (template not found), and `1235` (message stream not found).
 
-**SMTP.** Postmark takes mail over SMTP at `smtp.postmarkapp.com`, and at `smtp-broadcasts.postmarkapp.com` for broadcast streams, on port 25, 2525, or 587. The user and the password are both the Server API token, or an SMTP token's access key and secret key. Look for those hosts in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config. The headers `X-PM-Message-Stream`, `X-PM-Tag`, `X-PM-Metadata-<name>`, and `X-PM-KeepID` carry Postmark options over SMTP.
+**SMTP.** Postmark takes mail over SMTP at `smtp.postmarkapp.com`, and at `smtp-broadcasts.postmarkapp.com` for broadcast streams. Look for those hosts in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config.
 
 **Frameworks.** Mailers that send every framework mail through Postmark: `postmark.django.EmailBackend` (from `postmark-python[django]`), `postmarker.django.EmailBackend`, and `anymail.backends.postmark.EmailBackend` in Django; `postmark-rails` in Rails; `MAIL_MAILER=postmark` with `symfony/postmark-mailer` in Laravel and Symfony; `Swoosh.Adapters.Postmark` in Swoosh and `Bamboo.PostmarkAdapter` (`bamboo_postmark`) in Bamboo for Elixir; and `nodemailer-postmark-transport` in Nodemailer. Each mailable or mailer that sends is a site.
 
@@ -152,7 +152,7 @@ HTTP names. Node.js, .NET, and Java use them as they are, Python and Ruby use sn
 | Field | Value |
 |---|---|
 | `From` | An address, or `Name <address>`. It needs a confirmed sender signature or domain at Postmark |
-| `To` | One address, or several comma-separated. At most 50 across `To`, `Cc`, and `Bcc` |
+| `To` | One address, or several comma-separated. |
 | `Cc`, `Bcc` | Same as `To` |
 | `ReplyTo` | An address, or several comma-separated |
 | `Subject` | String |
@@ -162,7 +162,7 @@ HTTP names. Node.js, .NET, and Java use them as they are, Python and Ruby use sn
 | `Tag` | One string, such as `welcome` |
 | `Metadata` | Object of string values, sent back in webhook events |
 | `Headers` | A list of `{ Name, Value }` |
-| `Attachments` | A list of `{ Name, Content, ContentType, ContentID }`. `Content` is base64. `ContentID` such as `cid:logo.png` shows the file inline as `<img src="cid:logo.png">` |
+| `Attachments` | A list of `{ Name, Content, ContentType, ContentID }`. |
 | `TrackOpens` | Boolean. Overrides the server's open tracking setting |
 | `TrackLinks` | `None`, `HtmlAndText`, `HtmlOnly`, or `TextOnly`. Overrides the server's link tracking setting |
 | `MessageStream` | A stream ID. `outbound`, the default transactional stream, when it is left out |
@@ -173,10 +173,6 @@ A Postmark send has no idempotency key and no send time.
 
 A send to `/email/withTemplate`, with `TemplateId` or `TemplateAlias` and `TemplateModel`, renders a template from the Postmark dashboard. Its content is not in the code.
 
-- A template has a `Subject`, an `HtmlBody`, and a `TextBody`, and all three use Mustachio: `{{name}}`, `{{person.first_name}}`, `{{{raw}}}` and `{{& raw}}`, sections `{{#person}}…{{/person}}`, inverted sections `{{^items}}…{{/items}}`, loops `{{#each items}}…{{/each}}`, the current value `{{.}}`, and parent values `{{../name}}`.
-- A section renders when its value passes Mustachio's truth test. Inside it, names are read from that value, and `../` reads an outer one. `mapping.md` says under "Templates" what each tag renders, and which templates move.
-- A standard template can name a layout in `LayoutTemplate`. The layout wraps it at `{{{ @content }}}`, and has no subject.
-- `{{{ pm:unsubscribe }}}` inserts Postmark's unsubscribe link.
 - An alias holds letters, digits, `.`, `-`, and `_`, and starts with a letter. `TemplateId` is a number.
 
 ## Status reads
