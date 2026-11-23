@@ -51,19 +51,6 @@ const { MessageId } = await ses.send(new SendEmailCommand({
 
 **Node.js, v1 API.** The same client shape from `@aws-sdk/client-ses`, with `SESClient` and v1 fields. It throws an `SESServiceException`, with the same `name`, `message`, and `$metadata`.
 
-```js
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
-
-await new SESClient({}).send(new SendEmailCommand({
-  Source: 'Example <hello@mail.example.com>',
-  Destination: { ToAddresses: ['jane@example.com'] },
-  Message: {
-    Subject: { Data: 'Welcome' },
-    Body: { Html: { Data: '<p>Welcome</p>' }, Text: { Data: 'Welcome' } },
-  },
-}))
-```
-
 **Node.js, `aws-sdk`.** `new AWS.SES().sendEmail(params)` takes the v1 fields, and `new AWS.SESV2().sendEmail(params)` the v2 fields. `.promise()` answers `{ MessageId }` and rejects on an error, and the callback form `sendEmail(params, (err, data) => ...)` passes the error first. The error has `code` (the error name), `message`, and `statusCode`.
 
 **Python.** `send_email` answers a dict with `MessageId`. It raises `botocore.exceptions.ClientError` on an API error: `e.response['Error']['Code']` is the error name, `e.response['Error']['Message']` its text, and `e.response['ResponseMetadata']['HTTPStatusCode']` the HTTP status. The client also names each error as a subclass, such as `client.exceptions.MessageRejected` and `client.exceptions.TooManyRequestsException`.
@@ -89,97 +76,19 @@ The v1 client is `boto3.client("ses")`, with `send_email(Source=, Destination=, 
 
 **Ruby.** `send_email` answers a response whose `message_id` is the message id. It raises an `Aws::SESV2::Errors::ServiceError` on an API error, such as `Aws::SESV2::Errors::MessageRejected`, with `e.code`, `e.message`, and `e.context.http_response.status_code`.
 
-```ruby
-require 'aws-sdk-sesv2'
-
-ses = Aws::SESV2::Client.new(region: ENV['AWS_REGION'])
-resp = ses.send_email(
-  from_email_address: 'Example <hello@mail.example.com>',
-  destination: { to_addresses: ['jane@example.com'] },
-  content: { simple: {
-    subject: { data: 'Welcome' },
-    body: { html: { data: '<p>Welcome</p>' }, text: { data: 'Welcome' } }
-  } }
-)
-```
-
 The v1 client is `Aws::SES::Client`, with `send_email(source:, destination:, message:)` and `Aws::SES::Errors::ServiceError`.
 
 **PHP.** `sendEmail` answers an `Aws\Result`, and `$result['MessageId']` is the message id. It throws `Aws\SesV2\Exception\SesV2Exception` on an API error, or `Aws\Ses\Exception\SesException` for the v1 client. Both are `Aws\Exception\AwsException`, with `getAwsErrorCode()`, `getAwsErrorMessage()`, and `getStatusCode()`.
 
-```php
-use Aws\SesV2\SesV2Client;
-
-$ses = new SesV2Client(['region' => getenv('AWS_REGION'), 'version' => 'latest']);
-$result = $ses->sendEmail([
-    'FromEmailAddress' => 'Example <hello@mail.example.com>',
-    'Destination' => ['ToAddresses' => ['jane@example.com']],
-    'Content' => ['Simple' => [
-        'Subject' => ['Data' => 'Welcome'],
-        'Body' => ['Html' => ['Data' => '<p>Welcome</p>'], 'Text' => ['Data' => 'Welcome']],
-    ]],
-]);
-```
-
 **Go.** `SendEmail` answers `(*sesv2.SendEmailOutput, error)`, and `out.MessageId` is a `*string`. It returns an error value, never panics: `errors.As` with `smithy.APIError` (`github.com/aws/smithy-go`) reads `ErrorCode()` and `ErrorMessage()`, a typed error such as `*types.MessageRejected` matches one error, and `*awshttp.ResponseError` (`github.com/aws/aws-sdk-go-v2/aws/transport/http`) has `HTTPStatusCode()`.
-
-```go
-cfg, err := config.LoadDefaultConfig(ctx)
-client := sesv2.NewFromConfig(cfg)
-out, err := client.SendEmail(ctx, &sesv2.SendEmailInput{
-	FromEmailAddress: aws.String("Example <hello@mail.example.com>"),
-	Destination:      &types.Destination{ToAddresses: []string{"jane@example.com"}},
-	Content: &types.EmailContent{Simple: &types.Message{
-		Subject: &types.Content{Data: aws.String("Welcome")},
-		Body: &types.Body{
-			Html: &types.Content{Data: aws.String("<p>Welcome</p>")},
-			Text: &types.Content{Data: aws.String("Welcome")},
-		},
-	}},
-})
-```
 
 The v1 client is `ses.NewFromConfig(cfg)` from `.../service/ses`, with `ses.SendEmailInput{Source, Destination, Message}`.
 
 **.NET.** `SendEmailAsync` answers a `SendEmailResponse` whose `MessageId` is the message id. It throws on an API error: an `AmazonSimpleEmailServiceV2Exception`, such as `MessageRejectedException`, with `ErrorCode`, `Message`, and `StatusCode`. The namespaces are `Amazon.SimpleEmailV2` and `Amazon.SimpleEmailV2.Model`.
 
-```csharp
-var ses = new AmazonSimpleEmailServiceV2Client();
-var response = await ses.SendEmailAsync(new SendEmailRequest
-{
-    FromEmailAddress = "Example <hello@mail.example.com>",
-    Destination = new Destination { ToAddresses = new List<string> { "jane@example.com" } },
-    Content = new EmailContent
-    {
-        Simple = new Message
-        {
-            Subject = new Content { Data = "Welcome" },
-            Body = new Body { Html = new Content { Data = "<p>Welcome</p>" }, Text = new Content { Data = "Welcome" } },
-        },
-    },
-});
-```
-
 The v1 client is `AmazonSimpleEmailServiceClient` in `Amazon.SimpleEmail`, with `SendEmailRequest { Source, Destination, Message }` and `AmazonSimpleEmailServiceException`.
 
 **Rust.** `send()` answers `Result<SendEmailOutput, SdkError<SendEmailError>>`, and `out.message_id()` is the message id. `err.into_service_error()` gives a `SendEmailError`, with one variant per error, such as `SendEmailError::MessageRejected`, and `code()`.
-
-```rust
-let config = aws_config::load_from_env().await;
-let client = aws_sdk_sesv2::Client::new(&config);
-let out = client
-    .send_email()
-    .from_email_address("Example <hello@mail.example.com>")
-    .destination(Destination::builder().to_addresses("jane@example.com").build())
-    .content(EmailContent::builder().simple(
-        Message::builder()
-            .subject(Content::builder().data("Welcome").build()?)
-            .body(Body::builder().html(Content::builder().data("<p>Welcome</p>").build()?).build())
-            .build(),
-    ).build())
-    .send()
-    .await?;
-```
 
 **Elixir.** `ExAws.request()` answers `{:ok, %{body: body}}`, or `{:error, {:http_error, status, body}}` on an API error.
 
