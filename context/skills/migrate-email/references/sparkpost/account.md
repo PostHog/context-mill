@@ -2,7 +2,7 @@
 
 What the migration needs from the person's SparkPost account. The agent never changes the account: it reads what the person exports or allows.
 
-An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app's sites send from both a US and an EU account, ask the person which account's sites move: every site of the other account stays, and the reason is `sends from another SparkPost account`.
+An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app reads more than one SparkPost API key, ask the person which account each belongs to. When the sites send from more than one account, such as a US and an EU account, ask which account's sites move: every site of another account stays, and the reason is `sends from another SparkPost account`. The subaccounts of one account count as that account, as `mapping.md` says under "Subaccounts".
 
 **EU accounts.** An app on an EU account names `api.eu.sparkpost.com`, or sets the client's host to it by a setting, as `sdk-reference.md` says under "EU accounts". For such an app, use `api.eu.sparkpost.com` in every request of this file instead of `api.sparkpost.com`.
 
