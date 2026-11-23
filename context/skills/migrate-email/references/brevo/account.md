@@ -29,7 +29,7 @@ The steps call this key the full-access provider key, even when it is restricted
 
 ## Tracking settings
 
-A send that sets no `contactPixelTrackingConsent` or `removeTrackingPixel` follows the account's tracking, as `mapping.md` says under "Tracking". The API doesn't show these settings. Ask the person once, in one question, and note the answers in the plan. This asks about Brevo's settings, never whether PostHog may add its pixel:
+A send that sets no `contactPixelTrackingConsent` follows the account's tracking, as `mapping.md` says under "Tracking". The API doesn't show these settings. Ask the person once, in one question, and note the answers in the plan. This asks about Brevo's settings, never whether PostHog may add its pixel:
 
 - Whether anonymous email tracking is on for transactional emails: Settings, then Automations, then Transactional emails, then Tracking.
 - Whether per-contact pixel tracking consent is on: Settings, then Contacts, then Per-contact pixel tracking consent.
