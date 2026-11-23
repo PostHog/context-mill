@@ -2,7 +2,7 @@
 
 What the migration needs from the person's SparkPost account. The agent never changes the account: it reads what the person exports or allows.
 
-An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`.
+An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app's sites send from both a US and an EU account, ask the person which account's sites move: every site of the other account stays, and the reason is `sends from another SparkPost account`.
 
 **EU accounts.** An app on an EU account names `api.eu.sparkpost.com`, or sets the client's host to it by a setting, as `sdk-reference.md` says under "EU accounts". For such an app, use `api.eu.sparkpost.com` in every request of this file instead of `api.sparkpost.com`.
 
@@ -68,7 +68,7 @@ The request takes every source and every type, so the agent can import some entr
 
 The answer holds `results`, a list of `{ recipient, type, source, description, list_id, created, updated }`, `total_count`, and `links`. Follow the `href` of the link whose `rel` is `next` until no such link comes back or `results` is empty. Wait 1 to 5 seconds and retry on `429`. An account with subaccounts: read the list of each account the moved sites send from, as `mapping.md` says under "Subaccounts", on its own, with the header `X-MSYS-SUBACCOUNT: 0` for the primary account and the subaccount's ID for a subaccount. A search without the header covers every list at once, and SparkPost says such a search can be up to 20 minutes out of date. An account without subaccounts needs no header. When the moved sites send from more than one account, count the import as complete only when the list of every one is in.
 
-**Map each entry.**
+**Map each entry.** First leave out every entry with a `list_id`, as "Leave out the other entries" says, whatever its `source`. Map the rest:
 
 | SparkPost `source` | Entries to take | PostHog `reason` |
 |---|---|---|
