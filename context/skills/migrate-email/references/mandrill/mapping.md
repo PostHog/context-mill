@@ -31,7 +31,7 @@ A field the site doesn't set takes the account's Sending Defaults: `track_opens`
 | `important` set to `true` | none | Always. PostHog's send doesn't take it yet |
 | `view_content_link` set to `false` | none | Always. PostHog's send doesn't take it yet |
 | `url_strip_qs`, `preserve_recipients` | none | Never on their own. They change only Mailchimp Transactional's reports, or what several recipients see |
-| `async` | none | Never on its own. It changes only when Mailchimp Transactional answers |
+| `async` | none | Never on its own. It changes only when Mailchimp Transactional answers: with `async` set to `true`, every recipient's `status` was `queued`, so a branch on `rejected`, `invalid`, or a `reject_reason` never ran. The moved site drops that branch and handles `recipient_suppressed` the way it went on after a queued send: log it and go on, as the bullet on suppressed addresses under "Rewrite" says |
 | `tags` | none | Always: no PostHog SDK takes tags yet |
 | `metadata`, `recipient_metadata` | none | Always: no PostHog SDK takes metadata yet |
 | `attachments` | none | Always. PostHog's send doesn't take it yet |
