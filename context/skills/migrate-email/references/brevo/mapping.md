@@ -31,7 +31,7 @@ PostHog fields are written in their Node.js names here, such as `replyTo`. Use t
 
 A Brevo send without an idempotency key moves without one.
 
-**Tracking.** No Brevo field maps directly to PostHog's `tracking`: Step 7 sets it from the plan, as it says under "Sensitive emails and tracking", and never writes the deprecated `captureEngagement` field. Brevo tracks a transactional send's opens and clicks per recipient, unless an account setting changes that. Ask the person for those settings once, as `account.md` says under "Tracking settings", and work out what Brevo did for each site that sets no `contactPixelTrackingConsent`, `removeTrackingPixel: true` included:
+**Tracking.** Step 7 sets PostHog's `tracking` from the plan, as it says under "Sensitive emails and tracking", and never writes the deprecated `captureEngagement` field. Brevo tracks a transactional send's opens and clicks per recipient, unless an account setting changes that. Ask the person for those settings once, as `account.md` says under "Tracking settings", and work out what Brevo did for each site that sets no `contactPixelTrackingConsent`, `removeTrackingPixel: true` included:
 
 - Anonymous tracking on: the site stays, and the reason is `account tracking anonymized`. Brevo counted opens without tying them to a recipient, and PostHog ties a moved send's events to the person it names.
 - Per-contact tracking consent on: the site stays, and the reason is `per-contact tracking consent on`. Brevo tracked a recipient's opens only as their consent said, and PostHog's send takes no consent.
