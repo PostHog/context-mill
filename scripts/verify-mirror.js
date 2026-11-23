@@ -103,21 +103,11 @@ export async function verifyMirror({
         }
     };
 
-    const [skillMenu, agentMenu] = await Promise.all([
-        fetchJson('skill-menu.json'),
-        fetchJson('agent-menu.json'),
-    ]);
-    if (!skillMenu || !agentMenu) return { ok: false, failures, checked: 0 };
+    const skillMenu = await fetchJson('skill-menu.json');
+    if (!skillMenu) return { ok: false, failures, checked: 0 };
 
-    // Disagreeing menus mean two builds got mixed into one prefix.
     const buildVersion = skillMenu.buildVersion;
     if (!buildVersion) fail('skill-menu.json has no buildVersion');
-    if (agentMenu.buildVersion !== buildVersion) {
-        fail(
-            `menus disagree on version: skill-menu.json says ${buildVersion}, ` +
-                `agent-menu.json says ${agentMenu.buildVersion}`,
-        );
-    }
     if (expectVersion && buildVersion !== expectVersion) {
         fail(`expected buildVersion ${expectVersion}, served menu says ${buildVersion}`);
     }
@@ -130,8 +120,8 @@ export async function verifyMirror({
         prefix === '/latest' ? `${declaredOrigin}/v${buildVersion}` : `${declaredOrigin}${prefix}`;
     log(`menu buildVersion ${buildVersion}; asset URLs must live under ${versionedBase}/`);
 
-    const urls = collectDownloadUrls({ skillMenu, agentMenu });
-    if (urls.length === 0) fail('menus contain no download URLs at all');
+    const urls = collectDownloadUrls({ skillMenu });
+    if (urls.length === 0) fail('the menu contains no download URLs at all');
 
     // A mirrored menu pointing back at GitHub rescues the menu fetch and loses
     // every asset fetch — the exact failure this origin exists to prevent.
@@ -146,7 +136,7 @@ export async function verifyMirror({
     }
 
     // SHA256SUMS is the release's own inventory: the complete object set, and a
-    // superset of what the menus reference.
+    // superset of what the menu references.
     const sumsResponse = await request(fetchImpl, toFetchable(`${versionedBase}/SHA256SUMS`));
     let sums = new Map();
     if (!sumsResponse.ok) {

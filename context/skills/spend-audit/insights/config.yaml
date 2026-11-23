@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: "How the spend audit creates insights and dashboards from value findings"
+tags: [orchestrator, spend-audit]
+variants:
+  - id: all
+    display_name: "Spend audit — insights"
+    tags: [orchestrator, spend-audit]
+    docs_urls: []
+cli:
+  role: internal
