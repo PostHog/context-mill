@@ -56,7 +56,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 SparkPost keeps one suppression list per account, and one per subaccount. Each entry has a `recipient`, a `type` (`transactional`, `non_transactional`, or `open_tracking`), a `source`, and a `description`, and some carry a `list_id` for one mailing list. SparkPost skips an address with a `transactional` entry on transactional sends, and one with a `non_transactional` entry on the others. It also keeps a global suppression list that no API can read.
 
-**Export from the dashboard.** In SparkPost: Recipients, then Suppressions. SparkPost's docs describe no file export there, so ask the person whether they already have an export file, such as from their own tooling, and where they saved it. Read the header row to find the address, type, and source columns. Without a file, read the list from the API.
+**Export from the dashboard.** In SparkPost: Recipients, then Suppressions. SparkPost's docs describe no file export there, so ask the person whether they already have an export file, such as from their own tooling, and where they saved it. Read the header row to find the address, type, source, and `list_id` columns. Without a file, or with one that has no `list_id` column, read the list from the API.
 
 **Read from the API.** With `Authorization: $SPARKPOST_READ_API_KEY`, on `api.eu.sparkpost.com` for an EU account (see the top of this file):
 
