@@ -29,11 +29,11 @@ The steps call this key the full-access provider key, even when it is restricted
 
 ## Tracking settings
 
-A send that sets no `contactPixelTrackingConsent` follows the account's tracking, as `mapping.md` says under "Tracking". The API doesn't show these settings. Ask the person once, and note the answers in the plan:
+A send that sets no `contactPixelTrackingConsent` or `removeTrackingPixel` follows the account's tracking, as `mapping.md` says under "Tracking". The API doesn't show these settings. Ask the person once, in one question, and note the answers in the plan. This asks about Brevo's settings, never whether PostHog may add its pixel:
 
 - Whether anonymous email tracking is on for transactional emails: Settings, then Automations, then Transactional emails, then Tracking.
 - Whether per-contact pixel tracking consent is on: Settings, then Contacts, then Per-contact pixel tracking consent.
-- Whether Brevo turned off open tracking, click tracking, or both for the account. Open tracking off means the site's emails had no open pixel, and no answer means nobody knows whether they had one, as Step 3 says under "Opens the provider didn't track". Click tracking off means Brevo didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog".
+- Whether Brevo turned off open tracking, click tracking, or both for the account. Open tracking off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track". Click tracking off means Brevo didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog".
 
 ## Template content
 
