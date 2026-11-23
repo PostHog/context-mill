@@ -28,7 +28,7 @@ The steps call these keys the full-access provider key.
 
 ## Tracking settings
 
-A site that leaves out `TrackOpens` or `TrackLinks` sends with its server's setting, as `mapping.md` says under "Tracking". Step 3 reads open tracking here for "Opens the provider didn't track": a server whose open tracking is off sent its sites' emails with no open pixel, and a setting nobody gives means nobody can tell.
+A site that leaves out `TrackOpens` or `TrackLinks`, or sets it to `null`, sends with its server's setting, as `mapping.md` says under "Tracking". Step 3 reads open tracking here for "Opens the provider didn't track": a server whose open tracking is off sent its sites' emails with no open pixel, and a setting nobody gives means nobody can tell. Either way the site moves with opens off, as Step 3 says there. This asks about Postmark's settings, never whether PostHog may add its pixel.
 
 **Ask the person.** In Postmark: the server, then Settings. It shows whether open tracking and link tracking are on, and which parts link tracking covers.
 
