@@ -37,6 +37,8 @@ enough — `project.yml` is a generic name), and typically no committed
 
 ## Getting started
 
+Requires Xcode 26 or later, which posthog-ios 4.x needs.
+
 ### 1. Generate the Xcode project
 
 ```bash

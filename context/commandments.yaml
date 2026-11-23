@@ -273,7 +273,7 @@ commandments:
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
-    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager, using `https://github.com/PostHog/posthog-ios.git`. posthog-ios 4.x installs with SPM only; use CocoaPods only for an app that already uses the 3.x pod
+    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager, using `https://github.com/PostHog/posthog-ios.git`. posthog-ios 4.x installs with SPM only and needs Xcode 26. Use CocoaPods only for an app that already uses the 3.x pod, because CocoaPods trunk goes read-only on December 2, 2026
     - Initialize `PostHogSDK.shared.setup(config)` exactly once and as early as possible, either in `UIApplicationDelegate.application(_:didFinishLaunchingWithOptions:)` or in the SwiftUI `App` initializer
     - For SwiftUI apps, prefer meaningful `.postHogScreenView(...)` modifiers for screen tracking because automatic SwiftUI screen names can be internal view identifiers
     - Call `PostHogSDK.shared.identify(...)` after login and `PostHogSDK.shared.reset()` on logout; keep PII in user properties, not event properties
