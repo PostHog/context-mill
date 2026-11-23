@@ -4,7 +4,7 @@ What the migration needs from the person's SparkPost account. The agent never ch
 
 An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app reads more than one SparkPost API key, ask the person which account each belongs to. When the sites send from more than one account, such as a US and an EU account, ask which account's sites move: every site of another account stays, and the reason is `sends from another SparkPost account`. The subaccounts of one account count as that account, as `mapping.md` says under "Subaccounts". Every read and export of this file then uses that account's host, read key, and dashboard, never another account's.
 
-**EU accounts.** An app on an EU account names `api.eu.sparkpost.com`, or sets the client's host to it by a setting, as `sdk-reference.md` says under "EU accounts". For such an app, use `api.eu.sparkpost.com` in every request of this file instead of `api.sparkpost.com`.
+**EU accounts.** An app on an EU account names `api.eu.sparkpost.com`, or sets the client's host to it by a setting, as `sdk-reference.md` says under "EU accounts". When the account whose sites move is an EU account, use `api.eu.sparkpost.com` in every request of this file instead of `api.sparkpost.com`.
 
 ## DNS records
 
@@ -88,7 +88,7 @@ An address can come back once per type. Repeating it in the import is safe. Post
 
 When the list was read, count from it:
 
-- the entries left out as unsubscribes, as "Leave out the other entries" says;
+- the entries left out, as "Leave out the other entries" says;
 - the `Tracking Consent Revoked` entries.
 
 When the list wasn't read, write `not counted` for each.
