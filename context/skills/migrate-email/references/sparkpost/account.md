@@ -2,7 +2,7 @@
 
 What the migration needs from the person's SparkPost account. The agent never changes the account: it reads what the person exports or allows.
 
-An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app reads more than one SparkPost API key, ask the person which account each belongs to. When the sites send from more than one account, such as a US and an EU account, ask which account's sites move: every site of another account stays, and the reason is `sends from another SparkPost account`. The subaccounts of one account count as that account, as `mapping.md` says under "Subaccounts".
+An account lives in one region: `app.sparkpost.com` with `api.sparkpost.com`, or `app.eu.sparkpost.com` with `api.eu.sparkpost.com`. When the app reads more than one SparkPost API key, ask the person which account each belongs to. When the sites send from more than one account, such as a US and an EU account, ask which account's sites move: every site of another account stays, and the reason is `sends from another SparkPost account`. The subaccounts of one account count as that account, as `mapping.md` says under "Subaccounts". Every read and export of this file then uses that account's host, read key, and dashboard, never another account's.
 
 **EU accounts.** An app on an EU account names `api.eu.sparkpost.com`, or sets the client's host to it by a setting, as `sdk-reference.md` says under "EU accounts". For such an app, use `api.eu.sparkpost.com` in every request of this file instead of `api.sparkpost.com`.
 
@@ -76,20 +76,19 @@ The answer holds `results`, a list of `{ recipient, type, source, description, l
 | `Spam Complaint` | Every type | `complaint` |
 | `Manually Added` | `transactional` only | `manual` |
 | `Compliance` | `transactional` only | `manual` |
-| `List Unsubscribe`, `Unsubscribe Link` | `transactional` only | `manual` |
 
 An address can come back once per type. Repeating it in the import is safe. PostHog blocks a moved send only to an address imported as `bounce`, as Step 5 says: a `complaint` or `manual` entry blocks only PostHog's marketing email. Step 3 asks which sites rely on the entries someone added, as `mapping.md` says under "Suppression list".
 
 **Leave out the other entries.**
 
-- **`List Unsubscribe`, `Unsubscribe Link`, `Manually Added` and `Compliance` entries of type `non_transactional`**, and entries with a `list_id`, are unsubscribes from non-transactional mail. They are marketing preferences, and PostHog's opt-outs apply to marketing messages only. SparkPost skipped these addresses on every send it sent as non-transactional. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional.
+- **`List Unsubscribe` and `Unsubscribe Link` entries of every type, `Manually Added` and `Compliance` entries of type `non_transactional`**, and entries with a `list_id`, are unsubscribes. They are marketing preferences, and PostHog's opt-outs apply to marketing messages only. SparkPost skipped these addresses on every send it sent as non-transactional. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional. An unsubscribe of type `transactional` would block PostHog's marketing mail only, so it stays out too: Step 3 asks which sites rely on it, as `mapping.md` says under "Suppression list".
 - **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Step 3 asks about them first, as `mapping.md` says under "Tracking".
 
 ## For the report
 
 When the list was read, from the API or an export file, count from it:
 
-- the entries left out as unsubscribes from non-transactional mail, as "Leave out the other entries" says;
+- the entries left out as unsubscribes, as "Leave out the other entries" says;
 - the `Tracking Consent Revoked` entries.
 
 When the list wasn't read, write `not counted` for each.
