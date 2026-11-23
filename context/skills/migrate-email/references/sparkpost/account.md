@@ -72,16 +72,16 @@ The answer holds `results`, a list of `{ recipient, type, source, description, l
 
 | SparkPost `source` | Entries to take | PostHog `reason` |
 |---|---|---|
-| `Bounce Rule` | `transactional` only | `bounce` |
+| `Bounce Rule` | Every type | `bounce` |
 | `Spam Complaint` | Every type | `complaint` |
 | `Manually Added` | `transactional` only | `manual` |
 | `Compliance` | `transactional` only | `manual` |
 
-An address can come back once per type. When it comes back as both a `bounce` and another reason, import it as `bounce` only, since PostHog keeps the first reason it gets for an address. PostHog blocks a moved send only to an address imported as `bounce`, as Step 5 says: a `complaint` or `manual` entry blocks only PostHog's marketing email. Step 3 asks which sites rely on the entries someone added, as `mapping.md` says under "Suppression list".
+A `Bounce Rule` entry of type `non_transactional` comes in too: the address bounced, and a moved send to it would bounce again. An address can come back once per type. When it comes back as both a `bounce` and another reason, import it as `bounce` only, since PostHog keeps the first reason it gets for an address. PostHog blocks a moved send only to an address imported as `bounce`, as Step 5 says: a `complaint` or `manual` entry blocks only PostHog's marketing email. Step 3 asks which sites rely on the entries someone added, as `mapping.md` says under "Suppression list".
 
 **Leave out the other entries.**
 
-- **`Bounce Rule`, `Manually Added`, `Compliance`, `List Unsubscribe` and `Unsubscribe Link` entries of type `non_transactional`**, and entries with a `list_id`, blocked only SparkPost's non-transactional mail, or one list's. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional. `List Unsubscribe` and `Unsubscribe Link` entries of type `transactional` stay out too: as `manual` they would block only PostHog's marketing mail, which the recipient never opted out of. Step 3 asks which sites rely on them, as `mapping.md` says under "Suppression list".
+- **`Manually Added`, `Compliance`, `List Unsubscribe` and `Unsubscribe Link` entries of type `non_transactional`**, and entries with a `list_id`, blocked only SparkPost's non-transactional mail, or one list's. A site that SparkPost sent as non-transactional moves only as `mapping.md` says under `options.transactional`, and every send that moves sends as transactional. `List Unsubscribe` and `Unsubscribe Link` entries of type `transactional` stay out too: as `manual` they would block only PostHog's marketing mail, which the recipient never opted out of. Step 3 asks which sites rely on them, as `mapping.md` says under "Suppression list".
 - **`Tracking Consent Revoked`** entries, of type `open_tracking`, block no send: they only turn off open tracking for the address. Step 3 asks about them first, as `mapping.md` says under "Tracking".
 
 ## For the report
