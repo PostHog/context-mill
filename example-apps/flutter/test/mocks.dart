@@ -36,6 +36,7 @@ class FakePosthogPlatform extends PosthogFlutterPlatformInterface {
     required String userId,
     Map<String, Object>? userProperties,
     Map<String, Object>? userPropertiesSetOnce,
+    Map<String, Object?>? options,
   }) async {
     callOrder.add('identify');
     identifyCalls.add((
@@ -51,6 +52,7 @@ class FakePosthogPlatform extends PosthogFlutterPlatformInterface {
     Map<String, Object>? properties,
     Map<String, Object>? userProperties,
     Map<String, Object>? userPropertiesSetOnce,
+    Map<String, Object?>? options,
   }) async {
     callOrder.add('capture');
     capturedEvents.add((eventName: eventName, properties: properties));
@@ -61,6 +63,7 @@ class FakePosthogPlatform extends PosthogFlutterPlatformInterface {
     required Object error,
     StackTrace? stackTrace,
     Map<String, Object>? properties,
+    Map<String, Object?>? options,
   }) async {
     callOrder.add('captureException');
     capturedExceptions.add((
@@ -74,6 +77,7 @@ class FakePosthogPlatform extends PosthogFlutterPlatformInterface {
   Future<void> screen({
     required String screenName,
     Map<String, Object>? properties,
+    Map<String, Object?>? options,
   }) async {
     callOrder.add('screen');
     screenNames.add(screenName);
