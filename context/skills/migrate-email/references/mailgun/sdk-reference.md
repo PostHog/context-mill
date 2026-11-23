@@ -43,7 +43,6 @@ await mg.messages.create('mail.example.com', {
 })
 ```
 
-- The client takes `url: 'https://api.eu.mailgun.net'` for a domain in the EU region.
 - `to`, `cc`, and `bcc` take one address, a comma-separated string, or a list. Several addresses in `to` send **one** email that every address sees, unless `recipient-variables` is set.
 - `attachment` and `inline` take `{ data, filename, contentType }` or a list of them. `data` is a `Buffer`, a string, a stream, or a `Blob`.
 - A `message` field sends a full MIME message to `/messages.mime`.
@@ -69,7 +68,6 @@ response = client.messages.create(
 )
 ```
 
-- `Client(auth=..., api_url="https://api.eu.mailgun.net")` is the EU client.
 - Files go in `files=`, such as `[("attachment", ("report.pdf", data)), ("inline", ("logo.png", data))]`.
 - `headers={"Idempotency-Key": ...}` passes a request header.
 - `client.mimemessage.create(...)` sends a full MIME message.
@@ -89,7 +87,6 @@ mg.send_message('mail.example.com', {
 })
 ```
 
-- `Mailgun::Client.new(key, 'api.eu.mailgun.net')` is the EU client.
 - `Mailgun::MessageBuilder` builds the same fields: `from`, `add_recipient(:to | :cc | :bcc, address)`, `reply_to`, `subject`, `body_text`, `body_html`, `add_attachment(path_or_io, filename)`, `add_inline_image`, `add_tag`, `variable` (a `v:` value), `header`, `deliver_at`, `track_opens`, `track_clicks`, `test_mode`, `template`, `template_version`, and `add_custom_parameter`. `send_message(domain, builder)` sends it.
 - `Mailgun::BatchMessage.new(mg, domain)` sends one email per recipient, in parts of 1,000.
 - Test mode: `Mailgun.configure { |config| config.test_mode = true }`, or `enable_test_mode!` on a client. The client then keeps each message in `Mailgun::Client.deliveries` and sends nothing.
@@ -99,7 +96,7 @@ mg.send_message('mail.example.com', {
 ```php
 use Mailgun\Mailgun;
 
-$mg = Mailgun::create(getenv('MAILGUN_API_KEY')); // EU: Mailgun::create($key, 'https://api.eu.mailgun.net')
+$mg = Mailgun::create(getenv('MAILGUN_API_KEY'));
 $mg->messages()->send('mail.example.com', [
     'from' => 'Example <hello@mail.example.com>',
     'to' => 'jane@example.com',
@@ -122,11 +119,8 @@ resp, err := mg.Send(ctx, m)
 ```
 
 - In `/v4`, `mailgun.NewMessage(from, subject, text, to...)` and `mg.NewMessage(...)` take no domain, and `SetHtml` sets the HTML.
-- `mg.SetAPIBase(mailgun.APIBaseEU)` is the EU client.
 - The message takes `AddCC`, `AddBCC`, `SetReplyTo`, `AddBufferAttachment(filename, []byte)`, `AddReaderAttachment`, `AddAttachment(path)`, `AddInline`, `AddTag`, `AddVariable` (a `v:` value), `AddHeader`, `SetTemplate`, `SetTemplateVersion`, `AddTemplateVariable`, `SetDeliveryTime`, `SetTracking`, `SetTrackingClicks`, `SetTrackingOpens`, `EnableTestMode`, and `AddRecipientAndVariables` (batch sending).
 - `mailgun.NewMIMEMessage(...)` sends a full MIME message.
-
-**Java.** `MailgunMessagesApi.sendMessage(domain, message)` with a `Message` builder. PostHog has no Java email send.
 
 **EU region.** An app whose domain is in the EU region sets the EU API host in code or config. Each of these means every API request in `account.md` goes to `api.eu.mailgun.net`:
 
@@ -190,8 +184,6 @@ The HTTP form fields. The SDKs take the same names as keys, apart from the sette
 | `o:campaign` | A campaign id |
 | `recipient-variables` | A JSON object of values per recipient, for batch sending: one email per address in `to`, up to 1,000 |
 
-The `o:`, `h:`, `v:`, and `t:` fields add up to at most 16 KB.
-
 A body or subject can also hold Mailgun's own variables, which Mailgun fills at send time: `%recipient.<name>%` from `recipient-variables`, and `%unsubscribe_url%`, `%tag_unsubscribe_url%`, and `%mailing_list_unsubscribe_url%`.
 
 ## Templates stored at Mailgun
@@ -214,17 +206,6 @@ Mailgun posts one JSON object per event to an endpoint of the app: `{ "signature
 - `event-data.id` is the event's id. `event-data.message.headers["message-id"]` is the send's message id, without the angle brackets the send answered.
 - `event-data.recipient` is the address. `event-data.tags` holds the `o:tag` values, and `event-data["user-variables"]` holds the `v:` and `X-Mailgun-Variables` values.
 - The signature is a hex HMAC-SHA256 of `timestamp` and `token` joined, keyed with the webhook signing key of the account. A subaccount event also carries `parent-signature`.
-
-```js
-app.post('/webhooks/mailgun', express.json(), (req, res) => {
-  const { timestamp, token, signature } = req.body.signature
-  const digest = crypto.createHmac('sha256', process.env.MAILGUN_WEBHOOK_SIGNING_KEY).update(timestamp + token).digest('hex')
-  if (digest !== signature) return res.sendStatus(406)
-  const event = req.body['event-data']
-  if (event.event === 'failed' && event.severity === 'permanent') markBounced(event.recipient)
-  res.sendStatus(200)
-})
-```
 
 Look for routes that read `event-data`, `user-variables`, or `message.headers`, an HMAC over `timestamp` and `token`, and the SDK helpers `VerifyWebhookSignature` with `mtypes.WebhookPayload` and `events.ParseEvent` in Go, and `$mg->webhooks($signingKey)->verifyWebhookSignature($timestamp, $token, $signature)` in PHP.
 

@@ -6,7 +6,7 @@ What the migration needs from the person's Mailgun account. The agent never chan
 
 ## DNS records
 
-A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`, carries these records. Keep all of them until the cutover is done. The Mailgun dashboard shows the exact names and values in the domain's DNS records, under Send, then Sending, then Domains.
+A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`, carries these records. The Mailgun dashboard shows the exact names and values in the domain's DNS records, under Send, then Sending, then Domains.
 
 | Record | Name | What it does |
 |---|---|---|
@@ -19,9 +19,6 @@ A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`
 
 - PostHog's sender uses its own label for its MAIL FROM, `feedback` by default. Never give PostHog a label Mailgun uses, such as the tracking prefix `email`.
 - PostHog's DKIM records have their own names, so they sit next to Mailgun's `_domainkey` records.
-- Keep the one `_dmarc` record. Never add a second one.
-- The domain's SPF record names `include:mailgun.org`. Keep it, and merge PostHog's include into that record.
-- Keep Mailgun's `MX` records: removing them stops the mail that Mailgun receives for the domain.
 
 ## Read-only key
 
