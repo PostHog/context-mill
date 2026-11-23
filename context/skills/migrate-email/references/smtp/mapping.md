@@ -54,7 +54,7 @@ A send through SMTP has no idempotency key, so the moved site sends none either.
 | Nodemailer `transporter.sendMail(message)`, with a promise or a callback | A field above keeps it |
 | Python `send_message(msg)` and `sendmail(from_addr, to_addrs, msg)` with a message built with `EmailMessage` or `email.mime`, and `aiosmtplib.send` | A field above keeps it. A message string the code wrote by hand always stays. |
 | Ruby `mail` gem `deliver` | A field above keeps it |
-| PHPMailer `send()`, and `symfony/mailer` `$mailer->send($email)` used on its own | A field above keeps it. So does a PHPMailer `Host` that lists several hosts, such as `'smtp1.example.com;smtp2.example.com'`, which connects to the next one when one fails, or a Symfony Mailer `failover(...)` or `roundrobin(...)` DSN, which sends through the next transport when a send fails, as Step 3 says for a fallback: the moved send would lose that server. The reason is `falls back to another SMTP server` |
+| PHPMailer `send()`, and `symfony/mailer` `$mailer->send($email)` used on its own | A field above keeps it |
 | Go gomail and go-mail `DialAndSend` | A field above keeps it |
 | Go `net/smtp` `SendMail`, Ruby `Net::SMTP` `send_message` | Always: the message is a string the code built |
 | MailKit `SendAsync` or `System.Net.Mail` `SendMailAsync`, awaited in an `async` method | A field above keeps it |
