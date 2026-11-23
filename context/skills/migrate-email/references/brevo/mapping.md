@@ -48,7 +48,6 @@ A Brevo send without an idempotency key moves without one.
 | A loop that sends one email per address | Never for the call itself: each call is one send. Keep the loop |
 | SMTP through `smtp-relay.brevo.com` | Always here. `migrate-email-smtp` moves sends through SMTP: run `wizard migrate smtp` for them, or `wizard skill migrate-email-smtp` on a wizard whose `migrate` takes no provider |
 | A framework mailer (Django Anymail, Symfony Mailer, Swoosh), or a delivery method the app registers with Rails ActionMailer that sends through Brevo | Always. PostHog has no mailer driver |
-| .NET `SendTransacEmail`, the sync send | As the .NET rewrite file says under "The send" for a synchronous send |
 | A send in a language without a PostHog SDK that sends email, such as Java or Kotlin | Always. Step 7 lists the languages PostHog's SDKs cover |
 
 ## Code around the send
@@ -91,20 +90,10 @@ Brevo's template language works like Django's templates. In the code:
 | `{{ params.name\|default:"there" }}` | The value, escaped, or `there` when Brevo's truth test below finds the value false: missing, `null`, `""`, `0`, `false`, an empty list, or an empty object |
 | `{{ params.name\|default_if_none:"there" }}` | The value, escaped, or `there` only when it is missing or `null`. `""` stays `""` |
 | `\|upper`, `\|lower` | The value as text, in upper or lower case, letter by letter in Unicode |
-| `\|capfirst` | The value as text, with its first character in upper case and the rest as it is |
-| `\|title` | Each word with its first letter in upper case and the rest in lower case, where a word is a run of letters and digits. A value that can hold an apostrophe or a word that starts with a digit keeps the template: the docs don't say how Brevo writes those |
-| `\|truncatechars:N` | The value as text when it has at most N characters. Otherwise its first N-1 characters followed by `…`, so the result has N characters |
 | `\|floatformat:N` | The number with N decimals when N is above 0. With `0`, a negative N, or no N: a whole number with no decimals, and any other number with as many decimals as N without its sign, or 1 with no N. The docs say it takes numbers only, so a value that is not always a number keeps the template. They don't say how a value exactly halfway rounds: when the code can pass one, such as `2.5`, note it in the plan row |
-| `\|integer`, `\|float` | The number, or a string of a number, cut to a whole number toward 0, or written with six decimals, such as `10.000000` |
-| `\|lang_format:"en,%.2f"`, `\|lang_format:"fr,%.2f"` | The number with that many decimals, with `,` between thousands and `.` before the decimals for `en`, and a non-breaking space (U+00A0) between thousands and `,` before the decimals for `fr`. Write the separators yourself, not with the language's locale formatting, which can use other spaces. Without the `%.Nf` part, or with another language, it keeps the template: the docs show examples only, not how many decimals it keeps or how other languages group digits |
 | `\|length` | The number of characters in a string, of entries in a list or an object, and `0` for anything else |
-| `\|first`, `\|last` | The first or last entry of a list, or the first or last character of a string. On an object, it keeps the template |
-| `\|join:", "` on a list of strings | The strings joined with the separator, escaped as a whole. Without a separator, or on a list that holds anything but strings, it keeps the template |
-| `\|base64_encode`, with `std`, `raw_std`, `url`, or `raw_url` | The value's UTF-8 bytes in base64: standard, standard without `=` padding, URL-safe with `-` and `_`, or URL-safe without padding. With no option, standard |
 | `\|time_parse:"…"`, `\|time_parse_rfc3339` | The string read as a time, with the layout written as Go writes its reference time `Monday January 2 15:04:05 -0700 MST 2006`, English names, and UTC when the string names no zone. Parts the layout leaves out are 0 |
 | `\|date:"…"` on a parsed time | The time written with the same kind of layout, in English, with the language's date formatting. The tokens are `2006` `06` `January` `Jan` `01` `1` `02` `2` `_2` `Monday` `Mon` `15` `03` `3` `04` `4` `05` `5` `PM` `pm` `-0700` `-07:00` `MST`. Any other token keeps the template |
-| `\|date_i18n:"de,…"` | As `date`, with day and month names in `en`, `fr`, `it`, `es`, `de`, or `pt`. It moves only with full names (`Monday`, `January`), written as that language's own names, such as `Freitag`. Abbreviated names keep the template: the docs don't say which Brevo writes |
-| `\|time_in_location:"Europe/Berlin"`, `\|time_add_date:"1,2,3"`, `\|time_add_duration:"1h2m3s"`, `\|time_unix` | The time in that IANA zone; plus years, months, and days, where a day past the month's end rolls over into the next month, such as January 31 plus one month being March 3, or March 2 in a leap year; plus hours, minutes, and seconds; and the Unix time in seconds |
 | `{{ time_now }}` with `date` | The send time, in the time zone set in the Brevo account, or UTC when none is set: ask the person for it once. A time written without `date` keeps the template |
 | `{% if a %}…{% elif b %}…{% else %}…{% endif %}` | A branch that tests each value for Brevo's truth, in order |
 | `not`, `and`, `or`, and parentheses in a condition | The same test written out: `not` binds tightest, then `and`, then `or`, and parentheses group as written |
@@ -114,8 +103,6 @@ Brevo's template language works like Django's templates. In the code:
 | `{% for item in params.items %}…{% endfor %}`, with `reversed` or `limit:N` | A loop over the list, in order, backwards, or over its first N entries. Inside it, `item` is the entry, and `params.name` still reads the send's value. A `for` over a value that can be anything but a list, `null`, or missing keeps the template: the docs describe lists only |
 | `{% else %}` or `{% empty %}` before `{% endfor %}` | What shows when the list is empty, missing, or `null` |
 | `forloop.Counter`, `forloop.Counter0`, `forloop.Revcounter`, `forloop.Revcounter0`, `forloop.First`, `forloop.Last`, `forloop.Parentloop` | The entry's position from 1 or from 0, how many entries are left counting this one or not, whether it is the first or the last, and the same values for the loop around this one. With `limit`, `Revcounter`, `Revcounter0`, and `Last` keep the template: the docs don't say whether they count the whole list |
-| `{% comment %}…{% endcomment %}`, `{% verbatim %}…{% endverbatim %}` | Nothing, and the text between the tags as it is |
-| `{% set x = … %}`, `{% with x = … %}…{% endwith %}` | A local value with that name, from the same expression |
 | `{{ contact.ATTRIBUTE }}` | The value the app keeps for that attribute, only as the bullet below says. Otherwise it keeps the template |
 | The template's `subject` | The send's `subject`, rendered with the same rules and no escaping |
 | The template's `sender` | The send's `from`, as `'Name <email>'`, as the "Fields" table says for `sender` |

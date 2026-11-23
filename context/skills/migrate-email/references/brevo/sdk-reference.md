@@ -51,40 +51,9 @@ const { messageId } = await brevo.transactionalEmails.sendTransacEmail({
 
 **Python, `brevo-python` 4.x and later.** `send_transac_email` takes the fields as keyword arguments in snake case, and answers a result whose `message_id` is the message id. It raises `brevo.core.api_error.ApiError` on an API error, with `status_code` and `body`, and subclasses such as `brevo.BadRequestError`. `AsyncBrevo` is the async client.
 
-```python
-from brevo import Brevo
-from brevo.transactional_emails import SendTransacEmailRequestSender, SendTransacEmailRequestToItem
-
-client = Brevo(api_key=os.environ["BREVO_API_KEY"])
-result = client.transactional_emails.send_transac_email(
-    sender=SendTransacEmailRequestSender(email="hello@mail.example.com", name="Example"),
-    to=[SendTransacEmailRequestToItem(email="jane@example.com")],
-    subject="Welcome",
-    html_content="<p>Welcome</p>",
-    text_content="Welcome",
-)
-```
-
-The other arguments are `cc`, `bcc`, `reply_to`, `attachment` (a list of `SendTransacEmailRequestAttachmentItem(content=, name=, url=)`), `template_id`, `params`, `tags`, `headers`, `scheduled_at`, `batch_id`, and `message_versions`.
-
 **Python, `brevo-python` 1.x and `sib-api-v3-sdk`.** `configuration.api_key['api-key'] = key` sets the key. `send_transac_email(SendSmtpEmail(sender=, to=, subject=, html_content=, text_content=, ...))` answers a `CreateSmtpEmail` whose `message_id` is the message id. It raises `ApiException` from the module's `rest`, with `status`, `reason`, and `body`.
 
 **PHP, `getbrevo/brevo-php` 4.x and later.** `sendTransacEmail` answers a `SendTransacEmailResponse` whose `messageId` property is the message id. It throws `Brevo\Exceptions\BrevoApiException` on an API error, with `getCode()` (the HTTP status), `getMessage()`, and `getBody()`.
-
-```php
-use Brevo\Brevo;
-use Brevo\TransactionalEmails\Requests\SendTransacEmailRequest;
-use Brevo\TransactionalEmails\Types\SendTransacEmailRequestSender;
-use Brevo\TransactionalEmails\Types\SendTransacEmailRequestToItem;
-
-$brevo = new Brevo(getenv('BREVO_API_KEY'));
-$result = $brevo->transactionalEmails->sendTransacEmail(new SendTransacEmailRequest([
-    'sender' => new SendTransacEmailRequestSender(['email' => 'hello@mail.example.com', 'name' => 'Example']),
-    'to' => [new SendTransacEmailRequestToItem(['email' => 'jane@example.com'])],
-    'subject' => 'Welcome',
-    'htmlContent' => '<p>Welcome</p>',
-]));
-```
 
 **PHP, 1.x, 2.x, and `sendinblue/api-v3-sdk`.** `Configuration::getDefaultConfiguration()->setApiKey('api-key', $key)` sets the key, and a `SendSmtpEmail` takes setters such as `setSender`, `setTo`, `setSubject`, and `setHtmlContent`. `sendTransacEmail` answers a `CreateSmtpEmail` whose `getMessageId()` is the message id. It throws the namespace's `ApiException` on an API error, with `getCode()` and `getResponseBody()`.
 
@@ -92,25 +61,7 @@ $result = $brevo->transactionalEmails->sendTransacEmail(new SendTransacEmailRequ
 
 **Go.** `SendTransacEmail` answers `(CreateSmtpEmail, *http.Response, error)`, and `result.MessageId` is the message id. `err` is set for a network error and for an API error: an answer of 300 or more comes back as a `brevo.GenericSwaggerError` (`sendinblue.GenericSwaggerError` in the older library), with `Error()` and `Body()`. Code may also read `resp.StatusCode`.
 
-```go
-import brevo "github.com/getbrevo/brevo-go/lib"
-
-cfg := brevo.NewConfiguration()
-cfg.AddDefaultHeader("api-key", os.Getenv("BREVO_API_KEY"))
-client := brevo.NewAPIClient(cfg)
-
-result, resp, err := client.TransactionalEmailsApi.SendTransacEmail(ctx, brevo.SendSmtpEmail{
-    Sender:      &brevo.SendSmtpEmailSender{Name: "Example", Email: "hello@mail.example.com"},
-    To:          []brevo.SendSmtpEmailTo{{Email: "jane@example.com"}},
-    Subject:     "Welcome",
-    HtmlContent: "<p>Welcome</p>",
-    TextContent: "Welcome",
-})
-```
-
-The struct also takes `Cc`, `Bcc`, `ReplyTo`, `Attachment` (`[]SendSmtpEmailAttachment{Url, Content, Name}`, with `Content` a base64 string), `TemplateId`, `Params`, `Tags`, `Headers`, `ScheduledAt`, `BatchId`, and `MessageVersions`.
-
-**.NET.** `Configuration.Default.ApiKey.Add("api-key", key)`, or `AddApiKey`, sets the key. `new TransactionalEmailsApi().SendTransacEmail(sendSmtpEmail)` and `SendTransacEmailAsync` answer a `CreateSmtpEmail` whose `MessageId` is the message id. They throw `brevo_csharp.Client.ApiException` on an answer of 400 or more, with `ErrorCode` (the HTTP status) and `ErrorContent`. A `SendSmtpEmailAttachment` takes `Content` as `byte[]`.
+**.NET.** `Configuration.Default.ApiKey.Add("api-key", key)`, or `AddApiKey`, sets the key. `new TransactionalEmailsApi().SendTransacEmail(sendSmtpEmail)` and `SendTransacEmailAsync` answer a `CreateSmtpEmail` whose `MessageId` is the message id. They throw `brevo_csharp.Client.ApiException` on an answer of 400 or more, with `ErrorCode` (the HTTP status) and `ErrorContent`.
 
 **HTTP.** `POST https://api.brevo.com/v3/smtp/email`, or the older host `api.sendinblue.com`, with the header `api-key: <key>`. The API has one host. A send answers `201` with `{ "messageId": "<...>" }`, and a scheduled send answers `202`. An error answers `{ "code", "message" }`, such as `{ "code": "invalid_parameter", ... }`. Look for `api.brevo.com` and `api.sendinblue.com` in `fetch`, `axios`, `got`, `ky`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
@@ -152,12 +103,6 @@ Node.js and HTTP names. Python and Ruby use the same names in snake case, Go and
 ## Templates stored at Brevo
 
 A send with `templateId` renders a template from the Brevo dashboard. Its content is not in the code. The template holds its `subject`, `htmlContent`, `sender`, `replyTo`, `toField`, and `tag`, so the send may set no `sender` or `subject`. It can also hold an attachment, added in the dashboard under its advanced options.
-
-- The template language reads the send's values as `{{ params.name }}`, `{{ params.user.first_name }}`, and `{{ params.items.0.name }}`.
-- It reads contact attributes as `{{ contact.FIRSTNAME }}`, data feeds as `{{ feed.alias.field }}`, the send time as `{{ time_now }}`, and links as `{{ mirror }}`, `{{ unsubscribe }}`, and `{{ update_profile }}`.
-- Tags are `{% if %}`, `{% elif %}`, `{% else %}`, `{% endif %}`, and `{% for item in params.items %}…{% endfor %}`, with `forloop.Counter`, `forloop.First`, and `forloop.Last` inside a loop.
-- Filters follow a pipe, such as `{{ params.name|default:"there" }}`, `|upper`, `|lower`, `|floatformat:2`, and `|date:"..."`.
-- A template in Brevo's old template language reads no `params`.
 
 ## Status reads
 
