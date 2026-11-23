@@ -58,7 +58,7 @@ app/
 ├── root.tsx                 # Root route with error boundary
 └── routes.tsx               # Route configuration
 
-index.tsx                    # App entry point with PostHog initialization
+index.tsx                    # App entry point with PostHog initialization and router error capture
 ```
 
 ## Key Integration Points
@@ -66,6 +66,7 @@ index.tsx                    # App entry point with PostHog initialization
 ### Client-side initialization (index.tsx)
 
 ```typescript
+import { isRouteErrorResponse, type ClientOnErrorFunction } from 'react-router';
 import posthog from 'posthog-js';
 import { PostHogProvider } from '@posthog/react'
 
@@ -75,11 +76,19 @@ if (posthogToken) {
   posthog.init(posthogToken, {
     api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
     defaults: '2026-08-30',
+    capture_exceptions: true,
   });
 }
 
+// Errors React Router catches (render, loader, action, fetcher). Responses thrown on purpose,
+// such as 404s, are not errors to track.
+const onError: ClientOnErrorFunction = (error) => {
+  if (isRouteErrorResponse(error)) return;
+  posthog.captureException(error);
+};
+
 <PostHogProvider client={posthog}>
-  <RouterProvider router={router} />
+  <RouterProvider router={router} onError={onError} />
 </PostHogProvider>
 ```
 
@@ -107,21 +116,11 @@ posthog?.capture('burrito_considered', {
 });
 ```
 
-### Error tracking (root.tsx, profile.tsx)
+### Error tracking (index.tsx, profile.tsx)
 
-Errors are captured in two ways:
+React Router catches errors in rendering, loaders, actions and fetchers and shows `RootErrorBoundary`, so these errors never reach exception autocapture, and `RootErrorBoundary` only renders the error UI. Errors are captured in two ways:
 
-1. **Error boundary** - The `RootErrorBoundary` in `root.tsx` automatically captures unhandled React Router errors:
-```typescript
-export function RootErrorBoundary() {
-  const error = useRouteError();
-  const posthog = usePostHog();
-  if (error) {
-    posthog.captureException(error);
-  }
-  // ... error UI
-}
-```
+1. **Router errors** - the `onError` handler on `<RouterProvider>` in `index.tsx` (above). `capture_exceptions: true` covers errors outside the router, such as unhandled promise rejections.
 
 2. **Manual error capture** in components (profile.tsx):
 ```typescript
