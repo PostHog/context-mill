@@ -61,7 +61,9 @@ This does NOT require any new API calls — just add the metadata field to the e
 
 ### Stripe Checkout special case
 
-If the project uses `checkout.Session.create`, add `posthog_person_distinct_id` to the session's `metadata` parameter. Also set `client_reference_id` to the user's distinct_id so it can be retrieved in webhooks.
+If the project uses `checkout.Session.create`, add `posthog_person_distinct_id` to the session's `metadata` parameter.
+
+Before setting `client_reference_id`, trace where the app reads it, including `checkout.session.completed` webhooks and checkout success routes. If existing code uses it for a lookup or to reconcile a checkout, preserve the value and how it is set. For example, when a webhook uses it to look up a local user, keep the local user ID there and use `session.metadata.posthog_person_distinct_id` for PostHog attribution. When no existing code depends on the field, set it to the user's PostHog distinct_id.
 
 If the project has a `checkout.session.completed` webhook handler and Stripe auto-creates customers there, add the metadata to the customer in the webhook handler.
 
