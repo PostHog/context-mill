@@ -37,7 +37,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 
 ## The send
 
-- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `CaptureEngagement`, and `Sensitive = true` optional.
+- Code send: `await emails.SendAsync(new SendCodeEmailOptions { To, TemplateKey, Subject, Html, Text, DistinctId, IdempotencyKey })`, with `From`, `ReplyTo`, `Sensitive`, and `Tracking` optional. `Tracking` takes `EmailTracking.All`, `EmailTracking.None`, or `new EmailTracking { Opens, Clicks, Engagement }`. Open tracking off is `Tracking = new EmailTracking { Opens = false }`. `CaptureEngagement` is deprecated: use `Tracking = new EmailTracking { Engagement = false }`. Sensitive is `Sensitive = true`.
 - Template send: `await emails.SendAsync(new SendTemplateEmailOptions { To, TemplateId, TemplateData, DistinctId, IdempotencyKey })`.
 - `ReplyTo` is a list, and `TemplateId` is a `Guid`.
 - There is no synchronous send. A site in a method that is not `async` and doesn't return the send's `Task` stays, with the reason `synchronous .NET send`, unless the person agrees to make the method and its callers `async`. Never block on `SendAsync` with `.Result` or `.Wait()`.
@@ -46,7 +46,7 @@ With `SecretKey` set, the client loads flag definitions from its host with it wh
 
 For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
 
-- `SendAsync` keeps to its cancellation token: pass one with the site's deadline, such as from `using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5))`, and set `MaxRetries = 0` on the email options. A token the caller can cancel, such as a request's `HttpContext.RequestAborted`, cancels the send the same way.
+- `SendAsync` keeps to its cancellation token: pass one with the site's deadline over the whole send, never one the code set for each try, which is `EmailRequestTimeout`, as Step 7 says, such as from `using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5))`, and set `MaxRetries = 0` on the email options when the code never retried the request, as Step 7 says. A token the caller can cancel, such as a request's `HttpContext.RequestAborted`, cancels the send the same way.
 - The client also ends each request at its `EmailRequestTimeout`. A deadline up to that timeout needs no client of its own. A longer one needs a client of its own with `EmailRequestTimeout` set to it, or the send fails before the site's deadline.
 - The client's `HttpClient` also ends each request at 100 seconds, .NET's default. A deadline longer than 100 seconds can't be kept: the site stays, as Step 7 says.
 - `PostHogOptions.EmailRequestTimeout` is the time each email request may take, 15 seconds by default, and `EmailRequestMaxRetries` its retries, 2 by default.

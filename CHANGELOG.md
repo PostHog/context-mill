@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.67.0](https://github.com/PostHog/context-mill/compare/v1.66.0...v1.67.0) (2026-11-17)
+
+
+### Features
+
+* **agents:** stop publishing the orchestrator prompts ([#536](https://github.com/PostHog/context-mill/issues/536)) ([33b6cf2](https://github.com/PostHog/context-mill/commit/33b6cf278049fd2300deb88d7e66797d0f35cc02))
+* **integration:** publish each orchestrator step as one skill ([#537](https://github.com/PostHog/context-mill/issues/537)) ([333072f](https://github.com/PostHog/context-mill/commit/333072f629625524c702ba59e2f04c8fe87ff8dd))
+* **menu:** say which projects a skill serves in its tags alone ([#538](https://github.com/PostHog/context-mill/issues/538)) ([4a9250f](https://github.com/PostHog/context-mill/commit/4a9250fb9fb27df7f4efec967f0e9f5c9a9b0d23))
+* **skills:** move SendGrid sends to PostHog in every SDK language ([#459](https://github.com/PostHog/context-mill/issues/459)) ([45e6e07](https://github.com/PostHog/context-mill/commit/45e6e070b9928a6c8b2777c83954b788db02aa4a))
+* **skills:** publish sending-transactional-emails for the Wizard ([#456](https://github.com/PostHog/context-mill/issues/456)) ([8594917](https://github.com/PostHog/context-mill/commit/8594917edaac20cdc052175ecac20deab5c5f263))
+
+
+### Bug Fixes
+
+* **migrate-email:** collect before-cutover plan notes in Step 9 ([#525](https://github.com/PostHog/context-mill/issues/525)) ([24ee0ea](https://github.com/PostHog/context-mill/commit/24ee0ea2b5ae7fe82324c544f06c2e3527cde278))
+
+## [1.66.0](https://github.com/PostHog/context-mill/compare/v1.65.0...v1.66.0) (2026-11-16)
+
+
+### Features
+
+* **integration:** make the integration config a variant table with per-product pages ([#528](https://github.com/PostHog/context-mill/issues/528)) ([1c25a25](https://github.com/PostHog/context-mill/commit/1c25a25b4d748c1397b0daeee13da645f32af0bf))
+* **integration:** publish each step skill once, completed from the framework's pack ([#529](https://github.com/PostHog/context-mill/issues/529)) ([a2a8df4](https://github.com/PostHog/context-mill/commit/a2a8df465147e9e1bb2eebc695294a0d2d8919ee))
+
+
+### Bug Fixes
+
+* **skills:** read the project token and host from project-get ([#511](https://github.com/PostHog/context-mill/issues/511)) ([d5ba3bb](https://github.com/PostHog/context-mill/commit/d5ba3bb520629b4726155092787f594acb68fbd2))
+
+## [1.65.0](https://github.com/PostHog/context-mill/compare/v1.64.0...v1.65.0) (2026-11-13)
+
+
+### Features
+
+* **menu:** describe skills with title, description and tags ([#447](https://github.com/PostHog/context-mill/issues/447)) ([8a38619](https://github.com/PostHog/context-mill/commit/8a38619670b30ddc07828912fb524f43885ef565))
+* **migrate-email:** move Resend sends in every PostHog SDK's language ([#472](https://github.com/PostHog/context-mill/issues/472)) ([8cd7381](https://github.com/PostHog/context-mill/commit/8cd73810fa6ece1d62744b07e8acc80fe1708e9d))
+* **skills:** add instrument-reverse-proxy skill ([#512](https://github.com/PostHog/context-mill/issues/512)) ([66175c2](https://github.com/PostHog/context-mill/commit/66175c221ba18209619c931811efd9925e2bb752))
+* **skills:** add the migrate-email skill with a Resend variant ([#450](https://github.com/PostHog/context-mill/issues/450)) ([ff49233](https://github.com/PostHog/context-mill/commit/ff492334f81220b4010aad4c40655a578c1a4b4c))
+* **skills:** move Resend sends to posthog-node in migrate-email ([#451](https://github.com/PostHog/context-mill/issues/451)) ([a66a9fe](https://github.com/PostHog/context-mill/commit/a66a9fe79281c3ba51e788cf07ed9fc5c76d49aa))
+
+
+### Bug Fixes
+
+* use posthog-js directly in the Gatsby example ([#520](https://github.com/PostHog/context-mill/issues/520)) ([cdcd9e3](https://github.com/PostHog/context-mill/commit/cdcd9e3104c81e177f067133ed5d5cc39220bf5b))
+
 ## [1.64.0](https://github.com/PostHog/context-mill/compare/v1.63.0...v1.64.0) (2026-11-11)
 
 

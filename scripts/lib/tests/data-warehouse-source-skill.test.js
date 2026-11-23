@@ -19,7 +19,7 @@ const DESCRIPTION = readFileSync(
 
 /** The skill the install flow's seeded `warehouse` task loads. */
 const STEP_SKILL = readFileSync(
-    join(CONFIG_DIR, 'skills', 'integration-v2', 'warehouse', 'description.md'),
+    join(CONFIG_DIR, 'skills', 'integration', 'warehouse', 'description.md'),
     'utf8',
 );
 
@@ -92,7 +92,7 @@ describe('data-warehouse-source reporting contract', () => {
     });
 });
 
-describe('integration-v2 warehouse step skill', () => {
+describe('integration warehouse step skill', () => {
     it('tells the seeded install task to ask once per source, tagged with a subject', () => {
         expect(STEP_SKILL).toMatch(/One `wizard_ask` call per source, tagged with `subject`/);
         expect(STEP_SKILL).toMatch(/counts its batching guard per subject/);
