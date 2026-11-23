@@ -69,7 +69,6 @@ response = client.messages.create(
 ```
 
 - Files go in `files=`, such as `[("attachment", ("report.pdf", data)), ("inline", ("logo.png", data))]`.
-- `headers={"Idempotency-Key": ...}` passes a request header.
 - `client.mimemessage.create(...)` sends a full MIME message.
 
 **Ruby.** `send_message` answers a `Mailgun::Response`: `response.to_h['id']` is the message id. It raises `Mailgun::CommunicationError` on an API error, with `status` (the HTTP status) and a `message` that holds Mailgun's text. `Mailgun::BadRequest` (400) and `Mailgun::Unauthorized` (401) are its subclasses.
