@@ -22,7 +22,7 @@ A sending domain verified at Mailgun, often a subdomain such as `mg.example.com`
 
 ## Read-only key
 
-The app's own Mailgun key is often a domain sending key, which can only send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in Mailgun (Settings, then API Security) with the role that has the fewest rights and still reads templates and suppressions, and a short expiry when the form offers one. Ask them to store it in `MAILGUN_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailgun and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
+The app's own Mailgun key is often a domain sending key, which can only send, and it can't read templates or suppressions. When the person chooses the API over the dashboard, ask them to create an API key in Mailgun (Settings, then API Security) with the role that has the fewest rights and still reads templates, suppressions, and domain settings, and a short expiry when the form offers one. Ask them to store it in `MAILGUN_READ_API_KEY` in the git-ignored env file, and write it into the plan as Step 3's plan layout says. Its last use is the suppression import in Step 5. At the end of Step 5, on every way out of it, ask the person to delete the key in Mailgun and remove its variable from the env file, and note in the plan whether they did. The report reminds them when they didn't. Never print the key, and never write it into another file.
 
 The steps call this key the full-access provider key.
 
@@ -39,7 +39,7 @@ A site whose template moves needs the content of the version it sends, the activ
 - When the domain has no template of that name, `GET https://api.mailgun.net/v4/templates/<name>?active=yes`, or `https://api.eu.mailgun.net` for an account in the EU region, reads an account template with its active version.
 - `GET https://api.mailgun.net/v4/templates/<name>/versions/<tag>`, or `https://api.eu.mailgun.net` for an account in the EU region, reads the account template's version a site names with `t:version`.
 
-The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`. When the site names the template by its id, take the answer only when its `template.id` is that id: a domain template and an account template can share a name. When neither the domain's nor the account's has that id, ask the person for the template. The version also carries `version.mjml`, which the docs call the template's source and don't relate to `template`: take `template`, and when `mjml` is not empty, note in the plan row that the email came from `template`.
+The answer holds `template`, with `name`, `id`, and `version`: `{ tag, template, engine, headers, active }`. `version.template` is the content, and `version.headers` can hold `From`, `Subject`, and `Reply-To`. When the site names the template by its id, take the answer only when its `template.id` is that id: a domain template and an account template can share a name. When neither the domain's nor the account's has that id, ask the person for the template. Take `version.template`, also when the version carries `version.mjml`.
 
 Read the person's copies where they saved them. An API answer goes only into the temporary file Step 3 writes, which is deleted as `template-to-code.md` says. Never write the content into the plan or the report.
 
@@ -51,7 +51,7 @@ A site that sets no open or click tracking field sends with its domain's setting
 
 **Read from the API.** `GET https://api.mailgun.net/v3/domains/<domain>/tracking`, or `https://api.eu.mailgun.net` for an EU domain, with the user `api` and the password `$MAILGUN_READ_API_KEY`. The answer holds `tracking.open.active`, `tracking.click.active`, and `tracking.unsubscribe.active`.
 
-For a site that sets neither `o:tracking-opens` nor `o:tracking`, open tracking off means the site's emails had no open pixel, and no answer means nobody knows whether they had one: either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track".
+For a site that sets neither `o:tracking-opens` nor `o:tracking`, open tracking off means the site's emails had no open pixel, and no answer means nobody knows whether they had one. `mapping.md` says under "Tracking" what each means for the site.
 
 For a site that moves to a template made in PostHog, click tracking off means Mailgun didn't track the site's clicks, and no answer means nobody knows, as Step 3 says under "A template in PostHog". A send's own tracking fields override the domain's setting, as `mapping.md` says under "Tracking".
 
@@ -65,7 +65,7 @@ A domain can post a copy of each delivered message to a URL, its `archive_to`, w
 
 ## Suppression list
 
-Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out.
+Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out. A re-import has no plan to name them: ask the person which domains' lists to import, and name the domains of the `from` addresses of the PostHog sends in the code.
 
 **Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces, Complaints, and Unsubscribes. Ask the person to download each of them where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
 
