@@ -154,7 +154,7 @@ Transmission.send(%Transmission{
 }
 ```
 
-**EU accounts.** An app on an EU account names `api.eu.sparkpost.com` in its code, or sets the client's host by a setting whose value may live elsewhere: Node.js `origin` or `endpoint`, Python `base_uri=sparkpost.EU_API` or the Django setting `SPARKPOST_BASE_URI`, Ruby's `SPARKPOST_API_HOST` env variable, PHP `'host'`, Go `Config.BaseUrl`, .NET `Client.ApiHost`, and Elixir `config :sparkpost, api_endpoint:`. Read the value of that setting, in the env files too. When it names `api.eu.sparkpost.com`, every API request in `account.md` goes to `api.eu.sparkpost.com`.
+**EU accounts.** An app on an EU account names `api.eu.sparkpost.com` in its code, or sets the client's host by a setting whose value may live elsewhere: Node.js `origin` or `endpoint`, Python `base_uri=sparkpost.EU_API` or the Django setting `SPARKPOST_BASE_URI`, Ruby's `SPARKPOST_API_HOST` env variable, PHP `'host'`, Go `Config.BaseUrl`, .NET `Client.ApiHost`, and Elixir `config :sparkpost, api_endpoint:`. Read the value of that setting, in the env files too. When it names `api.eu.sparkpost.com`, the sites on that client send from an EU account, and `account.md` says which account's host its requests use.
 
 **SMTP.** SparkPost takes mail over SMTP at `smtp.sparkpostmail.com`, or `smtp.eu.sparkpostmail.com` for an EU account, on port 587 or 2525, with the user `SMTP_Injection` and an API key as the password. Look for those hosts in Nodemailer transports, `EMAIL_HOST`, `MAIL_HOST`, or `SMTP_HOST` settings, and framework mail config. An `X-MSYS-API` header carries SparkPost options over SMTP, such as `campaign_id`, `metadata`, `tags`, `cc`, `bcc`, and `options`.
 
