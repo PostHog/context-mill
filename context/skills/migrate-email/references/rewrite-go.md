@@ -27,7 +27,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 ## The send
 
-- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `CaptureEngagement` (`posthog.Ptr(false)`), and `Sensitive` (`posthog.Ptr(true)`) optional.
+- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `Sensitive`, and `Tracking` optional. `Tracking` takes `posthog.EmailTrackingOn()`, `posthog.EmailTrackingOff()`, or `posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens, Clicks, Engagement})` with `posthog.Ptr` values. Open tracking off is `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens: posthog.Ptr(false)})`. `CaptureEngagement` is deprecated: use `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Engagement: posthog.Ptr(false)})`. Sensitive is `Sensitive: posthog.Ptr(true)`.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
@@ -36,7 +36,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 For a site whose request had its own deadline, as `7-rewrite.md` says under "Set up the client":
 
-- `Send` keeps to its context: pass a context with the site's deadline, such as `ctx, cancel := context.WithTimeout(ctx, 5*time.Second)` and `defer cancel()`, and set `MaxRetries: posthog.Ptr(0)` on the email. A context the caller can cancel cancels the send the same way.
+- `Send` keeps to its context: pass a context with the site's deadline over the whole send, never one the code set for each try, which is `EmailRequestTimeout`, as Step 7 says, such as `ctx, cancel := context.WithTimeout(ctx, 5*time.Second)` and `defer cancel()`, and set `MaxRetries: posthog.Ptr(0)` on the email when the code never retried the request, as Step 7 says. A context the caller can cancel cancels the send the same way.
 - The client also ends each request at its `EmailRequestTimeout`. A deadline up to that timeout needs no client of its own. A longer one needs a client of its own with `EmailRequestTimeout` set to it, or the send fails before the site's deadline.
 - `posthog.Config`'s `EmailRequestTimeout` is the time each email request may take, 15 seconds by default, and `EmailRequestMaxRetries` its retries, 2 by default.
 - The email send uses `posthog.Config`'s `Transport`. A limit the request set on its `http.Transport`, such as a `net.Dialer`'s `Timeout` in its `DialContext`, `TLSHandshakeTimeout`, or `ResponseHeaderTimeout`, is kept by giving the email client that transport, or one with the same limits, as `Transport`. Such a client is one of its own, like a client for a longer deadline.

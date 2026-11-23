@@ -11,7 +11,7 @@ The mechanics live in dedicated step skills - install each one with `install_ski
 
 | skill id | owns |
 | --- | --- |
-| `replay-vision-enable-replay` | making session replay record (both halves) |
+| `integration-session-replay` | making session replay record (both halves) |
 | `replay-vision-scanners-core` | scanner create/update mechanics, sizing, collisions, security ground rules |
 | `replay-vision-scanner-problems` | the problems monitor brief |
 | `replay-vision-scanner-flow-outcome` | the key flow outcome classifier brief |
@@ -35,14 +35,14 @@ Follow these steps IN ORDER.
 Emit `[STATUS] Reading project state`.
 
 - From the project state / MCP tools, note: is session replay recording on, does the project have recordings, and what scanners already exist (`vision-scanners-list` via the PostHog `exec` tool).
-- From the repo: is PostHog integrated (`posthog-js` / a server SDK in the dependency manifests, a snippet, or events in the project state)? **If it is not, do not stop** - install and initialize the SDK first, following the `integration-v2-install` and `integration-v2-init` skills (install each with `install_skill`). The minimal SDK footprint they leave behind is enough for recordings to flow; skip identify, capture, and dashboards - this run sets up Replay vision, not the full integration.
+- From the repo: is PostHog integrated (`posthog-js` / a server SDK in the dependency manifests, a snippet, or events in the project state)? **If it is not, do not stop** - install and initialize the SDK first, following the `integration-install` and `integration-init` skills (install each with `install_skill`). The minimal SDK footprint they leave behind is enough for recordings to flow; skip identify, capture, and dashboards - this run sets up Replay vision, not the full integration.
 - Find the `posthog.init(...)` call if this is a web app, and identify **this product's key completion flow** - checkout, signup, booking, publish, whatever this product's "done" is - by reading router files and page/route directories. Never guess at `/checkout` if this app calls it `/booking`.
 
 ### STEP 2: Make sure session replay records
 
 Emit `[STATUS] Enabling session replay`.
 
-Install and follow `replay-vision-enable-replay`. Pure backend or mobile app with no web surface: nothing records browser sessions here. Say so, record it as a follow-up, and continue - scanner creation may still be skipped in STEP 4 for the same reason.
+Install and follow `integration-session-replay`. Pure backend or mobile app with no web surface: nothing records browser sessions here. Say so, record it as a follow-up, and continue - scanner creation may still be skipped in STEP 4 for the same reason.
 
 The replay setting is **on** when `products-enable` succeeds. When the tool is missing or rejected for permission, read the real setting with `project-get` (`session_recording_opt_in`): `true` is **on**, `false` is **off** (only a project admin can turn it on), and a failed read is **unknown**. Never call it off without reading `false`. Continue to the client half in every case.
 
