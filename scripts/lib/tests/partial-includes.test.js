@@ -46,6 +46,12 @@ describe('expandPartials', () => {
         expect(() => expandPartials('{{> missing-partial}}', tmpDir)).toThrow(/missing-partial/);
     });
 
+    it('keeps a column-0 include unindented', () => {
+        writeFileSync(join(tmpDir, 'shared', 'x.md'), 'Line one.\nLine two.\n');
+        const out = expandPartials('Before.\n{{> x}}\nAfter.', tmpDir);
+        expect(out).toBe('Before.\nLine one.\nLine two.\nAfter.');
+    });
+
     it('leaves inline {{> ...}} that is not on its own line untouched', () => {
         writeFileSync(join(tmpDir, 'shared', 'x.md'), 'PARTIAL BODY');
         const out = expandPartials('text {{> x}} still text', tmpDir);
@@ -105,5 +111,51 @@ describe('generateSkill partial expansion', () => {
         const conclude = readFileSync(join(outputDir, 'integration', 'references', '4-conclude.md'), 'utf8');
         expect(conclude).toContain('The canonical MCP grammar.');
         expect(conclude).not.toContain('{{>');
+    });
+
+    it('nests an indented include under the list item it sits in', async () => {
+        createFixture({
+            shared: {
+                'credentials.md': '- Token bullet.\n\n- Host bullet.\n',
+            },
+            skills: {
+                setup: {
+                    'description.md': '# Setup\n\n- Set up environment variables:\n  - Check existing env files.\n  {{> credentials}}\n  - Write the env file.\n',
+                },
+            },
+        }, tmpDir);
+
+        const config = {
+            setup: {
+                type: 'skill',
+                template: 'description.md',
+                variants: [{ id: 'all', display_name: 'Setup' }],
+            },
+        };
+
+        const skill = expandSkillGroups(config, tmpDir)[0];
+        const outputDir = join(tmpDir, 'out');
+
+        await generateSkill({
+            skill,
+            version: 'test',
+            repoRoot: tmpDir,
+            configDir: tmpDir,
+            outputDir,
+            skipPatterns: { global: [], examples: {} },
+            commandmentsConfig: { commandments: {} },
+            skillTemplate: skill._template,
+            sharedDocs: skill._sharedDocs || [],
+        });
+
+        const skillMd = readFileSync(join(outputDir, 'setup', 'SKILL.md'), 'utf8');
+        expect(skillMd).toContain(
+            '- Set up environment variables:\n'
+            + '  - Check existing env files.\n'
+            + '  - Token bullet.\n'
+            + '\n'
+            + '  - Host bullet.\n'
+            + '  - Write the env file.\n',
+        );
     });
 });

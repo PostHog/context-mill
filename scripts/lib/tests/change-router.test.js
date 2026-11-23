@@ -75,6 +75,14 @@ describe('routeChange — skills dir', () => {
         expect(decision).toEqual({ ids: ['audit'] });
     });
 
+    it('routes a template edit to every skill that reads it, whichever folder it is in', () => {
+        const template = path.join(SKILLS_DIR, 'audit', 'description.md');
+        const borrowing = { ...skill({ id: 'audit-copy', group: 'audit-copy' }), _templatePath: template };
+        const borrowed = buildIndexes({ skills: [...skills, borrowing], configDir: CONFIG_DIR });
+        const decision = routeChange({ event: 'change', absPath: template, indexes: borrowed, paths: PATHS });
+        expect(decision).toEqual({ ids: ['audit', 'audit-copy'] });
+    });
+
     it('disambiguates subagent vs. parent group (longest-first wins)', () => {
         const abs = path.join(SKILLS_DIR, 'audit', 'subagents', 'dispatch', 'description.md');
         const decision = routeChange({ event: 'change', absPath: abs, indexes, paths: PATHS });
