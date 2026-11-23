@@ -148,7 +148,7 @@ Loops' webhook stops getting events for a site that moves. PostHog records the e
 | `email.opened`, `email.clicked` | none. Loops sends them for campaign and workflow emails only. A moved send has opens off, so PostHog sends no `$workflows_email_opened` or `$workflows_email_link_clicked` for it either |
 | `email.unsubscribed`, `email.resubscribed`, `campaign.email.sent`, `loop.email.sent`, `contact.*` | none. They are about campaigns, workflows, and contacts, which stay on Loops |
 
-Every event Loops sends for a transactional email has a PostHog event in the table. A Loops send sets nothing that comes back in an event apart from its `transactionalId`, the recipient, and the subject its data variables fill in. A site whose events a handler reads or matches by `email.subject` stays, and the reason is `its subject feeds a webhook handler`: Step 7 marks every code send sensitive, which keeps the subject off PostHog's events. No other handler keeps a site on Loops. The handler keeps working for the sites that stay, and for campaign and workflow events. Never change it.
+Every event Loops sends for a transactional email has a PostHog event in the table. A site whose events a handler reads or matches by any field but the event name, `transactionalId`, and the recipient's address, such as `email.subject`, `email.id`, or `contactIdentity.userId`, stays, and the reason is `its <field> feeds a webhook handler`: PostHog's events carry none of Loops' ids, and Step 7 marks every code send sensitive, which keeps the subject off them. No other handler keeps a site on Loops. The handler keeps working for the sites that stay, and for campaign and workflow events. Never change it.
 
 ## Calls that change the suppression list
 
