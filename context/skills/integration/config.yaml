@@ -55,7 +55,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v6.md
     docs:
       error-tracking:
-        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/error-tracking/installation/react-router.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/react.md
 
@@ -68,7 +68,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-framework-mode.md
     docs:
       error-tracking:
-        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/error-tracking/installation/react-router.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/react.md
         - https://posthog.com/docs/feature-flags/installation/nodejs.md
@@ -82,7 +82,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-data-mode.md
     docs:
       error-tracking:
-        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/error-tracking/installation/react-router.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/react.md
 
@@ -95,7 +95,7 @@ variants:
       - https://posthog.com/docs/libraries/react-router/react-router-v7-declarative-mode.md
     docs:
       error-tracking:
-        - https://posthog.com/docs/error-tracking/installation/react.md
+        - https://posthog.com/docs/error-tracking/installation/react-router.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/react.md
 

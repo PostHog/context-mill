@@ -1,38 +1,24 @@
-import { PostHog } from "posthog-node";
 import type { RouterContextProvider } from "react-router";
+import type { PostHog } from "posthog-node";
 import type { Route } from "../+types/root";
+import { posthog } from "./posthog.server";
+import { posthogRequestContext } from "./posthog-request.server";
 
 export interface PostHogContext extends RouterContextProvider {
   posthog?: PostHog;
 }
 
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
-  if (!token) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.");
-    }
+  if (!posthog) {
     return next();
   }
 
-  const posthog = new PostHog(token, {
-    host: process.env.VITE_PUBLIC_POSTHOG_HOST,
-    flushAt: 1,
-    flushInterval: 0,
-  });
-
-  const sessionId = request.headers.get('X-POSTHOG-SESSION-ID');
-  const distinctId = request.headers.get('X-POSTHOG-DISTINCT-ID');
-
   (context as PostHogContext).posthog = posthog;
 
-  const response = await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    next
+  const { distinctId, properties } = posthogRequestContext(request);
+  return posthog.withContext(
+    { distinctId, sessionId: properties.$session_id, properties },
+    next,
+    { fresh: true },
   );
-
-  await posthog.shutdown().catch(() => {});
-
-  return response;
 };
-
