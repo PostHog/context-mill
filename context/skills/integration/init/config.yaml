@@ -1,0 +1,15 @@
+# A step skill written once for every framework. Its consumer adds the framework's pages and rules from the
+# framework's pack when it installs the skill; see "Step skills" in the README.
+type: docs-only
+template: description.md
+description: Initialize PostHog and set its environment variables
+category: integration-steps
+tags: [orchestrator, init]
+cli:
+  role: internal
+shared_docs:
+  - https://posthog.com/docs/advanced/content-security-policy.md
+framework_references: integration
+variants:
+  - id: all
+    display_name: PostHog init step

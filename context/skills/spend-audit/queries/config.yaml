@@ -1,0 +1,11 @@
+type: docs-only
+template: description.md
+description: "The HogQL measurements every spend audit task shares"
+tags: [orchestrator, spend-audit]
+variants:
+  - id: all
+    display_name: "Spend audit — queries"
+    tags: [orchestrator, spend-audit]
+    docs_urls: []
+cli:
+  role: internal

@@ -12,13 +12,11 @@
 import fs from 'fs';
 import path from 'path';
 import { generateAllSkills, fetchDoc } from './lib/skill-generator.js';
-import { buildAgents } from './lib/agent-generator.js';
 import { generateMarketplace } from './lib/marketplace-generator.js';
 import {
     loadDocsConfig,
     zipSkillToBuffer,
     createBundledArchive,
-    writeBundles,
     writeManifestAndMenu,
 } from './lib/build-phases.js';
 
@@ -58,13 +56,16 @@ async function main() {
             version: BUILD_VERSION,
         });
 
+        // Non-blocking: a skill with no tags of its own gets only the commandments that apply to every skill.
+        for (const skill of skills) {
+            if (!skill.tags?.length) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
+        }
+
         const docEntries = loadDocsConfig(configDir);
 
         console.log('\nCreating skill ZIPs...');
         const skillZips = {};
         for (const skill of skills) {
-            // A bundled variant ships inside its group's JSON, not as its own zip.
-            if (skill.bundle) continue;
             const skillDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillDir);
             const filename = `${skill.id}.zip`;
@@ -73,13 +74,6 @@ async function main() {
             fs.writeFileSync(path.join(skillsDir, filename), buffer);
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
-        const bundleFiles = writeBundles({
-            skills,
-            sourceDir: tempDir,
-            skillsDir,
-            log: console.log,
-        });
-
         console.log('\nGenerating marketplace plugins...');
         const marketplaceResult = generateMarketplace({
             skills,
@@ -114,15 +108,6 @@ async function main() {
         const menuEntries = Object.values(skillMenu.categories).flat().length;
         console.log(`  ✓ skill-menu.json (${Object.keys(skillMenu.categories).length} categories, ${menuEntries} entries)`);
 
-        console.log('\nBuilding agent prompts...');
-        const agentsResult = buildAgents({
-            configDir,
-            distDir,
-            baseUrl: process.env.AGENTS_BASE_URL,
-            version: BUILD_VERSION,
-        });
-        console.log(`  ✓ ${agentsResult.count} agent prompt(s) → dist/agents/ + agent-menu.json`);
-
         const releaseAssetDocs = docEntries.filter(d => d.release_asset);
         if (releaseAssetDocs.length > 0) {
             console.log('\nWriting release-asset docs...');
@@ -138,10 +123,7 @@ async function main() {
 
         console.log('\nCreating bundled archive...');
         const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
-        const bundleSize = await createBundledArchive(bundlePath, manifest, {
-            ...skillZips,
-            ...bundleFiles,
-        });
+        const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
         console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
 
         console.log('\n' + '='.repeat(50));
