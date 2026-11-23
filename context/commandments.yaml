@@ -296,7 +296,7 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`, at the version the Flutter SDK docs pin
+    - posthog_flutter is the Flutter SDK package name. When `pubspec.yaml` doesn't list it, install it with `flutter pub add 'posthog_flutter:^<VERSION>'` at the version the Flutter SDK docs pin. When `pubspec.yaml` already lists it, keep that version range and never run `flutter pub add posthog_flutter` on it, because a bare add moves the app to the newest major. A feature that needs a newer minor release works when the existing range already resolves to it
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
     - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
