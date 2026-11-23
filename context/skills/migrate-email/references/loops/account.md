@@ -31,7 +31,7 @@ The steps call this key the full-access provider key.
 
 ## Template content
 
-Every Loops site sends a Loops email, so each site that moves needs the content of the email's published version: Step 3 checks it, and Step 7 brings it into the code, or the person makes a template in PostHog from it when they ask for one. The API returns the content, but not as HTML: it answers the body in LMX, Loops' markup, which `mapping.md` turns into HTML under "Templates". The dashboard has no export of an email's HTML, so its copy is a preview send.
+Every Loops site sends a Loops email, so each site that moves needs the content of the email's published version: Step 3 checks it, and Step 7 brings it into the code. The API returns the content, but not as HTML: it answers the body in LMX, Loops' markup, which `mapping.md` turns into HTML under "Templates". The dashboard has no export of an email's HTML, so its copy is a preview send.
 
 **Read from the API.** With `Authorization: Bearer $LOOPS_MIGRATION_API_KEY`:
 
@@ -60,10 +60,7 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 ## Open and click tracking
 
-Loops tracks no opens or clicks on a transactional email, at any setting or plan, so there is nothing to check in the account and no case where nobody can tell:
-
-- Every Loops site's emails had no open pixel, as Step 3 says under "Opens the provider didn't track".
-- A Loops site that moves to a template made in PostHog is one whose clicks the provider didn't track, as Step 3 says under "A template in PostHog".
+Loops tracks no opens or clicks on a transactional email, at any setting or plan, so there is nothing to ask the person and no case where nobody can tell. Every Loops site's emails had no open pixel, so every site moves with opens off, as Step 3 says under "Opens the provider didn't track", and Loops tracked none of their clicks.
 
 ## Suppression list
 
