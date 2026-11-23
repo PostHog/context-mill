@@ -351,7 +351,7 @@ commandments:
     - PostHogContext is platform-specific — on Android pass PostHogContext(application); on iOS and web use the no-argument PostHogContext()
     - posthog-kmp is a thin wrapper that delegates to the native posthog-android, posthog-ios, and posthog-js SDKs, so session replay and autocapture availability follow the underlying native platform
     - Use PostHogConfig.HOST_US or PostHogConfig.HOST_EU for the host, and read the project token from generated build config or environment values rather than hardcoding it
-    - The SDK is 0.x pre-release; check the latest posthog-kmp version on Maven Central (https://central.sonatype.com/artifact/com.posthog/posthog-kmp) before pinning instead of hardcoding a stale version
+    - Check the latest posthog-kmp version on Maven Central (https://central.sonatype.com/artifact/com.posthog/posthog-kmp) before pinning instead of hardcoding a stale version
 
   # Carve-outs for the ai-observability skill; every variant carries this tag.
   # Worded to override the generic language rules regardless of list order.
