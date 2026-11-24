@@ -161,8 +161,182 @@ describe('a variant table', () => {
         ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
         ['a match that is null', { match: null }, /match must map trait names/],
         ['an empty match value', { match: { framework: '' } }, /match must map trait names/],
+        ['an empty list of match values', { match: { framework: 'nextjs', frameworkVariant: [] } }, /match must map trait names/],
+        ['a match list with a member that is not a string', { match: { framework: 'nextjs', frameworkVariant: ['app-router', 4] } }, /match must map trait names/],
+        ['a match list with an empty member', { match: { framework: 'nextjs', frameworkVariant: ['app-router', ''] } }, /match must map trait names/],
+        ['a match list with a member that has a colon', { match: { framework: 'nextjs', frameworkVariant: ['app-router', 'pages:router'] } }, /match must map trait names/],
+        ['a match list that holds a list', { match: { framework: 'nextjs', frameworkVariant: [['app-router']] } }, /match must map trait names/],
+        ['a non-boolean default value', { default: 'true' }, /default must be a boolean/],
+        ['a numeric default value', { default: 1 }, /default must be a boolean/],
+        ['duplicate values inside a single match array', { match: { framework: 'nextjs', frameworkVariant: ['app-router', 'app-router'] } }, /duplicate values/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
+    });
+
+    it('rejects duplicate values in a single match array and overlapping claims across non-framework variants', () => {
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { sdkPython: ['7', '7'] } },
+                { id: 'v8', default: true, match: { sdkPython: '8' } },
+            ],
+        })).toThrow(/duplicate values/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v5', match: { sdkPython: '5' } },
+                { id: 'v7', match: { sdkPython: ['5', '6', '7'] } },
+                { id: 'v8', default: true, match: { sdkPython: '8' } },
+            ],
+        })).toThrow(/already claimed by variant "v5"/);
+    });
+
+    it('enforces default: true uniqueness per group/framework and requires exactly one default on sdk groups', () => {
+        // Non-framework group cannot mark two variants as default.
+        expect(() => expand({
+            type: 'docs-only',
+            variants: [
+                { id: 'a', default: true, match: { sdkPython: '7' } },
+                { id: 'b', default: true, match: { sdkPython: '8' } },
+            ],
+        })).toThrow(/at most one variant may set default: true/);
+
+        // Framework group cannot mark two variants for the same framework as default.
+        expect(() => expand(table({
+            variants: [
+                { ...table().variants[0], id: 'app', default: true, match: { framework: 'nextjs', frameworkVariant: 'app-router' } },
+                { ...table().variants[0], id: 'pages', default: true, match: { framework: 'nextjs', frameworkVariant: 'pages-router' } },
+            ],
+        }))).toThrow(/already marks variant "app" as default/);
+
+        // Framework group can still mark one default per distinct framework.
+        expect(() => expand(table({
+            variants: [
+                { ...table().variants[0], id: 'next', default: true, match: { framework: 'nextjs' } },
+                { ...table().variants[0], id: 'nuxt', default: true, match: { framework: 'nuxt' } },
+            ],
+        }))).not.toThrow();
+
+        // Framework group rejects default: true when match.framework is missing.
+        expect(() => expand(table({
+            variants: [
+                { ...table().variants[0], id: 'next', default: false, match: { framework: 'nextjs' } },
+                { ...table().variants[0], id: 'headless', default: true, match: undefined },
+            ],
+        }))).toThrow(/default: true in a framework group requires match\.framework/);
+
+        // Framework group catches duplicate defaults when match.framework is an array.
+        expect(() => expand(table({
+            variants: [
+                { ...table().variants[0], id: 'shared', default: true, match: { framework: ['nextjs', 'nuxt'] } },
+                { ...table().variants[0], id: 'next', default: true, match: { framework: 'nextjs' } },
+            ],
+        }))).toThrow(/framework "nextjs" already marks variant "shared" as default/);
+
+        // SDK groups must mark exactly one variant with default: true.
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { sdkPython: ['6', '7'] } },
+                { id: 'v8', match: { sdkPython: ['8'] } },
+            ],
+        })).toThrow(/sdk groups must mark exactly one variant with default: true/);
+
+        // SDK variants must all declare one shared non-framework match key.
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { sdkPython: ['6', '7'] } },
+                { id: 'v8', default: true },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { sdkPython: ['6', '7'] } },
+                { id: 'v8', default: true, match: { sdkPyhton: ['8'] } },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { sdkPython: ['6', '7'] } },
+                { id: 'v8', default: true, match: { sdkPython: ['8'], sdkNode: ['6'] } },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v8', default: true, match: { sdkPython: ['8'], framework: 'django' } },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v8', default: true, match: { framework: 'django' } },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
+
+        // Invalid reference_version fails validation (empty and whitespace-only).
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v0', reference_version: '', match: { sdkKmp: ['0'] } },
+                { id: 'v1', default: true, match: { sdkKmp: ['1'] } },
+            ],
+        })).toThrow(/reference_version must be a non-empty string/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v0', reference_version: '   ', match: { sdkKmp: ['0'] } },
+                { id: 'v1', default: true, match: { sdkKmp: ['1'] } },
+            ],
+        })).toThrow(/reference_version must be a non-empty string/);
+
+        // A group under sdk/ is an sdk group even without an explicit category.
+        expect(() => expandSkillGroups({
+            'sdk/posthog-python': {
+                type: 'docs-only',
+                variants: [
+                    { id: 'v7', match: { sdkPython: ['6', '7'] } },
+                    { id: 'v8', match: { sdkPython: ['8'] } },
+                ],
+            },
+        }, dir)).toThrow(/sdk groups must mark exactly one variant with default: true/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', default: false, match: { sdkPython: ['6', '7'] } },
+                { id: 'v8', default: true, match: { sdkPython: ['8'] } },
+            ],
+        })).not.toThrow();
+    });
+
+    it('accepts a list of match values and keeps it through expansion and variant.json', async () => {
+        const match = { framework: 'nextjs', frameworkVariant: ['app-router', 'pages-router'] };
+        const [skill] = expand(withVariant({ match }));
+        expect(skill.match).toEqual(match);
+        expect(serializeSkill(skill).match).toEqual(match);
+        const files = await build(withVariant({ match }));
+        expect(JSON.parse(files[VARIANT_FILE]).match).toEqual(match);
     });
 
     it('accepts a product a variant declares as a gap', () => {
@@ -179,11 +353,34 @@ describe('a variant table', () => {
     });
 
     it.each([
+        ['an empty match object without products', { type: 'skill', template: 'description.md', variants: [{ id: 'v7', match: {} }] }, /match must map trait names/],
+        ['a products group omitting framework in match', table({ variants: [{ ...table().variants[0], match: { sdkPython: '7' } }] }), /match must name the framework/],
+        ['frameworkVariant without products or another framework variant', { type: 'skill', template: 'description.md', variants: [{ id: 'app', match: { frameworkVariant: 'app-router' } }] }, /match must name the framework/],
+    ])('rejects %s', (_, group, message) => {
+        expect(() => expand(group)).toThrow(message);
+    });
+
+    it.each([
         ['a product listed twice', ['error-tracking', 'error-tracking'], /products lists a name twice/],
         ['a product name that is not kebab-case', ['Error Tracking'], /must be a list of kebab-case names/],
         ['products that are not a list', 'error-tracking', /must be a list of kebab-case names/],
     ])('rejects %s', (_, products, message) => {
         expect(() => expand(table({ products }))).toThrow(message);
+    });
+
+    it('publishes one menu tag per value of a match list, in order, beside single-string keys', () => {
+        writeManifestAndMenu({
+            allSkills: expand(withVariant({ match: { frameworkVariant: ['app-router', 'pages-router'], framework: 'nextjs' } })).map(serializeSkill),
+            docContents: {},
+            distDir: path.join(dir, 'dist'),
+            configDir: dir,
+            version: '1.2.3',
+        });
+        const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
+        const [entry] = Object.values(menu.categories).flat();
+
+        expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'frameworkVariant:pages-router', 'integration', 'default']);
+        expect(entry.tags.some(tag => tag.includes('['))).toBe(false);
     });
 
     it('publishes match as key:value menu tags, the framework first however the row orders them', () => {

@@ -167,7 +167,7 @@ function generateManifest({ resources, uriSchema, version, docContents = {} }) {
 }
 
 /**
- * Menu tags: the skill's own tags plus its match keys as `key:value`, its group and `default`.
+ * Menu tags: the skill's own tags plus its match keys as `key:value` (one tag per value when a key lists several), its group and `default`.
  * A match key is prefixed, because a content tag such as `python` describes a skill, not what it serves.
  * Added here only, so the tags commandments are selected by stay untouched.
  */
@@ -176,7 +176,7 @@ function menuTags(tags, { match, group, isDefault }) {
         ...new Set(
             [
                 ...(tags || []),
-                ...Object.entries(match || {}).map(([key, value]) => `${key}:${value}`),
+                ...Object.entries(match || {}).flatMap(([key, value]) => [value].flat().map(v => `${key}:${v}`)),
                 group,
                 isDefault ? 'default' : null,
             ].filter(Boolean),

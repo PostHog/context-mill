@@ -1,0 +1,22 @@
+# PostHog Node.js SDK — exact-major reference & migration skills
+type: docs-only
+category: sdk
+cli:
+  role: internal
+description: PostHog Node.js SDK {display_name} reference
+variants:
+  - id: v5
+    display_name: 5.x.x
+    template: ../non-default-major.md
+    match: { sdkNode: ["4", "5"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/node/5.x.x.md
+      - https://posthog.com/docs/libraries/node/migration.md
+
+  - id: v6
+    default: true
+    display_name: 6.x.x
+    template: ../default-major.md
+    match: { sdkNode: ["6"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/node/6.x.x.md
