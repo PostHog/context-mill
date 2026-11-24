@@ -234,7 +234,7 @@ How a site that moves is written with PostHog's SDK. Step 7 says when to use eac
 
 **The fields.**
 
-- `sender: { email: 'hello@mail.example.com', name: 'Example' }` becomes `from: 'Example <hello@mail.example.com>'`. A name with a comma, a quote, or another special character goes in double quotes, such as `'"Example, Inc." <hello@mail.example.com>'`, with a quote in the name escaped as `\"`. A `sender` without a name becomes the bare address.
+- `sender: { email: 'hello@mail.example.com', name: 'Example' }` becomes `from: 'Example <hello@mail.example.com>'`. A name with a comma, a quote, or another special character goes in double quotes, such as `'"Example, Inc." <hello@mail.example.com>'`, with each `\` and `"` in the name escaped with a `\`, so the address reads `"Jane \"JJ\" Doe" <hello@mail.example.com>`. A `sender` without a name becomes the bare address.
 - `to: [{ email, name }]` becomes `to: email`. When a helper takes a list of recipients and every caller passes one address, change the parameter to one address and update the callers. Never send one email per address in a loop.
 - `replyTo: { email }` becomes `replyTo: email`.
 - `htmlContent` becomes `html`, and `textContent` becomes `text`. With `params`, they are the content the code rendered, as "Templates" says, and the send has no `params`.
