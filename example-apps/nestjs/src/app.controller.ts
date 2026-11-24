@@ -57,7 +57,8 @@ export class AppController {
     this.posthog.client.capture({
       distinctId: req.visitor.distinctId,
       event: 'burrito_considered',
-      properties: { ...req.visitor.properties, source: 'api' },
+      properties: { source: 'api' },
+      options: req.visitor.options,
     })
 
     return { considered: true }

@@ -59,9 +59,11 @@ app.get('/profile', () => {
 })
 
 app.onError((err, c) => {
-  posthog.captureException(err, undefined, {
-    $request_path: c.req.path,
-    $request_method: c.req.method,
+  posthog.captureException(err, {
+    properties: {
+      $request_path: c.req.path,
+      $request_method: c.req.method,
+    },
   })
 
   return c.json({ error: 'Internal server error' }, 500)

@@ -27,8 +27,8 @@ importers:
         specifier: ^1.447.6
         version: 1.447.6(@types/react@18.3.31)(react@18.3.1)
       posthog-node:
-        specifier: ^5.64.0
-        version: 5.64.0
+        specifier: ^6.0.6
+        version: 6.0.6
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -677,6 +677,9 @@ packages:
   '@posthog/core@1.65.0':
     resolution: {integrity: sha512-eXbEpErslRjNLbOWx2GdBiYmJ70Yzq2JPuuQaFGJHNv//5DwbsVVF4R0yPCOIT1AqUrd4cW0faamrN8ijnPMTw==}
 
+  '@posthog/core@1.69.2':
+    resolution: {integrity: sha512-toMfPKklwLW+a4ZY3/EzM3GNMVXmk2ylGb8NPJXRH4igXMoI8wgNL2jqXOiglWAXqFBLZGYFN1oQx6LVmUTxTg==}
+
   '@posthog/react@1.11.3':
     resolution: {integrity: sha512-YqvZb2y9jh/yW0ojUtAns0l4yHWqpu+5UeIBxZlXpyGuWlh8M4siXRMtqhEh1BKfqp6Sq2usdsQCuoUzx1QFWQ==}
     peerDependencies:
@@ -689,6 +692,9 @@ packages:
 
   '@posthog/types@1.422.0':
     resolution: {integrity: sha512-65cWefuvAiyTNe+cv8btywtdXLPwmM0ATggoH4l9rJkam0n2kJCIb5HeaLJ9GQ6dSs5MAbney2QgW0MVeBtiOg==}
+
+  '@posthog/types@1.427.1':
+    resolution: {integrity: sha512-Kx9hWf6Au64CrBLafscANAeswkRFUMs4zlU9/gwB2Hf/9ggU9YNjbw/MQA5tt7cbzTCkh+4fNIPjQeJz7/j63w==}
 
   '@remix-run/dev@2.17.5':
     resolution: {integrity: sha512-yEDrKcIICHnaJdUOdBAXQTNXoehB0J3FBcZr4CnK6Alic6cVJGGBGMtJdIO7DUwNySwoYvkUTS3qnXuk2zGYZA==}
@@ -2246,14 +2252,17 @@ packages:
       react:
         optional: true
 
-  posthog-node@5.64.0:
-    resolution: {integrity: sha512-io0NI/qqWvpxxHUyIg9GeZrt092Q6jRwqFOC/+ir98AiDG3T+xNgNrfxtz85GVfVcVCLs1BT40WlHjipxJZv8Q==}
+  posthog-node@6.0.6:
+    resolution: {integrity: sha512-7FMMQ4fk4Uqg/w2zpKVS8/Yv0doIz0HRcWML4WhxDTqqkS7eyXCvfGUuh+wLJbWYvdSm/7QNu9eeL31++G/dOw==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
       '@opentelemetry/api': ^1.2.0
+      '@react-email/render': ^2.1.0
       rxjs: ^7.0.0
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+      '@react-email/render':
         optional: true
       rxjs:
         optional: true
@@ -3384,6 +3393,10 @@ snapshots:
     dependencies:
       '@posthog/types': 1.422.0
 
+  '@posthog/core@1.69.2':
+    dependencies:
+      '@posthog/types': 1.427.1
+
   '@posthog/react@1.11.3(@types/react@18.3.31)(posthog-js@1.447.6(@types/react@18.3.31)(react@18.3.1))(react@18.3.1)':
     dependencies:
       posthog-js: 1.447.6(@types/react@18.3.31)(react@18.3.1)
@@ -3392,6 +3405,8 @@ snapshots:
       '@types/react': 18.3.31
 
   '@posthog/types@1.422.0': {}
+
+  '@posthog/types@1.427.1': {}
 
   '@remix-run/dev@2.17.5(@remix-run/react@2.17.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(@remix-run/serve@2.17.5(typescript@5.9.3))(@types/node@26.6.6)(typescript@5.9.3)(vite@6.4.6(@types/node@26.6.6)(yaml@2.9.1))(yaml@2.9.1)':
     dependencies:
@@ -5240,9 +5255,9 @@ snapshots:
     transitivePeerDependencies:
       - preact-render-to-string
 
-  posthog-node@5.64.0:
+  posthog-node@6.0.6:
     dependencies:
-      '@posthog/core': 1.65.0
+      '@posthog/core': 1.69.2
 
   preact@10.29.8: {}
 

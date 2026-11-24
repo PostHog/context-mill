@@ -364,7 +364,6 @@ variants:
     tags: [python]
     docs_urls:
       - https://posthog.com/docs/libraries/python.md
-      - https://posthog.com/docs/references/posthog-python.md
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/python.md
@@ -379,7 +378,6 @@ variants:
     tags: [javascript_node, javascript]
     docs_urls:
       - https://posthog.com/docs/libraries/node.md
-      - https://posthog.com/docs/references/posthog-node.md
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/node.md
@@ -461,7 +459,7 @@ variants:
     match: { framework: rust }
     example_paths: example-apps/rust
     display_name: Rust
-    description: PostHog integration for Rust applications using the posthog-rs SDK
+    description: PostHog integration for Rust applications using the PostHog Rust SDK
     tags: [rust]
     docs_urls:
       - https://posthog.com/docs/libraries/rust.md

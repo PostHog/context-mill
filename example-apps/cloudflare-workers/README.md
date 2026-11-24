@@ -104,10 +104,10 @@ posthog?.captureImmediate({
 
 ### Signed-out visitors (src/index.ts)
 
-Visitors without a `user_id` cookie get a random id in an `anon_id` cookie, reused for the visit. Their events set `$process_person_profile` to `false` so PostHog creates no person profile.
+Visitors without a `user_id` cookie get a random id in an `anon_id` cookie, reused for the visit. Their events set the `process_person_profile` option to `false` so PostHog creates no person profile.
 
 ```ts
-const anonymousProps = visitor.anonymous ? { $process_person_profile: false } : {}
+const anonymousOptions = visitor.anonymous ? { process_person_profile: false } : {}
 ```
 
 ### Feature flags (src/index.ts)
@@ -122,7 +122,12 @@ const showNewFeature = flags?.isEnabled('new-dashboard-feature') ?? false
 ### Error tracking (src/index.ts)
 
 ```ts
-track(posthog?.captureExceptionImmediate(error, visitor.id, anonymousProps))
+track(
+  posthog?.captureExceptionImmediate(error, {
+    distinctId: visitor.id,
+    properties: anonymousProps,
+  })
+)
 ```
 
 ## Reverse proxy

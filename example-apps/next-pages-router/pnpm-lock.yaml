@@ -15,8 +15,8 @@ importers:
         specifier: ^1.447.6
         version: 1.447.6(@types/react@19.2.2)(react@19.1.2)
       posthog-node:
-        specifier: ^5.64.0
-        version: 5.64.0
+        specifier: ^6.0.6
+        version: 6.0.6
       react:
         specifier: 19.1.2
         version: 19.1.2
@@ -345,8 +345,14 @@ packages:
   '@posthog/core@1.65.0':
     resolution: {integrity: sha512-eXbEpErslRjNLbOWx2GdBiYmJ70Yzq2JPuuQaFGJHNv//5DwbsVVF4R0yPCOIT1AqUrd4cW0faamrN8ijnPMTw==}
 
+  '@posthog/core@1.69.2':
+    resolution: {integrity: sha512-toMfPKklwLW+a4ZY3/EzM3GNMVXmk2ylGb8NPJXRH4igXMoI8wgNL2jqXOiglWAXqFBLZGYFN1oQx6LVmUTxTg==}
+
   '@posthog/types@1.422.0':
     resolution: {integrity: sha512-65cWefuvAiyTNe+cv8btywtdXLPwmM0ATggoH4l9rJkam0n2kJCIb5HeaLJ9GQ6dSs5MAbney2QgW0MVeBtiOg==}
+
+  '@posthog/types@1.427.1':
+    resolution: {integrity: sha512-Kx9hWf6Au64CrBLafscANAeswkRFUMs4zlU9/gwB2Hf/9ggU9YNjbw/MQA5tt7cbzTCkh+4fNIPjQeJz7/j63w==}
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
@@ -1379,14 +1385,17 @@ packages:
       react:
         optional: true
 
-  posthog-node@5.64.0:
-    resolution: {integrity: sha512-io0NI/qqWvpxxHUyIg9GeZrt092Q6jRwqFOC/+ir98AiDG3T+xNgNrfxtz85GVfVcVCLs1BT40WlHjipxJZv8Q==}
+  posthog-node@6.0.6:
+    resolution: {integrity: sha512-7FMMQ4fk4Uqg/w2zpKVS8/Yv0doIz0HRcWML4WhxDTqqkS7eyXCvfGUuh+wLJbWYvdSm/7QNu9eeL31++G/dOw==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
       '@opentelemetry/api': ^1.2.0
+      '@react-email/render': ^2.1.0
       rxjs: ^7.0.0
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+      '@react-email/render':
         optional: true
       rxjs:
         optional: true
@@ -1911,7 +1920,13 @@ snapshots:
     dependencies:
       '@posthog/types': 1.422.0
 
+  '@posthog/core@1.69.2':
+    dependencies:
+      '@posthog/types': 1.427.1
+
   '@posthog/types@1.422.0': {}
+
+  '@posthog/types@1.427.1': {}
 
   '@rtsao/scc@1.1.0': {}
 
@@ -3120,9 +3135,9 @@ snapshots:
     transitivePeerDependencies:
       - preact-render-to-string
 
-  posthog-node@5.64.0:
+  posthog-node@6.0.6:
     dependencies:
-      '@posthog/core': 1.65.0
+      '@posthog/core': 1.69.2
 
   preact@10.29.8: {}
 
