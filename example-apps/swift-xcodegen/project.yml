@@ -16,7 +16,7 @@ options:
 packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
-    from: 3.64.1
+    from: 4.0.0
 
 targets:
   BurritoStand:
