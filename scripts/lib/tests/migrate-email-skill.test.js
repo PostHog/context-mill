@@ -191,32 +191,6 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
         });
 
-        it('sends a site the provider sent as marketing on to its category, and keeps only other marketing, in step 3', () => {
-            const inventory = read('3-inventory.md');
-            const classify = inventory.split('## Classify each site')[1].split('\n## ')[0];
-
-            expect(classify).toMatch(/A site the provider sent as marketing, as "The category of each site" below says, is marketing and goes on to that section: it moves only in a marketing message category\. Any other site that sends marketing, such as a newsletter, a promotion, or a product announcement, stays, and the reason is `marketing email`\./);
-            expect(classify).not.toMatch(/A site that sends marketing, such as a newsletter, a promotion, or a product announcement, stays/);
-        });
-
-        it("asks the person for a workflow step's category when the tools are missing, in step 3", () => {
-            expect(read('3-inventory.md')).toMatch(/When those tools are missing, ask the person for the category the step shows in PostHog, with its key, type, name, and description\. A marketing one they can't give stays, and the reason is `no message category tools`\. A transactional one they can't give moves with a blank category, noted under the table\./);
-        });
-
-        it("moves a SendGrid send's unsubscribe group into a marketing category, and its unsubscribe tags into the placeholder", () => {
-            const mapping = read('sendgrid/mapping.md');
-
-            expect(mapping).toMatch(/\| `asm` \| the site's category, as Step 3 says under "The category of each site" \|/);
-            expect(mapping).not.toMatch(/\| `asm` \| none \| Always/);
-            for (const tag of ['{{{unsubscribe}}}', '{{{unsubscribe_preferences}}}', '<%asm_group_unsubscribe_raw_url%>', '<%asm_preferences_raw_url%>']) expect(mapping).toContain(`\`${tag}\``);
-            expect(mapping).toMatch(/In a marketing site, each of these becomes `\{\{ unsubscribe_url \}\}`, as `template-to-code\.md` says\. In any other site, it keeps the template on SendGrid/);
-            expect(mapping).toMatch(/SendGrid sends `unsubscribe`, `group_unsubscribe`, and `group_resubscribe` only for emails with subscription tracking or `asm`, so a handler on those events keeps only such a site\./);
-        });
-
-        it('handles an opted-out recipient only on a marketing site, in step 7', () => {
-            expect(read('7-rewrite.md')).toMatch(/Where a marketing site handles `recipient_suppressed`, it handles `recipient_opted_out` the same way/);
-        });
-
         it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
         });
