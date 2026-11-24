@@ -481,17 +481,13 @@ variants:
     tags: [swift, ios, macos, swiftui, xcodegen]
     docs_urls:
       - https://posthog.com/docs/libraries/ios.md
-      - https://posthog.com/docs/libraries/ios/usage.md
-      - https://posthog.com/docs/libraries/ios/configuration.md
     docs:
       error-tracking:
         - https://posthog.com/docs/error-tracking/installation/ios.md
         - https://posthog.com/docs/libraries/ios.md
-        - https://posthog.com/docs/libraries/ios/usage.md
-        - https://posthog.com/docs/libraries/ios/configuration.md
       feature-flags:
         - https://posthog.com/docs/feature-flags/installation/ios.md
-        - https://posthog.com/docs/libraries/ios/usage.md
+        - https://posthog.com/docs/libraries/ios.md
 
   - id: flutter
     match: { framework: flutter }
