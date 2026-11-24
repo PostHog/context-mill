@@ -17,7 +17,6 @@ A domain set up at Mailjet carries these records. Keep all of them until the cut
 
 - Mailjet sends with its own bounce address, so it puts no MAIL FROM record on the domain. PostHog's sender uses its own label for its MAIL FROM, `feedback` by default. Never give PostHog a label that starts with `mailjet`.
 - PostHog's DKIM records have their own names, so they sit next to `mailjet._domainkey`.
-- Keep the one `_dmarc` record. Never add a second one.
 - A domain has one SPF record. When it names `include:spf.mailjet.com`, keep that include and merge PostHog's include into the same record.
 
 ## Read-only key
@@ -47,7 +46,7 @@ Mailjet blocks some addresses on every later send, such as after a bounce that i
 - Hard bounces: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=10&ShowContactAlt=true`. Each entry of `Data` holds the recipient's address in `ContactAlt`.
 - Spam reports: `GET https://api.mailjet.com/v3/REST/message?MessageStatus=6&ShowContactAlt=true`, and `GET https://api.mailjet.com/v3/REST/contact`, whose entries with `IsSpamComplaining: true` hold the address in `Email`.
 
-Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. The message list reaches only the messages Mailjet still keeps, as "For the report" says. An address can show up more than once: import it once, with the first source in the table below that holds it, so an address that hard-bounced keeps `bounce`, the one reason that blocks a moved send.
+Ask the person whether Mailjet unblocked any address, such as after they asked its support, and leave those out: Mailjet sends to them again. Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page has fewer than 1000 entries. Wait and retry on `429`. When a page still answers `429` after five tries, stop: the import is partial, and the report says so. The message list reaches only the messages Mailjet still keeps, as "For the report" says. An address can show up more than once: import it once, with the first source in the table below that holds it, so an address that hard-bounced keeps `bounce`, the one reason that blocks a moved send.
 
 **Map each entry.**
 
@@ -67,12 +66,11 @@ Page each with `Limit=1000` and `Offset`, adding 1000 each time, until a page ha
 
 ## For the report
 
-- When the import read hard bounces from the message list: it reaches only the messages Mailjet still keeps, so older bounces may be missing.
-- The number of contact-list unsubscribes the import left out. Ask the person for it, such as from their contact-list exports, and leave it out when they don't have it.
+- When the import read hard bounces from the message list: it reaches only the messages Mailjet still keeps, so older bounces may be missing. It takes every hard bounce the list still holds, so an address Mailjet would mail again after an old bounce stays blocked in PostHog until the person removes it from the suppression list.
 
 ## Tracking settings
 
-The account's tracking settings decide how Mailjet tracks the opens and clicks of every send, and they cap what a send's own `TrackOpens` and `TrackClicks` ask for. They cover every API key of the account, and Mailjet's API has no call that reads them. Ask the person once for each account the sites send from:
+The account's tracking settings decide how Mailjet tracks the opens and clicks of every send that doesn't set its own `TrackOpens` and `TrackClicks`. They cover every API key of the account, and Mailjet's API has no call that reads them. Ask the person once for each account the sites send from:
 
 - The open tracking and the click tracking setting, each `Enabled`, `Disabled`, or `Anonymous`, in the Mailjet dashboard under Account, then Tracking.
 - Whether any contact refused open or click tracking. Mailjet keeps each as a contact property, "Open tracking consent" and "Click tracking consent": an export of all contacts shows them as `mjoptinopen` and `mjoptinclick`, where `0` means the contact opted out. Ask for the export of all contacts, not one list: transactional recipients often sit in no list. An answer read from one list counts as not given, and so does an export without the `mjoptinopen` or `mjoptinclick` column, unless the person confirms the account never collected tracking preferences.
