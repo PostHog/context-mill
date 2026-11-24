@@ -61,7 +61,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## Sending tier
 
-<What the person found, or that it was not checked. When a site that moves sends files, add that PostHog also limits the files a project uploads each day, apart from the sending allowance, and that a used-up upload allowance fails a send with `upload_quota_exceeded`: the person checks it against the files these sites send on their busiest day.>
+<What the person found, or that it was not checked. When a site that moves sends files, add that PostHog also limits the files a project uploads each day, apart from the sending allowance, and that a used-up upload allowance fails a send with `upload_quota_exceeded`: the allowance counts the bytes of files PostHog doesn't hold yet, from every send of the project, so the person checks it against the new files the project sends on its busiest day.>
 
 ## Before cutover
 

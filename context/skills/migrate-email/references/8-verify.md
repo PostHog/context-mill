@@ -35,7 +35,7 @@ The chain to prove: PostHog sends the email, records its engagement on the perso
 
 Skip this part and record `not checked` with the reason when the API is not confirmed on, no sender is verified, or `POSTHOG_PROJECT_SECRET_API_KEY` is not set.
 
-When this part sends no email with files, because it is skipped at any point, the person declines, or no site with files passes `distinctId`, note under the table for each moved site that sends files `before cutover: files not checked — send one email from it`. PostHog opens files to projects in stages, and only a send with files shows that the project takes them.
+When no email with files goes out in this part, because it is skipped at any point, the person declines, no site with files passes `distinctId`, or the send with files fails, note under the table for each site that sends files and still moves `before cutover: files not checked — send one email from it`. PostHog opens files to projects in stages, and only a send with files shows that the project takes them.
 
 1. Check that the app sends to the MCP's project: compare the project token the app reads with `api_token` from the PostHog MCP `project-get` tool, called without an ID. Read only the token's line of the env file, by searching for the token variable's name: the file also holds secret keys, so never open all of it. When they differ, record `not checked: the app uses another project`, tell the person which project the app uses, and skip the rest of this part.
 2. Ask the person whether to send one test email. Say that it sends a real email. When they say no, record `not checked: declined`, and skip the rest of this part.
