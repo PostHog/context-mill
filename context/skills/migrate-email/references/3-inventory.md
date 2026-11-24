@@ -24,7 +24,7 @@ A **site** is one place in the code that decides what a send contains: its conte
 - When a helper only forwards a payload that its callers build, each caller is a site, and the helper is not. The same holds for a queue job or a transport that posts a message built elsewhere, such as a JSON string: each place that builds the message is a site.
 - Find a helper's callers by searching the repository. When you can't find or read every caller, each send through the helper stays, and the reason names the caller or the value you could not read.
 - A forwarding helper that nothing in the repository calls is not a site, unless the repository is a library that exports it: no code builds a message for it. List it with the other provider calls, and leave it as it is. A function that builds its own send stays a site, even when nothing in the repository calls it.
-- When one function chooses between this provider and others, by a setting or as a fallback when a send fails, the branch that sends through this provider is the site. Move only that branch, and leave the other branches as they are.
+- When one function chooses between this provider and others, by a setting or as a fallback when a send fails, the branch that sends through this provider is the site. Move only that branch, and leave the other branches as they are. A branch whose failed send falls back to another provider stays, as Step 7 says under "What every SDK's send takes and answers": `moves: no — falls back to another provider when the send's outcome is unknown`.
 
 For each site, read the surrounding code and record:
 
