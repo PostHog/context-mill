@@ -152,11 +152,11 @@ export default {
           throw new Error('Profile data is unavailable')
         } catch (error) {
           track(
-        posthog?.captureExceptionImmediate(error, {
-          distinctId: visitor.id,
-          properties: anonymousProps,
-        })
-      )
+            posthog?.captureExceptionImmediate(error, {
+              distinctId: visitor.id,
+              properties: anonymousProps,
+            })
+          )
         }
 
         return page('Profile', '<p>Profile data is unavailable. The error was reported.</p>')

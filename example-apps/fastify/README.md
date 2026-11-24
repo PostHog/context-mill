@@ -82,7 +82,7 @@ Register the auth plugin first so `request.user` is set before this hook reads i
 ```typescript
 app.setErrorHandler((error, request, reply) => {
   if (statusCode >= 500) {
-    posthog.captureException(error, undefined, { $response_status_code: statusCode })
+    posthog.captureException(error, { properties: { $response_status_code: statusCode } })
   }
   reply.code(statusCode).send({ error: 'Internal server error' })
 })

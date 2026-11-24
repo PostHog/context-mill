@@ -87,7 +87,7 @@ flags.isEnabled('new-dashboard-feature')
 
 ```typescript
 app.onError((err, c) => {
-  posthog.captureException(err, undefined, { $request_path: c.req.path })
+  posthog.captureException(err, { properties: { $request_path: c.req.path } })
   return c.json({ error: 'Internal server error' }, 500)
 })
 ```
