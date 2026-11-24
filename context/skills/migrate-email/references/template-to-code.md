@@ -64,13 +64,13 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
 
-Use the string-built `node` row only when the part that sends can't take React Email: Node.js runs its source as it is, as plain JavaScript or TypeScript with its type stripping, or `tsc` emits it with `"jsx": "preserve"` and nothing compiles the JSX after. A part that a bundler builds, that `tsc` emits with `"jsx": "react-jsx"`, or that Bun, `tsx`, or a framework such as Next.js runs, takes it. Write the reason in the plan row.
+Use the string-built `node` row only when the part that sends can't take React Email: Node.js runs its source as it is, as plain JavaScript or TypeScript with its type stripping, or `tsc` emits it with `"jsx": "preserve"` and nothing compiles the JSX after. A part that a bundler builds, that `tsc` emits with `"jsx": "react-jsx"`, or that Bun, `tsx`, or a framework such as Next.js runs, takes it. An app on `react` older than 18 with no React Email package can't take it either: `react-email` 6 needs React 18 or later. Write the reason in the plan row.
 
 ## React Email
 
 - **Packages.** Add `react-email` as a dependency, with `react` and `react-dom`, its peers, when the app lacks them. It holds the components and `render` from version 6 on. Never add `@react-email/components`: it is deprecated. An app that already has `@react-email/components` keeps it, and its emails import from it. When the part that sends is TypeScript, its `tsconfig.json` sets `jsx`, such as `"jsx": "react-jsx"`, and it gets `@types/react` and `@types/react-dom` as dev dependencies when it lacks them.
 - **Preview.** Add the preview only with `react-email` 6 or later: add `@react-email/ui` as a dev dependency, in the same version as `react-email`, and a script that runs `email dev --dir emails`, with the folder's path from the project root, such as `"email:preview": "email dev --dir src/emails"`. The preview lists a `.tsx`, `.jsx`, or `.js` file in that folder only when it has a default export, and skips every folder whose name starts with `_`. So each email's file default-exports its component, and every other file exports by name or sits in a folder such as `emails/_shared/`. An app that keeps an older React Email package gets no preview script, and the plan row says so.
-- **Layout.** Put what the emails share, such as the page, the card, the logo, and the footer, in one layout component, such as `MailLayout`, which takes the preview text and the body. Rebuild the provider's design with React Email's components (`Html`, `Head`, `Preview`, `Body`, `Container`, `Section`, `Row`, `Column`, `Text`, `Link`, `Button`, `Img`, `Hr`) with inline styles, keeping the provider's text, links, images, colors, and layout. `Preview` writes its text as the page's `<title>` too, from `react-email` 6 on: when the provider's HTML has a `<title>` of its own, keep it in `Head` and give `Preview` `useTitleTag={false}`.
+- **Layout.** Put what the emails share, such as the page, the card, the logo, and the footer, in one layout component, such as `MailLayout`, which takes the preview text and the body. Rebuild the provider's design with React Email's components (`Html`, `Head`, `Preview`, `Body`, `Container`, `Section`, `Row`, `Column`, `Text`, `Link`, `Button`, `Img`, `Hr`) with inline styles, keeping the provider's text, links, images, colors, and layout. `Preview` writes its text as the page's `<title>` too, from `react-email` 6 on: when the provider's HTML has a `<title>` of its own, keep it in `Head` and give `Preview` `useTitleTag={false}`. A release whose `Preview` has no `useTitleTag` prop, such as 6.5, gets the preview text as the hidden block that "Settings of the template" names, in place of `Preview`.
 - **Each email.** One file, `emails/<Name>Mail.tsx` in TypeScript, or `emails/<Name>Mail.jsx` in JavaScript, default-exports the email's component. Each variable becomes a prop, typed in TypeScript, and so does the recipient's name, as "Variables" says. Set `PreviewProps` on the component with made-up values, so the preview shows the email filled in. Write no real person's name or address there.
 - **Render.** The file also exports a function that takes the props and returns `{ subject, html, text }`. One shared helper renders both parts: the HTML with `render(element)` and the text with `toPlainText(html)`, from that HTML, so the two can't drift. A React Email package without `toPlainText`, such as `@react-email/render` before 1.2, renders the text with `render(element, { plainText: true })`. `render` is async. The site sends `html` and `text`. When the provider template had its own text part, compare it with the rendered one, and name in the plan row each line or link that only the provider's text had, so the person decides whether the email needs it.
 - **Escaping.** React escapes each value it renders, in text and in attributes, so pass each value as it is. A value the provider inserted as HTML goes in through `dangerouslySetInnerHTML`, under the rule of "Escaping".
@@ -83,9 +83,9 @@ A welcome email built from strings, with a text part written by hand beside it:
 export function welcomeEmail({ firstName, dashboardUrl }: { firstName?: string; dashboardUrl: string }) {
   return {
     subject: 'Welcome to Acme',
-    html: `<div style="font-family:sans-serif"><p>Hi ${escapeHtml(firstName ?? 'there')},</p>
+    html: `<div style="font-family:sans-serif"><p>Hi ${escapeHtml(firstName || 'there')},</p>
 <p><a href="${escapeHtml(dashboardUrl)}" style="background:#1d4ed8;color:#fff;padding:12px 20px">Open your dashboard</a></p></div>`,
-    text: `Hi ${firstName ?? 'there'},\n\nOpen your dashboard: ${dashboardUrl}`,
+    text: `Hi ${firstName || 'there'},\n\nOpen your dashboard: ${dashboardUrl}`,
   }
 }
 ```
@@ -104,7 +104,7 @@ export const welcomeMail = (props: WelcomeMailProps) => renderMail('Welcome to A
 export default function WelcomeMail({ firstName, dashboardUrl }: WelcomeMailProps) {
   return (
     <MailLayout preview="Your Acme account is ready.">
-      <Text>{`Hi ${firstName ?? 'there'},`}</Text>
+      <Text>{`Hi ${firstName || 'there'},`}</Text>
       <Button href={dashboardUrl} style={{ backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
         Open your dashboard
       </Button>
