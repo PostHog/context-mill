@@ -31,7 +31,7 @@ Wire source map or debug-symbol generation and upload into your **production bui
   - The maps include `sourcesContent` (the original source embedded inside the map). Without it PostHog has the line/column mappings but not the code, so traces can't be fully resolved.
 - **Inject before deploy**: the *injected* bundles must be the ones shipped to production. Bundles missing the `//# chunkId=…` comment can't be matched to uploaded maps.
 - Wire injection + upload into the build itself (plugin, post-build script, or CI step) — manual uploads drift from deployed code.
-- **A build without the upload credentials must still pass.** A teammate's checkout and a pull-request build have no key. The PostHog bundler plugins (`withPostHogConfig` for Next.js, `@posthog/rollup-plugin` for Vite and Rollup, `@posthog/webpack-plugin`) default `sourcemaps.enabled` to `true` and then stop the build with `projectId is required when sourcemaps are enabled` when the variables are missing. Turn the upload on only when they are set — `sourcemaps: { enabled: Boolean(process.env.POSTHOG_API_KEY && process.env.POSTHOG_PROJECT_ID) }` with `personalApiKey: process.env.POSTHOG_API_KEY ?? ''` so a typed config compiles, using the variable names this project settled on. With the upload off, the plugin checks neither value. Guard a `posthog-cli` build step on the key the same way.
+- **A build without the upload credentials must still pass.** A teammate's checkout and a pull-request build have no key. The PostHog bundler plugins (`withPostHogConfig` for Next.js, `@posthog/rollup-plugin` for Vite and Rollup, `@posthog/webpack-plugin`) default `sourcemaps.enabled` to `true` and then stop the build with `projectId is required when sourcemaps are enabled` when the variables are missing. Turn the upload on only when they are set — `sourcemaps: { enabled: Boolean(process.env.POSTHOG_CLI_API_KEY && process.env.POSTHOG_CLI_PROJECT_ID) }` with `personalApiKey: process.env.POSTHOG_CLI_API_KEY ?? ''` so a typed config compiles, using the variable names this project settled on. With the upload off, the plugin checks neither value. Guard a `posthog-cli` build step on the key the same way.
 - **Don't ship source maps publicly**: omit `.map` files from the deployed artifact, or use hidden source maps. Uploaded maps live in PostHog, not on your origin.
 - **Link each release to its commit.** The CLI auto-detects the commit from the CI's git env vars — see "Associate the release with a git commit" for making those reachable in Docker/CI builds.
 - **Never write a dependency version from memory.** When a variant needs the CLI or a plugin *inside the project* — the JS/web build tools (Node, web, Next.js, React, Angular, Nuxt, Vite, Webpack, Rollup) — install it with the project's package manager pinned to `latest` (`npm install --save-dev @posthog/cli@latest`, `pnpm add -D @posthog/cli@latest`, `yarn add -D @posthog/cli@latest`) and let the manager write the resolved version into `package.json`. A version recalled from memory is usually far behind and silently breaks the commands in this skill — `--dotenv-file`, for one, is rejected outright by 0.5.x. iOS, Android, React Native, Flutter, Go and Rust are the exception: the wizard pre-installs a global `posthog-cli` for those, so add no project dependency for them at all.
@@ -97,13 +97,13 @@ The upload credentials must be readable **by the build pipeline at build time**,
 
 #### Examples
 - **Next.js / Nuxt** Auto-load `.env` at build time; put the vars there and you're done.
-- **Vite** Export `vite.config` as a function and merge `loadEnv` into `process.env` so the config (and the PostHog plugin) can read the upload credentials. Pass `''` as the third arg so non-`VITE_` vars like `POSTHOG_API_KEY` are included — the default `'VITE_'` prefix skips them:
+- **Vite** Export `vite.config` as a function and merge `loadEnv` into `process.env` so the config (and the PostHog plugin) can read the upload credentials. Pass `''` as the third arg so non-`VITE_` vars like `POSTHOG_CLI_API_KEY` are included — the default `'VITE_'` prefix skips them:
   ```ts
   import { defineConfig, loadEnv } from 'vite';
 
   export default ({ mode }) => {
     process.env = { ...process.env, ...loadEnv(mode, process.cwd(), '') };
-    // process.env.POSTHOG_API_KEY is now readable by the plugins below
+    // process.env.POSTHOG_CLI_API_KEY is now readable by the plugins below
     return defineConfig({
       plugins: [/* … posthog source map plugin … */],
     });
@@ -141,11 +141,9 @@ Write the personal API key and project identifiers into the env file your build 
 
 #### Tips
 - Picking the file: if an env file already contains PostHog vars (`POSTHOG_*` / `NEXT_PUBLIC_POSTHOG_*`), use that one. Otherwise, if exactly one env file exists use it; if several exist prefer `.env`. Only create a new file when none exists.
-- Variable names depend on which uploader you wired:
-  - `posthog-cli` direct upload → `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID`, `POSTHOG_CLI_HOST`
-  - bundler-plugin variants → `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_HOST`
-- **Write one set only — the names the mechanism you actually wired reads.** The uploader you chose in "Wire the upload" decides the names; the other set is never read by anything in the project. Writing both as a fallback leaves live credentials in the user's env file that no code consumes. If you are unsure which names apply, re-read the config you just wrote and use the names it references.
-- Set the `*_HOST` var when you're not on US Cloud's default (e.g. EU Cloud or self-hosted); setting it explicitly always is safe. Follow the reference for the variant.
+- Variable names, whichever uploader you wired: `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID`, `POSTHOG_CLI_HOST`. `posthog-cli` reads them itself. Pass them to a bundler plugin's `personalApiKey`, `projectId` and `host` options, even where a docs page shows `POSTHOG_API_KEY`.
+- **Never write upload credentials to `POSTHOG_API_KEY`, `POSTHOG_HOST` or `POSTHOG_PROJECT_TOKEN`.** The app's own PostHog SDKs read those names at run time (posthog-laravel reads its project token from `POSTHOG_API_KEY`), so the personal key and the API host would replace the project token and the ingestion host, and the app's events would stop arriving. If the build config already uploads with other names, keep those.
+- Set `POSTHOG_CLI_HOST` when you're not on US Cloud's default (e.g. EU Cloud or self-hosted); setting it explicitly always is safe. Follow the reference for the variant.
 - In CI/CD, set the same vars as secrets — never commit the key.
 
 ### Identify the build and run commands
