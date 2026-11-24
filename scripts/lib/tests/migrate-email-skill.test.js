@@ -181,7 +181,8 @@ describe('migrate-email skill', () => {
             const turnAway = section.indexOf('A marketing email can\'t become one');
             const makeRequest = section.indexOf('Ask the person once, for every transactional one, to make it in PostHog');
             expect(section).toMatch(/Get its content as "Classify each site" says above, and decide the kind of each template the person wants made in PostHog from it, as "The category of each site" below says\. When the person can't give the content, the site stays, and the reason is `template content not checked`/);
-            expect(section).toMatch(/Tell the person once, for every marketing one, and ask whether each moves into the code, with the plan and the check of the paragraphs above, or stays, with the reason `kept on <provider name> for now`/);
+            expect(section).toContain('A marketing email can\'t become one, and it stays, as "Classify each site" says, with the reason `marketing email`.');
+            expect(section).not.toContain('kept on <provider name> for now');
             expect(section).toMatch(/Ask the person once, for every transactional one, to make it in PostHog from the provider's template and give you its template ID/);
             expect(turnAway).toBeGreaterThan(-1);
             expect(makeRequest).toBeGreaterThan(turnAway);
@@ -271,7 +272,9 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description/);
             expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the key, type, name, and description this report lists for it/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
-            expect(read('9-report.md')).toMatch(/each workflow email moved into the code \(the one item done at the deploy itself: turn off its email step in PostHog as the code goes live, or both send it\)/);
+            expect(read('9-report.md')).toMatch(/each workflow email moved into the code, with its workflow and email step IDs from the plan \(turn off that step in PostHog right before the deploy starts: a run that reaches the step during the deploy is skipped, not sent twice\)/);
+            expect(read('9-report.md')).toMatch(/For each marketing workflow email moved into the code, write that its code send skips the project's marketing frequency cap, also one turned on later, so the app limits how often it sends that email\./);
+            expect(read('3-inventory.md')).toMatch(/For each workflow email that moves, note its workflow's ID and name and its email step's ID\./);
             expect(read('9-report.md')).toMatch(/check that it is transactional, sends from a verified sender/);
             expect(read('resend/mapping.md')).toMatch(/makes it transactional once a verified sender covers its address/);
         });
