@@ -115,7 +115,7 @@ The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mai
 
 **HTTP.** `POST https://api.sendgrid.com/v3/mail/send`, or `api.eu.sendgrid.com` for an EU subuser, with `Authorization: Bearer <key>`. A success answers `202` with no body and the message id in the `X-Message-Id` header. An error answers `{ "errors": [{ "message", "field", "help" }] }`. Look for `api.sendgrid.com` in `fetch`, `axios`, `got`, `requests`, `httpx`, `net/http`, and `curl` calls.
 
-**EU subusers.** The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) sends for an EU regional subuser to `api.eu.sendgrid.com`. An app on an EU subuser either names that host, or sets an option of the client that changes the host, such as a data residency of `eu`: read the installed client for the host such an option sends to. Either one means every API request in `account.md` goes to `api.eu.sendgrid.com`.
+**EU subusers.** The [Mail Send reference](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) sends for an EU regional subuser to `api.eu.sendgrid.com`. An app on an EU subuser either names that host, or sets an option of the client that changes the host, such as a data residency of `eu`: read the installed client for the host such an option sends to.
 
 ```json
 {
@@ -163,7 +163,6 @@ Node.js names, with the HTTP names where they differ. The Mail Send reference's 
 
 A send with `templateId: 'd-...'` and `dynamicTemplateData` renders a dynamic template from the SendGrid dashboard. Its content is not in the code.
 
-- A dynamic template uses Handlebars: `{{name}}`, `{{user.name}}`, `{{{raw}}}`, `{{#if}}`, `{{#unless}}`, `{{#each}}`, and helpers such as `{{#equals}}`, `{{formatDate}}`, and `{{insert}}`.
 - A template has versions. The active version holds `subject`, `html_content`, and `plain_content`.
 - A legacy template has an id without the `d-` prefix, and reads `substitutions` as `-name-` tags.
 

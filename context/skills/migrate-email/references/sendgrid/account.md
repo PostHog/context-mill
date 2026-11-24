@@ -19,9 +19,6 @@ A domain authenticated at SendGrid carries these records. Keep all of them until
 
 - A domain set up without automated security has an `MX` and an SPF `TXT` record on `em<digits>`, and a DKIM `TXT` record at `m1._domainkey`, in place of the CNAMEs.
 - PostHog's sender uses its own label for its MAIL FROM, `feedback` by default. Never give PostHog a label SendGrid uses.
-- PostHog's DKIM records have their own names, so they sit next to `s1._domainkey` and `s2._domainkey`.
-- Keep the one `_dmarc` record. Never add a second one.
-- A domain whose SPF record names `include:sendgrid.net` keeps it. Merge PostHog's include into that record.
 
 ## Read-only key
 
@@ -31,9 +28,9 @@ The steps call this key the full-access provider key.
 
 ## Tracking
 
-A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking), and whether click tracking also covers plain-text emails, and note the answers in the plan.
+A send follows the account's open and click tracking for each of the two that its `trackingSettings` doesn't set. What PostHog does with opens and clicks is in `mapping.md` under "Open and click tracking". Ask the person once whether open tracking and click tracking are on in SendGrid (Settings, then Tracking), and whether click tracking also covers plain-text emails, and note the answers in the plan. This asks about SendGrid's settings, never whether PostHog may add its pixel.
 
-A site's emails had no open pixel when its `trackingSettings` sets `openTracking` with `enable: false`, or sets no `openTracking` while the account's open tracking is off. When it sets none and the person can't say whether open tracking is on, nobody can tell whether they had one. Step 3 says under "Opens the provider didn't track" what either means.
+A site's emails had no open pixel when its `trackingSettings` sets `openTracking` with `enable: false`, or sets no `openTracking` while the account's open tracking is off. When it sets none and the person can't say whether open tracking is on, nobody can tell whether they had one. Either way the site moves with opens off, as Step 3 says under "Opens the provider didn't track".
 
 SendGrid didn't track a site's clicks when its `trackingSettings` sets `clickTracking` with `enable: false`, or sets no `clickTracking` while the account's click tracking is off. It didn't track the links in a plain-text part either, unless `clickTracking` sets `enableText: true`, or sets no `clickTracking` while the account's click tracking covers plain-text emails: a site whose plain-text part has a link SendGrid didn't track counts as one whose clicks SendGrid didn't track. When it sets no `clickTracking` and the person can't say whether click tracking is on, or whether it covers plain text for a site whose plain-text part has a link, nobody knows whether SendGrid tracked them. Step 3 says under "A template in PostHog" what either means for a site that moves to a template made in PostHog.
 
@@ -62,6 +59,8 @@ Read the person's copies where they saved them. An API answer goes only into the
 
 SendGrid keeps several suppression lists. It skips an address on any of them on every send.
 
+**For Step 3's question.** SendGrid's suppression list, in Step 3's question about the sites that rely on it, is Bounces, Spam Reports, Invalid Emails, and Global Unsubscribes together. A person adds to them by hand under Suppressions, and the app with the calls `mapping.md` names under "Calls that change the suppression list", such as an unsubscribe handler that adds a global unsubscribe. A global unsubscribe stopped every send to the address at SendGrid, transactional ones too, unless the send bypassed it, and a moved send reaches it, as "Leave out the other lists" says: name Global Unsubscribes in the question. A site that sets `asm` or `mailSettings` already stays, as `mapping.md` says, so the question leaves out group unsubscribes and the bypass settings.
+
 Whenever the person adds entries to PostHog's list by hand, in the import or a re-import, such as when the import tool is missing, ask only whether the Address Allow List and Bounce Purge are on, as "For the report" says, and for Bounce Purge's two day counts. Tell them the rule of each one that is on: leave out the addresses and domains on the Allow List, which they read in SendGrid themselves, and the bounces older than the day count for their kind, as "Leave out what SendGrid delivered to anyway" says. A setting they can't say is on gets no rule.
 
 **Export from the dashboard (preferred).** In SendGrid: Suppressions, then each of Bounces, Spam Reports, and Invalid Emails, then **Export CSV**. Ask the person where they saved each file. Read the header row to find the address column.
@@ -76,11 +75,11 @@ Each answers a list of `{ created, email, reason, status }`. Page with `limit=50
 
 **Map each entry.**
 
-| SendGrid list | PostHog source | Reason |
-|---|---|---|
-| Bounces | bounce | `Imported from SendGrid: bounce` |
-| Invalid Emails | bounce | `Imported from SendGrid: invalid address` |
-| Spam Reports | complaint | `Imported from SendGrid: spam report` |
+| SendGrid list | PostHog `reason` |
+|---|---|
+| Bounces | `bounce` |
+| Invalid Emails | `bounce` |
+| Spam Reports | `complaint` |
 
 **Leave out what SendGrid delivered to anyway.** Before you take the entries, ask the person what "For the report" asks about the Address Allow List and Bounce Purge, unless they answered it in this run, and, when the Allow List is on, ask for its entries. Apply each one on its own:
 

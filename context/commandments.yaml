@@ -19,6 +19,14 @@ commandments:
     - "If the app sends a Content-Security-Policy (a meta tag or a response header), extend it for the browser SDK in one change: allow the PostHog hosts, or the reverse proxy, in `script-src` and `connect-src`, and `blob:` in `worker-src` for session replay. A partial change fails silently: the SDK loads, but events or recordings never send"
     - "When one codebase ships several platform targets (Flutter, React Native, Kotlin Multiplatform), initialize PostHog for every target the project ships. One init call often covers only some of them"
 
+  # Routing the browser SDK through a proxy. Skills that set one up carry the `reverse-proxy` tag.
+  reverse-proxy:
+    - "A proxy forwards to the project's own region only: `/static/*` and `/array/*` to the assets host (us-assets.i.posthog.com or eu-assets.i.posthog.com), every other path to the ingestion host (us.i.posthog.com or eu.i.posthog.com). Never mix US and EU hosts"
+    - "Whenever `api_host` points at a proxy, set `ui_host` to the PostHog app host (https://us.posthog.com or https://eu.posthog.com). Without it the toolbar and the recordings player break"
+    - "A self-hosted proxy sets the `Host` header to the PostHog host it forwards to, forwards the visitor's IP in `X-Forwarded-For`, passes `Authorization`, every `PostHog-*` header, `Content-Type`, `Content-Encoding`, and `User-Agent` unchanged, allows GET and POST, keeps the query string, and accepts request bodies up to 64 MB for session recordings"
+    - "Never point `api_host` at a managed proxy before `proxy-get` reports its status as `valid`. Until then every request to it fails"
+    - "Create a managed proxy only after the user confirmed the subdomain. A proxy belongs to the whole organization and counts against its limit"
+
   # Generic JavaScript rules — every JS skill carries the `javascript` tag.
   javascript:
     - Remember that source code is available in the node_modules directory
@@ -265,7 +273,7 @@ commandments:
     - If the project uses App Sandbox (macOS), add `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` to the target's build settings so PostHog can reach its servers — do NOT disable the sandbox entirely
 
   ios:
-    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager or CocoaPods, using `https://github.com/PostHog/posthog-ios.git` for SPM
+    - Install the PostHog iOS SDK as `PostHog` via Swift Package Manager, using `https://github.com/PostHog/posthog-ios.git`. posthog-ios 4.x installs with SPM only and needs Xcode 26. Use CocoaPods only for an app that already uses the 3.x pod, because CocoaPods trunk goes read-only on December 2, 2026
     - Initialize `PostHogSDK.shared.setup(config)` exactly once and as early as possible, either in `UIApplicationDelegate.application(_:didFinishLaunchingWithOptions:)` or in the SwiftUI `App` initializer
     - For SwiftUI apps, prefer meaningful `.postHogScreenView(...)` modifiers for screen tracking because automatic SwiftUI screen names can be internal view identifiers
     - Call `PostHogSDK.shared.identify(...)` after login and `PostHogSDK.shared.reset()` on logout; keep PII in user properties, not event properties
@@ -288,10 +296,10 @@ commandments:
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect
 
   flutter:
-    - posthog_flutter is the Flutter SDK package name; install it with `flutter pub add posthog_flutter` or add it to `pubspec.yaml`, at the version the Flutter SDK docs pin
+    - posthog_flutter is the Flutter SDK package name. When `pubspec.yaml` doesn't list it, install it with `flutter pub add 'posthog_flutter:^<VERSION>'` at the version the Flutter SDK docs pin. When `pubspec.yaml` already lists it, keep that version range and never run `flutter pub add posthog_flutter` on it, because a bare add moves the app to the newest major. A feature that needs a newer minor release works when the existing range already resolves to it
     - For manual setup, call `WidgetsFlutterBinding.ensureInitialized()`, create a `PostHogConfig`, then await `Posthog().setup(config)` before `runApp()`
     - For Android, ensure `minSdkVersion` is at least `23`. If the current value is lower than `23` or missing, update/add it as `minSdkVersion 23`; if it is already `23` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `android/app/src/main/AndroidManifest.xml` unless using manual setup with `AUTO_INIT=false`
-    - For iOS, ensure the minimum deployment target is at least iOS `13.0`. If the current `platform :ios` value is lower than `13.0` or missing, update/add it as `platform :ios, '13.0'`; if it is already `13.0` or higher, leave it unchanged. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` unless using manual setup
+    - For iOS and macOS, posthog_flutter 6.x installs via Swift Package Manager only (no podspec), needs Xcode 26 and Flutter 3.41+, and requires iOS 15.0+ and macOS 12.0+ in Runner.xcodeproj (and in any Podfile the project keeps for other pods). Apps staying on 5.x need at least iOS 13.0. Configure `com.posthog.posthog.PROJECT_TOKEN` and `com.posthog.posthog.POSTHOG_HOST` in `ios/Runner/Info.plist` (and `macos/Runner/Info.plist` if present) unless using manual setup
     - For Session Replay or Surveys, disable auto-init with `com.posthog.posthog.AUTO_INIT=false` and initialize manually so the required options can be enabled
     - For Flutter Web, add the posthog-js web snippet to `web/index.html`. If you are instructed to ever embed the HTML snippet into the user's code, write the real token directly into the snippet. It is not a secret, and when used as an HTML snippet, it should be written in literally. The example token phc_your_project_token_here is a placeholder for readers. It is not the shape to copy. Flutter Web session replay also requires Canvas capture in project settings
     - Capture screen views by adding `PosthogObserver()` to the app's `navigatorObservers`, whatever routing package the app uses; where its routes are unnamed, name them so `$screen` is readable
@@ -343,7 +351,7 @@ commandments:
     - PostHogContext is platform-specific — on Android pass PostHogContext(application); on iOS and web use the no-argument PostHogContext()
     - posthog-kmp is a thin wrapper that delegates to the native posthog-android, posthog-ios, and posthog-js SDKs, so session replay and autocapture availability follow the underlying native platform
     - Use PostHogConfig.HOST_US or PostHogConfig.HOST_EU for the host, and read the project token from generated build config or environment values rather than hardcoding it
-    - The SDK is 0.x pre-release; check the latest posthog-kmp version on Maven Central (https://central.sonatype.com/artifact/com.posthog/posthog-kmp) before pinning instead of hardcoding a stale version
+    - Check the latest posthog-kmp version on Maven Central (https://central.sonatype.com/artifact/com.posthog/posthog-kmp) before pinning instead of hardcoding a stale version
 
   # Carve-outs for the ai-observability skill; every variant carries this tag.
   # Worded to override the generic language rules regardless of list order.
