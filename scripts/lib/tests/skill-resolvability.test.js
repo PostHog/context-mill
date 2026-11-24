@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkSkillResolvability, missingMessage, resolveSkill } from '../skill-resolvability.js';
+import { absentMessage, checkSkillResolvability, missingMessage, resolveSkill } from '../skill-resolvability.js';
 
 /** A menu entry with the tags the menu writer gives it. */
 const entry = (id, tags = [], extra = {}) => ({ id, name: id, tags, ...extra });
@@ -55,7 +55,7 @@ describe('checkSkillResolvability', () => {
             'integration/install': [step('install')],
         });
 
-        expect(result).toEqual({ families: ['integration'], missing: [], unreachable: [] });
+        expect(result).toEqual({ families: ['integration'], absent: [], missing: [], unreachable: [] });
     });
 
     it('names every family and framework that resolves nothing', () => {
@@ -81,29 +81,63 @@ describe('checkSkillResolvability', () => {
 
     it('asks no framework of a task skill that is a menu id', () => {
         const result = check(
-            { 'spend-audit/queries': [entry('spend-audit-queries')] },
+            {
+                integration: [pack('nextjs', { framework: 'nextjs' }), pack('django', { framework: 'django' })],
+                'spend-audit/queries': [entry('spend-audit-queries')],
+            },
             { taskSkills: ['spend-audit-queries'] },
         );
 
-        expect(result).toEqual({ families: [], missing: [], unreachable: [] });
+        expect(result).toEqual({ families: ['integration'], absent: [], missing: [], unreachable: [] });
     });
 
-    it('checks the pack family only once a task skill is completed from the pack', () => {
+    it('checks the pack family when no task skill is completed from the pack', () => {
         const result = check({
             integration: [pack('nextjs', { framework: 'nextjs' })],
             'integration/install': [entry('integration-install')],
         });
 
-        expect(result.families).toEqual([]);
+        expect(result.families).toEqual(['integration']);
+        expect(result.missing).toEqual([{ family: 'integration', framework: 'django' }]);
+    });
+
+    it('lists a task skill that is no menu id and no family, apart from the frameworks', () => {
+        const result = check(
+            {
+                integration: [pack('nextjs', { framework: 'nextjs' }), pack('django', { framework: 'django' })],
+                'integration/install': [step('install')],
+            },
+            { taskSkills: ['integration-install', 'spend-audit-queries'] },
+        );
+
+        expect(result).toEqual({ families: ['integration'], absent: ['spend-audit-queries'], missing: [], unreachable: [] });
+        const message = absentMessage(result.absent);
+        expect(message).toContain('  spend-audit-queries');
+        expect(message).toContain('WIZARD_TASK_SKILLS');
     });
 
     it('resolves a framework by the category a family is published under', () => {
         const result = check(
-            { 'integration/install': [entry('install-next', ['framework:nextjs']), entry('install-django', ['framework:django'])] },
+            {
+                integration: [pack('nextjs', { framework: 'nextjs' }), pack('django', { framework: 'django' })],
+                'integration/install': [entry('install-next', ['framework:nextjs']), entry('install-django', ['framework:django'])],
+            },
             { taskSkills: ['integration-install'] },
         );
 
-        expect(result).toEqual({ families: ['integration-install'], missing: [], unreachable: [] });
+        expect(result).toEqual({ families: ['integration-install', 'integration'], absent: [], missing: [], unreachable: [] });
+    });
+
+    it('counts a framework missing when its family has only an untagged entry', () => {
+        const result = check({
+            integration: [entry('integration-php', ['php', 'integration'])],
+            'integration/install': [step('install')],
+        });
+
+        expect(result.missing).toEqual([
+            { family: 'integration', framework: 'nextjs' },
+            { family: 'integration', framework: 'django' },
+        ]);
     });
 
     it('lists an entry with no framework tag, and one for a framework the wizard does not detect', () => {
@@ -142,33 +176,71 @@ describe('checkSkillResolvability', () => {
         ]);
     });
 
-    it('reaches an entry through any other match key, such as variant', () => {
-        const result = check({
-            integration: [
-                pack('next-app', { framework: 'nextjs', variant: 'app' }, 'default'),
-                pack('next-pages', { framework: 'nextjs', variant: 'pages' }),
-                pack('django', { framework: 'django' }, 'default'),
-                pack('django-async', { framework: 'django', server: 'asgi' }),
-            ],
-            'integration/install': [step('install')],
-        });
+    it('reaches an entry through any other match key the wizard sends, such as variant', () => {
+        const result = check(
+            {
+                integration: [
+                    pack('next-app', { framework: 'nextjs', variant: 'app' }, 'default'),
+                    pack('next-pages', { framework: 'nextjs', variant: 'pages' }),
+                    pack('django', { framework: 'django' }, 'default'),
+                    pack('django-async', { framework: 'django', server: 'asgi' }),
+                ],
+                'integration/install': [step('install')],
+            },
+            { matchKeys: { variant: { nextjs: ['app', 'pages'] }, server: { django: ['asgi'] } } },
+        );
 
-        expect(result).toEqual({ families: ['integration'], missing: [], unreachable: [] });
+        expect(result).toEqual({ families: ['integration'], absent: [], missing: [], unreachable: [] });
     });
 
     it('lists an entry another outranks on every value of the other match keys', () => {
-        const result = check({
-            integration: [
-                pack('next-pages', { framework: 'nextjs', variant: 'pages' }),
-                pack('next-pages-again', { framework: 'nextjs', variant: 'pages' }),
-                pack('next-fallback', { framework: 'nextjs' }),
-                pack('django', { framework: 'django' }),
-            ],
-            'integration/install': [step('install')],
-        });
+        const result = check(
+            {
+                integration: [
+                    pack('next-pages', { framework: 'nextjs', variant: 'pages' }),
+                    pack('next-pages-again', { framework: 'nextjs', variant: 'pages' }),
+                    pack('next-fallback', { framework: 'nextjs' }),
+                    pack('django', { framework: 'django' }),
+                ],
+                'integration/install': [step('install')],
+            },
+            { matchKeys: { variant: { nextjs: ['app', 'pages'] } } },
+        );
 
         expect(result.missing).toEqual([]);
         expect(ids(result.unreachable)).toEqual(['integration-next-pages-again']);
+    });
+
+    it('names a framework and variant that resolves nothing, and the entry whose variant the wizard does not send', () => {
+        const result = check(
+            {
+                integration: [
+                    pack('next-app', { framework: 'nextjs', variant: 'app' }, 'default'),
+                    pack('next-pages', { framework: 'nextjs', variant: 'page' }),
+                    pack('django', { framework: 'django' }),
+                ],
+                'integration/install': [step('install')],
+            },
+            { matchKeys: { variant: { nextjs: ['app', 'pages'] } } },
+        );
+
+        expect(result.missing).toEqual([{ family: 'integration', framework: 'nextjs', variant: 'pages' }]);
+        expect(missingMessage(result.missing)).toContain('integration: nextjs with variant:pages');
+        expect(result.unreachable).toEqual([
+            { family: 'integration', id: 'integration-next-pages', reason: 'the wizard sends no variant:page with framework:nextjs' },
+        ]);
+    });
+
+    it('lists a framework that resolves nothing alone once, whatever variants it has', () => {
+        const result = check(
+            {
+                integration: [pack('django', { framework: 'django' })],
+                'integration/install': [step('install')],
+            },
+            { matchKeys: { variant: { nextjs: ['app', 'pages'] } } },
+        );
+
+        expect(result.missing).toEqual([{ family: 'integration', framework: 'nextjs' }]);
     });
 
     it('counts a framework resolved by an entry that names another key, which a run with no value for it never disagrees with', () => {

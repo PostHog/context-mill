@@ -2,9 +2,10 @@
  * Skill resolvability
  *
  * The wizard picks a run's skill by menu id or by skill family. This module
- * runs that pick over a built menu and reports the frameworks a family
- * resolves nothing for and the entries no pick reaches. It is pure: the build
- * hands it the menu and what the wizard picks with.
+ * runs that pick over a built menu and reports the task-named skills the menu
+ * lacks, the runs a family resolves nothing for and the entries no pick
+ * reaches. It is pure: the build hands it the menu and what the wizard picks
+ * with.
  */
 
 /** The match key every family pick requires. */
@@ -12,9 +13,6 @@ const FRAMEWORK_KEY = 'framework';
 
 /** The tag that breaks a ranking tie. */
 const DEFAULT_TAG = 'default';
-
-/** A match key value no tag names. */
-const UNNAMED = '\u0000unnamed';
 
 /** The menu's entries, each with its skill family: its category key with `/` as `-`. */
 function menuEntries(menu) {
@@ -72,45 +70,53 @@ function resolveSkill(entries, name, keys) {
 }
 
 /**
- * The families a run picks from by framework: each task-named skill that is
- * no menu id, and the pack family once a task names a skill that is completed
- * from the framework's pack.
+ * What the task-named skills pick from: `families`, each name that is no menu
+ * id and has entries, then the pack family, which every run on a framework
+ * picks from. `absent` is each name that is no menu id and no family with an
+ * entry.
  */
-function pickedFamilies(entries, { taskSkills, packFamily }) {
-    const byId = new Map(entries.map(entry => [entry.id, entry]));
-    const families = taskSkills.filter(name => !byId.has(name));
-    if (taskSkills.some(name => byId.get(name)?.frameworkReferences)) families.push(packFamily);
-    return [...new Set(families)];
+function pickedFamilies(entries, { frameworks, taskSkills, packFamily }) {
+    const ids = new Set(entries.map(entry => entry.id));
+    const published = new Set(entries.map(entry => entry.family));
+    const named = [...new Set(taskSkills.filter(name => !ids.has(name)))];
+    const families = named.filter(name => published.has(name));
+    if (frameworks.length > 0) families.push(packFamily);
+    return { families: [...new Set(families)], absent: named.filter(name => !published.has(name)) };
+}
+
+/** The values a run on `framework` can send for the match key `key`. */
+function sentValues(matchKeys, key, framework) {
+    const byFramework = Object.hasOwn(matchKeys, key) ? matchKeys[key] : {};
+    return Object.hasOwn(byFramework, framework) ? byFramework[framework] : [];
 }
 
 /**
- * Every run on `framework` the family's tags tell apart. Each other match key
- * the framework's entries name takes no value, each value they name, and a
- * value none names.
+ * Every run on `framework` the wizard can send: the framework alone first,
+ * then with each value it can give each other match key.
  */
-function runsOn(framework, members) {
-    const named = new Map();
-    for (const entry of members) {
-        const declared = matchKeysOf(entry);
-        if (!declared.get(FRAMEWORK_KEY)?.includes(framework)) continue;
-        for (const [key, values] of declared) {
-            if (key === FRAMEWORK_KEY) continue;
-            named.set(key, new Set([...(named.get(key) ?? []), ...values]));
-        }
-    }
+function runsOn(framework, matchKeys) {
     let runs = [{ [FRAMEWORK_KEY]: [framework] }];
-    for (const [key, values] of named) {
-        runs = runs.flatMap(run => [run, ...[...values, UNNAMED].map(value => ({ ...run, [key]: [value] }))]);
+    for (const key of Object.keys(matchKeys)) {
+        const values = sentValues(matchKeys, key, framework);
+        runs = runs.flatMap(run => [run, ...values.map(value => ({ ...run, [key]: [value] }))]);
     }
     return runs;
 }
 
 /** Why no pick reaches `entry`. */
-function unreachableReason(entry, frameworks) {
-    const served = matchKeysOf(entry).get(FRAMEWORK_KEY);
+function unreachableReason(entry, { frameworks, matchKeys }) {
+    const declared = matchKeysOf(entry);
+    const served = declared.get(FRAMEWORK_KEY);
     if (!served) return `it has no ${FRAMEWORK_KEY}: tag`;
-    if (!served.some(framework => frameworks.includes(framework))) {
-        return `the wizard detects no ${served.map(framework => `${FRAMEWORK_KEY}:${framework}`).join(' or ')}`;
+    const tagged = (key, values) => values.map(value => `${key}:${value}`).join(' or ');
+    const detected = served.filter(framework => frameworks.includes(framework));
+    if (detected.length === 0) return `the wizard detects no ${tagged(FRAMEWORK_KEY, served)}`;
+    for (const [key, values] of declared) {
+        if (key === FRAMEWORK_KEY) continue;
+        const sent = detected.flatMap(framework => sentValues(matchKeys, key, framework));
+        if (!values.some(value => sent.includes(value))) {
+            return `the wizard sends no ${tagged(key, values)} with ${tagged(FRAMEWORK_KEY, detected)}`;
+        }
     }
     return 'another entry outranks it on every run';
 }
@@ -118,45 +124,60 @@ function unreachableReason(entry, frameworks) {
 /**
  * Check a built skill menu against what the wizard picks with.
  *
- * `missing` lists each `{ family, framework }` whose run on that framework
- * alone resolves no skill. `unreachable` lists each `{ family, id, reason }`
- * of a picked family that no run on a detected framework resolves to; such
- * an entry is still served by its id.
+ * `absent` lists each task-named skill that is no menu id and no family with
+ * an entry. `missing` lists each run that resolves no skill in a picked
+ * family, as `{ family, framework }` with the run's other match keys, such as
+ * `frameworkVariant: 'pages-router'`. `unreachable` lists each
+ * `{ family, id, reason }` of a picked family that no run resolves to; such an
+ * entry is still served by its id.
  */
-function checkSkillResolvability(menu, { frameworks, taskSkills, packFamily }) {
+function checkSkillResolvability(menu, { frameworks, matchKeys = {}, taskSkills, packFamily }) {
     const entries = menuEntries(menu);
-    const families = pickedFamilies(entries, { taskSkills, packFamily });
+    const { families, absent } = pickedFamilies(entries, { frameworks, taskSkills, packFamily });
     const missing = [];
     const unreachable = [];
     for (const family of families) {
         const members = entries.filter(entry => entry.family === family);
         const reached = new Set();
         for (const framework of frameworks) {
-            if (!resolveSkill(entries, family, { [FRAMEWORK_KEY]: [framework] })) missing.push({ family, framework });
-            for (const run of runsOn(framework, members)) {
+            const runs = runsOn(framework, matchKeys);
+            // A framework that resolves nothing alone resolves nothing with another key, so it is listed once.
+            for (const run of resolveSkill(entries, family, runs[0]) ? runs : runs.slice(0, 1)) {
                 const pick = resolveSkill(entries, family, run);
                 if (pick) reached.add(pick.id);
+                else missing.push({ family, ...Object.fromEntries(Object.entries(run).map(([key, [value]]) => [key, value])) });
             }
         }
         for (const entry of members) {
             if (!reached.has(entry.id)) {
-                unreachable.push({ family, id: entry.id, reason: unreachableReason(entry, frameworks) });
+                unreachable.push({ family, id: entry.id, reason: unreachableReason(entry, { frameworks, matchKeys }) });
             }
         }
     }
-    return { families, missing, unreachable };
+    return { families, absent, missing, unreachable };
 }
 
-/** The build error for `missing`: every family with the frameworks it resolves nothing for. */
-function missingMessage(missing) {
-    const byFamily = new Map();
-    for (const { family, framework } of missing) {
-        byFamily.set(family, [...(byFamily.get(family) ?? []), framework]);
-    }
+/** The build error for `absent`: every task-named skill the menu has under no id or family. */
+function absentMessage(absent) {
     return [
-        'A wizard run on these frameworks resolves no skill. Each family needs a menu entry tagged framework:<framework>:',
-        ...[...byFamily].map(([family, frameworks]) => `  ${family}: ${frameworks.join(', ')}`),
+        'A wizard task names these skills, and the menu has no entry or family for them:',
+        ...absent.map(name => `  ${name}`),
+        'Publish each skill again, or remove its name from WIZARD_TASK_SKILLS in scripts/lib/wizard-skill-picks.js when no wizard task names it.',
     ].join('\n');
 }
 
-export { resolveSkill, checkSkillResolvability, missingMessage };
+/** The build error for `missing`: every family with the runs it resolves nothing for. */
+function missingMessage(missing) {
+    const byFamily = new Map();
+    for (const { family, framework, ...others } of missing) {
+        const sent = Object.entries(others).map(([key, value]) => `${key}:${value}`);
+        const run = sent.length > 0 ? `${framework} with ${sent.join(' and ')}` : framework;
+        byFamily.set(family, [...(byFamily.get(family) ?? []), run]);
+    }
+    return [
+        'A wizard run on these frameworks resolves no skill. Each family needs a menu entry tagged framework:<framework>, with no tag that disagrees with the run:',
+        ...[...byFamily].map(([family, runs]) => `  ${family}: ${runs.join(', ')}`),
+    ].join('\n');
+}
+
+export { resolveSkill, checkSkillResolvability, absentMessage, missingMessage };

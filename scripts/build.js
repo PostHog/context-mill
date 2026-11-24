@@ -19,8 +19,8 @@ import {
     createBundledArchive,
     writeManifestAndMenu,
 } from './lib/build-phases.js';
-import { checkSkillResolvability, missingMessage } from './lib/skill-resolvability.js';
-import { WIZARD_FRAMEWORKS, WIZARD_TASK_SKILLS, FRAMEWORK_PACK_FAMILY } from './lib/wizard-skill-picks.js';
+import { checkSkillResolvability, absentMessage, missingMessage } from './lib/skill-resolvability.js';
+import { WIZARD_FRAMEWORKS, WIZARD_MATCH_KEYS, WIZARD_TASK_SKILLS, FRAMEWORK_PACK_FAMILY } from './lib/wizard-skill-picks.js';
 
 const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 
@@ -110,16 +110,21 @@ async function main() {
         const menuEntries = Object.values(skillMenu.categories).flat().length;
         console.log(`  ✓ skill-menu.json (${Object.keys(skillMenu.categories).length} categories, ${menuEntries} entries)`);
 
-        // Every framework the wizard detects resolves a skill in every family a run picks from.
+        // Every run the wizard can send resolves a skill in every family it picks from.
         const resolvability = checkSkillResolvability(skillMenu, {
             frameworks: WIZARD_FRAMEWORKS,
+            matchKeys: WIZARD_MATCH_KEYS,
             taskSkills: WIZARD_TASK_SKILLS,
             packFamily: FRAMEWORK_PACK_FAMILY,
         });
         for (const { family, id, reason } of resolvability.unreachable) {
             console.warn(`  [WARN] No pick in family "${family}" reaches "${id}": ${reason}`);
         }
-        if (resolvability.missing.length > 0) throw new Error(missingMessage(resolvability.missing));
+        const failures = [
+            resolvability.absent.length > 0 && absentMessage(resolvability.absent),
+            resolvability.missing.length > 0 && missingMessage(resolvability.missing),
+        ].filter(Boolean);
+        if (failures.length > 0) throw new Error(failures.join('\n\n'));
         console.log(`  ✓ ${WIZARD_FRAMEWORKS.length} frameworks resolve in ${resolvability.families.join(', ') || 'no family'}`);
 
         const releaseAssetDocs = docEntries.filter(d => d.release_asset);

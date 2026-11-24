@@ -157,24 +157,28 @@ drops any whose `key:value` tag disagrees with the run, and takes the entry
 with the most agreeing tags, then the `default` tag, then menu order. A key
 the run has no value for never disagrees.
 
-`npm run build` runs that pick over the built `skill-menu.json`:
+`npm run build` runs that pick over the built `skill-menu.json`, once for every
+run the wizard can send. A run is a detected framework, alone or with a value
+the wizard can send for each other match key, such as
+`frameworkVariant:pages-router`.
 
-- The build fails when a framework the wizard detects resolves no skill in a
-  family a run picks from. The error names every such family and framework.
-- The build warns for each entry of such a family that no pick reaches: it has
-  no `framework:` tag, it names a framework the wizard does not detect, or
-  another entry outranks it on every run. A run is a detected framework with
-  any value, or none, for each other match key the family's tags name. The
-  entry is still served by its id.
+- The build fails when a run resolves no skill in a family a run picks from.
+  The error names every such family and run.
+- The build fails when a wizard task names a skill that is no menu id and no
+  family with an entry. The error names every such skill.
+- The build warns for each entry of a picked family that no run reaches: it
+  has no `framework:` tag, it names a framework the wizard does not detect, it
+  names a match key value the wizard does not send, or another entry outranks
+  it on every run. The entry is still served by its id.
 
 The families a run picks from are the skills a wizard task names that are no
-menu id, and `integration`, the family a step skill's framework pack comes
-from.
+menu id, and `integration`, the family every run's framework pack comes from.
 
 `scripts/lib/wizard-skill-picks.js` states what the wizard picks with: the
-frameworks it detects, the skills its tasks name and the pack family. Update
-it when the wizard adds a framework or a task names another skill. The check
-is `scripts/lib/skill-resolvability.js`.
+frameworks it detects, the other match keys it sends with each framework's
+values, the skills its tasks name and the pack family. Update it when the
+wizard adds a framework, a match key or a variant, or a task names another
+skill. The check is `scripts/lib/skill-resolvability.js`.
 
 ### Manifest structure
 
