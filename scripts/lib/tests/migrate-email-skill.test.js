@@ -209,6 +209,10 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toContain('`<a href="{{ unsubscribe_url }}">`');
         });
 
+        it('says only sends moved from the provider are transactional, in step 5', () => {
+            expect(read('5-suppressions.md')).toContain('Every send that moves from the provider is transactional');
+        });
+
         it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
         });
