@@ -31,9 +31,12 @@ VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. Vite inlines both variables into the browser and the server build, so set them before `npm run build`; the server needs nothing at run time. If the token is missing, the app still builds and runs without PostHog and logs a warning.
 
-The server reads both variables at run time. `npm start` runs `react-router-serve`, which does not load `.env`, so set them in the environment that runs it.
+### Requirements
+
+- `onError` on `<HydratedRouter>` needs `react-router` 7.11 or later. On 7.8.2 to 7.10, the prop is `unstable_onError`, typed `unstable_ClientOnErrorFunction`. On earlier versions, capture inside a `useEffect` in every route `ErrorBoundary`, with the same checks.
+- `captureException(error, { distinctId, properties })` needs `posthog-node` 6. On 5.x, call `captureException(error, distinctId, properties)`.
 
 ### 3. Run the Development Server
 
@@ -55,7 +58,7 @@ app/
 │   └── AuthContext.tsx      # Authentication context
 ├── lib/
 │   ├── posthog.server.ts    # The server's one PostHog client
-│   ├── posthog-request.server.ts # Person, session and request properties for server events
+│   ├── posthog-request.server.ts # Person, session and page URL for server exceptions
 │   ├── posthog-middleware.ts # Server-side PostHog middleware
 │   └── db.ts                # Database utilities
 ├── routes/
@@ -125,7 +128,7 @@ The session and distinct ID are automatically passed to the backend via the `X-P
 
 ### Server-side middleware (posthog-middleware.ts)
 
-The server process has one PostHog client, created in `posthog.server.ts` with exception autocapture on. `posthog-request.server.ts` reads the person and session for a request: the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers first, then the posthog-js cookie that page loads send, dropping an expired session. The middleware runs each request inside that context:
+The server process has one PostHog client, created in `posthog.server.ts` with exception autocapture on. The middleware runs each request inside the browser's IDs from the tracing headers, so server events link to the user and session:
 
 ```typescript
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
@@ -135,9 +138,9 @@ export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, con
 
   (context as PostHogContext).posthog = posthog;
 
-  const { distinctId, properties } = posthogRequestContext(request);
+  const header = (name: string) => request.headers.get(name)?.trim() || undefined;
   return posthog.withContext(
-    { distinctId, sessionId: properties.$session_id, properties },
+    { distinctId: header("x-posthog-distinct-id"), sessionId: header("x-posthog-session-id") },
     next,
     { fresh: true },
   );
@@ -146,9 +149,12 @@ export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, con
 
 **Key Points:**
 - One client for the whole server process, or no PostHog when the token is missing
-- Reads `distinctId` and `sessionId` from the tracing headers, then from the PostHog cookie
+- Reads `distinctId` and `sessionId` from the tracing headers
 - Sets the PostHog client on the request context for use in route handlers
 - Uses `withContext()` to associate server-side events with the correct session/user
+- Error capture does not need the middleware: `handleError` reads the request itself. Do not add loaders to make the middleware run.
+
+On Vercel, Netlify or another serverless host, the function can stop as soon as the response is sent. Pass the platform's `waitUntil` as the client's `waitUntil` option, so queued events are still sent.
 
 ### Reverse proxy (ingest.ts)
 
@@ -171,19 +177,24 @@ React Router catches errors in rendering, loaders, actions and fetchers and show
 
 1. **Browser** - `capture_exceptions: true` plus the `onError` handler on `<HydratedRouter>` in `entry.client.tsx` (above).
 
-2. **Server** - `handleError` in `entry.server.tsx` captures loader, action, middleware, resource route and server render errors with the request's person and session. Errors raised while streaming, after the shell was sent, reach React's `onError` in the same file instead:
+2. **Server** - `handleError` in `entry.server.tsx` captures loader, action, middleware, resource route and server render errors. `posthogExceptionContext` in `posthog-request.server.ts` adds the page URL (not the `.data` URL of a client navigation) and the visitor: the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers first, then the project's posthog-js cookie that page loads send. It drops an expired session and a visitor who opted out in the consent cookie. Errors raised while streaming, after the shell was sent, reach React's `onError` in the same file instead:
 ```typescript
 export const handleError: HandleErrorFunction = (error, { request }) => {
-  if (request.signal.aborted || isRouteErrorResponse(error)) return;
-  posthog?.captureException(error, posthogRequestContext(request));
+  if (request.signal.aborted) return;
   console.error(error);
+  if (isRouteErrorResponse(error)) return;
+  posthog?.captureException(error, posthogExceptionContext(request));
 };
 ```
+
+   React Router does not call `handleError` for a promise a loader returns and the page renders with `<Await>`. Capture those rejections in the loader with `.catch((error) => { posthog?.captureException(error, posthogExceptionContext(request)); throw error })`, and give the `<Await>` an `errorElement`: without one, a rejection during a page load also reaches the stream `onError` and arrives twice.
 
 3. **Manual error capture** in components (profile.tsx):
 ```typescript
 posthog.captureException(err);
 ```
+
+Test error capture with a production build (`npm run build && npm start`). In `react-router dev`, React Router sends the browser the original server error instead of "Unexpected Server Error", so each server error arrives twice: once from the server and once from the browser.
 
 ### Server-side tracking (api.auth.login.ts, api.burrito.consider.ts)
 

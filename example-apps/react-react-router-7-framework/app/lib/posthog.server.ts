@@ -1,15 +1,17 @@
 import { PostHog } from "posthog-node";
 
-const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+// Vite inlines VITE_ variables into the server build too, so the server gets the browser's values
+// without reading .env at run time (react-router-serve does not load it).
+const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 
-if (!token && process.env.NODE_ENV === "development") {
-  console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.");
+if (!token) {
+  console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN was not set at build time. Server-side PostHog is disabled.");
 }
 
 // One client for the server process. Exception autocapture covers errors no request handles.
 export const posthog = token
   ? new PostHog(token, {
-      host: process.env.VITE_PUBLIC_POSTHOG_HOST,
+      host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
       enableExceptionAutocapture: true,
     })
   : undefined;

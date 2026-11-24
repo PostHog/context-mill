@@ -8,16 +8,18 @@ import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 
 import { posthog } from "./lib/posthog.server";
-import { posthogRequestContext } from "./lib/posthog-request.server";
+import { posthogExceptionContext } from "./lib/posthog-request.server";
 
 export const streamTimeout = 5_000;
 
-// Loader, action, middleware, resource route and server render errors.
-// Skip cancelled requests and the 404/405 responses React Router creates itself.
+// Loader, action, middleware, resource route and server render errors. Exporting handleError
+// replaces React Router's own error log. Skip cancelled requests and the 404/405 responses
+// React Router creates itself.
 export const handleError: HandleErrorFunction = (error, { request }) => {
-  if (request.signal.aborted || isRouteErrorResponse(error)) return;
-  posthog?.captureException(error, posthogRequestContext(request));
+  if (request.signal.aborted) return;
   console.error(error);
+  if (isRouteErrorResponse(error)) return;
+  posthog?.captureException(error, posthogExceptionContext(request));
 };
 
 export default function handleRequest(
@@ -88,7 +90,7 @@ export default function handleRequest(
           // errors encountered during initial shell rendering since they'll
           // reject and get logged in handleDocumentRequest.
           if (shellRendered && !request.signal.aborted) {
-            posthog?.captureException(error, posthogRequestContext(request));
+            posthog?.captureException(error, posthogExceptionContext(request));
             console.error(error);
           }
         },

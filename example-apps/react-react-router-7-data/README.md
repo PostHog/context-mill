@@ -120,7 +120,7 @@ posthog?.capture('burrito_considered', {
 
 React Router catches errors in rendering, loaders, actions and fetchers and shows `RootErrorBoundary`, so these errors never reach exception autocapture, and `RootErrorBoundary` only renders the error UI. Errors are captured in two ways:
 
-1. **Router errors** - the `onError` handler on `<RouterProvider>` in `index.tsx` (above). `capture_exceptions: true` covers errors outside the router, such as unhandled promise rejections.
+1. **Router errors** - the `onError` handler on `<RouterProvider>` in `index.tsx` (above). `capture_exceptions: true` covers errors outside the router, such as unhandled promise rejections. `onError` needs `react-router` 7.11 or later. On 7.8.2 to 7.10, the prop is `unstable_onError`, typed `unstable_ClientOnErrorFunction`. On earlier versions, capture inside a `useEffect` in every route `ErrorBoundary`, with the same check.
 
 2. **Manual error capture** in components (profile.tsx):
 ```typescript
