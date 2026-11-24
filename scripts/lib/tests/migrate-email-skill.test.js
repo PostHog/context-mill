@@ -162,7 +162,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/The category: blank for no category, or the key of the category its email is filed under in PostHog/);
             expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
             expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` and `message_category_type` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
-            expect(inventory).toMatch(/A step without a category leaves the site's category blank/);
+            expect(inventory).toMatch(/A transactional step without a category leaves the site's category blank/);
             expect(inventory).toMatch(/Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
             expect(inventory).toMatch(/for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet/);
@@ -196,6 +196,9 @@ describe('migrate-email skill', () => {
 
             expect(inventory).toMatch(/read the step's `message_category_id` and `message_category_type` with `workflows-get`/);
             expect(inventory).toContain('the reason is `workflow step type differs from its category`');
+            expect(inventory).toContain('sends it as marketing unless that type is `transactional`, a missing type included');
+            expect(inventory).toMatch(/When `workflows-get` or `message-categories-get` is missing, the workflow email stays, and the reason is `no message category tools`/);
+            expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
         });
 
         it('keeps a site with a category when the project refuses categories on code sends, in step 7', () => {
