@@ -162,7 +162,6 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/The category: blank for no category, or the key of the category its email is filed under in PostHog/);
             expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
             expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` and `message_category_type` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
-            expect(inventory).toMatch(/A transactional step without a category leaves the site's category blank/);
             expect(inventory).toMatch(/Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
             expect(inventory).toMatch(/for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet/);
@@ -191,13 +190,13 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
         });
 
-        it("takes a moved workflow email's kind from the step's saved type, which PostHog sends by", () => {
+        it("moves a workflow email only when its step's saved type and its category's type match", () => {
             const inventory = read('3-inventory.md');
 
             expect(inventory).toMatch(/read the step's `message_category_id` and `message_category_type` with `workflows-get`/);
-            expect(inventory).toContain('the reason is `workflow step type differs from its category`');
-            expect(inventory).toContain('sends it as marketing unless that type is `transactional`, a missing type included');
-            expect(inventory).toMatch(/When `workflows-get` is missing, or `message-categories-get` is missing for a step with a category, the workflow email stays, and the reason is `no message category tools`/);
+            expect(inventory).toContain("The workflow email moves only when the step has both a saved type and a category, and the category's type matches the step's");
+            expect(inventory).toContain('Any other step stays, and the reason is `workflow step has no matching category`');
+            expect(inventory).toMatch(/When `workflows-get` or `message-categories-get` is missing, the workflow email stays, and the reason is `no message category tools`/);
             expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
         });
 
@@ -216,10 +215,10 @@ describe('migrate-email skill', () => {
             expect(read('5-suppressions.md')).toContain('Every send that moves from the provider is transactional');
         });
 
-        it("leaves a workflow email out of the provider's suppression question, in steps 3 and 5", () => {
-            const rule = 'A workflow email moved into the code never sent through the provider, so this question leaves it out, and it moves';
-            expect(read('3-inventory.md')).toContain(rule);
-            expect(read('5-suppressions.md')).toContain(rule);
+        it("asks about the provider's suppression list only for sites that sent through the provider, in steps 3 and 5", () => {
+            expect(read('3-inventory.md')).toContain('for the sites the checks above leave moving that sent through the provider, which of them');
+            expect(read('5-suppressions.md')).toContain('which sites that move and sent through the provider rely on it');
+            expect(read('5-suppressions.md')).toContain('every site that moves and sent through the provider stays with that reason');
         });
 
         it('refuses a new category key that the project already has, in step 3', () => {
