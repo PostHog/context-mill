@@ -127,6 +127,37 @@ function parseCliBlock(raw, context) {
     return result;
 }
 
+const SKILL_AUDIENCES = ['customer', 'internal'];
+
+// Consumers that hand skills to a customer's agent (the PostHog MCP server, the `hog` CLI)
+// read these two fields from the SKILL.md frontmatter. They serve only `customer` skills, and
+// a skill with a `feature_flag` only to callers that have the flag.
+/**
+ * @param {{ audience?: unknown, feature_flag?: unknown }} group
+ * @param {string} context
+ * @returns {{ audience: 'customer' | 'internal', featureFlag?: string } | null}
+ */
+function parseAudience(group, context) {
+    const { audience, feature_flag: featureFlag } = group;
+    if (audience == null) {
+        if (featureFlag != null) {
+            throw new Error(`${context}: feature_flag needs an audience`);
+        }
+        return null;
+    }
+    if (!SKILL_AUDIENCES.includes(audience)) {
+        throw new Error(`${context}: audience must be one of ${SKILL_AUDIENCES.join(', ')} (got "${audience}")`);
+    }
+    if (featureFlag == null) return { audience };
+    if (typeof featureFlag !== 'string' || featureFlag.length === 0) {
+        throw new Error(`${context}: feature_flag must be a non-empty string when set`);
+    }
+    if (audience !== 'customer') {
+        throw new Error(`${context}: only a customer skill can have a feature_flag`);
+    }
+    return { audience, featureFlag };
+}
+
 /**
  * Merge a group-level cli block with a variant-level override and fill in
  * the implicit command name for the `command` role. Returns `null` when
@@ -390,6 +421,11 @@ function expandSkillGroups(config, configDir) {
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
         const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
+        const audience = parseAudience(group, `Skill group "${key}"`);
+        // The consumers skip an omnibus skill that names no audience, so a new one would never be served.
+        if (key.startsWith('omnibus/') && !audience) {
+            throw new Error(`Skill group "${key}": an omnibus skill must set audience (${SKILL_AUDIENCES.join(' or ')})`);
+        }
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -451,6 +487,7 @@ function expandSkillGroups(config, configDir) {
                 _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
                 _cli: cli,
+                _audience: audience,
             });
         }
     }
@@ -743,6 +780,8 @@ function generateFrontmatter(skill, version) {
         metadata: {
             author: 'PostHog',
             version: version,
+            ...(skill._audience ? { audience: skill._audience.audience } : {}),
+            ...(skill._audience?.featureFlag ? { feature_flag: skill._audience.featureFlag } : {}),
         },
     };
 
@@ -1153,6 +1192,7 @@ export {
     serializeSkill,
     fetchDoc,
     parseCliBlock,
+    parseAudience,
     resolveVariantCli,
     expandPartials,
 };

@@ -4,6 +4,7 @@ template: description.md
 category: integration
 description: Route PostHog's browser traffic through the app's own domain, so ad blockers don't drop events, session replays, and feature flag calls. Use when the user asks for a reverse proxy or agrees to one you suggested, for example after adding posthog-js or when events or recordings seem to be missing. Don't set one up unprompted. Prefers a self-hosted proxy where the app's platform makes it a small change, such as Next.js or Cloudflare, and PostHog's managed reverse proxy elsewhere.
 tags: [reverse-proxy, javascript_web]
+audience: customer
 shared_docs:
   - https://posthog.com/docs/advanced/proxy.md
 variants:

@@ -3,6 +3,7 @@ template: description.md
 category: integration
 description: Add PostHog SDK integration to your application. Use when setting up PostHog for the first time or reviewing PRs that need PostHog initialization. Covers SDK installation, provider setup, and basic configuration for any framework.
 tags: [sdk-install]
+audience: customer
 shared_docs:
   - https://posthog.com/docs/getting-started/identify-users.md
 variants:
