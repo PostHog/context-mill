@@ -197,14 +197,15 @@ describe('migrate-email skill', () => {
             expect(inventory).toContain("The workflow email moves only when the step has both a saved type and a category, and the category's type matches the step's");
             expect(inventory).toContain('Any other step stays, and the reason is `workflow step has no matching category`');
             expect(inventory).toMatch(/When `workflows-get` or `message-categories-get` is missing, the workflow email stays, and the reason is `no message category tools`/);
-            expect(inventory).toMatch(/A marketing step also stays when `workflows-sending-rules-get` shows a marketing frequency cap for the project and the step doesn't set `skip_frequency_cap`: a code send with a category skips that cap\. The reason is `workflow frequency cap`/);
-            expect(inventory).toMatch(/When `workflows-sending-rules-get` is missing, a marketing step stays with that reason/);
+            expect(inventory).toMatch(/A marketing step also stays when `workflows-sending-rules-get` shows a marketing frequency cap for the project, unless the step sets `skip_frequency_cap: true`: a code send with a category skips that cap\. The reason is `workflow frequency cap`/);
+            expect(inventory).toMatch(/When `workflows-sending-rules-get` is missing or fails, a marketing step stays with that reason/);
             expect(inventory).toMatch(/When the app sends from another project, or nobody can tell, the workflow email stays, and the reason is `workflow in another project`/);
             expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
         });
 
         it('leaves out a category description longer than the send takes, in step 7', () => {
             expect(read('7-rewrite.md')).toMatch(/Leave out a description longer than 1,000 characters: the send refuses it, and PostHog uses the description only when the send creates the category\./);
+            expect(read('8-verify.md')).toMatch(/passes the key, type, name, and description the plan notes, without a description longer than 1,000 characters/);
         });
 
         it('keeps a site with a category when the project refuses categories on code sends, in step 7', () => {
