@@ -2,7 +2,7 @@
 
 What the migration needs from the person's Loops account. The agent never changes the account: it reads what the person exports or allows.
 
-Every request in this file goes to `app.loops.so`, Loops' one host, even when the app's client points at another URL with `WithBaseURL` or `apiRoot`, as `sdk-reference.md` says.
+Every request in this file goes to `app.loops.so`, Loops' one host, even when the app's client points at another URL, as `sdk-reference.md` says.
 
 ## DNS records
 
