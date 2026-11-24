@@ -216,6 +216,12 @@ describe('migrate-email skill', () => {
             expect(read('5-suppressions.md')).toContain('Every send that moves from the provider is transactional');
         });
 
+        it("leaves a workflow email out of the provider's suppression question, in steps 3 and 5", () => {
+            const rule = 'A workflow email moved into the code never sent through the provider, so this question leaves it out, and it moves';
+            expect(read('3-inventory.md')).toContain(rule);
+            expect(read('5-suppressions.md')).toContain(rule);
+        });
+
         it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
         });
