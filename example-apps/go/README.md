@@ -95,7 +95,7 @@ client.Enqueue(posthog.Capture{
 
 ### Signed-out visitors (handlers.go)
 
-The `visitor` helper returns the distinct id and whether the visitor is anonymous. Signed-in users (a `user_id` cookie) keep their stable user id. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and the `properties` helper sets `$process_person_profile` to `false` so PostHog does not create a person profile for them.
+The `visitor` helper returns the distinct id and whether the visitor is anonymous. Signed-in users (a `user_id` cookie) keep their stable user id. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and the `options` helper sets the `process_person_profile` option to `false` so PostHog does not create a person profile for them.
 
 ```go
 userId, anonymous := visitor(w, r)
@@ -103,7 +103,7 @@ userId, anonymous := visitor(w, r)
 client.Enqueue(posthog.Capture{
     DistinctId: userId,
     Event:      "burrito_considered",
-    Properties: properties(anonymous), // adds $process_person_profile=false when anonymous
+    Options:    options(anonymous), // sets process_person_profile=false when anonymous
 })
 ```
 

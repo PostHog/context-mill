@@ -7,7 +7,7 @@ export interface Visitor {
   distinctId: string
   user?: { id: string; username: string }
   // Signed-out visitors get no person profile.
-  properties: Record<string, unknown>
+  options: { process_person_profile?: boolean }
 }
 
 export type VisitorRequest = Request & { visitor: Visitor }
@@ -22,7 +22,7 @@ export class VisitorMiddleware implements NestMiddleware {
     const user = this.auth.findBySession(req.cookies?.session)
 
     if (user) {
-      ;(req as VisitorRequest).visitor = { distinctId: user.id, user, properties: {} }
+      ;(req as VisitorRequest).visitor = { distinctId: user.id, user, options: {} }
     } else {
       let visitId: string | undefined = req.cookies?.visit_id
       if (!visitId) {
@@ -31,7 +31,7 @@ export class VisitorMiddleware implements NestMiddleware {
       }
       ;(req as VisitorRequest).visitor = {
         distinctId: visitId,
-        properties: { $process_person_profile: false },
+        options: { process_person_profile: false },
       }
     }
 

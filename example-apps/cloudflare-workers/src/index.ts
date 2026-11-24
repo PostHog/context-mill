@@ -48,9 +48,9 @@ export default {
     const visitor = getVisitor(request)
     const url = new URL(request.url)
 
-    // Anonymous events set $process_person_profile to false so PostHog does
-    // not create a person profile for the visitor.
-    const anonymousProps = visitor.anonymous ? { $process_person_profile: false } : {}
+    // Anonymous events set the process_person_profile option to false so
+    // PostHog does not create a person profile for the visitor.
+    const anonymousOptions = visitor.anonymous ? { process_person_profile: false } : {}
 
     // Sends started during the request. They are awaited after the response
     // is returned, then the client is shut down.
@@ -66,7 +66,7 @@ export default {
       track(
         posthog?.captureExceptionImmediate(error, {
           distinctId: visitor.id,
-          properties: anonymousProps,
+          options: anonymousOptions,
         })
       )
       console.error('Unhandled error', error)
@@ -116,7 +116,8 @@ export default {
           posthog?.captureImmediate({
             distinctId: visitor.id,
             event: 'burrito_considered',
-            properties: { total_considerations: count, ...anonymousProps },
+            properties: { total_considerations: count },
+            options: anonymousOptions,
           })
         )
 
@@ -154,7 +155,7 @@ export default {
           track(
             posthog?.captureExceptionImmediate(error, {
               distinctId: visitor.id,
-              properties: anonymousProps,
+              options: anonymousOptions,
             })
           )
         }

@@ -43,15 +43,15 @@ func visitor(w http.ResponseWriter, r *http.Request) (id string, anonymous bool)
 	return id, true
 }
 
-// properties returns event properties for a capture. Anonymous events set
-// "$process_person_profile" to false so PostHog does not create a person
+// options returns capture options for an event. Anonymous events set the
+// process_person_profile option to false so PostHog does not create a person
 // profile for the visitor.
-func properties(anonymous bool) posthog.Properties {
-	props := posthog.NewProperties()
+func options(anonymous bool) posthog.Options {
+	opts := posthog.NewOptions()
 	if anonymous {
-		props.Set("$process_person_profile", false)
+		opts.Set("process_person_profile", false)
 	}
-	return props
+	return opts
 }
 
 // home renders the login form (or a short greeting once logged in).
@@ -132,8 +132,9 @@ func (a *app) burrito(w http.ResponseWriter, r *http.Request) {
 	a.posthog.Enqueue(posthog.Capture{
 		DistinctId: userId,
 		Event:      "burrito_considered",
-		Properties: properties(anonymous).
+		Properties: posthog.NewProperties().
 			Set("total_considerations", count),
+		Options: options(anonymous),
 	})
 
 	page(w, "Burrito considered", fmt.Sprintf(`
@@ -193,7 +194,7 @@ func (a *app) profile(w http.ResponseWriter, r *http.Request) {
 			"ProfileDataError",
 			caught,
 		)
-		exception.Properties = properties(anonymous)
+		exception.Options = options(anonymous)
 		a.posthog.Enqueue(exception)
 	}
 

@@ -8,7 +8,7 @@ A small Fastify 5 API ("burrito app") that shows how to integrate PostHog with `
 - **Request context**: an `onRequest` hook runs each request inside `posthog.withContext`, so captures carry the visitor
 - **Graceful shutdown**: an `onClose` hook flushes queued events when the app closes
 - **User identification**: `POST /login` identifies the user once with their own id
-- **Signed-out visitors**: a random id kept in a cookie for the visit, with `$process_person_profile: false`
+- **Signed-out visitors**: a random id kept in a cookie for the visit, with the `process_person_profile: false` option
 - **Event capture**: `POST /burrito` sends `burrito_considered`
 - **Feature flags**: `GET /dashboard` evaluates `new-dashboard-feature`
 - **Error tracking**: `setErrorHandler` captures 5xx errors (`GET /profile` throws one)
@@ -71,7 +71,7 @@ app.decorate('posthog', posthog)
 
 // Keep this hook callback-based: done() inside withContext continues the request in that context.
 app.addHook('onRequest', (request, reply, done) => {
-  posthog.withContext({ distinctId, properties }, done, { fresh: true })
+  posthog.withContext({ distinctId, properties, options }, done, { fresh: true })
 })
 ```
 
