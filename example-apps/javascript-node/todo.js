@@ -174,10 +174,8 @@ app.get('/stats', async (req, res) => {
 
   // Check feature flag to decide whether to include per-todo breakdown
   if (posthog) {
-    const showDetailed = await posthog.isFeatureEnabled(
-      'detailed-analytics',
-      userId,
-    );
+    const flags = await posthog.evaluateFlags(userId);
+    const showDetailed = flags.isEnabled('detailed-analytics');
 
     if (showDetailed) {
       stats.todos = todos.map((t) => ({
