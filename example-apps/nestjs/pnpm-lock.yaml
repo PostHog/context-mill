@@ -21,8 +21,8 @@ importers:
         specifier: ^1.4.7
         version: 1.4.7
       posthog-node:
-        specifier: ^5.68.1
-        version: 5.68.1(rxjs@7.8.2)
+        specifier: ^6.0.6
+        version: 6.0.6(rxjs@7.8.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -90,11 +90,11 @@ packages:
       '@nestjs/core': ^12.0.0
       rxjs: ^7.1.0
 
-  '@posthog/core@1.67.1':
-    resolution: {integrity: sha512-Fq8YySx3G2ggxKV/dLf5nfbQocB3/yU6TNSGIyRvVynizrIW8tZfB2HQ/13cY61PoU+cNzvKch+B7Ac+OUkORw==}
+  '@posthog/core@1.69.2':
+    resolution: {integrity: sha512-toMfPKklwLW+a4ZY3/EzM3GNMVXmk2ylGb8NPJXRH4igXMoI8wgNL2jqXOiglWAXqFBLZGYFN1oQx6LVmUTxTg==}
 
-  '@posthog/types@1.423.0':
-    resolution: {integrity: sha512-4gzXyyXKN6mktVoQQkeIlgAva054P99sUSvVGHd0/mDBYuk3gz2ZDHhPOP5C1j2cl+7Dtu2BeBJr4LfILptm/w==}
+  '@posthog/types@1.427.1':
+    resolution: {integrity: sha512-Kx9hWf6Au64CrBLafscANAeswkRFUMs4zlU9/gwB2Hf/9ggU9YNjbw/MQA5tt7cbzTCkh+4fNIPjQeJz7/j63w==}
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -498,14 +498,17 @@ packages:
   path-to-regexp@8.4.2:
     resolution: {integrity: sha512-qRcuIdP69NPm4qbACK+aDogI5CBDMi1jKe0ry5rSQJz8JVLsC7jV8XpiJjGRLLol3N+R5ihGYcrPLTno6pAdBA==}
 
-  posthog-node@5.68.1:
-    resolution: {integrity: sha512-vM0C7F8mwAaVMj7I6XdZ9KapBbyO3ySDfjfPVy1HJXl4aWD2556k5RLsXadrtYjl0G1dkZb6RvOFq3rWf/1kwg==}
+  posthog-node@6.0.6:
+    resolution: {integrity: sha512-7FMMQ4fk4Uqg/w2zpKVS8/Yv0doIz0HRcWML4WhxDTqqkS7eyXCvfGUuh+wLJbWYvdSm/7QNu9eeL31++G/dOw==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
       '@opentelemetry/api': ^1.2.0
+      '@react-email/render': ^2.1.0
       rxjs: ^7.0.0
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+      '@react-email/render':
         optional: true
       rxjs:
         optional: true
@@ -669,11 +672,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@posthog/core@1.67.1':
+  '@posthog/core@1.69.2':
     dependencies:
-      '@posthog/types': 1.423.0
+      '@posthog/types': 1.427.1
 
-  '@posthog/types@1.423.0': {}
+  '@posthog/types@1.427.1': {}
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -1036,9 +1039,9 @@ snapshots:
 
   path-to-regexp@8.4.2: {}
 
-  posthog-node@5.68.1(rxjs@7.8.2):
+  posthog-node@6.0.6(rxjs@7.8.2):
     dependencies:
-      '@posthog/core': 1.67.1
+      '@posthog/core': 1.69.2
     optionalDependencies:
       rxjs: 7.8.2
 
