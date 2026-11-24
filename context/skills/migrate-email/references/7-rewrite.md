@@ -11,7 +11,7 @@ Rewrite each site whose `moves` is `yes` in the plan to send with PostHog's SDK 
 |---|---|---|
 | JavaScript or TypeScript on a server: Node.js, or an edge runtime such as Cloudflare Workers or Vercel Edge Functions | `posthog-node` | `rewrite-node.md` |
 | Python | `posthog` | `rewrite-python.md` |
-| Go | `github.com/posthog/posthog-go` | `rewrite-go.md` |
+| Go | `posthog-go` | `rewrite-go.md` |
 | Ruby | `posthog-ruby` | `rewrite-ruby.md` |
 | PHP | `posthog/posthog-php` | `rewrite-php.md` |
 | C# or F# on .NET | `PostHog` | `rewrite-dotnet.md` |
