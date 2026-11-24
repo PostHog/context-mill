@@ -23,9 +23,7 @@ Check which PostHog MCP tools exist.
 
 Do not call a tool that changes anything to find out.
 
-The MCP speaks for one project: the one `project-get`, called without an ID, returns. The app's project, here and in Steps 4 and 5, is the one production sends email from: when the local token can be a development project's, ask the person which project production uses, and compare the MCP's project with that one. When the app's project token, read only from its own line as Step 8 says, is not that project's `api_token`, the MCP's answers say nothing about the app's project. Ask the person to switch the MCP to the app's project. When they can't, record `mcp: other project` and `api: not confirmed — the MCP can't see the app's project`, and ask the person, wherever a later step reads the project through the MCP, what that step would read. While the plan says `mcp: other project`, never call an MCP tool that reads or changes the app's project in its place, such as Step 4's sender tools or Step 5's import: each step says what to do instead.
-
-When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, and the person says it delivers in production, record `api: on — the app already sends code emails`: the project takes sends with content from the code too. This record wins over `not confirmed`, also when the MCP can't see the project, and `mcp: other project` still stands.
+When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, and the person says it delivers in production, record `api: on — the app already sends code emails`: the project takes sends with content from the code too. This record wins over `not confirmed`.
 
 Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
 
@@ -39,4 +37,4 @@ PostHog gives each project a sending allowance: how many emails it sends per hou
 
 ## Write down
 
-Keep `api`, `tier`, and `mcp` for Step 3, which writes them into the plan file. `mcp` is `app's project` unless Step 2 recorded `other project`.
+Keep `api` and `tier` for Step 3, which writes them into the plan file.

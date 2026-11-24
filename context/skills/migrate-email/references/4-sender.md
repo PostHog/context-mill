@@ -21,9 +21,7 @@ Group the addresses by domain. Each domain needs one verified sender.
 
 ## Check for verified senders
 
-When the plan's preflight line says `mcp: other project`, the MCP's senders are another project's: call no sender tool, `integrations-list` included, ask the person whether a sender is verified for each domain in the app's project, and for each one that isn't, follow the last bullet below.
-
-Otherwise, call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, call `integrations-email-verify-create` once on the sender for the address: `success` means it is verified, and `pending` or `failed` means you continue from its records below. When the sender tools are missing, or the verify answers 403, ask the person whether a sender is verified for each domain.
+Call `integrations-list` with `kind=email`, and read every page. A sender with `config.verified: true` can send. When the list shows senders without `config`, call `integrations-email-verify-create` once on the sender for the address: `success` means it is verified, and `pending` or `failed` means you continue from its records below. When the sender tools are missing, or the verify answers 403, ask the person whether a sender is verified for each domain.
 
 The first sender that verifies becomes the project's default sender. A send without `from` uses it.
 

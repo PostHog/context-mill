@@ -72,7 +72,6 @@ PostHog adds its open pixel to every email it sends unless the send turns its `o
 
 - When a site's emails had no open pixel, because the provider never tracks opens, or open tracking was off or never set up, the site moves with opens off. Write `opens off: <provider name> didn't track its opens` in its note under the sites table.
 - When nobody can tell whether the provider tracked a site's opens, the site moves with opens off too, so PostHog adds no pixel the old emails may not have had. Write `opens off: open tracking not checked` in its note. A site whose emails a webhook handler acts on for the provider's open event, such as `email.opened` in Resend or `open` in SendGrid, stays instead, and the reason is `open tracking not checked`: with opens off, PostHog sends no opened events in place of the provider's.
-- When the app's docs promise that the site's emails carry no open tracking, as "Code and docs around the sends" below finds, the site moves with opens off, whatever the provider did. Write `opens off: <file> promises no open tracking` in its note. A site whose emails a webhook handler acts on for the provider's open event stays instead, and the reason is `<file> promises no open tracking`: with opens off, PostHog sends no opened events in place of the provider's.
 - When the provider tracked the site's opens, the site moves with nothing to note.
 
 A send by template ID can't set tracking, so a site where tracking matters never moves to a template made in PostHog, even when the person asked for one:
@@ -93,7 +92,7 @@ The sends are not the only code that knows the provider. Search the repository, 
 
 - **Switches.** Code that reads the provider's key to decide whether to send at all, such as an `isEmailConfigured()` that checks the variable is set. Note which sites each switch guards: Step 7 says what happens to it.
 - **Counts and limits.** Code that counts the sends, labels them, or limits them to fit the provider's plan, such as a daily count stored under the provider's name, a daily cap, a share of that cap, or a pause between sends sized to the provider's rate limit. These stay as they are: the report names each, so the person can size it to PostHog's sending allowance.
-- **Promises.** What the app's own docs promise about these emails: a privacy policy or terms that name the provider as a processor, say what it receives or how long it keeps it, or say that the emails carry no open or click tracking, and specs, ADRs, and setup docs that say these emails go through the provider. Note each with its file and line. Never change a legal text: the report asks the person to update it before cutover. A promise of no open tracking also turns opens off for the site, as "Opens the provider didn't track" says. A promise of no click tracking changes nothing in a code send, which counts no clicks until the person turns its `clicks` switch on, and the report tells them to leave it off for those emails. A site that moves to a template made in PostHog takes the promise as click tracking off: ask the person to mark the template sensitive, as the rule for those templates says when the provider didn't track the site's clicks, and the site stays with `click tracking off` when they don't.
+- **Promises.** What the app's own docs promise about these emails: a privacy policy or terms that name the provider as a processor, say what it receives or how long it keeps it, or say that the emails carry no open or click tracking, and specs, ADRs, and setup docs that say these emails go through the provider. Note each with its file and line. Never change a legal text: the report asks the person to update it before cutover. A promise of no click tracking changes nothing in a code send, which counts no clicks until the person turns its `clicks` switch on, and the report tells them to leave it off for those emails. A site that moves to a template made in PostHog takes the promise as click tracking off: ask the person to mark the template sensitive, as the rule for those templates says when the provider didn't track the site's clicks, and the site stays with `click tracking off` when they don't.
 - **What the app's PostHog sends already do.** When the app already sends code emails with a PostHog SDK, note how: the module and client they use, how they read the key, token, and host, whether they turn engagement capture off, such as `tracking: { engagement: false }`, `tracking: false`, or the deprecated capture field set to `false`, and whether they pass a distinct ID. Step 7 follows them.
 
 ## Write the plan file
@@ -103,7 +102,7 @@ Write `.posthog-email-migration-plan.md` at the project root with three sections
 A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, and `inventory` once the file is written. Later steps tick the rest.
 
 ```
-- [x] preflight — api: <on|not confirmed> — tier: <fits|too low|not checked> — mcp: <app's project|other project>
+- [x] preflight — api: <on|not confirmed> — tier: <fits|too low|not checked>
 - [x] inventory — <sites found> sites, <sites that stay> stay on the provider
 - [ ] sender
 - [ ] suppressions

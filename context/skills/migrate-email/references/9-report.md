@@ -53,7 +53,7 @@ Read `.posthog-email-migration-plan.md`. Write `posthog-migrate-email-<provider>
 
 ## PostHog secret key
 
-<The PostHog key's variable name and where it is set, a file or the hosting platform, and each other place the provider key lives that needs the PostHog key too.>
+<Where POSTHOG_PROJECT_SECRET_API_KEY is set, and each other place the provider key lives that needs the PostHog key too.>
 
 ## Checks
 
