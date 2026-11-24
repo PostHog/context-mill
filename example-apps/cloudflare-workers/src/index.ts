@@ -63,7 +63,12 @@ export default {
     try {
       response = await route()
     } catch (error) {
-      track(posthog?.captureExceptionImmediate(error, visitor.id, anonymousProps))
+      track(
+        posthog?.captureExceptionImmediate(error, {
+          distinctId: visitor.id,
+          properties: anonymousProps,
+        })
+      )
       console.error('Unhandled error', error)
       response = new Response('Internal server error', { status: 500 })
     }
@@ -146,7 +151,12 @@ export default {
         try {
           throw new Error('Profile data is unavailable')
         } catch (error) {
-          track(posthog?.captureExceptionImmediate(error, visitor.id, anonymousProps))
+          track(
+        posthog?.captureExceptionImmediate(error, {
+          distinctId: visitor.id,
+          properties: anonymousProps,
+        })
+      )
         }
 
         return page('Profile', '<p>Profile data is unavailable. The error was reported.</p>')

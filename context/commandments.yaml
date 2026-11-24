@@ -15,7 +15,7 @@ commandments:
     - "In a monorepo or workspace, install the SDK in the package that imports it, not at the repository root"
     - "Create one server-side client per process at startup and reuse it for every request. In serverless functions and other per-request handlers, flush before the handler returns, or the events are lost"
     - "Identify users with the app's own stable user id, such as a primary key or UUID, never an email or username. Send those as person properties instead. Identify once when the user logs in or signs up, and call `reset()` when they log out"
-    - "On a server, identity belongs to the request, never to the process. Where the SDK has middleware or a context for the framework, use it, so events and errors inside the request carry the user. For a signed-out visitor, use a random id kept for the visit and set `$process_person_profile` to false. If the framework integration already sends signed-out events as personless, as the Laravel SDK does, keep its behavior. Never share one id, such as \"anonymous\", across visitors"
+    - "On a server, identity belongs to the request, never to the process. Where the SDK has middleware or a context for the framework, use it, so events and errors inside the request carry the user. For a signed-out visitor, use a random id kept for the visit and set the `process_person_profile` capture option to false on capture v1 SDKs (or `$process_person_profile` in properties on older SDK majors). If the framework integration already sends signed-out events as personless, as the Laravel SDK does, keep its behavior. Never share one id, such as \"anonymous\", across visitors"
     - "If the app sends a Content-Security-Policy (a meta tag or a response header), extend it for the browser SDK in one change: allow the PostHog hosts, or the reverse proxy, in `script-src` and `connect-src`, and `blob:` in `worker-src` for session replay. A partial change fails silently: the SDK loads, but events or recordings never send"
     - "When one codebase ships several platform targets (Flutter, React Native, Kotlin Multiplatform), initialize PostHog for every target the project ships. One init call often covers only some of them"
 
@@ -80,8 +80,8 @@ commandments:
   javascript_node:
     - posthog-node is the Node.js server-side SDK package name; posthog-js is browser-only, so use posthog-node on the server instead
     - 'Include enableExceptionAutocapture: true in the PostHog constructor options'
-    - Add posthog.capture() calls in route handlers for meaningful user actions – every route that creates, updates, or deletes data should track an event with contextual properties
-    - Add posthog.captureException(err, distinctId) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
+    - Always pass a single options object to `posthog.capture({ distinctId, event, properties })` (or `posthog.capture({ event, properties })` inside `withContext`) — NEVER a bare string event name like browser `posthog-js` — in route handlers for meaningful user actions that create, update, or delete data
+    - Add posthog.captureException(err, { distinctId }) (or posthog.captureException(err) inside withContext) in the application's error handler (e.g., Express error middleware, Fastify setErrorHandler, Koa app.on('error'))
     - The SDK batches events and flushes asynchronously. await flush() or await shutdown() before letting that process exit. If unsure, set flushAt 1 and flushInterval 0.
     - '`posthog.capture()` enqueues synchronously and returns; the batched HTTP send happens afterwards. Treat every per-request handler as short-lived even when the framework feels like a server: Next.js / Nuxt / SvelteKit / Remix route handlers, serverless and edge functions, and Lambda are torn down per invocation before the send runs. Create the client with flushAt 1, flushInterval 0, requestTimeout 2000 and fetchRetryCount 0, then await the send before returning. Always use `await posthog.flush().catch(() => {})` for a shared/singleton client, `await posthog.shutdown()` for a per-request client. Never skip the awaited flush or risk the enqueued event being silently dropped.'
     - 'Never leave a flush uncaught or on default timeouts where the app waits on it. With defaults, `await posthog.flush()` rejects when PostHog is down, which fails a handler whose own work succeeded, and holds it for about 50 seconds when PostHog hangs. A long-running server or queue worker needs no flush per capture at all. Let it batch on the SDK default timeout and retries, and flush only at shutdown with a bounded wait such as `posthog.shutdown(3000)`. A module both of them load follows the handler rule'
@@ -101,7 +101,7 @@ commandments:
     - The Python SDK has NO identify() method — use posthog_client.set(distinct_id=user_id, properties={...}) to set person properties, or use identify_context(user_id) within a context
 
   go:
-    - posthog-go is the Go SDK package; install it with `go get github.com/posthog/posthog-go` and import `github.com/posthog/posthog-go`
+    - posthog-go is the Go SDK package. When go.mod does not already require it, install it with `go get github.com/posthog/posthog-go/v2` and import `github.com/posthog/posthog-go/v2`; when go.mod already requires `github.com/posthog/posthog-go`, keep that module and import path
     - Create one PostHog client per process with `posthog.NewWithConfig(...)`; do not create a new client per request or job
     - Always close the client during graceful shutdown with `client.Close()` so queued events flush before the process exits
     - Configure the project token, endpoint, and optional personal API key from environment variables; never hardcode PostHog secrets
@@ -113,7 +113,7 @@ commandments:
     - For error tracking, use `posthog.NewDefaultException(...)` for direct captures or wrap `log/slog` with `posthog.NewSlogCaptureHandler(...)` for automatic warning-and-above exception capture
 
   rust:
-    - posthog-rs is the Rust SDK crate; add it with `cargo add posthog-rs` and construct the client with `posthog_rs::client(options).await`
+    - posthog is the Rust SDK crate; add it with `cargo add posthog` and construct the client with `posthog::client(options).await`. When Cargo.toml already depends on `posthog-rs`, keep that crate and `posthog_rs::client(options).await`
     - Create one client per process and share it (for example an `Arc` in your app state or a `OnceCell`); do not build a new client per request or task
     - Configure the project token and host from environment variables via `ClientOptions` (the `(api_key, host)` tuple); never hardcode PostHog secrets
     - Because `capture` is fire-and-forget, call `client.flush().await` then `client.shutdown().await` before the process exits — where the server future resolves. An app with no shutdown path still needs this; add the calls there rather than skipping them so queued events are delivered before exit
@@ -284,13 +284,13 @@ commandments:
     - For widgets, app clips, share extensions, and other app extensions, configure `config.appGroupIdentifier` so the main app and extensions share analytics identity
 
   react-native:
-    - posthog-react-native is the React Native SDK package name
+    - posthog-react-native is the React Native SDK package name. When `package.json` does not list it, install it at the version the React Native SDK docs pin; when `package.json` already lists it, keep the existing major version
     - Use react-native-config to load POSTHOG_PROJECT_TOKEN and POSTHOG_HOST from .env (variables are embedded at build time, not runtime)
     - react-native-svg is a required peer dependency of posthog-react-native (used by the surveys feature) and must be installed alongside it
     - Place PostHogProvider INSIDE NavigationContainer for React Navigation v7 compatibility
 
   expo:
-    - posthog-react-native is the React Native SDK package name (same as bare RN)
+    - posthog-react-native is the React Native SDK package name (same as bare RN). When `package.json` does not list it, install it at the version the React Native SDK docs pin; when `package.json` already lists it, keep the existing major version
     - Use expo-constants with app.config.js extras for POSTHOG_PROJECT_TOKEN and POSTHOG_HOST (NOT react-native-config)
     - Access config via `Constants.expoConfig?.extra?.posthogProjectToken` in your posthog.ts config file
     - For expo-router, wrap PostHogProvider in app/_layout.tsx and manually track screens with `posthog.screen(pathname, params)` in a useEffect

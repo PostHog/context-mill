@@ -204,7 +204,7 @@ app.use((err, req, res, _next) => {
   const userId = req.body?.user_id || req.query?.user_id || 'anonymous';
 
   if (posthog) {
-    posthog.captureException(err, userId);
+    posthog.captureException(err, { distinctId: userId });
   }
 
   console.error('Unhandled error:', err.message);

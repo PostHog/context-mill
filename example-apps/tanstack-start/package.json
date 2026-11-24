@@ -22,7 +22,7 @@
     "@tanstack/router-plugin": "^1.158.0",
     "lucide-react": "^0.544.0",
     "posthog-js": "^1.447.6",
-    "posthog-node": "^5.64.0",
+    "posthog-node": "^6.0.6",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.0.6",

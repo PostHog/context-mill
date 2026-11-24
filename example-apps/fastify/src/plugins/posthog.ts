@@ -54,9 +54,11 @@ export default fp(async (app) => {
     const statusCode = error.status ?? error.statusCode ?? (reply.statusCode >= 400 ? reply.statusCode : 500)
 
     if (statusCode >= 500) {
-      posthog.captureException(error, undefined, {
-        $response_status_code: statusCode,
-        $request_path: request.routeOptions.url,
+      posthog.captureException(error, {
+        properties: {
+          $response_status_code: statusCode,
+          $request_path: request.routeOptions.url,
+        },
       })
     }
 

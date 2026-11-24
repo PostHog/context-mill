@@ -16,7 +16,7 @@ This is a [Go](https://go.dev) example demonstrating PostHog integration with pr
 ### 1. Install dependencies
 
 ```bash
-go get github.com/posthog/posthog-go
+go get github.com/posthog/posthog-go/v2
 ```
 
 ### 2. Configure environment variables

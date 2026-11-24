@@ -122,7 +122,12 @@ const showNewFeature = flags?.isEnabled('new-dashboard-feature') ?? false
 ### Error tracking (src/index.ts)
 
 ```ts
-track(posthog?.captureExceptionImmediate(error, visitor.id, anonymousProps))
+track(
+  posthog?.captureExceptionImmediate(error, {
+    distinctId: visitor.id,
+    properties: anonymousProps,
+  })
+)
 ```
 
 ## Reverse proxy

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/posthog/posthog-go"
+	"github.com/posthog/posthog-go/v2"
 )
 
 // newPostHogClient builds the single, process-wide PostHog client.

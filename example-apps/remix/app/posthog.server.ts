@@ -55,6 +55,9 @@ export async function captureError(request: Request, error: unknown) {
   if (!posthog) return;
 
   const identity = identityFrom(request);
-  posthog.captureException(error, identity.distinctId, identity.properties);
+  posthog.captureException(error, {
+    distinctId: identity.distinctId,
+    properties: identity.properties,
+  });
   await posthog.flush().catch(() => {});
 }
