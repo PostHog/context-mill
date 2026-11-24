@@ -53,7 +53,7 @@ Each file of a site that moves keeps its fields, under the PostHog SDK's names, 
 | `filename` | The filename. Resend can name a file from its `path`, and PostHog can't: a file without `filename` keeps the site, as Step 3 says |
 | `content`, a Buffer, a Base64 string, or a list of byte values | The content, as the same bytes or the same Base64 string. A list of byte values, such as Python's `list(f.read())`, goes as the SDK's bytes: `bytes(content)` in Python, `content.pack('C*')` in Ruby |
 | `contentType` / `content_type` | The content type. When the site sets none, Resend derived it from the filename's extension: set that type, such as `application/pdf` for `.pdf` or `text/calendar` for `.ics`, and note it in the plan row |
-| `contentId` / `content_id` | The content ID, the same bare ID that the HTML shows with `<img src="cid:...">` |
+| `contentId` / `content_id` | none: a file that the HTML shows inline with `<img src="cid:...">`, whatever key gives its content ID, keeps the site: `moves: no — an inline image with a content ID stays on its provider` |
 | `path`, a URL or a path that Resend fetches | none: the site stays, and the report says to read the file in the app and pass its bytes |
 
 Resend takes an email of up to 40 MB after Base64 encoding with its files, as PostHog does. PostHog also takes at most 10 files, as Step 3 says.
