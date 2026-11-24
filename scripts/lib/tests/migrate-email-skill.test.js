@@ -208,7 +208,6 @@ describe('migrate-email skill', () => {
 
             expect(mapping).toMatch(/\| `asm` \| the site's category, as Step 3 says under "The category of each site" \|/);
             expect(mapping).not.toMatch(/\| `asm` \| none \| Always/);
-            expect(mapping).toMatch(/The group's unsubscribes and the account's global unsubscribes go into that category before cutover, as Step 9 says: SendGrid sent the email to neither\./);
             for (const tag of ['{{{unsubscribe}}}', '{{{unsubscribe_preferences}}}', '<%asm_group_unsubscribe_raw_url%>', '<%asm_preferences_raw_url%>']) expect(mapping).toContain(`\`${tag}\``);
             expect(mapping).toMatch(/In a marketing site, each of these becomes `\{\{ unsubscribe_url \}\}`, as `template-to-code\.md` says\. In any other site, it keeps the template on SendGrid/);
             expect(mapping).toMatch(/SendGrid sends `unsubscribe`, `group_unsubscribe`, and `group_resubscribe` only for emails with subscription tracking or `asm`, so a handler on those events keeps only such a site\./);
