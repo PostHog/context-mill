@@ -15,9 +15,9 @@ PostHog's send needs a project secret API key on the server. The provider's key 
 
 ## The PostHog key
 
-When the app already reads a PostHog project secret key, such as for code sends it already makes, under any name, that is the key: Step 7's email client reads it under the app's name, and you ask for no new one. Write its name into the plan where this step writes `POSTHOG_PROJECT_SECRET_API_KEY`, and in every later step read that name in its place. Check that the key has the `transactional_email:write` or `hog_flow:write` scope only by asking the person.
+When the app already reads a PostHog project secret key, such as for code sends it already makes, under any name, that is the key: Step 7's email client reads it under the app's name, and you ask for no new one. Write its name into the plan where this step writes `POSTHOG_PROJECT_SECRET_API_KEY`, and in every later step read that name in its place. Check that the key has the `transactional_email:write` or `hog_flow:write` scope only by asking the person. When they say it has neither, ask them to add `transactional_email:write` to it. When they can't, go on as for an app without a key, below, and the email client reads the new key.
 
-When the app reads its provider key from its hosting platform's environment and not from a file, such as a Convex deployment's environment variables, a Vercel or Netlify project's, or a Worker's secrets, the PostHog key goes there too: ask the person to set it with the platform's command or dashboard, in every deployment that sends email. Check it, where the platform's command line can list the variables, with a command that prints a count and never the value, such as `convex env list | grep -c '^POSTHOG_PROJECT_SECRET_API_KEY=phs_'`. When it can't, the person's word that they set it is the check.
+When the app reads its provider key from its hosting platform's environment and not from a file, such as a Convex deployment's environment variables, a Vercel or Netlify project's, or a Worker's secrets, the PostHog key goes there too: ask the person to set it with the platform's command or dashboard, in every deployment that sends email. Check it, where the platform's command line can list the variables, with a command that prints a count and never the value, such as `convex env list | grep -c '^POSTHOG_PROJECT_SECRET_API_KEY=phs_'`. Check every deployment that sends email: `convex env list` reads the dev deployment, and `convex env list --prod` reads production. When it can't, the person's word that they set it is the check.
 
 Otherwise:
 
@@ -29,7 +29,7 @@ Otherwise:
 
 ## Check that the key is set
 
-The key is set only when the env file holds it. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value, after an optional quote, starts with `phs_`:
+The key is set only when the env file holds it, or, for a key in the hosting platform's environment, when the check above found it in every deployment that sends email. Inside the Wizard, it is set once `set_env_values` succeeds. Otherwise, once the person says they added it, check the file with a command that prints a count and never the key. It reads the last line that sets the variable, as the app's env loader does, and checks that the value, after an optional quote, starts with `phs_`:
 
 ```bash
 grep -E '^[[:space:]]*(export[[:space:]]+)?POSTHOG_PROJECT_SECRET_API_KEY[[:space:]]*=' .env | tail -n 1 | grep -cE "^[^=]*=[[:space:]]*[\"']?phs_"

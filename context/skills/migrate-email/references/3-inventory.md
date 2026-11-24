@@ -101,9 +101,11 @@ A site that sends files, which the provider calls attachments, moves only when e
 
 A file whose content type carries parameters, such as `text/calendar; charset=utf-8; method=REQUEST` for a calendar invite, moves only when PostHog takes its parameters: PostHog has refused every parameter with `not_mime_type`, and taking it out changes the email. Without its `method`, a mail app shows a calendar invite as a file, with no invitation. Keep the content type as it is in the plan row, write `content type parameters not checked` in its note under the sites table, and let Step 8's check email decide.
 
+A send by template ID takes no files, so a site with files never moves to a template made in PostHog, even when the person asked for one: it moves into the code, and when the person wants its template made in PostHog, it stays, and the reason is `a template in PostHog takes no files`.
+
 Write each file of a site that moves in the `content` cell of its plan row: its filename, or where the code builds it, its content type, and the content ID the send passes when the HTML shows it inline.
 
-For each site with files that stays, write in its plan row what would let it move, so the report can tell the person: read the file in the app and pass its bytes for a URL or a path, a fixed filename or extension for a refused one, a filename, content type or content ID that keeps PostHog's header rules, a bound on the size or the count, a check that skips or refuses an empty file, or the SDK release that takes files.
+For each site with files that stays, write in its plan row what would let it move, so the report can tell the person: read the file in the app and pass its bytes for a URL or a path, a fixed filename or extension for a refused one, a filename, content type or content ID that keeps PostHog's header rules, a bound on the size or the count, a check that skips or refuses an empty file, the email in the code in place of a template in PostHog, or the SDK release that takes files.
 
 ### Code and docs around the sends
 
@@ -111,7 +113,7 @@ The sends are not the only code that knows the provider. Search the repository, 
 
 - **Switches.** Code that reads the provider's key to decide whether to send at all, such as an `isEmailConfigured()` that checks the variable is set. Note which sites each switch guards: Step 7 says what happens to it.
 - **Counts and limits.** Code that counts the sends, labels them, or limits them to fit the provider's plan, such as a daily count stored under the provider's name, a daily cap, a share of that cap, or a pause between sends sized to the provider's rate limit. These stay as they are: the report names each, so the person can size it to PostHog's sending allowance.
-- **Promises.** What the app's own docs promise about these emails: a privacy policy or terms that name the provider as a processor, say what it receives or how long it keeps it, or say that the emails carry no open or click tracking, and specs, ADRs, and setup docs that say these emails go through the provider. Note each with its file and line. Never change a legal text: the report asks the person to update it before cutover. A promise of no open or click tracking also turns opens off for the site, as "Opens the provider didn't track" says.
+- **Promises.** What the app's own docs promise about these emails: a privacy policy or terms that name the provider as a processor, say what it receives or how long it keeps it, or say that the emails carry no open or click tracking, and specs, ADRs, and setup docs that say these emails go through the provider. Note each with its file and line. Never change a legal text: the report asks the person to update it before cutover. A promise of no open tracking also turns opens off for the site, as "Opens the provider didn't track" says. A promise of no click tracking changes nothing in the send: a code send counts no clicks until the person turns its `clicks` switch on, and the report tells them to leave it off for those emails.
 - **What the app's PostHog sends already do.** When the app already sends code emails with a PostHog SDK, note how: the module and client they use, how they read the key, token, and host, whether they turn engagement capture off, such as `tracking: { engagement: false }`, `tracking: false`, or the deprecated capture field set to `false`, and whether they pass a distinct ID. Step 7 follows them.
 
 ## Write the plan file
@@ -121,7 +123,7 @@ Write `.posthog-email-migration-plan.md` at the project root with three sections
 A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, and `inventory` once the file is written. Later steps tick the rest.
 
 ```
-- [x] preflight — api: <on|not confirmed> — tier: <fits|too low|not checked>
+- [x] preflight — api: <on|not confirmed> — tier: <fits|too low|not checked> — mcp: <app's project|other project>
 - [x] inventory — <sites found> sites, <sites that stay> stay on the provider
 - [ ] sender
 - [ ] suppressions
