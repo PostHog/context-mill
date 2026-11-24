@@ -161,7 +161,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
             expect(inventory).toMatch(/The category: blank for no category, or the key of the category its email is filed under in PostHog/);
             expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
-            expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
+            expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` and `message_category_type` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
             expect(inventory).toMatch(/A step without a category leaves the site's category blank/);
             expect(inventory).toMatch(/Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
@@ -186,9 +186,27 @@ describe('migrate-email skill', () => {
             expect(section).toMatch(/Ask the person once, for every transactional one, to make it in PostHog from the provider's template and give you its template ID/);
             expect(turnAway).toBeGreaterThan(-1);
             expect(makeRequest).toBeGreaterThan(turnAway);
-            expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category;/);
+            expect(read('7-rewrite.md')).toMatch(/- a code-form site with a category: the code send takes a category\./);
             expect(read('8-verify.md')).toMatch(/Check that every site with a category that sends in the code form passes the key, type, name, and description the plan notes/);
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
+        });
+
+        it("takes a moved workflow email's kind from the step's saved type, which PostHog sends by", () => {
+            const inventory = read('3-inventory.md');
+
+            expect(inventory).toMatch(/read the step's `message_category_id` and `message_category_type` with `workflows-get`/);
+            expect(inventory).toContain('the reason is `workflow step type differs from its category`');
+        });
+
+        it('keeps a site with a category when the project refuses categories on code sends, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            expect(rewriteStep).toContain('`categories_not_enabled`');
+            expect(rewriteStep).toContain('`moves: no — code-send categories are off`');
+        });
+
+        it("checks a marketing site's placeholder as the href of a link, as PostHog does, in step 8", () => {
+            expect(read('8-verify.md')).toContain('`<a href="{{ unsubscribe_url }}">`');
         });
 
         it('refuses a new category key that the project already has, in step 3', () => {
