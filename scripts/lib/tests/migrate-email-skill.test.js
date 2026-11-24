@@ -298,6 +298,14 @@ describe('migrate-email skill', () => {
         });
     });
 
+    it('keeps the hidden preview block of an old React Email release out of the text part', () => {
+        const templateToCode = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', 'template-to-code.md'), 'utf8');
+        const fallback = templateToCode.split('\n').find((line) => line.includes('has no `useTitleTag` prop'));
+
+        expect(fallback).toBeDefined();
+        expect(fallback).toContain('data-skip-in-text="true"');
+    });
+
     it.each(PROVIDERS)('builds migrate-email-%s with its provider files, the rewrite files, and no other provider', async (provider) => {
         outputDir = mkdtempSync(join(tmpdir(), 'migrate-skill-'));
 
