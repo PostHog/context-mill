@@ -201,6 +201,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/A marketing step also stays when `workflows-sending-rules-get` shows a marketing frequency cap for the project, unless the step sets `skip_frequency_cap: true`: a code send with a category skips that cap\. The reason is `workflow frequency cap`/);
             expect(inventory).toMatch(/When `workflows-sending-rules-get` is missing or fails, a marketing step stays with that reason/);
             expect(inventory).toMatch(/When the app sends from another project, or nobody can tell, the workflow email stays, and the reason is `workflow in another project`/);
+            expect(inventory).toMatch(/A workflow whose `workflows-get` shows `email_sending_paused_at` set stays too, and the reason is `workflow sending paused`/);
             expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
         });
 
@@ -245,6 +246,7 @@ describe('migrate-email skill', () => {
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
             for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
+            expect(rewriteStep).toMatch(/A site that sends a marketing workflow email moved into the code handles `recipient_opted_out` like that too, also when it never handled `recipient_suppressed`: [^\n]*never fails, retries, or requeues the job for it\./);
         });
 
         it('says a send only creates or restores a category, and names its 400 refusals by code, in step 7', () => {
@@ -272,7 +274,10 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description/);
             expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the key, type, name, and description this report lists for it/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
-            expect(read('9-report.md')).toMatch(/each workflow email moved into the code, with its workflow and email step IDs from the plan \(turn off that step in PostHog right before the deploy starts: a run that reaches the step during the deploy is skipped, not sent twice\)/);
+            const cutover = read('9-report.md').split('## Before cutover')[1].split('\n## ')[0];
+            expect(cutover).toMatch(/each workflow email moved into the code, with its workflow and email step IDs from the plan \(right before the deploy starts, remove that step from the workflow in PostHog, publish the workflow, and check that the step is gone from the live, published workflow: an edit you only save stays a draft, and the live workflow keeps sending beside the code\. When the deploy fails or rolls back, add the step back and publish the workflow again\)/);
+            expect(cutover).toMatch(/each marketing workflow email moved into the code \(before you remove its step, check the project's sending rules again with `workflows-sending-rules-get`, and the step's `skip_frequency_cap` in the live workflow with `workflows-get`: when a marketing frequency cap now covers the step, keep the step in PostHog and take that site's change out of the deploy\)/);
+            expect(cutover).not.toContain('turn off that step');
             expect(read('9-report.md')).toMatch(/For each marketing workflow email moved into the code, write that its code send skips the project's marketing frequency cap, also one turned on later, so the app limits how often it sends that email\./);
             expect(read('3-inventory.md')).toMatch(/For each workflow email that moves, note its workflow's ID and name and its email step's ID\./);
             expect(read('9-report.md')).toMatch(/check that it is transactional, sends from a verified sender/);
