@@ -67,13 +67,12 @@ A domain can post a copy of each delivered message to a URL, its `archive_to`, w
 
 Mailgun keeps suppression lists per sending domain. It drops a send to an address on any of them, transactional mail included. Its bounce list holds permanent failures only, such as a mailbox that doesn't exist. Take the lists of every domain the moved sites send from, and of no other domain: when the person keeps some domains' sites on Mailgun for their own suppression lists, as `mapping.md` says under "Domains", leave those domains' lists out. A re-import has no plan to name them: ask the person which sending domains' lists to import. A sending domain is the one the old code passed to Mailgun's client or API, such as `mg.example.com`, which can differ from the domain of its `from` address.
 
-**Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces, Complaints, and Unsubscribes. Ask the person to download each of them where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
+**Export from the dashboard (preferred).** In the Mailgun dashboard, the Suppressions tab of each sending domain lists Bounces, Complaints, and Unsubscribes. Ask the person to download Bounces and Complaints where the dashboard offers it, and to tell you where they saved each file. Read the header row to find the address column. When the dashboard offers no download, use the API.
 
 **Read from the API.** With the user `api` and the password `$MAILGUN_READ_API_KEY`:
 
 - `GET https://api.mailgun.net/v3/<domain>/bounces?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
 - `GET https://api.mailgun.net/v3/<domain>/complaints?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
-- `GET https://api.mailgun.net/v3/<domain>/unsubscribes?limit=1000`, or `https://api.eu.mailgun.net` for an EU domain
 
 Each answers `{ items, paging }`, and each item holds the entry's `address`. Read the next page from the URL in `paging.next`, until a page has no items. Wait and retry on `429`.
 
@@ -83,8 +82,9 @@ Each answers `{ items, paging }`, and each item holds the entry's `address`. Rea
 |---|---|
 | Bounces | `bounce` |
 | Complaints | `complaint` |
-| Unsubscribes | `manual` |
+
+**Leave out unsubscribes.** Mailgun keeps an unsubscribe for one sending domain, or for some of its tags only, while PostHog's list covers the whole project: imported, it would block PostHog's marketing email that the recipient never unsubscribed from. They are not suppressions.
 
 **Leave out allowlists.** An allowlist holds addresses and domains that Mailgun never adds to its bounce list. They are not suppressions.
 
-**Unsubscribes and Step 3's question.** An unsubscribe is a recipient who clicked a Mailgun unsubscribe link, or the unsubscribe footer, in an email from the domain, for the whole domain or for the message's tags. Mailgun then skips the address on every send from that domain, or with that tag, transactional ones included. PostHog's `manual` entry blocks only its marketing email, so a moved send reaches the address. When you ask Step 3's question about the suppression list, name these recipients next to the addresses added by hand or by a call: a site relies on the list when it must not mail a recipient who unsubscribed from the domain's emails, or from a tag the site sends.
+**Unsubscribes and Step 3's question.** An unsubscribe is a recipient who clicked a Mailgun unsubscribe link, or the unsubscribe footer, in an email from the domain, for the whole domain or for the message's tags. Mailgun then skips the address on every send from that domain, or with that tag, transactional ones included. The import leaves them out, so a moved send reaches the address. When you ask Step 3's question about the suppression list, name these recipients next to the addresses added by hand or by a call: a site relies on the list when it must not mail a recipient who unsubscribed from the domain's emails, or from a tag the site sends.
