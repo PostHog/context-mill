@@ -197,7 +197,7 @@ describe('migrate-email skill', () => {
             expect(inventory).toMatch(/read the step's `message_category_id` and `message_category_type` with `workflows-get`/);
             expect(inventory).toContain('the reason is `workflow step type differs from its category`');
             expect(inventory).toContain('sends it as marketing unless that type is `transactional`, a missing type included');
-            expect(inventory).toMatch(/When `workflows-get` or `message-categories-get` is missing, the workflow email stays, and the reason is `no message category tools`/);
+            expect(inventory).toMatch(/When `workflows-get` is missing, or `message-categories-get` is missing for a step with a category, the workflow email stays, and the reason is `no message category tools`/);
             expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
         });
 
