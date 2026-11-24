@@ -30,7 +30,7 @@ Write each API answer and each copy you make to a file in the system's temporary
 
 ## Where the email goes
 
-Write each email next to the module that sends it, in an `emails` folder, or in the folder where the app already keeps its email content. Name the files after the template key that Step 7 gives the send, such as `emails/welcome.html` and `emails/welcome.txt`, or `emails/WelcomeMail.tsx` for a React Email component. Two sites that send the same provider template share one email.
+Write each email next to the module that sends it, in an `emails` folder, or in the folder where the app already keeps its email content. Name the files after the template key that Step 7 gives the send, such as `emails/welcome.html` and `emails/welcome.txt`, or `emails/WelcomeMail.tsx` for a React Email component. Two sites that send the same provider template share one email. When their parts would take different renderers, such as React Email for one and the string-built `node` row for a part that Node.js runs with no build, write the shared email with a renderer every one of those parts can load, so one email serves them all, and write the reason in each site's plan row.
 
 Keep the content where the build ships it. A file that the code reads at run time by its path ships only when the build copies it: a bundler, a compiled binary, or a package that lists its data files can leave it out. So write the content as code, or embed it at build time, as the table below says, unless the app already ships template files the same way, such as a `templates` folder its template engine reads.
 
