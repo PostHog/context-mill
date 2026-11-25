@@ -7,14 +7,13 @@ description: Keep 4.x/5.x pubspec constraints without upgrading to 6.x
 
 Keep the existing `posthog_flutter` constraint in `pubspec.yaml` and never run a bare `flutter pub add posthog_flutter` (`6.x` requires Flutter 3.41+, Xcode 26+, Swift Package Manager, and iOS 15+).
 
-## Feature minimums inside 4.x and 5.x
+## APIs added inside 4.x and 5.x
 
-Check the installed version in `pubspec.lock` first. When it is below a feature's minimum, use the fallback. Raise an open range only within the installed major; never move a hard pin or cross a major, so a 4.x project never gets these features.
+Check the installed version in `pubspec.lock` first. When it is below an API's minimum, use the fallback.
 
-| Feature | Minimum | Below the minimum |
+| API | Minimum | Below the minimum |
 |---|---|---|
-| `captureException` (manual error capture) | 5.7.0 | No exception capture: report the minimum |
-| `errorTrackingConfig` (exception autocapture) | 5.9.0 | Report the minimum |
+| `errorTrackingConfig` (exception autocapture) | 5.9.0 | Call `Posthog().captureException()` in the app's error handlers |
 | `onFeatureFlags` in `PostHogConfig` | 5.10.0 | No load callback: call `Posthog().getFeatureFlag()` or `isFeatureEnabled()` where the flag is used |
 | `beforeSend` in `PostHogConfig` | 5.13.0 | Don't add it; report the minimum |
 | `getFeatureFlagResult` | 5.14.0 | `getFeatureFlag()` and `getFeatureFlagPayload()` |

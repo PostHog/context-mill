@@ -1,11 +1,11 @@
 ---
-title: posthog (Python) 8.x feature availability
+title: posthog (Python) 8.x API notes
 description: Which APIs 8.x has, for projects on the default major
 ---
 
-# posthog (Python) 8.x feature availability
+# posthog (Python) 8.x API notes
 
-Every 8.x release meets the feature minimums of the older majors, so no fallback applies:
+Every 8.x release has these APIs, so no fallback applies:
 
 - `PosthogFlaskIntegration`, `PosthogASGIMiddleware`, the Django REST Framework exception handler, `PosthogContextMiddleware`, and `enable_exception_autocapture=True` are all available.
 - `identify()` does not exist. Use `set(distinct_id=..., properties=...)` or `identify_context(...)` inside a context.

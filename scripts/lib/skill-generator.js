@@ -299,7 +299,7 @@ function supportedVersionsNote(skill, where) {
             : values[0] === '0'
                 ? '`0.x`'
                 : `major ${values[0]}`;
-        return `No archived **${displayName}** reference page exists on posthog.com, so the bundled reference targets **${skill.reference_version}** while the project already uses ${installedScope}. Rely on \`references/*/feature-minimums.md\` and \`references/*/migration.md\` for ${installedScope} rules, and never copy ${skill.reference_version}-only syntax.`;
+        return `No archived **${displayName}** reference page exists on posthog.com, so the bundled reference targets **${skill.reference_version}** while the project already uses ${installedScope}. Rely on \`references/*/api-notes.md\` and \`references/*/migration.md\` for ${installedScope} rules, and never copy ${skill.reference_version}-only syntax.`;
     }
     if (values.length > 1) {
         return `The bundled reference is written for the newest of them, **${displayName}**; the project already has one of these majors installed (older minors within a major can also differ).`;

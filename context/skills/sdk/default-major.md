@@ -4,7 +4,7 @@ This run targets **{display_name}**. Spot-search the bundled reference documenta
 
 ## Version facts
 
-This skill's `feature-minimums.md` reference, listed below, says which APIs this major has. Where a framework rule names a version, take the version from that file.
+This skill's `api-notes.md` reference, listed below, says which APIs this major has.
 
 ## On an existing install
 
@@ -12,7 +12,7 @@ When the project already declares this SDK, keep its major and any exact pin, an
 
 ## Bounded reference lookup
 
-Read `references/*/feature-minimums.md` in full right after this file — it is short. The bundled SDK reference page (`references/*.x.x.md` or `references/kmp.md`) is thousands of lines long. **Never** read that large reference file from start to finish in one call.
+Read `references/*/api-notes.md` in full right after this file — it is short. The bundled SDK reference page (`references/*.x.x.md` or `references/kmp.md`) is thousands of lines long. **Never** read that large reference file from start to finish in one call.
 
 1. Search this skill's `references` directory (pass the directory path to `Grep`, never a `.md` file path) for `^##`, `^###`, or exact symbol names first.
 2. Open only the matching slice with `Read` using `offset` and `limit` (25–40 lines).

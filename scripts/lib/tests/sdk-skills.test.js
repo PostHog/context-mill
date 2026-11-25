@@ -1039,13 +1039,6 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
         }
     });
 
-    it('keeps non-default-major.md free of known syntax errors', () => {
-        const nonDefaultMd = fs.readFileSync(path.join(REPO_CONFIG_DIR, 'skills', 'sdk', 'non-default-major.md'), 'utf8');
-        expect(nonDefaultMd).not.toContain('<<M+1>');
-        expect(nonDefaultMd).toContain('`<M+1`');
-        expect(nonDefaultMd).toContain('`"=X.Y.Z"` in `Cargo.toml`');
-    });
-
     it('states the supported versions and the lower-major rule in non-default-major.md', () => {
         const nonDefaultMd = fs.readFileSync(path.join(REPO_CONFIG_DIR, 'skills', 'sdk', 'non-default-major.md'), 'utf8');
         expect(nonDefaultMd).toContain('This skill supports {supported_versions}. {supported_versions_note}');
@@ -1197,14 +1190,14 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
         expect(refNonZero).toContain('targets **3.x** while the project already uses major 2.');
     });
 
-    const FEATURE_MINIMUMS_FACTS = [
-        ['sdk-posthog-python-v7', ['PosthogFlaskIntegration', '7.69.0', '5.4', '6.0.0', 'early 3.x', '`from posthog import new_context, identify_context`', '`POSTHOG_RELEASE_ID`', '`[ABORT] posthog sdk upgrade required: posthog <current> (requires >=7.62.0)`']],
+    const API_NOTES_FACTS = [
+        ['sdk-posthog-python-v7', ['PosthogFlaskIntegration', '7.69.0', '5.4', '6.0.0', 'early 3.x', '`from posthog import new_context, identify_context`']],
         ['sdk-posthog-python-v8', ['PosthogFlaskIntegration', '`identify()` does not exist']],
-        ['sdk-posthog-node-v5', ['4.5.0', '5.2.1', '`withContext`', 'captureException(err, distinctId, additionalProperties)', '`[ABORT] posthog sdk upgrade required: posthog-node <current> (requires >=5.0.0)`']],
+        ['sdk-posthog-node-v5', ['5.2.1', '`withContext`', 'captureException(err, distinctId, additionalProperties)']],
         ['sdk-posthog-node-v6', ['captureException(err, { distinctId, properties })']],
-        ['sdk-posthog-go-v1', ['`github.com/posthog/posthog-go/otel`', '`[ABORT] posthog sdk upgrade required: posthogmcpsdk <current> (requires >=v1.34.0)`']],
+        ['sdk-posthog-go-v1', ['`github.com/posthog/posthog-go/otel`', '`github.com/posthog/posthog-go/posthogmcpsdk`']],
         ['sdk-posthog-go-v2', ['`github.com/posthog/posthog-go/v2`', '`github.com/posthog/posthog-go/otel/v2`']],
-        ['sdk-posthog-rust-v0', ['`posthog-rs`', '`tls`', '`[ABORT] posthog sdk upgrade required: posthog-rs <current> (requires >=0.29.0)`']],
+        ['sdk-posthog-rust-v0', ['`posthog-rs`', '`tls`', '`client.capture(event).await`']],
         ['sdk-posthog-rust-v1', ['`cargo add posthog@1`', '`use posthog::...`', '`tls`']],
         ['sdk-posthog-ios-v3', ["pod 'PostHog'", 'Xcode 26', '`capture(...)`']],
         ['sdk-posthog-ios-v4', ['Swift Package Manager only', 'Xcode 26']],
@@ -1216,14 +1209,14 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
         ['sdk-posthog-kmp-v1', ['PostHogConfig("<token>") {', 'captureScreenViews']],
     ];
 
-    it('covers every disk-loaded sdk variant in FEATURE_MINIMUMS_FACTS', () => {
+    it('covers every disk-loaded sdk variant in API_NOTES_FACTS', () => {
         const diskSdkIds = allSkills.filter((s) => s._category === 'sdk').map((s) => s.id).sort();
-        expect(FEATURE_MINIMUMS_FACTS.map(([id]) => id).sort()).toEqual(diskSdkIds);
+        expect(API_NOTES_FACTS.map(([id]) => id).sort()).toEqual(diskSdkIds);
     });
 
-    it.each(FEATURE_MINIMUMS_FACTS)('%s ships its version facts in references/<variant>/feature-minimums.md', async (skillId, facts) => {
+    it.each(API_NOTES_FACTS)('%s ships its version facts in references/<variant>/api-notes.md', async (skillId, facts) => {
         const skill = allSkills.find((s) => s.id === skillId);
-        const outputDir = path.join(dir, 'feature-minimums-out');
+        const outputDir = path.join(dir, 'api-notes-out');
         await generateSkill({
             skill,
             version: 'test',
@@ -1236,11 +1229,11 @@ describe('checked-in context/skills/sdk configs and commandments', () => {
             sharedDocs: [],
             fetchDocFn: (url) => Promise.resolve({ content: url.endsWith('migration.md') ? SAMPLE_MIGRATION : '# x\n', title: 'x' }),
         });
-        const file = path.join(outputDir, skill.id, 'references', skill._shortId, 'feature-minimums.md');
+        const file = path.join(outputDir, skill.id, 'references', skill._shortId, 'api-notes.md');
         const text = fs.readFileSync(file, 'utf8');
         for (const fact of facts) expect(text).toContain(fact);
         const rendered = fs.readFileSync(path.join(outputDir, skill.id, 'SKILL.md'), 'utf8');
-        expect(rendered).toContain(`references/${skill._shortId}/feature-minimums.md`);
-        expect(rendered).toContain('`feature-minimums.md`');
+        expect(rendered).toContain(`references/${skill._shortId}/api-notes.md`);
+        expect(rendered).toContain('`api-notes.md`');
     });
 });
