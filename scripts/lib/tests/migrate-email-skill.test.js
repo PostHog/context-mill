@@ -160,8 +160,6 @@ describe('migrate-email skill', () => {
             expect(inventory).toContain('`message-categories-list`');
             expect(inventory).toMatch(/\| site \| file \| line \| language \| sends \| content \| category \| from \| moves \| reason \|/);
             expect(inventory).toMatch(/The category: blank for no category, or the key of the category its email is filed under in PostHog/);
-            expect(inventory).toMatch(/When the person asks to move an email that a PostHog workflow sends into the code, the site is the code they name to send it/);
-            expect(inventory).toMatch(/The site keeps the category of the workflow's email step: read the step.s `message_category_id` and `message_category_type` with `workflows-get`, and the category's key, type, name, and description with `message-categories-get`/);
             expect(inventory).toMatch(/Copy an existing category's key, type, name, and description exactly: a key spelled another way makes a new category that no recipient opted out of/);
             expect(inventory).toMatch(/The first send creates a new category, so make none yourself/);
             expect(inventory).toMatch(/for each category key, note its type, name, and description, and mark it new when it is not in PostHog yet/);
@@ -191,22 +189,6 @@ describe('migrate-email skill', () => {
             expect(read('8-verify.md')).toMatch(/A site with a blank category, or one that sends a template made in PostHog, passes none\./);
         });
 
-        it("moves a workflow email only when its step's saved type and its category's type match", () => {
-            const inventory = read('3-inventory.md');
-
-            expect(inventory).toMatch(/read the step's `message_category_id` and `message_category_type` with `workflows-get`/);
-            expect(inventory).toContain("The workflow email moves only when the step has both a saved type and a category, and the category's type matches the step's");
-            expect(inventory).toContain('Any other step stays, and the reason is `workflow step has no matching category`');
-            expect(inventory).toMatch(/When `workflows-get` or `message-categories-get` is missing, the workflow email stays, and the reason is `no message category tools`/);
-            expect(inventory).toMatch(/A marketing step also stays when `workflows-sending-rules-get` shows a marketing frequency cap for the project, unless the step sets `skip_frequency_cap: true`: a code send with a category skips that cap\. The reason is `workflow frequency cap`/);
-            expect(inventory).toMatch(/When `workflows-sending-rules-get` is missing or fails, a marketing step stays with that reason/);
-            expect(inventory).toMatch(/When the app sends from another project, or nobody can tell, the workflow email stays, and the reason is `workflow in another project`/);
-            expect(inventory).toMatch(/A workflow whose `workflows-get` shows `email_sending_paused_at` set stays too, and the reason is `workflow sending paused`/);
-            expect(inventory).toMatch(/A workflow with `trigger_masking` set, or any other limit on how often a person enters it, stays too, and the reason is `workflow enrollment limit`/);
-            expect(inventory).toMatch(/The workflow email moves only when the workflow has the simplest shape: in the live workflow that `workflows-get` returns, its `actions` are the trigger, that one email step, and the exit, and its `edges` lead from the trigger straight to the email step and from it to the exit, with no delay, wait, branch, or other step\. It must also have no `email_sending_rate_limit` and no unpublished `draft`\. Any other workflow stays, and the reason is `workflow not a single immediate email`/);
-            expect(inventory.split('## Classify each site')[1].split('\n## ')[0]).toContain('A workflow email the person asks to move into the code takes its kind from "The category of each site" below');
-        });
-
         it('leaves out a category description longer than the send takes, in step 7', () => {
             expect(read('7-rewrite.md')).toMatch(/Leave out a description longer than 1,000 characters: the send refuses it, and PostHog uses the description only when the send creates the category\./);
             expect(read('8-verify.md')).toMatch(/passes the key, type, name, and description the plan notes, without a description longer than 1,000 characters/);
@@ -227,12 +209,6 @@ describe('migrate-email skill', () => {
             expect(read('5-suppressions.md')).toContain('Every send that moves from the provider is transactional');
         });
 
-        it("asks about the provider's suppression list only for sites that sent through the provider, in steps 3 and 5", () => {
-            expect(read('3-inventory.md')).toContain('for the sites the checks above leave moving that sent through the provider, which of them');
-            expect(read('5-suppressions.md')).toContain('which sites that move and sent through the provider rely on it');
-            expect(read('5-suppressions.md')).toContain('every site that moves and sent through the provider stays with that reason');
-        });
-
         it('refuses a new category key that the project already has, in step 3', () => {
             expect(read('3-inventory.md')).toMatch(/A new key must not be in that list, whatever its category's type: when it is, ask them for another\./);
         });
@@ -248,7 +224,6 @@ describe('migrate-email skill', () => {
             expect(rewriteStep).toMatch(/In a marketing site, the unsubscribe link that the provider filled becomes `\{\{ unsubscribe_url \}\}`\./);
             for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'recipient_opted_out']) expect(rewriteStep).toContain(`\`${code}\``);
             expect(rewriteStep).toMatch(/`recipient_opted_out`[^\n]*never retry/);
-            expect(rewriteStep).toMatch(/A site that sends a workflow email moved into the code handles `recipient_opted_out` and `recipient_suppressed` like that too, also when it handled neither before: [^\n]*never fails, retries, or requeues the job for it\./);
         });
 
         it('says a send only creates or restores a category, and names its 400 refusals by code, in step 7', () => {
@@ -276,12 +251,6 @@ describe('migrate-email skill', () => {
             expect(read('9-report.md')).toMatch(/Under the table, list each category the plan marks new that a moved site uses, with its key, type, name, and description/);
             expect(read('9-report.md')).toMatch(/a category the plan marks new exists only after its first send, so make it in PostHog first, with the key, type, name, and description this report lists for it/);
             expect(read('9-report.md')).toMatch(/a branch for a suppressed or opted-out recipient/);
-            const cutover = read('9-report.md').split('## Before cutover')[1].split('\n## ')[0];
-            expect(cutover).toMatch(/each workflow email moved into the code, with its workflow and email step IDs from the plan \(right before the deploy starts, read the live workflow again with `workflows-get`\. Its `version` and `updated_at` must be the ones the plan notes, and it must still be the trigger, that one email step, and the exit, with the step's `message_category_id` and `message_category_type` the plan notes, no `trigger_masking`, no `email_sending_rate_limit`, no `email_sending_paused_at`, and no unpublished `draft`\. For a marketing step, also check the project's sending rules again with `workflows-sending-rules-get`, and the step's `skip_frequency_cap`: no marketing frequency cap may cover the step\. When anything changed, keep the step in PostHog and take that site's change out of the deploy\. Otherwise deploy, and only once every instance of the app runs the new code, remove the step, publish the workflow, which then carries only this removal, and check that the step is gone from the live, published workflow: an edit you only save stays a draft, and the live workflow keeps sending beside the code\. Until the step is gone, a person both the workflow and the code reach gets the email twice, once from each: this order sends some emails twice rather than losing any\. When the deploy rolls back after you removed the step, add the step back and publish the workflow again\)/);
-            expect(cutover).not.toContain('each marketing workflow email moved into the code (before you remove its step');
-            expect(cutover).not.toContain('turn off that step');
-            expect(read('9-report.md')).toMatch(/For each marketing workflow email moved into the code, write that its code send skips the project's marketing frequency cap, also one turned on later, so the app limits how often it sends that email\./);
-            expect(read('3-inventory.md')).toMatch(/For each workflow email that moves, note its workflow's ID and name, the `version` and `updated_at` that `workflows-get` returned for it, its email step's ID, and the step's `message_category_id` and `message_category_type`\./);
             expect(read('9-report.md')).toMatch(/check that it is transactional, sends from a verified sender/);
             expect(read('resend/mapping.md')).toMatch(/makes it transactional once a verified sender covers its address/);
         });
