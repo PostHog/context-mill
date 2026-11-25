@@ -7,14 +7,17 @@ spiral.
 
 ## Install
 
-Detect the package manager from the project's lockfile and run its install once,
-in this project directory. The manifest already declares PostHog. A plain HTML
-site, where the install step installed nothing and init added the HTML snippet,
-has nothing to install or build: skip both, create no manifest, and review the
-pages the snippet went into. If install is
-slow, errors, or can't resolve a package, do not retry with offline flags and do
-not poke the package manager's global store or cache — a failed install is a
-conflict to report (below), not a problem to fight.
+A plain HTML site, where the install step installed nothing and init added the
+HTML snippet, runs no package manager here: no install, no `npm ci`, and no
+check that needs one, even when a `package.json` lists dev tooling. Create no
+manifest or lockfile. Review the pages the snippet went into, skip Build and
+verify, and say so in your handoff.
+
+Otherwise, detect the package manager from the project's lockfile and run its
+install once, in this project directory. The manifest already declares PostHog.
+If install is slow, errors, or can't resolve a package, do not retry with
+offline flags and do not poke the package manager's global store or cache — a
+failed install is a conflict to report (below), not a problem to fight.
 
 ## Review the integration
 
