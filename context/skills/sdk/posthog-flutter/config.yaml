@@ -8,7 +8,7 @@ variants:
   - id: v5
     display_name: 5.x.x
     template: ../non-default-major.md
-    match: { sdkFlutter: ["4", "5"] }
+    match: { posthogSdks: ["posthog_flutter@4", "posthog_flutter@5"] }
     docs_urls:
       - https://posthog.com/docs/libraries/flutter/5.x.x.md
       - https://posthog.com/docs/libraries/flutter/migration.md
@@ -17,6 +17,6 @@ variants:
     default: true
     display_name: 6.x.x
     template: ../default-major.md
-    match: { sdkFlutter: ["6"] }
+    match: { posthogSdks: ["posthog_flutter@6"] }
     docs_urls:
       - https://posthog.com/docs/libraries/flutter/6.x.x.md

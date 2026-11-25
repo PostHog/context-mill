@@ -8,7 +8,7 @@ variants:
   - id: v3
     display_name: 3.x.x
     template: ../non-default-major.md
-    match: { sdkIos: ["3"] }
+    match: { posthogSdks: ["PostHog@3", "github.com/posthog/posthog-ios@3"] }
     docs_urls:
       - https://posthog.com/docs/libraries/ios/3.x.x.md
       - https://posthog.com/docs/libraries/ios/migration.md
@@ -17,6 +17,6 @@ variants:
     default: true
     display_name: 4.x.x
     template: ../default-major.md
-    match: { sdkIos: ["4"] }
+    match: { posthogSdks: ["PostHog@4", "github.com/posthog/posthog-ios@4"] }
     docs_urls:
       - https://posthog.com/docs/libraries/ios/4.x.x.md

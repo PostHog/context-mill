@@ -269,7 +269,10 @@ function supportedVersionsValues(match, where = 'Skill') {
             `${where} uses {supported_versions} but match mixes multiple keys (${entries.map(([k]) => k).join(', ')})`,
         );
     }
-    const values = [entries[0][1]].flat().filter(v => typeof v === 'string' && v.length > 0);
+    // A value is `<package>@<major>`; one major can list several package names.
+    const values = [...new Set([entries[0][1]].flat()
+        .filter(v => typeof v === 'string' && v.length > 0)
+        .map(v => v.slice(v.lastIndexOf('@') + 1)))];
     if (values.length === 0) {
         throw new Error(`${where} uses {supported_versions} but match has no values`);
     }
@@ -291,7 +294,7 @@ function supportedVersionsText(match, where) {
  */
 function supportedVersionsNote(skill, where) {
     const values = supportedVersionsValues(skill.match, where);
-    const [[matchKey]] = Object.entries(skill.match || {});
+    const isRust = Object.values(skill.match || {}).flat().some(v => String(v).startsWith('posthog-rs@'));
     const displayName = skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name;
     if (skill.reference_version) {
         const installedScope = values.length > 1
@@ -305,7 +308,7 @@ function supportedVersionsNote(skill, where) {
         return `The bundled reference is written for the newest of them, **${displayName}**; the project already has one of these majors installed (older minors within a major can also differ).`;
     }
     if (values[0] === '0') {
-        const cargoNote = matchKey === 'sdkRust'
+        const cargoNote = isRust
             ? ', and Cargo treats each `0.y` minor as breaking'
             : '';
         return `The bundled reference covers the latest **${displayName}** release, and the project already uses \`0.x\` (older \`0.x\` minors can still differ from the reference${cargoNote}).`;
@@ -384,7 +387,8 @@ function validateVariantTable(key, group) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
                 : null;
-            const validValue = v => typeof v === 'string' && v.length > 0 && !v.includes(':');
+            // A tag splits at its first `:`, so a value may hold one, as a Maven `group:artifact` does.
+            const validValue = v => typeof v === 'string' && v.length > 0;
             if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || !(Array.isArray(v) ? v.length > 0 && v.every(validValue) : validValue(v)))) {
                 throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings or non-empty lists of strings`);
             }
@@ -770,27 +774,6 @@ async function fetchDocOnce(url) {
 }
 
 /**
- * Rewrite `https://posthog.com` origin to `POSTHOG_DOCS_BASE_URL` when set,
- * so local doc previews never touch the production URL or cache.
- */
-function resolveDocUrl(url) {
-    const override = process.env.POSTHOG_DOCS_BASE_URL?.trim();
-    if (!override) return { fetchUrl: url, overridden: false };
-    let parsed;
-    try {
-        parsed = new URL(url);
-    } catch {
-        return { fetchUrl: url, overridden: false };
-    }
-    if (parsed.origin !== 'https://posthog.com') return { fetchUrl: url, overridden: false };
-    const normalized = override.replace(/\/+$/, '');
-    return {
-        fetchUrl: `${normalized}${parsed.pathname}${parsed.search}${parsed.hash}`,
-        overridden: true,
-    };
-}
-
-/**
  * Extract the top `## Checklist` section from a migration guide markdown document.
  * Drops leading intro text so the non-default SKILL.md receives only the checklist items.
  * Returns null when the heading or bullet items are absent so callers fall back cleanly.
@@ -807,27 +790,21 @@ function extractMigrationChecklist(markdown) {
 
 /**
  * Fetch markdown content from a URL, with an on-disk cache and retries.
- * When `POSTHOG_DOCS_BASE_URL` overrides the origin, bypasses `.docs-cache`
- * and reuses `memoryCache` (when provided) so repeated doc refs fetch once per run.
- * Logs `Fetching doc:` only on a real network fetch — cache hits are silent.
+ * Returns both content and inferred metadata. Logs `Fetching doc:` only
+ * on a real network fetch — cache hits are silent.
  */
-async function fetchDoc(url, { memoryCache } = {}) {
-    const { fetchUrl, overridden } = resolveDocUrl(url);
-    if (overridden && memoryCache?.has(fetchUrl)) {
-        return memoryCache.get(fetchUrl);
-    }
-    const cached = overridden ? null : readDocCache(url);
+async function fetchDoc(url) {
+    const cached = readDocCache(url);
     if (cached?.fresh) {
         return { content: cached.content, title: cached.title };
     }
 
-    console.log(`  Fetching doc: ${fetchUrl}`);
+    console.log(`  Fetching doc: ${url}`);
     let lastError;
     for (let attempt = 1; attempt <= FETCH_RETRIES; attempt++) {
         try {
-            const result = await fetchDocOnce(fetchUrl);
-            if (overridden) memoryCache?.set(fetchUrl, result);
-            else writeDocCache(url, result);
+            const result = await fetchDocOnce(url);
+            writeDocCache(url, result);
             return result;
         } catch (error) {
             lastError = error;
@@ -1263,10 +1240,8 @@ async function runGenerate({
     outputDir,
     skipPatterns,
     commandmentsConfig,
-    memoryCache = new Map(),
 }) {
     fs.mkdirSync(outputDir, { recursive: true });
-    const fetchDocFn = url => fetchDoc(url, { memoryCache });
 
     for (const skill of skills) {
         console.log(`\nGenerating skill: ${skill.id}`);
@@ -1281,7 +1256,6 @@ async function runGenerate({
             commandmentsConfig,
             skillTemplate: skill._template,
             sharedDocs: skill._sharedDocs || [],
-            fetchDocFn,
         });
 
         console.log(`  ✓ ${skill.id}`);
@@ -1299,7 +1273,6 @@ async function generateSkillsByIds({
     configDir,
     outputDir,
     version,
-    memoryCache,
 }) {
     const { skills, commandmentsConfig, skipPatterns } = loadAndExpandSkills({ configDir });
     const idSet = new Set(ids);
@@ -1317,7 +1290,6 @@ async function generateSkillsByIds({
         outputDir,
         skipPatterns,
         commandmentsConfig,
-        memoryCache,
     });
 
     return {
@@ -1334,14 +1306,12 @@ async function generateSkillsByIds({
  * @param {string} options.configDir - Config directory path (context)
  * @param {string} options.outputDir - Output directory for generated skills
  * @param {string} options.version - Build version
- * @param {Map} [options.memoryCache] - Optional per-run cache for overridden doc URLs
  */
 async function generateAllSkills({
     repoRoot,
     configDir,
     outputDir,
     version,
-    memoryCache,
 }) {
     console.log('Loading configuration...');
 
@@ -1357,7 +1327,6 @@ async function generateAllSkills({
         outputDir,
         skipPatterns,
         commandmentsConfig,
-        memoryCache,
     });
 
     console.log(`\n✓ Generated ${skills.length} skills to ${outputDir}`);
@@ -1382,8 +1351,6 @@ export {
     runGenerate,
     generateSkillsByIds,
     serializeSkill,
-    docCachePath,
-    resolveDocUrl,
     fetchDoc,
     extractMigrationChecklist,
     parseCliBlock,

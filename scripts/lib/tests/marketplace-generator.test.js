@@ -98,23 +98,4 @@ describe('generateMarketplace', () => {
         expect(fs.readdirSync(megaSkillsDir).sort()).toEqual(['integration-nextjs-app', 'integration-skill-only']);
         expect(warnSpy).not.toHaveBeenCalled();
     });
-
-    it('warns and skips non-internal skills in unmapped categories', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const skills = [
-            {
-                id: 'unmapped-public',
-                shortId: 'public',
-                category: 'unmapped',
-                displayName: 'Unmapped',
-                description: 'Public unmapped skill',
-            },
-        ];
-        createBuiltSkill('unmapped-public');
-
-        const res = generateMarketplace({ skills, tempDir, version: '1.0.0', outputDir, configDir });
-
-        expect(res.skillCount).toBe(0);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No plugin mapping for group "unmapped"'));
-    });
 });

@@ -11,7 +11,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
 import { generateAllSkills, fetchDoc } from './lib/skill-generator.js';
 import { generateMarketplace } from './lib/marketplace-generator.js';
 import {
@@ -28,10 +27,10 @@ const BUILD_VERSION = process.env.BUILD_VERSION || 'dev';
 /**
  * Fetch and concatenate docs for a guide resource
  */
-async function fetchDocContent(doc, { memoryCache } = {}) {
+async function fetchDocContent(doc) {
     const parts = [];
     for (const url of (doc.urls || [])) {
-        const result = await fetchDoc(url, { memoryCache });
+        const result = await fetchDoc(url);
         if (result) {
             parts.push(result.content);
         }
@@ -39,54 +38,36 @@ async function fetchDocContent(doc, { memoryCache } = {}) {
     return parts.join('\n\n---\n\n');
 }
 
-/**
- * Run the full resource build pipeline into `distDir`.
- * Shares one in-memory doc cache across skill generation and inline docs.
- * `wizardPicks` is what the resolvability check runs the built menu against.
- */
-async function buildResources({
-    repoRoot = path.join(import.meta.dirname, '..'),
-    configDir = path.join(repoRoot, 'context'),
-    distDir = path.join(repoRoot, 'dist'),
-    version = BUILD_VERSION,
-    wizardPicks = {
-        frameworks: WIZARD_FRAMEWORKS,
-        matchKeys: WIZARD_MATCH_KEYS,
-        taskSkills: WIZARD_TASK_SKILLS,
-        packFamily: FRAMEWORK_PACK_FAMILY,
-    },
-} = {}) {
+async function main() {
     console.log('Building resources...');
-    console.log(`Version: ${version}\n`);
+    console.log(`Version: ${BUILD_VERSION}\n`);
 
+    const repoRoot = path.join(import.meta.dirname, '..');
+    const configDir = path.join(repoRoot, 'context');
+    const distDir = path.join(repoRoot, 'dist');
     const skillsDir = path.join(distDir, 'skills');
     const tempDir = path.join(distDir, 'skills-temp');
-    const memoryCache = new Map();
-
-    fs.mkdirSync(skillsDir, { recursive: true });
-    fs.rmSync(tempDir, { recursive: true, force: true });
-
-    let skills;
-    const docEntries = loadDocsConfig(configDir);
-    const skillZips = {};
-    let marketplaceResult;
 
     try {
-        skills = await generateAllSkills({
+        fs.mkdirSync(skillsDir, { recursive: true });
+
+        const skills = await generateAllSkills({
             repoRoot,
             configDir,
             outputDir: tempDir,
-            version,
-            memoryCache,
+            version: BUILD_VERSION,
         });
 
         // Non-blocking: a skill with no tags of its own gets only the commandments that apply to every skill.
-        // Skills with `match` publish `key:value` and group tags on the menu without needing commandment tags.
+        // A skill with `match` publishes `key:value` menu tags, so it needs no commandment tags.
         for (const skill of skills) {
             if (!skill.tags?.length && !skill.match) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
         }
 
+        const docEntries = loadDocsConfig(configDir);
+
         console.log('\nCreating skill ZIPs...');
+        const skillZips = {};
         for (const skill of skills) {
             const skillDir = path.join(tempDir, skill.id);
             const buffer = await zipSkillToBuffer(skillDir);
@@ -97,95 +78,93 @@ async function buildResources({
             console.log(`  ✓ ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
         }
         console.log('\nGenerating marketplace plugins...');
-        marketplaceResult = generateMarketplace({
+        const marketplaceResult = generateMarketplace({
             skills,
             tempDir,
-            version,
+            version: BUILD_VERSION,
             outputDir: distDir,
             configDir,
         });
-    } finally {
+
         fs.rmSync(tempDir, { recursive: true, force: true });
-    }
 
-    const docContents = {};
-    if (docEntries.length > 0) {
-        console.log('\nFetching doc resources...');
-        for (const doc of docEntries) {
-            console.log(`\nDoc: ${doc.id}`);
-            docContents[doc.id] = await fetchDocContent(doc, { memoryCache });
-            console.log(`  ✓ ${doc.id} (${docContents[doc.id].length} chars)`);
-        }
-    }
-
-    const manifest = writeManifestAndMenu({
-        allSkills: skills,
-        docContents,
-        distDir,
-        configDir,
-        version,
-    });
-    console.log(`\n  ✓ manifest.json`);
-
-    const skillMenu = JSON.parse(fs.readFileSync(path.join(skillsDir, 'skill-menu.json'), 'utf8'));
-    const menuEntries = Object.values(skillMenu.categories).flat().length;
-    console.log(`  ✓ skill-menu.json (${Object.keys(skillMenu.categories).length} categories, ${menuEntries} entries)`);
-
-    // Every run the wizard can send resolves a skill in every family it picks from.
-    const resolvability = checkSkillResolvability(skillMenu, wizardPicks);
-    for (const { family, id, reason } of resolvability.unreachable) {
-        console.warn(`  [WARN] No pick in family "${family}" reaches "${id}": ${reason}`);
-    }
-    const failures = [
-        resolvability.absent.length > 0 && absentMessage(resolvability.absent),
-        resolvability.missing.length > 0 && missingMessage(resolvability.missing),
-    ].filter(Boolean);
-    if (failures.length > 0) throw new Error(failures.join('\n\n'));
-    console.log(`  ✓ ${wizardPicks.frameworks.length} frameworks resolve in ${resolvability.families.join(', ') || 'no family'}`);
-
-    const releaseAssetDocs = docEntries.filter(d => d.release_asset);
-    if (releaseAssetDocs.length > 0) {
-        console.log('\nWriting release-asset docs...');
-        for (const doc of releaseAssetDocs) {
-            const content = docContents[doc.id];
-            if (content) {
-                const filename = `${doc.id}.md`;
-                fs.writeFileSync(path.join(skillsDir, filename), content);
-                console.log(`  ✓ ${filename} (${content.length} chars)`);
+        const docContents = {};
+        if (docEntries.length > 0) {
+            console.log('\nFetching doc resources...');
+            for (const doc of docEntries) {
+                console.log(`\nDoc: ${doc.id}`);
+                docContents[doc.id] = await fetchDocContent(doc);
+                console.log(`  ✓ ${doc.id} (${docContents[doc.id].length} chars)`);
             }
         }
-    }
 
-    console.log('\nCreating bundled archive...');
-    const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
-    const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
-    console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
+        const manifest = writeManifestAndMenu({
+            allSkills: skills,
+            docContents,
+            distDir,
+            configDir,
+            version: BUILD_VERSION,
+        });
+        console.log(`\n  ✓ manifest.json`);
 
-    console.log('\n' + '='.repeat(50));
-    console.log('Build complete!\n');
-    console.log('Output:', skillsDir);
-    console.log('Bundle:', bundlePath);
-    console.log(`Resources: ${manifest.resources.length} (${skills.length} skills, ${docEntries.length} docs)`);
-    console.log('\nSkill ZIPs:');
-    for (const skill of skills) {
-        const downloadUrl = manifest.resources.find(s => s.id === skill.id)?.downloadUrl;
-        console.log(`  - ${skill.id}.zip → ${downloadUrl}`);
-    }
-    if (docEntries.length > 0) {
-        console.log('\nInline docs:');
-        for (const doc of docEntries) {
-            console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
+        const skillMenu = JSON.parse(fs.readFileSync(path.join(skillsDir, 'skill-menu.json'), 'utf8'));
+        const menuEntries = Object.values(skillMenu.categories).flat().length;
+        console.log(`  ✓ skill-menu.json (${Object.keys(skillMenu.categories).length} categories, ${menuEntries} entries)`);
+
+        // Every run the wizard can send resolves a skill in every family it picks from.
+        const resolvability = checkSkillResolvability(skillMenu, {
+            frameworks: WIZARD_FRAMEWORKS,
+            matchKeys: WIZARD_MATCH_KEYS,
+            taskSkills: WIZARD_TASK_SKILLS,
+            packFamily: FRAMEWORK_PACK_FAMILY,
+        });
+        for (const { family, id, reason } of resolvability.unreachable) {
+            console.warn(`  [WARN] No pick in family "${family}" reaches "${id}": ${reason}`);
         }
-    }
-    console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
-    console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
+        const failures = [
+            resolvability.absent.length > 0 && absentMessage(resolvability.absent),
+            resolvability.missing.length > 0 && missingMessage(resolvability.missing),
+        ].filter(Boolean);
+        if (failures.length > 0) throw new Error(failures.join('\n\n'));
+        console.log(`  ✓ ${WIZARD_FRAMEWORKS.length} frameworks resolve in ${resolvability.families.join(', ') || 'no family'}`);
 
-    return { skills, manifest, marketplaceResult };
-}
+        const releaseAssetDocs = docEntries.filter(d => d.release_asset);
+        if (releaseAssetDocs.length > 0) {
+            console.log('\nWriting release-asset docs...');
+            for (const doc of releaseAssetDocs) {
+                const content = docContents[doc.id];
+                if (content) {
+                    const filename = `${doc.id}.md`;
+                    fs.writeFileSync(path.join(skillsDir, filename), content);
+                    console.log(`  ✓ ${filename} (${content.length} chars)`);
+                }
+            }
+        }
 
-async function main() {
-    try {
-        await buildResources();
+        console.log('\nCreating bundled archive...');
+        const bundlePath = path.join(distDir, 'skills-mcp-resources.zip');
+        const bundleSize = await createBundledArchive(bundlePath, manifest, skillZips);
+        console.log(`  ✓ skills-mcp-resources.zip (${(bundleSize / 1024).toFixed(1)} KB)`);
+
+        console.log('\n' + '='.repeat(50));
+        console.log('Build complete!\n');
+        console.log('Output:', skillsDir);
+        console.log('Bundle:', bundlePath);
+        console.log(`Resources: ${manifest.resources.length} (${skills.length} skills, ${docEntries.length} docs)`);
+        console.log('\nSkill ZIPs:');
+        for (const skill of skills) {
+            const downloadUrl = manifest.resources.find(s => s.id === skill.id)?.downloadUrl;
+            console.log(`  - ${skill.id}.zip → ${downloadUrl}`);
+        }
+        if (docEntries.length > 0) {
+            console.log('\nInline docs:');
+            for (const doc of docEntries) {
+                console.log(`  - ${doc.id} (${docContents[doc.id].length} chars)`);
+            }
+        }
+        console.log(`\nMarketplace: ${marketplaceResult.marketplaceDir}`);
+        console.log(`  ${marketplaceResult.pluginCount} plugins, ${marketplaceResult.skillCount} skills`);
+
     } catch (e) {
         console.error('\n[FATAL] Build failed:', e.message);
         console.error(e.stack);
@@ -193,8 +172,4 @@ async function main() {
     }
 }
 
-if (process.argv[1] && fs.existsSync(process.argv[1]) && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
-    main();
-}
-
-export { buildResources, fetchDocContent };
+main();
