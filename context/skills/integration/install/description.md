@@ -17,6 +17,11 @@ client library, plus the server library if the app sends events server-side.
 
 Read the manifest first. If the SDK is already installed, leave it and say so.
 
+A plain HTML site has no bundler or site generator and serves its HTML files as
+they are; any `package.json` it has holds only dev tooling. Install nothing
+there and create no manifest: the init step adds the HTML snippet. Say so in
+your handoff and finish.
+
 Explicit-pin ecosystems (Swift SPM, Gradle) have no install command that resolves a
 version — declare the dependency as the library doc shows, taking the version it pins.
 

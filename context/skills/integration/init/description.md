@@ -10,13 +10,22 @@ Use the framework's public env-var convention so the client can read them.
 - the public project token
 - the PostHog host
 
-Where a build genuinely has no valid environment to read from, often
-mobile projects, (iOS/Android release and archive builds), embed the
-real public token in the config the build ships — never an empty string or
-placeholder. Env-based configuration still covers development and any build
-that can read the environment.
+The project token is public; only a personal API key is a secret. Where a build
+genuinely has no valid environment to read from, such as mobile release and
+archive builds (iOS/Android) or a plain HTML site (below), embed the real
+public token in what ships — never an empty string or placeholder. Env-based
+configuration still covers development and any build that can read the
+environment.
 
-Then document these keys for other developers: add them to `.env.example` (create
+**Plain HTML sites.** A site with no bundler or site generator serves its HTML
+files as they are, so nothing can read an env var. A `package.json` that holds
+only dev tooling (a formatter, a linter, a local server) does not change that. Paste the HTML snippet from the JavaScript web docs
+under Reference into the `<head>` of the shared template, or of every
+top-level page when there is none, with the real project token and host.
+Write no `.env` or `.env.example` there, since nothing reads them, and say in
+your handoff that later steps reach PostHog through `window.posthog`.
+
+Otherwise, document these keys for other developers: add them to `.env.example` (create
 it if the project has none), with the real names and empty or placeholder values —
 never the real secret. This file is committed, so the next developer knows which
 keys to set. The example file is the only `.env*` you may write directly; the
