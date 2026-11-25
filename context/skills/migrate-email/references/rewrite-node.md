@@ -51,6 +51,12 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
 - Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
 
+## A test
+
+- posthog-node sends with the global `fetch`, so a fake on `globalThis.fetch`, or on the `fetch` client option where the app passes one, answers the send, as `8-verify.md` says. The client reads the global `fetch` at each request, so a fake put on after the client is made still answers.
+- Each email request races a `setTimeout` of `emailRequestTimeoutMs`. Between attempts, the send waits on a `setTimeout` of about one second before the first retry and two before the second, or longer when PostHog's answer names a wait. A faked clock holds both: a retry runs only when the test moves the clock past its wait, such as with `await vi.advanceTimersByTimeAsync(5000)`.
+- The app's own `capture` calls go out through the same `fetch` when the client's flush timer fires, so a test that moves a faked clock gets them in its fake too.
+
 ## Check
 
 The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck.
