@@ -23,9 +23,7 @@ Check which PostHog MCP tools exist.
 
 Do not call a tool that changes anything to find out.
 
-Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. Record `code sends: not confirmed`. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
-
-When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, ask the person whether it delivers in production, unless they said so. When it does, record `code sends: on` instead: the project takes sends with content from the code. That confirms code sends only, not sends by template ID, which PostHog enables separately, so `api` stays what the tools showed.
+Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
 
 ## The sending tier
 
@@ -37,4 +35,4 @@ PostHog gives each project a sending allowance: how many emails it sends per hou
 
 ## Write down
 
-Keep `api`, `code sends`, and `tier` for Step 3, which writes them into the plan file.
+Keep `api` and `tier` for Step 3, which writes them into the plan file.
