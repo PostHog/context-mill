@@ -54,7 +54,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 ## A test
 
 - posthog-node sends with the global `fetch`, so a fake on `globalThis.fetch`, or on the `fetch` client option where the app passes one, answers the send, as `8-verify.md` says. The client reads the global `fetch` at each request, so a fake put on after the client is made still answers.
-- Each email request races a `setTimeout` of `emailRequestTimeoutMs`. Between attempts, the send waits on a `setTimeout` of about one second before the first retry and two before the second, or longer when PostHog's answer names a wait. A faked clock holds both: a retry runs only when the test moves the clock past its wait, such as with `await vi.advanceTimersByTimeAsync(5000)`.
+- Each email request races a `setTimeout` of `emailRequestTimeoutMs`. Between attempts, the send waits on a `setTimeout` of about one second before the first retry and two before the second, or as long as the wait PostHog's answer names, up to 30 seconds. An answer that names a longer wait ends the send with its error, with no retry. A faked clock holds both: a retry runs only when the test moves the clock past its wait, such as with `await vi.advanceTimersByTimeAsync(5000)`.
 - The app's own `capture` calls go out through the same `fetch` when the client's flush timer fires, so a test that moves a faked clock gets them in its fake too.
 
 ## Check
