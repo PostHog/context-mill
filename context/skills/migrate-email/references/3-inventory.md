@@ -94,7 +94,7 @@ Write `.posthog-email-migration-plan.md` at the project root with three sections
 A phase checklist, in this order. Tick `preflight` with what Step 2 recorded, and `inventory` once the file is written. Later steps tick the rest.
 
 ```
-- [x] preflight — api: <on|not confirmed> — code sends: <on|not confirmed> — tier: <fits|too low|not checked>
+- [x] preflight — api: <on|not confirmed> — tier: <fits|too low|not checked>
 - [x] inventory — <sites found> sites, <sites that stay> stay on the provider
 - [ ] sender
 - [ ] suppressions
