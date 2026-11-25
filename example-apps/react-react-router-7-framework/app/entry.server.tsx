@@ -1,26 +1,18 @@
 import { PassThrough } from "node:stream";
 
-import type { EntryContext, HandleErrorFunction, RouterContextProvider } from "react-router";
+import type { EntryContext, RouterContextProvider } from "react-router";
 import { createReadableStreamFromReadable } from "@react-router/node";
-import { isRouteErrorResponse, ServerRouter } from "react-router";
+import { ServerRouter } from "react-router";
 import { isbot } from "isbot";
 import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 
-import { posthog } from "./lib/posthog.server";
-import { posthogExceptionContext } from "./lib/posthog-request.server";
+import { handleError } from "./lib/posthog.server";
+
+// Loader, action, middleware, resource route and server render errors.
+export { handleError };
 
 export const streamTimeout = 5_000;
-
-// Loader, action, middleware, resource route and server render errors. Exporting handleError
-// replaces React Router's own error log. Skip cancelled requests and the 404/405 responses
-// React Router creates itself.
-export const handleError: HandleErrorFunction = (error, { request }) => {
-  if (request.signal.aborted) return;
-  console.error(error);
-  if (isRouteErrorResponse(error)) return;
-  posthog?.captureException(error, posthogExceptionContext(request));
-};
 
 export default function handleRequest(
   request: Request,
@@ -86,12 +78,14 @@ export default function handleRequest(
         },
         onError(error: unknown) {
           responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
-          if (shellRendered && !request.signal.aborted) {
-            posthog?.captureException(error, posthogExceptionContext(request));
-            console.error(error);
+          // Errors raised while streaming, after the shell was sent, skip handleError: pass them
+          // on. Errors during the initial shell rendering reject and reach handleError already.
+          if (shellRendered) {
+            if (handleError) {
+              void handleError(error, { request });
+            } else {
+              console.error(error);
+            }
           }
         },
       },

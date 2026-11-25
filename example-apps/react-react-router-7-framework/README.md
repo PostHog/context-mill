@@ -36,7 +36,7 @@ Get your PostHog project token from your [PostHog project settings](https://app.
 ### Requirements
 
 - `onError` on `<HydratedRouter>` needs `react-router` 7.11 or later. On 7.8.2 to 7.10, the prop is `unstable_onError`, typed `unstable_ClientOnErrorFunction`. On earlier versions, capture inside a `useEffect` in every route `ErrorBoundary`, with the same checks.
-- `captureException(error, { distinctId, properties })` needs `posthog-node` 6. On 5.x, call `captureException(error, distinctId, properties)`.
+- `createReactRouterErrorHandler` needs `posthog-node` 6.1.0 or later.
 
 ### 3. Run the Development Server
 
@@ -57,8 +57,7 @@ app/
 ├── contexts/
 │   └── AuthContext.tsx      # Authentication context
 ├── lib/
-│   ├── posthog.server.ts    # The server's one PostHog client
-│   ├── posthog-request.server.ts # Person, session and page URL for server exceptions
+│   ├── posthog.server.ts    # The server's one PostHog client and its React Router error handler
 │   ├── posthog-middleware.ts # Server-side PostHog middleware
 │   └── db.ts                # Database utilities
 ├── routes/
@@ -177,17 +176,15 @@ React Router catches errors in rendering, loaders, actions and fetchers and show
 
 1. **Browser** - `capture_exceptions: true` plus the `onError` handler on `<HydratedRouter>` in `entry.client.tsx` (above).
 
-2. **Server** - `handleError` in `entry.server.tsx` captures loader, action, middleware, resource route and server render errors. `posthogExceptionContext` in `posthog-request.server.ts` adds the page URL (not the `.data` URL of a client navigation) and the visitor: the `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers first, then the project's posthog-js cookie that page loads send. It drops an expired session and a visitor who opted out in the consent cookie. Errors raised while streaming, after the shell was sent, reach React's `onError` in the same file instead:
+2. **Server** - `entry.server.tsx` exports the `handleError` that `createReactRouterErrorHandler` from `posthog-node` creates in `posthog.server.ts`. It captures loader, action, middleware, resource route and server render errors with the page URL (not the `.data` URL of a client navigation) and the visitor: the IDs the middleware sets, then the `X-POSTHOG-*` tracing headers, then the posthog-js cookie that page loads send (`readPostHogCookie: true`). It skips cancelled requests, the 404 and 405 responses React Router creates, and visitors who opted out in the consent cookie. Errors raised while streaming, after the shell was sent, reach React's `onError` in the same file, which passes them to the same handler:
 ```typescript
-export const handleError: HandleErrorFunction = (error, { request }) => {
-  if (request.signal.aborted) return;
-  console.error(error);
-  if (isRouteErrorResponse(error)) return;
-  posthog?.captureException(error, posthogExceptionContext(request));
-};
+import { createReactRouterErrorHandler, PostHog } from "posthog-node";
+
+export const posthog = new PostHog(token, { host, enableExceptionAutocapture: true, readPostHogCookie: true });
+export const handleError = createReactRouterErrorHandler(posthog);
 ```
 
-   React Router does not call `handleError` for a promise a loader returns and the page renders with `<Await>`. Capture those rejections in the loader with `.catch((error) => { posthog?.captureException(error, posthogExceptionContext(request)); throw error })`, and give the `<Await>` an `errorElement`: without one, a rejection during a page load also reaches the stream `onError` and arrives twice.
+   React Router does not call `handleError` for a promise a loader returns and the page renders with `<Await>`. Pass those rejections to the handler in the loader with `.catch((error) => { void handleError?.(error, { request }); throw error })`, and give the `<Await>` an `errorElement`.
 
 3. **Manual error capture** in components (profile.tsx):
 ```typescript
