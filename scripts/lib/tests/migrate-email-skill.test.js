@@ -140,6 +140,51 @@ describe('migrate-email skill', () => {
         ]);
     });
 
+    describe('a marketing email', () => {
+        const REFERENCES = join(CONFIG_DIR, 'skills', 'migrate-email', 'references');
+        const read = (file) => readFileSync(join(REFERENCES, file), 'utf8');
+        const SEND_CATEGORY = {
+            node: "`category: { key, type: 'marketing', name, description }`",
+            python: '`category=MessageCategory(key=..., type="marketing", name=..., description=...)`',
+            go: '`Category: posthog.MessageCategory{Key, Type: posthog.MessageCategoryMarketing, Name, Description}`',
+            ruby: "`category: PostHog::Emails::MessageCategory.new(key:, type: 'marketing', name:, description:)`",
+            php: "`'category' => ['key' => ..., 'type' => 'marketing', 'name' => ..., 'description' => ...]`",
+            dotnet: '`Category = new MessageCategory { Key, Type = MessageCategoryType.Marketing, Name, Description }`',
+            rust: '`.category(MessageCategory::new(key, MessageCategoryType::Marketing, name).description(...))`',
+            elixir: '`category: %PostHog.Emails.MessageCategory{key: ..., type: :marketing, name: ..., description: ...}`',
+        };
+
+        it.each(Object.entries(SEND_CATEGORY))('passes the category object in the %s code send and names an opted-out recipient', (sdk, category) => {
+            const rewrite = read(`rewrite-${sdk}.md`);
+
+            expect(rewrite.split('## The send')[1].split('## The answer')[0]).toContain(category);
+            expect(rewrite).toContain('recipient_opted_out');
+        });
+
+        it('adds a category column to the plan and the report, and counts kept categories in step 8', () => {
+            expect(read('3-inventory.md')).toContain('| site | file | line | language | sends | content | category | from | moves | reason |');
+            expect(read('9-report.md')).toContain('| File | Line | Content | Category | Key | Status |');
+            expect(read('8-verify.md')).toContain('category: <kept>/<sites with a category> kept');
+        });
+
+        it('names each reason a marketing site stays for, in step 3', () => {
+            const inventory = read('3-inventory.md');
+
+            for (const reason of ['no unsubscribe link', 'no category named', 'no message category tools', 'copies_not_allowed']) expect(inventory).toContain(`the reason is \`${reason}\``);
+        });
+
+        it('names each refusal of a send with a category, in step 7', () => {
+            const rewriteStep = read('7-rewrite.md');
+
+            for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'marketing_template', 'recipient_opted_out', 'categories_not_enabled']) expect(rewriteStep).toContain(`\`${code}\``);
+        });
+
+        it("writes PostHog's unsubscribe placeholder as a link's href, and as text in JSX", () => {
+            expect(read('8-verify.md')).toContain('`<a href="{{ unsubscribe_url }}">`');
+            expect(read('template-to-code.md')).toContain("`{'{{ unsubscribe_url }}'}`");
+        });
+    });
+
     describe('the key check in step 6', () => {
         const keyStep = readFileSync(join(CONFIG_DIR, 'skills', 'migrate-email', 'references', '6-key.md'), 'utf8');
         const command = keyStep.match(/```bash\n(grep .+)\n```/)?.[1];

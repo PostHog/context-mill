@@ -30,7 +30,7 @@ export const posthog = new PostHog(process.env.POSTHOG_PROJECT_TOKEN, {
 
 ## The send
 
-- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `sensitive`, and `tracking` optional. `tracking` takes `true`, `false`, or `{ opens, clicks, engagement }`. Open tracking off is `tracking: { opens: false }`. `captureEngagement` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
+- Code send: `posthog.emails.send({ templateKey, to, subject, html, text, distinctId, idempotencyKey })`, with `from`, `replyTo`, `sensitive`, `tracking`, and `category` optional. `tracking` takes `true`, `false`, or `{ opens, clicks, engagement }`. Open tracking off is `tracking: { opens: false }`. `captureEngagement` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`. A category: `category: { key, type: 'marketing', name, description }`, with `'transactional'` as the type of a transactional one, and the description left out when it has none.
 - `replyTo` takes one address or a list of addresses.
 - Template send: `posthog.emails.send({ to, templateId, templateData, distinctId, idempotencyKey })`.
 - A component the provider rendered, such as React Email, is rendered in the app with the `render` that "Install" names, and sent as `html`.
@@ -49,7 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 - A network error that is left after the retries comes back as `error` with the code `network_error`. A bad argument comes back as `error` too, with a code that starts with `invalid_`.
 - An error PostHog answered with a wait carries it as `error.retryAfterMs`, in milliseconds; it is unset when PostHog named none.
 - `error.code` is PostHog's error code, such as `recipient_suppressed`. `error.name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers". `error.message` and `error.statusCode` are there too.
-- Suppressed recipient: `if (error?.code === 'recipient_suppressed')`.
+- Suppressed recipient: `if (error?.code === 'recipient_suppressed')`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 
 ## Check
 

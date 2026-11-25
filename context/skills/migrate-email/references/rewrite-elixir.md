@@ -34,7 +34,7 @@ Give email a named instance of its own in the application's children, also when 
 
 ## The send
 
-- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a map with `:opens`, `:clicks`, and `:engagement`. Open tracking off is `tracking: %{opens: false}`. `capture_engagement:` is deprecated: use `tracking: %{engagement: false}`. Sensitive is `sensitive: true`.
+- Code send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_key: ..., subject: ..., html: ..., text: ..., distinct_id: ..., idempotency_key: ...)`, with `from:`, `reply_to:`, `sensitive:`, `tracking:`, and `category:` optional. `tracking:` takes `true`, `false`, or a map with `:opens`, `:clicks`, and `:engagement`. Open tracking off is `tracking: %{opens: false}`. `capture_engagement:` is deprecated: use `tracking: %{engagement: false}`. Sensitive is `sensitive: true`. A category: `category: %PostHog.Emails.MessageCategory{key: ..., type: :marketing, name: ..., description: ...}`, with `:transactional` as the type of a transactional one, and the description left out when it has none.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `PostHog.Emails.send(MyApp.PostHogEmail, to: ..., template_id: ..., template_data: %{...}, distinct_id: ..., idempotency_key: ...)`.
 
@@ -49,7 +49,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The send returns `{:ok, result}`, and `result.id` is the message ID.
 - An API error is `{:error, %PostHog.Emails.Error{}}`. `code` is PostHog's error code, a string such as `"recipient_suppressed"`, and `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", as an atom, such as `:rate_limit_exceeded`.
-- Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`.
+- Suppressed recipient: match `{:error, %PostHog.Emails.Error{code: "recipient_suppressed"}}`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - A network error that is left after the retries is the same `{:error, %PostHog.Emails.Error{}}`, with the code `"network_error"`, and so is a bad argument, with a code that starts with `invalid_`. `message` and `status_code` are there too.
 - An error PostHog answered with a wait carries it as `retry_after_ms`, in milliseconds; it is `nil` when PostHog named none.
 

@@ -27,7 +27,7 @@ client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog
 
 ## The send
 
-- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `Sensitive`, and `Tracking` optional. `Tracking` takes `posthog.EmailTrackingOn()`, `posthog.EmailTrackingOff()`, or `posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens, Clicks, Engagement})` with `posthog.Ptr` values. Open tracking off is `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens: posthog.Ptr(false)})`. `CaptureEngagement` is deprecated: use `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Engagement: posthog.Ptr(false)})`. Sensitive is `Sensitive: posthog.Ptr(true)`.
+- Code send: `client.Emails().Send(ctx, posthog.CodeEmail{To, TemplateKey, Subject, HTML, Text, DistinctID, IdempotencyKey})`, with `From`, `ReplyTo`, `Sensitive`, `Tracking`, and `Category` optional. `Tracking` takes `posthog.EmailTrackingOn()`, `posthog.EmailTrackingOff()`, or `posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens, Clicks, Engagement})` with `posthog.Ptr` values. Open tracking off is `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Opens: posthog.Ptr(false)})`. `CaptureEngagement` is deprecated: use `Tracking: posthog.EmailTrackingWith(posthog.EmailTrackingOptions{Engagement: posthog.Ptr(false)})`. Sensitive is `Sensitive: posthog.Ptr(true)`. A category: `Category: posthog.MessageCategory{Key, Type: posthog.MessageCategoryMarketing, Name, Description}`, with `posthog.MessageCategoryTransactional` as the type of a transactional one, and the description left out when it has none.
 - Template send: `client.Emails().Send(ctx, posthog.TemplateEmail{To, TemplateID, TemplateData, DistinctID, IdempotencyKey})`.
 - `ReplyTo` is a `[]string`, a list of addresses: wrap one address as `[]string{addr}`.
 - A site with no `context.Context` passes `context.Background()`.
@@ -45,7 +45,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The send returns a `*posthog.SendEmailResult` and an error. `ID` is the message ID.
 - An API error is a `*posthog.EmailError`: read it with `errors.As`. `Code` is PostHog's error code, such as `recipient_suppressed`, `Name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `StatusCode` is the HTTP status.
-- Suppressed recipient: `var emailErr *posthog.EmailError` and `if errors.As(err, &emailErr) && emailErr.Code == "recipient_suppressed"`.
+- Suppressed recipient: `var emailErr *posthog.EmailError` and `if errors.As(err, &emailErr) && emailErr.Code == "recipient_suppressed"`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - Every error from the send is a `*posthog.EmailError`: also a network error that is left after the retries, with the code `network_error`, and a bad argument, with a code that starts with `invalid_`. `Message` is there too.
 - An error PostHog answered with a wait carries it as `RetryAfter`, a `time.Duration`; it is `0` when PostHog named none.
 

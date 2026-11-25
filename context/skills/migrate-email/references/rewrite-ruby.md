@@ -29,7 +29,7 @@ POSTHOG = PostHog::Client.new({
 
 ## The send
 
-- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `sensitive:`, and `tracking:` optional. `tracking:` takes `true`, `false`, or a hash with `opens`, `clicks`, and `engagement`. Open tracking off is `tracking: { opens: false }`. `capture_engagement:` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`.
+- Code send: `POSTHOG.emails.send(to:, template_key:, subject:, html:, text:, distinct_id:, idempotency_key:)`, with `from:`, `reply_to:`, `sensitive:`, `tracking:`, and `category:` optional. `tracking:` takes `true`, `false`, or a hash with `opens`, `clicks`, and `engagement`. Open tracking off is `tracking: { opens: false }`. `capture_engagement:` is deprecated: use `tracking: { engagement: false }`. Sensitive is `sensitive: true`. A category: `category: PostHog::Emails::MessageCategory.new(key:, type: 'marketing', name:, description:)`, with `'transactional'` as the type of a transactional one, and the description left out when it has none.
 - `reply_to:` takes one address or a list of addresses.
 - Template send: `POSTHOG.emails.send(to:, template_id:, template_data:, distinct_id:, idempotency_key:)`.
 
@@ -45,7 +45,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The send returns a `SendResult`. Its `id` is the message ID.
 - On an API error it raises `PostHog::EmailError`. `code` is PostHog's error code, such as `recipient_suppressed`, `name` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status_code` is the HTTP status.
-- Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`.
+- Suppressed recipient: `rescue PostHog::EmailError => e` with `if e.code == 'recipient_suppressed'`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - It raises the same `PostHog::EmailError` for a network error that is left after the retries, with the code `network_error`. `message` is there too.
 - An error PostHog answered with a wait carries it as `e.retry_after`, in seconds, as a float; it is `nil` when PostHog named none.
 - A bad argument raises `ArgumentError`, before any request.

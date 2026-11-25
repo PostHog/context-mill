@@ -26,6 +26,8 @@ These parts keep a template on the provider, unless the provider's table says ho
 
 A template that the app's own code creates, changes, or publishes through the provider's API keeps its sites on the provider too: the code would hold the content of one moment while the app goes on changing it at the provider. The reason is `the app changes this template at <provider name>`.
 
+In a marketing email, the provider's unsubscribe link becomes `{{ unsubscribe_url }}`, which PostHog fills with the recipient's preferences link, so it keeps no template on the provider. Step 3 says which emails are marketing.
+
 Write each API answer and each copy you make to a file in the system's temporary folder, never in the repository or the plan. Delete it as soon as no site that sends its template will bring the email into the code: when each such site stays on the provider, or moves to a template made in PostHog. Otherwise keep it until Step 7 has written the email, then delete it. Step 7 deletes every copy still there before it goes on to Step 8, on every way out of the step. When a copy Step 7 needs is gone by then, ask the person for a copy from the dashboard: the full-access key that an API read needs is deleted at the end of Step 5. Read the person's own copies where they saved them.
 
 ## Where the email goes
@@ -61,6 +63,7 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - `html/template` encodes a value that stands in a URL's query again, so `%2F` becomes `%252F`. In Go, pass a value the app already encoded as `template.URL`, which it keeps as it is.
 - `html/template` drops HTML comments, and with them Outlook's conditional comments, `<!--[if mso]>…<![endif]-->`, and what they hold. In Go, keep each one as a `template.HTML` constant next to the renderer, pass it in the data, and write it where it stood, such as `{{.OutlookButton}}`. A block that holds a variable becomes a function that takes the value, escapes it with `template.HTMLEscapeString`, and returns the block as `template.HTML`.
 - A function that replaces markers first checks that each marker in the template has a value, and raises when one has none, so a misspelled name fails the send instead of mailing the marker. It then replaces every marker in one pass, so a value that itself contains `{{name}}` goes out as written.
+- A function that replaces markers leaves `{{ unsubscribe_url }}` as it is, and so does every renderer: PostHog fills it, so the check above needs no value for it. In a renderer that reads braces itself, such as JSX, Jinja2, Handlebars, or Go's templates, write it as a literal the renderer prints unchanged, such as, in JSX text, `{'{{ unsubscribe_url }}'}`, and check that the rendered HTML and text hold it exactly: an escape for URLs, such as Go's `html/template` in an `href`, changes it.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
 - Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
 

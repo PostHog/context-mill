@@ -31,7 +31,7 @@ let posthog = posthog_rs::client(options.build()?).await; // with `async-client`
 
 ## The send
 
-- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.sensitive(...)`, and `.tracking(...)` optional. `.tracking(...)` takes `EmailTracking::On`, `EmailTracking::Off`, or `EmailTrackingOptions::new()` with `.opens(...)`, `.clicks(...)`, and `.engagement(...)`. Open tracking off is `.tracking(EmailTrackingOptions::new().opens(false))`. `.capture_engagement(false)` is deprecated: use `.tracking(EmailTrackingOptions::new().engagement(false))`. Sensitive is `.sensitive(true)`.
+- Code send: `posthog.emails().send(CodeEmail::new(to, template_key, subject).html(...).text(...).distinct_id(...).idempotency_key(...))`, with `.from(...)`, `.reply_to(...)`, `.sensitive(...)`, `.tracking(...)`, and `.category(...)` optional. `.tracking(...)` takes `EmailTracking::On`, `EmailTracking::Off`, or `EmailTrackingOptions::new()` with `.opens(...)`, `.clicks(...)`, and `.engagement(...)`. Open tracking off is `.tracking(EmailTrackingOptions::new().opens(false))`. `.capture_engagement(false)` is deprecated: use `.tracking(EmailTrackingOptions::new().engagement(false))`. Sensitive is `.sensitive(true)`. A category: `.category(MessageCategory::new(key, MessageCategoryType::Marketing, name).description(...))`, with `MessageCategoryType::Transactional` as the type of a transactional one, and the description left out when it has none.
 - Template send: `posthog.emails().send(TemplateEmail::new(to, template_id).template_data(...).distinct_id(...).idempotency_key(...))`.
 - With the async client, await the send.
 - Call `.reply_to(...)` once per address.
@@ -47,7 +47,7 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 - The send returns a `Result`. On success, `SendEmailResult`'s `id` is the message ID.
 - An API error is a `posthog_rs::EmailError`. `code()` is PostHog's error code, such as `recipient_suppressed`, `kind().as_str()` is one of the coarse names that `7-rewrite.md` lists under "What every SDK's send takes and answers", and `status()` is the HTTP status.
-- Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`.
+- Suppressed recipient: `Err(error) if error.code() == "recipient_suppressed"`. A recipient who opted out of a marketing send: the same check with `recipient_opted_out`.
 - A network error that is left after the retries is the same `EmailError`, with the code `network_error`, and so is a bad argument, with a code that starts with `invalid_`.
 - An error PostHog answered with a wait carries it as `error.retry_after()`, an `Option<Duration>`; it is `None` when PostHog named none.
 
