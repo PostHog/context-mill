@@ -264,7 +264,7 @@ def main():
 
         # Manually capture handled errors
         if posthog:
-            posthog.capture_exception(e, get_user_id())
+            posthog.capture_exception(e, distinct_id=get_user_id())
 
         sys.exit(1)
 

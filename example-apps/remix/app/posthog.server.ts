@@ -30,8 +30,8 @@ function identityFrom(request: Request) {
     distinctId: distinctId ?? crypto.randomUUID(),
     properties: {
       ...(sessionId && { $session_id: sessionId }),
-      ...(!distinctId && { $process_person_profile: false }),
     },
+    options: distinctId ? {} : { process_person_profile: false },
   };
 }
 
@@ -47,6 +47,7 @@ export async function captureEvent(
     distinctId: identity.distinctId,
     event,
     properties: { ...properties, ...identity.properties },
+    options: identity.options,
   });
   await posthog.flush().catch(() => {});
 }
@@ -55,6 +56,10 @@ export async function captureError(request: Request, error: unknown) {
   if (!posthog) return;
 
   const identity = identityFrom(request);
-  posthog.captureException(error, identity.distinctId, identity.properties);
+  posthog.captureException(error, {
+    distinctId: identity.distinctId,
+    properties: identity.properties,
+    options: identity.options,
+  });
   await posthog.flush().catch(() => {});
 }

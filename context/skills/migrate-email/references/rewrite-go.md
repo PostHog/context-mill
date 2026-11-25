@@ -9,7 +9,7 @@ For a site in Go.
 
 ## Install
 
-`go get github.com/posthog/posthog-go@latest`. Run `go mod tidy` only after the sites import it, in Step 8: before that, it removes the new requirement.
+`go get github.com/posthog/posthog-go/v2@latest`, and import `posthog "github.com/posthog/posthog-go/v2"`. If `go.mod` already requires `github.com/posthog/posthog-go` (v1), run `go get github.com/posthog/posthog-go@latest` instead and keep its import path. Run `go mod tidy` only after the sites import it, in Step 8: before that, it removes the new requirement.
 
 ## The client
 

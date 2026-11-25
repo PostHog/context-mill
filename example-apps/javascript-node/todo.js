@@ -174,10 +174,8 @@ app.get('/stats', async (req, res) => {
 
   // Check feature flag to decide whether to include per-todo breakdown
   if (posthog) {
-    const showDetailed = await posthog.isFeatureEnabled(
-      'detailed-analytics',
-      userId,
-    );
+    const flags = await posthog.evaluateFlags(userId);
+    const showDetailed = flags.isEnabled('detailed-analytics');
 
     if (showDetailed) {
       stats.todos = todos.map((t) => ({
@@ -204,7 +202,7 @@ app.use((err, req, res, _next) => {
   const userId = req.body?.user_id || req.query?.user_id || 'anonymous';
 
   if (posthog) {
-    posthog.captureException(err, userId);
+    posthog.captureException(err, { distinctId: userId });
   }
 
   console.error('Unhandled error:', err.message);

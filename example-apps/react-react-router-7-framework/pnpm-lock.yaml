@@ -24,7 +24,7 @@ importers:
         specifier: ^1.447.6
         version: 1.447.6(@types/react@19.2.7)(react@19.2.3)
       posthog-node:
-        specifier: ^6.0.5
+        specifier: ^6.0.6
         version: 6.0.6
       react:
         specifier: ^19.2.3

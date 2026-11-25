@@ -1,6 +1,6 @@
 # PostHog Rust example
 
-This is an [Axum](https://github.com/tokio-rs/axum) example demonstrating PostHog integration with product analytics, feature flags, user identification, and error tracking using the server-side Rust SDK, [`posthog-rs`](https://crates.io/crates/posthog-rs).
+This is an [Axum](https://github.com/tokio-rs/axum) example demonstrating PostHog integration with product analytics, feature flags, user identification, and error tracking using the server-side Rust SDK, [`posthog`](https://crates.io/crates/posthog).
 
 ## Features
 
@@ -11,7 +11,7 @@ This is an [Axum](https://github.com/tokio-rs/axum) example demonstrating PostHo
 - **Server-side tracking**: All tracking happens server-side with the async Rust SDK
 - **Single client per process**: One PostHog client for the whole app, flushed on shutdown
 
-> **Note on SDK scope:** the `posthog-rs` server SDK does **not** provide an
+> **Note on SDK scope:** the `posthog` server SDK does **not** provide an
 > `alias` helper, surveys, or session replay. This example does not scaffold or
 > promise any of those. It uses only documented methods: `capture`,
 > `evaluate_flags`, `capture_exception_with`, `flush`, and `shutdown`.
@@ -41,7 +41,7 @@ Open [http://localhost:8000](http://localhost:8000) with your browser to see the
 
 ```
 rust/
-├── Cargo.toml          # Crate + the posthog-rs dependency
+├── Cargo.toml          # Crate + the posthog dependency
 ├── .env.example        # Environment variable template
 ├── .gitignore          # Ignores /target and .env
 └── src/
@@ -56,7 +56,7 @@ Build **one client per process** and share it through Axum state as an `Arc<Clie
 
 ```rust
 let options = ClientOptions::from((token.as_str(), host.as_str()));
-let client: Arc<Client> = Arc::new(posthog_rs::client(options).await);
+let client: Arc<Client> = Arc::new(posthog::client(options).await);
 
 let app = Router::new()
     // ...routes...
@@ -128,7 +128,7 @@ let show_new_feature = flags.is_enabled("new-dashboard-feature");
 
 ### Error tracking (src/main.rs)
 
-Unlike some PostHog server SDKs, `posthog-rs` **does** capture exceptions. Report any `std::error::Error` with `capture_exception_with`, attaching the distinct id and context.
+Unlike some PostHog server SDKs, `posthog` **does** capture exceptions. Report any `std::error::Error` with `capture_exception_with`, attaching the distinct id and context.
 
 ```rust
 let options = CaptureExceptionOptions::new()

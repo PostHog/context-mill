@@ -130,7 +130,6 @@ If the project uses Node.js (`posthog-node`):
 - For short-lived processes, call `await posthog.shutdown()` before exit. If needed, use `await posthog.shutdown(shutdownTimeoutMs?)`.
 - Use `posthog.flush()` only for per-request cleanup.
 - Reverse proxy guidance does not apply to the server SDK itself.
-- If this applies, consult [the PostHog Node.js reference](https://posthog.com/docs/references/posthog-node).
 
 ### Python
 
@@ -144,7 +143,6 @@ If the project uses Python:
   work — a fresh context at the top of each route — and let plain `capture(...)`
   calls inherit. Wrapping an individual capture in its own context buys nothing.
 - For scripts or CLIs, register `atexit.register(posthog.shutdown)` or call `posthog.shutdown()` before exit.
-- If this applies, consult [the PostHog Python reference](https://posthog.com/docs/references/posthog-python).
 
 ### Django
 
