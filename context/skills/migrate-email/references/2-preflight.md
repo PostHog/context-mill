@@ -23,7 +23,7 @@ Check which PostHog MCP tools exist.
 
 Do not call a tool that changes anything to find out.
 
-When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, and the person says it delivers in production, record `api: on — the app already sends code emails`: the project takes sends with content from the code too. This record wins over `not confirmed`.
+When the app already sends email with a PostHog SDK's code send, a send with a template key and content from the code, and the person says it delivers in production, record `api: on — the app already sends code emails`: the project takes sends with content from the code too. This record wins over `not confirmed` for sends with content from the code. It doesn't confirm sends by template ID, which PostHog enables separately: when the tools above didn't confirm the API and a site moves to a template made in PostHog, the report asks the person to confirm sends by template ID before cutover.
 
 Those tools confirm sends by template. PostHog enables sends with content from the code separately, and no tool shows it. The report asks the person to confirm it before cutover when a site that moves sends its content from the code.
 
