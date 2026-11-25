@@ -179,6 +179,13 @@ describe('migrate-email skill', () => {
             for (const code of ['category_mismatch', 'too_many_categories', 'unsubscribe_link_required', 'copies_not_allowed', 'marketing_template', 'recipient_opted_out', 'categories_not_enabled']) expect(rewriteStep).toContain(`\`${code}\``);
         });
 
+        it('names each reason a workflow email stays in PostHog, and the tools it reads, in step 3', () => {
+            const inventory = read('3-inventory.md');
+
+            for (const reason of ['workflow not a single immediate email', 'workflow step has no matching category', 'no message category tools', 'workflow frequency cap', 'workflow in another project', 'workflow sending paused', 'workflow enrollment limit']) expect(inventory).toContain(`reason is \`${reason}\``);
+            for (const tool of ['workflows-list', 'workflows-get', 'message-categories-get', 'workflows-sending-rules-get']) expect(inventory).toContain(`\`${tool}\``);
+        });
+
         it("writes PostHog's unsubscribe placeholder as a link's href, and as text in JSX", () => {
             expect(read('8-verify.md')).toContain('`<a href="{{ unsubscribe_url }}">`');
             expect(read('template-to-code.md')).toContain("`{'{{ unsubscribe_url }}'}`");
