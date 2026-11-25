@@ -1,6 +1,6 @@
 //! A tiny "burrito" web service that mirrors the other PostHog example apps.
 //!
-//! Each route shows one integration point of the `posthog-rs` server SDK:
+//! Each route shows one integration point of the `posthog` server SDK:
 //!   * `/`          — home / login page
 //!   * `/login`     — user identification (attach person properties)
 //!   * `/burrito`   — event tracking (`burrito_considered`)
@@ -20,7 +20,7 @@ use axum::{
     Form, Router,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar};
-use posthog_rs::{
+use posthog::{
     CaptureExceptionOptions, Client, ClientOptions, EvaluateFlagsOptions, Event,
 };
 use serde::Deserialize;
@@ -53,7 +53,7 @@ async fn main() {
     // form `(api_key, host)` sets both, so we honor POSTHOG_HOST. We build the
     // client once here and share it via Axum state for the whole process.
     let options = ClientOptions::from((token.as_str(), host.as_str()));
-    let client: AppState = Arc::new(posthog_rs::client(options).await);
+    let client: AppState = Arc::new(posthog::client(options).await);
 
     let app = Router::new()
         .route("/", get(home))

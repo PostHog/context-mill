@@ -22,6 +22,6 @@
 	},
 	"dependencies": {
 		"posthog-js": "^1.444.4",
-		"posthog-node": "^5.61.2"
+		"posthog-node": "^6.0.6"
 	}
 }

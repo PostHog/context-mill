@@ -145,7 +145,7 @@ The SDK ships inside `posthog`, so first look for an existing `posthog` declarat
 
 #### Go
 
-Run `go get github.com/posthog/posthog-go/posthogmcpsdk@latest` in the module that contains the server, then read the version back from `go.mod`: `posthogmcpsdk` must be `v1.34.0` or later, the first release with `WithIntentFallback`. It pulls in `posthog-go` and raises the `go-sdk` requirement to the supported minimum if needed. The package needs Go 1.25 or later; if the installed toolchain is older and `go get` can't switch to a newer one, emit `[ABORT] go toolchain older than 1.25`. Never add or change anything else in `go.mod` by hand. In the report, say whether `go get` raised the `go` directive (to `1.25.0`) or bumped go-sdk, and tell the user to check the Go version in their Dockerfiles and CI. Serving the `2026-07-28` revision needs go-sdk `v1.8.0` or later; if the project's go-sdk is older, leave it and say so in the report.
+Match the core SDK major in the module that contains the server. If its `go.mod` already requires `github.com/posthog/posthog-go` (v1), run `go get github.com/posthog/posthog-go/posthogmcpsdk@latest`, then read the version back from `go.mod`: `posthogmcpsdk` must be `v1.34.0` or later, the first v1 release with `WithIntentFallback`. Otherwise, including when it requires no `posthog-go`, run `go get github.com/posthog/posthog-go/posthogmcpsdk/v2@latest`; every v2 release has `WithIntentFallback`. Never mix the majors: a v2 client doesn't fit the v1 `posthogmcp.New`. Either command pulls in the matching `posthog-go` and raises the `go-sdk` requirement to the supported minimum if needed. The package needs Go 1.25 or later; if the installed toolchain is older and `go get` can't switch to a newer one, emit `[ABORT] go toolchain older than 1.25`. Never add or change anything else in `go.mod` by hand. In the report, say whether `go get` raised the `go` directive (to `1.25.0`) or bumped go-sdk, and tell the user to check the Go version in their Dockerfiles and CI. Serving the `2026-07-28` revision needs go-sdk `v1.8.0` or later; if the project's go-sdk is older, leave it and say so in the report.
 
 #### Ruby
 
@@ -367,9 +367,9 @@ import (
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	posthog "github.com/posthog/posthog-go"
-	"github.com/posthog/posthog-go/posthogmcp"
-	"github.com/posthog/posthog-go/posthogmcpsdk"
+	"github.com/posthog/posthog-go/posthogmcpsdk/v2"
+	posthog "github.com/posthog/posthog-go/v2"
+	"github.com/posthog/posthog-go/v2/posthogmcp"
 )
 
 client, err := posthog.NewWithConfig(os.Getenv("POSTHOG_PROJECT_TOKEN"), posthog.Config{
@@ -387,7 +387,7 @@ posthogmcpsdk.Instrument(server, posthogmcp.New(client),
 // register tools with mcp.AddTool as usual
 ```
 
-Reuse the name and version the server already passes to `mcp.NewServer` for `WithServerInfo`. Match the existing error-handling style instead of `log.Fatal` if the project has one. On a stdio transport, never log to stdout. After editing, run `go mod tidy` so the new requirements aren't left marked `// indirect`.
+On a v1 project, import `github.com/posthog/posthog-go`, `github.com/posthog/posthog-go/posthogmcp` and `github.com/posthog/posthog-go/posthogmcpsdk` instead. Reuse the name and version the server already passes to `mcp.NewServer` for `WithServerInfo`. Match the existing error-handling style instead of `log.Fatal` if the project has one. On a stdio transport, never log to stdout. After editing, run `go mod tidy` so the new requirements aren't left marked `// indirect`.
 
 If the user asks for `WithMissingCapabilityTool`, also pass `&mcp.ServerOptions{HasTools: true}` to `mcp.NewServer` if the server registers no tools of its own. Add `WithIntentFallback` only if the user asks for it (`go.md` shows how). The Go SDK has no feedback tool or task handling, and doesn't emit `$mcp_initialize`, `$mcp_tools_list`, or resource events, so don't try to add those. `WithIdentity` is optional; add it only if the server already authenticates callers (`go.md` shows how).
 

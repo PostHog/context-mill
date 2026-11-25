@@ -15,8 +15,8 @@ importers:
         specifier: ^4.13.17
         version: 4.13.17
       posthog-node:
-        specifier: ^5.64.0
-        version: 5.64.0
+        specifier: ^6.0.6
+        version: 6.0.6
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -33,11 +33,11 @@ packages:
     peerDependencies:
       hono: ^4 || ^5.0.0-0
 
-  '@posthog/core@1.65.0':
-    resolution: {integrity: sha512-eXbEpErslRjNLbOWx2GdBiYmJ70Yzq2JPuuQaFGJHNv//5DwbsVVF4R0yPCOIT1AqUrd4cW0faamrN8ijnPMTw==}
+  '@posthog/core@1.69.2':
+    resolution: {integrity: sha512-toMfPKklwLW+a4ZY3/EzM3GNMVXmk2ylGb8NPJXRH4igXMoI8wgNL2jqXOiglWAXqFBLZGYFN1oQx6LVmUTxTg==}
 
-  '@posthog/types@1.422.0':
-    resolution: {integrity: sha512-65cWefuvAiyTNe+cv8btywtdXLPwmM0ATggoH4l9rJkam0n2kJCIb5HeaLJ9GQ6dSs5MAbney2QgW0MVeBtiOg==}
+  '@posthog/types@1.427.1':
+    resolution: {integrity: sha512-Kx9hWf6Au64CrBLafscANAeswkRFUMs4zlU9/gwB2Hf/9ggU9YNjbw/MQA5tt7cbzTCkh+4fNIPjQeJz7/j63w==}
 
   '@types/node@26.6.6':
     resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
@@ -166,14 +166,17 @@ packages:
     resolution: {integrity: sha512-vZIcbkvjOR5hHRWERbGkr8fGfF0GGM1ooYkuH448iO3b2AdVEr3AXZSw4Z3Kn+1L5z0CVoVeyV29VGYmFh05kQ==}
     engines: {node: '>=16.9.0'}
 
-  posthog-node@5.64.0:
-    resolution: {integrity: sha512-io0NI/qqWvpxxHUyIg9GeZrt092Q6jRwqFOC/+ir98AiDG3T+xNgNrfxtz85GVfVcVCLs1BT40WlHjipxJZv8Q==}
+  posthog-node@6.0.6:
+    resolution: {integrity: sha512-7FMMQ4fk4Uqg/w2zpKVS8/Yv0doIz0HRcWML4WhxDTqqkS7eyXCvfGUuh+wLJbWYvdSm/7QNu9eeL31++G/dOw==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
       '@opentelemetry/api': ^1.2.0
+      '@react-email/render': ^2.1.0
       rxjs: ^7.0.0
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+      '@react-email/render':
         optional: true
       rxjs:
         optional: true
@@ -192,11 +195,11 @@ snapshots:
     dependencies:
       hono: 4.13.17
 
-  '@posthog/core@1.65.0':
+  '@posthog/core@1.69.2':
     dependencies:
-      '@posthog/types': 1.422.0
+      '@posthog/types': 1.427.1
 
-  '@posthog/types@1.422.0': {}
+  '@posthog/types@1.427.1': {}
 
   '@types/node@26.6.6':
     dependencies:
@@ -264,9 +267,9 @@ snapshots:
 
   hono@4.13.17: {}
 
-  posthog-node@5.64.0:
+  posthog-node@6.0.6:
     dependencies:
-      '@posthog/core': 1.65.0
+      '@posthog/core': 1.69.2
 
   typescript@7.0.2:
     optionalDependencies:

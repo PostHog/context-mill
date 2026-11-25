@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/posthog/posthog-go v1.42.2
+	github.com/posthog/posthog-go/v2 v2.1.1
 )
 
 require (

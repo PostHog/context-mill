@@ -98,12 +98,10 @@ variants:
       - https://posthog.com/docs/libraries/remix.md
       - https://posthog.com/docs/libraries/cloudflare-workers.md
       - https://posthog.com/docs/libraries/convex.md
-      - https://posthog.com/docs/references/posthog-node.md
       # Python
       - https://posthog.com/docs/libraries/django.md
       - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/libraries/python.md
-      - https://posthog.com/docs/references/posthog-python.md
       # .NET
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir

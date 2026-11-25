@@ -98,7 +98,7 @@ posthog.capture({
 await posthog.flush().catch(() => {});
 ```
 
-Identity belongs to the request. `posthog-js` adds `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to same-origin requests, and the helpers use them so server events land on the same person and session as the browser. A request without them gets a random id and `$process_person_profile: false`, so it never shares one person with other visitors.
+Identity belongs to the request. `posthog-js` adds `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to same-origin requests, and the helpers use them so server events land on the same person and session as the browser. A request without them gets a random id and the `process_person_profile: false` option, so it never shares one person with other visitors.
 
 ### Server events (routes/burrito.tsx)
 

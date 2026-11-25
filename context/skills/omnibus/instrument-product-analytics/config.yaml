@@ -97,7 +97,6 @@ variants:
       - https://posthog.com/docs/libraries/django.md
       - https://posthog.com/docs/libraries/flask.md
       - https://posthog.com/docs/libraries/python.md
-      - https://posthog.com/docs/references/posthog-python.md
       # .NET
       - https://posthog.com/docs/libraries/dotnet.md
       # Elixir

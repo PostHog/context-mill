@@ -24,10 +24,11 @@ export const posthog = new PostHog(token ?? '', {
 export const posthogMiddleware = createMiddleware<{ Variables: { user?: User } }>(async (c, next) => {
   const user = c.get('user')
   let distinctId = user?.id
-  let properties: Record<string, unknown> = {
+  const properties: Record<string, unknown> = {
     $request_method: c.req.method,
     $request_path: c.req.path,
   }
+  let options: { process_person_profile?: boolean } = {}
 
   if (!distinctId) {
     // Signed-out visitors get a random id for the visit and no person profile.
@@ -36,8 +37,8 @@ export const posthogMiddleware = createMiddleware<{ Variables: { user?: User } }
       distinctId = randomUUID()
       setCookie(c, 'visit_id', distinctId, { httpOnly: true, sameSite: 'Lax', path: '/' })
     }
-    properties = { ...properties, $process_person_profile: false }
+    options = { process_person_profile: false }
   }
 
-  return posthog.withContext({ distinctId, properties }, next, { fresh: true })
+  return posthog.withContext({ distinctId, properties, options }, next, { fresh: true })
 })
