@@ -53,4 +53,4 @@ For a site whose request had its own deadline, as `7-rewrite.md` says under "Set
 
 ## Check
 
-The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. For a site that renders a React Email component, also run the build, so a runtime that can't load JSX fails here.
+The project's typecheck, such as its `typecheck` script or `tsc --noEmit`, or its build when it has no typecheck. For a site that renders a React Email component, also run the build when the project has one, so a runtime that can't load JSX fails here. When the sender loads JSX directly with no build, render the migrated email once in isolation on the part's runtime, as the trial does, as that check.
