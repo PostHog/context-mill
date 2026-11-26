@@ -74,7 +74,16 @@ export const storage = {
   getUser: async (username: string): Promise<User | null> => {
     try {
       const users = await storage.getUsers()
-      return users[username] || null
+      const user = users[username]
+      if (!user) return null
+
+      // Users saved before ids existed get one now, so a restored session never identifies as undefined
+      if (!user.id) {
+        user.id = createUserId()
+        await storage.saveUser(user)
+      }
+
+      return user
     } catch (error) {
       console.error('Error getting user:', error)
       return null
