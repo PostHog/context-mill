@@ -39,7 +39,7 @@ You are an audit subagent. Resolve exactly one rule and return: capture-event-na
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-events/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-events/references/best-practices.md`).
 
-Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once. Inspect the first argument of every capture() call.
+Run **one** Grep: `posthog\??\.capture(\?\.)?\(`. Read each file that contains a hit, once. Inspect the first argument of every capture() call.
 
 Rule:
 - Event names in posthog.capture("name", …) must be static strings, not template literals or dynamic variables.
@@ -59,7 +59,7 @@ You are an audit subagent. Resolve exactly one rule and return: event-naming-sta
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-events/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-events/references/best-practices.md`). Pay attention to PostHog's recommended event-naming convention (snake_case, `noun_verb` shape, descriptive over generic).
 
-Run **one** Grep: `posthog\.capture\(` (and any framework-specific variants the project uses, e.g. `capture(` in React Native, `analytics.capture(` in wrapper utils). Read each file that contains a hit, once. Collect every static event name passed to `capture()`.
+Run **one** Grep: `posthog\??\.capture(\?\.)?\(` (and any framework-specific variants the project uses, e.g. `capture(` in React Native, `analytics.capture(` in wrapper utils). Read each file that contains a hit, once. Collect every static event name passed to `capture()`.
 
 Procedure:
 1. **Detect the project's current convention.** From the collected names, infer the dominant pattern: snake_case / camelCase / PascalCase / kebab-case / "verb_object" / "object_verb" / mixed / no convention. If 80%+ of names share a pattern, the project HAS a convention. Otherwise treat as "no convention".
@@ -101,7 +101,7 @@ You are an audit subagent. Resolve exactly one rule and return: event-duplicates
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-events/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-events/references/best-practices.md`).
 
-Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once. For each capture call, record: event name, file:line, property keys passed (the object shape, not values).
+Run **one** Grep: `posthog\??\.capture(\?\.)?\(`. Read each file that contains a hit, once. For each capture call, record: event name, file:line, property keys passed (the object shape, not values).
 
 Find three kinds of issues:
 
@@ -144,7 +144,7 @@ This check is intentionally open-ended. Different projects have different constr
 
 Read this skill's bundled `best-practices.md` reference once (typically `.claude/skills/audit-events/references/best-practices.md`; otherwise discover with `Glob` `**/skills/audit-events/references/best-practices.md`).
 
-Run **one** Grep: `posthog\.capture\(`. Read each file that contains a hit, once. Look across the captures for the following classes of issues, but only report those that are actually present:
+Run **one** Grep: `posthog\??\.capture(\?\.)?\(`. Read each file that contains a hit, once. Look across the captures for the following classes of issues, but only report those that are actually present:
 
 - **PII in event properties** — property keys named `email`, `phone`, `ssn`, `password`, `address`, or full names passed as property values. PostHog recommends keeping PII out of events (use person properties on `identify()` instead, where access controls apply).
 - **High-cardinality properties** — properties that look unique per request (`request_id`, `trace_id`, `timestamp` as ISO string, `uuid`). High-cardinality props pollute breakdowns and inflate ingestion.
