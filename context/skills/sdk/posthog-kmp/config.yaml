@@ -1,0 +1,22 @@
+# PostHog KMP SDK — exact-major reference & migration skills
+type: docs-only
+category: sdk
+cli:
+  role: internal
+description: PostHog KMP SDK {display_name} reference
+variants:
+  - id: v0
+    display_name: 0.x
+    reference_version: 1.x
+    template: ../non-default-major.md
+    match: { posthogSdks: ["maven:com.posthog:posthog-kmp@0"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/kmp.md
+
+  - id: v1
+    default: true
+    display_name: 1.x
+    template: ../default-major.md
+    match: { posthogSdks: ["maven:com.posthog:posthog-kmp@1"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/kmp.md

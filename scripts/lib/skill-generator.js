@@ -244,13 +244,76 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** A match key is a trait name as the wizard spells it, such as `framework` or `frameworkVariant`. */
 const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
 
-/** The match key every `match` sets: the framework a variant serves. */
+/** The match key for the framework a variant serves, when present. */
 const FRAMEWORK_KEY = 'framework';
 
-/** A variant's `match` with `framework` first, the order its tags and its `variant.json` are written in. */
+/** A variant's `match` with `framework` first when present, the order its tags and `variant.json` are written in. */
 function orderedMatch(match) {
+    if (!(FRAMEWORK_KEY in match)) return { ...match };
     const { [FRAMEWORK_KEY]: framework, ...rest } = match;
     return { [FRAMEWORK_KEY]: framework, ...rest };
+}
+
+/**
+ * Return the list of match values for `{supported_versions}` / `{supported_versions_note}`.
+ * Requires a single match key with at least one non-empty string value so unrelated keys
+ * (such as `framework` + `frameworkVariant`) or empty matches fail loudly.
+ */
+function supportedVersionsValues(match, where = 'Skill') {
+    const entries = Object.entries(match || {});
+    if (entries.length === 0) {
+        throw new Error(`${where} uses {supported_versions} but match has no values`);
+    }
+    if (entries.length > 1) {
+        throw new Error(
+            `${where} uses {supported_versions} but match mixes multiple keys (${entries.map(([k]) => k).join(', ')})`,
+        );
+    }
+    // A value is `<package>@<major>`; one major can list several package names.
+    const values = [...new Set([entries[0][1]].flat()
+        .filter(v => typeof v === 'string' && v.length > 0)
+        .map(v => v.slice(v.lastIndexOf('@') + 1)))];
+    if (values.length === 0) {
+        throw new Error(`${where} uses {supported_versions} but match has no values`);
+    }
+    return values;
+}
+
+/** The versions a variant's `match` serves, as the skill text says them: "0.x", "major 1", or "majors 3, 4, 5, 6, 7". */
+function supportedVersionsText(match, where) {
+    const values = supportedVersionsValues(match, where);
+    if (values.length === 1) {
+        return values[0] === '0' ? '0.x' : `major ${values[0]}`;
+    }
+    return `majors ${values.join(', ')}`;
+}
+
+/**
+ * The reference-scope sentence paired with `{supported_versions}` in non-default SDK skills.
+ * Adapts singular/plural phrasing and notes minor-version differences (and Cargo `0.y` semantics for Rust).
+ */
+function supportedVersionsNote(skill, where) {
+    const values = supportedVersionsValues(skill.match, where);
+    const isRust = Object.values(skill.match || {}).flat().some(v => String(v).startsWith('posthog-rs@'));
+    const displayName = skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name;
+    if (skill.reference_version) {
+        const installedScope = values.length > 1
+            ? `one of majors ${values.join(', ')}`
+            : values[0] === '0'
+                ? '`0.x`'
+                : `major ${values[0]}`;
+        return `No archived **${displayName}** reference page exists on posthog.com, so the bundled reference targets **${skill.reference_version}** while the project already uses ${installedScope}. Rely on \`references/*/api-notes.md\` and \`references/*/migration.md\` for ${installedScope} rules, and never copy ${skill.reference_version}-only syntax.`;
+    }
+    if (values.length > 1) {
+        return `The bundled reference is written for the newest of them, **${displayName}**; the project already has one of these majors installed (older minors within a major can also differ).`;
+    }
+    if (values[0] === '0') {
+        const cargoNote = isRust
+            ? ', and Cargo treats each `0.y` minor as breaking'
+            : '';
+        return `The bundled reference covers the latest **${displayName}** release, and the project already uses \`0.x\` (older \`0.x\` minors can still differ from the reference${cargoNote}).`;
+    }
+    return `The bundled reference covers the latest **${displayName}** release, and the project already has major ${values[0]} installed (older \`${values[0]}.x\` minors can still differ from the reference).`;
 }
 
 /** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
@@ -297,8 +360,26 @@ function validateVariantTable(key, group) {
             throw new Error(`Skill group "${key}": products lists a name twice`);
         }
     }
+    const groupUsesFramework = (group.variants || []).some(
+        v => v.match && typeof v.match === 'object' && v.match[FRAMEWORK_KEY] !== undefined,
+    );
+    const claimedNonFrameworkMatches = new Map();
+    const frameworkDefaults = new Map();
+    const defaultVariants = [];
     for (const variant of group.variants || []) {
         const where = `Skill group "${key}", variant "${variant.id}"`;
+        if (variant.default !== undefined && typeof variant.default !== 'boolean') {
+            throw new Error(`${where}: default must be a boolean`);
+        }
+        if (
+            variant.reference_version !== undefined &&
+            (typeof variant.reference_version !== 'string' || variant.reference_version.trim().length === 0)
+        ) {
+            throw new Error(`${where}: reference_version must be a non-empty string`);
+        }
+        if (variant.default === true) {
+            defaultVariants.push(variant);
+        }
         if (variant.framework !== undefined) {
             throw new Error(`${where}: name the framework under match, as match: { framework: ${variant.framework} }`);
         }
@@ -306,11 +387,44 @@ function validateVariantTable(key, group) {
             const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
                 ? Object.entries(variant.match)
                 : null;
-            if (!entries || entries.some(([k, v]) => !TRAIT_NAME.test(k) || typeof v !== 'string' || v.length === 0 || v.includes(':'))) {
-                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings`);
+            // A tag splits at its first `:`, so a value may hold one, as a Maven `group:artifact` does.
+            const validValue = v => typeof v === 'string' && v.length > 0;
+            if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || !(Array.isArray(v) ? v.length > 0 && v.every(validValue) : validValue(v)))) {
+                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings or non-empty lists of strings`);
             }
-            if (variant.match[FRAMEWORK_KEY] === undefined) {
+            for (const [k, v] of entries) {
+                if (Array.isArray(v) && new Set(v).size !== v.length) {
+                    throw new Error(`${where}: match.${k} lists duplicate values`);
+                }
+            }
+            const needsFramework = products !== undefined || groupUsesFramework || variant.match.frameworkVariant !== undefined;
+            if (needsFramework && variant.match[FRAMEWORK_KEY] === undefined) {
                 throw new Error(`${where}: match must name the framework, as match: { framework: … }`);
+            }
+            if (!groupUsesFramework) {
+                for (const [k, v] of entries) {
+                    for (const value of Array.isArray(v) ? v : [v]) {
+                        const claim = `${k}:${value}`;
+                        const existingOwner = claimedNonFrameworkMatches.get(claim);
+                        if (existingOwner !== undefined) {
+                            throw new Error(`${where}: match ${claim} is already claimed by variant "${existingOwner}"`);
+                        }
+                        claimedNonFrameworkMatches.set(claim, variant.id);
+                    }
+                }
+            }
+        }
+        if (groupUsesFramework && variant.default === true) {
+            const rawFramework = variant.match?.[FRAMEWORK_KEY];
+            if (rawFramework === undefined) {
+                throw new Error(`${where}: default: true in a framework group requires match.framework`);
+            }
+            for (const fw of Array.isArray(rawFramework) ? rawFramework : [rawFramework]) {
+                const existingDefault = frameworkDefaults.get(fw);
+                if (existingDefault !== undefined) {
+                    throw new Error(`${where}: framework "${fw}" already marks variant "${existingDefault}" as default`);
+                }
+                frameworkDefaults.set(fw, variant.id);
             }
         }
         if (products === undefined) {
@@ -339,6 +453,31 @@ function validateVariantTable(key, group) {
                     listed
                         ? `${where}: ${product} has pages and is also named under gaps`
                         : `${where}: no ${product} pages. List them under docs, or name ${product} under gaps`,
+                );
+            }
+        }
+    }
+    if (!groupUsesFramework && defaultVariants.length > 1) {
+        throw new Error(`Skill group "${key}": at most one variant may set default: true`);
+    }
+    // Same fallback as expandSkillGroups: a group under sdk/ is an sdk group even without `category: sdk`.
+    const category = group.category || key.split('/')[0];
+    if (category === 'sdk') {
+        if (defaultVariants.length !== 1) {
+            throw new Error(`Skill group "${key}": sdk groups must mark exactly one variant with default: true`);
+        }
+        let sharedMatchKey = null;
+        for (const variant of group.variants || []) {
+            const keys = variant.match ? Object.keys(variant.match) : [];
+            if (keys.length !== 1 || keys[0] === FRAMEWORK_KEY) {
+                throw new Error(
+                    `Skill group "${key}", variant "${variant.id}": sdk variants must declare one shared non-framework match key`,
+                );
+            }
+            sharedMatchKey ??= keys[0];
+            if (keys[0] !== sharedMatchKey) {
+                throw new Error(
+                    `Skill group "${key}", variant "${variant.id}": sdk variants must declare one shared non-framework match key`,
                 );
             }
         }
@@ -635,6 +774,21 @@ async function fetchDocOnce(url) {
 }
 
 /**
+ * Extract the top `## Checklist` section from a migration guide markdown document.
+ * Drops leading intro text so the non-default SKILL.md receives only the checklist items.
+ * Returns null when the heading or bullet items are absent so callers fall back cleanly.
+ */
+function extractMigrationChecklist(markdown) {
+    const match = markdown.match(/^## Checklist[ \t]*\r?\n([\s\S]*?)(?=\r?\n##\s|(?![\s\S]))/m);
+    if (!match) return null;
+    const lines = match[1]
+        .split(/\r?\n/)
+        .map(line => line.trimEnd())
+        .filter(line => /^\*\*[^*]+\*\*$|^-\s+/.test(line.trim()));
+    return lines.some(line => /^\s*-\s+/.test(line)) ? lines.join('\n') : null;
+}
+
+/**
  * Fetch markdown content from a URL, with an on-disk cache and retries.
  * Returns both content and inferred metadata. Logs `Fetching doc:` only
  * on a real network fetch — cache hits are silent.
@@ -792,6 +946,7 @@ async function generateSkill({
 
     // Track reference files for the SKILL.md listing
     const references = [];
+    const localPages = [];
 
     // Track workflow step files (local references with `next_step:` frontmatter)
     // for the {workflow} template placeholder. Ordered by filename.
@@ -872,6 +1027,10 @@ async function generateSkill({
                 filename: reference,
                 description: displayDescription,
             });
+            localPages.push({
+                filename: reference,
+                content: body,
+            });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
@@ -901,6 +1060,7 @@ async function generateSkill({
             written.push({
                 filename: path.posix.join(subfolder, names[i]),
                 description: (typeof docEntry === 'object' && docEntry.title) || result.title,
+                content: result.content,
             });
         }
         return written;
@@ -969,15 +1129,55 @@ async function generateSkill({
     // Format workflow steps for skills that use the {workflow} placeholder
     const workflowText = formatWorkflowSteps(workflowSteps);
 
+    let migrationChecklistText = '';
+    if (skillTemplate.includes('{migration_checklist}')) {
+        const variantLocalMigration = skill._shortId
+            ? localPages.find(page => page.filename === path.posix.join(skill._shortId, 'migration.md'))
+            : null;
+        const migrationPage =
+            pages.find(page => page.filename === 'migration.md')
+            || variantLocalMigration
+            || localPages.find(page => page.filename === 'migration.md');
+        if (!migrationPage) {
+            console.warn(`  [WARN] Skill "${skill.id}": no migration.md found; omitting migration checklist`);
+            migrationChecklistText = '_No migration guide bundled for this version; rely on the installed package and reference files below._';
+        } else {
+            const checklist = extractMigrationChecklist(migrationPage.content);
+            if (checklist) {
+                migrationChecklistText = checklist;
+            } else {
+                console.warn(`  [WARN] Skill "${skill.id}": migration checklist not found in ${migrationPage.filename}; linking references/${migrationPage.filename}`);
+                migrationChecklistText = `_See \`references/${migrationPage.filename}\` for the breaking-change checklist._`;
+            }
+        }
+    }
+
     // Build SKILL.md content
     let skillContent = generateFrontmatter(skill, version);
 
-    // Apply template substitutions
-    let body = skillTemplate
-        .replace(/{display_name}/g, skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name)
-        .replace(/{references}/g, referencesText)
-        .replace(/{commandments}/g, commandmentsText)
-        .replace(/{workflow}/g, workflowText);
+    // Apply template substitutions in a single pass via a replacer callback so `$&` / `` $` `` in
+    // fetched docs or nested `{placeholder}` text cannot corrupt or re-expand the template.
+    const usesSupportedVersions =
+        skillTemplate.includes('{supported_versions}') || skillTemplate.includes('{supported_versions_note}');
+    const displayName = skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name;
+    const replacements = {
+        display_name: displayName,
+        reference_version: skill.reference_version || displayName,
+        supported_versions: usesSupportedVersions
+            ? supportedVersionsText(skill.match, `Skill "${skill.id}"`)
+            : '',
+        supported_versions_note: usesSupportedVersions
+            ? supportedVersionsNote(skill, `Skill "${skill.id}"`)
+            : '',
+        references: referencesText,
+        commandments: commandmentsText,
+        workflow: workflowText,
+        migration_checklist: migrationChecklistText,
+    };
+    let body = skillTemplate.replace(
+        /\{(display_name|reference_version|supported_versions|supported_versions_note|references|commandments|workflow|migration_checklist)\}/g,
+        (_, key) => replacements[key],
+    );
     body = expandPartials(body, configDir);
 
     skillContent += body;
@@ -1152,6 +1352,7 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    extractMigrationChecklist,
     parseCliBlock,
     resolveVariantCli,
     expandPartials,

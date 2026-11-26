@@ -156,13 +156,52 @@ describe('a variant table', () => {
         ['a match that names no framework', { match: { frameworkVariant: 'app-router' } }, /match must name the framework/],
         ['a match value that is not a string', { match: { framework: 'nextjs', frameworkVariant: 4 } }, /match must map/],
         ['a match key that is not a trait name', { match: { framework: 'nextjs', 'framework-variant': 'app-router' } }, /match must map trait names/],
-        // A match pair is published as a `key:value` tag, so a colon in the value would read as another key.
-        ['a match value with a colon', { match: { framework: 'nextjs', frameworkVariant: 'app:router' } }, /match must map trait names/],
         ['a match that is a list', { match: ['nextjs'] }, /match must map trait names/],
         ['a match that is null', { match: null }, /match must map trait names/],
         ['an empty match value', { match: { framework: '' } }, /match must map trait names/],
     ])('rejects %s', (_, changes, message) => {
         expect(() => expand(withVariant(changes))).toThrow(message);
+    });
+
+    it('rejects duplicate values in a single match array and overlapping claims across non-framework variants', () => {
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { posthogSdks: ['posthog@7', 'posthog@7'] } },
+                { id: 'v8', default: true, match: { posthogSdks: 'posthog@8' } },
+            ],
+        })).toThrow(/duplicate values/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v5', match: { posthogSdks: 'posthog@5' } },
+                { id: 'v7', match: { posthogSdks: ['posthog@5', 'posthog@6', 'posthog@7'] } },
+                { id: 'v8', default: true, match: { posthogSdks: 'posthog@8' } },
+            ],
+        })).toThrow(/already claimed by variant "v5"/);
+    });
+
+    it('requires an sdk group to have exactly one default and one shared match key', () => {
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { posthogSdks: ['posthog@6', 'posthog@7'] } },
+                { id: 'v8', match: { posthogSdks: ['posthog@8'] } },
+            ],
+        })).toThrow(/sdk groups must mark exactly one variant with default: true/);
+
+        expect(() => expand({
+            type: 'docs-only',
+            category: 'sdk',
+            variants: [
+                { id: 'v7', match: { posthogSdks: ['posthog@6', 'posthog@7'] } },
+                { id: 'v8', default: true },
+            ],
+        })).toThrow(/sdk variants must declare one shared non-framework match key/);
     });
 
     it('accepts a product a variant declares as a gap', () => {
@@ -184,6 +223,21 @@ describe('a variant table', () => {
         ['products that are not a list', 'error-tracking', /must be a list of kebab-case names/],
     ])('rejects %s', (_, products, message) => {
         expect(() => expand(table({ products }))).toThrow(message);
+    });
+
+    it('publishes one menu tag per value of a match list, in order, beside single-string keys', () => {
+        writeManifestAndMenu({
+            allSkills: expand(withVariant({ match: { frameworkVariant: ['app-router', 'pages-router'], framework: 'nextjs' } })).map(serializeSkill),
+            docContents: {},
+            distDir: path.join(dir, 'dist'),
+            configDir: dir,
+            version: '1.2.3',
+        });
+        const menu = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'skills', 'skill-menu.json'), 'utf8'));
+        const [entry] = Object.values(menu.categories).flat();
+
+        expect(entry.tags).toEqual(['nextjs', 'framework:nextjs', 'frameworkVariant:app-router', 'frameworkVariant:pages-router', 'integration', 'default']);
+        expect(entry.tags.some(tag => tag.includes('['))).toBe(false);
     });
 
     it('publishes match as key:value menu tags, the framework first however the row orders them', () => {

@@ -154,6 +154,7 @@ function generateMarketplace({ skills, tempDir, version, outputDir, configDir })
     // Group skills by plugin name
     const pluginGroups = {};
     for (const skill of skills) {
+        if (skill.cli?.role === 'internal') continue;
         const pluginName = groupToPlugin[skill.category];
         if (!pluginName) {
             console.warn(`  [WARN] No plugin mapping for group "${skill.category}", skipping ${skill.id}`);
