@@ -4,7 +4,7 @@ next_step: 2-read-context.md
 
 # Step 1 — Check access
 
-Self-driving is in **open beta** — available to every team — so there is no access gate to check here. This step exists only so the run opens with a fast, visible first checkmark. Do no real work: call no tool, fetch nothing.
+Self-driving is **generally available** to every team, so there is no access gate to check here. This step exists only so the run opens with a fast, visible first checkmark. Do no real work: call no tool, fetch nothing.
 
 ## Status
 
