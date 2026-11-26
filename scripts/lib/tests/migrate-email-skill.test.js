@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { spawnSync } from 'child_process';
 import { join, relative } from 'path';
 import { tmpdir } from 'os';
-import { generateCliEntries } from '../build-phases.js';
+import { writeManifestAndMenu } from '../build-phases.js';
 
 const CONFIG_DIR = join(process.cwd(), 'context');
 const DOCS_PAGES = {
@@ -11,7 +11,7 @@ const DOCS_PAGES = {
     'https://posthog.com/docs/workflows/transactional-emails/api.md': '# Send transactional emails with the API\n',
 };
 const REFERENCE_PATH = /references\/[A-Za-z0-9_./-]+\.md/g;
-const PROVIDERS = ['resend', 'sendgrid'];
+const PROVIDERS = ['resend', 'sendgrid', 'mandrill'];
 const PROVIDER_FILES = ['sdk-reference.md', 'mapping.md', 'account.md'];
 const SDKS = ['node', 'python', 'go', 'ruby', 'php', 'dotnet', 'rust', 'elixir'];
 
@@ -210,7 +210,9 @@ describe('migrate-email skill', () => {
 
     it('publishes each provider and Statsig as wizard migrate subcommands in the menu the Wizard reads', async () => {
         const { generator, skills } = await loadSkills();
-        const entries = generateCliEntries({ allSkills: skills.map(generator.serializeSkill) });
+        outputDir = mkdtempSync(join(tmpdir(), 'migrate-menu-'));
+        writeManifestAndMenu({ allSkills: skills.map(generator.serializeSkill), docContents: {}, distDir: outputDir, configDir: CONFIG_DIR, version: 'test' });
+        const entries = JSON.parse(readFileSync(join(outputDir, 'skills', 'skill-menu.json'), 'utf8')).cliEntries;
         const entryOf = (skillId) => entries.find((entry) => entry.skillId === skillId);
 
         for (const provider of PROVIDERS) {
