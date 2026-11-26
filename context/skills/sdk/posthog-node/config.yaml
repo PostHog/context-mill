@@ -8,7 +8,7 @@ variants:
   - id: v5
     display_name: 5.x.x
     template: ../non-default-major.md
-    match: { posthogSdks: ["posthog-node@4", "posthog-node@5"] }
+    match: { posthogSdks: ["npm:posthog-node@1", "npm:posthog-node@2", "npm:posthog-node@3", "npm:posthog-node@4", "npm:posthog-node@5"] }
     docs_urls:
       - https://posthog.com/docs/libraries/node/5.x.x.md
       - https://posthog.com/docs/libraries/node/migration.md
@@ -17,6 +17,6 @@ variants:
     default: true
     display_name: 6.x.x
     template: ../default-major.md
-    match: { posthogSdks: ["posthog-node@6"] }
+    match: { posthogSdks: ["npm:posthog-node@6"] }
     docs_urls:
       - https://posthog.com/docs/libraries/node/6.x.x.md

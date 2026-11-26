@@ -8,7 +8,7 @@ variants:
   - id: v7
     display_name: 7.x.x
     template: ../non-default-major.md
-    match: { posthogSdks: ["posthog@3", "posthog@4", "posthog@5", "posthog@6", "posthog@7"] }
+    match: { posthogSdks: ["pypi:posthog@3", "pypi:posthog@4", "pypi:posthog@5", "pypi:posthog@6", "pypi:posthog@7"] }
     docs_urls:
       - https://posthog.com/docs/libraries/python/7.x.x.md
       - https://posthog.com/docs/libraries/python/migration.md
@@ -17,6 +17,6 @@ variants:
     default: true
     display_name: 8.x.x
     template: ../default-major.md
-    match: { posthogSdks: ["posthog@8"] }
+    match: { posthogSdks: ["pypi:posthog@8"] }
     docs_urls:
       - https://posthog.com/docs/libraries/python/8.x.x.md
