@@ -18,12 +18,13 @@
 <div class="card">
     <h3>Code Example</h3>
     <pre>
-# API endpoint captures the event
-with new_context():
+posthog_client = current_app.extensions.get('posthog')
+if posthog_client:
     identify_context(str(current_user.id))
-    capture('burrito_considered', properties={
-        'total_considerations': burrito_count
-    })</pre>
+    posthog_client.capture(
+        'burrito_considered',
+        properties={'total_considerations': burrito_count},
+    )</pre>
 </div>
 {% endblock %}
 

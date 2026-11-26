@@ -1,8 +1,14 @@
 import { PostHog } from "posthog-node";
 
-const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+// Leave missing tokens unset and return null rather than constructing a PostHog client with a placeholder key.
+const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 
-if (!token && process.env.NODE_ENV !== "production") {
+const globalWarnState = globalThis as typeof globalThis & {
+  __posthogRemixMissingTokenWarned?: boolean;
+};
+
+if (!token && process.env.NODE_ENV !== "production" && !globalWarnState.__posthogRemixMissingTokenWarned) {
+  globalWarnState.__posthogRemixMissingTokenWarned = true;
   console.warn(
     "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
   );
@@ -11,7 +17,7 @@ if (!token && process.env.NODE_ENV !== "production") {
 // One client for the whole process. Remix handlers are short-lived, so send each event straight away.
 export const posthog = token
   ? new PostHog(token, {
-      host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+      host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
       flushAt: 1,
       flushInterval: 0,
       requestTimeout: 2000,
@@ -20,18 +26,28 @@ export const posthog = token
     })
   : null;
 
-// posthog-js adds these headers to same-origin requests because of `tracing_headers`.
-// Without them the visitor is anonymous: use a random id and skip creating a person profile.
+// posthog-js attaches X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID to same-origin requests via tracing_headers.
+// When an unauthenticated visitor or server error request lacks a distinct id, generate a per-request UUID with process_person_profile set to false instead of a shared literal string.
 function identityFrom(request: Request) {
-  const distinctId = request.headers.get("X-POSTHOG-DISTINCT-ID");
-  const sessionId = request.headers.get("X-POSTHOG-SESSION-ID");
+  const distinctId = request.headers.get("X-POSTHOG-DISTINCT-ID")?.trim();
+  const sessionId = request.headers.get("X-POSTHOG-SESSION-ID")?.trim();
+
+  if (distinctId) {
+    return {
+      distinctId,
+      properties: {
+        ...(sessionId && { $session_id: sessionId }),
+      },
+      options: {},
+    };
+  }
 
   return {
-    distinctId: distinctId ?? crypto.randomUUID(),
+    distinctId: crypto.randomUUID(),
     properties: {
       ...(sessionId && { $session_id: sessionId }),
     },
-    options: distinctId ? {} : { process_person_profile: false },
+    options: { process_person_profile: false },
   };
 }
 
@@ -42,12 +58,18 @@ export async function captureEvent(
 ) {
   if (!posthog) return;
 
-  const identity = identityFrom(request);
+  const distinctId = request.headers.get("X-POSTHOG-DISTINCT-ID")?.trim();
+  const sessionId = request.headers.get("X-POSTHOG-SESSION-ID")?.trim();
+  // Signed-in user action routes require the browser's PostHog distinct id header, so skip capture when it is missing instead of inventing a fallback id.
+  if (!distinctId) return;
+
   posthog.capture({
-    distinctId: identity.distinctId,
+    distinctId,
     event,
-    properties: { ...properties, ...identity.properties },
-    options: identity.options,
+    properties: {
+      ...properties,
+      ...(sessionId && { $session_id: sessionId }),
+    },
   });
   await posthog.flush().catch(() => {});
 }

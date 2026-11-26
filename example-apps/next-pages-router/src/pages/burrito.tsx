@@ -6,30 +6,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 
 export default function BurritoPage() {
-  const { user, incrementBurritoConsiderations } = useAuth();
+  const { user, isReady, incrementBurritoConsiderations } = useAuth();
   const router = useRouter();
   const [hasConsidered, setHasConsidered] = useState(false);
 
-  // Redirect to home if not logged in
+  // Redirect to home once session restoration completes if no user is logged in.
   useEffect(() => {
-    if (!user) {
+    if (isReady && !user) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [isReady, user, router]);
 
   if (!user) {
     return null;
   }
 
   const handleConsideration = () => {
+    const nextCount = user.burritoConsiderations + 1;
     incrementBurritoConsiderations();
     setHasConsidered(true);
     setTimeout(() => setHasConsidered(false), 2000);
 
-    // Capture burrito consideration event
+    // Omit username and other PII from event properties. User attributes belong on identify() person properties.
     posthog.capture('burrito_considered', {
-      total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
+      total_considerations: nextCount,
     });
   };
 

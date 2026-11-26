@@ -7,7 +7,7 @@ This is a [Next.js](https://nextjs.org) App Router example demonstrating PostHog
 - **Product analytics**: Track user events and behaviors
 - **Session replay**: Record and replay user sessions
 - **Error tracking**: Capture and track errors
-- **User authentication**: Demo login system with PostHog user identification
+- **User authentication**: Demo login system with PostHog user identification and session restore
 - **Server-side & Client-side tracking**: Examples of both tracking methods
 - **Reverse proxy**: PostHog ingestion through Next.js rewrites
 
@@ -23,10 +23,10 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env.local` file in the root directory:
+Copy `.env.example` to `.env.local` in the root directory and fill in your PostHog project token:
 
 ```bash
-NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -75,7 +75,8 @@ instrumentation-client.ts      # Client-side PostHog initialization
 ```typescript
 import posthog from "posthog-js"
 
-const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const rawToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const token = rawToken?.trim()
 
 if (token) {
   posthog.init(token, {
@@ -90,20 +91,29 @@ if (token) {
 }
 ```
 
-### User identification (AuthContext.tsx)
+### User identification and logout (AuthContext.tsx)
+
+Identify with the user's stable UUID on login and when restoring a persisted session on reload, keep `username` in person properties rather than `capture()` event properties, and capture `user_logged_out` before calling `reset()`:
 
 ```typescript
 posthog.identify(user.id, {
   username: user.username,
 });
+
+posthog.capture('user_logged_in', {
+  login_method: 'username',
+});
+
+// On logout from an authenticated session, capture before reset()
+posthog.capture('user_logged_out');
+posthog.reset();
 ```
 
 ### Event tracking (burrito/page.tsx)
 
 ```typescript
 posthog.capture('burrito_considered', {
-  total_considerations: count,
-  username: username,
+  total_considerations: nextCount,
 });
 ```
 
@@ -120,8 +130,12 @@ const posthog = getPostHogClient();
 posthog?.capture({
   distinctId: user.id,
   event: 'server_login',
-  properties: { ... }
+  properties: {
+    isNewUser,
+    source: 'api',
+  },
 });
+await posthog?.flush().catch(() => {});
 ```
 
 ## Reverse proxy

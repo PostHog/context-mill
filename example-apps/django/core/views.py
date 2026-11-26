@@ -1,12 +1,11 @@
 """Django views demonstrating PostHog integration patterns"""
 
-import posthog
-from posthog import capture
-from django.shortcuts import render, redirect
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 
@@ -16,19 +15,26 @@ def home_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = (request.POST.get('username') or '').strip()
+        password = request.POST.get('password') or ''
+
+        # Reject empty credentials before authentication and omit event capture when no user resolves.
+        if not username or not password:
+            messages.error(request, 'Username and password are required')
+            return render(request, 'core/home.html')
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
 
-            # PostHog: the user_logged_in signal (core/signals.py) has identified
-            # this request's context, so a plain capture is attributed.
-            capture('user_logged_in', properties={
-                'login_method': 'email',
-            })
+            # The user_logged_in signal (core/signals.py) already identified this request context,
+            # so a plain capture on the configured client is attributed to user.pk without PII properties.
+            client = settings.POSTHOG_MW_CLIENT
+            if client:
+                client.capture('user_logged_in', properties={
+                    'login_method': 'username',
+                })
 
             return redirect('dashboard')
         else:
@@ -39,10 +45,11 @@ def home_view(request):
 
 def logout_view(request):
     """Logout the current user"""
+    # Only capture logout when an authenticated session is active, and before logout() clears it.
     if request.user.is_authenticated:
-        # PostHog: the middleware identified this request's context from the
-        # still-authenticated user, so capture before calling logout().
-        capture('user_logged_out')
+        client = settings.POSTHOG_MW_CLIENT
+        if client:
+            client.capture('user_logged_out')
 
         logout(request)
 
@@ -52,29 +59,30 @@ def logout_view(request):
 @login_required
 def dashboard_view(request):
     """Dashboard page with feature flag example"""
-    user_id = str(request.user.id)
+    user_id = str(request.user.pk)
+    client = settings.POSTHOG_MW_CLIENT
 
-    # PostHog: the middleware already identified this request's context from the
-    # logged-in user, so a plain capture is attributed to them.
-    capture('dashboard_viewed', properties={
-        'is_staff': request.user.is_staff,
-    })
-
-    # PostHog: Check feature flag
-    show_new_feature = posthog.feature_enabled(
-        'new-dashboard-feature',
-        distinct_id=user_id,
-        person_properties={
-            'email': request.user.email,
+    # The middleware already identified this request context from the logged-in user.
+    if client:
+        client.capture('dashboard_viewed', properties={
             'is_staff': request.user.is_staff,
-        }
-    )
+        })
 
-    # PostHog: Get feature flag payload
-    feature_config = posthog.get_feature_flag_payload(
-        'new-dashboard-feature',
-        distinct_id=user_id,
-    )
+        show_new_feature = client.feature_enabled(
+            'new-dashboard-feature',
+            distinct_id=user_id,
+            person_properties={
+                'email': request.user.email,
+                'is_staff': request.user.is_staff,
+            },
+        )
+        feature_config = client.get_feature_flag_payload(
+            'new-dashboard-feature',
+            distinct_id=user_id,
+        )
+    else:
+        show_new_feature = False
+        feature_config = None
 
     context = {
         'show_new_feature': show_new_feature,
@@ -103,10 +111,11 @@ def consider_burrito_view(request):
     count = request.session.get('burrito_count', 0) + 1
     request.session['burrito_count'] = count
 
-    # PostHog: Track custom event
-    capture('burrito_considered', properties={
-        'total_considerations': count,
-    })
+    client = settings.POSTHOG_MW_CLIENT
+    if client:
+        client.capture('burrito_considered', properties={
+            'total_considerations': count,
+        })
 
     return JsonResponse({
         'success': True,
@@ -117,10 +126,9 @@ def consider_burrito_view(request):
 @login_required
 def profile_view(request):
     """Profile page with error tracking demonstration"""
-    user_id = str(request.user.id)
-
-    # PostHog: Track profile view
-    capture('profile_viewed')
+    client = settings.POSTHOG_MW_CLIENT
+    if client:
+        client.capture('profile_viewed')
 
     context = {
         'user': request.user,
@@ -133,9 +141,8 @@ def profile_view(request):
 @require_POST
 def trigger_error_view(request):
     """API endpoint that demonstrates error tracking"""
+    error_type = request.POST.get('error_type', 'generic')
     try:
-        error_type = request.POST.get('error_type', 'generic')
-
         if error_type == 'value':
             raise ValueError("Invalid value provided by user")
         elif error_type == 'key':
@@ -145,14 +152,13 @@ def trigger_error_view(request):
             raise Exception("Something went wrong!")
 
     except Exception as e:
-        # PostHog: Capture exception
-        posthog.capture_exception(e)
-
-        # PostHog: Track error trigger event
-        capture('error_triggered', properties={
-            'error_type': error_type,
-            'error_message': str(e),
-        })
+        client = settings.POSTHOG_MW_CLIENT
+        if client:
+            client.capture_exception(e)
+            client.capture('error_triggered', properties={
+                'error_type': error_type,
+                'error_message': str(e),
+            })
 
         return JsonResponse({
             'success': False,
@@ -166,29 +172,26 @@ def trigger_error_view(request):
 @login_required
 def group_analytics_view(request):
     """Example demonstrating group analytics"""
-    user_id = str(request.user.id)
-
-    # PostHog: Identify group
-    posthog.group_identify(
-        group_type='company',
-        group_key='acme-corp',
-        properties={
-            'name': 'Acme Corporation',
-            'plan': 'enterprise',
-            'employee_count': 150,
-        }
-    )
-
-    # PostHog: Capture event with group
-    capture(
-        'feature_used',
-        properties={
-            'feature_name': 'group_analytics',
-        },
-        groups={
-            'company': 'acme-corp',
-        }
-    )
+    client = settings.POSTHOG_MW_CLIENT
+    if client:
+        client.group_identify(
+            group_type='company',
+            group_key='acme-corp',
+            properties={
+                'name': 'Acme Corporation',
+                'plan': 'enterprise',
+                'employee_count': 150,
+            },
+        )
+        client.capture(
+            'feature_used',
+            properties={
+                'feature_name': 'group_analytics',
+            },
+            groups={
+                'company': 'acme-corp',
+            },
+        )
 
     return JsonResponse({
         'success': True,

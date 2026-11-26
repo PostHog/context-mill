@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
 import { useAuth } from '../src/contexts/AuthContext'
 import { colors, spacing, typography, borderRadius, shadows } from '../src/styles/theme'
@@ -8,7 +9,7 @@ import { colors, spacing, typography, borderRadius, shadows } from '../src/style
 /**
  * Burrito Consideration Screen
  *
- * Demonstrates PostHog event tracking with custom properties.
+ * Demonstrates PostHog event tracking with non-PII custom properties.
  * Each time the user considers a burrito, an event is captured.
  *
  * @see https://posthog.com/docs/libraries/react-native#capturing-events
@@ -16,7 +17,7 @@ import { colors, spacing, typography, borderRadius, shadows } from '../src/style
 export default function BurritoScreen() {
   const { user, incrementBurritoConsiderations } = useAuth()
   const router = useRouter()
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
   const [hasConsidered, setHasConsidered] = useState(false)
 
   // Redirect to home if not logged in
@@ -40,12 +41,9 @@ export default function BurritoScreen() {
     // Hide success message after 2 seconds
     setTimeout(() => setHasConsidered(false), 2000)
 
-    // Capture custom event in PostHog with properties
-    // We recommend using a [object] [verb] format for event names
-    // @see https://posthog.com/docs/libraries/react-native#capturing-events
-    posthog.capture('burrito_considered', {
+    // Capture custom event in PostHog with non-PII properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: newCount,
-      username: user.username,
     })
   }
 
@@ -58,8 +56,7 @@ export default function BurritoScreen() {
         </Text>
 
         {/*
-          testID is captured by PostHog autocapture for touch events
-          This helps identify the button in analytics
+          testID is captured by PostHog autocapture for touch events.
           @see https://posthog.com/docs/libraries/react-native#autocapture
         */}
         <TouchableOpacity

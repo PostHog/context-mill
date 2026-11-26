@@ -7,7 +7,9 @@ import App from './App'
 import posthog from 'posthog-js'
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 
-const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+// Read the project token without a fallback value. When it is missing, leave the client uninitialized()
+// and PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
 
 if (posthogToken) {
   posthog.init(posthogToken, {
@@ -21,12 +23,16 @@ if (posthogToken) {
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element not found')
 
+const app = <App />
+
 ReactDOM.createRoot(root).render(
   <StrictMode>
-    <PostHogProvider client={posthog}>
-      <PostHogErrorBoundary>
-        <App />
-      </PostHogErrorBoundary>
-    </PostHogProvider>
+    {posthogToken ? (
+      <PostHogProvider client={posthog}>
+        <PostHogErrorBoundary>{app}</PostHogErrorBoundary>
+      </PostHogProvider>
+    ) : (
+      app
+    )}
   </StrictMode>,
 )

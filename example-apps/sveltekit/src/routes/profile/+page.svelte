@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { env } from '$env/dynamic/public';
 	import posthog from 'posthog-js';
 	import { getAuthContext } from '$lib/auth.svelte';
 
@@ -17,7 +18,9 @@
 		try {
 			throw new Error('Test error for PostHog error tracking');
 		} catch (err) {
-			posthog.captureException(err);
+			if (env.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()) {
+				posthog.captureException(err);
+			}
 			console.error('Captured error:', err);
 			alert('Error captured and sent to PostHog!');
 		}

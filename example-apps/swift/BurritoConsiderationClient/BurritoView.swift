@@ -20,12 +20,16 @@ struct BurritoView: View {
                 .font(.system(size: 80))
 
             Button("I Have Considered the Burrito Potential") {
-                userState.burritoConsiderations += 1
+                // Skip capture when no user is signed in rather than falling back to "unknown".
+                guard userState.isLoggedIn else {
+                    return
+                }
 
-                // PostHog: Capture burrito consideration event
+                let count = userState.incrementBurritoConsiderations()
+
+                // Keep PII like username out of event properties since identify sets person properties.
                 PostHogSDK.shared.capture("burrito_considered", properties: [
-                    "total_considerations": userState.burritoConsiderations,
-                    "username": userState.username ?? "unknown",
+                    "total_considerations": count,
                 ])
 
                 showConfirmation = true
@@ -50,5 +54,6 @@ struct BurritoView: View {
         .padding()
         .animation(.default, value: showConfirmation)
         .navigationTitle("Burrito Consideration Zone")
+        .postHogScreenView("Burrito")
     }
 }

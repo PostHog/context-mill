@@ -49,21 +49,31 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 // Capture server-side errors with PostHog
-export const handleError: HandleServerError = async ({ error, status, message }) => {
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
 	const posthog = getPostHogClient();
 
-	posthog?.capture({
-		distinctId: 'server',
-		event: 'server_error',
-		properties: {
-			error: error instanceof Error ? error.message : String(error),
-			status,
-			message
-		}
-	});
+	if (posthog) {
+		const headerDistinctId = event.request.headers.get('x-posthog-distinct-id')?.trim();
+		const sessionId = event.request.headers.get('x-posthog-session-id')?.trim();
 
-	// handleError runs per request; flush so the enqueued event sends before it returns
-	await posthog?.flush();
+		// Never use a shared literal ID like 'server' or 'anonymous', which merges unrelated visitors into one profile.
+		// When the client tracing header is absent on an unhandled error, generate a per-request UUID with personless processing.
+		const distinctId = headerDistinctId ? headerDistinctId : crypto.randomUUID();
+		const options = headerDistinctId ? undefined : { process_person_profile: false };
+
+		posthog.captureException(error, {
+			distinctId,
+			properties: {
+				$session_id: sessionId || undefined,
+				status,
+				message
+			},
+			options
+		});
+
+		// handleError runs per request, so flush queued events and ignore delivery errors before returning.
+		await posthog.flush().catch(() => {});
+	}
 
 	return {
 		message,

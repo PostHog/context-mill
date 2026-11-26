@@ -2,18 +2,7 @@ import { useState } from "react";
 import { usePostHog } from "@posthog/react";
 import type { MetaFunction } from "@remix-run/node";
 
-import { useAuth } from "../auth";
-
-// Stands in for your auth system: each username gets a stable user id, the way a user
-// record's primary key would. Identify with that id, never with the username or email.
-function getUserId(username: string): string {
-  const key = `demo-user-id:${username}`;
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  window.localStorage.setItem(key, id);
-  return id;
-}
+import { getUserId, useAuth } from "../auth";
 
 export const meta: MetaFunction = () => [{ title: "Burrito consideration app" }];
 
@@ -24,16 +13,22 @@ export default function Index() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username) return;
+    const trimmed = username.trim();
+    // Reject blank usernames so we never call identify or capture login without a valid user identity.
+    if (!trimmed) return;
 
-    posthog.identify(getUserId(username), { username });
-    posthog.capture("user_logged_in");
-    setUser(username);
+    posthog?.identify(getUserId(trimmed), { username: trimmed });
+    posthog?.capture("user_logged_in", { login_method: "username" });
+    setUser(trimmed);
     setUsername("");
   };
 
   const handleLogout = () => {
-    posthog.reset();
+    // Only capture logout and reset PostHog when signing out of an authenticated session.
+    if (!user) return;
+
+    posthog?.capture("user_logged_out");
+    posthog?.reset();
     setUser(null);
   };
 

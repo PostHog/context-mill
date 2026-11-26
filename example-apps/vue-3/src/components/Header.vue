@@ -17,9 +17,6 @@
         </template>
         <template v-else>
           <span>Not logged in</span>
-          <button v-if="authStore.user" @click="handleLogout" class="btn-logout">
-            Clear Session
-          </button>
         </template>
       </div>
     </div>
@@ -35,9 +32,13 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const handleLogout = () => {
-  authStore.logout()
-  // IMPORTANT: Reset the PostHog instance to clear the user session
+  // Only capture logout and reset PostHog when signing out of an authenticated session.
+  if (!authStore.user) return
+
+  // Capture user_logged_out before reset() so the event stays attributed to the departing user.
+  posthog.capture('user_logged_out')
   posthog.reset()
+  authStore.logout()
   router.push({ name: 'home' })
 }
 </script>

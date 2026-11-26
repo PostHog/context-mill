@@ -39,6 +39,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
   }
 
   function handleConsideration() {
+    // Skip capture when no user is logged in instead of using a fallback identity.
     const currentUser = localStorage.getItem('currentUser');
     if (!currentUser) return;
 
@@ -60,10 +61,9 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       successMessage.style.display = 'none';
     }, 2000);
 
-    // Capture burrito consideration event in PostHog
+    // Capture burrito consideration event without PII such as username in event properties.
     window.posthog?.capture('burrito_considered', {
-      total_considerations: newCount,
-      username: currentUser
+      total_considerations: newCount
     });
   }
 

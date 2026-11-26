@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
 import { useAuth } from '../src/contexts/AuthContext'
 import { colors, spacing, typography, borderRadius, shadows } from '../src/styles/theme'
@@ -16,7 +17,7 @@ import { colors, spacing, typography, borderRadius, shadows } from '../src/style
 export default function ProfileScreen() {
   const { user } = useAuth()
   const router = useRouter()
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
 
   // Redirect to home if not logged in
   useEffect(() => {
@@ -30,11 +31,7 @@ export default function ProfileScreen() {
   }
 
   /**
-   * Triggers a test error and captures it in PostHog
-   *
-   * This demonstrates manual exception capture via captureException.
-   * In production, you would typically set up automatic exception capture
-   * or use the before_send callback for customization.
+   * Triggers a test error and captures it in PostHog without attaching PII.
    *
    * @see https://posthog.com/docs/libraries/react-native#error-tracking
    */
@@ -44,9 +41,7 @@ export default function ProfileScreen() {
     } catch (err) {
       const error = err as Error
 
-      // @see https://posthog.com/docs/error-tracking
-      posthog.captureException(error, {
-        username: user.username,
+      posthog?.captureException(error, {
         screen: 'Profile',
       })
 
@@ -88,7 +83,7 @@ export default function ProfileScreen() {
         </View>
 
         {/*
-          testID is captured by PostHog autocapture for touch events
+          testID is captured by PostHog autocapture for touch events.
           @see https://posthog.com/docs/libraries/react-native#autocapture
         */}
         <TouchableOpacity

@@ -4,18 +4,18 @@ This is a [Vue 3](https://vuejs.org/) + [Vite](https://vitejs.dev/) example demo
 
 It uses the `posthog-js` browser SDK directly and shows how to:
 
-- Initialize PostHog in a Vue 3 SPA
-- Identify users after login
-- Track custom events from components
-- Capture errors via Vue’s global `errorHandler`
-- Reset PostHog state on logout
+- Initialize PostHog in a Vue 3 SPA when a project token is configured
+- Identify users with a stable UUID on login and when restoring a saved session on reload
+- Track custom events with non-PII properties from components
+- Capture errors via Vue's global `errorHandler`
+- Capture `user_logged_out` before resetting PostHog state on logout
 
 ## Features
 
-- **Product analytics**: Track login and burrito consideration events
+- **Product analytics**: Track login, logout, and burrito consideration events
 - **Session replay**: Enabled via `posthog-js` configuration
 - **Error tracking**: Global Vue error handler sends exceptions to PostHog
-- **Simple auth flow**: Demo login + protected routes using Pinia + Vue Router
+- **Simple auth flow**: Demo login, `localStorage` session persistence, and protected routes using Pinia + Vue Router
 
 ## Getting started
 
@@ -29,10 +29,10 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and fill in your PostHog project token:
 
 ```bash
-VITE_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+VITE_POSTHOG_PROJECT_TOKEN=
 VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -53,17 +53,17 @@ Open `http://localhost:5173` (or whatever Vite prints) in your browser.
 
 ```text
 src/
-  main.ts            # Vue app entrypoint, PostHog init + global errorHandler
+  main.ts            # Vue app entrypoint, PostHog init, auth hydration, and global errorHandler
   router/
     index.ts         # Routes + simple auth guard
   stores/
-    auth.ts          # Pinia auth store (login, logout, user state)
+    auth.ts          # Pinia auth store with localStorage persistence and session-restore identify
   components/
-    Header.vue       # Navigation + logout, calls posthog.reset()
+    Header.vue       # Navigation + logout, captures 'user_logged_out' before posthog.reset()
   views/
     Home.vue         # Login form, identifies user + captures 'user_logged_in'
     Burrito.vue      # Burrito consideration demo, captures 'burrito_considered'
-    Profile.vue      # Profile + error tracking demo (if implemented)
+    Profile.vue      # Profile and statistics view
   App.vue            # Root layout
 ```
 
@@ -71,18 +71,22 @@ src/
 
 ### PostHog initialization (`src/main.ts`)
 
-`posthog-js` is initialized once when the app boots:
+`posthog-js` is initialized once when the app boots if `VITE_POSTHOG_PROJECT_TOKEN` is set:
 
 ```ts
 import posthog from 'posthog-js'
 
-const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN
+const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN?.trim()
 
 if (posthogToken) {
   posthog.init(posthogToken, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
     defaults: '2026-08-30',
   })
+} else if (import.meta.env.DEV) {
+  console.error(
+    'VITE_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_POSTHOG_PROJECT_TOKEN is configured',
+  )
 }
 
 app.config.errorHandler = (err) => {
@@ -92,44 +96,46 @@ app.config.errorHandler = (err) => {
 
 This ensures:
 
-- The SDK is configured with your project key and host
-- The singleton instance is initialized only once and before the app mounts
+- The SDK is configured with your project token and host, or skipped cleanly when unconfigured
+- The singleton instance initializes before the auth store restores a persisted user session
 - Any uncaught Vue errors are sent to PostHog
 
-### User identification (`src/views/Home.vue`)
+### User identification (`src/views/Home.vue` and `src/stores/auth.ts`)
 
-After a successful “login”, the app identifies the user and captures a login event:
+After a successful login, the app identifies the user with their stable UUID and captures a login event:
 
 ```ts
 const success = await authStore.login(username.value, password.value)
-if (success) {
-  posthog.identify(getUserId(username.value), { username: username.value })
-  posthog.capture('user_logged_in')
+if (success && authStore.user) {
+  posthog.identify(authStore.user.id, { username: authStore.user.username })
+  posthog.capture('user_logged_in', { login_method: 'username' })
 }
 ```
 
-Identification happens **only on login**, all further requests will automatically use the same distinct ID.
+When a logged-in user reloads the page, `useAuthStore` restores `{ id, username, burritoConsiderations }` from `localStorage` and re-identifies `posthog.identify(restoredUser.id, { username: restoredUser.username })` after `posthog.init` runs.
 
 ### Event tracking (`src/views/Burrito.vue`)
 
-The burrito page tracks a custom event when a user “considers” the burrito:
+The burrito page tracks a custom event when a signed-in user considers a burrito:
 
 ```ts
 posthog.capture('burrito_considered', {
   total_considerations: updatedUser.burritoConsiderations,
-  username: updatedUser.username,
 })
 ```
 
-This shows how to attach useful properties to events (e.g. counts, usernames).
+Keep PII like usernames and emails in `identify()` person properties, and attach only non-PII metadata such as counts to `capture()` event properties.
 
 ### Logout and session reset (`src/components/Header.vue`)
 
-On logout, both the local auth state and PostHog state are cleared:
+On logout from an authenticated session, capture `user_logged_out` before resetting PostHog and clearing local auth state:
 
 ```ts
-authStore.logout()
+if (!authStore.user) return
+
+posthog.capture('user_logged_out')
 posthog.reset()
+authStore.logout()
 router.push({ name: 'home' })
 ```
 

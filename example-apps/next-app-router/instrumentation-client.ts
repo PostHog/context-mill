@@ -1,6 +1,8 @@
 import posthog from "posthog-js"
 
-const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+// Leave missing tokens unset and leave the client uninitialized rather than passing an empty or placeholder key.
+const rawToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const token = rawToken?.trim()
 
 if (token) {
   posthog.init(token, {
@@ -22,4 +24,4 @@ if (token) {
   console.error("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured")
 }
 
-//IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches, especially components like a PostHogProvider. instrumentation-client.ts is the correct solution for initializating client-side PostHog in Next.js 15.3+ apps.
+// Keep client-side PostHog initialization in instrumentation-client.ts for Next.js 15.3+ apps instead of duplicating it in a provider component.

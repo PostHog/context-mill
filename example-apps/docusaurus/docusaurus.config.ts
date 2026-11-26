@@ -4,10 +4,16 @@ import type * as Preset from "@docusaurus/preset-classic"
 
 dotenv.config({ quiet: true })
 
-const token = process.env.POSTHOG_PROJECT_TOKEN
+// Leave missing tokens unset rather than passing a default or placeholder key to posthog-docusaurus.
+const token = process.env.POSTHOG_PROJECT_TOKEN?.trim()
 const host = process.env.POSTHOG_HOST || "https://us.i.posthog.com"
 
-if (!token && process.env.NODE_ENV !== "production") {
+const globalWarnState = globalThis as typeof globalThis & {
+  __posthogMissingTokenWarned?: boolean
+}
+
+if (!token && process.env.NODE_ENV !== "production" && !globalWarnState.__posthogMissingTokenWarned) {
+  globalWarnState.__posthogMissingTokenWarned = true
   console.warn(
     "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
   )
@@ -18,6 +24,9 @@ const config: Config = {
   url: "https://example.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
+
+  // In development builds without a token, load a client module so the browser console also surfaces the missing-token error.
+  clientModules: !token && process.env.NODE_ENV !== "production" ? ["./src/posthog-client.ts"] : [],
 
   presets: [
     [
@@ -30,7 +39,7 @@ const config: Config = {
   ],
 
   plugins: [
-    // The plugin throws without an apiKey, so only register it when a token is set
+    // posthog-docusaurus throws without an apiKey, so skip registering it instead of passing a placeholder token.
     ...(token
       ? [
           [

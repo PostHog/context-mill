@@ -3,6 +3,10 @@ import { useState } from 'react'
 import { usePostHog } from '@posthog/react'
 import { useAuth } from '../contexts/AuthContext'
 
+const isPostHogConfigured = Boolean(
+  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim(),
+)
+
 export const Route = createFileRoute('/burrito')({
   component: BurritoPage,
   head: () => ({
@@ -31,17 +35,22 @@ function BurritoPage() {
   }
 
   const handleClientConsideration = () => {
+    const nextCount = user.burritoConsiderations + 1
     incrementBurritoConsiderations()
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
 
-    posthog.capture('burrito_considered', {
-      total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
-    })
+    // Capture client event without PII such as username in event properties.
+    if (isPostHogConfigured) {
+      posthog.capture('burrito_considered', {
+        total_considerations: nextCount,
+        source: 'client',
+      })
+    }
   }
 
   const handleServerConsideration = async () => {
+    const nextCount = user.burritoConsiderations + 1
     incrementBurritoConsiderations()
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
@@ -55,8 +64,7 @@ function BurritoPage() {
       },
       body: JSON.stringify({
         userId: user.id,
-        username: user.username,
-        totalConsiderations: user.burritoConsiderations + 1,
+        totalConsiderations: nextCount,
       }),
     })
   }
@@ -67,7 +75,14 @@ function BurritoPage() {
         <h1>Burrito consideration zone</h1>
         <p>Take a moment to truly consider the potential of burritos.</p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.125rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.125rem',
+          }}
+        >
           <button
             onClick={handleClientConsideration}
             className="btn-burrito"

@@ -25,7 +25,9 @@ const rootRoute = createRootRoute({
   component: RootComponent,
 })
 
-const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+// Read the project token without a fallback value. When it is missing, render the app
+// without PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
 
 if (!posthogToken && import.meta.env.DEV) {
   console.error(
@@ -129,8 +131,15 @@ function Home() {
     e.preventDefault()
     setError('')
 
+    // Trim username before login so blank input never triggers user identification or events.
+    const trimmedUsername = username.trim()
+    if (!trimmedUsername || !password) {
+      setError('Please provide both username and password')
+      return
+    }
+
     try {
-      const success = await login(username, password)
+      const success = await login(trimmedUsername, password)
       if (success) {
         setUsername('')
         setPassword('')
@@ -225,11 +234,9 @@ function BurritoPage() {
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
 
-    // Capture burrito consideration event
-    console.log('posthog', posthog)
-    posthog.capture('burrito_considered', {
+    // Capture burrito consideration event without PII such as username in event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
     })
   }
 
@@ -284,7 +291,7 @@ function ProfilePage() {
     try {
       throw new Error('Test error for PostHog error tracking')
     } catch (err) {
-      posthog.captureException(err)
+      posthog?.captureException(err)
       console.error('Captured error:', err)
       alert('Error captured and sent to PostHog!')
     }

@@ -12,6 +12,7 @@ $consumer = env('POSTHOG_CONSUMER');
 
 return [
     'enabled' => env('POSTHOG_ENABLED', true),
+    // Leave api_key null when POSTHOG_API_KEY is unset so the SDK stays disabled instead of sending to a placeholder token.
     'api_key' => env('POSTHOG_API_KEY'),
     'host' => env('POSTHOG_HOST', 'https://us.i.posthog.com'),
     'secret_key' => env('POSTHOG_SECRET_KEY'),
@@ -25,9 +26,9 @@ return [
         'connection' => env('POSTHOG_LARAVEL_QUEUE_CONNECTION'),
         'name' => env('POSTHOG_LARAVEL_QUEUE_NAME'),
     ],
-    // Invokable container class; receives the application and returns a distinct ID or null.
+    // Invokable container class that receives the application and returns a distinct ID or null.
     'distinct_id' => null,
-    // Invokable container class; receives the application and returns group identifiers.
+    // Invokable container class that receives the application and returns group identifiers.
     'groups' => null,
     'sdk' => array_filter([
         'disableGeoip' => true,

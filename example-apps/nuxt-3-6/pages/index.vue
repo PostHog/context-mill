@@ -55,15 +55,22 @@ const { $posthog: posthog } = useNuxtApp()
 
 const handleSubmit = async () => {
   error.value = ''
+  const trimmedUsername = username.value.trim()
 
-  const success = await auth.login(username.value, password.value)
-  if (success) {
-    // Identifying the user once on login/sign up is enough.
-    posthog?.identify(auth.user.value!.id, { username: username.value })
-    
+  // Reject blank credentials before attempting login, identify, or capture.
+  if (!trimmedUsername || !password.value) {
+    error.value = 'Please provide both username and password'
+    return
+  }
+
+  const success = await auth.login(trimmedUsername, password.value)
+  if (success && auth.user.value?.id) {
+    // Identify with the stable user ID and keep username in person properties.
+    posthog?.identify(auth.user.value.id, { username: auth.user.value.username })
+
     // Capture login event
     posthog?.capture('user_logged_in')
-    
+
     username.value = ''
     password.value = ''
   } else {

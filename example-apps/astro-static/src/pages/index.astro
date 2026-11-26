@@ -80,10 +80,11 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
   function handleLogin(event) {
     event.preventDefault();
 
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorMessage = document.getElementById('error-message');
 
+    // Reject blank login inputs before calling identify or capture rather than using a fallback identity.
     if (!username || !password) {
       errorMessage.textContent = 'Please provide both username and password';
       errorMessage.style.display = 'block';
@@ -96,7 +97,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       localStorage.setItem('burritoConsiderations', '0');
     }
 
-    // Identify the user in PostHog (once on login is enough)
+    // Identify the user with a stable user ID and pass username as a person property.
     window.posthog?.identify(getUserId(username), { username });
     window.posthog?.capture('user_logged_in');
 

@@ -18,12 +18,10 @@
 
 <div class="card">
     <h3>How event tracking works</h3>
-    <p>Each time you click the button, a <code>burrito_considered</code> event is sent to PostHog:</p>
-    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; margin-top: 15px;"><code>from posthog import new_context, identify_context, capture
-
-with new_context():
-    identify_context(user_id)
-    capture('burrito_considered', properties={
+    <p>Each time you click the button, a <code>burrito_considered</code> event is sent to PostHog. Because <code>PosthogContextMiddleware</code> already attributes the request to the signed-in user, the view captures directly:</p>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; margin-top: 15px;"><code>client = settings.POSTHOG_MW_CLIENT
+if client:
+    client.capture('burrito_considered', properties={
         'total_considerations': count,
     })</code></pre>
 </div>

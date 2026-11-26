@@ -7,31 +7,32 @@ export const Route = createFileRoute('/api/burrito/consider')({
     handlers: {
       POST: async ({ request }) => {
         const body = await request.json()
-        const { userId, username, totalConsiderations } = body
+        const { userId, totalConsiderations } = body || {}
+        const trimmedUserId = typeof userId === 'string' ? userId.trim() : ''
 
-        if (!userId) {
-          return json(
-            { error: 'User id is required' },
-            { status: 400 },
-          )
+        // Require an authenticated user ID and skip capture when missing rather than falling back to a placeholder ID.
+        if (!trimmedUserId) {
+          return json({ error: 'User id is required' }, { status: 400 })
         }
 
         const sessionId = request.headers.get('X-PostHog-Session-Id')
-
         const posthog = getPostHogClient()
-        posthog?.capture({
-          distinctId: userId,
-          event: 'burrito_considered',
-          properties: {
-            $session_id: sessionId || undefined,
-            total_considerations: totalConsiderations,
-            username: username,
-            source: 'api',
-          },
-        })
 
-        // This handler is short-lived; flush so the enqueued event sends before it returns
-        await posthog?.flush()
+        // Only capture when PostHog is configured and a valid user ID is present, without PII in event properties.
+        if (posthog && trimmedUserId) {
+          posthog.capture({
+            distinctId: trimmedUserId,
+            event: 'burrito_considered',
+            properties: {
+              $session_id: sessionId || undefined,
+              total_considerations: totalConsiderations,
+              source: 'api',
+            },
+          })
+
+          // Flush queued events in this short-lived handler and ignore delivery errors so the request never stalls or fails.
+          await posthog.flush().catch(() => {})
+        }
 
         return json({ success: true })
       },

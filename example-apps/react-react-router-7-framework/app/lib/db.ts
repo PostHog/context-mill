@@ -16,8 +16,8 @@ db.serialize(() => {
   `);
 });
 
-const dbGet = promisify(db.get.bind(db));
-const dbRun = promisify(db.run.bind(db));
+const dbGet = promisify(db.get.bind(db)) as (sql: string, params?: unknown) => Promise<any>;
+const dbRun = promisify(db.run.bind(db)) as (sql: string, params?: unknown) => Promise<unknown>;
 
 export function getBurritoConsiderations(username: string): Promise<number> {
   return dbGet("SELECT count FROM burrito_considerations WHERE username = ?", [username])

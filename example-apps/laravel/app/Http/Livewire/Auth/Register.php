@@ -28,7 +28,8 @@ class Register extends Component
             'is_staff' => false,
         ]);
 
-        // PostHog: Identify new user and track signup
+        // Identify the newly created user by stable primary key and keep email in person properties,
+        // omitting PII from capture() event properties.
         PostHog::identify([
             'distinctId' => $user->getPostHogDistinctId(),
             'properties' => $user->getPostHogProperties(),

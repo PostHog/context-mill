@@ -6,19 +6,21 @@ import Home from "./app/routes/home";
 import Burrito from "./app/routes/burrito";
 import Profile from "./app/routes/profile";
 
-import posthog from 'posthog-js';
-import { PostHogProvider } from '@posthog/react'
+import posthog from "posthog-js";
+import { PostHogProvider } from "@posthog/react";
 
-const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+// Read the project token without a fallback value. When it is missing, leave the client uninitialized()
+// and PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 
 if (posthogToken) {
   posthog.init(posthogToken, {
     api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-    defaults: '2026-08-30',
+    defaults: "2026-08-30",
     capture_exceptions: true,
   });
 } else if (import.meta.env.DEV) {
-  console.error('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
+  console.error("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured");
 }
 
 const router = createBrowserRouter([
@@ -46,15 +48,19 @@ const router = createBrowserRouter([
 // Errors React Router catches (render, loader, action, fetcher). Responses thrown on purpose,
 // such as 404s, are not errors to track.
 const onError: ClientOnErrorFunction = (error) => {
+  if (!posthogToken) return;
   if (isRouteErrorResponse(error)) return;
   posthog.captureException(error);
 };
 
+const app = <RouterProvider router={router} onError={onError} />;
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <PostHogProvider client={posthog}>
-      <RouterProvider router={router} onError={onError} />
-    </PostHogProvider>
+    {posthogToken ? (
+      <PostHogProvider client={posthog}>{app}</PostHogProvider>
+    ) : (
+      app
+    )}
   </StrictMode>
 );
-

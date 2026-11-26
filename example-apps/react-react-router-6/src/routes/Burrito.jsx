@@ -27,7 +27,8 @@ export default function BurritoPage() {
     setUser(updatedUser);
     setHasConsidered(true);
     setTimeout(() => setHasConsidered(false), 2000);
-    posthog.capture('burrito_considered', {
+    // Keep PII such as username out of event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: updatedUser.burritoConsiderations,
     });
   };

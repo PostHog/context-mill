@@ -6,6 +6,7 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
 import { createUserId, storage, User } from '../services/storage'
 
@@ -24,88 +25,80 @@ interface AuthProviderProps {
 }
 
 /**
- * Authentication Provider with PostHog integration
- *
- * Manages user authentication state and integrates with PostHog for:
- * - User identification (posthog.identify)
- * - Login/logout event tracking
- * - Session reset on logout
+ * Authentication Provider with PostHog integration.
  *
  * @see https://posthog.com/docs/libraries/react-native#identifying-users
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Restore session on app launch
   useEffect(() => {
-    restoreSession()
-  }, [])
+    const restoreSession = async () => {
+      try {
+        const storedUsername = (await storage.getCurrentUser())?.trim()
+        if (storedUsername) {
+          const existingUser = await storage.getUser(storedUsername)
+          if (existingUser) {
+            setUser(existingUser)
 
-  const restoreSession = async () => {
-    try {
-      const storedUsername = await storage.getCurrentUser()
-      if (storedUsername) {
-        const existingUser = await storage.getUser(storedUsername)
-        if (existingUser) {
-          setUser(existingUser)
-
-          // Re-identify user in PostHog on session restore
-          // This ensures events are correctly attributed after app restart
-          posthog.identify(existingUser.id, {
-            $set: {
-              username: storedUsername,
-            },
-          })
+            // Re-identify user in PostHog on session restore so events after restart match login.
+            posthog?.identify(existingUser.id, {
+              $set: {
+                username: existingUser.username,
+              },
+            })
+          }
         }
+      } catch (error) {
+        console.error('Failed to restore session:', error)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error('Failed to restore session:', error)
-    } finally {
-      setIsLoading(false)
     }
-  }
+
+    restoreSession()
+  }, [posthog])
 
   const login = useCallback(
     async (username: string, password: string): Promise<boolean> => {
-      // Simple validation (demo app accepts any username/password)
-      if (!username.trim() || !password.trim()) {
+      const trimmedUsername = username.trim()
+      const trimmedPassword = password.trim()
+
+      // Reject blank credentials before persisting state or calling identify and capture,
+      // rather than falling back to a shared placeholder identity.
+      if (!trimmedUsername || !trimmedPassword) {
         return false
       }
 
       try {
-        // Check if user exists or create new
-        const existingUser = await storage.getUser(username)
+        const existingUser = await storage.getUser(trimmedUsername)
         const isNewUser = !existingUser
 
         const userData: User = existingUser || {
           id: createUserId(),
-          username,
+          username: trimmedUsername,
           burritoConsiderations: 0,
         }
 
-        // Save user data
         await storage.saveUser(userData)
-        await storage.setCurrentUser(username)
+        await storage.setCurrentUser(trimmedUsername)
         setUser(userData)
 
-        // PostHog identify - use the stable user id as distinct ID
-        // $set updates properties every time, $set_once only sets if not already set
-        // @see https://posthog.com/docs/libraries/react-native#identifying-users
-        posthog.identify(userData.id, {
+        // Identify with the stable user id as distinct ID and put username in person properties.
+        posthog?.identify(userData.id, {
           $set: {
-            username: username,
+            username: trimmedUsername,
           },
           $set_once: {
             first_login_date: new Date().toISOString(),
           },
         })
 
-        // Capture login event with properties
-        // @see https://posthog.com/docs/libraries/react-native#capturing-events
-        posthog.capture('user_logged_in', {
-          username: username,
+        // Keep PII like username out of capture event properties.
+        posthog?.capture('user_logged_in', {
+          login_method: 'username',
           is_new_user: isNewUser,
         })
 
@@ -119,17 +112,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 
   const logout = useCallback(async () => {
-    // Capture logout event before reset
-    posthog.capture('user_logged_out')
+    if (!user) {
+      return
+    }
 
-    // Reset PostHog - clears the current user's distinct ID and anonymous ID
-    // This should be called when the user logs out
-    // @see https://posthog.com/docs/libraries/react-native#reset-after-logout
-    posthog.reset()
+    // Capture logout event before reset on an authenticated session.
+    posthog?.capture('user_logged_out')
+    posthog?.reset()
 
     await storage.removeCurrentUser()
     setUser(null)
-  }, [posthog])
+  }, [posthog, user])
 
   const incrementBurritoConsiderations = useCallback(async () => {
     if (user) {

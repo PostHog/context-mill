@@ -1,6 +1,7 @@
 """FastAPI application configuration using Pydantic Settings."""
 
 from functools import lru_cache
+from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,8 +22,9 @@ class Settings(BaseSettings):
     # Database (SQLite like Flask example)
     database_url: str = "sqlite:///./db.sqlite3"
 
-    # PostHog
-    posthog_project_token: str = ""
+    # Leave the PostHog token as None when unset rather than defaulting to an empty or placeholder key,
+    # so unconfigured environments skip client creation cleanly instead of sending invalid requests.
+    posthog_project_token: Optional[str] = None
     posthog_host: str = "https://us.i.posthog.com"
     posthog_disabled: bool = False
 

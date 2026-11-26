@@ -107,11 +107,18 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const success = await auth.login(formData.username, formData.password)
-    if (success) {
-      // Identifying the user once on login/sign up is enough.
-      posthog?.identify(auth.user.value!.id, { username: formData.username })
-      
+    const trimmedUsername = formData.username.trim()
+    // Reject blank credentials before calling login, identify, or capture.
+    if (!trimmedUsername || !formData.password) {
+      error.value = 'Please provide both username and password.'
+      return
+    }
+
+    const success = await auth.login(trimmedUsername, formData.password)
+    if (success && auth.user.value?.id) {
+      // Identify with the stable user ID and keep username in person properties.
+      posthog?.identify(auth.user.value.id, { username: auth.user.value.username })
+
       // Capture login event
       posthog?.capture('user_logged_in')
       formData.username = ''

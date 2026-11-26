@@ -6,44 +6,45 @@ const users = new Map<string, { id: string; username: string; burritoConsiderati
 
 export const POST: RequestHandler = async ({ request }) => {
 	const { username, password } = await request.json();
+	const trimmedUsername = typeof username === 'string' ? username.trim() : '';
 
-	if (!username || !password) {
+	// Reject empty credentials early so login never creates or tracks a blank user identity.
+	if (!trimmedUsername || !password) {
 		return json({ error: 'Username and password required' }, { status: 400 });
 	}
 
-	let user = users.get(username);
+	let user = users.get(trimmedUsername);
 	const isNewUser = !user;
 
 	if (!user) {
-		user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 };
-		users.set(username, user);
+		user = { id: crypto.randomUUID(), username: trimmedUsername, burritoConsiderations: 0 };
+		users.set(trimmedUsername, user);
 	}
 
-	// Capture server-side login event with user context
+	const sessionId = request.headers.get('x-posthog-session-id')?.trim();
 	const posthog = getPostHogClient();
-	posthog?.withContext(
-		{
-			distinctId: user.id,
-			properties: {
-				$set: {
-					username,
-					createdAt: isNewUser ? new Date().toISOString() : undefined
-				}
-			}
-		},
-		() => {
-			posthog.capture({
-				event: 'server_login',
-				properties: {
-					isNewUser,
-					source: 'api'
-				}
-			});
-		}
-	);
 
-	// Flush events to ensure they're sent
-	await posthog?.flush();
+	// Only capture when PostHog is configured and a stable user ID exists, keeping PII out of event properties.
+	if (posthog && user.id) {
+		posthog.withContext(
+			{
+				distinctId: user.id,
+				sessionId: sessionId || undefined
+			},
+			() => {
+				posthog.capture({
+					event: 'server_login',
+					properties: {
+						isNewUser,
+						source: 'api'
+					}
+				});
+			}
+		);
+
+		// Flush queued events in this short-lived handler and ignore delivery errors so login still succeeds.
+		await posthog.flush().catch(() => {});
+	}
 
 	return json({ success: true, user });
 };

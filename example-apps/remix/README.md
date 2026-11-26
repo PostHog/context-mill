@@ -10,7 +10,7 @@ Using Remix v3? It is now React Router v7 framework mode. See the `react-react-r
 - **Session replay**: recordings start with `posthog-js`
 - **Feature flags**: `useFeatureFlagEnabled()` gates a tip on the burrito page
 - **Error tracking**: an `ErrorBoundary` and `captureException()` in the browser, and Remix's `handleError` on the server
-- **User identification**: a demo sign-in that calls `identify()`, and a sign-out that calls `reset()`
+- **User identification**: a demo sign-in that persists session state in `localStorage`, calls `identify()` on sign-in and reload, and captures `user_logged_out` before `reset()` on sign-out
 - **Server and browser linked**: `tracing_headers` sends the PostHog distinct id and session id to the server routes
 - **Reverse proxy**: PostHog traffic goes through `/ingest`
 
@@ -26,10 +26,10 @@ npm install
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and fill in your PostHog project token:
 
 ```bash
-VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -48,14 +48,14 @@ pnpm build && pnpm start
 
 ```
 app/
-├── auth.tsx             # In-memory demo auth context
+├── auth.tsx             # Demo auth context persisted in localStorage with session-restore identify
 ├── entry.server.tsx     # Server entry, handleError reports server errors
 ├── posthog.server.ts    # posthog-node client and capture helpers
 ├── provider.tsx         # posthog-js initialization and PostHogProvider
 ├── root.tsx             # Layout, providers and ErrorBoundary
 └── routes/
-    ├── _index.tsx       # Sign-in page: identify and reset
-    ├── burrito.tsx      # Server action with a server-side event, feature flag, error capture
+    ├── _index.tsx       # Sign-in page with identify, login/logout capture, and reset
+    ├── burrito.tsx      # Signed-in server action with a server-side event, feature flag, error capture
     └── ingest.$.tsx     # Reverse proxy to PostHog
 ```
 
@@ -64,41 +64,53 @@ app/
 ### Browser initialization (provider.tsx)
 
 ```typescript
-posthog.init(token, {
-  api_host: "/ingest",
-  ui_host: "https://us.posthog.com",
-  defaults: "2026-08-30",
-  tracing_headers: [window.location.hostname],
-});
+const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
+
+if (token) {
+  posthog.init(token, {
+    api_host: "/ingest",
+    ui_host: "https://us.posthog.com",
+    defaults: "2026-08-30",
+    tracing_headers: [window.location.hostname],
+  });
+}
 ```
 
-`posthog-js` and `@posthog/react` are listed under `ssr.noExternal` in `vite.config.ts` so Vite bundles them for server rendering. `PHProvider` initializes PostHog after hydration and wraps the app in `PostHogProvider`.
+`posthog-js` and `@posthog/react` are listed under `ssr.noExternal` in `vite.config.ts` so Vite bundles them for server rendering. `PHProvider` initializes PostHog after hydration when a token is configured and wraps the app in `PostHogProvider`.
 
-### Identify and reset (routes/_index.tsx)
+### Identify, session restore and reset (auth.tsx, routes/_index.tsx)
 
 ```typescript
-posthog.identify(getUserId(username), { username });
-posthog.capture("user_logged_in");
+posthog?.identify(getUserId(trimmed), { username: trimmed });
+posthog?.capture("user_logged_in", { login_method: "username" });
 
-posthog.reset(); // on sign-out
+// On sign-out from an authenticated session, capture before reset()
+posthog?.capture("user_logged_out");
+posthog?.reset();
 ```
 
-Identify once when the user signs in, with your own stable user id (a primary key or UUID, never an email), and call `reset()` on sign-out.
+Identify with your own stable user id (a primary key or UUID, never a username or email) on sign-in and when `AuthProvider` restores a saved session on reload. Capture `user_logged_out` before calling `reset()` on sign-out.
 
 ### Server-side client (posthog.server.ts)
 
-One `PostHog` client is created per process. Remix handlers are short-lived, so it sends each event straight away (`flushAt: 1`, `flushInterval: 0`, a short `requestTimeout`, no retries) and each helper awaits `posthog.flush().catch(() => {})` so a PostHog outage never fails a request.
+One `PostHog` client is created per process when `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` is set. Remix handlers are short-lived, so it sends each event straight away (`flushAt: 1`, `flushInterval: 0`, `requestTimeout: 2000`, `fetchRetryCount: 0`, `enableExceptionAutocapture: true`) and each helper awaits `posthog.flush().catch(() => {})` so a PostHog outage never fails a request.
 
 ```typescript
+const distinctId = request.headers.get("X-POSTHOG-DISTINCT-ID")?.trim();
+if (!distinctId) return;
+
 posthog.capture({
-  distinctId: identity.distinctId,
+  distinctId,
   event,
-  properties: { ...properties, ...identity.properties },
+  properties: {
+    ...properties,
+    ...(sessionId && { $session_id: sessionId }),
+  },
 });
 await posthog.flush().catch(() => {});
 ```
 
-Identity belongs to the request. `posthog-js` adds `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to same-origin requests, and the helpers use them so server events land on the same person and session as the browser. A request without them gets a random id and the `process_person_profile: false` option, so it never shares one person with other visitors.
+Identity belongs to the request. `posthog-js` adds `X-POSTHOG-DISTINCT-ID` and `X-POSTHOG-SESSION-ID` headers to same-origin requests, and `captureEvent` requires `X-POSTHOG-DISTINCT-ID` so signed-in user actions land on the same person and session as the browser instead of inventing a fallback id. Unhandled server errors reported through `captureError` can happen for signed-out visitors without tracing headers, so `identityFrom(request)` generates a per-request UUID with `process_person_profile: false` rather than a shared literal id.
 
 ### Server events (routes/burrito.tsx)
 
@@ -124,7 +136,8 @@ export function handleError(error: unknown, { request }: { request: Request }) {
 ```typescript
 const showTip = useFeatureFlagEnabled("burrito-tip");
 
-posthog.captureException(error); // in the root ErrorBoundary and in event handlers
+if (isRouteErrorResponse(error)) return;
+posthog?.captureException(error);
 ```
 
 ## Reverse proxy
@@ -133,7 +146,7 @@ Ad blockers drop events sent to PostHog's domain. This example sends them throug
 
 The region comes from `VITE_PUBLIC_POSTHOG_HOST`. The route derives the ingestion host, the assets host (`-assets.i.posthog.com`) and `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) from that one value.
 
-Pick a proxy path unique to your app rather than a common name such as `/analytics` or `/telemetry`. Every PostHog request passes through your server, which can add bandwidth cost on serverless hosts. The [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md) avoids that.
+Pick a proxy path unique to your app rather than a common name such as `/analytics` or `/telemetry`. Every PostHog request passes through your server, which can add bandwidth cost on serverless hosts. The [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) avoids that.
 
 ## Learn more
 

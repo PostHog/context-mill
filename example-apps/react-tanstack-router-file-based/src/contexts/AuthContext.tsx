@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePostHog } from '@posthog/react';
 
-interface User {
+export interface User {
+  id: string;
   username: string;
   burritoConsiderations: number;
 }
@@ -15,80 +16,137 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const users: Map<string, User> = new Map();
+const CURRENT_USER_KEY = 'currentUser';
+const DEMO_USERS_KEY = 'demoUsers';
 
-// Stands in for your auth system: each username gets a stable user id, the way a user
-// record's primary key would. Identify with that id, never with the username or email.
-function getUserId(username: string): string {
-  const key = `demo-user-id:${username}`;
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  window.localStorage.setItem(key, id);
-  return id;
+function isValidStoredUser(value: unknown): value is User {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.trim().length > 0 &&
+    typeof candidate.username === 'string' &&
+    candidate.username.trim().length > 0 &&
+    typeof candidate.burritoConsiderations === 'number'
+  );
+}
+
+function readDemoUsers(): Record<string, User> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(DEMO_USERS_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, User>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDemoUser(user: User): void {
+  if (typeof window === 'undefined') return;
+  const users = readDemoUsers();
+  users[user.username] = user;
+  window.localStorage.setItem(DEMO_USERS_KEY, JSON.stringify(users));
+}
+
+function readCurrentUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CURRENT_USER_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isValidStoredUser(parsed)) return null;
+    return {
+      id: parsed.id.trim(),
+      username: parsed.username.trim(),
+      burritoConsiderations: parsed.burritoConsiderations,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Use lazy initializer to read from localStorage only once on mount
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
-
-    const storedUsername = localStorage.getItem('currentUser');
-    if (storedUsername) {
-      const existingUser = users.get(storedUsername);
-      if (existingUser) {
-        return existingUser;
-      }
-    }
-    return null;
-  });
+  const [user, setUser] = useState<User | null>(() => readCurrentUser());
+  const initialUserRef = useRef(user);
   const posthog = usePostHog();
 
+  useEffect(() => {
+    const restoredUser = initialUserRef.current;
+    // Re-identify with the stored stable user ID when restoring an authenticated session.
+    // Skip identify when no stored session exists rather than using a fallback ID.
+    if (!restoredUser) return;
+
+    const identifyRestoredUser = () => {
+      posthog?.identify(restoredUser.id, { username: restoredUser.username });
+    };
+
+    if ((posthog as { __loaded?: boolean } | undefined)?.__loaded === false) {
+      queueMicrotask(identifyRestoredUser);
+    } else {
+      identifyRestoredUser();
+    }
+  }, [posthog]);
+
   const login = async (username: string, password: string): Promise<boolean> => {
-    if (!username || !password) {
+    // Trim username and reject blank credentials so we never identify or capture with an empty ID.
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
       return false;
     }
 
-    // Get or create user in local map
-    let user = users.get(username);
-    const isNewUser = !user;
+    const demoUsers = readDemoUsers();
+    const existingUser = demoUsers[trimmedUsername];
+    const isNewUser = !isValidStoredUser(existingUser);
 
-    if (!user) {
-      user = { username, burritoConsiderations: 0 };
-      users.set(username, user);
-    }
+    const localUser: User = isNewUser
+      ? {
+          id: crypto.randomUUID(),
+          username: trimmedUsername,
+          burritoConsiderations: 0,
+        }
+      : {
+          id: existingUser.id.trim(),
+          username: trimmedUsername,
+          burritoConsiderations: existingUser.burritoConsiderations,
+        };
 
-    setUser(user);
-    localStorage.setItem('currentUser', username);
+    saveDemoUser(localUser);
+    window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(localUser));
+    setUser(localUser);
 
-    posthog.identify(getUserId(username), {
-      username: username,
-      isNewUser: isNewUser,
-    });
+    // Identify with the stable UUID primary key and pass username only as a person property.
+    posthog?.identify(localUser.id, { username: localUser.username });
 
-    // Capture login event
-    posthog.capture('user_logged_in', {
-      username: username,
-      isNewUser: isNewUser,
+    // Capture login event without PII such as username in event properties.
+    posthog?.capture('user_logged_in', {
+      is_new_user: isNewUser,
     });
 
     return true;
   };
 
   const logout = () => {
-    // Capture logout event before resetting
-    posthog.capture('user_logged_out');
-    posthog.reset();
+    // Only capture logout and reset PostHog when logging out of an authenticated session.
+    if (user) {
+      posthog?.capture('user_logged_out');
+      posthog?.reset();
+    }
 
     setUser(null);
-    localStorage.removeItem('currentUser');
+    window.localStorage.removeItem(CURRENT_USER_KEY);
   };
 
   const incrementBurritoConsiderations = () => {
     if (user) {
-      user.burritoConsiderations++;
-      users.set(user.username, user);
-      setUser({ ...user });
+      const updatedUser: User = {
+        ...user,
+        burritoConsiderations: user.burritoConsiderations + 1,
+      };
+      saveDemoUser(updatedUser);
+      window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+      setUser(updatedUser);
     }
   };
 

@@ -1,4 +1,4 @@
-# PostHog JavaScript Example - Browser Todo App
+# PostHog JavaScript Example: Browser Todo App
 
 A simple browser-based todo application built with vanilla JavaScript and Vite, demonstrating PostHog integration for non-framework JavaScript projects.
 
@@ -11,11 +11,11 @@ This example serves as:
 
 ## Features Demonstrated
 
-- **PostHog initialization** - `posthog.init()` with `api_host` configuration
-- **Autocapture** - Automatic tracking of clicks, form submissions, and pageviews (enabled by default)
-- **Custom event tracking** - Manual `posthog.capture()` calls with event properties
-- **User identification** - `posthog.identify()` on login and `posthog.reset()` on logout
-- **Error tracking** - `posthog.captureException()` for unhandled errors and promise rejections
+- **PostHog initialization**: Guarded `posthog.init()` with `api_host` configuration
+- **Autocapture**: Automatic tracking of clicks, form submissions, and pageviews (enabled by default)
+- **Custom event tracking**: Manual `posthog.capture()` calls with non-PII event properties
+- **User identification**: `posthog.identify()` on login and session reload, plus `posthog.capture('user_logged_out')` before `posthog.reset()` on logout
+- **Error tracking**: `posthog.captureException()` for unhandled errors and promise rejections
 
 ## Quick Start
 
@@ -32,7 +32,7 @@ npm install
 cp .env.example .env
 
 # Edit .env and add your PostHog project token
-# VITE_POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+# VITE_POSTHOG_PROJECT_TOKEN=
 # VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -79,31 +79,41 @@ example-apps/javascript-web/
 ```javascript
 import posthog from 'posthog-js'
 
-posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
-  defaults: '2026-08-30',
-})
+const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN?.trim()
+const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com'
+
+if (!projectToken) {
+  if (import.meta.env.DEV) {
+    console.error('VITE_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_POSTHOG_PROJECT_TOKEN is configured')
+  }
+} else {
+  posthog.init(projectToken, {
+    api_host: apiHost,
+    defaults: '2026-08-30',
+  })
+}
 ```
 
-Initialize PostHog once, early in your app. All other modules import the same instance. If the project token is not set, `posthog.js` skips initialization and logs an error in development.
+Initialize PostHog once, early in your app. All other modules import the same instance. If the project token is not set, `posthog.js` skips initialization instead of passing a placeholder token and logs an error in development.
 
 ### 2. Event Tracking
 
 ```javascript
-// Track events with properties — never send PII or user-generated content
+// Track events with non-PII metadata, never PII or user-generated content
 posthog.capture('event_name', {
-  item_count: 5,           // Metadata is OK
-  action_type: 'create',   // Categories are OK
+  item_count: 5,
+  action_type: 'create',
 })
 ```
 
 ### 3. User Identification
 
 ```javascript
-// On login — links events to a known user
-posthog.identify('user_123')
+// On login and when restoring a logged-in session on reload, pass a stable user id
+posthog.identify(getUserId(username), { username })
 
-// On logout — resets to a new anonymous distinct_id
+// On logout from an authenticated session, capture before resetting to a new anonymous distinct_id
+posthog.capture('user_logged_out')
 posthog.reset()
 ```
 
@@ -122,7 +132,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 ## Running Without PostHog
 
-The app works fine without PostHog configured. You'll see a console error in development, but the app continues to function normally.
+The app works fine without PostHog configured. You'll see a console error in development, and the app continues to function normally.
 
 ## Next Steps
 

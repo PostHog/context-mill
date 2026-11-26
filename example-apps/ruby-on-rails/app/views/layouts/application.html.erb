@@ -109,24 +109,32 @@
         }
     </style>
 
-    <% if ENV['POSTHOG_PROJECT_TOKEN'].present? %>
+    <%# Only initialize posthog-js when a real token is configured, never with a blank or placeholder key. %>
+    <% posthog_token = ENV["POSTHOG_PROJECT_TOKEN"]&.strip %>
+    <% posthog_host = ENV["POSTHOG_HOST"].presence || "https://us.i.posthog.com" %>
+    <% if posthog_token.present? %>
     <!-- PostHog frontend tracking (posthog-js) -->
     <script>
       // POSTHOG_BROWSER_SNIPPET_START
       !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
       // POSTHOG_BROWSER_SNIPPET_END
-      posthog.init('<%= ENV["POSTHOG_PROJECT_TOKEN"] %>', {
-        api_host: '<%= ENV.fetch("POSTHOG_HOST", "https://us.i.posthog.com") %>',
+      posthog.init('<%= j posthog_token %>', {
+        api_host: '<%= j posthog_host %>',
         defaults: '2026-08-30',
         person_profiles: 'identified_only',
         // Send X-POSTHOG-DISTINCT-ID and X-POSTHOG-SESSION-ID on same-origin requests so
         // posthog-rails links backend events to the browser session
         tracing_headers: [window.location.hostname]
       })
+      <%# Identify signed-in sessions on initial render and reloads, and reset only after logout. %>
       <% if current_user %>
-      posthog.identify('<%= j current_user.posthog_distinct_id %>')
+      posthog.identify('<%= j current_user.posthog_distinct_id %>', { email: '<%= j current_user.email %>' })
+      <% elsif flash[:posthog_reset] %>
+      posthog.reset()
       <% end %>
     </script>
+    <% elsif Rails.env.development? %>
+    <script>console.error("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured")</script>
     <% end %>
 </head>
 <body>

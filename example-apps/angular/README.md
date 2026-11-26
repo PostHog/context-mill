@@ -7,7 +7,7 @@ This is an [Angular](https://angular.dev/) example demonstrating PostHog integra
 - **Product analytics**: Track user events and behaviors
 - **Session replay**: Record and replay user sessions
 - **Error tracking**: Capture and track errors
-- **User authentication**: Demo login system with PostHog user identification
+- **User authentication**: Demo login system with PostHog user identification and session restore
 - **SSR-safe**: Uses platform checks for browser-only PostHog calls
 - **Reverse proxy**: Point `NG_APP_POSTHOG_HOST` at a reverse proxy
 
@@ -21,10 +21,10 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and fill in your PostHog project token:
 
 ```bash
-NG_APP_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+NG_APP_POSTHOG_PROJECT_TOKEN=
 NG_APP_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -68,30 +68,33 @@ src/
 
 ### PostHog service (services/posthog.service.ts)
 
-A wrapper service that handles SSR safety and provides access to the PostHog instance:
+A wrapper service that handles SSR safety and exposes the initialized browser PostHog instance:
 
 ```typescript
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import posthog from 'posthog-js';
+import posthog, { PostHogConfig } from 'posthog-js';
 
 @Injectable({ providedIn: 'root' })
 export class PostHogService {
   private readonly platformId = inject(PLATFORM_ID);
+  private initialized = false;
 
-  get posthog(): typeof posthog {
-    if (isPlatformBrowser(this.platformId)) {
+  get posthog(): typeof posthog | null {
+    if (isPlatformBrowser(this.platformId) && this.initialized) {
       return posthog;
     }
-    // Return a no-op proxy for SSR safety
-    return new Proxy({} as typeof posthog, {
-      get: () => () => undefined,
-    });
+    return null;
   }
 
-  init(apiKey: string, options: Partial<PostHogConfig>): void {
-    if (isPlatformBrowser(this.platformId)) {
-      posthog.init(apiKey, options);
+  init(apiKey: string | undefined, options: Partial<PostHogConfig>): void {
+    // Skip initialization when the project token is missing instead of passing an empty or placeholder key.
+    if (!apiKey?.trim()) {
+      return;
+    }
+    if (isPlatformBrowser(this.platformId) && !this.initialized) {
+      posthog.init(apiKey.trim(), options);
+      this.initialized = true;
     }
   }
 }
@@ -99,57 +102,69 @@ export class PostHogService {
 
 ### PostHog initialization (app.component.ts)
 
-PostHog is initialized in the root component's `ngOnInit`:
+PostHog is initialized in the root component's `ngOnInit`, and any persisted user session is re-identified after initialization:
 
 ```typescript
+import { AuthService } from './services/auth.service';
 import { PostHogService } from './services/posthog.service';
 import { environment } from '../environments/environment';
 
 export class AppComponent implements OnInit {
   private readonly posthogService = inject(PostHogService);
+  private readonly authService = inject(AuthService);
 
   ngOnInit(): void {
-    if (environment.posthogKey) {
-      this.posthogService.init(environment.posthogKey, {
+    const token = environment.posthogKey?.trim();
+    if (token) {
+      this.posthogService.init(token, {
         api_host: environment.posthogHost,
         defaults: '2026-08-30',
         capture_exceptions: true,
       });
+
+      const restoredUser = this.authService.user();
+      if (restoredUser) {
+        this.posthogService.posthog?.identify(restoredUser.id, {
+          username: restoredUser.username,
+        });
+      }
+    } else if (!environment.production) {
+      console.error(
+        'NG_APP_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NG_APP_POSTHOG_PROJECT_TOKEN is configured'
+      );
     }
   }
 }
 ```
 
-### User identification (services/auth.service.ts)
+### User identification and logout (services/auth.service.ts)
 
 ```typescript
-import { PostHogService } from './posthog.service';
-
-const posthogService = inject(PostHogService);
-
-posthogService.posthog.identify(getUserId(username), {
-  username,
-  isNewUser,
+posthogService.posthog?.identify(user.id, {
+  username: user.username,
 });
+
+posthogService.posthog?.capture('user_logged_in', {
+  is_new_user: isNewUser,
+});
+
+// On logout from an authenticated session, capture before reset()
+posthogService.posthog?.capture('user_logged_out');
+posthogService.posthog?.reset();
 ```
 
 ### Event tracking (pages/burrito/burrito.component.ts)
 
 ```typescript
-import { PostHogService } from '../../services/posthog.service';
-
-const posthogService = inject(PostHogService);
-
-posthogService.posthog.capture('burrito_considered', {
-  total_considerations: count,
-  username: username,
+posthogService.posthog?.capture('burrito_considered', {
+  total_considerations: updatedCount,
 });
 ```
 
 ### Error tracking (pages/profile/profile.component.ts)
 
 ```typescript
-posthogService.posthog.captureException(error);
+posthogService.posthog?.captureException(error);
 ```
 
 ## Angular-specific details
@@ -160,11 +175,11 @@ This example uses Angular 21 with modern features:
 2. **Signals**: Reactive state management with Angular signals
 3. **SSR support**: Uses `isPlatformBrowser()` checks for SSR safety
 4. **Dependency injection**: PostHog wrapped in an injectable service
-5. **Environment files**: Read from `.env` at build time by `@ngx-env/builder` (variables use the `NG_APP_` prefix)
+5. **Environment files**: Read from `.env` at build time by `@ngx-env/builder` (variables use the `NG_APP_` prefix), with `fileReplacements` swapping `environment.production.ts` into production builds
 
 ## Environment variable handling
 
-Angular CLI doesn't natively support `.env` files. This project uses [`@ngx-env/builder`](https://github.com/chihab/ngx-env), which exposes `NG_APP_*` variables through `import.meta.env`. The files in `src/environments/` read them and default to an empty project token, which skips PostHog initialization.
+Angular CLI doesn't natively support `.env` files. This project uses [`@ngx-env/builder`](https://github.com/chihab/ngx-env), which exposes `NG_APP_*` variables through `import.meta.env`. The files in `src/environments/` read `NG_APP_POSTHOG_PROJECT_TOKEN` without a fallback string so missing configuration stays `undefined` and `AppComponent` skips PostHog initialization cleanly.
 
 ## Reverse proxy
 

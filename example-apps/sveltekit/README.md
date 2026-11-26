@@ -5,8 +5,8 @@ This example demonstrates how to integrate PostHog with a SvelteKit application,
 - Client-side PostHog initialization using SvelteKit hooks
 - Server-side PostHog tracking with the Node.js SDK
 - Reverse proxy to avoid ad blockers
-- User identification and event tracking
-- Error tracking with `captureException`
+- User identification on login and session restore
+- Error tracking with `captureException` on both client and server
 - Session replay configuration
 
 ## Getting started
@@ -28,11 +28,11 @@ cp .env.example .env
 Edit `.env` with your PostHog project token:
 
 ```
-PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token_here
+PUBLIC_POSTHOG_PROJECT_TOKEN=
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
+You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings). Leave `PUBLIC_POSTHOG_PROJECT_TOKEN` blank until you have a real token. When the token is unset, the app still builds and runs, logs an error in browser development builds and a warning on the server outside production, and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -47,7 +47,7 @@ Open [http://localhost:5173](http://localhost:5173) to view the app.
 ```
 src/
 ├── lib/
-│   ├── auth.svelte.ts              # Auth context with Svelte 5 runes
+│   ├── auth.svelte.ts              # Auth context with Svelte 5 runes and session restore
 │   ├── components/
 │   │   └── Header.svelte           # Navigation component
 │   └── server/
@@ -64,7 +64,7 @@ src/
 │           └── login/
 │               └── +server.ts      # Login API with server-side tracking
 ├── hooks.client.ts                 # Client-side PostHog init + error handling
-├── hooks.server.ts                 # Server hooks with reverse proxy
+├── hooks.server.ts                 # Server hooks with reverse proxy + error handling
 ├── app.css                         # Global styles
 └── app.html                        # HTML template
 ```
@@ -73,7 +73,7 @@ src/
 
 ### Client-side initialization (`src/hooks.client.ts`)
 
-PostHog is initialized in the SvelteKit client hooks `init` function, which runs once when the app starts:
+PostHog is initialized in the SvelteKit client hooks `init` function, which runs once when the app starts in the browser:
 
 ```typescript
 import posthog from 'posthog-js';
@@ -81,7 +81,7 @@ import { env } from '$env/dynamic/public';
 import { dev } from '$app/environment';
 
 export async function init() {
-  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
   if (!token) {
     if (dev) {
       console.error('PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
@@ -93,31 +93,41 @@ export async function init() {
     api_host: '/ingest',
     ui_host: env.PUBLIC_POSTHOG_HOST?.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com',
     defaults: '2026-08-30',
-    capture_exceptions: true
+    capture_exceptions: true,
+    tracing_headers: [window.location.hostname]
   });
 }
 ```
 
 ### Server-side tracking (`src/lib/server/posthog.ts`)
 
-A singleton pattern ensures one PostHog client instance for server-side tracking:
+A singleton pattern ensures one PostHog client instance for server-side tracking, returning `null` when unconfigured:
 
 ```typescript
 import { PostHog } from 'posthog-node';
 import { env } from '$env/dynamic/public';
 
 let posthogClient: PostHog | null = null;
+let hasWarnedMissingToken = false;
 
-export function getPostHogClient() {
-  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
+export function getPostHogClient(): PostHog | null {
+  const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
   if (!token) {
+    if (!import.meta.env.PROD && !hasWarnedMissingToken) {
+      hasWarnedMissingToken = true;
+      console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
+    }
     return null;
   }
+
   if (!posthogClient) {
     posthogClient = new PostHog(token, {
-      host: env.PUBLIC_POSTHOG_HOST,
+      host: env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
       flushAt: 1,
-      flushInterval: 0
+      flushInterval: 0,
+      requestTimeout: 2000,
+      fetchRetryCount: 0,
+      enableExceptionAutocapture: true
     });
   }
   return posthogClient;
@@ -141,30 +151,50 @@ The proxy follows the region in `PUBLIC_POSTHOG_HOST`: `https://us.i.posthog.com
 
 The hook only runs with server-side rendering. If you deploy with `adapter-static`, use the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) instead.
 
-### User identification
+### User identification (`src/lib/auth.svelte.ts`)
 
-When a user logs in, they are identified in PostHog:
+Identify users with a stable user ID on login and when restoring an authenticated session from `localStorage`, keeping `username` in person properties rather than event properties:
 
 ```typescript
 import posthog from 'posthog-js';
 
 // On login
-posthog.identify(userId, { username });
-posthog.capture('user_logged_in', { username });
+posthog.identify(userData.id, { username });
+posthog.capture('user_logged_in', { login_method: 'username' });
 
-// On logout
-posthog.capture('user_logged_out');
-posthog.reset();
+// On logout (only when authenticated)
+if (this.user) {
+  posthog.capture('user_logged_out');
+  posthog.reset();
+}
 ```
 
-### Error tracking
+### Error tracking (`src/hooks.client.ts` and `src/hooks.server.ts`)
 
-Errors are automatically captured via the `handleError` hook:
+Client errors are captured via `HandleClientError`, and unhandled server errors are captured via `HandleServerError` using the forwarded `x-posthog-distinct-id` header or a per-request personless UUID when absent:
 
 ```typescript
-export const handleError: HandleClientError = async ({ error }) => {
-  posthog.captureException(error);
-  return { message: 'An error occurred' };
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+  const posthog = getPostHogClient();
+  if (posthog) {
+    const headerDistinctId = event.request.headers.get('x-posthog-distinct-id')?.trim();
+    const sessionId = event.request.headers.get('x-posthog-session-id')?.trim();
+    const distinctId = headerDistinctId ? headerDistinctId : crypto.randomUUID();
+    const options = headerDistinctId ? undefined : { process_person_profile: false };
+
+    posthog.captureException(error, {
+      distinctId,
+      properties: {
+        $session_id: sessionId || undefined,
+        status,
+        message
+      },
+      options
+    });
+
+    await posthog.flush().catch(() => {});
+  }
+  return { message, status };
 };
 ```
 
@@ -195,7 +225,7 @@ export default {
 ## Features demonstrated
 
 1. **Login page** (`/`) - User authentication with PostHog identification
-2. **Burrito page** (`/burrito`) - Custom event tracking with properties
+2. **Burrito page** (`/burrito`) - Custom event tracking with non-PII properties
 3. **Profile page** (`/profile`) - Error tracking demonstration
 
 ## Learn more

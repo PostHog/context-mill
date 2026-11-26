@@ -6,15 +6,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const router = useRouter();
 
-  // Redirect to home if not logged in
+  // Redirect to home once session restoration completes if no user is logged in.
   useEffect(() => {
-    if (!user) {
+    if (isReady && !user) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [isReady, user, router]);
 
   if (!user) {
     return null;

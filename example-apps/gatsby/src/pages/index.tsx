@@ -2,8 +2,8 @@ import * as React from "react"
 import type { HeadFC, PageProps } from "gatsby"
 import posthog from "posthog-js"
 
-// Stands in for your auth system: each username gets a stable user id, the way a user
-// record's primary key would. Identify with that id, never with the username or email.
+// Stands in for your auth system, giving each username a stable UUID like a database primary key.
+// Identify with that id, never with the username or email.
 function getUserId(username: string): string {
   const key = `demo-user-id:${username}`
   const existing = window.localStorage.getItem(key)
@@ -19,27 +19,49 @@ const IndexPage: React.FC<PageProps> = () => {
   const [considerations, setConsiderations] = React.useState(0)
   const [showTip, setShowTip] = React.useState(false)
 
+  React.useEffect(() => {
+    const saved = window.localStorage.getItem("currentUser")?.trim()
+    // Skip session restore and identify when no saved user exists in localStorage.
+    if (!saved) return
+
+    setUser(saved)
+    posthog.identify(getUserId(saved), { username: saved })
+  }, [])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username) return
+    const trimmed = username.trim()
+    // Reject blank usernames so we never call identify or capture login without a valid user identity.
+    if (!trimmed) return
 
-    posthog.identify(getUserId(username), { username })
-    posthog.capture("user_logged_in")
-    setUser(username)
+    window.localStorage.setItem("currentUser", trimmed)
+    posthog.identify(getUserId(trimmed), { username: trimmed })
+    posthog.capture("user_logged_in", { login_method: "username" })
+    setUser(trimmed)
     setUsername("")
   }
 
   const handleLogout = () => {
+    // Only capture logout and reset PostHog when signing out of an authenticated session.
+    if (!user) return
+
+    posthog.capture("user_logged_out")
     posthog.reset()
+    window.localStorage.removeItem("currentUser")
     setUser(null)
     setConsiderations(0)
+    setShowTip(false)
   }
 
   const handleConsider = () => {
+    if (!user) return
+
+    const nextCount = considerations + 1
+    // Send only non-PII event metadata in capture() properties.
     posthog.capture("burrito_considered", {
-      total_considerations: considerations + 1,
+      total_considerations: nextCount,
     })
-    setConsiderations(considerations + 1)
+    setConsiderations(nextCount)
     setShowTip(posthog.isFeatureEnabled("burrito-tip") === true)
   }
 

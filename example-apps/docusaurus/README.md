@@ -8,7 +8,7 @@ A minimal [Docusaurus](https://docusaurus.io) 3 site that uses the [`posthog-doc
 - **Session replay**: recordings start with the plugin's posthog-js snippet
 - **Feature flags**: `isFeatureEnabled()` gates a tip in the demo page
 - **Error tracking**: `captureException()` from a try/catch
-- **User identification**: a demo sign-in that calls `identify()`, and a sign-out that calls `reset()`
+- **User identification**: a demo sign-in that persists session state, calls `identify()` on sign-in and reload, and captures `user_logged_out` before `reset()` on sign-out
 
 ## Getting started
 
@@ -22,16 +22,16 @@ npm install
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and fill in your PostHog project token:
 
 ```bash
-POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+POSTHOG_PROJECT_TOKEN=
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your project token from your [PostHog project settings](https://app.posthog.com/project/settings). Use `https://eu.i.posthog.com` as the host for an EU Cloud project.
 
-If the token is missing, the site still builds and runs. `docusaurus.config.ts` leaves the plugin out and logs a warning outside production.
+If the token is missing, the site still builds and runs. `docusaurus.config.ts` skips registering the plugin, logs a warning outside production during the Node build, and loads `src/posthog-client.ts` in development so the browser console logs a missing-token error.
 
 ### 3. Run the site
 
@@ -44,13 +44,14 @@ pnpm build && pnpm serve
 
 ```
 .
-├── docusaurus.config.ts    # Registers posthog-docusaurus with the token and host from env
+├── docusaurus.config.ts    # Registers posthog-docusaurus when POSTHOG_PROJECT_TOKEN is set
 ├── sidebars.ts
 ├── docs/
 │   └── intro.md
 └── src/
     ├── pages/
-    │   └── burrito.tsx     # Demo page: identify, custom event, feature flag, error capture
+    │   └── burrito.tsx     # Demo page with identify, session restore, custom event, feature flag, error capture
+    ├── posthog-client.ts   # Logs browser console.error in dev when POSTHOG_PROJECT_TOKEN is missing
     └── posthog.d.ts        # Types for window.posthog
 ```
 
@@ -59,34 +60,45 @@ pnpm build && pnpm serve
 ### Plugin setup (docusaurus.config.ts)
 
 ```typescript
-[
-  "posthog-docusaurus",
-  {
-    apiKey: token,
-    appUrl: host,
-    enableInDevelopment: true,
-    defaults: "2026-08-30",
-    capture_pageview: false,
-  },
+const token = process.env.POSTHOG_PROJECT_TOKEN?.trim()
+const host = process.env.POSTHOG_HOST || "https://us.i.posthog.com"
+
+plugins: [
+  ...(token
+    ? [
+        [
+          "posthog-docusaurus",
+          {
+            apiKey: token,
+            appUrl: host,
+            enableInDevelopment: true,
+            defaults: "2026-08-30",
+            capture_pageview: false,
+          },
+        ],
+      ]
+    : []),
 ]
 ```
 
 The plugin injects the posthog-js snippet into the page head and exposes the client as `window.posthog`. Any option besides `apiKey`, `appUrl` and `enableInDevelopment` is passed through to `posthog.init()`, so `defaults` goes there. Options go through `JSON.stringify()`, so functions such as `before_send` are not supported. The plugin captures its own `$pageview` on every route change, including the first page load, so `capture_pageview: false` stops the SDK from sending a second one.
 
-The plugin throws when `apiKey` is empty, which is why the config only registers it when a token is set. It only loads PostHog in production builds unless `enableInDevelopment` is `true`. The token is read at build time and ends up in the generated HTML, which is expected for a project token.
+The plugin throws when `apiKey` is empty, which is why the config only registers it when a token is set instead of passing a placeholder value. It only loads PostHog in production builds unless `enableInDevelopment` is `true`. The token is read at build time and ends up in the generated HTML, which is expected for a project token.
 
 ### Identify, capture and reset (src/pages/burrito.tsx)
 
 ```typescript
-window.posthog?.identify(getUserId(username), { username })
-window.posthog?.capture("user_logged_in")
+window.posthog?.identify(getUserId(trimmed), { username: trimmed })
+window.posthog?.capture("user_logged_in", { login_method: "username" })
 
-window.posthog?.capture("burrito_considered", { total_considerations: n })
+window.posthog?.capture("burrito_considered", { total_considerations: nextCount })
 
-window.posthog?.reset() // on sign-out
+// On sign-out from an authenticated session, capture before reset()
+window.posthog?.capture("user_logged_out")
+window.posthog?.reset()
 ```
 
-Identify once when the user signs in, with your own stable user id (a primary key or UUID, never an email), and call `reset()` on sign-out.
+Identify with your own stable user id (a primary key or UUID, never a username or email) on sign-in and when restoring a saved session on reload. Keep PII like `username` in `identify()` person properties rather than `capture()` event properties, and capture `user_logged_out` before calling `reset()` on sign-out.
 
 ### Feature flags and error capture
 
@@ -98,7 +110,7 @@ window.posthog?.captureException(err)
 
 ## Reverse proxy
 
-The site is static, so there is no server code to host a proxy. To keep events from being blocked, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md), then set `POSTHOG_HOST` to your proxy domain.
+The site is static, so there is no server code to host a proxy. To keep events from being blocked, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), set `POSTHOG_HOST` to your proxy domain, and pass `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) in the `posthog-docusaurus` plugin options so toolbar links keep pointing at PostHog.
 
 ## Learn more
 

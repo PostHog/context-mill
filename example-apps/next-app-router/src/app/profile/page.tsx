@@ -1,16 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const router = useRouter();
 
-  // Redirect to home if not logged in
+  // Redirect to home inside an effect once session restoration finishes if no user is logged in.
+  useEffect(() => {
+    if (isReady && !user) {
+      router.push('/');
+    }
+  }, [isReady, user, router]);
+
   if (!user) {
-    router.push('/');
     return null;
   }
 
@@ -27,19 +33,19 @@ export default function ProfilePage() {
   return (
     <div className="container">
       <h1>User Profile</h1>
-      
+
       <div className="stats">
         <h2>Your Information</h2>
         <p><strong>Username:</strong> {user.username}</p>
         <p><strong>Burrito Considerations:</strong> {user.burritoConsiderations}</p>
       </div>
-      
+
       <div style={{ marginTop: '2rem' }}>
         <button onClick={triggerTestError} className="btn-primary" style={{ backgroundColor: '#dc3545' }}>
           Trigger Test Error (for PostHog)
         </button>
       </div>
-      
+
       <div style={{ marginTop: '2rem' }}>
         <h3>Your Burrito Journey</h3>
         {user.burritoConsiderations === 0 ? (

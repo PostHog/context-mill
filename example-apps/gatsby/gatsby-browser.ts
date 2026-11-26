@@ -2,9 +2,17 @@ import type { GatsbyBrowser } from "gatsby"
 import posthog from "posthog-js"
 
 export const onClientEntry: GatsbyBrowser["onClientEntry"] = () => {
-  const token = process.env.GATSBY_POSTHOG_PROJECT_TOKEN
-  // Without a token, posthog-js would initialize with an empty key, so skip it
-  if (!token) return
+  const rawToken = process.env.GATSBY_POSTHOG_PROJECT_TOKEN
+  const token = rawToken?.trim()
+  // Leave the client uninitialized when the project token is missing instead of passing an empty or fallback key.
+  if (!token) {
+    if (process.env.NODE_ENV === "development") {
+      console.error(
+        "GATSBY_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once GATSBY_POSTHOG_PROJECT_TOKEN is configured"
+      )
+    }
+    return
+  }
 
   posthog.init(token, {
     api_host: process.env.GATSBY_POSTHOG_HOST || "https://us.i.posthog.com",

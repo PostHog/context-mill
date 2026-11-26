@@ -7,34 +7,46 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
     const { userId, totalConsiderations } = body;
+    const trimmedUserId = typeof userId === "string" ? userId.trim() : "";
 
-    if (!userId) {
+    // Require an authenticated user ID instead of falling back to an anonymous or shared distinctId.
+    if (!trimmedUserId) {
       return new Response(JSON.stringify({ error: "User id is required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Get the PostHog server client
     const posthog = getPostHogServer();
 
-    // Get session ID from client if available (passed via header)
+    // Read PostHog tracing headers forwarded automatically from posthog-js.
+    const clientDistinctId = request.headers.get("X-PostHog-Distinct-Id");
     const sessionId = request.headers.get("X-PostHog-Session-Id");
 
-    // Capture server-side burrito consideration event
-    posthog.capture({
-      distinctId: userId,
-      event: "burrito_considered",
-      properties: {
-        $session_id: sessionId || undefined,
-        total_considerations: totalConsiderations,
-        source: "api",
-        timestamp: new Date().toISOString(),
-      },
-    });
+    // Skip server capture when PostHog is unconfigured or user identity is absent.
+    if (posthog && trimmedUserId) {
+      posthog.withContext(
+        {
+          distinctId: clientDistinctId || undefined,
+          sessionId: sessionId || undefined,
+        },
+        () => {
+          posthog.capture({
+            distinctId: trimmedUserId,
+            event: "burrito_considered",
+            properties: {
+              $session_id: sessionId || undefined,
+              total_considerations: totalConsiderations,
+              source: "api",
+              timestamp: new Date().toISOString(),
+            },
+          });
+        },
+      );
 
-    // This endpoint is short-lived; flush so the enqueued event sends before it returns
-    await posthog.flush();
+      // Flush queued events in this short-lived route handler and ignore delivery errors so the response never stalls or fails.
+      await posthog.flush().catch(() => {});
+    }
 
     return new Response(
       JSON.stringify({

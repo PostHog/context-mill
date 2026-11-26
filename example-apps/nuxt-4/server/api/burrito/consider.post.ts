@@ -1,19 +1,18 @@
 import { useServerPostHog } from '../../utils/posthog'
 import { users, incrementBurritoConsiderations } from '../../utils/users'
-import { defineEventHandler, readBody, createError, getHeader } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ username: string }>(event)
-  const username = body?.username
+  const trimmedUsername = typeof body?.username === 'string' ? body.username.trim() : ''
 
-  if (!username) {
+  if (!trimmedUsername) {
     throw createError({
       statusCode: 400,
       message: 'Username required',
     })
   }
 
-  if (!users.has(username)) {
+  if (!users.has(trimmedUsername)) {
     throw createError({
       statusCode: 404,
       message: 'User not found',
@@ -21,27 +20,27 @@ export default defineEventHandler(async (event) => {
   }
 
   // Increment burrito considerations (fake, in-memory)
-  const user = incrementBurritoConsiderations(username)
+  const user = incrementBurritoConsiderations(trimmedUsername)
 
-  const sessionId = getHeader(event, 'x-posthog-session-id')
-  const distinctId = getHeader(event, 'x-posthog-distinct-id')
-
-  // Capture server-side burrito consideration event
+  const sessionId = getHeader(event, 'x-posthog-session-id')?.trim()
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')?.trim()
   const posthog = useServerPostHog()
-  
-  posthog.capture({
-    distinctId: distinctId ?? user.id,
-    event: 'burrito_considered',
-    properties: {
-      $session_id: sessionId,
-      username: username,
-      total_considerations: user.burritoConsiderations,
-      source: 'api',
-    },
-  })
 
-  // This handler is short-lived; flush so the enqueued event sends before it returns
-  await posthog.flush()
+  // Only capture when x-posthog-distinct-id is present, never falling back to user.id when tracing headers are absent.
+  if (posthog && distinctId) {
+    posthog.capture({
+      distinctId,
+      event: 'burrito_considered',
+      properties: {
+        $session_id: sessionId || undefined,
+        total_considerations: user.burritoConsiderations,
+        source: 'api',
+      },
+    })
+
+    // Flush queued events in this short-lived handler and ignore delivery errors so the request never stalls or fails.
+    await posthog.flush().catch(() => {})
+  }
 
   return {
     success: true,

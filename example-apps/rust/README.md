@@ -5,11 +5,11 @@ This is an [Axum](https://github.com/tokio-rs/axum) example demonstrating PostHo
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with users via person properties (`$set`); signed-out visitors get a random id and anonymous events
+- **User identification**: Associate events with a stable UUID via person properties (`$set`), while signed-out visitors get a random cookie UUID and personless events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
-- **Error tracking**: Capture exceptions with `capture_exception`
+- **Error tracking**: Capture exceptions with `capture_exception_with`
 - **Server-side tracking**: All tracking happens server-side with the async Rust SDK
-- **Single client per process**: One PostHog client for the whole app, flushed on shutdown
+- **Single client per process**: One PostHog client for the whole app when configured, flushed on shutdown
 
 > **Note on SDK scope:** the `posthog` server SDK does **not** provide an
 > `alias` helper, surveys, or session replay. This example does not scaffold or
@@ -45,63 +45,72 @@ rust/
 ├── .env.example        # Environment variable template
 ├── .gitignore          # Ignores /target and .env
 └── src/
-    └── main.rs         # Axum app: client init, routes, identify, events, flags, errors
+    └── main.rs         # Axum app: optional client init, routes, identify, events, flags, errors
 ```
 
 ## Key integration points
 
-### PostHog client init (src/main.rs)
+### PostHog client init and configuration (src/main.rs)
 
-Build **one client per process** and share it through Axum state as an `Arc<Client>`. Never construct a new client per request.
-
-```rust
-let options = ClientOptions::from((token.as_str(), host.as_str()));
-let client: Arc<Client> = Arc::new(posthog::client(options).await);
-
-let app = Router::new()
-    // ...routes...
-    .with_state(client.clone());
-```
-
-### Configuration from the environment (src/main.rs)
-
-Read the token and host from the environment so secrets never live in source. A blank token logs a clear warning and the app still boots — fail loudly, but never break the app.
+Read `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` optionally from the environment so secrets never live in source. When `POSTHOG_PROJECT_TOKEN` is missing or empty, log a warning outside production and store `None` in Axum state rather than calling `posthog::client` with a blank key. When configured, build **one client per process** and share it as `Option<Arc<Client>>`.
 
 ```rust
-let token = std::env::var("POSTHOG_PROJECT_TOKEN").unwrap_or_default();
+let token = std::env::var("POSTHOG_PROJECT_TOKEN")
+    .ok()
+    .map(|v| v.trim().to_string())
+    .filter(|v| !v.is_empty());
+
 let host = std::env::var("POSTHOG_HOST")
-    .unwrap_or_else(|_| "https://us.i.posthog.com".to_string());
+    .ok()
+    .map(|v| v.trim().to_string())
+    .filter(|v| !v.is_empty())
+    .unwrap_or_else(|| "https://us.i.posthog.com".to_string());
 
-if token.trim().is_empty() {
-    tracing::warn!("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured");
-}
+let posthog_client = match token {
+    Some(token) => {
+        let options = ClientOptions::from((token.as_str(), host.as_str()));
+        Some(Arc::new(posthog::client(options).await))
+    }
+    None => {
+        if cfg!(debug_assertions)
+            || std::env::var("APP_ENV").as_deref() != Ok("production")
+        {
+            tracing::warn!(
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
+            );
+        }
+        None
+    }
+};
 ```
-
-The `(api_key, host)` tuple converts into `ClientOptions`, which is how this example applies `POSTHOG_HOST`.
 
 ### User identification (src/main.rs)
 
-The server SDK identifies a user by attaching person properties to a capture with the `$set` property. The distinct id (2nd argument to `Event::new`) is the stable user id and must match the id your frontend `posthog.identify(...)` call uses.
+Validate login input and return `StatusCode::BAD_REQUEST` when empty without setting cookies or capturing events. Map each login account to a stable UUID so `distinct_id` is never raw PII, and include `"email"` or `"username"` in `$set` only when non-empty.
 
 ```rust
-let mut event = Event::new("user_logged_in", &user_id);
-event.insert_prop("$set", serde_json::json!({ "email": email }))?;
-event.insert_prop("login_method", "email")?;
-client.capture(event); // fire-and-forget
+if let Some(client) = &state.posthog {
+    let mut event = Event::new("user_logged_in", &distinct_id);
+    let _ = event.insert_prop("$set", serde_json::Value::Object(person_props));
+    let _ = event.insert_prop("login_method", login_method);
+    client.capture(event);
+}
 ```
 
 ### Signed-out visitors (src/main.rs)
 
-The `visitor` helper returns the cookie jar, the distinct id, and whether the visitor is anonymous. Signed-in users (a `user_id` cookie) keep their stable user id. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and `mark_anonymous` sets `$process_person_profile` to `false` on their events so PostHog does not create a person profile for them. Return the jar from the handler so the cookie reaches the browser.
+The `visitor` helper returns the cookie jar, the distinct id, and whether the visitor is anonymous. Signed-in users (a non-empty `user_id` cookie) keep their stable UUID. For everyone else it generates a random UUID, stores it in an `anon_id` cookie so it is reused for the rest of the visit, and `mark_anonymous` sets `$process_person_profile` to `false` on their events so PostHog does not create a person profile for them.
 
 ```rust
 let (jar, user_id, anonymous) = visitor(jar);
 
-let mut event = Event::new("burrito_considered", &user_id);
-if anonymous {
-    event.insert_prop("$process_person_profile", false)?;
+if let Some(client) = &state.posthog {
+    let mut event = Event::new("burrito_considered", &user_id);
+    if anonymous {
+        let _ = event.insert_prop("$process_person_profile", false);
+    }
+    client.capture(event);
 }
-client.capture(event);
 ```
 
 Feature flags use the same visitor id, so flag evaluation works for anonymous visitors too.
@@ -109,41 +118,49 @@ Feature flags use the same visitor id, so flag evaluation works for anonymous vi
 ### Event tracking (src/main.rs)
 
 ```rust
-let mut event = Event::new("burrito_considered", &user_id);
-event.insert_prop("total_considerations", count)?;
-mark_anonymous(&mut event, anonymous); // sets $process_person_profile=false when anonymous
-client.capture(event);
+if let Some(client) = &state.posthog {
+    let mut event = Event::new("burrito_considered", &user_id);
+    let _ = event.insert_prop("total_considerations", count);
+    mark_anonymous(&mut event, anonymous);
+    client.capture(event);
+}
 ```
 
 ### Feature flags (src/main.rs)
 
-Evaluate flags once per request with `evaluate_flags(...)`, then read individual flags off the returned snapshot. Avoid the deprecated per-flag helpers.
+Evaluate flags once per request with `evaluate_flags(...)` when PostHog is configured, then read individual flags off the returned snapshot. Avoid the deprecated per-flag helpers.
 
 ```rust
-let flags = client
-    .evaluate_flags(user_id, EvaluateFlagsOptions::default())
-    .await?;
-let show_new_feature = flags.is_enabled("new-dashboard-feature");
+if let Some(client) = &state.posthog {
+    let flags = client
+        .evaluate_flags(user_id, EvaluateFlagsOptions::default())
+        .await?;
+    let show_new_feature = flags.is_enabled("new-dashboard-feature");
+}
 ```
 
 ### Error tracking (src/main.rs)
 
-Unlike some PostHog server SDKs, `posthog` **does** capture exceptions. Report any `std::error::Error` with `capture_exception_with`, attaching the distinct id and context.
+Report any `std::error::Error` with `capture_exception_with`, attaching the distinct id and non-PII context.
 
 ```rust
-let options = CaptureExceptionOptions::new()
-    .distinct_id(user_id)
-    .property("source", "profile_view")?;
-client.capture_exception_with(&err, options).await?;
+if let Some(client) = &state.posthog {
+    let options = CaptureExceptionOptions::new()
+        .distinct_id(user_id)
+        .property("source", "profile_view")?;
+    client.capture_exception_with(&err, options).await?;
+}
 ```
 
 ### Flush and shutdown (src/main.rs)
 
-`capture` is fire-and-forget, so queued events must be flushed before the process exits or they are lost. On graceful shutdown (Ctrl+C), flush and then shut the client down.
+`capture` is fire-and-forget, so queued events must be flushed before the process exits or they are lost. On graceful shutdown (Ctrl+C), flush and shut the client down when configured.
 
 ```rust
-client.flush().await;
-client.shutdown().await;
+if let Some(client) = &state.posthog {
+    client.flush().await;
+    client.shutdown().await;
+}
 ```
 
 ## Learn more

@@ -4,39 +4,72 @@ interface User {
   burritoConsiderations: number
 }
 
+const STORAGE_KEY = 'currentUser'
 const users: Map<string, User> = new Map()
+let restoredUserId: string | null = null
 
-export function useAuth() {
-  const user = useState<User | null>('auth-user', () => {
-    if (process.client) {
-      const storedUsername = localStorage.getItem('currentUser')
-      if (storedUsername) {
-        const existingUser = users.get(storedUsername)
-        if (existingUser) {
-          return existingUser
-        }
+function readStoredUser(): User | null {
+  if (!import.meta.client) return null
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Partial<User>
+    if (typeof parsed?.id === 'string' && parsed.id.trim() && typeof parsed?.username === 'string' && parsed.username.trim()) {
+      return {
+        id: parsed.id,
+        username: parsed.username,
+        burritoConsiderations: typeof parsed.burritoConsiderations === 'number' ? parsed.burritoConsiderations : 0,
       }
     }
-    return null
-  })
+  } catch {
+    // Ignore legacy or malformed storage values and remove them cleanly.
+  }
+  localStorage.removeItem(STORAGE_KEY)
+  return null
+}
+
+export function useAuth() {
+  const user = useState<User | null>('auth-user', () => readStoredUser())
+
+  // Restore persisted user state on the client after SSR hydration and re-identify with the stable user ID.
+  if (import.meta.client) {
+    if (!user.value) {
+      const stored = readStoredUser()
+      if (stored) {
+        user.value = stored
+        users.set(stored.username, stored)
+      }
+    }
+    if (user.value?.id && restoredUserId !== user.value.id) {
+      restoredUserId = user.value.id
+      usePostHog()?.identify(user.value.id, { username: user.value.username })
+    }
+  }
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    const trimmedUsername = username.trim()
+    // Reject empty credentials before calling the API or identifying a user.
+    if (!trimmedUsername || !password) {
+      return false
+    }
+
     try {
       const response = await $fetch<{ success: boolean; user: User }>('/api/auth/login', {
         method: 'POST',
-        body: { username, password },
+        body: { username: trimmedUsername, password },
       })
 
-      if (response.success) {
-        let localUser = users.get(username)
+      if (response.success && response.user?.id) {
+        let localUser = users.get(trimmedUsername)
         if (!localUser) {
           localUser = response.user
-          users.set(username, localUser)
+          users.set(trimmedUsername, localUser)
         }
 
         user.value = localUser
-        if (process.client) {
-          localStorage.setItem('currentUser', username)
+        restoredUserId = localUser.id
+        if (import.meta.client) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(localUser))
         }
 
         return true
@@ -50,23 +83,32 @@ export function useAuth() {
 
   const logout = () => {
     user.value = null
-    if (process.client) {
-      localStorage.removeItem('currentUser')
+    restoredUserId = null
+    if (import.meta.client) {
+      localStorage.removeItem(STORAGE_KEY)
     }
   }
 
   const incrementBurritoConsiderations = () => {
     if (user.value) {
-      user.value.burritoConsiderations++
-      users.set(user.value.username, user.value)
-      // Trigger reactivity
-      user.value = { ...user.value }
+      const updated = {
+        ...user.value,
+        burritoConsiderations: user.value.burritoConsiderations + 1,
+      }
+      user.value = updated
+      users.set(updated.username, updated)
+      if (import.meta.client) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      }
     }
   }
 
   const setUser = (newUser: User) => {
     user.value = newUser
     users.set(newUser.username, newUser)
+    if (import.meta.client) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser))
+    }
   }
 
   return {

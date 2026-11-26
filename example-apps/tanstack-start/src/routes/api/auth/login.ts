@@ -2,59 +2,58 @@ import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { getPostHogClient } from '../../../utils/posthog-server'
 
-const users = new Map<string, { id: string; username: string; burritoConsiderations: number }>()
+const users = new Map<
+  string,
+  { id: string; username: string; burritoConsiderations: number }
+>()
 
 export const Route = createFileRoute('/api/auth/login')({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const body = await request.json()
-        const { username, password } = body
+        const { username, password } = body || {}
+        const trimmedUsername =
+          typeof username === 'string' ? username.trim() : ''
 
-        // Simple validation (in production, you'd verify against a real database)
-        if (!username || !password) {
+        // Reject missing credentials early so login never creates or tracks a blank user identity.
+        if (!trimmedUsername || !password) {
           return json(
             { error: 'Username and password required' },
             { status: 400 },
           )
         }
 
-        // Check if this is a new user (simplified - in production use a database)
-        const isNewUser = !users.has(username)
+        const isNewUser = !users.has(trimmedUsername)
 
-        // Create or get user
-        let user = users.get(username)
+        let user = users.get(trimmedUsername)
         if (!user) {
-          user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 }
-          users.set(username, user)
+          user = {
+            id: crypto.randomUUID(),
+            username: trimmedUsername,
+            burritoConsiderations: 0,
+          }
+          users.set(trimmedUsername, user)
         }
 
         const sessionId = request.headers.get('X-PostHog-Session-Id')
-
-        // Capture server-side login event
         const posthog = getPostHogClient()
-        posthog?.capture({
-          distinctId: user.id,
-          event: 'server_login',
-          properties: {
-            $session_id: sessionId || undefined,
-            username: username,
-            isNewUser: isNewUser,
-            source: 'api',
-          },
-        })
 
-        // Identify user on server side
-        posthog?.identify({
-          distinctId: user.id,
-          properties: {
-            username: username,
-            createdAt: isNewUser ? new Date().toISOString() : undefined,
-          },
-        })
+        // Only capture when PostHog is configured and a stable user ID exists, keeping PII out of event properties.
+        if (posthog && user.id) {
+          posthog.capture({
+            distinctId: user.id,
+            event: 'server_login',
+            properties: {
+              $session_id: sessionId || undefined,
+              isNewUser,
+              source: 'api',
+            },
+          })
 
-        // This handler is short-lived; flush so the enqueued events send before it returns
-        await posthog?.flush()
+          // Flush queued events in this short-lived handler and ignore delivery errors so login still succeeds.
+          await posthog.flush().catch(() => {})
+        }
 
         return json({ success: true, user })
       },

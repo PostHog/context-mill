@@ -1,14 +1,43 @@
 import Config
 
 # runtime.exs runs at boot in every environment, which makes it the right
-# place to read environment variables (they are not available at compile time).
+# place to read environment variables.
 
-# Configuration from the environment. Never hardcode the token.
-#   POSTHOG_PROJECT_TOKEN -> your project's write key
-#   POSTHOG_HOST          -> defaults to PostHog US Cloud
-config :posthog,
-  api_key: System.get_env("POSTHOG_PROJECT_TOKEN"),
-  api_host: System.get_env("POSTHOG_HOST") || "https://us.i.posthog.com"
+# Trim POSTHOG_PROJECT_TOKEN and disable the SDK when unset or blank rather than
+# passing an empty or placeholder string as api_key.
+token =
+  case System.get_env("POSTHOG_PROJECT_TOKEN") do
+    nil ->
+      nil
+
+    raw ->
+      case String.trim(raw) do
+        "" -> nil
+        trimmed -> trimmed
+      end
+  end
+
+host =
+  case System.get_env("POSTHOG_HOST") do
+    nil ->
+      "https://us.i.posthog.com"
+
+    raw ->
+      case String.trim(raw) do
+        "" -> "https://us.i.posthog.com"
+        trimmed -> trimmed
+      end
+  end
+
+if config_env() != :test do
+  posthog_opts =
+    [
+      enable: token not in [nil, ""],
+      api_host: host
+    ] ++ if(token not in [nil, ""], do: [api_key: token], else: [])
+
+  config :posthog, posthog_opts
+end
 
 # In production, require a real secret_key_base from the environment.
 if config_env() == :prod do

@@ -34,7 +34,8 @@ export const prerender = false;
 <script is:inline>
   function checkAuth() {
     const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) {
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUser || !currentUserId) {
       window.location.href = '/';
       return false;
     }
@@ -47,8 +48,10 @@ export const prerender = false;
   }
 
   async function handleConsideration() {
+    // Skip tracking and server calls when authenticated user identity is missing instead of falling back.
     const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) return;
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUser || !currentUserId) return;
 
     // Increment the count
     const currentCount = parseInt(localStorage.getItem('burritoConsiderations') || '0', 10);
@@ -68,10 +71,9 @@ export const prerender = false;
       successMessage.style.display = 'none';
     }, 2000);
 
-    // Client-side event tracking
+    // Client-side event tracking without PII such as username in event properties.
     window.posthog?.capture('burrito_considered', {
       total_considerations: newCount,
-      username: currentUser,
       source: 'client'
     });
 
@@ -84,7 +86,7 @@ export const prerender = false;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: localStorage.getItem('currentUserId'),
+          userId: currentUserId,
           totalConsiderations: newCount
         })
       });

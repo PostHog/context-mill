@@ -16,8 +16,15 @@ function Home() {
     e.preventDefault()
     setError('')
 
+    // Trim username before login so blank input never triggers user identification or events.
+    const trimmedUsername = username.trim()
+    if (!trimmedUsername || !password) {
+      setError('Please provide both username and password')
+      return
+    }
+
     try {
-      const success = await login(username, password)
+      const success = await login(trimmedUsername, password)
       if (success) {
         setUsername('')
         setPassword('')

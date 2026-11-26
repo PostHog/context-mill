@@ -16,8 +16,10 @@ app.get('/', (c) =>
   }),
 )
 
-// User identification: identify once, on login, with the app's own user id.
+// User identification: identify on login with the app's stable user UUID.
 app.post('/login', async (c) => {
+  // Reject blank usernames before creating a session, identifying, or capturing
+  // so missing identity never falls back to a placeholder user.
   const body = await c.req.json<{ username?: string }>().catch(() => ({}) as { username?: string })
   const username = body.username?.trim()
   if (!username) {
@@ -26,31 +28,49 @@ app.post('/login', async (c) => {
 
   const user = login(c, username)
 
-  posthog.identify({
+  posthog?.identify({
     distinctId: user.id,
     properties: { username: user.username },
+  })
+  posthog?.capture({
+    distinctId: user.id,
+    event: 'user_logged_in',
+    properties: { login_method: 'username' },
   })
 
   return c.json({ user })
 })
 
 app.post('/logout', (c) => {
+  const user = c.get('user')
+  if (user) {
+    posthog?.capture({
+      distinctId: user.id,
+      event: 'user_logged_out',
+    })
+  }
   logout(c)
   return c.body(null, 204)
 })
 
 // Custom event. The distinct id comes from the request context.
 app.post('/burrito', (c) => {
-  posthog.capture({ event: 'burrito_considered', properties: { source: 'api' } })
+  posthog?.capture({ event: 'burrito_considered', properties: { source: 'api' } })
 
   return c.json({ considered: true })
 })
 
 // Feature flag.
 app.get('/dashboard', async (c) => {
-  const flags = await posthog.evaluateFlags()
+  let newDashboard = false
+  try {
+    const flags = await posthog?.evaluateFlags()
+    newDashboard = flags?.isEnabled('new-dashboard-feature') ?? false
+  } catch (error) {
+    console.warn('Feature flag evaluation failed', error)
+  }
 
-  return c.json({ newDashboard: flags.isEnabled('new-dashboard-feature') })
+  return c.json({ newDashboard })
 })
 
 // Error tracking: onError captures this.
@@ -59,7 +79,7 @@ app.get('/profile', () => {
 })
 
 app.onError((err, c) => {
-  posthog.captureException(err, {
+  posthog?.captureException(err, {
     properties: {
       $request_path: c.req.path,
       $request_method: c.req.method,
@@ -77,7 +97,7 @@ const server = serve({ fetch: app.fetch, port: Number(process.env.PORT ?? 3000) 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     server.close(async () => {
-      await posthog.shutdown(3000)
+      await posthog?.shutdown(3000)
       process.exit(0)
     })
   })

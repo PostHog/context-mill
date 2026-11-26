@@ -8,22 +8,22 @@ export class PostHogService {
   private initialized = false;
 
   /**
-   * The posthog instance. Use this directly to call posthog methods.
-   * Returns the actual posthog instance on browser, or a no-op proxy on server.
+   * Returns the initialized browser PostHog client, or null on the server or when unconfigured.
    */
-  get posthog(): typeof posthog {
+  get posthog(): typeof posthog | null {
     if (isPlatformBrowser(this.platformId) && this.initialized) {
       return posthog;
     }
-    // Return a no-op proxy for SSR safety
-    return new Proxy({} as typeof posthog, {
-      get: () => () => undefined,
-    });
+    return null;
   }
 
-  init(apiKey: string, options: Partial<PostHogConfig>): void {
+  init(apiKey: string | undefined, options: Partial<PostHogConfig>): void {
+    // Skip initialization when the project token is missing instead of passing an empty or placeholder key.
+    if (!apiKey?.trim()) {
+      return;
+    }
     if (isPlatformBrowser(this.platformId) && !this.initialized) {
-      posthog.init(apiKey, options);
+      posthog.init(apiKey.trim(), options);
       this.initialized = true;
     }
   }

@@ -6,10 +6,11 @@ A FastAPI application demonstrating PostHog integration for analytics, feature f
 
 - User registration and authentication with cookie-based sessions
 - SQLite database persistence with SQLAlchemy
-- User identification and property tracking
-- Custom event tracking
+- Instance-based `Posthog` client with `PosthogASGIMiddleware`
+- User identification via request context and person properties via `set()`
+- Custom event tracking without PII in event properties
 - Feature flags with payload support
-- Error tracking with manual exception capture
+- Automatic and manual error tracking
 
 ## Quick Start
 
@@ -24,10 +25,10 @@ A FastAPI application demonstrating PostHog integration for analytics, feature f
    pip install -r requirements.txt
    ```
 
-3. Copy the environment file and configure:
+3. Copy the environment file and configure your project token:
    ```bash
    cp .env.example .env
-   # Edit .env with your PostHog project key
+   # Edit .env and set POSTHOG_PROJECT_TOKEN
    ```
 
 4. Run the application:
@@ -41,66 +42,95 @@ A FastAPI application demonstrating PostHog integration for analytics, feature f
 
 ## PostHog Integration Points
 
-### User Registration
-New users are identified and tracked on signup using the context-based API:
+### App Initialization (`app/main.py`)
+
+`Posthog` is constructed at app build time only when `POSTHOG_PROJECT_TOKEN` is configured, registered with `PosthogASGIMiddleware` and `atexit.register(posthog_client.shutdown)`, and flushed during lifespan shutdown:
+
 ```python
-with new_context():
-    identify_context(str(user.id))
-    tag('email', user.email)
-    tag('is_staff', user.is_staff)
-    capture('user_signed_up', properties={'signup_method': 'form'})
+import atexit
+from posthog import Posthog
+from posthog.integrations.asgi import PosthogASGIMiddleware
+
+_posthog_token = (settings.posthog_project_token or "").strip()
+if not settings.posthog_disabled and _posthog_token:
+    posthog_client = Posthog(
+        _posthog_token,
+        host=settings.posthog_host,
+        enable_exception_autocapture=True,
+        debug=settings.debug,
+    )
+    atexit.register(posthog_client.shutdown)
+else:
+    posthog_client = None
+
+if posthog_client is not None:
+    app.add_middleware(PosthogASGIMiddleware, client=posthog_client)
 ```
 
-### User Identification
-Users are identified on login with their properties:
+### User Registration and Login (`app/routers/main.py`)
+
+Users are identified by their stable numeric primary key, and PII such as email stays in person properties via `set()`:
+
 ```python
-with new_context():
-    identify_context(str(user.id))
-    tag('email', user.email)
-    tag('is_staff', user.is_staff)
-    capture('user_logged_in', properties={'login_method': 'password'})
+if posthog_client:
+    user_id = str(user.id)
+    with new_context(client=posthog_client):
+        identify_context(user_id)
+        posthog_client.set(
+            distinct_id=user_id,
+            properties={"email": user.email, "is_staff": user.is_staff},
+        )
+        posthog_client.capture(
+            "user_logged_in",
+            properties={"is_new_user": is_new_user, "login_method": "password"},
+        )
 ```
 
 ### Event Tracking
-Custom events are captured throughout the app:
+
+`get_current_user` calls `identify_context(str(user.id))` inside the active ASGI middleware context, so authenticated route handlers capture directly:
+
 ```python
-with new_context():
-    identify_context(str(current_user.id))
-    capture('burrito_considered', properties={'total_considerations': count})
+if posthog_client:
+    posthog_client.capture(
+        "burrito_considered",
+        properties={"total_considerations": new_count},
+    )
 ```
 
 ### Feature Flags
-The dashboard demonstrates feature flag checking:
+
+The dashboard demonstrates feature flag evaluation:
+
 ```python
-show_new_feature = posthog.feature_enabled(
-    'new-dashboard-feature',
-    str(current_user.id),
-    person_properties={'email': current_user.email, 'is_staff': current_user.is_staff}
-)
-feature_config = posthog.get_feature_flag_payload('new-dashboard-feature', str(current_user.id))
+if posthog_client:
+    show_new_feature = posthog_client.feature_enabled(
+        "new-dashboard-feature",
+        str(current_user.id),
+        person_properties={"email": current_user.email, "is_staff": current_user.is_staff},
+    )
+    feature_config = posthog_client.get_feature_flag_payload(
+        "new-dashboard-feature", str(current_user.id)
+    )
 ```
 
 ### Error Tracking
 
-The example demonstrates two approaches to error tracking:
-
-Manual capture for specific critical operations** (`app/routers/api.py`).
+Unhandled route exceptions are captured automatically by `PosthogASGIMiddleware`. Handled exceptions in critical paths can be captured explicitly (`app/routers/api.py`):
 
 ```python
 try:
-    # Critical operation that might fail
     result = process_payment()
 except Exception as e:
-    # Manually capture this specific exception
-    with new_context():
-        identify_context(str(current_user.id))
-        event_id = posthog.capture_exception(e)
-
-    return JSONResponse({
-        "error": "Operation failed",
-        "error_id": event_id,
-        "message": f"Error captured in PostHog. Reference ID: {event_id}"
-    }, status_code=500)
+    event_id = posthog_client.capture_exception(e) if posthog_client else None
+    return JSONResponse(
+        {
+            "error": "Operation failed",
+            "error_id": event_id,
+            "message": f"Error captured in PostHog. Reference ID: {event_id}",
+        },
+        status_code=500,
+    )
 ```
 
 The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capture=true` to capture in PostHog, or `?capture=false` to skip tracking.
@@ -114,7 +144,7 @@ example-apps/fastapi/
 │   ├── config.py                # Pydantic Settings configuration
 │   ├── database.py              # SQLAlchemy setup
 │   ├── dependencies.py          # FastAPI dependency injection
-│   ├── main.py                  # Application factory and lifespan
+│   ├── main.py                  # App factory, PosthogASGIMiddleware, and lifespan
 │   ├── models.py                # User model (SQLAlchemy)
 │   ├── routers/
 │   │   ├── __init__.py          # Routers package

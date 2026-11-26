@@ -12,7 +12,7 @@ This shows how to:
 - Initialize PostHog on both client and server
 - Track events from API routes using `posthog-node`
 - Link client and server sessions automatically with the `tracing_headers` option
-- Identify users on both client and server
+- Identify users on login and restore identity across page reloads
 - Capture errors via `posthog.captureException()`
 - Reset PostHog state on logout
 
@@ -39,19 +39,19 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and set your project tokens:
 
 ```bash
 # Client-side (PUBLIC_ prefix exposes to browser)
-PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+PUBLIC_POSTHOG_PROJECT_TOKEN=
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 # Server-side (no PUBLIC_ prefix, server-only)
-POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+POSTHOG_PROJECT_TOKEN=
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs an error naming the variable and skips PostHog initialization.
+Get your PostHog project token from your project settings in PostHog. Leave token variables blank until you have a real token. When a token is unset, the app still builds and runs: in development it logs a message naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -92,19 +92,34 @@ src/
 
 ### Server-side PostHog client (`src/lib/posthog-server.ts`)
 
-A singleton pattern ensures only one PostHog client is created:
+A singleton pattern ensures only one PostHog client is created, returning `null` when `POSTHOG_PROJECT_TOKEN` is unconfigured:
 
 ```typescript
 import { PostHog } from "posthog-node";
 
 let posthogClient: PostHog | null = null;
+let hasWarnedMissingToken = false;
 
-export function getPostHogServer(): PostHog {
+export function getPostHogServer(): PostHog | null {
+  const token = import.meta.env.POSTHOG_PROJECT_TOKEN?.trim();
+  if (!token) {
+    if (!import.meta.env.PROD && !hasWarnedMissingToken) {
+      hasWarnedMissingToken = true;
+      console.warn(
+        "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured",
+      );
+    }
+    return null;
+  }
+
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.POSTHOG_PROJECT_TOKEN, {
-      host: import.meta.env.POSTHOG_HOST,
+    posthogClient = new PostHog(token, {
+      host: import.meta.env.POSTHOG_HOST || "https://us.i.posthog.com",
       flushAt: 1,
       flushInterval: 0,
+      requestTimeout: 2000,
+      fetchRetryCount: 0,
+      enableExceptionAutocapture: true,
     });
   }
   return posthogClient;
@@ -118,25 +133,38 @@ import { getPostHogServer } from "../../../lib/posthog-server";
 
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
-  const { username } = body;
-  const user = users.get(username)!;
+  const trimmedUsername = typeof body.username === "string" ? body.username.trim() : "";
+  if (!trimmedUsername || !body.password) {
+    return new Response(JSON.stringify({ error: "Username and password are required" }), { status: 400 });
+  }
 
-  // Get session ID from client
+  const user = users.get(trimmedUsername);
+  const clientDistinctId = request.headers.get("X-PostHog-Distinct-Id");
   const sessionId = request.headers.get("X-PostHog-Session-Id");
-
   const posthog = getPostHogServer();
 
-  // Capture server-side event
-  posthog.capture({
-    distinctId: user.id,
-    event: "server_login",
-    properties: {
-      $session_id: sessionId || undefined,
-      source: "api",
-    },
-  });
+  if (posthog && user?.id) {
+    posthog.withContext(
+      {
+        distinctId: clientDistinctId || undefined,
+        sessionId: sessionId || undefined,
+      },
+      () => {
+        posthog.capture({
+          distinctId: user.id,
+          event: "server_login",
+          properties: {
+            $session_id: sessionId || undefined,
+            source: "api",
+          },
+        });
+      },
+    );
 
-  return new Response(JSON.stringify({ success: true }));
+    await posthog.flush().catch(() => {});
+  }
+
+  return new Response(JSON.stringify({ success: true, userId: user?.id, username: trimmedUsername }));
 };
 ```
 
@@ -148,11 +176,19 @@ The `tracing_headers` option in `posthog.init` automatically adds the
 wiring:
 
 ```javascript
-posthog.init(apiKey, {
-  api_host: apiHost,
-  defaults: "2026-08-30",
-  tracing_headers: [window.location.hostname],
-});
+if (apiKey && apiKey.trim()) {
+  posthog.init(apiKey, {
+    api_host: apiHost || "https://us.i.posthog.com",
+    defaults: "2026-08-30",
+    tracing_headers: [window.location.hostname],
+  });
+
+  const currentUserId = localStorage.getItem("currentUserId");
+  const currentUser = localStorage.getItem("currentUser");
+  if (currentUserId && currentUser) {
+    posthog.identify(currentUserId, { username: currentUser });
+  }
+}
 
 // Client fetches then need no PostHog headers of their own:
 const response = await fetch("/api/auth/login", {
@@ -164,7 +200,7 @@ const response = await fetch("/api/auth/login", {
 
 ### Client-side identification (`src/pages/index.astro`)
 
-After server login succeeds, also identify on client:
+After server login succeeds, identify on the client with the stable user ID and keep `username` in person properties:
 
 ```javascript
 window.posthog?.identify(data.userId, { username });
@@ -173,13 +209,16 @@ window.posthog?.capture("user_logged_in");
 
 ### Logout and session reset (`src/components/Header.astro`)
 
-On logout, both the local auth state and PostHog state are cleared:
+When logging out of an authenticated session, capture the logout event before resetting PostHog:
 
 ```javascript
-window.posthog?.capture("user_logged_out");
-localStorage.removeItem("currentUser");
-localStorage.removeItem("currentUserId");
-window.posthog?.reset();
+if (currentUser) {
+  window.posthog?.capture("user_logged_out");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("currentUserId");
+  localStorage.removeItem("burritoConsiderations");
+  window.posthog?.reset();
+}
 ```
 
 ## Scripts

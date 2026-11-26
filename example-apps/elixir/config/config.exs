@@ -1,7 +1,9 @@
 import Config
 
-# Endpoint configuration. The secret_key_base here is a throwaway dev value;
-# override it in prod via runtime.exs / an environment variable.
+config :posthog_example, env: config_env()
+
+# Endpoint configuration. The secret_key_base here is a throwaway dev value.
+# Override it in prod via runtime.exs and SECRET_KEY_BASE.
 config :posthog_example, PostHogExampleWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -11,15 +13,13 @@ config :posthog_example, PostHogExampleWeb.Endpoint,
     "dev_only_secret_key_base_replace_in_prod_0123456789abcdefghijklmnopqrstuvwxyz",
   server: true
 
-# PostHog SDK — one client per app, started automatically by the SDK's
-# own supervisor. The token and host are read from the environment in
-# config/runtime.exs so secrets never live in source control.
-#
-#   enable            -> master on/off switch for the SDK
-#   in_app_otp_apps   -> which OTP apps' stack frames count as "in app" for
-#                        automatic error tracking (grouping / noise control)
+# PostHog SDK starts one supervised client per app when enabled in runtime.exs.
+#   in_app_otp_apps -> which OTP app stack frames count as in_app for error grouping
 config :posthog,
-  enable: true,
   in_app_otp_apps: [:posthog_example]
 
 config :phoenix, :json_library, Jason
+
+if File.exists?(Path.expand("#{config_env()}.exs", __DIR__)) do
+  import_config "#{config_env()}.exs"
+end

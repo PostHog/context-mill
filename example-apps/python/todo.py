@@ -6,9 +6,11 @@ for non-framework Python projects (CLIs, scripts, data pipelines, etc.).
 """
 
 import argparse
+import atexit
 import json
 import os
 import sys
+import uuid
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -24,48 +26,57 @@ DATA_FILE = Path.home() / ".todo_app.json"
 def initialize_posthog():
     """Initialize PostHog with instance-based API.
 
-    Returns PostHog instance or None if project token not configured.
+    Returns PostHog instance or None if project token is not configured.
     """
-    project_token = os.getenv('POSTHOG_PROJECT_TOKEN')
+    # Return None when POSTHOG_PROJECT_TOKEN is unset or blank instead of passing
+    # an empty or placeholder token to Posthog(), which would raise ValueError or send invalid requests.
+    project_token = (os.getenv("POSTHOG_PROJECT_TOKEN") or "").strip()
 
     if not project_token:
-        print("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured")
+        env = os.getenv("ENV", os.getenv("PYTHON_ENV", "development")).lower()
+        if env != "production":
+            print(
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, "
+                "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured",
+                file=sys.stderr,
+            )
         return None
 
-    # Create PostHog instance with opinionated defaults
-    posthog = Posthog(
+    client = Posthog(
         project_token,
-        host=os.getenv('POSTHOG_HOST', 'https://us.i.posthog.com'),
-        debug=os.getenv('POSTHOG_DEBUG', 'False').lower() == 'true',
-        enable_exception_autocapture=True  # Auto-capture unhandled exceptions
+        host=os.getenv("POSTHOG_HOST", "https://us.i.posthog.com"),
+        debug=os.getenv("POSTHOG_DEBUG", "False").lower() == "true",
+        enable_exception_autocapture=True,
     )
-
-    return posthog
+    atexit.register(client.shutdown)
+    return client
 
 
 def get_user_id():
-    """Get or create a user ID for this installation.
-
-    Uses a UUID stored in the data file to represent this user.
-    In a real app, this would be your actual user ID.
-    """
-    import uuid
-
+    """Get or create a persistent user ID for this installation."""
+    data = {"todos": []}
     if DATA_FILE.exists():
         data = json.loads(DATA_FILE.read_text())
-        if 'user_id' in data:
-            return data['user_id']
+        existing_id = (data.get("user_id") or "").strip()
+        if existing_id:
+            return existing_id
 
-    # Create new user ID
-    return f"user_{uuid.uuid4().hex[:8]}"
+    # Persist the generated UUID immediately so read-only commands like list or stats
+    # and error handlers reuse one stable distinct_id instead of creating throwaway person IDs.
+    user_id = str(uuid.uuid4())
+    data["user_id"] = user_id
+    data.setdefault("todos", [])
+    save_todos(data)
+    return user_id
 
 
 def load_todos():
     """Load todos from disk."""
-    if not DATA_FILE.exists():
-        return {"user_id": get_user_id(), "todos": []}
-
-    return json.loads(DATA_FILE.read_text())
+    user_id = get_user_id()
+    data = json.loads(DATA_FILE.read_text())
+    data["user_id"] = user_id
+    data.setdefault("todos", [])
+    return data
 
 
 def save_todos(data):
@@ -73,22 +84,19 @@ def save_todos(data):
     DATA_FILE.write_text(json.dumps(data, indent=2))
 
 
-def track_event(posthog, event_name, properties=None):
-    """Track an event with PostHog.
-
-    Uses the real PostHog Python SDK API.
-    """
-    if not posthog:
+def track_event(posthog_client, event_name, properties=None):
+    """Track an event with PostHog."""
+    if not posthog_client:
         return
 
-    posthog.capture(
+    posthog_client.capture(
         distinct_id=get_user_id(),
         event=event_name,
-        properties=properties or {}
+        properties=properties or {},
     )
 
 
-def cmd_add(args, posthog):
+def cmd_add(args, posthog_client):
     """Add a new todo item."""
     data = load_todos()
 
@@ -96,7 +104,7 @@ def cmd_add(args, posthog):
         "id": len(data["todos"]) + 1,
         "text": args.text,
         "completed": False,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
 
     data["todos"].append(todo)
@@ -104,15 +112,14 @@ def cmd_add(args, posthog):
 
     print(f"Added todo #{todo['id']}: {todo['text']}")
 
-    # Track the event
-    track_event(posthog, "todo_added", {
+    track_event(posthog_client, "todo_added", {
         "todo_id": todo["id"],
         "todo_length": len(todo["text"]),
-        "total_todos": len(data["todos"])
+        "total_todos": len(data["todos"]),
     })
 
 
-def cmd_list(args, posthog):
+def cmd_list(args, posthog_client):
     """List all todos."""
     data = load_todos()
 
@@ -128,14 +135,13 @@ def cmd_list(args, posthog):
 
     print()
 
-    # Track the event
-    track_event(posthog, "todos_viewed", {
+    track_event(posthog_client, "todos_viewed", {
         "total_todos": len(data["todos"]),
-        "completed_todos": sum(1 for t in data["todos"] if t["completed"])
+        "completed_todos": sum(1 for t in data["todos"] if t["completed"]),
     })
 
 
-def cmd_complete(args, posthog):
+def cmd_complete(args, posthog_client):
     """Mark a todo as completed."""
     data = load_todos()
 
@@ -155,17 +161,16 @@ def cmd_complete(args, posthog):
 
     print(f"Completed todo #{todo['id']}: {todo['text']}")
 
-    # Track the event
-    track_event(posthog, "todo_completed", {
+    track_event(posthog_client, "todo_completed", {
         "todo_id": todo["id"],
         "time_to_complete_hours": (
             datetime.fromisoformat(todo["completed_at"]) -
             datetime.fromisoformat(todo["created_at"])
-        ).total_seconds() / 3600
+        ).total_seconds() / 3600,
     })
 
 
-def cmd_delete(args, posthog):
+def cmd_delete(args, posthog_client):
     """Delete a todo."""
     data = load_todos()
 
@@ -180,14 +185,13 @@ def cmd_delete(args, posthog):
 
     print(f"Deleted todo #{args.id}")
 
-    # Track the event
-    track_event(posthog, "todo_deleted", {
+    track_event(posthog_client, "todo_deleted", {
         "todo_id": todo["id"],
-        "was_completed": todo["completed"]
+        "was_completed": todo["completed"],
     })
 
 
-def cmd_stats(args, posthog):
+def cmd_stats(args, posthog_client):
     """Show usage statistics."""
     data = load_todos()
 
@@ -195,18 +199,17 @@ def cmd_stats(args, posthog):
     completed = sum(1 for t in data["todos"] if t["completed"])
     pending = total - completed
 
-    print(f"\nStats:\n")
+    print("\nStats:\n")
     print(f"  Total todos:     {total}")
     print(f"  Completed:       {completed}")
     print(f"  Pending:         {pending}")
-    print(f"  Completion rate: {(completed/total*100) if total > 0 else 0:.1f}%")
+    print(f"  Completion rate: {(completed / total * 100) if total > 0 else 0:.1f}%")
     print()
 
-    # Track the event
-    track_event(posthog, "stats_viewed", {
+    track_event(posthog_client, "stats_viewed", {
         "total_todos": total,
         "completed_todos": completed,
-        "pending_todos": pending
+        "pending_todos": pending,
     })
 
 
@@ -218,22 +221,17 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Add command
     add_parser = subparsers.add_parser("add", help="Add a new todo")
     add_parser.add_argument("text", help="Todo text")
 
-    # List command
     subparsers.add_parser("list", help="List all todos")
 
-    # Complete command
     complete_parser = subparsers.add_parser("complete", help="Mark todo as completed")
     complete_parser.add_argument("id", type=int, help="Todo ID")
 
-    # Delete command
     delete_parser = subparsers.add_parser("delete", help="Delete a todo")
     delete_parser.add_argument("id", type=int, help="Todo ID")
 
-    # Stats command
     subparsers.add_parser("stats", help="Show statistics")
 
     args = parser.parse_args()
@@ -242,35 +240,35 @@ def main():
         parser.print_help()
         return
 
-    # Initialize PostHog
-    posthog = initialize_posthog()
+    posthog_client = initialize_posthog()
 
     try:
-        # Route to appropriate command
         if args.command == "add":
-            cmd_add(args, posthog)
+            cmd_add(args, posthog_client)
         elif args.command == "list":
-            cmd_list(args, posthog)
+            cmd_list(args, posthog_client)
         elif args.command == "complete":
-            cmd_complete(args, posthog)
+            cmd_complete(args, posthog_client)
         elif args.command == "delete":
-            cmd_delete(args, posthog)
+            cmd_delete(args, posthog_client)
         elif args.command == "stats":
-            cmd_stats(args, posthog)
+            cmd_stats(args, posthog_client)
 
     except Exception as e:
-        print(f"ERROR: {e}")
+        print(f"ERROR: {e}", file=sys.stderr)
 
-        # Manually capture handled errors
-        if posthog:
-            posthog.capture_exception(e, distinct_id=get_user_id())
+        if posthog_client:
+            posthog_client.capture_exception(e, distinct_id=get_user_id())
 
         sys.exit(1)
 
     finally:
-        # IMPORTANT: Always shutdown PostHog to flush events
-        if posthog:
-            posthog.shutdown()
+        # Flush queued events before the CLI process exits without failing if PostHog is unreachable.
+        if posthog_client:
+            try:
+                posthog_client.shutdown()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

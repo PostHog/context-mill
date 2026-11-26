@@ -27,6 +27,7 @@
     23 => 'Carbon\\Laravel\\ServiceProvider',
     24 => 'Termwind\\Laravel\\TermwindServiceProvider',
     25 => 'PostHog\\Laravel\\PostHogServiceProvider',
+    26 => 'App\\Providers\\AppServiceProvider',
   ),
   'eager' => 
   array (
@@ -44,6 +45,7 @@
     11 => 'Carbon\\Laravel\\ServiceProvider',
     12 => 'Termwind\\Laravel\\TermwindServiceProvider',
     13 => 'PostHog\\Laravel\\PostHogServiceProvider',
+    14 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (

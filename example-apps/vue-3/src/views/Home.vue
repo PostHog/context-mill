@@ -46,42 +46,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import posthog from 'posthog-js'
-
-// Stands in for your auth system: each username gets a stable user id, the way a user
-// record's primary key would. Identify with that id, never with the username or email.
-function getUserId(username: string): string {
-  const key = `demo-user-id:${username}`
-  const existing = window.localStorage.getItem(key)
-  if (existing) return existing
-  const id = crypto.randomUUID()
-  window.localStorage.setItem(key, id)
-  return id
-}
 
 const authStore = useAuthStore()
 const username = ref('')
 const password = ref('')
 const error = ref('')
 
-// Clean up invalid user state on mount
-onMounted(() => {
-  if (authStore.user && !authStore.user.username) {
-    authStore.logout()
-  }
-})
-
 const handleSubmit = async () => {
   error.value = ''
 
   const success = await authStore.login(username.value, password.value)
-  if (success) {
-    // Identifying the user once on login/sign up is enough.
-    posthog.identify(getUserId(username.value), { username: username.value })
-    posthog.capture('user_logged_in')
-    
+  if (success && authStore.user) {
+    // Identify with the user's stable UUID and keep username in person properties rather than capture() properties.
+    posthog.identify(authStore.user.id, { username: authStore.user.username })
+    posthog.capture('user_logged_in', { login_method: 'username' })
+
     username.value = ''
     password.value = ''
   } else {
