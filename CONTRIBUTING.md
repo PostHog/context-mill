@@ -195,7 +195,12 @@ The base path is the same regardless of the skill's CLI role:
 3. Add a `description.md` template and any `references/*.md` files.
 4. If the skill should be a wizard command, add a `cli:` block per the
    schema above.
-5. Run `npm test && npm run build`. The build emits the new skill into
+5. An omnibus skill (`context/skills/omnibus/<name>/`) must say who it is for.
+   Set `audience: customer` or `audience: internal` in its `config.yaml`, and
+   `feature_flag: <key>` when only callers with that flag should get it. The
+   build writes both into the `metadata` block of `SKILL.md`. The PostHog MCP
+   server and the `hog` CLI read them there and serve only `customer` skills.
+6. Run `npm test && npm run build`. The build emits the new skill into
    `dist/skills/<your-skill>.zip` and lists it in the manifest.
 
 ## Adding a new command
