@@ -5,7 +5,7 @@ This is an [Astro](https://astro.build/) static site (SSG) example demonstrating
 It uses the PostHog web snippet directly and shows how to:
 
 - Initialize PostHog in a static Astro site using a reusable component
-- Identify users after login
+- Identify users on login and restore identity on page reloads
 - Track custom events from pages
 - Capture errors via `posthog.captureException()`
 - Reset PostHog state on logout
@@ -29,14 +29,14 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and set your project token:
 
 ```bash
-PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+PUBLIC_POSTHOG_PROJECT_TOKEN=
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs a warning naming the variable and skips PostHog initialization.
+Get your PostHog project token from your project settings in PostHog. Leave `PUBLIC_POSTHOG_PROJECT_TOKEN` blank until you have a real token. When the token is unset, the app still builds and runs: in development it logs an error naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -71,15 +71,21 @@ src/
 
 ### PostHog initialization (`src/components/posthog.astro`)
 
-The PostHog snippet is included as an inline script to prevent Astro from processing it:
+The PostHog snippet is included as an inline script to prevent Astro from processing it, and only initializes when `PUBLIC_POSTHOG_PROJECT_TOKEN` is configured:
 
 ```astro
-<script is:inline>
+<script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST, isDev: import.meta.env.DEV }}>
   !function(t,e){...}(document,window.posthog||[]);
-  posthog.init('<ph_project_token>', {
-    api_host: 'https://us.i.posthog.com',
-    defaults: '2026-08-30'
-  })
+  if (apiKey && apiKey.trim()) {
+    posthog.init(apiKey, {
+      api_host: apiHost || 'https://us.i.posthog.com',
+      defaults: '2026-08-30'
+    })
+    const currentUser = localStorage.getItem('currentUser')
+    if (currentUser) {
+      posthog.identify(getUserId(currentUser), { username: currentUser })
+    }
+  }
 </script>
 ```
 
@@ -87,27 +93,26 @@ The `is:inline` directive is required to prevent TypeScript errors about `window
 
 ### User identification (`src/pages/index.astro`)
 
-After a successful "login", the app identifies the user and captures a login event:
+After a successful login, the app identifies the user with a stable user ID and captures a login event:
 
 ```javascript
-window.posthog?.identify(username);
+window.posthog?.identify(getUserId(username), { username });
 window.posthog?.capture("user_logged_in");
 ```
 
-Identification happens **only on login**, all further requests will automatically use the same distinct ID.
+Identification runs on login and on page reloads when a logged-in session is restored from `localStorage`, keeping `username` in person properties rather than event properties.
 
 ### Event tracking (`src/pages/burrito.astro`)
 
-The burrito page tracks a custom event when a user "considers" the burrito:
+The burrito page tracks a custom event when a user considers a burrito:
 
 ```javascript
 window.posthog?.capture("burrito_considered", {
   total_considerations: newCount,
-  username: currentUser,
 });
 ```
 
-This shows how to attach useful properties to events (e.g. counts, usernames).
+Attach safe non-PII metadata such as counts to event properties.
 
 ### Error tracking (`src/pages/profile.astro`)
 
@@ -123,12 +128,15 @@ try {
 
 ### Logout and session reset (`src/components/Header.astro`)
 
-On logout, both the local auth state and PostHog state are cleared:
+When logging out of an authenticated session, capture the logout event before resetting PostHog:
 
 ```javascript
-window.posthog?.capture("user_logged_out");
-localStorage.removeItem("currentUser");
-window.posthog?.reset();
+if (currentUser) {
+  window.posthog?.capture("user_logged_out");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("burritoConsiderations");
+  window.posthog?.reset();
+}
 ```
 
 `posthog.reset()` clears the current distinct ID and session so the next login starts a fresh identity.

@@ -54,15 +54,18 @@ export class BurritoComponent {
 
   handleConsideration(): void {
     const user = this.auth.user();
+    // Skip event capture when no authenticated user session is active.
     if (!user) return;
 
     this.auth.incrementBurritoConsiderations();
+    const updatedCount =
+      this.auth.user()?.burritoConsiderations ?? user.burritoConsiderations + 1;
     this.hasConsidered.set(true);
     setTimeout(() => this.hasConsidered.set(false), 2000);
 
-    this.posthogService.posthog.capture('burrito_considered', {
-      total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
+    // Send only non-PII event metadata. Never include username or email in capture() properties.
+    this.posthogService.posthog?.capture('burrito_considered', {
+      total_considerations: updatedCount,
     });
   }
 }

@@ -22,8 +22,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', Profile::class)->name('profile');
 
     Route::post('/logout', function () {
-        // PostHog: capture before logging out, while the request still has a signed-in user
-        PostHog::capture('user_logged_out');
+        // Capture logout only when an authenticated user exists and before Auth::logout() clears the session.
+        if (Auth::check()) {
+            PostHog::capture('user_logged_out');
+        }
 
         Auth::logout();
         request()->session()->invalidate();

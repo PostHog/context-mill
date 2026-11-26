@@ -4,7 +4,9 @@ import { randomUUID } from 'node:crypto'
 import { PostHog } from 'posthog-node'
 import type { User } from './auth.js'
 
-const token = process.env.POSTHOG_PROJECT_TOKEN
+// Leave posthog null when POSTHOG_PROJECT_TOKEN is unset rather than passing
+// an empty string with disabled set to true.
+const token = process.env.POSTHOG_PROJECT_TOKEN?.trim()
 
 if (!token && process.env.NODE_ENV !== 'production') {
   console.warn(
@@ -12,16 +14,18 @@ if (!token && process.env.NODE_ENV !== 'production') {
   )
 }
 
-// One client per process. Without a token it is disabled and capture calls are no-ops.
-export const posthog = new PostHog(token ?? '', {
-  host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
-  enableExceptionAutocapture: true,
-  disabled: !token,
-})
+export const posthog: PostHog | null = token
+  ? new PostHog(token, {
+      host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
+      enableExceptionAutocapture: true,
+    })
+  : null
 
 // Everything captured while handling a request carries the visitor's identity.
 // Register this after the middleware that sets `user`.
 export const posthogMiddleware = createMiddleware<{ Variables: { user?: User } }>(async (c, next) => {
+  if (!posthog) return next()
+
   const user = c.get('user')
   let distinctId = user?.id
   const properties: Record<string, unknown> = {
@@ -31,7 +35,8 @@ export const posthogMiddleware = createMiddleware<{ Variables: { user?: User } }
   let options: { process_person_profile?: boolean } = {}
 
   if (!distinctId) {
-    // Signed-out visitors get a random id for the visit and no person profile.
+    // Signed-out visitors get a per-visit cookie UUID with person profile
+    // creation disabled instead of sharing a literal anonymous string.
     distinctId = getCookie(c, 'visit_id')
     if (!distinctId) {
       distinctId = randomUUID()

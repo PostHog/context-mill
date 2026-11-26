@@ -2,7 +2,7 @@
 
 This is an [Astro](https://astro.build/) hybrid rendering example demonstrating PostHog integration with both static and on-demand rendered pages.
 
-Hybrid mode allows you to have most pages prerendered (static) while opting specific pages into server-side rendering (SSR) when needed.
+Hybrid mode lets you prerender most pages as static HTML while opting specific pages into server-side rendering (SSR) when needed.
 
 It uses:
 
@@ -38,14 +38,14 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and set your project token:
 
 ```bash
-PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+PUBLIC_POSTHOG_PROJECT_TOKEN=
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs a warning naming the variable and skips PostHog initialization.
+Get your PostHog project token from your project settings in PostHog. Leave `PUBLIC_POSTHOG_PROJECT_TOKEN` blank until you have a real token. When the token is unset, the app still builds and runs: in development it logs a message naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -93,7 +93,7 @@ import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
 
 export default defineConfig({
-  // 'static' is the default - pages are prerendered unless they opt out
+  // 'static' is the default, pages are prerendered unless they opt out
   output: "static",
   adapter: node({ mode: "standalone" }),
 });
@@ -111,19 +111,34 @@ export const prerender = false;
 
 ### Server-side PostHog client (`src/lib/posthog-server.ts`)
 
-A singleton pattern ensures only one PostHog client is created:
+A singleton pattern ensures only one PostHog client is created, returning `null` when the token is unconfigured:
 
 ```typescript
 import { PostHog } from "posthog-node";
 
 let posthogClient: PostHog | null = null;
+let hasWarnedMissingToken = false;
 
-export function getPostHogServer(): PostHog {
+export function getPostHogServer(): PostHog | null {
+  const token = import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
+  if (!token) {
+    if (!import.meta.env.PROD && !hasWarnedMissingToken) {
+      hasWarnedMissingToken = true;
+      console.warn(
+        "PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured",
+      );
+    }
+    return null;
+  }
+
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN, {
-      host: import.meta.env.PUBLIC_POSTHOG_HOST,
+    posthogClient = new PostHog(token, {
+      host: import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
       flushAt: 1,
       flushInterval: 0,
+      requestTimeout: 2000,
+      fetchRetryCount: 0,
+      enableExceptionAutocapture: true,
     });
   }
   return posthogClient;
@@ -137,17 +152,35 @@ import { getPostHogServer } from "../../../lib/posthog-server";
 
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
+  const trimmedUserId = typeof body.userId === "string" ? body.userId.trim() : "";
+  if (!trimmedUserId) {
+    return new Response(JSON.stringify({ error: "User id is required" }), { status: 400 });
+  }
+
+  const clientDistinctId = request.headers.get("X-PostHog-Distinct-Id");
   const sessionId = request.headers.get("X-PostHog-Session-Id");
 
   const posthog = getPostHogServer();
-  posthog.capture({
-    distinctId: body.username,
-    event: "burrito_considered",
-    properties: {
-      $session_id: sessionId || undefined,
-      source: "api",
-    },
-  });
+  if (posthog) {
+    posthog.withContext(
+      {
+        distinctId: clientDistinctId || undefined,
+        sessionId: sessionId || undefined,
+      },
+      () => {
+        posthog.capture({
+          distinctId: trimmedUserId,
+          event: "burrito_considered",
+          properties: {
+            $session_id: sessionId || undefined,
+            source: "api",
+          },
+        });
+      },
+    );
+
+    await posthog.flush().catch(() => {});
+  }
 
   return new Response(JSON.stringify({ success: true }));
 };

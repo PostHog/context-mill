@@ -75,7 +75,7 @@ export class ProfileComponent {
       throw new Error('Test error for PostHog error tracking');
     } catch (err) {
       const error = err as Error;
-      this.posthogService.posthog.captureException(error);
+      this.posthogService.posthog?.captureException(error);
       console.error('Captured error:', err);
       alert('Error captured and sent to PostHog!');
     }

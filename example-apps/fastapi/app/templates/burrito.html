@@ -18,12 +18,12 @@
 <div class="card">
     <h3>Code Example</h3>
     <pre>
-# API endpoint captures the event
-with new_context():
-    identify_context(current_user.email)
-    capture('burrito_considered', properties={
-        'total_considerations': burrito_count
-    })</pre>
+# Request context is already identified via PosthogASGIMiddleware + get_current_user
+if posthog_client:
+    posthog_client.capture(
+        'burrito_considered',
+        properties={'total_considerations': new_count},
+    )</pre>
 </div>
 {% endblock %}
 

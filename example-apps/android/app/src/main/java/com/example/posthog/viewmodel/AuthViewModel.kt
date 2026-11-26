@@ -30,24 +30,49 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             val user = repository.getCurrentUser()
             _currentUser.value = user
             _isAuthenticated.value = user != null
+            if (user != null) {
+                // Re-identify restored sessions with the persisted UUID so events after relaunch match login.
+                PostHog.identify(
+                    distinctId = user.id,
+                    userProperties = mapOf("username" to user.username)
+                )
+            }
         }
     }
 
     fun login(username: String) {
+        val trimmedUsername = username.trim()
+        // Reject blank usernames before persisting state or calling identify and capture,
+        // rather than falling back to a shared placeholder identity.
+        if (trimmedUsername.isEmpty()) {
+            return
+        }
+
         viewModelScope.launch {
-            val existingUser = repository.getUser(username)
-            val user = existingUser ?: User(username = username, burritoConsiderations = 0)
+            val existingUser = repository.getUser(trimmedUsername)
+            val isNewUser = existingUser == null
+            val user = existingUser ?: User(username = trimmedUsername, burritoConsiderations = 0)
             repository.saveUser(user)
             _currentUser.value = user
             _isAuthenticated.value = true
 
-            PostHog.identify(username)
-            PostHog.capture(event = "user_logged_in")
+            PostHog.identify(
+                distinctId = user.id,
+                userProperties = mapOf("username" to user.username)
+            )
+            PostHog.capture(
+                event = "user_logged_in",
+                properties = mapOf(
+                    "login_method" to "username",
+                    "is_new_user" to isNewUser
+                )
+            )
         }
     }
 
     fun logout() {
         viewModelScope.launch {
+            if (_currentUser.value == null) return@launch
             PostHog.capture("user_logged_out")
             PostHog.reset()
             repository.clearCurrentUser()
@@ -63,11 +88,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             repository.saveUser(updatedUser)
             _currentUser.value = updatedUser
 
+            // Keep PII like username out of event properties, since person properties already store it via identify.
             PostHog.capture(
                 event = "burrito_considered",
                 properties = mapOf(
-                    "total_considerations" to updatedUser.burritoConsiderations,
-                    "username" to updatedUser.username
+                    "total_considerations" to updatedUser.burritoConsiderations
                 )
             )
         }

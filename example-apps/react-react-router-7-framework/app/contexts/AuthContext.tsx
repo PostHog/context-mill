@@ -1,12 +1,15 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { usePostHog } from '@posthog/react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-interface User {
+export interface User {
+  id: string;
   username: string;
   burritoConsiderations: number;
 }
 
 interface AuthContextType {
   user: User | null;
+  isReady: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   incrementBurritoConsiderations: () => void;
@@ -15,42 +18,87 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const users: Map<string, User> = new Map();
+const CURRENT_USER_KEY = 'currentUser';
+
+function isValidStoredUser(value: unknown): value is User {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.trim().length > 0 &&
+    typeof candidate.username === 'string' &&
+    candidate.username.trim().length > 0 &&
+    typeof candidate.burritoConsiderations === 'number'
+  );
+}
+
+function readCurrentUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CURRENT_USER_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isValidStoredUser(parsed)) return null;
+    return {
+      id: parsed.id.trim(),
+      username: parsed.username.trim(),
+      burritoConsiderations: parsed.burritoConsiderations,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
+  const posthog = usePostHog();
+  const [user, setUser] = useState<User | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
-    const storedUsername = localStorage.getItem('currentUser');
-    if (storedUsername) {
-      const existingUser = users.get(storedUsername);
-      if (existingUser) {
-        return existingUser;
-      }
+  useEffect(() => {
+    const storedUser = readCurrentUser();
+    // Re-identify with the stored stable user ID when restoring an authenticated session.
+    // Skip identify when no stored session exists rather than using a fallback ID.
+    if (storedUser) {
+      setUser(storedUser);
+      posthog?.identify(storedUser.id, { username: storedUser.username });
     }
-    return null;
-  });
+    setIsReady(true);
+  }, [posthog]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    // Trim username and reject blank credentials before calling the server or PostHog.
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
+      return false;
+    }
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: trimmedUsername, password }),
       });
 
       if (response.ok) {
         const { user: userData } = await response.json();
-
-        let localUser = users.get(username);
-        if (!localUser) {
-          localUser = userData as User;
-          users.set(username, localUser);
+        if (!isValidStoredUser(userData)) {
+          return false;
         }
 
-        setUser(localUser);
-        localStorage.setItem('currentUser', username);
-        
+        const authenticatedUser: User = {
+          id: userData.id.trim(),
+          username: userData.username.trim(),
+          burritoConsiderations: userData.burritoConsiderations,
+        };
+
+        setUser(authenticatedUser);
+        window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authenticatedUser));
+
+        // Identify with the stable UUID returned by the server, passing username only as a person property.
+        posthog?.identify(authenticatedUser.id, { username: authenticatedUser.username });
+        // Keep PII such as username out of event properties.
+        posthog?.capture('user_logged_in', { login_method: 'username' });
+
         return true;
       }
       return false;
@@ -62,24 +110,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('currentUser');
+    window.localStorage.removeItem(CURRENT_USER_KEY);
   };
 
   const incrementBurritoConsiderations = () => {
     if (user) {
-      user.burritoConsiderations++;
-      users.set(user.username, user);
-      setUser({ ...user });
+      const updatedUser: User = {
+        ...user,
+        burritoConsiderations: user.burritoConsiderations + 1,
+      };
+      setUser(updatedUser);
+      window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
     }
   };
 
   const setUserState = (newUser: User) => {
     setUser(newUser);
-    users.set(newUser.username, newUser);
+    window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, incrementBurritoConsiderations, setUser: setUserState }}>
+    <AuthContext.Provider value={{ user, isReady, login, logout, incrementBurritoConsiderations, setUser: setUserState }}>
       {children}
     </AuthContext.Provider>
   );
@@ -92,4 +143,3 @@ export function useAuth() {
   }
   return context;
 }
-

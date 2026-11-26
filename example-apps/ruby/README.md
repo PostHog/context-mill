@@ -11,11 +11,11 @@ This example serves as:
 
 ## Features Demonstrated
 
-- **Instance-based API** - Uses `PostHog::Client.new(...)` for explicit client management
-- **Proper shutdown** - Uses `shutdown` in `ensure` block to flush events before exit
-- **Event tracking** - Captures user actions with `distinct_id` and properties
-- **User identification** - Associates properties with users via `identify`
-- **Error handling** - Manual exception capture for handled errors
+- **Instance-based API**: Uses `PostHog::Client.new(...)` for explicit client management
+- **Proper shutdown**: Calls `shutdown` safely in an `ensure` block to flush events before exit
+- **Event tracking**: Captures user actions with a persistent `distinct_id` and non-PII properties
+- **User identification**: Associates person properties with users via `identify`
+- **Error handling**: Manual exception capture for handled errors
 
 ## Quick Start
 
@@ -35,8 +35,8 @@ bundle install
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your PostHog project token
-# POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+# Edit .env and set POSTHOG_PROJECT_TOKEN
+# POSTHOG_PROJECT_TOKEN=
 # POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -87,23 +87,27 @@ example-apps/ruby/
 ### 1. Instance-Based Initialization
 
 ```ruby
-require 'posthog-ruby'
+require 'posthog'
 
-posthog = PostHog::Client.new(
-  api_key: api_key,
-  host: 'https://us.i.posthog.com',
-  on_error: proc { |status, msg| puts "PostHog error: #{status} - #{msg}" }
-)
+project_token = ENV['POSTHOG_PROJECT_TOKEN']&.strip
+posthog = if project_token.nil? || project_token.empty?
+            nil
+          else
+            PostHog::Client.new(
+              api_key: project_token,
+              host: ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com'),
+              on_error: proc { |status, msg| $stderr.puts "PostHog error: #{status} - #{msg}" }
+            )
+          end
 ```
 
 ### 2. Event Tracking Pattern
 
 ```ruby
-# Track events with distinct_id
-posthog.capture(
-  distinct_id: 'user_123',
-  event: 'event_name',
-  properties: { key: 'value' }
+posthog&.capture(
+  distinct_id: user_id,
+  event: 'todo_added',
+  properties: { todo_id: 1, todo_length: 13, total_todos: 1 }
 )
 ```
 
@@ -113,30 +117,32 @@ posthog.capture(
 begin
   # Your application code
 ensure
-  # Always call shutdown to flush events and close connections
-  posthog&.shutdown
+  begin
+    posthog&.shutdown
+  rescue StandardError
+    nil
+  end
 end
 ```
 
 ### 4. Identifying Users
 
 ```ruby
-# Identify users (optional - adds user properties)
-posthog.identify(
-  distinct_id: 'user_123',
+posthog&.identify(
+  distinct_id: user_id,
   properties: { email: 'user@example.com', plan: 'pro' }
 )
 ```
 
 ## Running Without PostHog
 
-The app works fine without PostHog configured - it simply won't track analytics. You'll see a warning message but the app continues to function normally.
+When `POSTHOG_PROJECT_TOKEN` is unset, the CLI logs a warning to `stderr` outside production, skips client initialization, and runs todos normally.
 
 ## Next Steps
 
 - Modify `todo.rb` to experiment with PostHog tracking
 - Add new commands and track their usage
-- Explore feature flags: `posthog.is_feature_enabled('flag-name', 'user_id')`
+- Explore feature flags: `posthog.is_feature_enabled('flag-name', user_id)`
 - Check your PostHog dashboard to see tracked events
 
 ## Learn More

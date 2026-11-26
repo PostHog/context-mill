@@ -21,17 +21,19 @@ class Login extends Component
     {
         $this->validate();
 
+        // Only identify and capture when authentication succeeds with a real user primary key,
+        // keeping PII such as email in identify() person properties rather than event properties.
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             $user = Auth::user();
-
-            // PostHog: Identify and track login
-            PostHog::identify([
-                'distinctId' => $user->getPostHogDistinctId(),
-                'properties' => $user->getPostHogProperties(),
-            ]);
-            PostHog::capture('user_logged_in', [
-                'login_method' => 'password',
-            ], $user->getPostHogDistinctId());
+            if ($user !== null) {
+                PostHog::identify([
+                    'distinctId' => $user->getPostHogDistinctId(),
+                    'properties' => $user->getPostHogProperties(),
+                ]);
+                PostHog::capture('user_logged_in', [
+                    'login_method' => 'password',
+                ], $user->getPostHogDistinctId());
+            }
 
             session()->regenerate();
 

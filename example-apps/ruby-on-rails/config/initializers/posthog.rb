@@ -1,6 +1,6 @@
 # PostHog configuration. The posthog-rails gem wires the integration into Rails
-# (middleware, Rails.error subscriber, ActiveJob hooks, shutdown); this file only
-# chooses which of those are on and creates the single client.
+# (middleware, Rails.error subscriber, ActiveJob hooks, shutdown). This file
+# chooses which features are active and creates the single client when configured.
 # See the "What the integration sets up for you" section of the README.
 
 PostHog::Rails.configure do |config|
@@ -10,7 +10,7 @@ PostHog::Rails.configure do |config|
   # Also capture exceptions Rails rescues and renders as error pages
   config.report_rescued_exceptions = true
 
-  # Capture ActiveJob failures and carry the request's identity into jobs
+  # Capture ActiveJob failures and carry the request identity into jobs
   config.auto_instrument_active_job = true
 
   # Attach the signed-in user to captured exceptions. These are the defaults,
@@ -20,17 +20,18 @@ PostHog::Rails.configure do |config|
   config.user_id_method = :posthog_distinct_id
 end
 
-project_token = ENV['POSTHOG_PROJECT_TOKEN'].to_s.strip
+# Leave the SDK uninitialized when POSTHOG_PROJECT_TOKEN is missing or blank instead of passing
+# an empty or placeholder key, so unconfigured apps stay a safe no-op.
+token = ENV['POSTHOG_PROJECT_TOKEN']&.strip
 
-if project_token.empty?
-  # Without PostHog.init the client stays disabled and every PostHog call is a no-op.
-  if Rails.env.development?
-    Rails.logger.warn('POSTHOG_PROJECT_TOKEN is not set; PostHog is disabled. Copy .env.example to .env and set it.')
+if token.nil? || token.empty?
+  unless Rails.env.production? || Rails.env.test?
+    Rails.logger.warn('POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured')
   end
 else
   PostHog.init do |config|
-    config.api_key = project_token
-    config.host = ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com')
+    config.api_key = token
+    config.host = ENV['POSTHOG_HOST'].presence || 'https://us.i.posthog.com'
     config.test_mode = true if Rails.env.test?
     config.on_error = proc { |status, msg| Rails.logger.error("PostHog error (#{status}): #{msg}") }
   end

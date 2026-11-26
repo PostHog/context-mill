@@ -23,9 +23,11 @@ const auth = useAuth()
 const user = computed(() => auth.user.value)
 
 const handleLogout = async () => {
-  auth.logout()
+  // Only capture logout and reset PostHog when logging out of an authenticated session.
+  if (!user.value) return
   posthog?.capture('user_logged_out')
   posthog?.reset()
+  auth.logout()
   await navigateTo('/')
 }
 </script>

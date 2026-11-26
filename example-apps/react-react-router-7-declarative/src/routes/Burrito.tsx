@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { usePostHog } from '@posthog/react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function BurritoPage() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const [hasConsidered, setHasConsidered] = useState(false);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function BurritoPage() {
   }
 
   const handleConsideration = () => {
-    // Client-side only - no server calls
+    // Update the client-side consideration count without server calls.
     const updatedUser = {
       ...user,
       burritoConsiderations: user.burritoConsiderations + 1
@@ -26,6 +28,11 @@ export default function BurritoPage() {
     setUser(updatedUser);
     setHasConsidered(true);
     setTimeout(() => setHasConsidered(false), 2000);
+
+    // Capture burrito consideration event without PII such as username in event properties.
+    posthog?.capture('burrito_considered', {
+      total_considerations: updatedUser.burritoConsiderations,
+    });
   };
 
   return (
@@ -55,4 +62,3 @@ export default function BurritoPage() {
     </div>
   );
 }
-

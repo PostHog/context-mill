@@ -24,11 +24,9 @@ function BurritoPage() {
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
 
-    // Capture burrito consideration event
-    console.log('posthog', posthog)
-    posthog.capture('burrito_considered', {
+    // Capture burrito consideration event without PII such as username in event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
     })
   }
 

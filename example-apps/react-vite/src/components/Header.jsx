@@ -6,18 +6,17 @@ export default function Header() {
   const posthog = usePostHog()
 
   const handleLogout = () => {
+    // Only capture logout without PII and reset PostHog when logging out of an authenticated session.
     if (user) {
-      posthog.capture('user_logged_out', {
-        username: user.username,
-      })
+      posthog?.capture('user_logged_out')
+      posthog?.reset()
     }
     logout()
-    posthog.reset()
   }
 
   const navigate = (target) => {
     setPage(target)
-    posthog.capture('$pageview', { $current_url: `/${target}` })
+    posthog?.capture('$pageview', { $current_url: `/${target}` })
   }
 
   return (

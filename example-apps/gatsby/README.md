@@ -8,7 +8,7 @@ A minimal [Gatsby](https://www.gatsbyjs.com) 5 site that uses the [PostHog JavaS
 - **Session replay**: recordings start when posthog-js initializes
 - **Feature flags**: `isFeatureEnabled()` gates a tip in the demo page
 - **Error tracking**: `captureException()` from a try/catch
-- **User identification**: a demo sign-in that calls `identify()`, and a sign-out that calls `reset()`
+- **User identification**: a demo sign-in that persists session state, calls `identify()` on sign-in and reload, and captures `user_logged_out` before `reset()` on sign-out
 
 ## Getting started
 
@@ -22,16 +22,16 @@ npm install
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and fill in your PostHog project token:
 
 ```bash
-GATSBY_POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+GATSBY_POSTHOG_PROJECT_TOKEN=
 GATSBY_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your project token from your [PostHog project settings](https://app.posthog.com/project/settings). Use `https://eu.i.posthog.com` as the host for an EU Cloud project.
 
-If the token is missing, the site still builds and runs. `gatsby-browser.ts` skips `posthog.init()`, and `gatsby-config.ts` logs a warning outside production.
+If the token is missing, the site still builds and runs. `gatsby-browser.ts` skips `posthog.init()` and logs an error in browser development, while `gatsby-config.ts` logs a warning outside production during builds.
 
 ### 3. Run the site
 
@@ -48,7 +48,7 @@ pnpm build && pnpm serve
 ├── gatsby-config.ts        # Loads .env and warns when the token is missing
 └── src/
     └── pages/
-        └── index.tsx       # Demo page: identify, custom event, feature flag, error capture
+        └── index.tsx       # Demo page with identify, session restore, custom event, feature flag, error capture
 ```
 
 ## Key integration points
@@ -59,8 +59,17 @@ pnpm build && pnpm serve
 import posthog from "posthog-js"
 
 export const onClientEntry: GatsbyBrowser["onClientEntry"] = () => {
-  const token = process.env.GATSBY_POSTHOG_PROJECT_TOKEN
-  if (!token) return
+  const rawToken = process.env.GATSBY_POSTHOG_PROJECT_TOKEN
+  const token = rawToken?.trim()
+  // Leave the client uninitialized when the project token is missing instead of passing an empty or fallback key.
+  if (!token) {
+    if (process.env.NODE_ENV === "development") {
+      console.error(
+        "GATSBY_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once GATSBY_POSTHOG_PROJECT_TOKEN is configured"
+      )
+    }
+    return
+  }
 
   posthog.init(token, {
     api_host: process.env.GATSBY_POSTHOG_HOST || "https://us.i.posthog.com",
@@ -88,15 +97,17 @@ The `gatsby-plugin-posthog` plugin is deprecated. To move to `posthog-js`:
 ```typescript
 import posthog from "posthog-js"
 
-posthog.identify(username, { username })
-posthog.capture("user_logged_in")
+posthog.identify(getUserId(trimmed), { username: trimmed })
+posthog.capture("user_logged_in", { login_method: "username" })
 
-posthog.capture("burrito_considered", { total_considerations: n })
+posthog.capture("burrito_considered", { total_considerations: nextCount })
 
-posthog.reset() // on sign-out
+// On sign-out from an authenticated session, capture before reset()
+posthog.capture("user_logged_out")
+posthog.reset()
 ```
 
-Identify once when the user signs in, with your own stable user id (a primary key or UUID, never an email), and call `reset()` on sign-out.
+Identify with your own stable user id (a primary key or UUID, never a username or email) on sign-in and when restoring a saved session on reload. Keep PII like `username` in `identify()` person properties rather than `capture()` event properties, and capture `user_logged_out` before calling `reset()` on sign-out.
 
 ### Feature flags and error capture
 
@@ -108,7 +119,7 @@ posthog.captureException(err)
 
 ## Reverse proxy
 
-The site is static, so there is no server code to host a proxy. To keep events from being blocked, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md), then set `GATSBY_POSTHOG_HOST` to your proxy domain.
+The site is static, so there is no server code to host a proxy. To keep events from being blocked, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), set `GATSBY_POSTHOG_HOST` to your proxy domain, and pass `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) to `posthog.init()` so toolbar links keep pointing at PostHog.
 
 ## Learn more
 

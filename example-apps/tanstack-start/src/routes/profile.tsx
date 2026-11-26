@@ -32,7 +32,9 @@ function ProfilePage() {
     try {
       throw new Error('Test error for PostHog error tracking')
     } catch (err) {
-      posthog.captureException(err)
+      if (import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()) {
+        posthog.captureException(err)
+      }
       console.error('Captured error:', err)
       alert('Error captured and sent to PostHog!')
     }

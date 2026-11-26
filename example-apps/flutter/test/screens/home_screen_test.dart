@@ -52,12 +52,14 @@ void main() {
       expect(posthog.callOrder, isEmpty);
     });
 
-    testWidgets('signing in identifies the user in PostHog', (tester) async {
+    testWidgets('signing in identifies the user in PostHog with a UUID', (tester) async {
       await tester.pumpApp(const HomeScreen());
 
       await signIn(tester, username: 'maria');
 
-      expect(posthog.identifyCalls.single.userId, 'maria');
+      expect(posthog.identifyCalls.single.userId, AuthState.instance.userId);
+      expect(posthog.identifyCalls.single.userId, isNot('maria'));
+      expect(posthog.identifyCalls.single.userProperties, {'username': 'maria'});
       expect(posthog.capturedEvents.single.eventName, 'user_logged_in');
       expect(find.text('Welcome back, maria!'), findsOneWidget);
     });

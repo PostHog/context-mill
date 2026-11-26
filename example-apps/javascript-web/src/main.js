@@ -6,12 +6,23 @@
  */
 import posthog from './posthog.js';
 
-// --- State ---
+// State
 
 let todos = JSON.parse(localStorage.getItem('todos') || '[]');
-let currentUser = localStorage.getItem('currentUser') || null;
+let currentUser = localStorage.getItem('currentUser')?.trim() || null;
 
-// --- DOM Elements ---
+// Stands in for your auth system, giving each username a stable UUID like a database primary key.
+// Identify with that id, never with the username or email.
+function getUserId(username) {
+  const key = `demo-user-id:${username}`;
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem(key, id);
+  return id;
+}
+
+// DOM Elements
 
 const todoForm = document.getElementById('todo-form');
 const todoInput = document.getElementById('todo-input');
@@ -25,18 +36,18 @@ const usernameDisplay = document.getElementById('username-display');
 const loggedOutSection = document.getElementById('logged-out');
 const loggedInSection = document.getElementById('logged-in');
 
-// --- Auth ---
+// Auth
 
 function login() {
   const username = usernameInput.value.trim();
+  // Reject blank usernames so we never call identify or capture login without a valid user identity.
   if (!username) return;
 
   currentUser = username;
   localStorage.setItem('currentUser', username);
 
-  // Identify user in PostHog — links all future events to this user
-  // Pass person properties as second arg (this is where name/email belong, NOT in capture())
-  posthog.identify(username, { name: username });
+  // Identify with a stable user id and pass person attributes like username in person properties, never in capture().
+  posthog.identify(getUserId(username), { username });
 
   posthog.capture('user_logged_in');
 
@@ -45,14 +56,15 @@ function login() {
 }
 
 function logout() {
+  // Only capture logout and reset PostHog when signing out of an authenticated session.
+  if (!currentUser) return;
+
   currentUser = null;
   localStorage.removeItem('currentUser');
 
-  // Reset PostHog — unlinks future events from the current user
-  // and generates a new anonymous distinct_id
-  posthog.reset();
-
+  // Capture user_logged_out before reset() so the event stays attributed to the departing user.
   posthog.capture('user_logged_out');
+  posthog.reset();
 
   updateAuthUI();
 }
@@ -68,7 +80,7 @@ function updateAuthUI() {
   }
 }
 
-// --- Todos ---
+// Todos
 
 function addTodo(text) {
   const todo = {
@@ -82,7 +94,7 @@ function addTodo(text) {
   saveTodos();
   renderTodos();
 
-  // Track the event — only metadata, never PII or user-generated content
+  // Track the event with non-PII metadata only, never user-generated content or PII.
   posthog.capture('todo_added', {
     todo_id: todo.id,
     text_length: text.length,
@@ -127,7 +139,7 @@ function saveTodos() {
   localStorage.setItem('todos', JSON.stringify(todos));
 }
 
-// --- Rendering ---
+// Rendering
 
 function renderTodos() {
   todoList.innerHTML = '';
@@ -160,7 +172,7 @@ function renderTodos() {
   completedCount.textContent = `${completed} completed`;
 }
 
-// --- Error Tracking ---
+// Error Tracking
 
 // Capture unhandled errors with PostHog
 window.addEventListener('error', (event) => {
@@ -171,7 +183,7 @@ window.addEventListener('unhandledrejection', (event) => {
   posthog.captureException(event.reason);
 });
 
-// --- Event Listeners ---
+// Event Listeners
 
 todoForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -188,11 +200,11 @@ usernameInput.addEventListener('keydown', (e) => {
 });
 logoutBtn.addEventListener('click', logout);
 
-// --- Init ---
+// Init
 
-// Restore auth state and re-identify if already logged in
+// Restore auth state on reload and re-identify the stored user without calling reset() for anonymous visitors.
 if (currentUser) {
-  posthog.identify(currentUser, { name: currentUser });
+  posthog.identify(getUserId(currentUser), { username: currentUser });
 }
 
 updateAuthUI();

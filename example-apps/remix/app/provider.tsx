@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import posthog from "posthog-js";
 import { PostHogProvider } from "@posthog/react";
 
-const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+// Read the project token without a fallback value so missing configuration skips PostHog instead of using a placeholder key.
+const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    // Only initialize posthog-js when a real project token is configured.
     if (token) {
       posthog.init(token, {
         api_host: "/ingest",
@@ -20,7 +22,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
         tracing_headers: [window.location.hostname],
       });
     } else if (import.meta.env.DEV) {
-      console.warn(
+      console.error(
         "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
       );
     }
@@ -28,6 +30,6 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, []);
 
-  if (!hydrated) return <>{children}</>;
+  if (!hydrated || !token) return <>{children}</>;
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
 }

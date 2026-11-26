@@ -1,7 +1,11 @@
 """Django settings for PostHog example project"""
 
+import atexit
+import logging
 import os
 from pathlib import Path
+
+from posthog import Posthog
 
 try:
     from dotenv import load_dotenv
@@ -9,19 +13,39 @@ try:
 except ImportError:
     pass
 
+logger = logging.getLogger(__name__)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-example-key-change-in-production')
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
-# PostHog configuration
-POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN', '<ph_project_token>')
+# Leave the token as None when unset rather than defaulting to a placeholder or empty key,
+# which would either send events to a bogus token or raise ValueError during client setup.
+POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN')
 POSTHOG_HOST = os.environ.get('POSTHOG_HOST', 'https://us.i.posthog.com')
 POSTHOG_DISABLED = os.environ.get('POSTHOG_DISABLED', 'False').lower() == 'true'
+
+_posthog_token = (POSTHOG_PROJECT_TOKEN or '').strip()
+if not POSTHOG_DISABLED and _posthog_token:
+    POSTHOG_MW_CLIENT = Posthog(
+        _posthog_token,
+        host=POSTHOG_HOST,
+        enable_exception_autocapture=True,
+        debug=DEBUG,
+    )
+    atexit.register(POSTHOG_MW_CLIENT.shutdown)
+else:
+    POSTHOG_MW_CLIENT = None
+    if DEBUG and not POSTHOG_DISABLED:
+        logger.warning(
+            'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, '
+            'this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
+        )
 
 
 INSTALLED_APPS = [
@@ -42,8 +66,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'posthog.integrations.django.PosthogContextMiddleware',
 ]
+
+# Only install PosthogContextMiddleware when a configured client exists because
+# process_exception falls back to module-level posthog and raises ValueError when unconfigured.
+if POSTHOG_MW_CLIENT is not None:
+    MIDDLEWARE.append('posthog.integrations.django.PosthogContextMiddleware')
 
 ROOT_URLCONF = 'posthog_example.urls'
 

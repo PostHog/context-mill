@@ -24,6 +24,8 @@ export class VisitorMiddleware implements NestMiddleware {
     if (user) {
       ;(req as VisitorRequest).visitor = { distinctId: user.id, user, options: {} }
     } else {
+      // Signed-out visitors get a per-visit cookie UUID with person profile
+      // creation disabled instead of sharing a literal anonymous string.
       let visitId: string | undefined = req.cookies?.visit_id
       if (!visitId) {
         visitId = randomUUID()

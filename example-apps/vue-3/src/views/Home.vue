@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import posthog from 'posthog-js'
 
@@ -55,22 +55,15 @@ const username = ref('')
 const password = ref('')
 const error = ref('')
 
-// Clean up invalid user state on mount
-onMounted(() => {
-  if (authStore.user && !authStore.user.username) {
-    authStore.logout()
-  }
-})
-
 const handleSubmit = async () => {
   error.value = ''
 
   const success = await authStore.login(username.value, password.value)
-  if (success) {
-    // Identifying the user once on login/sign up is enough.
-    posthog.identify(username.value)
-    posthog.capture('user_logged_in')
-    
+  if (success && authStore.user) {
+    // Identify with the user's stable UUID and keep username in person properties rather than capture() properties.
+    posthog.identify(authStore.user.id, { username: authStore.user.username })
+    posthog.capture('user_logged_in', { login_method: 'username' })
+
     username.value = ''
     password.value = ''
   } else {

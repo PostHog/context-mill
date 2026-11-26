@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { usePostHog } from '@posthog/react';
 
 export default function Home() {
   const { user, login } = useAuth();
-  const posthog = usePostHog();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,12 +11,15 @@ export default function Home() {
     e.preventDefault();
     setError('');
 
-    const success = await login(username, password);
+    // Trim username before login so blank input never triggers user identification or events.
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
+      setError('Please provide both username and password');
+      return;
+    }
+
+    const success = await login(trimmedUsername, password);
     if (success) {
-      posthog.capture('user_logged_in', {
-        username: username,
-        distinct_id: username,
-      });
       setUsername('');
       setPassword('');
     } else {
@@ -78,4 +79,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -42,19 +42,76 @@ function dataFilePath(): string
     return rtrim($home, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . DATA_FILE;
 }
 
+function generateUuidV4(): string
+{
+    $bytes = random_bytes(16);
+    $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+    $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
+}
+
+/**
+ * @return array{0: string, 1: bool} [userId, isNewUser]
+ */
+function ensureUserRecord(): array
+{
+    $path = dataFilePath();
+    $todos = [];
+
+    if (file_exists($path)) {
+        $data = json_decode((string) file_get_contents($path), true);
+        if (is_array($data)) {
+            $todos = is_array($data['todos'] ?? null) ? $data['todos'] : [];
+            $existingId = trim((string) ($data['user_id'] ?? ''));
+            if ($existingId !== '') {
+                return [$existingId, false];
+            }
+        }
+    }
+
+    // Persist the generated UUID immediately on first creation so read-only commands
+    // and exception handlers reuse one stable distinctId instead of inventing new IDs.
+    $userId = generateUuidV4();
+    saveTodos([
+        'user_id' => $userId,
+        'todos' => $todos,
+    ]);
+
+    return [$userId, true];
+}
+
+function getUserId(): string
+{
+    [$userId] = ensureUserRecord();
+    return $userId;
+}
+
 function initializePostHog(): bool
 {
     loadEnvFile(__DIR__ . '/.env');
 
-    $projectToken = getenv('POSTHOG_PROJECT_TOKEN');
-    if (!$projectToken || str_starts_with($projectToken, 'phc_your_')) {
-        echo "WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)\n";
-        echo "         App will work but analytics won't be tracked\n";
+    // Leave PostHog uninitialized when POSTHOG_PROJECT_TOKEN is missing or blank rather than
+    // passing an empty or placeholder key to PostHog::init.
+    $projectToken = trim((string) ($_ENV['POSTHOG_PROJECT_TOKEN'] ?? getenv('POSTHOG_PROJECT_TOKEN') ?: ''));
+    if ($projectToken === '') {
+        $appEnv = strtolower(trim((string) ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'development')));
+        if ($appEnv !== 'production') {
+            fwrite(
+                STDERR,
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured\n"
+            );
+        }
         return false;
     }
 
+    $host = trim((string) ($_ENV['POSTHOG_HOST'] ?? getenv('POSTHOG_HOST') ?: ''));
+    if ($host === '') {
+        $host = 'https://us.i.posthog.com';
+    }
+
     PostHog::init($projectToken, [
-        'host' => getenv('POSTHOG_HOST') ?: 'https://us.i.posthog.com',
+        'host' => $host,
         'error_tracking' => [
             'enabled' => true,
             'context_provider' => static function (array $payload): array {
@@ -73,33 +130,16 @@ function initializePostHog(): bool
     return true;
 }
 
-function getUserId(): string
-{
-    $path = dataFilePath();
-    if (file_exists($path)) {
-        $data = json_decode((string) file_get_contents($path), true);
-        if (is_array($data) && isset($data['user_id'])) {
-            return (string) $data['user_id'];
-        }
-    }
-
-    return 'user_' . bin2hex(random_bytes(4));
-}
-
 function loadTodos(): array
 {
-    $path = dataFilePath();
-    if (!file_exists($path)) {
-        return ['user_id' => getUserId(), 'todos' => []];
-    }
-
-    $data = json_decode((string) file_get_contents($path), true);
+    [$userId] = ensureUserRecord();
+    $data = json_decode((string) file_get_contents(dataFilePath()), true);
     if (!is_array($data)) {
-        return ['user_id' => getUserId(), 'todos' => []];
+        return ['user_id' => $userId, 'todos' => []];
     }
 
-    $data['todos'] = $data['todos'] ?? [];
-    $data['user_id'] = $data['user_id'] ?? getUserId();
+    $data['user_id'] = $userId;
+    $data['todos'] = is_array($data['todos'] ?? null) ? $data['todos'] : [];
     return $data;
 }
 
@@ -108,14 +148,14 @@ function saveTodos(array $data): void
     file_put_contents(dataFilePath(), json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL);
 }
 
-function identifyUser(bool $posthogEnabled): void
+function identifyUser(bool $posthogEnabled, string $userId): void
 {
     if (!$posthogEnabled) {
         return;
     }
 
     PostHog::identify([
-        'distinctId' => getUserId(),
+        'distinctId' => $userId,
         'properties' => [
             'app_language' => 'php',
             'app_type' => 'cli',
@@ -275,27 +315,46 @@ Usage:
 USAGE;
 }
 
+// Validate CLI command and arguments before initializing PostHog or recording user events.
+$command = $argv[1] ?? null;
+if (!$command) {
+    printUsage();
+    exit(0);
+}
+
+$validCommands = ['add', 'list', 'complete', 'delete', 'stats'];
+if (!in_array($command, $validCommands, true)) {
+    fwrite(STDERR, "ERROR: Unknown command '{$command}'\n");
+    printUsage();
+    exit(1);
+}
+
+if ($command === 'add' && trim((string) ($argv[2] ?? '')) === '') {
+    fwrite(STDERR, "ERROR: Please provide todo text\n");
+    fwrite(STDERR, "Usage: php todo.php add \"Your task\"\n");
+    exit(1);
+}
+
+if (($command === 'complete' || $command === 'delete') && (int) ($argv[2] ?? 0) <= 0) {
+    fwrite(STDERR, "ERROR: Please provide a valid todo ID\n");
+    fwrite(STDERR, "Usage: php todo.php {$command} <id>\n");
+    exit(1);
+}
+
 $posthogEnabled = false;
 
 try {
     $posthogEnabled = initializePostHog();
-    identifyUser($posthogEnabled);
 
-    $command = $argv[1] ?? null;
-    if (!$command) {
-        printUsage();
-        exit(0);
+    // Only call PostHog::identify when first creating the persisted installation UUID.
+    [$userId, $isNewUser] = ensureUserRecord();
+    if ($isNewUser) {
+        identifyUser($posthogEnabled, $userId);
     }
 
     switch ($command) {
         case 'add':
-            $text = $argv[2] ?? null;
-            if (!$text) {
-                echo "ERROR: Please provide todo text\n";
-                echo "Usage: php todo.php add \"Your task\"\n";
-                exit(1);
-            }
-            cmdAdd($text, $posthogEnabled);
+            cmdAdd((string) $argv[2], $posthogEnabled);
             break;
 
         case 'list':
@@ -303,40 +362,23 @@ try {
             break;
 
         case 'complete':
-            $id = (int) ($argv[2] ?? 0);
-            if ($id <= 0) {
-                echo "ERROR: Please provide a valid todo ID\n";
-                echo "Usage: php todo.php complete <id>\n";
-                exit(1);
-            }
-            cmdComplete($id, $posthogEnabled);
+            cmdComplete((int) $argv[2], $posthogEnabled);
             break;
 
         case 'delete':
-            $id = (int) ($argv[2] ?? 0);
-            if ($id <= 0) {
-                echo "ERROR: Please provide a valid todo ID\n";
-                echo "Usage: php todo.php delete <id>\n";
-                exit(1);
-            }
-            cmdDelete($id, $posthogEnabled);
+            cmdDelete((int) $argv[2], $posthogEnabled);
             break;
 
         case 'stats':
             cmdStats($posthogEnabled);
             break;
-
-        default:
-            echo "ERROR: Unknown command '{$command}'\n";
-            printUsage();
-            exit(1);
     }
 } catch (Throwable $e) {
-    echo "ERROR: {$e->getMessage()}\n";
+    fwrite(STDERR, "ERROR: {$e->getMessage()}\n");
 
     if ($posthogEnabled) {
         PostHog::captureException($e, getUserId(), [
-            'command' => $argv[1] ?? null,
+            'command' => $command,
             'app' => 'php_todo_cli',
         ]);
     }
@@ -344,6 +386,10 @@ try {
     exit(1);
 } finally {
     if ($posthogEnabled) {
-        PostHog::flush();
+        try {
+            PostHog::flush();
+        } catch (Throwable) {
+            // Analytics flush failures must never fail the CLI command.
+        }
     }
 }

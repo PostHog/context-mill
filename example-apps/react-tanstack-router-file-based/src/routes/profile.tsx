@@ -21,7 +21,7 @@ function ProfilePage() {
     try {
       throw new Error('Test error for PostHog error tracking')
     } catch (err) {
-      posthog.captureException(err)
+      posthog?.captureException(err)
       console.error('Captured error:', err)
       alert('Error captured and sent to PostHog!')
     }

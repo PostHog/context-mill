@@ -21,44 +21,66 @@ defmodule PostHogExampleWeb.BurritoController do
   # ---------------------------------------------------------------------------
 
   def home(conn, _params) do
-    render(conn, :home, distinct_id: conn.assigns.distinct_id)
+    message = get_session(conn, :message)
+
+    conn
+    |> delete_session(:message)
+    |> render(:home,
+      distinct_id: conn.assigns.distinct_id,
+      anonymous?: conn.assigns.anonymous?,
+      message: message
+    )
   end
 
   @doc """
   Identify the user.
 
-  The PostHog Elixir SDK has no separate `identify` step for server events —
-  you identify a user by passing their `distinct_id` on `capture`. The
+  The PostHog Elixir SDK has no separate `identify` step for server events.
+  You identify a user by passing their `distinct_id` on `capture`. The
   `distinct_id` must match the id your frontend `posthog.identify(...)` uses,
   so events from both sides attach to the same person.
 
-  We derive a stable distinct id from the username and remember it in the
-  session so every later request captures against the same person.
-
-  Identity note: this demo takes the username from an unverified form field for
-  simplicity. A real app must derive `distinct_id` from the authenticated
-  principal (session / token), never from an unverified request param — otherwise
-  a client could pick any id and overwrite another person's profile.
+  We assign each username a stable UUID (standing in for a database primary key)
+  and remember it in the session so every later request captures against the same
+  person. Never use the username or email itself as `distinct_id`. Send those as
+  person properties via `$set` instead.
   """
   def login(conn, params) do
-    username = params["username"] || "burrito_fan"
-    distinct_id = "user_" <> username
+    # Reject missing or blank usernames instead of falling back to a shared default username,
+    # which would merge every empty login submission into one person profile.
+    username =
+      case params["username"] do
+        value when is_binary(value) -> String.trim(value)
+        _ -> ""
+      end
 
-    # PostHog: identify + capture in one call. Extra keys in the map become
-    # event properties.
-    PostHog.capture("user_logged_in", %{
-      distinct_id: distinct_id,
-      login_method: "email"
-    })
+    if username == "" do
+      conn
+      |> put_flash_message("Please enter a username to log in.")
+      |> redirect(to: ~p"/")
+    else
+      distinct_id = get_or_create_user_id(username)
 
-    conn
-    |> put_session(:distinct_id, distinct_id)
-    |> redirect(to: ~p"/dashboard")
+      # Identify and capture in one call. "$set" writes person properties while keeping
+      # username PII out of top-level event properties.
+      PostHog.capture("user_logged_in", %{
+        distinct_id: distinct_id,
+        login_method: "username",
+        "$set": %{username: username}
+      })
+
+      conn
+      |> put_session(:distinct_id, distinct_id)
+      |> redirect(to: ~p"/dashboard")
+    end
   end
 
   def logout(conn, _params) do
-    # Capture before we drop the session so the event is still attributed.
-    capture(conn, "user_logged_out")
+    # Only capture user_logged_out when signing out of an authenticated session,
+    # never for an anonymous visitor.
+    if not conn.assigns.anonymous? do
+      capture(conn, "user_logged_out")
+    end
 
     conn
     |> delete_session(:distinct_id)
@@ -77,7 +99,7 @@ defmodule PostHogExampleWeb.BurritoController do
   def consider_burrito(conn, _params) do
     count = (get_session(conn, :burrito_count) || 0) + 1
 
-    # PostHog: custom event. `distinct_id` is required; the rest are properties.
+    # Pass distinct_id via the helper and attach non-PII event properties.
     capture(conn, "burrito_considered", %{total_considerations: count})
 
     conn
@@ -90,7 +112,8 @@ defmodule PostHogExampleWeb.BurritoController do
   # ---------------------------------------------------------------------------
 
   @doc """
-  Evaluate flags once per request, then read individual flags off the snapshot.
+  Evaluate flags once per request, read individual flags off the snapshot,
+  and attach accessed flags to the process context before capturing events.
   """
   def dashboard(conn, _params) do
     distinct_id = conn.assigns.distinct_id
@@ -98,10 +121,17 @@ defmodule PostHogExampleWeb.BurritoController do
     show_new_feature =
       case PostHog.FeatureFlags.evaluate_flags(distinct_id) do
         {:ok, snapshot} ->
-          PostHog.FeatureFlags.Evaluations.enabled?(snapshot, "new-dashboard-feature")
+          enabled =
+            PostHog.FeatureFlags.Evaluations.enabled?(snapshot, "new-dashboard-feature")
+
+          PostHog.FeatureFlags.set_in_context(
+            PostHog.FeatureFlags.Evaluations.only_accessed(snapshot)
+          )
+
+          enabled
 
         _error ->
-          # Fail safe: if flag evaluation fails, fall back to "off".
+          # Fail safe: if flag evaluation fails, fall back to off.
           false
       end
 
@@ -126,24 +156,21 @@ defmodule PostHogExampleWeb.BurritoController do
   @doc """
   Demonstrate error tracking.
 
-  PostHog's Elixir SDK does error tracking *automatically*: it is built on top
-  of Elixir's `Logger`, so any `Logger.error/1` call and any uncaught exception
-  is captured — there is no documented explicit `capture_exception` function.
+  PostHog's Elixir SDK performs error tracking automatically through Elixir's
+  `Logger`, so any `Logger.error/1` call and any uncaught exception is captured.
 
-  So here we `rescue` a deliberate exception and report it two ways:
+  Here we `rescue` a deliberate exception and report it two ways:
 
-    1. `Logger.error(...)` — which the SDK auto-captures as an exception, and
-    2. an explicit `error_occurred` custom event for easy funnel/analytics use.
+    1. `Logger.error(...)`, which the SDK auto-captures as an exception, and
+    2. an explicit `error_occurred` custom event for funnel and analytics use.
   """
   def trigger_error(conn, _params) do
     try do
       raise "Something went wrong while loading the burrito profile!"
     rescue
       error ->
-        # PostHog auto-captures this Logger.error as an exception.
         Logger.error("Burrito profile error: #{Exception.message(error)}")
 
-        # Plus an explicit analytics event, matching the other examples.
         capture(conn, "error_occurred", %{
           error_type: error.__struct__ |> Module.split() |> List.last(),
           error_message: Exception.message(error)
@@ -162,7 +189,7 @@ defmodule PostHogExampleWeb.BurritoController do
   # Signed-in users keep their stable id. A signed-out visitor gets a random
   # UUID that lives in the session for the whole visit, and their events are
   # captured without a person profile. Never share one id such as "anonymous"
-  # across visitors: PostHog would merge them into a single person.
+  # across visitors because PostHog would merge them into a single person.
   defp assign_identity(conn, _opts) do
     {conn, distinct_id, anonymous?} =
       case get_session(conn, :distinct_id) do
@@ -189,7 +216,7 @@ defmodule PostHogExampleWeb.BurritoController do
     if get_session(conn, :visitor_id), do: conn, else: put_session(conn, :visitor_id, uuid4())
   end
 
-  # Capture against the request's identity; anonymous visitors are personless.
+  # Capture against the request identity, keeping anonymous visitors personless.
   defp capture(conn, event, properties \\ %{}) do
     properties = Map.put(properties, :distinct_id, conn.assigns.distinct_id)
 
@@ -201,6 +228,17 @@ defmodule PostHogExampleWeb.BurritoController do
     PostHog.capture(event, properties)
   end
 
+  defp get_or_create_user_id(username) do
+    case :ets.lookup(:demo_users, username) do
+      [{^username, id}] ->
+        id
+
+      [] ->
+        id = uuid4()
+        if :ets.insert_new(:demo_users, {username, id}), do: id, else: get_or_create_user_id(username)
+    end
+  end
+
   defp uuid4 do
     <<a::48, _::4, b::12, _::2, c::62>> = :crypto.strong_rand_bytes(16)
     hex = Base.encode16(<<a::48, 4::4, b::12, 2::2, c::62>>, case: :lower)
@@ -209,6 +247,6 @@ defmodule PostHogExampleWeb.BurritoController do
     Enum.join([p1, p2, p3, p4, p5], "-")
   end
 
-  # Tiny session-backed flash (this app doesn't wire the full Phoenix flash).
+  # Tiny session-backed flash (this app does not wire the full Phoenix flash).
   defp put_flash_message(conn, message), do: put_session(conn, :message, message)
 end

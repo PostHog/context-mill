@@ -16,13 +16,26 @@ function readCookie(request: Request, name: string): string | undefined {
     .find(([key]) => key === name)?.[1]
 }
 
-// Signed-in users keep the app's own user id in a cookie. Signed-out visitors
-// get a random id kept in a cookie for the visit, so they never share an id.
+// Derive a deterministic UUID for each email so the demo uses a stable primary
+// key as distinctId instead of passing a raw email address.
+async function userIdForEmail(email: string): Promise<string> {
+  const bytes = new Uint8Array(
+    await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email.toLowerCase()))
+  )
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes.slice(0, 16), (b) => b.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`
+}
+
+// Signed-in users keep the app's stable user UUID in a cookie. Signed-out
+// visitors get a per-visit cookie UUID rather than a shared anonymous string
+// so unrelated visitors are never merged into one person.
 function getVisitor(request: Request): Visitor {
-  const userId = readCookie(request, 'user_id')
+  const userId = readCookie(request, 'user_id')?.trim()
   if (userId) return { id: decodeURIComponent(userId), anonymous: false }
 
-  const anonId = readCookie(request, 'anon_id')
+  const anonId = readCookie(request, 'anon_id')?.trim()
   if (anonId) return { id: anonId, anonymous: true }
 
   const id = crypto.randomUUID()
@@ -45,11 +58,11 @@ function page(title: string, body: string, setCookies: string[] = []): Response 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const posthog = createPostHogClient(env)
+    // Signed-out visitors use a per-visit cookie UUID with process_person_profile
+    // set to false instead of a shared literal like anonymous.
     const visitor = getVisitor(request)
     const url = new URL(request.url)
 
-    // Anonymous events set the process_person_profile option to false so
-    // PostHog does not create a person profile for the visitor.
     const anonymousOptions = visitor.anonymous ? { process_person_profile: false } : {}
 
     // Sends started during the request. They are awaited after the response
@@ -83,16 +96,26 @@ export default {
     async function route(): Promise<Response> {
       if (request.method === 'POST' && url.pathname === '/login') {
         const form = await request.formData()
-        const userId = String(form.get('user_id') || 'burrito-fan-42')
-        const email = String(form.get('email') || '')
+        const email = String(form.get('email') ?? '').trim()
 
-        // Identify once, on login. The server-side equivalent of identify() is
-        // an event that carries person properties in $set.
+        // Require a non-empty login field instead of falling back to a shared
+        // placeholder user id, and skip cookies and capture when blank.
+        if (!email) {
+          return new Response('Email is required', { status: 400 })
+        }
+
+        const userId = await userIdForEmail(email)
+
+        // Identify on login with a stable UUID as distinctId and person properties
+        // in $set, including email only when non-empty.
         track(
           posthog?.captureImmediate({
             distinctId: userId,
             event: 'user_logged_in',
-            properties: { login_method: 'email', $set: { email } },
+            properties: {
+              login_method: 'email',
+              ...(email ? { $set: { email } } : {}),
+            },
           })
         )
 
@@ -103,6 +126,15 @@ export default {
       }
 
       if (request.method === 'POST' && url.pathname === '/logout') {
+        if (!visitor.anonymous) {
+          track(
+            posthog?.captureImmediate({
+              distinctId: visitor.id,
+              event: 'user_logged_out',
+            })
+          )
+        }
+
         return new Response(null, {
           status: 303,
           headers: { location: '/', 'set-cookie': `user_id=; ${COOKIE_OPTIONS}; Max-Age=0` },
@@ -129,7 +161,7 @@ export default {
       }
 
       if (url.pathname === '/dashboard') {
-        // Awaiting the flag blocks the response, which is what we want here.
+        // Awaiting the flag blocks the response, which is needed to render the page.
         // A PostHog failure falls back to the flag being off.
         let showNewFeature = false
         try {
@@ -148,7 +180,7 @@ export default {
       }
 
       if (url.pathname === '/profile') {
-        // A handled failure that is still worth reporting.
+        // Report a handled failure without failing the response.
         try {
           throw new Error('Profile data is unavailable')
         } catch (error) {
@@ -169,8 +201,7 @@ export default {
           : `Signed in as <strong>${escapeHtml(visitor.id)}</strong>`
         const form = visitor.anonymous
           ? `<form method="POST" action="/login">
-               <label>User id <input name="user_id" value="burrito-fan-42"></label>
-               <label>Email <input name="email" value="fan@example.com"></label>
+               <label>Email <input name="email" type="email" placeholder="fan@example.com" required></label>
                <button>Log in</button>
              </form>`
           : '<form method="POST" action="/logout"><button>Log out</button></form>'

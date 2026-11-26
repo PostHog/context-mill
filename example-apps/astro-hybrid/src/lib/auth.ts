@@ -36,6 +36,7 @@ export function login(username: string, password: string): boolean {
 
 export function logout(): void {
   localStorage.removeItem("currentUser");
+  localStorage.removeItem("currentUserId");
   localStorage.removeItem("burritoConsiderations");
 }
 

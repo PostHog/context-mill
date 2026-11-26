@@ -31,10 +31,9 @@ const hasConsidered = ref(false)
 const handleConsideration = () => {
   if (!authStore.user) return
 
-  // Client-side only - no server calls
   const updatedUser = {
     ...authStore.user,
-    burritoConsiderations: authStore.user.burritoConsiderations + 1
+    burritoConsiderations: authStore.user.burritoConsiderations + 1,
   }
   authStore.setUser(updatedUser)
   hasConsidered.value = true
@@ -42,10 +41,9 @@ const handleConsideration = () => {
     hasConsidered.value = false
   }, 2000)
 
-  // Capture burrito consideration event
+  // Omit username and other PII from event properties. User attributes belong on identify() person properties.
   posthog.capture('burrito_considered', {
     total_considerations: updatedUser.burritoConsiderations,
-    username: updatedUser.username
   })
 }
 </script>

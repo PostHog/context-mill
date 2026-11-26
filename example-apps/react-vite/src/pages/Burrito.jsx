@@ -1,9 +1,10 @@
 import { useAuth } from '../contexts/AuthContext'
-import { usePostHog } from '@posthog/react'
+import { useFeatureFlagEnabled, usePostHog } from '@posthog/react'
 
 export default function Burrito() {
   const { user, setUser } = useAuth()
   const posthog = usePostHog()
+  const showSpecialBurrito = useFeatureFlagEnabled('special-burrito')
 
   if (!user) return null
 
@@ -14,7 +15,8 @@ export default function Burrito() {
     }
     setUser(updatedUser)
 
-    posthog.capture('burrito_considered', {
+    // Capture burrito consideration event without PII such as username in event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: updatedUser.burritoConsiderations,
     })
   }
@@ -22,6 +24,12 @@ export default function Burrito() {
   return (
     <div className="container">
       <h1>Burrito Consideration Zone</h1>
+
+      {showSpecialBurrito && (
+        <div className="special-burrito">
+          <p>Special burrito mode is enabled for your session!</p>
+        </div>
+      )}
 
       <div className="burrito-stats">
         <p>Times considered: <strong>{user.burritoConsiderations}</strong></p>

@@ -21,14 +21,14 @@ npm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and set your project token:
 
 ```bash
-VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -53,18 +53,24 @@ src/
 
 ### PostHog provider setup (main.tsx)
 
-PostHog is initialized using `PostHogProvider` from `@posthog/react`. The provider wraps the entire app in the root route component:
+PostHog is initialized using `PostHogProvider` from `@posthog/react`. When `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` is set, the provider wraps the app in the root route component:
 
 ```typescript
 import { PostHogProvider } from '@posthog/react'
 import { createRootRoute } from '@tanstack/react-router'
+
+// Read the project token without a fallback value. When it is missing, render the app
+// without PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
 
 const rootRoute = createRootRoute({
   component: RootComponent,
 })
 
 function RootComponent() {
-  return (
+  const app = <AuthProvider>{/* your app */}</AuthProvider>
+
+  return posthogToken ? (
     <PostHogProvider
       apiKey={posthogToken}
       options={{
@@ -74,49 +80,65 @@ function RootComponent() {
         debug: import.meta.env.DEV,
       }}
     >
-      {/* your app */}
+      {app}
     </PostHogProvider>
+  ) : (
+    app
   )
 }
 ```
 
-`posthogToken` is `import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN`. When it is missing, the root route logs a warning in development and renders the app without the provider.
+When `posthogToken` is missing, the root module logs an error in development and renders the app without `PostHogProvider`.
 
 ### Reverse proxy
 
 Ad blockers drop events sent to PostHog's domain. A reverse proxy sends them through your own domain instead. This example is a client-only app with no server layer, so it has no proxy code and sends events straight to PostHog (`https://us.i.posthog.com` by default). A Vite dev server proxy would only work in development, not in a production build.
 
-To use a proxy, set up the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) and set `VITE_PUBLIC_POSTHOG_HOST` to your proxy domain. Add `ui_host` for your region (`https://us.posthog.com` or `https://eu.posthog.com`) to the `posthog.init` options so toolbar links keep pointing at PostHog's own domain, not the proxy. For an EU project, also set the default `api_host` to `https://eu.i.posthog.com`.
+To use a proxy, set up the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) and set `VITE_PUBLIC_POSTHOG_HOST` to your proxy domain. Add `ui_host` for your region (`https://us.posthog.com` or `https://eu.posthog.com`) to the `PostHogProvider` options so toolbar links keep pointing at PostHog's own domain, not the proxy. For an EU project, also set `VITE_PUBLIC_POSTHOG_HOST` to `https://eu.i.posthog.com`.
 
 ### User identification (contexts/AuthContext.tsx)
 
-```typescript
-import { usePostHog } from '@posthog/react'
-
-const posthog = usePostHog()
-
-posthog.identify(username, {
-  username: username,
-})
-```
-
-### Event tracking (main.tsx - BurritoPage)
+Users are identified with a stable UUID (`localUser.id`) on login and when restoring a persisted session from `localStorage` on reload. `username` is sent only as a person property, never as `distinctId` or in `capture()` event properties.
 
 ```typescript
 import { usePostHog } from '@posthog/react'
 
 const posthog = usePostHog()
 
-posthog.capture('burrito_considered', {
-  total_considerations: count,
-  username: username,
+posthog?.identify(localUser.id, {
+  username: localUser.username,
+})
+
+posthog?.capture('user_logged_in', {
+  is_new_user: isNewUser,
 })
 ```
 
-### Error tracking (main.tsx - ProfilePage)
+On logout from an active session, capture `user_logged_out` before calling `reset()`:
 
 ```typescript
-posthog.captureException(error)
+if (user) {
+  posthog?.capture('user_logged_out')
+  posthog?.reset()
+}
+```
+
+### Event tracking (main.tsx, BurritoPage)
+
+```typescript
+import { usePostHog } from '@posthog/react'
+
+const posthog = usePostHog()
+
+posthog?.capture('burrito_considered', {
+  total_considerations: user.burritoConsiderations + 1,
+})
+```
+
+### Error tracking (main.tsx, ProfilePage)
+
+```typescript
+posthog?.captureException(err)
 ```
 
 ## TanStack Router details
@@ -126,10 +148,10 @@ This example uses TanStack Router with **code-based routing**. Key details:
 1. **Client-side only**: No server-side logic, no API routes, no posthog-node
 2. **Code-based routing**: All routes defined in `main.tsx` using `createRoute()` and `createRootRoute()`
 3. **Manual route tree**: Routes connected with `addChildren()` method
-4. **Standard hooks**: Uses `useNavigate()` from @tanstack/react-router
-5. **Reverse proxy**: No proxy code, because the app has no server layer; see the reverse proxy section
+4. **Standard hooks**: Uses `useNavigate()` from `@tanstack/react-router`
+5. **Reverse proxy**: No proxy code, because the app has no server layer. See the reverse proxy section
 6. **Environment variables**: Uses `import.meta.env.VITE_*`
-7. **PostHog provider**: Uses `PostHogProvider` from `@posthog/react` in root route
+7. **PostHog provider**: Uses `PostHogProvider` from `@posthog/react` in root route when the project token is configured
 
 ### Code-based vs File-based routing
 

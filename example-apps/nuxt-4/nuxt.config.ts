@@ -1,11 +1,21 @@
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
+import type {} from '@posthog/nuxt'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-if (!process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NODE_ENV === 'development') {
-  console.warn('NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog will not capture events.')
+// Read PostHog keys without empty-string fallbacks so unset variables never initialize a client with a blank token.
+const rawPosthogToken = process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const posthogToken = rawPosthogToken?.trim() ? rawPosthogToken.trim() : undefined
+const posthogHost = process.env.NUXT_PUBLIC_POSTHOG_HOST?.trim() || 'https://us.i.posthog.com'
+const rawProjectId = process.env.PROJECT_ID
+const posthogProjectId = rawProjectId?.trim() ? rawProjectId.trim() : undefined
+const rawPersonalApiKey = process.env.PERSONAL_API_KEY
+const posthogPersonalApiKey = rawPersonalApiKey?.trim() ? rawPersonalApiKey.trim() : undefined
+
+if (!posthogToken && process.env.NODE_ENV !== 'production') {
+  console.warn('NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured')
 }
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -13,35 +23,54 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: [resolve(__dirname, 'assets/css/main.css')],
-  modules: ['@posthog/nuxt'],
+  // Only load @posthog/nuxt when the project token is configured so the module never boots with an empty publicKey.
+  modules: posthogToken ? ['@posthog/nuxt'] : [],
+  hooks: {
+    'imports:extend'(imports) {
+      if (!posthogToken) return
+      for (let i = imports.length - 1; i >= 0; i--) {
+        if (imports[i]?.name === 'usePostHog' && imports[i]?.from?.includes('/app/composables/usePostHog')) {
+          imports.splice(i, 1)
+        }
+      }
+    },
+  },
   runtimeConfig: {
     public: {
       posthog: {
-        publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '',
-        host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+        publicKey: posthogToken,
+        host: posthogHost,
       },
     },
   },
-  posthogConfig: {
-    publicKey: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN || '', // Find it in project settings https://app.posthog.com/settings/project
-    host: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com', // Optional: defaults to https://us.i.posthog.com. Use https://eu.i.posthog.com for EU region
-    clientConfig: {
-      api_host: '/burrito-relay', // Events go through the server route in server/routes/burrito-relay
-      ui_host: (process.env.NUXT_PUBLIC_POSTHOG_HOST || '').includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com', // The PostHog app for your region
-      defaults: '2026-08-30',
-      capture_exceptions: true, // Enables automatic exception capture on the client side (Vue)
-      tracing_headers: [ 'localhost', 'yourdomain.com' ], // Add your domain here
-    },
-    serverConfig: {
-      enableExceptionAutocapture: true, // Enables automatic exception capture on the server side (Nitro)
-    },
-    sourcemaps: {
-      enabled: Boolean(process.env.PERSONAL_API_KEY), // Upload only when a personal API key is set
-      envId: process.env.PROJECT_ID || '', // Your project ID from PostHog settings https://app.posthog.com/settings/environment#variables
-      personalApiKey: process.env.PERSONAL_API_KEY || '', // Your personal API key from PostHog settings https://app.posthog.com/settings/user-api-keys (requires organization:read and error_tracking:write scopes)
-      project: 'my-application', // Optional: defaults to git repository name
-      version: '1.0.0', // Optional: defaults to current git commit
-    },
-  },
+  ...(posthogToken
+    ? {
+        posthogConfig: {
+          publicKey: posthogToken,
+          host: posthogHost,
+          clientConfig: {
+            api_host: '/burrito-relay',
+            ui_host: posthogHost.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com',
+            defaults: '2026-08-30',
+            capture_exceptions: true,
+            tracing_headers: ['localhost', 'yourdomain.com'],
+          },
+          serverConfig: {
+            enableExceptionAutocapture: true,
+          },
+          // Only enable sourcemap uploads when both PERSONAL_API_KEY and PROJECT_ID are configured.
+          ...(posthogPersonalApiKey && posthogProjectId
+            ? {
+                sourcemaps: {
+                  enabled: true,
+                  projectId: posthogProjectId,
+                  personalApiKey: posthogPersonalApiKey,
+                  releaseName: 'my-application',
+                  releaseVersion: '1.0.0',
+                },
+              }
+            : {}),
+        },
+      }
+    : {}),
 })
-
