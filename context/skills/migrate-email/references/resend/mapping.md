@@ -62,7 +62,7 @@ Resend templates hold only variables, with an optional fallback. In the code:
 | A variable of type `number` | The number written as a decimal, such as `3` or `2.5`. Note in the plan row where the language writes a whole float differently, such as Python's `3.0` |
 | The template's `subject` | The send's `subject`, rendered with the same variables. A subject the site sets next to `template` wins: Resend sends the value the send passes over the template's |
 | The template's `from` and `reply_to` | The send's `from` and reply-to address. A value the site sets next to `template` wins, the same way. A value the send takes from the template meets the rules of "Fields" as one the site sets: a reply-to address with a name, such as `Support <support@example.com>`, keeps the site on Resend |
-| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only: Resend made its text part from the HTML, and PostHog does the same. A template whose `text` is an empty string sent no text part, which a PostHog send can't do: it stays on Resend, and the reason is `turns the plain-text part off` |
+| The template's `html` and `text` | The send's `html` and `text`. A template without `text` sends `html` only: Resend made its text part from the HTML, and PostHog does the same. A React Email component renders its own text part instead, as `template-to-code.md` says. A template whose `text` is an empty string sent no text part, which a PostHog send can't do: it stays on Resend, and the reason is `turns the plain-text part off` |
 
 Write the `\|` above as a plain `|`. The table escapes it.
 
@@ -142,7 +142,7 @@ How a site that moves is written with PostHog's SDK for its language. Step 7 say
 ### Node.js
 
 - `resend.emails.send(payload, { idempotencyKey })` and `resend.emails.create(...)` become one `posthog.emails.send({ ... })`. The options object goes away: `idempotencyKey` moves into the payload. A `signal` in it is code around the send, as the table above says.
-- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `import { render } from '@react-email/render'`. Keep a `text` the site already passes.
+- `react: <Welcome name={name} />` becomes `html: await render(<Welcome name={name} />)`, with `render` from the app's React Email package: `import { render } from 'react-email'` from version 6 on, or the `render` that `rewrite-node.md` names before it. Keep a `text` the site already passes.
 - An HTTP body's snake_case fields become camelCase: `reply_to` becomes `replyTo`.
 - posthog-node answers `{ data, error }` like Resend and never throws on an API error. `data.id` is PostHog's message ID, so code that logs it or stores it for the app's own use keeps working for a send that goes out. A suppressed send has none, as "Suppressed recipients" says. `error.name` uses Resend's names, and `error.message` and `error.statusCode` keep their names. A branch on `rate_limit_exceeded` goes, as Step 7 says, except work besides its retry, which stays.
 - Resend answers a network failure as an `error` with the name `application_error` and a `statusCode` of `null`. posthog-node answers it with the code `network_error`, the name `service_unavailable`, and no `statusCode`. A branch on `error.name === 'application_error'` took network failures too: it also takes `error.code === 'network_error'`. A check of `error.statusCode === null` becomes `error.statusCode == null`, which a local argument error matches too, as Resend's `null` did.

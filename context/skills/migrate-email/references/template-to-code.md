@@ -30,7 +30,7 @@ Write each API answer and each copy you make to a file in the system's temporary
 
 ## Where the email goes
 
-Write each email next to the module that sends it, in an `emails` folder, or in the folder where the app already keeps its email content. Name the files after the template key that Step 7 gives the send, such as `emails/welcome.html` and `emails/welcome.txt`. Two sites that send the same provider template share one email.
+Write each email next to the module that sends it, in an `emails` folder, or in the folder where the app already keeps its email content. Name the files after the template key that Step 7 gives the send, such as `emails/welcome.html` and `emails/welcome.txt`, or `emails/WelcomeMail.tsx` for a React Email component. Two sites that send the same provider template share one email. When their parts would take different renderers, such as React Email for one and the string-built `node` row for a part that Node.js runs with no build, write the shared email with a renderer every one of those parts can load, so one email serves them all, and write the reason in each site's plan row. When no renderer runs in every one of those parts, such as a TypeScript site and a Python worker packaged on its own, each part keeps its own copy of the email under the same template key, in its own format, and each site's plan row names every copy, so a later edit changes all of them. The provider template's copy of the content stays until every copy that template needs is written. Run the trial that "How the code renders it" describes in each part that React Email would take before Step 7 rewrites any site that sends the template or deletes its copy, and pick the shared email's renderer from all of their results: a part whose trial fails, such as one that renders under the `react-server` condition, takes the shared email to the next option that fits every one of those parts. When it does, also undo what the trials that passed changed for this email alone, as a failed trial is undone: keep each package, config edit, layout, and render helper that another email the migration keeps in React Email still uses. Undo them together, from one copy of the manifests and the lockfile taken before the first of those trials, never one trial after another.
 
 Keep the content where the build ships it. A file that the code reads at run time by its path ships only when the build copies it: a bundler, a compiled binary, or a package that lists its data files can leave it out. So write the content as code, or embed it at build time, as the table below says, unless the app already ships template files the same way, such as a `templates` folder its template engine reads.
 
@@ -38,13 +38,13 @@ Keep the content where the build ships it. A file that the code reads at run tim
 
 Pick the first that fits the part of the app that sends:
 
-1. **React Email.** When the app's manifest for that part already has a React Email package, such as `@react-email/components` or `react-email`, write the email as a component: rebuild it with React Email's components (`Html`, `Head`, `Preview`, `Body`, `Container`, `Section`, `Row`, `Column`, `Text`, `Link`, `Button`, `Img`, `Hr`) with inline styles, keeping the provider's text, links, images, colors, and layout. Each variable becomes a prop. Render it with `render` from `@react-email/render` and send the result as `html`.
+1. **React Email**, for JavaScript or TypeScript. It is the default there, also when the app has no React Email package yet: write the email as a component, as "React Email" below says. A component reads like the email it renders, gives the HTML and the text part from one source, and shows in a preview before anyone is sent it.
 2. **The app's template engine.** When the app already renders HTML on the server with a template engine in that language, such as Jinja2 or Django templates, ERB or ActionView, Blade or Twig, EEx or HEEx, Handlebars, Nunjucks, or EJS, write the email as a template of that engine, with its auto-escaping on, and render it the way the app renders its other templates.
 3. **The language's own way.** Otherwise:
 
 | Language | The email | Escape a value with |
 |---|---|---|
-| `node` | A module, `emails/<key>.ts` or `.js`, that exports one function per email, which takes the variables and returns `{ subject, html, text }` built with template literals. In TypeScript, give the variables a type | an `escapeHtml` function in the same folder that replaces `&`, `<`, `>`, `"`, and `'`, or the app's own one, such as from `escape-html` or `lodash` |
+| `node` | A module, `emails/<key>.ts` or `.js`, that exports one function per email, which takes the variables and returns `{ subject, html }`, with `text` when the provider template had a text part, built with template literals. In TypeScript, give the variables a type | an `escapeHtml` function in the same folder that replaces `&`, `<`, `>`, `"`, and `'`, or the app's own one, such as from `escape-html` or `lodash` |
 | `python` | A module, `emails/<key>.py`, with the HTML and the text as string constants with `{{name}}` markers, and a function that replaces each marker | `html.escape(value, quote=True)` |
 | `go` | `emails/<key>.html` and `emails/<key>.txt`, embedded with `//go:embed`, rendered with `html/template` and `text/template` | `html/template`, which escapes each value for where it stands |
 | `ruby` | `emails/<key>.html.erb` and `emails/<key>.text.erb`, rendered with `ERB` from the standard library | `ERB::Util.html_escape`, as `<%= h(value) %>` |
@@ -62,13 +62,80 @@ Write the `\|` above as a plain `|`. The table escapes it.
 - `html/template` drops HTML comments, and with them Outlook's conditional comments, `<!--[if mso]>…<![endif]-->`, and what they hold. In Go, keep each one as a `template.HTML` constant next to the renderer, pass it in the data, and write it where it stood, such as `{{.OutlookButton}}`. A block that holds a variable becomes a function that takes the value, escapes it with `template.HTMLEscapeString`, and returns the block as `template.HTML`.
 - A function that replaces markers first checks that each marker in the template has a value, and raises when one has none, so a misspelled name fails the send instead of mailing the marker. It then replaces every marker in one pass, so a value that itself contains `{{name}}` goes out as written.
 - A loop becomes a loop in the code that builds one piece per item and joins them, and a condition becomes a branch, as the provider's "Templates" table says. A piece that repeats is its own small template or function, rendered with the same escaping.
-- Add no template engine or other dependency. React Email and the app's engine are already in the app, and the table above needs only the language's standard library.
+- Add no dependency other than the React Email packages that "React Email" names. The app's engine is already in the app, and the table above needs only the language's standard library.
+
+A part that can't take React Email takes the next option above that fits: the app's template engine when the app has one, or else the string-built `node` row. A part can't take React Email when Node.js runs its source as it is, as plain JavaScript or TypeScript with its type stripping, or `tsc` emits it with `"jsx": "preserve"` and nothing compiles the JSX after. A part that a bundler builds, that `tsc` emits with `"jsx": "react-jsx"`, or that Bun, `tsx`, or a framework such as Next.js runs, takes it. React Email takes the part only when the app has `react-email` 6.6 or later, or neither `react-email` nor `@react-email/components`, and when each of `react` and `react-dom` it has is 19 or later, or it has neither, which it adds. Any other app can't take it either, such as one on an older `react` or `react-dom`, or one with only `@react-email/components` or a `react-email` older than 6.6. Write the reason in the plan row.
+
+For a part that React Email takes, try it before you write the rest of its emails. Install the packages that "Packages" under "React Email" names, not yet the preview's, with the app's own package manager, keeping its lockfile settings. Write the part's first email, with the layout and render helper it uses, and run its render function in the runtime the part sends on, in the version the part runs, with an isolated render script: a short script that imports only the email and its render helper, which you run with that runtime and the provider's send credentials unset, and delete after. The render passes only when `render()` runs there and returns the email's HTML. A build or a typecheck doesn't count: a `react` and `react-dom` pair whose versions don't match fails only when `render()` runs. Then run the app's deployment install from the new lockfile the way its deploy does, with the Node.js version and settings the deploy uses, such as `pnpm install --frozen-lockfile` with `engine-strict`. Run the render once more on what that install left, before anything else installs. Render the email again with that isolated script. When the deploy builds, compile that script on its own before the deployment install, with the deploy's compiler settings: its `tsconfig.json` and JSX settings, and resolve conditions such as `react-server`, never the deploy's build command, and keep its output. Then run the compiled script with the part's runtime and the provider's send credentials unset, not through a test runner or a tool that install leaves out. Neither render goes through the app's tests or any other app code: the trial runs no app code and never sends. Run the deployment install of each other service that installs from the manifest or lockfile the trial changed, too, the way each one's deploy does. The trial passes only when the render and each of those deployment installs pass. After each deployment install, run the app's usual install again, so the dev tools it may have left out are back. When the install, the render, or the deployment install fails, undo every change the trial made: the email, its layout and render helper, each `tsconfig.json` or other config edit, and the manifest and the lockfile, so the tree is as it was before the trial. Then write the part's emails with the next option that fits, as above, and write the error in the plan row. Decide only by these installs and the render, never by reading the Node.js versions packages declare: a deploy that isn't engine-strict runs a package below its declared floor, and an engine-strict one refuses it, which its deployment install shows. Add the preview, as "Preview" says, only after the trial passes.
+
+## React Email
+
+- **Packages.** Add `react-email` as a dependency, with `react` and `react-dom`, its peers, when the app lacks them. When the app has `react` or `react-dom` only as a dev dependency, move it to `dependencies`. When the app has one of the two, add the other at the exact version the app's one resolved to, as the lockfile shows: `react-dom` needs the same version as `react`, and an install without a version can pick a newer one. It holds the components and `render`. Never add `@react-email/components`: it is deprecated. When the part that sends is TypeScript, its `tsconfig.json` sets `jsx`, such as `"jsx": "react-jsx"`, and it gets `@types/react` and `@types/react-dom` as dev dependencies when it lacks them.
+- **Preview.** Add the preview: add `@react-email/ui` as a dev dependency, in the same version as `react-email`, and a script that runs `email dev --dir emails`, with the folder's path from the project root, such as `"email:preview": "email dev --dir src/emails"`. The preview lists a `.tsx`, `.jsx`, or `.js` file in that folder only when it has a default export, and skips every folder whose name starts with `_`. So each email's file default-exports its component, and every other file exports by name or sits in a folder such as `emails/_shared/`. The preview never decides the renderer. When it installs, run the app's deployment install again from the new lockfile the way its deploy does, with the Node.js version and settings the deploy uses, such as `pnpm install --frozen-lockfile` with `engine-strict`: the preview adds packages with Node.js floors of their own, and a deploy that installs dev dependencies installs them too. Then run its usual install again, as the trial says, and start `email:preview` with the app's Node.js version, open one migrated email in it, and stop it. Run the deployment install of each other service the trial ran one for again too, since the preview's packages change the lockfile they install from. When its install or any of those deployment installs fails, undo only the preview's install and leave out its script, so the manifest and the lockfile are as the trial left them. When either install fails, or `email:preview` can't start or open an email on the app's Node.js, keep React Email, and add the plan note `before cutover: the email preview needs <what its error names, such as a Node.js version>`, followed by the steps left once that is fixed: install `@react-email/ui` as a dev dependency at the version of `react-email` the app has, add the script `"email:preview": "email dev --dir <the emails folder>"`, rerun every deployment install the trial ran, the other services' included, from the lockfile that install regenerated, and undo the preview's install again when one fails, and otherwise run it. Leave out the steps already done.
+- **Layout.** Put what the emails share, such as the page, the card, the logo, and the footer, in one layout component, such as `MailLayout`, which takes the preview text and the body. Rebuild the provider's design with React Email's components (`Html`, `Head`, `Preview`, `Body`, `Container`, `Section`, `Row`, `Column`, `Text`, `Link`, `Button`, `Img`, `Hr`) with inline styles, keeping the provider's text, links, images, colors, and layout. `Preview` writes its text as the page's `<title>` too: when the provider's HTML has a `<title>` of its own, keep it in `Head` and give `Preview` `useTitleTag={false}`.
+- **Each email.** One file, `emails/<Name>Mail.tsx` in TypeScript, or `emails/<Name>Mail.jsx` in JavaScript, default-exports the email's component. Each variable becomes a prop, typed in TypeScript. Set `PreviewProps` on the component with made-up values, so the preview shows the email filled in. Write no real person's name or address there.
+- **Render.** The file also exports a function that takes the props and returns `{ subject, html, text }`. One shared helper renders both parts: the HTML with `render(element)` and the text with `toPlainText(html, { selectors })`, from that HTML, so the two can't drift. The selectors set `uppercase: false` for `h1` to `h6`, since `toPlainText` writes headings in capitals by default, which would turn `Hi Straße,` into `HI STRASSE,`. The one exception is a greeting: when the provider's text part greets differently from its HTML, as "Variables, fallbacks, conditions, and loops" says, the function returns a text part written by hand instead. `render` is async. The site sends `html` and `text`. When the provider template had its own text part, compare it with the rendered one, and name in the plan row each line or link that only the provider's text had, so the person decides whether the email needs it.
+- **Escaping.** React escapes each value it renders, in text and in attributes, so pass each value as it is. A value the provider inserted as HTML goes in through `dangerouslySetInnerHTML`, under the rule of "Escaping".
+
+### Before and after
+
+A welcome email built from strings, with a text part written by hand beside it:
+
+```ts
+export function welcomeEmail({ firstName, dashboardUrl }: { firstName?: string; dashboardUrl: string }) {
+  return {
+    subject: 'Welcome to Acme',
+    html: `<div style="font-family:sans-serif"><p>Hi ${escapeHtml(firstName ?? 'there')},</p>
+<p><a href="${escapeHtml(dashboardUrl)}" style="background:#1d4ed8;color:#fff;padding:12px 20px">Open your dashboard</a></p></div>`,
+    text: `Hi ${firstName ?? 'there'},\n\nOpen your dashboard: ${dashboardUrl}`,
+  }
+}
+```
+
+The same email in React Email, in `emails/WelcomeMail.tsx`, with `MailLayout` beside it:
+
+```tsx
+import { Button, Text } from 'react-email'
+import { MailLayout } from './MailLayout'
+import { renderMail } from './renderMail'
+
+type WelcomeMailProps = { firstName?: string; dashboardUrl: string }
+
+export const welcomeMail = (props: WelcomeMailProps) => renderMail('Welcome to Acme', <WelcomeMail {...props} />)
+
+export default function WelcomeMail({ firstName, dashboardUrl }: WelcomeMailProps) {
+  return (
+    <MailLayout preview="Your Acme account is ready.">
+      <Text>{`Hi ${firstName ?? 'there'},`}</Text>
+      <Button href={dashboardUrl} style={{ backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
+        Open your dashboard
+      </Button>
+    </MailLayout>
+  )
+}
+
+WelcomeMail.PreviewProps = { firstName: 'Ada', dashboardUrl: 'https://example.com/dashboard' } satisfies WelcomeMailProps
+```
+
+And the helper every email shares, in `emails/renderMail.ts`:
+
+```ts
+import type { ReactElement } from 'react'
+import { render, toPlainText } from 'react-email'
+
+const selectors = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((selector) => ({ selector, options: { uppercase: false } }))
+
+export async function renderMail(subject: string, element: ReactElement) {
+  const html = await render(element)
+  return { subject, html, text: toPlainText(html, { selectors }) }
+}
+```
 
 ## Escaping
 
 The rule is the provider's, value by value. Where the provider escaped a value, the code escapes it, and where the provider inserted it as it is, so the email renders the markup, the code inserts it as it is. The provider's "Templates" table says which of its forms does which.
 
-- **HTML.** Escape every value in the HTML part with the escape the table above names, or with the engine's auto-escaping. A value goes in unescaped only where the provider's template inserted it as it is, and only when the code builds that value as HTML itself from text it escapes or controls, such as a list it joins with `<br>` or a link it builds. Mark that value as HTML in the way the renderer expects, such as `Markup` in Jinja2, `raw` in ERB, `{!! !!}` in Blade, `template.HTML` in Go, or `dangerouslySetInnerHTML` in React Email, and name it in the plan row.
+- **HTML.** Escape every value in the HTML part with the escape the table above names, or with React's or the engine's auto-escaping. A value goes in unescaped only where the provider's template inserted it as it is, and only when the code builds that value as HTML itself from text it escapes or controls, such as a list it joins with `<br>` or a link it builds. Mark that value as HTML in the way the renderer expects, such as `Markup` in Jinja2, `raw` in ERB, `{!! !!}` in Blade, `template.HTML` in Go, or `dangerouslySetInnerHTML` in React Email, and name it in the plan row.
 - **Text that the code doesn't control.** When the provider inserted a value as it is, but the value carries text from a user, a form, or another service, escape it anyway. The old email rendered any markup in that text. The new one shows it as typed. Note it in the plan row.
 - **Text and subject.** Never escape a value in the text part or in the subject: they are not HTML.
 - **Attributes and URLs.** A value inside an attribute, such as a link's `href` or an image's `src`, is escaped as HTML too. When the attribute's value has no quotes in the provider's template, such as `href={{{URL}}}`, put it in double quotes in the code: an escaped value can still hold a space, `=`, or a backtick, which ends or changes an unquoted attribute. Never URL-encode a value that the provider didn't encode.
@@ -80,6 +147,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - A condition tests what the provider tested, written out in the code. Never lean on the language's own truth test: `0`, `""`, `[]`, `"false"`, and `null` are true or false differently in each language and template language.
 - A loop walks the same list, in the same order, with the same item names.
 - A helper, such as a date format or a comparison, becomes code that gives the same result, as the table says.
+- Greet the recipient by name only when the provider template already did, with a name variable in its greeting, such as `Hi {{first_name}}`. Keep that variable, filled from the value the site already sent for it, and keep the provider's fallback, such as `Hi there`, for a recipient without one. When the provider's greeting named no one, keep it as it was: never add a name the template didn't use. Each part keeps its own greeting. When the provider's HTML and text parts greet differently, such as `Hi there` in the HTML and `Hi {{first_name}}` in the text, keep each as it was, and write the text part by hand from the provider's text part rather than deriving it from the HTML.
 
 ## Settings of the template
 
@@ -87,7 +155,7 @@ The rule is the provider's, value by value. Where the provider escaped a value, 
 - The template's sender becomes the send's `from`, such as `'Name <hello@example.com>'`. It needs a verified sender, so Step 3 writes it in the site's `from` column. A sender that holds a variable is rendered too, and Step 3 classifies each address it can take, as it does for any `from`.
 - The template's reply-to address becomes the send's reply-to address.
 - Preview text, such as a preheader, goes into the HTML as a hidden block at the start of the body: `<div style="display:none;max-height:0;overflow:hidden">…</div>`, or `Preview` in React Email.
-- When the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML whenever a send has no text.
+- A React Email component gives the send its `text`, rendered from its own HTML as "React Email" above says, whether or not the provider template had a text part, or written by hand when the provider's two parts greet differently. Otherwise, when the provider template had a text part, the send has `text` too. When it had none, send `html` only, and never write a text part from the HTML yourself: PostHog makes one from the HTML whenever a send has no text.
 
 ## Images and links
 
@@ -95,4 +163,4 @@ Keep every image and link URL as it is. An image that the provider hosts, on a h
 
 ## Write down
 
-Under the sites table, list each email brought into the code: its files, the provider template it came from with its ID or name, its variables, each value inserted unescaped, each value now escaped that the provider inserted as it was, and each image the provider hosts. Never write the email's content into the plan or the report.
+Under the sites table, list each email brought into the code: its files, its preview script, the provider template it came from with its ID or name, its variables, each email's greeting: the name variable it keeps, or that it names no one, and whether its text part is written by hand because the two parts greet differently, each line only the provider's text part had, each value inserted unescaped, each value now escaped that the provider inserted as it was, and each image the provider hosts. Never write the email's content into the plan or the report.
