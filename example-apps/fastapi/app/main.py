@@ -1,5 +1,6 @@
 """FastAPI application with PostHog integration."""
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from app.middleware import PostHogMiddleware
 from app.models import User
 from app.routers import api, main
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Setup templates
@@ -26,8 +28,18 @@ templates = Jinja2Templates(directory=str(templates_dir))
 async def lifespan(app: FastAPI):
     """Application lifespan events for startup/shutdown."""
     # Startup: Initialize PostHog
-    if not settings.posthog_disabled:
-        posthog.api_key = settings.posthog_project_token
+    token = settings.posthog_project_token.strip()
+    is_configured = bool(token) and not token.startswith("<ph_")
+    if settings.posthog_disabled or not is_configured:
+        posthog.disabled = True
+        if not settings.posthog_disabled and settings.debug:
+            logger.warning(
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, "
+                "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
+            )
+    else:
+        posthog.disabled = False
+        posthog.api_key = token
         posthog.host = settings.posthog_host
         posthog.debug = settings.debug
 
@@ -48,7 +60,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown: Flush PostHog events
-    if not settings.posthog_disabled:
+    if not posthog.disabled:
         posthog.flush()
 
 

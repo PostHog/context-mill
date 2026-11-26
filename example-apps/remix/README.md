@@ -35,7 +35,7 @@ VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 Get your project token from your [PostHog project settings](https://app.posthog.com/project/settings). Use `https://eu.i.posthog.com` as the host for an EU Cloud project.
 
-Vite reads these at build time, so rebuild after you change them. If the token is missing, the app still builds and runs, skips PostHog, and logs a warning outside production.
+Vite reads these at build time, so rebuild after you change them. If the token is missing, the app still builds and runs and skips PostHog. The browser logs an error in development, and the server logs a warning outside production.
 
 ### 3. Run the app
 

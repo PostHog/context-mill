@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./db.sqlite3"
 
     # PostHog
-    posthog_project_token: str = "<ph_project_token>"
+    posthog_project_token: str = ""
     posthog_host: str = "https://us.i.posthog.com"
     posthog_disabled: bool = False
 

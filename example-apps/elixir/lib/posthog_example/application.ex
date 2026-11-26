@@ -7,6 +7,7 @@ defmodule PostHogExample.Application do
   @impl true
   def start(_type, _args) do
     warn_if_token_missing()
+    :ets.new(:demo_users, [:named_table, :public, :set])
 
     children = [
       PostHogExampleWeb.Endpoint

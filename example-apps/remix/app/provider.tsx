@@ -20,7 +20,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
         tracing_headers: [window.location.hostname],
       });
     } else if (import.meta.env.DEV) {
-      console.warn(
+      console.error(
         "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
       );
     }

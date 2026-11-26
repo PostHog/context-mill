@@ -16,7 +16,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # PostHog configuration
-    POSTHOG_PROJECT_TOKEN = os.environ.get("POSTHOG_PROJECT_TOKEN", "<ph_project_token>")
+    POSTHOG_PROJECT_TOKEN = os.environ.get("POSTHOG_PROJECT_TOKEN", "")
     POSTHOG_HOST = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
     POSTHOG_DISABLED = os.environ.get("POSTHOG_DISABLED", "False").lower() == "true"
 

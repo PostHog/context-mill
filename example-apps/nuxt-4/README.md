@@ -181,8 +181,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = getOrCreateUser(username)
   const isNewUser = !users.has(username)
+  const user = getOrCreateUser(username)
 
   const sessionId = getHeader(event, 'x-posthog-session-id')
   const distinctId = getHeader(event, 'x-posthog-distinct-id')
@@ -191,7 +191,7 @@ export default defineEventHandler(async (event) => {
   const posthog = useServerPostHog()
   
   posthog.capture({
-    distinctId: distinctId,
+    distinctId: distinctId ?? user.id,
     event: 'server_login',
     properties: {
       $session_id: sessionId,
@@ -296,7 +296,7 @@ export default defineEventHandler(async (event) => {
   const posthog = useServerPostHog()
   
   posthog.capture({
-    distinctId: distinctId,
+    distinctId: distinctId ?? user.id,
     event: 'server_login',
     properties: {
       $session_id: sessionId,

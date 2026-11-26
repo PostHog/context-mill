@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   const posthog = useServerPostHog()
   
   posthog.capture({
-    distinctId: distinctId,
+    distinctId: distinctId ?? user.id,
     event: 'burrito_considered',
     properties: {
       $session_id: sessionId,

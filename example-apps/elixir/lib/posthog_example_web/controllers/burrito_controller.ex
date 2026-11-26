@@ -32,8 +32,10 @@ defmodule PostHogExampleWeb.BurritoController do
   `distinct_id` must match the id your frontend `posthog.identify(...)` uses,
   so events from both sides attach to the same person.
 
-  We derive a stable distinct id from the username and remember it in the
-  session so every later request captures against the same person.
+  We assign each username a stable UUID (standing in for a database primary key)
+  and remember it in the session so every later request captures against the same
+  person. Never use the username or email itself as `distinct_id`; send those as
+  person properties via `$set` instead.
 
   Identity note: this demo takes the username from an unverified form field for
   simplicity. A real app must derive `distinct_id` from the authenticated
@@ -42,13 +44,14 @@ defmodule PostHogExampleWeb.BurritoController do
   """
   def login(conn, params) do
     username = params["username"] || "burrito_fan"
-    distinct_id = "user_" <> username
+    distinct_id = get_or_create_user_id(username)
 
     # PostHog: identify + capture in one call. Extra keys in the map become
-    # event properties.
+    # event properties, and `$set` writes person properties.
     PostHog.capture("user_logged_in", %{
       distinct_id: distinct_id,
-      login_method: "email"
+      login_method: "email",
+      "$set": %{username: username}
     })
 
     conn
@@ -199,6 +202,17 @@ defmodule PostHogExampleWeb.BurritoController do
         else: properties
 
     PostHog.capture(event, properties)
+  end
+
+  defp get_or_create_user_id(username) do
+    case :ets.lookup(:demo_users, username) do
+      [{^username, id}] ->
+        id
+
+      [] ->
+        id = uuid4()
+        if :ets.insert_new(:demo_users, {username, id}), do: id, else: get_or_create_user_id(username)
+    end
   end
 
   defp uuid4 do

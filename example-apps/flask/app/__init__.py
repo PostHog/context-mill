@@ -20,8 +20,18 @@ def create_app(config_name="default"):
     login_manager.init_app(app)
 
     # Initialize PostHog
-    if not app.config["POSTHOG_DISABLED"]:
-        posthog.api_key = app.config["POSTHOG_PROJECT_TOKEN"]
+    token = (app.config["POSTHOG_PROJECT_TOKEN"] or "").strip()
+    is_configured = bool(token) and not token.startswith("<ph_")
+    if app.config["POSTHOG_DISABLED"] or not is_configured:
+        posthog.disabled = True
+        if not app.config["POSTHOG_DISABLED"] and app.config["DEBUG"]:
+            app.logger.warning(
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, "
+                "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
+            )
+    else:
+        posthog.disabled = False
+        posthog.api_key = token
         posthog.host = app.config["POSTHOG_HOST"]
         posthog.debug = app.config["DEBUG"]
 
