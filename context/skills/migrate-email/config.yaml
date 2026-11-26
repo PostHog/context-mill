@@ -19,3 +19,6 @@ variants:
   - id: sendgrid
     display_name: SendGrid
     tags: [sendgrid]
+  - id: mailgun
+    display_name: Mailgun
+    tags: [mailgun]
