@@ -1,5 +1,6 @@
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
+import { isRouteErrorResponse, type ClientOnErrorFunction } from "react-router";
 import { HydratedRouter } from "react-router/dom";
 
 import posthog from 'posthog-js';
@@ -12,19 +13,27 @@ if (posthogToken) {
     api_host: '/ingest',
     ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST?.includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com', // The PostHog app for your region
     defaults: '2026-08-30',
+    capture_exceptions: true,
     tracing_headers: [ window.location.hostname ],
   });
 } else if (import.meta.env.DEV) {
   console.warn('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
 }
 
+// Errors React Router catches in the browser. Skip responses thrown on purpose (404s) and the
+// sanitized copy of a server error: the server already captured it with its stack.
+const onError: ClientOnErrorFunction = (error) => {
+  if (isRouteErrorResponse(error)) return;
+  if (error instanceof Error && error.message === "Unexpected Server Error") return;
+  posthog.captureException(error);
+};
 
 startTransition(() => {
   hydrateRoot(
     document,
     <PostHogProvider client={posthog}>
       <StrictMode>
-        <HydratedRouter />
+        <HydratedRouter onError={onError} />
       </StrictMode>
     </PostHogProvider>,
   );

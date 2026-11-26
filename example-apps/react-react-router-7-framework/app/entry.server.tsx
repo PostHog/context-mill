@@ -7,6 +7,11 @@ import { isbot } from "isbot";
 import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 
+import { handleError } from "./lib/posthog.server";
+
+// Loader, action, middleware, resource route and server render errors.
+export { handleError };
+
 export const streamTimeout = 5_000;
 
 export default function handleRequest(
@@ -73,11 +78,14 @@ export default function handleRequest(
         },
         onError(error: unknown) {
           responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
+          // Errors raised while streaming, after the shell was sent, skip handleError: pass them
+          // on. Errors during the initial shell rendering reject and reach handleError already.
           if (shellRendered) {
-            console.error(error);
+            if (handleError) {
+              void handleError(error, { request });
+            } else {
+              console.error(error);
+            }
           }
         },
       },

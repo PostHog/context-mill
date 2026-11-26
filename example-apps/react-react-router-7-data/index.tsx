@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, isRouteErrorResponse, RouterProvider, type ClientOnErrorFunction } from "react-router";
 import Root, { RootErrorBoundary } from "./app/root";
 import Home from "./app/routes/home";
 import Burrito from "./app/routes/burrito";
@@ -15,6 +15,7 @@ if (posthogToken) {
   posthog.init(posthogToken, {
     api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
     defaults: '2026-08-30',
+    capture_exceptions: true,
   });
 } else if (import.meta.env.DEV) {
   console.warn('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
@@ -42,10 +43,17 @@ const router = createBrowserRouter([
   },
 ]);
 
+// Errors React Router catches (render, loader, action, fetcher). Responses thrown on purpose,
+// such as 404s, are not errors to track.
+const onError: ClientOnErrorFunction = (error) => {
+  if (isRouteErrorResponse(error)) return;
+  posthog.captureException(error);
+};
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <PostHogProvider client={posthog}>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} onError={onError} />
     </PostHogProvider>
   </StrictMode>
 );
