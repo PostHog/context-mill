@@ -29,8 +29,7 @@ def initialize_posthog():
     project_token = os.getenv('POSTHOG_PROJECT_TOKEN')
 
     if not project_token:
-        print("WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)")
-        print("         App will work but analytics won't be tracked")
+        print("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured")
         return None
 
     # Create PostHog instance with opinionated defaults

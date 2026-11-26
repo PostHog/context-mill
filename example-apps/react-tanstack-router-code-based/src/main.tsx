@@ -28,8 +28,8 @@ const rootRoute = createRootRoute({
 const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
 
 if (!posthogToken && import.meta.env.DEV) {
-  console.warn(
-    'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.',
+  console.error(
+    'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
   )
 }
 

@@ -28,7 +28,7 @@ VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -87,7 +87,7 @@ import { PostHogProvider } from '@posthog/react'
 </PostHogProvider>
 ```
 
-The root route only renders `PostHogProvider` when `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` is set. Without it, it logs a warning in development and renders the app without PostHog.
+The root route only renders `PostHogProvider` when `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` is set. Without it, it logs an error in development and renders the app without PostHog.
 
 ### Server-side setup (utils/posthog-server.ts)
 

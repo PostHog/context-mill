@@ -25,7 +25,7 @@ project_token = ENV['POSTHOG_PROJECT_TOKEN'].to_s.strip
 if project_token.empty?
   # Without PostHog.init the client stays disabled and every PostHog call is a no-op.
   if Rails.env.development?
-    Rails.logger.warn('POSTHOG_PROJECT_TOKEN is not set; PostHog is disabled. Copy .env.example to .env and set it.')
+    Rails.logger.warn('POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured')
   end
 else
   PostHog.init do |config|

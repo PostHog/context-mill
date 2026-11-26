@@ -85,7 +85,7 @@ posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
 })
 ```
 
-Initialize PostHog once, early in your app. All other modules import the same instance. If the project token is not set, `posthog.js` skips initialization and logs a warning in development.
+Initialize PostHog once, early in your app. All other modules import the same instance. If the project token is not set, `posthog.js` skips initialization and logs an error in development.
 
 ### 2. Event Tracking
 
@@ -122,7 +122,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 ## Running Without PostHog
 
-The app works fine without PostHog configured. You'll see a console warning but the app continues to function normally.
+The app works fine without PostHog configured. You'll see a console error in development, but the app continues to function normally.
 
 ## Next Steps
 

@@ -48,8 +48,7 @@ function initializePostHog(): bool
 
     $projectToken = getenv('POSTHOG_PROJECT_TOKEN');
     if (!$projectToken || str_starts_with($projectToken, 'phc_your_')) {
-        echo "WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)\n";
-        echo "         App will work but analytics won't be tracked\n";
+        echo "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured\n";
         return false;
     }
 

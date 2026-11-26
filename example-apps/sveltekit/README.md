@@ -32,7 +32,7 @@ PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token_here
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+You can find your project token in your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -84,7 +84,7 @@ export async function init() {
   const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
   if (!token) {
     if (dev) {
-      console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
+      console.error('PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
     }
     return;
   }

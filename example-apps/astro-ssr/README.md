@@ -51,7 +51,7 @@ POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs a warning naming the variable and skips PostHog initialization.
+Get your PostHog project token from your project settings in PostHog. If the token is missing, the app still builds and runs: in development it logs an error naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 

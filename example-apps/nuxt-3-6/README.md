@@ -34,7 +34,7 @@ NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 NUXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and boots: in development `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, and PostHog is not initialized.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and boots: outside production `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, and PostHog is not initialized.
 
 ### 3. Run the Development Server
 

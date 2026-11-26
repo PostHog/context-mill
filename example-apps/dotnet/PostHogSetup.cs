@@ -14,8 +14,8 @@ public static class PostHogSetup
         if (string.IsNullOrWhiteSpace(projectToken) && builder.Environment.IsDevelopment())
         {
             Console.WriteLine(
-                "WARNING: POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled and no events " +
-                "will be delivered. Set it in your environment (see .env.example) to enable analytics.");
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, " +
+                "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured");
         }
 
         builder.Configuration["PostHog:ProjectToken"] = projectToken;

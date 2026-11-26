@@ -28,7 +28,7 @@ VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -80,7 +80,7 @@ function RootComponent() {
 }
 ```
 
-`posthogToken` is `import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN`. When it is missing, the root route logs a warning in development and renders the app without the provider.
+`posthogToken` is `import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN`. When it is missing, the root route logs an error in development and renders the app without the provider.
 
 ### Reverse proxy
 

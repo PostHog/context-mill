@@ -36,7 +36,7 @@ export class AppComponent implements OnInit {
         capture_exceptions: true,
       });
     } else if (!environment.production) {
-      console.warn('NG_APP_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
+      console.error('NG_APP_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NG_APP_POSTHOG_PROJECT_TOKEN is configured');
     }
   }
 }

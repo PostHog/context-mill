@@ -30,7 +30,7 @@ NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs a warning in development instead of initializing PostHog.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the development server
 
@@ -86,7 +86,7 @@ if (token) {
     debug: process.env.NODE_ENV === "development",
   });
 } else if (process.env.NODE_ENV === "development") {
-  console.warn("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.")
+  console.error("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured")
 }
 ```
 

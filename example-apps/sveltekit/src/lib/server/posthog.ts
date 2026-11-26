@@ -8,7 +8,7 @@ export function getPostHogClient() {
 	const token = env.PUBLIC_POSTHOG_PROJECT_TOKEN;
 	if (!token) {
 		if (dev) {
-			console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.');
+			console.warn('PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
 		}
 		return null;
 	}

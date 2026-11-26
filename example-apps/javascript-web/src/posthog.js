@@ -11,7 +11,7 @@ const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 if (!projectToken) {
   if (import.meta.env.DEV) {
-    console.warn('VITE_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
+    console.error('VITE_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_POSTHOG_PROJECT_TOKEN is configured');
   }
 } else {
   posthog.init(projectToken, {

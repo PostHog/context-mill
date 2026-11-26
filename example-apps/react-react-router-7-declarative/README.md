@@ -31,7 +31,7 @@ VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
-If the project token is not set, the app skips PostHog initialization and logs a warning in development.
+If the project token is not set, the app skips PostHog initialization and logs an error in development.
 
 ### 3. Run the Development Server
 

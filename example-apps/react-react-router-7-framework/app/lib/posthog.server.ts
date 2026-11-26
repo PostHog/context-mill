@@ -4,8 +4,8 @@ import { createReactRouterErrorHandler, PostHog } from "posthog-node";
 // without reading .env at run time (react-router-serve does not load it).
 const token = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 
-if (!token) {
-  console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN was not set at build time. Server-side PostHog is disabled.");
+if (!token && process.env.NODE_ENV !== "production") {
+  console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured");
 }
 
 // One client for the server process. Exception autocapture covers errors no request handles.

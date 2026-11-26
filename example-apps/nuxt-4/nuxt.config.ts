@@ -4,8 +4,8 @@ import { resolve, dirname } from 'node:path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-if (!process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NODE_ENV === 'development') {
-  console.warn('NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog will not capture events.')
+if (!process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NODE_ENV !== 'production') {
+  console.warn('NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured')
 }
 
 // https://nuxt.com/docs/api/configuration/nuxt-config

@@ -39,7 +39,7 @@ PROJECT_ID=your_project_id
 PERSONAL_API_KEY=your_personal_api_key
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and boots: in development `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, and the server-side client is disabled.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If the token is missing, the app still builds and boots: outside production `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, and the server-side client is disabled.
 
 For source map uploads, get your project ID from [PostHog environment variables](https://app.posthog.com/settings/environment#variables) and your personal API key from [PostHog user API keys](https://app.posthog.com/settings/user-api-keys) (requires `organization:read` and `error_tracking:write` scopes).
 

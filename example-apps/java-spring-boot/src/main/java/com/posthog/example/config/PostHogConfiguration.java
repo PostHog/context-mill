@@ -38,8 +38,8 @@ public class PostHogConfiguration {
             @Value("${posthog.host:https://us.i.posthog.com}") String host) {
 
         if (projectToken == null || projectToken.isBlank()) {
-            log.warn("POSTHOG_PROJECT_TOKEN is not set. PostHog events will not be delivered. "
-                    + "Set it in your environment (see .env.example) to enable analytics.");
+            log.warn("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, "
+                    + "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured");
         }
 
         PostHogConfig config = PostHogConfig

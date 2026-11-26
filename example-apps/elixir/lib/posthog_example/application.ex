@@ -28,8 +28,8 @@ defmodule PostHogExample.Application do
     case Application.get_env(:posthog, :api_key) do
       token when token in [nil, ""] ->
         Logger.warning(
-          "POSTHOG_PROJECT_TOKEN is not set — PostHog events will not be delivered. " <>
-            "The app will still run. Set it in your environment to enable analytics."
+          "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, " <>
+            "this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
         )
 
       _token ->

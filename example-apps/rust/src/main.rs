@@ -43,8 +43,8 @@ async fn main() {
     // and the server still boots (captures simply won't be delivered).
     if token.trim().is_empty() {
         tracing::warn!(
-            "POSTHOG_PROJECT_TOKEN is not set. PostHog events will NOT be delivered. \
-             Set it in your environment (see .env.example) to enable analytics."
+            "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, \
+             this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
         );
     }
 

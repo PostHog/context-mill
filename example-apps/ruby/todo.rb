@@ -21,8 +21,7 @@ def initialize_posthog
   project_token = ENV['POSTHOG_PROJECT_TOKEN']
 
   unless project_token
-    puts 'WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)'
-    puts '         App will work but analytics won\'t be tracked'
+    puts 'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
     return nil
   end
 

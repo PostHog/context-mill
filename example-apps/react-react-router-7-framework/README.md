@@ -31,7 +31,7 @@ VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. Vite inlines both variables into the browser and the server build, so set them before `npm run build`; the server needs nothing at run time. If the token is missing, the app still builds and runs without PostHog and logs a warning.
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. Vite inlines both variables into the browser and the server build, so set them before `npm run build`; the server needs nothing at run time. If the token is missing, the app still builds and runs without PostHog. The browser logs an error in development, and the server logs a warning outside production.
 
 ### Requirements
 
@@ -92,7 +92,7 @@ if (posthogToken) {
     tracing_headers: [ window.location.hostname ],
   });
 } else if (import.meta.env.DEV) {
-  console.warn('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.');
+  console.error('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
 }
 
 // Errors React Router catches in the browser. Skip responses thrown on purpose (404s) and the

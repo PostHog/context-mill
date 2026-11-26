@@ -15,7 +15,7 @@ if (posthogToken) {
     defaults: '2026-08-30',
   });
 } else if (import.meta.env.DEV) {
-  console.warn('VITE_POSTHOG_PROJECT_TOKEN is not set. Skipping PostHog initialization.');
+  console.error('VITE_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_POSTHOG_PROJECT_TOKEN is configured');
 }
 
 app.use(createPinia())

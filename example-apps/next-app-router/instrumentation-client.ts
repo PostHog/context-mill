@@ -19,7 +19,7 @@ if (token) {
     // @ignoreBlockEnd
   });
 } else if (process.env.NODE_ENV === "development") {
-  console.warn("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled.")
+  console.error("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured")
 }
 
 //IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches, especially components like a PostHogProvider. instrumentation-client.ts is the correct solution for initializating client-side PostHog in Next.js 15.3+ apps.

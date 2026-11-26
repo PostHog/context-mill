@@ -15,10 +15,9 @@ if (__DEV__) {
   })
 }
 
-if (!isPostHogConfigured) {
-  console.warn(
-    'PostHog project token not configured. Analytics will be disabled. ' +
-      'Set POSTHOG_PROJECT_TOKEN in your .env file to enable analytics.'
+if (!isPostHogConfigured && __DEV__) {
+  console.error(
+    'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
   )
 }
 

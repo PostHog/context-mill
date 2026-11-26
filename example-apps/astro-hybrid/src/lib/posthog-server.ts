@@ -11,7 +11,7 @@ export function getPostHogServer(): PostHog {
     const token = import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN;
     if (!token && import.meta.env.DEV) {
       console.warn(
-        "PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog capture is disabled.",
+        "PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured",
       );
     }
     posthogClient = new PostHog(token || "", {
