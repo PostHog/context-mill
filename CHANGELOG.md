@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.70.0](https://github.com/PostHog/context-mill/compare/v1.69.0...v1.70.0) (2026-11-26)
+
+
+### Features
+
+* **skills:** publish SDK skills per major for projects on an older SDK ([#546](https://github.com/PostHog/context-mill/issues/546)) ([e5f3562](https://github.com/PostHog/context-mill/commit/e5f35624bd90ae750f63ff9b9e44ecd89cde2bd4))
+
+
+### Bug Fixes
+
+* **examples:** make the example apps follow the install rules they teach ([#567](https://github.com/PostHog/context-mill/issues/567)) ([b67f4ec](https://github.com/PostHog/context-mill/commit/b67f4eccb365ccf710da55c96468db9a578840bd))
+
 ## [1.69.0](https://github.com/PostHog/context-mill/compare/v1.68.0...v1.69.0) (2026-11-26)
 
 
