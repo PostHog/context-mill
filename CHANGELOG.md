@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.69.0](https://github.com/PostHog/context-mill/compare/v1.68.0...v1.69.0) (2026-11-26)
+
+
+### Features
+
+* **build:** check every wizard framework resolves in each picked skill family ([#549](https://github.com/PostHog/context-mill/issues/549)) ([08af9c3](https://github.com/PostHog/context-mill/commit/08af9c3d68c98cd29751cc79494a0637bc324222))
+* **integration:** teach React Router error tracking ([#556](https://github.com/PostHog/context-mill/issues/556)) ([9fdf5a3](https://github.com/PostHog/context-mill/commit/9fdf5a372314a28a61e8a5830ac43cf54ef72a8c))
+
+
+### Bug Fixes
+
+* **migrate-email:** a fixed tracking enable wins, run-time clicks stay off templates ([#547](https://github.com/PostHog/context-mill/issues/547)) ([e7851f7](https://github.com/PostHog/context-mill/commit/e7851f709c78068b669cd2558ce2033240885d08))
+* **migrate-email:** open-event exception only when nobody knows, plain-text links need no sensitive mark ([#559](https://github.com/PostHog/context-mill/issues/559)) ([5ebdf4f](https://github.com/PostHog/context-mill/commit/5ebdf4fe06e0efe520056aa449d8e080eddf825a))
+* **skills:** fetch the iOS reference once ([#553](https://github.com/PostHog/context-mill/issues/553)) ([cb24aa8](https://github.com/PostHog/context-mill/commit/cb24aa8c41417082002620827e1e9bcf9fd963c4))
+
 ## [1.68.0](https://github.com/PostHog/context-mill/compare/v1.67.0...v1.68.0) (2026-11-23)
 
 
