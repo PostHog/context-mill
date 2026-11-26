@@ -1,0 +1,24 @@
+# Experiment-driven instrumentation skill.
+#
+# Unlike `instrument-product-analytics`, which casts a wide net (10–15 events of
+# "business value"), this skill scopes instrumentation to the events one specific
+# experiment needs to be measurable: hypothesis → primary metric → secondary
+# metrics → capture only the gaps. Hands off to experiment creation once events
+# are flowing.
+type: docs-only
+template: description.md
+category: experiments
+description: Instrument PostHog with one specific experiment in mind. Use when the user wants to A/B test a change but does not yet have the events needed to measure it. Forces a hypothesis, one primary metric, and a short list of secondary metrics, then captures only the gaps. Routes to instrument-product-analytics for general coverage and to experiment creation once events flow.
+tags: [experiments, instrumentation]
+shared_docs:
+  - https://posthog.com/docs/experiments/metrics.md
+  - https://posthog.com/docs/experiments/best-practices.md
+  - https://posthog.com/docs/experiments/exposures.md
+  - https://posthog.com/docs/experiments/installation.md
+  - https://posthog.com/docs/product-analytics/capture-events.md
+  - https://posthog.com/docs/getting-started/identify-users.md
+variants:
+  - id: all
+    display_name: all supported frameworks
+    tags: []
+    docs_urls: []
