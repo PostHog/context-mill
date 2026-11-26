@@ -80,7 +80,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: currentUser,
+          userId: localStorage.getItem('currentUserId'),
           totalConsiderations: newCount
         })
       });

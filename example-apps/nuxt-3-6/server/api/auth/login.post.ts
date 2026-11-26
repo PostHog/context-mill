@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     async () => {
       posthog.capture({
         event: 'server_login',
-        distinctId: distinctId ?? username,
+        distinctId: distinctId ?? user.id,
       })
     }
   )

@@ -7,6 +7,7 @@ import {
 import { usePostHog } from '@posthog/react'
 
 interface User {
+  id: string
   username: string
   burritoConsiderations: number
 }
@@ -69,8 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('currentUser', username)
         }
 
-        // Identify user in PostHog using username as distinct ID
-        posthog.identify(username, {
+        posthog.identify(userData.id, {
           username: username,
         })
 

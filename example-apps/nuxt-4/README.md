@@ -150,7 +150,7 @@ const handleSubmit = async () => {
   const success = await auth.login(formData.username, formData.password)
   if (success) {
     // Identifying the user once on login/sign up is enough.
-    posthog?.identify(formData.username)
+    posthog?.identify(auth.user.value!.id, { username: formData.username })
     
     // Capture login event
     posthog?.capture('user_logged_in')

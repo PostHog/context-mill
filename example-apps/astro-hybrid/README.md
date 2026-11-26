@@ -141,7 +141,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const posthog = getPostHogServer();
   posthog.capture({
-    distinctId: body.username,
+    distinctId: body.userId,
     event: "burrito_considered",
     properties: {
       $session_id: sessionId || undefined,

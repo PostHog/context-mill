@@ -88,7 +88,7 @@ The `gatsby-plugin-posthog` plugin is deprecated. To move to `posthog-js`:
 ```typescript
 import posthog from "posthog-js"
 
-posthog.identify(username, { username })
+posthog.identify(getUserId(username), { username })
 posthog.capture("user_logged_in")
 
 posthog.capture("burrito_considered", { total_considerations: n })

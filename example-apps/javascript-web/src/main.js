@@ -11,6 +11,17 @@ import posthog from './posthog.js';
 let todos = JSON.parse(localStorage.getItem('todos') || '[]');
 let currentUser = localStorage.getItem('currentUser') || null;
 
+// Stands in for your auth system: each username gets a stable user id, the way a user
+// record's primary key would. Identify with that id, never with the username or email.
+function getUserId(username) {
+  const key = `demo-user-id:${username}`;
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem(key, id);
+  return id;
+}
+
 // --- DOM Elements ---
 
 const todoForm = document.getElementById('todo-form');
@@ -36,7 +47,7 @@ function login() {
 
   // Identify user in PostHog — links all future events to this user
   // Pass person properties as second arg (this is where name/email belong, NOT in capture())
-  posthog.identify(username, { name: username });
+  posthog.identify(getUserId(username), { username });
 
   posthog.capture('user_logged_in');
 
@@ -192,7 +203,7 @@ logoutBtn.addEventListener('click', logout);
 
 // Restore auth state and re-identify if already logged in
 if (currentUser) {
-  posthog.identify(currentUser, { name: currentUser });
+  posthog.identify(getUserId(currentUser), { username: currentUser });
 }
 
 updateAuthUI();

@@ -131,7 +131,7 @@ const handleSubmit = async () => {
   const success = await auth.login(username.value, password.value)
   if (success) {
     // Identifying the user once on login/sign up is enough.
-    posthog?.identify(username.value)
+    posthog?.identify(auth.user.value!.id, { username: username.value })
     
     // Capture login event
     posthog?.capture('user_logged_in')
@@ -170,7 +170,7 @@ export default defineEventHandler(async (event) => {
     async () => {
       posthog.capture({
         event: 'server_login',
-        distinctId: distinctId ?? username,
+        distinctId: distinctId ?? user.id,
       })
     }
   )
@@ -250,7 +250,7 @@ await posthog.withContext(
   async () => {
     posthog.capture({
       event: 'server_login',
-      distinctId: distinctId ?? username,
+      distinctId: distinctId ?? user.id,
     })
   }
 )

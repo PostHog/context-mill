@@ -84,7 +84,7 @@ export const prerender = false;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: currentUser,
+          userId: localStorage.getItem('currentUserId'),
           totalConsiderations: newCount
         })
       });

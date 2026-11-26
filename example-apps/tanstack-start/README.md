@@ -145,7 +145,7 @@ const sessionId = request.headers.get('X-PostHog-Session-Id')
 
 const posthog = getPostHogClient()
 posthog?.capture({
-  distinctId: username,
+  distinctId: userId,
   event: 'burrito_considered',
   properties: {
     $session_id: sessionId || undefined,
@@ -179,8 +179,8 @@ import { usePostHog } from '@posthog/react'
 
 const posthog = usePostHog()
 
-posthog.identify(username, {
-  username: username,
+posthog.identify(user.id, {
+  username: user.username,
 })
 ```
 

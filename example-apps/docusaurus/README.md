@@ -78,7 +78,7 @@ The plugin throws when `apiKey` is empty, which is why the config only registers
 ### Identify, capture and reset (src/pages/burrito.tsx)
 
 ```typescript
-window.posthog?.identify(username, { username })
+window.posthog?.identify(getUserId(username), { username })
 window.posthog?.capture("user_logged_in")
 
 window.posthog?.capture("burrito_considered", { total_considerations: n })

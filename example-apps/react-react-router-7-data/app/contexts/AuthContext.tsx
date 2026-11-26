@@ -17,6 +17,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const users: Map<string, User> = new Map();
 
+// Stands in for your auth system: each username gets a stable user id, the way a user
+// record's primary key would. Identify with that id, never with the username or email.
+function getUserId(username: string): string {
+  const key = `demo-user-id:${username}`;
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem(key, id);
+  return id;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const posthog = usePostHog();
   const [user, setUser] = useState<User | null>(() => {
@@ -51,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('currentUser', username);
     
     // Identifying the user once on login/sign up is enough.
-    posthog.identify(username);
+    posthog.identify(getUserId(username), { username });
     posthog.capture('user_logged_in');
 
     return true;

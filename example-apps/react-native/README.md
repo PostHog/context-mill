@@ -288,7 +288,7 @@ import { usePostHog } from 'posthog-react-native'
 const posthog = usePostHog()
 
 // On login - identify with person properties
-posthog.identify(username, {
+posthog.identify(userData.id, {
   $set: {
     username: username,
   },

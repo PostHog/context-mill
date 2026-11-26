@@ -103,7 +103,7 @@ After a successful “login”, the app identifies the user and captures a login
 ```ts
 const success = await authStore.login(username.value, password.value)
 if (success) {
-  posthog.identify(username.value)
+  posthog.identify(getUserId(username.value), { username: username.value })
   posthog.capture('user_logged_in')
 }
 ```

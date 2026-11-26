@@ -50,7 +50,7 @@ try:
 except Exception as e:
     # Capture exception and event with user context
     with new_context():
-        identify_context(current_user.email)
+        identify_context(str(current_user.id))
         posthog.capture_exception(e)
         capture('error_triggered', properties={
             'error_type': 'value',

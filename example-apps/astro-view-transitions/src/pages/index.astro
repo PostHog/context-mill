@@ -66,6 +66,17 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     }
   }
 
+  // Stands in for your auth system: each username gets a stable user id, the way a user
+  // record's primary key would. Identify with that id, never with the username or email.
+  function getUserId(username) {
+    const key = `demo-user-id:${username}`;
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    window.localStorage.setItem(key, id);
+    return id;
+  }
+
   function handleLogin(event) {
     event.preventDefault();
 
@@ -86,7 +97,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     }
 
     // Identify the user in PostHog (once on login is enough)
-    window.posthog?.identify(username);
+    window.posthog?.identify(getUserId(username), { username });
     window.posthog?.capture('user_logged_in');
 
     // Clear form

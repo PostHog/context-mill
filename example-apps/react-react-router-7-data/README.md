@@ -97,7 +97,7 @@ const onError: ClientOnErrorFunction = (error) => {
 The user is identified when the user logs in on the **client-side**.
 
 ```typescript
-posthog.identify(username);
+posthog.identify(getUserId(username), { username });
 posthog.capture('user_logged_in');
 ```
 

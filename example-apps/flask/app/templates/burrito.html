@@ -20,7 +20,7 @@
     <pre>
 # API endpoint captures the event
 with new_context():
-    identify_context(current_user.email)
+    identify_context(str(current_user.id))
     capture('burrito_considered', properties={
         'total_considerations': burrito_count
     })</pre>

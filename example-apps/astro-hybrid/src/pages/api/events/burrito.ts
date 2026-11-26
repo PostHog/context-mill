@@ -6,10 +6,10 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { username, totalConsiderations } = body;
+    const { userId, totalConsiderations } = body;
 
-    if (!username) {
-      return new Response(JSON.stringify({ error: "Username is required" }), {
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "User id is required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
@@ -23,7 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Capture server-side burrito consideration event
     posthog.capture({
-      distinctId: username,
+      distinctId: userId,
       event: "burrito_considered",
       properties: {
         $session_id: sessionId || undefined,

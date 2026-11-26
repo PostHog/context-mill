@@ -88,7 +88,7 @@ if (posthogToken) {
 ### User identification (Home.jsx)
 
 ```javascript
-posthog.identify(username, { name: username })
+posthog.identify(getUserId(username), { username })
 posthog.capture('user_logged_in')
 ```
 

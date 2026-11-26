@@ -13,6 +13,17 @@ export interface User {
   burritoConsiderations: number;
 }
 
+// Stands in for your auth system: each username gets a stable user id, the way a user
+// record's primary key would. Identify with that id, never with the username or email.
+function getUserId(username: string): string {
+  const key = `demo-user-id:${username}`;
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem(key, id);
+  return id;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -62,7 +73,7 @@ export class AuthService {
     }
 
     // PostHog identification (client-side only)
-    this.posthogService.posthog.identify(username, {
+    this.posthogService.posthog.identify(getUserId(username), {
       username,
       isNewUser,
     });

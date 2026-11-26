@@ -29,8 +29,6 @@ export default function BurritoPage() {
     setTimeout(() => setHasConsidered(false), 2000);
     posthog.capture('burrito_considered', {
       total_considerations: updatedUser.burritoConsiderations,
-      username: user.username,
-      distinct_id: user.username,
     });
   };
 

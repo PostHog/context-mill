@@ -95,7 +95,7 @@ import { usePostHog } from '@posthog/react'
 
 const posthog = usePostHog()
 
-posthog.identify(username, {
+posthog.identify(getUserId(username), {
   username: username,
 })
 ```

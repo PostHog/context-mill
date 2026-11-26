@@ -77,7 +77,7 @@ posthog.init(token, {
 ### Identify and reset (routes/_index.tsx)
 
 ```typescript
-posthog.identify(username, { username });
+posthog.identify(getUserId(username), { username });
 posthog.capture("user_logged_in");
 
 posthog.reset(); // on sign-out

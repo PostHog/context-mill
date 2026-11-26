@@ -81,12 +81,12 @@ if (posthogToken) {
 </PostHogProvider>
 ```
 
-### User identification (AuthContext.jsx)
+### User identification (Home.jsx)
 
 The user is identified when the user logs in on the **client-side**.
 
 ```javascript
-posthog.identify(username);
+posthog.identify(getUserId(username), { username });
 posthog.capture('user_logged_in');
 ```
 
@@ -101,7 +101,6 @@ You should use these headers in the backend to identify events.
 ```javascript
 posthog?.capture('burrito_considered', {
   total_considerations: updatedUser.burritoConsiderations,
-  username: user.username,
 });
 ```
 

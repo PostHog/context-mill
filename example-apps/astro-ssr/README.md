@@ -119,6 +119,7 @@ import { getPostHogServer } from "../../../lib/posthog-server";
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
   const { username } = body;
+  const user = users.get(username)!;
 
   // Get session ID from client
   const sessionId = request.headers.get("X-PostHog-Session-Id");
@@ -127,7 +128,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Capture server-side event
   posthog.capture({
-    distinctId: username,
+    distinctId: user.id,
     event: "server_login",
     properties: {
       $session_id: sessionId || undefined,
@@ -166,7 +167,7 @@ const response = await fetch("/api/auth/login", {
 After server login succeeds, also identify on client:
 
 ```javascript
-window.posthog?.identify(username);
+window.posthog?.identify(data.userId, { username });
 window.posthog?.capture("user_logged_in");
 ```
 
@@ -177,6 +178,7 @@ On logout, both the local auth state and PostHog state are cleared:
 ```javascript
 window.posthog?.capture("user_logged_out");
 localStorage.removeItem("currentUser");
+localStorage.removeItem("currentUserId");
 window.posthog?.reset();
 ```
 

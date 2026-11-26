@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getPostHogClient } from '@/lib/posthog-server';
 
-const users = new Map<string, { username: string; burritoConsiderations: number }>();
+const users = new Map<string, { id: string; username: string; burritoConsiderations: number }>();
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,14 +21,14 @@ export default async function handler(
   const isNewUser = !user;
 
   if (!user) {
-    user = { username, burritoConsiderations: 0 };
+    user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 };
     users.set(username, user);
   }
 
   // Capture server-side login event
   const posthog = getPostHogClient();
   posthog?.capture({
-    distinctId: username,
+    distinctId: user.id,
     event: 'server_login',
     properties: {
       isNewUser: isNewUser,
@@ -38,7 +38,7 @@ export default async function handler(
 
   // Identify user on server side
   posthog?.identify({
-    distinctId: username,
+    distinctId: user.id,
     properties: {
       username: username,
       createdAt: isNewUser ? new Date().toISOString() : undefined

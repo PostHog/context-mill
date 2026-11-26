@@ -45,6 +45,7 @@
       window.posthog?.capture('user_logged_out');
     }
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUserId');
     localStorage.removeItem('burritoConsiderations');
     // IMPORTANT: Reset the PostHog instance to clear the user session
     window.posthog?.reset();

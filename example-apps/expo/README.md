@@ -124,7 +124,7 @@ posthog.capture('burrito_considered', {
 Users are identified on login:
 
 ```typescript
-posthog.identify(username, {
+posthog.identify(userData.id, {
   $set: { username },
   $set_once: { first_login_date: new Date().toISOString() },
 })

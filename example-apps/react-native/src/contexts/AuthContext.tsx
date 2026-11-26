@@ -7,7 +7,7 @@ import React, {
   useCallback,
 } from 'react'
 import { usePostHog } from 'posthog-react-native'
-import { storage, User } from '../services/storage'
+import { createUserId, storage, User } from '../services/storage'
 
 interface AuthContextType {
   user: User | null
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           // Re-identify user in PostHog on session restore
           // This ensures events are correctly attributed after app restart
-          posthog.identify(storedUsername, {
+          posthog.identify(existingUser.id, {
             $set: {
               username: storedUsername,
             },
@@ -80,6 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const isNewUser = !existingUser
 
         const userData: User = existingUser || {
+          id: createUserId(),
           username,
           burritoConsiderations: 0,
         }
@@ -89,10 +90,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await storage.setCurrentUser(username)
         setUser(userData)
 
-        // PostHog identify - use username as distinct ID
+        // PostHog identify - use the stable user id as distinct ID
         // $set updates properties every time, $set_once only sets if not already set
         // @see https://posthog.com/docs/libraries/react-native#identifying-users
-        posthog.identify(username, {
+        posthog.identify(userData.id, {
           $set: {
             username: username,
           },

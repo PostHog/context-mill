@@ -7,11 +7,11 @@ export const Route = createFileRoute('/api/burrito/consider')({
     handlers: {
       POST: async ({ request }) => {
         const body = await request.json()
-        const { username, totalConsiderations } = body
+        const { userId, username, totalConsiderations } = body
 
-        if (!username) {
+        if (!userId) {
           return json(
-            { error: 'Username is required' },
+            { error: 'User id is required' },
             { status: 400 },
           )
         }
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/api/burrito/consider')({
 
         const posthog = getPostHogClient()
         posthog?.capture({
-          distinctId: username,
+          distinctId: userId,
           event: 'burrito_considered',
           properties: {
             $session_id: sessionId || undefined,

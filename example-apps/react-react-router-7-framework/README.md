@@ -113,12 +113,8 @@ const onError: ClientOnErrorFunction = (error) => {
 The user is identified when the user logs in on the **client-side**.
 
 ```typescript
-posthog?.identify(username, {
-  username: username,
-});
-posthog?.capture('user_logged_in', {
-  username: username,
-});
+posthog?.identify(getUserId(username), { username });
+posthog?.capture('user_logged_in');
 ```
 
 The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers because we set the `tracing_headers` option in the PostHog initialization.

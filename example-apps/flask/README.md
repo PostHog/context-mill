@@ -45,7 +45,7 @@ A Flask application demonstrating PostHog integration for analytics, feature fla
 New users are identified and tracked on signup using the context-based API:
 ```python
 with new_context():
-    identify_context(user.email)
+    identify_context(str(user.id))
     tag('email', user.email)
     tag('is_staff', user.is_staff)
     capture('user_signed_up', properties={'signup_method': 'form'})
@@ -55,7 +55,7 @@ with new_context():
 Users are identified on login with their properties:
 ```python
 with new_context():
-    identify_context(user.email)
+    identify_context(str(user.id))
     tag('email', user.email)
     tag('is_staff', user.is_staff)
     capture('user_logged_in', properties={'login_method': 'password'})
@@ -65,7 +65,7 @@ with new_context():
 Custom events are captured throughout the app:
 ```python
 with new_context():
-    identify_context(current_user.email)
+    identify_context(str(current_user.id))
     capture('burrito_considered', properties={'total_considerations': count})
 ```
 
@@ -74,10 +74,10 @@ The dashboard demonstrates feature flag checking:
 ```python
 show_new_feature = posthog.feature_enabled(
     'new-dashboard-feature',
-    current_user.email,
+    str(current_user.id),
     person_properties={'email': current_user.email, 'is_staff': current_user.is_staff}
 )
-feature_config = posthog.get_feature_flag_payload('new-dashboard-feature', current_user.email)
+feature_config = posthog.get_feature_flag_payload('new-dashboard-feature', str(current_user.id))
 ```
 
 ### Error Tracking
@@ -93,7 +93,7 @@ try:
 except Exception as e:
     # Manually capture this specific exception
     with new_context():
-        identify_context(current_user.email)
+        identify_context(str(current_user.id))
         event_id = posthog.capture_exception(e)
 
     return jsonify({

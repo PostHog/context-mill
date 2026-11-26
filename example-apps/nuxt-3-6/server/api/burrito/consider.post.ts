@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     async () => {
       posthog.capture({
         event: 'burrito_considered',
-        distinctId: distinctId ?? username,
+        distinctId: distinctId ?? user.id,
       })
     }
   )

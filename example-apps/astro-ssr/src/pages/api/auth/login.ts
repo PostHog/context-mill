@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { getPostHogServer } from "../../../lib/posthog-server";
 
 // In-memory user store for demo purposes
-const users = new Map<string, { username: string; createdAt: string }>();
+const users = new Map<string, { id: string; username: string; createdAt: string }>();
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -21,10 +21,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (isNewUser) {
       users.set(username, {
+        id: crypto.randomUUID(),
         username,
         createdAt: new Date().toISOString(),
       });
     }
+
+    const user = users.get(username)!;
 
     // Get the PostHog server client
     const posthog = getPostHogServer();
@@ -34,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Capture server-side login event
     posthog.capture({
-      distinctId: username,
+      distinctId: user.id,
       event: "server_login",
       properties: {
         $session_id: sessionId || undefined,
@@ -46,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Also identify the user server-side
     posthog.identify({
-      distinctId: username,
+      distinctId: user.id,
       properties: {
         username,
         createdAt: isNewUser ? new Date().toISOString() : undefined,
@@ -59,6 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         success: true,
+        userId: user.id,
         username,
         isNewUser,
       }),

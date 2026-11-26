@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getPostHogClient } from '$lib/server/posthog';
 
-const users = new Map<string, { username: string; burritoConsiderations: number }>();
+const users = new Map<string, { id: string; username: string; burritoConsiderations: number }>();
 
 export const POST: RequestHandler = async ({ request }) => {
 	const { username, password } = await request.json();
@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const isNewUser = !user;
 
 	if (!user) {
-		user = { username, burritoConsiderations: 0 };
+		user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 };
 		users.set(username, user);
 	}
 
@@ -23,7 +23,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const posthog = getPostHogClient();
 	posthog?.withContext(
 		{
-			distinctId: username,
+			distinctId: user.id,
 			properties: {
 				$set: {
 					username,

@@ -92,8 +92,8 @@ if (token) {
 ### User identification (AuthContext.tsx)
 
 ```typescript
-posthog.identify(username, {
-  username: username,
+posthog.identify(user.id, {
+  username: user.username,
 });
 ```
 
@@ -117,7 +117,7 @@ posthog.captureException(error);
 ```typescript
 const posthog = getPostHogClient();
 posthog?.capture({
-  distinctId: username,
+  distinctId: user.id,
   event: 'server_login',
   properties: { ... }
 });

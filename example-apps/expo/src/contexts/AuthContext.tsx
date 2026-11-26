@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, use } from 'react'
 import type { ReactNode } from 'react'
 import { usePostHog } from 'posthog-react-native'
-import { storage } from '../services/storage'
+import { createUserId, storage } from '../services/storage'
 import type { User } from '../services/storage'
 
 interface AuthContextType {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const existingUser = await storage.getUser(storedUsername)
           if (existingUser) {
             setUser(existingUser)
-            posthog.identify(storedUsername, {
+            posthog.identify(existingUser.id, {
               $set: { username: storedUsername },
             })
           }
@@ -56,6 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const isNewUser = !existingUser
 
       const userData: User = existingUser || {
+        id: createUserId(),
         username,
         burritoConsiderations: 0,
       }
@@ -64,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await storage.setCurrentUser(username)
       setUser(userData)
 
-      posthog.identify(username, {
+      posthog.identify(userData.id, {
         $set: { username },
         $set_once: { first_login_date: new Date().toISOString() },
       })

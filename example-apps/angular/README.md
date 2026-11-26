@@ -127,7 +127,7 @@ import { PostHogService } from './posthog.service';
 
 const posthogService = inject(PostHogService);
 
-posthogService.posthog.identify(username, {
+posthogService.posthog.identify(getUserId(username), {
   username,
   isNewUser,
 });

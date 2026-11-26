@@ -4,8 +4,16 @@ const CURRENT_USER_KEY = 'currentUser'
 const USERS_KEY = 'users'
 
 export interface User {
+  id: string
   username: string
   burritoConsiderations: number
+}
+
+// Stands in for your auth system: each username keeps a stable user id, the way a user
+// record's primary key would. Identify with that id, never with the username or email.
+// React Native has no crypto.randomUUID, so the id joins the time and a random part.
+export function createUserId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
 /**

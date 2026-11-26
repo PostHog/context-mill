@@ -8,10 +8,8 @@ export default function Header() {
 
   const handleLogout = () => {
     if (user) {
-      posthog.capture('user_logged_out', {
-        username: user.username,
-        distinct_id: user.username,
-      });
+      posthog.capture('user_logged_out');
+      posthog.reset();
     }
     logout();
   };

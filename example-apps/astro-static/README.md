@@ -90,7 +90,7 @@ The `is:inline` directive is required to prevent TypeScript errors about `window
 After a successful "login", the app identifies the user and captures a login event:
 
 ```javascript
-window.posthog?.identify(username);
+window.posthog?.identify(getUserId(username), { username });
 window.posthog?.capture("user_logged_in");
 ```
 

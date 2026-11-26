@@ -1,4 +1,5 @@
 interface User {
+  id: string
   username: string
   burritoConsiderations: number
 }

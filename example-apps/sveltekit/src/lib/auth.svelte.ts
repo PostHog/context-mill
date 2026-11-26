@@ -3,6 +3,7 @@ import posthog from 'posthog-js';
 import { browser } from '$app/environment';
 
 export interface User {
+	id: string;
 	username: string;
 	burritoConsiderations: number;
 }
@@ -18,8 +19,9 @@ export class AuthState {
 		// Restore user from localStorage on creation (browser only)
 		if (browser) {
 			const storedUsername = localStorage.getItem('currentUser');
-			if (storedUsername) {
-				this.user = { username: storedUsername, burritoConsiderations: 0 };
+			const storedUserId = localStorage.getItem('currentUserId');
+			if (storedUsername && storedUserId) {
+				this.user = { id: storedUserId, username: storedUsername, burritoConsiderations: 0 };
 			}
 		}
 	}
@@ -38,7 +40,8 @@ export class AuthState {
 
 				if (browser) {
 					localStorage.setItem('currentUser', username);
-					posthog.identify(username, { username });
+					localStorage.setItem('currentUserId', userData.id);
+					posthog.identify(userData.id, { username });
 					posthog.capture('user_logged_in', { username });
 				}
 
@@ -56,6 +59,7 @@ export class AuthState {
 			posthog.capture('user_logged_out');
 			posthog.reset();
 			localStorage.removeItem('currentUser');
+			localStorage.removeItem('currentUserId');
 		}
 		this.user = null;
 	};

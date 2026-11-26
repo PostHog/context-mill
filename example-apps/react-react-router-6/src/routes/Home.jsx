@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePostHog } from '@posthog/react';
 
+// Stands in for your auth system: each username gets a stable user id, the way a user
+// record's primary key would. Identify with that id, never with the username or email.
+function getUserId(username) {
+  const key = `demo-user-id:${username}`;
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem(key, id);
+  return id;
+}
+
 export default function Home() {
   const { user, login } = useAuth();
   const posthog = usePostHog();
@@ -15,10 +26,8 @@ export default function Home() {
 
     const success = await login(username, password);
     if (success) {
-      posthog.capture('user_logged_in', {
-        username: username,
-        distinct_id: username,
-      });
+      posthog.identify(getUserId(username), { username });
+      posthog.capture('user_logged_in');
       setUsername('');
       setPassword('');
     } else {

@@ -135,7 +135,7 @@ document.addEventListener("astro:page-load", setupPage);
 After a successful "login", the app identifies the user and captures a login event:
 
 ```javascript
-window.posthog?.identify(username);
+window.posthog?.identify(getUserId(username), { username });
 window.posthog?.capture("user_logged_in");
 ```
 

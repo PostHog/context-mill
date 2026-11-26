@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { getPostHogClient } from '../../../utils/posthog-server'
 
+const users = new Map<string, { id: string; username: string; burritoConsiderations: number }>()
+
 export const Route = createFileRoute('/api/auth/login')({
   server: {
     handlers: {
@@ -18,12 +20,13 @@ export const Route = createFileRoute('/api/auth/login')({
         }
 
         // Check if this is a new user (simplified - in production use a database)
-        const isNewUser = !username
+        const isNewUser = !users.has(username)
 
         // Create or get user
-        const user = {
-          username,
-          burritoConsiderations: 0,
+        let user = users.get(username)
+        if (!user) {
+          user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 }
+          users.set(username, user)
         }
 
         const sessionId = request.headers.get('X-PostHog-Session-Id')
@@ -31,7 +34,7 @@ export const Route = createFileRoute('/api/auth/login')({
         // Capture server-side login event
         const posthog = getPostHogClient()
         posthog?.capture({
-          distinctId: username,
+          distinctId: user.id,
           event: 'server_login',
           properties: {
             $session_id: sessionId || undefined,
@@ -43,7 +46,7 @@ export const Route = createFileRoute('/api/auth/login')({
 
         // Identify user on server side
         posthog?.identify({
-          distinctId: username,
+          distinctId: user.id,
           properties: {
             username: username,
             createdAt: isNewUser ? new Date().toISOString() : undefined,
