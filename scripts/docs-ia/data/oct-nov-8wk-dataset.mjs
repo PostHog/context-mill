@@ -7,6 +7,10 @@
 // Each positive PR also carries objective on-disk `docChecks` evaluated against each arm's live `.mdx` tree
 // after EVERY PR so we can measure BOTH cumulative PR handling accuracy AND live on-disk doc accuracy / open drift over time.
 
+import { join } from 'node:path';
+
+const REPOS_ROOT = process.env.DOCS_IA_REPOS_ROOT || '.repos';
+
 export const OCT3_T0_COMMITS = {
   posthog: 'd05fae69e1747a95da038a068cd38683e52ec964',
   'posthog-js': 'abe2924c96a1ddb1d32362dc97bdd9ce121672ce',
@@ -17,20 +21,20 @@ export const OCT3_T0_COMMITS = {
 
 export const REPO_SEARCH_DIRS = {
   posthog: [
-    '/Users/vincent/work-code/workbench/posthog-onboarding-fixes',
-    '/Users/vincent/work-code/workbench/posthog-setup-401',
+    ...(process.env.DOCS_IA_POSTHOG_DIRS ? process.env.DOCS_IA_POSTHOG_DIRS.split(':').filter(Boolean) : []),
+    join(REPOS_ROOT, 'posthog'),
   ],
   'posthog-js': [
-    '/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/.repos/posthog-js',
+    process.env.DOCS_IA_POSTHOG_JS_DIR || join(REPOS_ROOT, 'posthog-js'),
   ],
   'posthog-python': [
-    '/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/.repos/posthog-python',
+    process.env.DOCS_IA_POSTHOG_PYTHON_DIR || join(REPOS_ROOT, 'posthog-python'),
   ],
   'posthog-rs': [
-    '/Users/vincent/work-code/posthog-rs-anchors',
+    process.env.DOCS_IA_POSTHOG_RS_DIR || join(REPOS_ROOT, 'posthog-rs'),
   ],
   'posthog-com': [
-    '/Users/vincent/work-code/workbench/groom-phcom-master',
+    process.env.DOCS_IA_POSTHOG_COM_DIR || join(REPOS_ROOT, 'posthog.com'),
   ],
 };
 

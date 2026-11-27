@@ -288,7 +288,7 @@ function extractBalancedJson(raw) {
   }
 }
 
-async function defaultLoadClaudeSdk({ moduleSearchPaths = [] } = {}) {
+export async function defaultLoadClaudeSdk({ moduleSearchPaths = [] } = {}) {
   const candidates = [process.env.DOCS_IA_CLAUDE_SDK_NODE_MODULES, ...moduleSearchPaths].filter(Boolean);
   try {
     const [sdk, zodMod] = await Promise.all([

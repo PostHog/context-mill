@@ -28,14 +28,12 @@ import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 
 import {
-  query as claudeQuery,
-} from '/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs';
-import {
   assertSubscriptionInit,
+  defaultLoadClaudeSdk,
   inspectSettingsConflicts,
   sanitizeSubscriptionEnv,
   verifyLocalSubscriptionAuth,
-} from '/Users/vincent/work-code/workbench/docs-ia-clean-run-2/docmap/tools/bootstrap/claude-driver.mjs';
+} from '../runtime/claude-sdk-adapter.mjs';
 
 import {
   OCT3_T0_COMMITS,
@@ -52,9 +50,9 @@ import { createTreeSitterAstParser } from '../tools/tree-sitter-parser.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
-const T0_OCT3_DIR = join(ROOT, 'out', 't0-oct3');
-const DIFF_CACHE_DIR = join(ROOT, 'cache', 'pr-diffs-8wk');
-const PRODUCT_YML = resolve(ROOT, '..', 'context-mill-docs-ia', 'facts', 'products', 'mcp-analytics.yml');
+const T0_OCT3_DIR = process.env.DOCS_IA_T0_OCT3_DIR || join(ROOT, 'out', 't0-oct3');
+const DIFF_CACHE_DIR = process.env.DOCS_IA_DIFF_CACHE_DIR || join(ROOT, 'cache', 'pr-diffs-8wk');
+const PRODUCT_YML = resolve(ROOT, '..', '..', 'facts', 'products', 'mcp-analytics.yml');
 
 const ARGS = new Set(process.argv.slice(2));
 const IS_PILOT = ARGS.has('--pilot');
@@ -438,7 +436,7 @@ ${inlineDiff}
 Follow your instructions above, edit/create any required \`.mdx\` files directly on disk (or leave all files untouched if no docs update is needed), and finish with a brief summary.`;
 }
 
-async function runSingleStatefulPr({ arm, ev, prData, docsMap, iaStore, parseAst, cleanEnv, settingsCheck }) {
+async function runSingleStatefulPr({ arm, ev, prData, docsMap, iaStore, parseAst, cleanEnv, settingsCheck, sdk }) {
   const startedAt = Date.now();
   const fullDiffText = (prData.files || []).map(f => prData.diffByPath?.[f.path] || '').filter(Boolean).join('\n');
 
@@ -501,7 +499,7 @@ async function runSingleStatefulPr({ arm, ev, prData, docsMap, iaStore, parseAst
 
   const allowDocsIaMcp = arm === 'ia_assisted_agent';
   const mcpBundle = allowDocsIaMcp
-    ? createStatefulDocsIaMcpServer({ store: iaStore, delta, event: ev, workspaceRoot, parseAst })
+    ? await createStatefulDocsIaMcpServer({ store: iaStore, delta, event: ev, workspaceRoot, parseAst, sdk })
     : null;
 
   const toolCalls = [];
@@ -514,7 +512,7 @@ async function runSingleStatefulPr({ arm, ev, prData, docsMap, iaStore, parseAst
   const iaGuardState = allowDocsIaMcp ? { calledPinDelta: false, calledBlastRadius: false } : null;
   const abortController = new AbortController();
   try {
-    const q = claudeQuery({
+    const q = sdk.query({
       prompt,
       options: {
         cwd: workspaceRoot,
@@ -805,7 +803,7 @@ function buildPlantedEventsWithChecks() {
   }));
 }
 
-async function runArmStream({ arm, events, productConfig, t0Data, parseAst, cleanEnv, settingsCheck }) {
+async function runArmStream({ arm, events, productConfig, t0Data, parseAst, cleanEnv, settingsCheck, sdk }) {
   const docsMap = loadOct3DocsMap(productConfig.docs_prefix);
   const iaStore = arm === 'ia_assisted_agent'
     ? new StatefulIaStore({
@@ -845,6 +843,7 @@ async function runArmStream({ arm, events, productConfig, t0Data, parseAst, clea
       parseAst,
       cleanEnv,
       settingsCheck,
+      sdk,
     });
 
     const point = scoreEventAndUpdateRunning({ ev, run, docsMap, state: scoreState });
@@ -906,8 +905,9 @@ async function runArmStream({ arm, events, productConfig, t0Data, parseAst, clea
 async function main() {
   console.log(`=== Stateful 8-Week Chronological Claude SDK Benchmark (${IS_PILOT ? 'PILOT' : 'FULL'} | tag=${TAG_ARG}) ===`);
   const cleanEnv = sanitizeSubscriptionEnv(process.env);
-  const settingsCheck = inspectSettingsConflicts(cleanEnv);
-  const authInfo = verifyLocalSubscriptionAuth(cleanEnv);
+  const settingsCheck = inspectSettingsConflicts({ env: cleanEnv });
+  const authInfo = verifyLocalSubscriptionAuth({ env: cleanEnv });
+  const sdk = await defaultLoadClaudeSdk();
   console.log(`Auth verified: ${authInfo.authMethod} (${authInfo.subscriptionType || 'team'}) | Model: ${MODEL} | Effort: ${EFFORT}`);
 
   const productConfig = yaml.load(readFileSync(PRODUCT_YML, 'utf8'));
@@ -921,7 +921,9 @@ async function main() {
 
   let parseAst = null;
   const tsRes = await createTreeSitterAstParser({
-    moduleSearchPaths: ['/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/node_modules'],
+    moduleSearchPaths: process.env.DOCS_IA_CLAUDE_SDK_NODE_MODULES
+      ? [process.env.DOCS_IA_CLAUDE_SDK_NODE_MODULES]
+      : [],
   });
   if (tsRes.available) parseAst = tsRes.parseAst;
   console.log(`AST parser: ${parseAst ? 'tree-sitter WASM' : 'fallback'} | Oct 3 T0: ${t0Data.facts.length} facts, ${t0Data.claims.length} claims`);
@@ -941,7 +943,7 @@ async function main() {
       : ['baseline_agent', 'ia_assisted_agent'];
 
   const resultsArr = await Promise.all(
-    armsToRun.map(arm => runArmStream({ arm, events, productConfig, t0Data, parseAst, cleanEnv, settingsCheck }))
+    armsToRun.map(arm => runArmStream({ arm, events, productConfig, t0Data, parseAst, cleanEnv, settingsCheck, sdk }))
   );
 
   const byArm = Object.fromEntries(resultsArr.map(r => [r.arm, r]));

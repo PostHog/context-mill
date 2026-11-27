@@ -8,12 +8,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import {
-  createSdkMcpServer,
-  tool as claudeTool,
-} from '/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs';
-import { z } from '/Users/vincent/work-code/workbench/posthog.com-docmap-bootstrap/docmap/node_modules/zod/index.js';
-
+import { defaultLoadClaudeSdk } from './claude-sdk-adapter.mjs';
 import { normalizeQuoteForIdentity, stableFactKey } from '../models/fact.mjs';
 import { createDetachedPin, refreshDetachedPin, shortSha256 } from '../models/pin.mjs';
 import { auditTrailForCode, padLeafNum } from '../models/register.mjs';
@@ -818,7 +813,9 @@ export class StatefulIaStore {
  * Create the live read/write `docs-ia` SDK MCP Server bound to the current PR and `StatefulIaStore`.
  * Every write tool mutates `store` in place and logs into `prMutations` for full auditability & scoring.
  */
-export function createStatefulDocsIaMcpServer({ store, delta, event: ev, workspaceRoot, parseAst }) {
+export async function createStatefulDocsIaMcpServer({ store, delta, event: ev, workspaceRoot, parseAst, sdk = null }) {
+  const loadedSdk = sdk || await defaultLoadClaudeSdk();
+  const { createSdkMcpServer, tool: claudeTool, z } = loadedSdk;
   const prMutations = {
     updatedFacts: [],
     retiredFacts: [],
