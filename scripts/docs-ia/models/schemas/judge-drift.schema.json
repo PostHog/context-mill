@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JudgeDriftOutput",
+  "type": "object",
+  "required": ["verdict", "summary", "new_or_updated_facts", "affected_claim_codes", "affected_docs_pages"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["no_behavior_change", "behavior_changed", "reverse_docs_contradiction"]
+    },
+    "summary": { "type": "string" },
+    "new_or_updated_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["def", "surface", "type", "claim", "quote"],
+        "properties": {
+          "def": { "type": "string" },
+          "surface": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fact", "schema", "guard", "input", "limit", "default",
+              "error", "branch", "control", "storage", "schedule", "wiring", "port"
+            ]
+          },
+          "claim": { "type": "string" },
+          "quote": { "type": "string" }
+        }
+      }
+    },
+    "retired_fact_codes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "op", "reason"],
+        "properties": {
+          "code": { "type": "string" },
+          "op": { "type": "string", "enum": ["rename", "delete", "split", "merge", "sunset"] },
+          "to": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "affected_claim_codes": { "type": "array", "items": { "type": "string" } },
+    "affected_docs_pages": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExtractFactsOutput",
+  "type": "object",
+  "required": ["facts"],
+  "properties": {
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["def", "type", "claim", "quote"],
+        "properties": {
+          "def": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fact", "schema", "guard", "input", "limit", "default",
+              "error", "branch", "control", "storage", "schedule", "wiring", "port"
+            ]
+          },
+          "claim": { "type": "string", "minLength": 18 },
+          "quote": { "type": "string", "minLength": 10 },
+          "port": {
+            "type": "object",
+            "required": ["kind", "dir", "key"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["http", "event", "store", "model_hook", "task", "query", "sdk_hook", "ui_nav", "mcp", "external"]
+              },
+              "dir": { "type": "string", "enum": ["emit", "handle", "guard", "write", "read"] },
+              "key": { "type": "string" }
+            }
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "dir", "key"],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": ["http", "event", "store", "model_hook", "task", "query", "sdk_hook", "ui_nav", "mcp", "external"]
+                },
+                "dir": { "type": "string", "enum": ["emit", "handle", "guard", "write", "read"] },
+                "key": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "no_behavior": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["def", "why"],
+        "properties": {
+          "def": { "type": "string" },
+          "why": { "type": "string" }
+        }
+      }
+    }
+  }
+}
