@@ -10,6 +10,5 @@ dist/
 .env*.local
 !.env.example
 
-# Convex local deployment state and generated code (run `npx convex dev` to regenerate)
+# Convex local deployment state
 .convex/
-convex/_generated/

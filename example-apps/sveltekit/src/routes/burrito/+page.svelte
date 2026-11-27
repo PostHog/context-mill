@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { env } from '$env/dynamic/public';
 	import posthog from 'posthog-js';
 	import { getAuthContext } from '$lib/auth.svelte';
 
@@ -16,17 +17,19 @@
 	});
 
 	function handleConsideration() {
+		// Skip capture when no user is logged in instead of using a fallback identity.
 		if (!auth.user) return;
 
 		auth.incrementBurritoConsiderations();
 		hasConsidered = true;
 		setTimeout(() => (hasConsidered = false), 2000);
 
-		// Capture burrito consideration event with PostHog
-		posthog.capture('burrito_considered', {
-			total_considerations: auth.user.burritoConsiderations,
-			username: auth.user.username
-		});
+		// Capture burrito consideration event without PII such as username in event properties.
+		if (env.PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()) {
+			posthog.capture('burrito_considered', {
+				total_considerations: auth.user.burritoConsiderations
+			});
+		}
 	}
 </script>
 

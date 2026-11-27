@@ -2,28 +2,35 @@ using PostHog;
 
 public static class PostHogSetup
 {
-    // Registers the single PostHog client for the app. The SDK reads the "PostHog"
-    // configuration section, so we map our environment variables onto it.
-    public static void AddPostHogFromEnvironment(this WebApplicationBuilder builder)
+    // Registers the single PostHog client for the app when POSTHOG_PROJECT_TOKEN is set.
+    public static bool AddPostHogFromEnvironment(this WebApplicationBuilder builder)
     {
-        var projectToken = Environment.GetEnvironmentVariable("POSTHOG_PROJECT_TOKEN");
-        var host = Environment.GetEnvironmentVariable("POSTHOG_HOST");
-
-        // A blank token never breaks the app: the SDK logs an error and turns every
-        // call into a no-op, so we only add a clearer hint in Development.
-        if (string.IsNullOrWhiteSpace(projectToken) && builder.Environment.IsDevelopment())
+        // Read the project token optionally and never register PostHog with a blank or fallback token,
+        // so unconfigured environments skip SDK initialization cleanly.
+        var projectToken = Environment.GetEnvironmentVariable("POSTHOG_PROJECT_TOKEN")?.Trim();
+        if (string.IsNullOrWhiteSpace(projectToken))
         {
-            Console.WriteLine(
-                "WARNING: POSTHOG_PROJECT_TOKEN is not set. PostHog is disabled and no events " +
-                "will be delivered. Set it in your environment (see .env.example) to enable analytics.");
+            return false;
         }
+
+        var host = Environment.GetEnvironmentVariable("POSTHOG_HOST")?.Trim();
 
         builder.Configuration["PostHog:ProjectToken"] = projectToken;
         builder.Configuration["PostHog:HostUrl"] = string.IsNullOrWhiteSpace(host)
             ? "https://us.i.posthog.com"
             : host;
 
-        // Registers IPostHogClient as a singleton: one client for the whole app.
+        // Registers IPostHogClient as a singleton, one client for the whole app.
         builder.AddPostHog();
+        return true;
+    }
+
+    public static void WarnIfPostHogUnconfigured(this WebApplication app)
+    {
+        if (app.Services.GetService<IPostHogClient>() is null && !app.Environment.IsProduction())
+        {
+            app.Logger.LogWarning(
+                "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured");
+        }
     }
 }

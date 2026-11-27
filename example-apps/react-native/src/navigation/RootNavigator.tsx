@@ -39,7 +39,7 @@ export function RootNavigator() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        headerBackTitleVisible: false,
+        headerBackButtonDisplayMode: 'minimal',
         animation: 'slide_from_right',
       }}
     >

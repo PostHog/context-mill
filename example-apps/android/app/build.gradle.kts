@@ -26,6 +26,26 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Read posthog.projectToken optionally and emit null when missing or blank,
+        // rather than defaulting BuildConfig.POSTHOG_PROJECT_TOKEN to an empty string.
+        val rawPostHogToken = localProperties.getProperty("posthog.projectToken")?.trim()
+        val postHogTokenLiteral =
+            if (rawPostHogToken.isNullOrEmpty()) "null" else "\"$rawPostHogToken\""
+        val rawPostHogHost = localProperties.getProperty("posthog.host")?.trim()
+        val postHogHost =
+            if (rawPostHogHost.isNullOrEmpty()) "https://us.i.posthog.com" else rawPostHogHost
+
+        buildConfigField(
+            "String",
+            "POSTHOG_PROJECT_TOKEN",
+            postHogTokenLiteral
+        )
+        buildConfigField(
+            "String",
+            "POSTHOG_HOST",
+            "\"$postHogHost\""
+        )
     }
 
     buildTypes {
@@ -44,19 +64,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    defaultConfig {
-        buildConfigField(
-            "String",
-            "POSTHOG_PROJECT_TOKEN",
-            "\"${localProperties.getProperty("posthog.projectToken", "")}\""
-        )
-        buildConfigField(
-            "String",
-            "POSTHOG_HOST",
-            "\"${localProperties.getProperty("posthog.host", "https://us.i.posthog.com")}\""
-        )
     }
 }
 

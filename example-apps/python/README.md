@@ -11,12 +11,12 @@ This example serves as:
 
 ## Features Demonstrated
 
-- **Instance-based API** - Uses `Posthog(...)` class instead of module-level API
-- **Exception autocapture** - Automatic tracking of unhandled exceptions
-- **Proper shutdown** - Uses `shutdown()` to flush events before exit
-- **Event tracking** - Captures user actions with `distinct_id` and properties
-- **User identification** - Sets properties on users via `identify()`, and updates them later with `set()` and `setOnce()`
-- **Error handling** - Manual exception capture for handled errors
+- **Instance-based API**: Uses the `Posthog(...)` class instead of module-level state
+- **Exception autocapture**: Automatic tracking of unhandled exceptions
+- **Proper shutdown**: Registers `atexit.register(client.shutdown)` and calls `shutdown()` before exit
+- **Event tracking**: Captures user actions with a persistent `distinct_id` and non-PII properties
+- **Person properties and context**: Sets person properties via `set()` and `set_once()`, or scopes request identity with `identify_context()` (the Python SDK has no `identify()` method)
+- **Error handling**: Manual exception capture for handled errors
 
 ## Quick Start
 
@@ -37,8 +37,8 @@ pip install -r requirements.txt
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your PostHog project token
-# POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+# Edit .env and set POSTHOG_PROJECT_TOKEN
+# POSTHOG_PROJECT_TOKEN=
 # POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -79,9 +79,9 @@ The app tracks these events in PostHog:
 example-apps/python/
 ├── todo.py              # Main CLI application
 ├── requirements.txt     # Python dependencies
-├── .env.example        # Environment variable template
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
+├── .env.example         # Environment variable template
+├── .gitignore           # Git ignore rules
+└── README.md            # This file
 ```
 
 ## Key Implementation Patterns
@@ -89,23 +89,24 @@ example-apps/python/
 ### 1. Instance-Based Initialization
 
 ```python
+import atexit
 from posthog import Posthog
 
-posthog = Posthog(
-    api_key,
-    host='https://us.i.posthog.com',
-    enable_exception_autocapture=True  # Automatically capture exceptions
+posthog_client = Posthog(
+    project_token,
+    host="https://us.i.posthog.com",
+    enable_exception_autocapture=True,
 )
+atexit.register(posthog_client.shutdown)
 ```
 
 ### 2. Event Tracking Pattern
 
 ```python
-# Track events with distinct_id
 posthog_client.capture(
-    distinct_id="user_123",
-    event="event_name",
-    properties={"key": "value"}
+    distinct_id=user_id,
+    event="todo_added",
+    properties={"todo_id": 1, "todo_length": 13, "total_todos": 1},
 )
 ```
 
@@ -113,20 +114,23 @@ posthog_client.capture(
 
 ```python
 try:
-    # Your application code
-    pass
+    run_cli()
 finally:
-    # Always call shutdown() to flush events and close connections
-    posthog.shutdown()
+    if posthog_client:
+        try:
+            posthog_client.shutdown()
+        except Exception:
+            pass
 ```
 
-### 4. Identifying Users
+### 4. Setting Person Properties
+
+The Python SDK has no `identify()` method. Set person properties via `set()` or `set_once()`, or use `identify_context()` inside a `new_context()` block:
 
 ```python
-# Set person properties on a user profile
 posthog_client.set(
-    distinct_id="user_123",
-    properties={"email": "user@example.com", "plan": "pro"}
+    distinct_id=user_id,
+    properties={"email": "user@example.com", "plan": "pro"},
 )
 ```
 
@@ -134,22 +138,21 @@ posthog_client.set(
 
 ```python
 try:
-    # Code that might fail
     risky_operation()
 except Exception as e:
-    # Manually capture handled errors you want to track
-    posthog_client.capture_exception(e, distinct_id="user_123")
+    if posthog_client:
+        posthog_client.capture_exception(e, distinct_id=user_id)
 ```
 
 ## Running Without PostHog
 
-The app works fine without PostHog configured - it simply won't track analytics. You'll see a warning message but the app continues to function normally.
+When `POSTHOG_PROJECT_TOKEN` is unset, the CLI logs a warning to `stderr` outside production, skips client creation, and runs todos normally.
 
 ## Next Steps
 
 - Modify `todo.py` to experiment with PostHog tracking
 - Add new commands and track their usage
-- Explore feature flags: `posthog.feature_enabled('flag-name', user_id)`
+- Explore feature flags: `posthog_client.feature_enabled("flag-name", user_id)`
 - Check your PostHog dashboard to see tracked events
 
 ## Learn More

@@ -69,10 +69,11 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
   async function handleLogin(event) {
     event.preventDefault();
 
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorMessage = document.getElementById('error-message');
 
+    // Reject empty login inputs before calling the API, identify, or capture instead of using a fallback identity.
     if (!username || !password) {
       errorMessage.textContent = 'Please provide both username and password';
       errorMessage.style.display = 'block';
@@ -92,18 +93,19 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.userId) {
         throw new Error(data.error || 'Login failed');
       }
 
       // Store in localStorage for client-side state
       localStorage.setItem('currentUser', username);
+      localStorage.setItem('currentUserId', data.userId);
       if (!localStorage.getItem('burritoConsiderations')) {
         localStorage.setItem('burritoConsiderations', '0');
       }
 
-      // Also identify on the client side (for session continuity)
-      window.posthog?.identify(username);
+      // Identify on the client with the stable user ID and keep username as a person property.
+      window.posthog?.identify(data.userId, { username });
       window.posthog?.capture('user_logged_in');
 
       // Clear form

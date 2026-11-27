@@ -66,13 +66,25 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     }
   }
 
+  // Stands in for your auth system: each username gets a stable user id, the way a user
+  // record's primary key would. Identify with that id, never with the username or email.
+  function getUserId(username) {
+    const key = `demo-user-id:${username}`;
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    window.localStorage.setItem(key, id);
+    return id;
+  }
+
   function handleLogin(event) {
     event.preventDefault();
 
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorMessage = document.getElementById('error-message');
 
+    // Reject blank login inputs before calling identify or capture rather than using a fallback identity.
     if (!username || !password) {
       errorMessage.textContent = 'Please provide both username and password';
       errorMessage.style.display = 'block';
@@ -85,8 +97,8 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       localStorage.setItem('burritoConsiderations', '0');
     }
 
-    // Identify the user in PostHog (once on login is enough)
-    window.posthog?.identify(username);
+    // Identify the user with a stable user ID and pass username as a person property.
+    window.posthog?.identify(getUserId(username), { username });
     window.posthog?.capture('user_logged_in');
 
     // Clear form

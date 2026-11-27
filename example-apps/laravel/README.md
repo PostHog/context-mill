@@ -6,7 +6,7 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
 
 - User registration and authentication with Livewire
 - SQLite database persistence with Eloquent ORM
-- User identification and property tracking
+- User identification and person property tracking
 - Custom event tracking (burrito consideration tracker)
 - Page view tracking (dashboard, profile)
 - Feature flags with payload support (`evaluateFlags`)
@@ -39,11 +39,11 @@ A Laravel application demonstrating PostHog integration for analytics, feature f
 
 3. Configure PostHog in `.env`:
    ```env
-   POSTHOG_API_KEY=phc_your_project_token
+   POSTHOG_API_KEY=
    POSTHOG_HOST=https://us.i.posthog.com
    POSTHOG_ENABLED=true
    ```
-   For an EU Cloud project, use `https://eu.i.posthog.com` as the host. With a blank `POSTHOG_API_KEY` the app boots with PostHog disabled.
+   Paste your project token into `POSTHOG_API_KEY`. For an EU Cloud project, use `https://eu.i.posthog.com` as the host. With a blank `POSTHOG_API_KEY`, the app boots with PostHog disabled and logs a warning outside production.
 
 4. Generate application key:
    ```bash
@@ -74,14 +74,14 @@ composer require posthog/posthog-laravel
 php artisan posthog:install
 ```
 
-`posthog:install` publishes `config/posthog.php`, which reads `POSTHOG_API_KEY`, `POSTHOG_HOST` and `POSTHOG_ENABLED`. Laravel's package discovery registers the service provider and the `PostHog\Laravel\Facades\PostHog` facade, so the app has no PostHog service provider, middleware, exception callback or wrapper class.
+`posthog:install` publishes `config/posthog.php`, which reads `POSTHOG_API_KEY`, `POSTHOG_HOST` and `POSTHOG_ENABLED`. Laravel package discovery registers the PostHog service provider and the `PostHog\Laravel\Facades\PostHog` facade automatically, so do not add `PostHog::init`, a PostHog middleware, or an exception report callback. `App\Providers\AppServiceProvider` logs a warning outside production when `POSTHOG_API_KEY` is blank so missing configuration is visible during development without breaking boot.
 
 > **Laravel 11 or earlier:** the Laravel SDK does not support these versions. Use the PHP SDK (`posthog/posthog-php`) with the "Manual setup with the PHP SDK" steps on the [Laravel docs page](https://posthog.com/docs/libraries/laravel) instead. Do not combine that setup with this SDK.
 
 ## What the SDK does for you
 
-- Events captured during a request carry the request method and matched route, and the visitor's IP as `$ip`.
-- The identity is the signed-in user's auth identifier. Without a signed-in user, the SDK falls back to the `X-PostHog-Distinct-Id` header sent by posthog-js, which is client-controlled and never authentication.
+- Events captured during a request carry the request method and matched route, and the visitor IP as `$ip`.
+- The identity is the signed-in user auth identifier. Without a signed-in user, the SDK falls back to the `X-PostHog-Distinct-Id` header sent by `posthog-js`, which is client-controlled and never authentication.
 - Signed-out events with no identity get a fresh random ID with `$process_person_profile` set to `false`. These IDs do not link events from the same visitor ([anonymous vs identified events](https://posthog.com/docs/data/anonymous-vs-identified-events.md)).
 - Exceptions Laravel reports are captured, honoring `dontReport`.
 - Events are flushed at the end of each request, queue job and Octane tick.
@@ -90,20 +90,22 @@ php artisan posthog:install
 **Still done by the app**
 
 - Identifying users at login and signup with a stable distinct ID (`User::getPostHogDistinctId()`, the primary key, not the email, which can change).
-- Capturing events with `PostHog::capture`.
+- Capturing events with `PostHog::capture` without PII in event properties.
 - Evaluating flags with `PostHog::evaluateFlags`.
 - Capturing handled exceptions with `PostHog::captureException`.
 
-Behind a reverse proxy or load balancer, configure Laravel's [trusted proxies](https://laravel.com/docs/requests#configuring-trusted-proxies) so `$ip` is the visitor's address. Set `POSTHOG_CAPTURE_IP=false` to turn IP collection off.
+Behind a reverse proxy or load balancer, configure Laravel [trusted proxies](https://laravel.com/docs/requests#configuring-trusted-proxies) so `$ip` is the visitor address. Set `POSTHOG_CAPTURE_IP=false` to turn IP collection off.
 
-This example loads no browser SDK, so there is no `posthog-js` or reverse proxy setup here. If you add `posthog-js`, set `defaults: '2026-08-30'`, configure `tracing_headers` for this app's hostname, and see the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md).
+This example loads no browser SDK, so there is no `posthog-js` or reverse proxy setup here. If you add `posthog-js`, set `defaults: '2026-08-30'`, configure `tracing_headers` for this app hostname, and see the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md).
 
 ## PostHog Integration Points
 
 Every call uses the facade: `use PostHog\Laravel\Facades\PostHog;`.
 
 ### User Registration (`app/Http/Livewire/Auth/Register.php`)
+
 New users are identified and tracked on signup. The distinct ID is passed explicitly so the identify and the event are tied to the same person:
+
 ```php
 PostHog::identify([
     'distinctId' => $user->getPostHogDistinctId(),
@@ -115,7 +117,9 @@ PostHog::capture('user_signed_up', [
 ```
 
 ### User Login (`app/Http/Livewire/Auth/Login.php`)
+
 Users are identified on login with their properties. The distinct ID is passed explicitly so the identify and the event are tied to the same person:
+
 ```php
 PostHog::identify([
     'distinctId' => $user->getPostHogDistinctId(),
@@ -127,13 +131,19 @@ PostHog::capture('user_logged_in', [
 ```
 
 ### User Logout (`routes/web.php`)
+
 The event is captured before `Auth::logout()`, while the request still has a signed-in user:
+
 ```php
-PostHog::capture('user_logged_out');
+if (Auth::check()) {
+    PostHog::capture('user_logged_out');
+}
 ```
 
 ### Page View Tracking
-Dashboard and profile views are tracked (`app/Http/Livewire/Dashboard.php`, `app/Http/Livewire/Profile.php`). No distinct ID is passed: the SDK uses the signed-in user.
+
+Dashboard and profile views are tracked (`app/Http/Livewire/Dashboard.php`, `app/Http/Livewire/Profile.php`). No distinct ID is passed because the SDK uses the signed-in user:
+
 ```php
 PostHog::capture('dashboard_viewed', [
     'is_staff' => $user->is_staff,
@@ -143,7 +153,9 @@ PostHog::capture('profile_viewed');
 ```
 
 ### Custom Event Tracking (`app/Http/Livewire/BurritoTracker.php`)
+
 The burrito tracker demonstrates custom event capture:
+
 ```php
 PostHog::capture('burrito_considered', [
     'total_considerations' => $this->burritoCount,
@@ -151,7 +163,9 @@ PostHog::capture('burrito_considered', [
 ```
 
 ### Feature Flags (`app/Http/Livewire/Dashboard.php`)
+
 The dashboard evaluates flags once for the signed-in user and reads from the snapshot:
+
 ```php
 $flags = PostHog::evaluateFlags(personProperties: $user->getPostHogProperties());
 
@@ -160,9 +174,11 @@ $this->featureConfig = $flags->getFlagPayload('new-dashboard-feature');
 ```
 
 ### Error Tracking
+
 Manual exception capture is demonstrated in multiple places. `captureException` returns a boolean, not an event ID, so the UI does not show an error ID.
 
 **Livewire Components** (`app/Http/Livewire/Dashboard.php`, `app/Http/Livewire/Profile.php`):
+
 ```php
 try {
     throw new \Exception('This is a test error for PostHog tracking');
@@ -173,6 +189,7 @@ try {
 ```
 
 **API Endpoint** (`app/Http/Controllers/Api/ErrorTestController.php`):
+
 ```php
 try {
     throw new \Exception('Test exception from critical operation');
@@ -191,7 +208,6 @@ try {
 The `/api/test-error` endpoint demonstrates manual exception capture. Use `?capture=true` to capture in PostHog, or `?capture=false` to skip tracking. The API routes use the session guard, so call them from a signed-in browser session with a CSRF token.
 
 Exceptions that Laravel reports on its own (uncaught ones) are captured by the SDK with no code in the app.
-
 
 ## Pages
 
@@ -221,8 +237,10 @@ example-apps/laravel/
 │   │       ├── BurritoTracker.php          # Burrito tracker component
 │   │       ├── Dashboard.php               # Dashboard with feature flags
 │   │       └── Profile.php                 # User profile component
-│   └── Models/
-│       └── User.php                        # User model with PostHog properties
+│   ├── Models/
+│   │   └── User.php                        # User model with PostHog properties
+│   └── Providers/
+│       └── AppServiceProvider.php          # Logs missing POSTHOG_API_KEY warning in dev
 ├── database/
 │   ├── migrations/                         # Database migrations
 │   └── seeders/

@@ -43,10 +43,9 @@ const handleConsideration = async () => {
       auth.setUser(response.user)
       hasConsidered.value = true
 
-      // Client-side tracking (in addition to server-side tracking)
+      // Client-side tracking without PII such as username in event properties.
       posthog?.capture('burrito_considered', {
         total_considerations: response.user.burritoConsiderations,
-        username: response.user.username,
       })
 
       setTimeout(() => {

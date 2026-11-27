@@ -7,35 +7,64 @@ import { posthog } from "./posthog"
 // that as the distinctId.
 const visitorArgs = {
     userId: v.optional(v.string()),
-    anonymousId: v.string(),
+    anonymousId: v.optional(v.string()),
     sessionId: v.optional(v.string()),
 }
 
-// Signed-in users keep their own id. Signed-out visitors use the random id
-// posthog-js keeps for the visit, and send $process_person_profile: false so
-// PostHog creates no person profile for them.
-function visitorProperties(args: { userId?: string; sessionId?: string }) {
-    return {
-        ...(args.userId ? {} : { $process_person_profile: false }),
-        ...(args.sessionId ? { $session_id: args.sessionId } : {}),
+// Resolve an authenticated user id first, or a per-visit anonymous id with
+// person profile creation disabled. Return null and omit analytics calls when
+// both are missing instead of falling back to a shared literal like anonymous.
+function resolveVisitor(args: { userId?: string; anonymousId?: string; sessionId?: string }): {
+    distinctId: string
+    properties: Record<string, unknown>
+} | null {
+    const sessionId = args.sessionId?.trim()
+    const sessionProps = sessionId ? { $session_id: sessionId } : {}
+
+    const userId = args.userId?.trim()
+    if (userId) {
+        return {
+            distinctId: userId,
+            properties: sessionProps,
+        }
     }
+
+    const anonymousId = args.anonymousId?.trim()
+    if (anonymousId) {
+        return {
+            distinctId: anonymousId,
+            properties: {
+                $process_person_profile: false,
+                ...sessionProps,
+            },
+        }
+    }
+
+    return null
 }
 
 export const login = mutation({
     args: { userId: v.string(), email: v.string(), sessionId: v.optional(v.string()) },
     handler: async (ctx, args) => {
-        // Identify once, on login. Use the same id in posthog.identify() in the browser.
+        // Skip identify and capture when user identity is blank rather than
+        // inventing a fallback distinctId.
+        const userId = args.userId.trim()
+        const email = args.email.trim()
+        if (!userId || !email) return
+
+        const sessionId = args.sessionId?.trim()
+
         await posthog.identify(ctx, {
-            distinctId: args.userId,
-            properties: { email: args.email },
+            distinctId: userId,
+            properties: { email },
         })
 
         await posthog.capture(ctx, {
-            distinctId: args.userId,
+            distinctId: userId,
             event: "user_logged_in",
             properties: {
                 login_method: "email",
-                ...(args.sessionId ? { $session_id: args.sessionId } : {}),
+                ...(sessionId ? { $session_id: sessionId } : {}),
             },
         })
     },
@@ -44,12 +73,15 @@ export const login = mutation({
 export const considerBurrito = mutation({
     args: { ...visitorArgs, totalConsiderations: v.number() },
     handler: async (ctx, args) => {
+        const visitor = resolveVisitor(args)
+        if (!visitor) return
+
         await posthog.capture(ctx, {
-            distinctId: args.userId ?? args.anonymousId,
+            distinctId: visitor.distinctId,
             event: "burrito_considered",
             properties: {
                 total_considerations: args.totalConsiderations,
-                ...visitorProperties(args),
+                ...visitor.properties,
             },
         })
     },
@@ -60,10 +92,13 @@ export const considerBurrito = mutation({
 export const dashboard = action({
     args: visitorArgs,
     handler: async (ctx, args) => {
+        const visitor = resolveVisitor(args)
+        if (!visitor) return { showNewFeature: false }
+
         try {
             const enabled = await posthog.evaluateFlag(ctx, {
                 key: "new-dashboard-feature",
-                distinctId: args.userId ?? args.anonymousId,
+                distinctId: visitor.distinctId,
             })
             return { showNewFeature: Boolean(enabled) }
         } catch (error) {
@@ -79,11 +114,14 @@ export const profile = action({
         try {
             throw new Error("Profile data is unavailable")
         } catch (error) {
-            await posthog.captureException(ctx, {
-                error,
-                distinctId: args.userId ?? args.anonymousId,
-                additionalProperties: visitorProperties(args),
-            })
+            const visitor = resolveVisitor(args)
+            if (visitor) {
+                await posthog.captureException(ctx, {
+                    error,
+                    distinctId: visitor.distinctId,
+                    additionalProperties: visitor.properties,
+                })
+            }
             return { message: "Profile data is unavailable. The error was reported." }
         }
     },

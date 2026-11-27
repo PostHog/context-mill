@@ -27,7 +27,9 @@ struct ProfileView: View {
     var body: some View {
         Form {
             Section("Your Information") {
-                LabeledContent("Username", value: userState.username ?? "—")
+                if let username = userState.username {
+                    LabeledContent("Username", value: username)
+                }
                 LabeledContent("Burrito Considerations", value: "\(userState.burritoConsiderations)")
             }
 
@@ -43,12 +45,8 @@ struct ProfileView: View {
                         userInfo: [NSLocalizedDescriptionKey: "Test error triggered by user"]
                     )
 
-                    // PostHog: Capture exception for error tracking
-                    PostHogSDK.shared.capture("test_error_triggered", properties: [
-                        "error_type": "test",
-                        "error_message": error.localizedDescription,
-                        "username": userState.username ?? "unknown",
-                    ])
+                    // Report exceptions with captureException and never attach PII like username.
+                    PostHogSDK.shared.captureException(error)
                 }
             }
 
@@ -60,11 +58,6 @@ struct ProfileView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Profile")
-        .onAppear {
-            // PostHog: Track profile view
-            PostHogSDK.shared.capture("profile_viewed", properties: [
-                "username": userState.username ?? "unknown",
-            ])
-        }
+        .postHogScreenView("Profile")
     }
 }

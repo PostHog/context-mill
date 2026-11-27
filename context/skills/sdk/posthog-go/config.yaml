@@ -1,0 +1,22 @@
+# PostHog Go SDK — exact-major reference & migration skills
+type: docs-only
+category: sdk
+cli:
+  role: internal
+description: PostHog Go SDK {display_name} reference
+variants:
+  - id: v1
+    display_name: 1.x.x
+    template: ../non-default-major.md
+    match: { posthogSdks: ["go:github.com/posthog/posthog-go@1"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/go/1.x.x.md
+      - https://posthog.com/docs/libraries/go/migration.md
+
+  - id: v2
+    default: true
+    display_name: 2.x.x
+    template: ../default-major.md
+    match: { posthogSdks: ["go:github.com/posthog/posthog-go@2"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/go/2.x.x.md

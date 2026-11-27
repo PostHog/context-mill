@@ -35,20 +35,19 @@
 
 <div class="card">
     <h3>How feature flags work</h3>
-    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code># Check if a feature flag is enabled
-show_feature = posthog.feature_enabled(
-    'new-dashboard-feature',
-    distinct_id=user_id,
-    person_properties={
-        'email': user.email,
-        'is_staff': user.is_staff,
-    }
-)
-
-# Get feature flag payload for configuration
-config = posthog.get_feature_flag_payload(
-    'new-dashboard-feature',
-    distinct_id=user_id,
-)</code></pre>
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>client = settings.POSTHOG_MW_CLIENT
+if client:
+    show_feature = client.feature_enabled(
+        'new-dashboard-feature',
+        distinct_id=str(request.user.pk),
+        person_properties={
+            'email': request.user.email,
+            'is_staff': request.user.is_staff,
+        },
+    )
+    config = client.get_feature_flag_payload(
+        'new-dashboard-feature',
+        distinct_id=str(request.user.pk),
+    )</code></pre>
 </div>
 {% endblock %}

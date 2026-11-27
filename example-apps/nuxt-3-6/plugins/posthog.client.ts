@@ -4,11 +4,17 @@ import type { PostHog, PostHogInterface } from 'posthog-js'
 
 export default defineNuxtPlugin((nuxtApp) => {
   const runtimeConfig = useRuntimeConfig()
-  const publicKey = runtimeConfig.public.posthog.publicKey
+  const rawKey = runtimeConfig.public.posthog?.publicKey
+  const publicKey = typeof rawKey === 'string' && rawKey.trim() ? rawKey.trim() : undefined
 
-  // nuxt.config.ts warns about a missing token in development
+  // Leave the client uninitialized when the token is missing instead of passing an empty key, and log an error in development.
   if (!publicKey) {
-    return { provide: { posthog: undefined } }
+    if (import.meta.env.DEV) {
+      console.error(
+        'NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
+      )
+    }
+    return { provide: { posthog: undefined as PostHog | undefined } }
   }
 
   const posthogClient = posthog.init(publicKey, {

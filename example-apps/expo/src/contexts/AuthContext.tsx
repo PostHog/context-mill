@@ -1,7 +1,8 @@
 import React, { createContext, useState, useEffect, use } from 'react'
 import type { ReactNode } from 'react'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
-import { storage } from '../services/storage'
+import { createUserId, storage } from '../services/storage'
 import type { User } from '../services/storage'
 
 interface AuthContextType {
@@ -19,20 +20,21 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const storedUsername = await storage.getCurrentUser()
+        const storedUsername = (await storage.getCurrentUser())?.trim()
         if (storedUsername) {
           const existingUser = await storage.getUser(storedUsername)
           if (existingUser) {
             setUser(existingUser)
-            posthog.identify(storedUsername, {
-              $set: { username: storedUsername },
+            // Re-identify restored sessions with the persisted user id so events after reload match login.
+            posthog?.identify(existingUser.id, {
+              $set: { username: existingUser.username },
             })
           }
         }
@@ -45,32 +47,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     restoreSession()
   }, [posthog])
 
-  // React Compiler auto-memoizes these callbacks - no useCallback needed!
+  // React Compiler auto-memoizes these callbacks, so manual useCallback is unnecessary.
   const login = async (username: string, password: string): Promise<boolean> => {
-    if (!username.trim() || !password.trim()) {
+    const trimmedUsername = username.trim()
+    const trimmedPassword = password.trim()
+
+    // Reject blank credentials before persisting state or calling identify and capture,
+    // rather than falling back to a shared placeholder identity.
+    if (!trimmedUsername || !trimmedPassword) {
       return false
     }
 
     try {
-      const existingUser = await storage.getUser(username)
+      const existingUser = await storage.getUser(trimmedUsername)
       const isNewUser = !existingUser
 
       const userData: User = existingUser || {
-        username,
+        id: createUserId(),
+        username: trimmedUsername,
         burritoConsiderations: 0,
       }
 
       await storage.saveUser(userData)
-      await storage.setCurrentUser(username)
+      await storage.setCurrentUser(trimmedUsername)
       setUser(userData)
 
-      posthog.identify(username, {
-        $set: { username },
+      posthog?.identify(userData.id, {
+        $set: { username: trimmedUsername },
         $set_once: { first_login_date: new Date().toISOString() },
       })
 
-      posthog.capture('user_logged_in', {
-        username,
+      // Keep PII like username out of capture event properties since person properties already store it.
+      posthog?.capture('user_logged_in', {
+        login_method: 'username',
         is_new_user: isNewUser,
       })
 
@@ -82,8 +91,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const logout = async () => {
-    posthog.capture('user_logged_out')
-    posthog.reset()
+    if (!user) return
+    posthog?.capture('user_logged_out')
+    posthog?.reset()
     await storage.removeCurrentUser()
     setUser(null)
   }
@@ -115,9 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 /**
- * React 19: Use the `use` API instead of useContext
- * - Can be called conditionally (unlike useContext)
- * - Enables more flexible component composition
+ * React 19: Use the `use` API instead of useContext.
  */
 export function useAuth() {
   const context = use(AuthContext)

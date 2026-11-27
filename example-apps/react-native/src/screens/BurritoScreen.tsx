@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
 import { useAuth } from '../contexts/AuthContext'
 import { RootStackParamList } from '../navigation/RootNavigator'
@@ -21,15 +22,14 @@ type BurritoScreenNavigationProp = NativeStackNavigationProp<
 /**
  * Burrito Consideration Screen
  *
- * Demonstrates PostHog event tracking with custom properties.
- * Each time the user considers a burrito, an event is captured.
+ * Demonstrates PostHog event tracking with non-PII custom properties.
  *
  * @see https://posthog.com/docs/libraries/react-native#capturing-events
  */
 export default function BurritoScreen() {
   const { user, incrementBurritoConsiderations } = useAuth()
   const navigation = useNavigation<BurritoScreenNavigationProp>()
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
   const [hasConsidered, setHasConsidered] = useState(false)
 
   // Redirect to home if not logged in
@@ -46,19 +46,14 @@ export default function BurritoScreen() {
   const handleConsideration = async () => {
     const newCount = user.burritoConsiderations + 1
 
-    // Update state first for immediate feedback
     await incrementBurritoConsiderations()
     setHasConsidered(true)
 
-    // Hide success message after 2 seconds
     setTimeout(() => setHasConsidered(false), 2000)
 
-    // Capture custom event in PostHog with properties
-    // We recommend using a [object] [verb] format for event names
-    // @see https://posthog.com/docs/libraries/react-native#capturing-events
-    posthog.capture('burrito_considered', {
+    // Keep PII like username out of event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: newCount,
-      username: user.username,
     })
   }
 
@@ -71,8 +66,7 @@ export default function BurritoScreen() {
         </Text>
 
         {/*
-          testID is captured by PostHog autocapture for touch events
-          This helps identify the button in analytics
+          testID is captured by PostHog autocapture for touch events.
           @see https://posthog.com/docs/libraries/react-native#autocapture
         */}
         <TouchableOpacity

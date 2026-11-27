@@ -11,15 +11,15 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function BurritoPage() {
-  const { user, setUser } = useAuth();
+  const { user, isReady, setUser } = useAuth();
   const navigate = useNavigate();
   const [hasConsidered, setHasConsidered] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (isReady && !user) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [isReady, user, navigate]);
 
   if (!user) {
     return null;

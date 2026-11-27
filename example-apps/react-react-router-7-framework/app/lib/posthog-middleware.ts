@@ -1,38 +1,37 @@
-import { PostHog } from "posthog-node";
 import type { RouterContextProvider } from "react-router";
+import type { PostHog } from "posthog-node";
 import type { Route } from "../+types/root";
+import { posthog } from "./posthog.server";
 
 export interface PostHogContext extends RouterContextProvider {
   posthog?: PostHog;
+  distinctId?: string;
 }
 
+// Propagate the browser's PostHog distinctId and sessionId from tracing headers.
+// Leave distinctId undefined when the header is missing rather than inventing a fallback ID.
 export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, context }, next) => {
-  const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
-  if (!token) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is not set. Server-side PostHog is disabled.");
-    }
+  if (!posthog) {
     return next();
   }
 
-  const posthog = new PostHog(token, {
-    host: process.env.VITE_PUBLIC_POSTHOG_HOST,
-    flushAt: 1,
-    flushInterval: 0,
-  });
+  const distinctId = request.headers.get("x-posthog-distinct-id")?.trim() || undefined;
+  const sessionId = request.headers.get("x-posthog-session-id")?.trim() || undefined;
 
-  const sessionId = request.headers.get('X-POSTHOG-SESSION-ID');
-  const distinctId = request.headers.get('X-POSTHOG-DISTINCT-ID');
+  const posthogContext = context as PostHogContext;
+  posthogContext.posthog = posthog;
+  posthogContext.distinctId = distinctId;
 
-  (context as PostHogContext).posthog = posthog;
+  if (!distinctId && !sessionId) {
+    return next();
+  }
 
-  const response = await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    next
+  return posthog.withContext(
+    {
+      ...(distinctId ? { distinctId } : {}),
+      ...(sessionId ? { sessionId } : {}),
+    },
+    next,
+    { fresh: true },
   );
-
-  await posthog.shutdown().catch(() => {});
-
-  return response;
 };
-

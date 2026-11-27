@@ -23,15 +23,15 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and set your project token:
 
 ```bash
-VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
-If the project token is not set, the app skips PostHog initialization and logs a warning in development.
+If the project token is not set, the app skips PostHog initialization and logs an error in development.
 
 ### 3. Run the Development Server
 
@@ -58,7 +58,7 @@ app/
 ├── root.tsx                 # Root route with error boundary
 └── routes.tsx               # Route configuration
 
-index.tsx                    # App entry point with PostHog initialization
+index.tsx                    # App entry point with PostHog initialization and router error capture
 ```
 
 ## Key Integration Points
@@ -66,62 +66,72 @@ index.tsx                    # App entry point with PostHog initialization
 ### Client-side initialization (index.tsx)
 
 ```typescript
-import posthog from 'posthog-js';
-import { PostHogProvider } from '@posthog/react'
+import { isRouteErrorResponse, type ClientOnErrorFunction } from "react-router";
+import posthog from "posthog-js";
+import { PostHogProvider } from "@posthog/react";
 
-const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+// Read the project token without a fallback value. When it is missing, leave the client uninitialized()
+// and PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 
 if (posthogToken) {
   posthog.init(posthogToken, {
     api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-    defaults: '2026-08-30',
+    defaults: "2026-08-30",
+    capture_exceptions: true,
   });
 }
 
-<PostHogProvider client={posthog}>
-  <RouterProvider router={router} />
-</PostHogProvider>
+// Errors React Router catches (render, loader, action, fetcher). Responses thrown on purpose,
+// such as 404s, are not errors to track.
+const onError: ClientOnErrorFunction = (error) => {
+  if (!posthogToken) return;
+  if (isRouteErrorResponse(error)) return;
+  posthog.captureException(error);
+};
+
+const app = <RouterProvider router={router} onError={onError} />;
+
+{posthogToken ? (
+  <PostHogProvider client={posthog}>{app}</PostHogProvider>
+) : (
+  app
+)}
 ```
 
-### User identification (AuthContext.tsx)
+### User identification (AuthContext.tsx, Header.tsx)
 
-The user is identified when the user logs in on the **client-side**.
+Users are identified on the client-side with a stable UUID (`localUser.id`) on login and when restoring a persisted session from `localStorage` on reload. `username` is sent only as a person property, never as `distinctId` or in `capture()` event properties.
 
 ```typescript
-posthog.identify(username);
-posthog.capture('user_logged_in');
+posthog?.identify(localUser.id, { username: localUser.username });
+posthog?.capture('user_logged_in', { is_new_user: isNewUser });
 ```
 
-The session and distinct ID can be passed to the backend by including the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers.
+On logout from an active session, capture `user_logged_out` before calling `reset()`:
 
-You should use these headers in the backend to identify events. 
+```typescript
+if (user) {
+  posthog?.capture('user_logged_out');
+  posthog?.reset();
+}
+```
 
-**Important**: do not identify users on the server-side.
+The session and distinct ID can be passed to a backend by including the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers. Do not identify users on the server-side.
 
 ### Event tracking (burrito.tsx)
 
 ```typescript
 posthog?.capture('burrito_considered', {
   total_considerations: updatedUser.burritoConsiderations,
-  username: user.username,
 });
 ```
 
-### Error tracking (root.tsx, profile.tsx)
+### Error tracking (index.tsx, profile.tsx)
 
-Errors are captured in two ways:
+React Router catches errors in rendering, loaders, actions, and fetchers and shows `RootErrorBoundary`, so these errors never reach exception autocapture, and `RootErrorBoundary` only renders the error UI. Errors are captured in two ways:
 
-1. **Error boundary** - The `RootErrorBoundary` in `root.tsx` automatically captures unhandled React Router errors:
-```typescript
-export function RootErrorBoundary() {
-  const error = useRouteError();
-  const posthog = usePostHog();
-  if (error) {
-    posthog.captureException(error);
-  }
-  // ... error UI
-}
-```
+1. **Router errors**: the `onError` handler on `<RouterProvider>` in `index.tsx` (above). `capture_exceptions: true` covers errors outside the router, such as unhandled promise rejections. `onError` needs `react-router` 7.11 or later. On 7.8.2 to 7.10, the prop is `unstable_onError`, typed `unstable_ClientOnErrorFunction`. On earlier versions, capture inside a `useEffect` in every route `ErrorBoundary`, with the same check.
 
 2. **Manual error capture** in components (profile.tsx):
 ```typescript

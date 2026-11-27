@@ -12,12 +12,14 @@ const considerations = new Map<string, number>();
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const username = String(formData.get("username") ?? "");
+  const username = String(formData.get("username") ?? "").trim();
+  // Reject unauthenticated submissions before updating state or capturing a signed-in user action event.
   if (!username) return Response.json({ error: "Username required" }, { status: 400 });
 
   const count = (considerations.get(username) ?? 0) + 1;
   considerations.set(username, count);
 
+  // Send only non-PII event metadata. captureEvent links the event via X-POSTHOG-DISTINCT-ID and skips capture if absent.
   await captureEvent(request, "burrito_considered", { total_considerations: count });
 
   return { count };
@@ -38,7 +40,7 @@ export default function Burrito() {
     try {
       throw new Error("Demo caught burrito error");
     } catch (err) {
-      posthog.captureException(err);
+      posthog?.captureException(err);
     }
   };
 

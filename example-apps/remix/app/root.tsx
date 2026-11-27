@@ -48,7 +48,9 @@ export function ErrorBoundary() {
   const posthog = usePostHog();
 
   useEffect(() => {
-    posthog.captureException(error);
+    // Skip expected HTTP route responses such as 404s so only unexpected errors are reported.
+    if (isRouteErrorResponse(error)) return;
+    posthog?.captureException(error);
   }, [error, posthog]);
 
   return (

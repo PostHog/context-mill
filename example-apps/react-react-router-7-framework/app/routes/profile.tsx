@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import type { Route } from "./+types/profile";
 import { useAuth } from '../contexts/AuthContext';
-import posthog from 'posthog-js';
 import { usePostHog } from '@posthog/react';
 
 export function meta({}: Route.MetaArgs) {
@@ -13,16 +12,15 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const navigate = useNavigate();
   const posthog = usePostHog();
-  
 
   useEffect(() => {
-    if (!user) {
+    if (isReady && !user) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [isReady, user, navigate]);
 
   if (!user) {
     return null;
@@ -33,7 +31,7 @@ export default function ProfilePage() {
       throw new Error('Test error for PostHog error tracking');
     } catch (err) {
       console.error('Captured error:', err);
-      posthog.captureException(err);
+      posthog?.captureException(err);
     }
   };
 
@@ -70,4 +68,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

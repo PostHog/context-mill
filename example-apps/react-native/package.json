@@ -21,7 +21,8 @@
     "react-native-device-info": "^15.0.1",
     "react-native-localize": "^3.6.1",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-screens": "^4.23.0"
+    "react-native-screens": "^4.23.0",
+    "react-native-svg": "^15.12.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -77,13 +77,11 @@
 try:
     raise ValueError('Invalid value provided')
 except Exception as e:
-    # Capture exception and event with user context
-    with new_context():
-        identify_context(current_user.email)
-        posthog.capture_exception(e)
-        capture('error_triggered', properties={
+    if posthog_client:
+        posthog_client.capture_exception(e)
+        posthog_client.capture('error_triggered', properties={
             'error_type': 'value',
-            'error_message': str(e)
+            'error_message': str(e),
         })</pre>
 </div>
 {% endblock %}

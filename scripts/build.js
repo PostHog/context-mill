@@ -59,8 +59,9 @@ async function main() {
         });
 
         // Non-blocking: a skill with no tags of its own gets only the commandments that apply to every skill.
+        // A skill with `match` publishes `key:value` menu tags, so it needs no commandment tags.
         for (const skill of skills) {
-            if (!skill.tags?.length) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
+            if (!skill.tags?.length && !skill.match) console.warn(`  [WARN] Skill "${skill.id}" has no tags`);
         }
 
         const docEntries = loadDocsConfig(configDir);

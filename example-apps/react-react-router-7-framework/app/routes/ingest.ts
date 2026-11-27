@@ -1,7 +1,11 @@
 import type { Route } from "./+types/ingest";
 
 // Proxy to the region in VITE_PUBLIC_POSTHOG_HOST: us.i.posthog.com or eu.i.posthog.com
-const API_HOST = new URL(process.env.VITE_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com").hostname;
+const posthogHost =
+  import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
+  process.env.VITE_PUBLIC_POSTHOG_HOST ||
+  "https://us.i.posthog.com";
+const API_HOST = new URL(posthogHost).hostname;
 const ASSET_HOST = API_HOST.replace(".i.posthog.com", "-assets.i.posthog.com");
 
 async function posthogProxy(request: Request) {

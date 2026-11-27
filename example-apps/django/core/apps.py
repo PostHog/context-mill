@@ -1,11 +1,10 @@
 """
-Django AppConfig that initializes PostHog when the application starts.
+Django AppConfig that wires up PostHog authentication signals on startup.
 
-This ensures the SDK is configured once when Django starts, making it available throughout the application.
+The Posthog client itself is constructed in posthog_example/settings.py as POSTHOG_MW_CLIENT.
 """
 
 from django.apps import AppConfig
-from django.conf import settings
 
 
 class CoreConfig(AppConfig):
@@ -13,28 +12,5 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        """
-        Initialize PostHog when Django starts.
-
-        This method is called once when Django starts. We configure the
-        PostHog SDK here so it's available everywhere in the application.
-
-        Note: Import posthog inside this method to avoid import issues
-        during Django's startup sequence.
-        """
-        import posthog
-
-        # Configure PostHog with settings from Django settings
-        posthog.api_key = settings.POSTHOG_PROJECT_TOKEN
-        posthog.host = settings.POSTHOG_HOST
-
-        # Honor the POSTHOG_DISABLED setting (useful for testing)
-        if settings.POSTHOG_DISABLED:
-            posthog.disabled = True
-
-        # Optional: Enable debug mode in development
-        if settings.DEBUG:
-            posthog.debug = True
-
-        # Register the auth signal that identifies the login request's context.
+        """Register the auth signal that identifies the login request context."""
         from . import signals  # noqa: F401

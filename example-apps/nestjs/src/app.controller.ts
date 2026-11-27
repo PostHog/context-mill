@@ -19,13 +19,15 @@ export class AppController {
     }
   }
 
-  // User identification: identify once, on login, with the app's own user id.
+  // User identification: identify on login with the app's stable user UUID.
   @Post('login')
   @HttpCode(200)
   login(
     @Body() body: { username?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
+    // Reject blank usernames before creating a session, identifying, or capturing
+    // so missing identity never falls back to a placeholder user.
     const username = body?.username?.trim()
     if (!username) {
       res.status(400)
@@ -35,9 +37,14 @@ export class AppController {
     const { user, sessionId } = this.auth.login(username)
     res.cookie('session', sessionId, { httpOnly: true, sameSite: 'lax' })
 
-    this.posthog.client.identify({
+    this.posthog.client?.identify({
       distinctId: user.id,
       properties: { username: user.username },
+    })
+    this.posthog.client?.capture({
+      distinctId: user.id,
+      event: 'user_logged_in',
+      properties: { login_method: 'username' },
     })
 
     return { user }
@@ -46,6 +53,12 @@ export class AppController {
   @Post('logout')
   @HttpCode(204)
   logout(@Req() req: VisitorRequest, @Res({ passthrough: true }) res: Response) {
+    if (req.visitor.user) {
+      this.posthog.client?.capture({
+        distinctId: req.visitor.user.id,
+        event: 'user_logged_out',
+      })
+    }
     this.auth.logout(req.cookies?.session)
     res.clearCookie('session')
   }
@@ -54,7 +67,7 @@ export class AppController {
   @Post('burrito')
   @HttpCode(200)
   burrito(@Req() req: VisitorRequest) {
-    this.posthog.client.capture({
+    this.posthog.client?.capture({
       distinctId: req.visitor.distinctId,
       event: 'burrito_considered',
       properties: { source: 'api' },
@@ -67,9 +80,15 @@ export class AppController {
   // Feature flag.
   @Get('dashboard')
   async dashboard(@Req() req: VisitorRequest) {
-    const flags = await this.posthog.client.evaluateFlags(req.visitor.distinctId)
+    let newDashboard = false
+    try {
+      const flags = await this.posthog.client?.evaluateFlags(req.visitor.distinctId)
+      newDashboard = flags?.isEnabled('new-dashboard-feature') ?? false
+    } catch (error) {
+      console.warn('Feature flag evaluation failed', error)
+    }
 
-    return { newDashboard: flags.isEnabled('new-dashboard-feature') }
+    return { newDashboard }
   }
 
   // Error tracking: the PostHog interceptor captures this unhandled error.

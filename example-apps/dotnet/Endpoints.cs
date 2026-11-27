@@ -1,27 +1,32 @@
+using System.Collections.Concurrent;
 using System.Net;
 using PostHog;
 
 public static class Endpoints
 {
+    // Maps each login identifier to a stable UUID so distinctId is never raw PII or a shared literal.
+    private static readonly ConcurrentDictionary<string, string> UsersByAccount =
+        new(StringComparer.OrdinalIgnoreCase);
+
     // Returns the distinct id for the request and whether the visitor is anonymous.
     //
-    // Signed-in users have a "user_id" cookie; that stable id is the join key for all
+    // Signed-in users have a "user_id" cookie, and that stable UUID is the join key for all
     // analytics and must match the id your frontend posthog.identify(...) call uses
     // so server- and client-side events land on the same person.
     //
     // Signed-out visitors get a random GUID stored in a cookie so it is reused for
-    // the rest of the visit. Never share one fixed id across visitors: they would
+    // the rest of the visit. Never share one fixed id across visitors because they would
     // all collapse into a single person.
     private static (string Id, bool Anonymous) Visitor(HttpContext context)
     {
-        if (context.Request.Cookies.TryGetValue("user_id", out var userId) && !string.IsNullOrEmpty(userId))
+        if (context.Request.Cookies.TryGetValue("user_id", out var userId) && !string.IsNullOrWhiteSpace(userId))
         {
-            return (userId, false);
+            return (userId.Trim(), false);
         }
 
-        if (context.Request.Cookies.TryGetValue("anon_id", out var anonId) && !string.IsNullOrEmpty(anonId))
+        if (context.Request.Cookies.TryGetValue("anon_id", out var anonId) && !string.IsNullOrWhiteSpace(anonId))
         {
-            return (anonId, true);
+            return (anonId.Trim(), true);
         }
 
         anonId = Guid.NewGuid().ToString();
@@ -53,13 +58,22 @@ public static class Endpoints
         app.MapGet("/", (HttpContext context) =>
         {
             var (userId, anonymous) = Visitor(context);
+            var authControls = anonymous
+                ? """
+                  <form method="POST" action="/login">
+                      <label>Email <input name="email" type="email" required placeholder="fan@example.com"></label>
+                      <button type="submit">Log in</button>
+                  </form>
+                  """
+                : """
+                  <form method="POST" action="/logout">
+                      <button type="submit">Log out</button>
+                  </form>
+                  """;
+
             return Page("Burrito app", $"""
             <p>{(anonymous ? "Not signed in, anonymous visitor" : "Signed in as")}: <strong>{Html(userId)}</strong></p>
-            <form method="POST" action="/login">
-                <label>User id <input name="user_id" value="burrito-fan-42"></label>
-                <label>Email <input name="email" value="fan@example.com"></label>
-                <button type="submit">Log in</button>
-            </form>
+            {authControls}
             <ul>
                 <li><a href="/burrito">Consider a burrito</a> (event tracking)</li>
                 <li><a href="/dashboard">Dashboard</a> (feature flag)</li>
@@ -68,32 +82,73 @@ public static class Endpoints
             """);
         });
 
-        // User identification: capture an event with person properties. The
-        // distinct id is the stable user id.
-        app.MapPost("/login", (HttpContext context, IPostHogClient posthog) =>
+        // User identification: map the login account to a stable UUID, identify person properties,
+        // and capture the login event without PII in event properties.
+        app.MapPost("/login", async (HttpContext context) =>
         {
-            var form = context.Request.Form;
-            var userId = form["user_id"].ToString();
-            if (string.IsNullOrEmpty(userId))
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].ToString().Trim();
+            var username = form["username"].ToString().Trim();
+            var accountKey = !string.IsNullOrEmpty(email) ? email : username;
+
+            // Require a non-empty login identifier and never fall back to a shared hardcoded distinctId,
+            // otherwise blank logins merge unrelated visitors into one PostHog person profile.
+            if (string.IsNullOrEmpty(accountKey))
             {
-                userId = "burrito-fan-42";
+                return Results.BadRequest("An email or username is required to log in.");
             }
 
+            var userId = UsersByAccount.GetOrAdd(accountKey, _ => Guid.NewGuid().ToString());
             context.Response.Cookies.Append("user_id", userId, CookieOptions);
 
-            posthog.Capture(
-                userId,
-                "user_logged_in",
-                properties: new() { ["login_method"] = "email" },
-                personPropertiesToSet: new() { ["email"] = form["email"].ToString() },
-                personPropertiesToSetOnce: new() { ["first_login_method"] = "email" });
+            var posthog = context.RequestServices.GetService<IPostHogClient>();
+            if (posthog is not null)
+            {
+                var personProperties = new Dictionary<string, object>();
+                if (!string.IsNullOrEmpty(email))
+                {
+                    personProperties["email"] = email;
+                }
+                if (!string.IsNullOrEmpty(username))
+                {
+                    personProperties["username"] = username;
+                }
 
+                var loginMethod = !string.IsNullOrEmpty(email) ? "email" : "username";
+                await posthog.IdentifyAsync(
+                    userId,
+                    personPropertiesToSet: personProperties,
+                    personPropertiesToSetOnce: new Dictionary<string, object>
+                    {
+                        ["first_login_method"] = loginMethod,
+                    },
+                    cancellationToken: context.RequestAborted);
+
+                posthog.Capture(
+                    userId,
+                    "user_logged_in",
+                    properties: new Dictionary<string, object> { ["login_method"] = loginMethod });
+            }
+
+            return Results.Redirect("/");
+        }).DisableAntiforgery();
+
+        app.MapPost("/logout", (HttpContext context) =>
+        {
+            // Only capture user_logged_out when a signed-in user session actually exists.
+            if (context.Request.Cookies.TryGetValue("user_id", out var userId) && !string.IsNullOrWhiteSpace(userId))
+            {
+                var posthog = context.RequestServices.GetService<IPostHogClient>();
+                posthog?.Capture(userId.Trim(), "user_logged_out");
+            }
+
+            context.Response.Cookies.Delete("user_id", CookieOptions);
             return Results.Redirect("/");
         }).DisableAntiforgery();
 
         // Event tracking: capture a business event with the visitor's distinct id
         // and an event property.
-        app.MapGet("/burrito", (HttpContext context, IPostHogClient posthog) =>
+        app.MapGet("/burrito", (HttpContext context) =>
         {
             var (userId, anonymous) = Visitor(context);
 
@@ -102,7 +157,8 @@ public static class Endpoints
                 : 1;
             context.Response.Cookies.Append("burrito_count", count.ToString(), CookieOptions);
 
-            posthog.Capture(
+            var posthog = context.RequestServices.GetService<IPostHogClient>();
+            posthog?.Capture(
                 userId,
                 "burrito_considered",
                 properties: EventProperties(anonymous, new() { ["total_considerations"] = count }));
@@ -116,25 +172,29 @@ public static class Endpoints
 
         // Feature flags: evaluate once per request, then read flags off the
         // returned snapshot.
-        app.MapGet("/dashboard", async (HttpContext context, IPostHogClient posthog, ILogger<Program> logger) =>
+        app.MapGet("/dashboard", async (HttpContext context, ILogger<Program> logger) =>
         {
             var (userId, _) = Visitor(context);
+            var posthog = context.RequestServices.GetService<IPostHogClient>();
 
             var showNewFeature = false;
-            try
+            if (posthog is not null)
             {
-                var flags = await posthog.EvaluateFlagsAsync(
-                    userId,
-                    options: new AllFeatureFlagsOptions
-                    {
-                        FlagKeysToEvaluate = ["new-dashboard-feature"],
-                    });
-                showNewFeature = flags.IsEnabled("new-dashboard-feature");
-            }
-            catch (Exception exception)
-            {
-                // A failed flag evaluation should never take the page down.
-                logger.LogError(exception, "Feature flag evaluation failed");
+                try
+                {
+                    var flags = await posthog.EvaluateFlagsAsync(
+                        userId,
+                        options: new AllFeatureFlagsOptions
+                        {
+                            FlagKeysToEvaluate = ["new-dashboard-feature"],
+                        });
+                    showNewFeature = flags.IsEnabled("new-dashboard-feature");
+                }
+                catch (Exception exception)
+                {
+                    // A failed flag evaluation should never take the page down.
+                    logger.LogError(exception, "Feature flag evaluation failed");
+                }
             }
 
             var body = showNewFeature
@@ -150,9 +210,10 @@ public static class Endpoints
 
         // Error tracking: catch an exception and report it with CaptureException.
         // The app keeps serving.
-        app.MapGet("/profile", (HttpContext context, IPostHogClient posthog, ILogger<Program> logger) =>
+        app.MapGet("/profile", (HttpContext context, ILogger<Program> logger) =>
         {
             var (userId, anonymous) = Visitor(context);
+            var posthog = context.RequestServices.GetService<IPostHogClient>();
 
             var caught = "";
             try
@@ -164,7 +225,7 @@ public static class Endpoints
                 caught = exception.Message;
                 logger.LogError(exception, "Profile risky operation failed");
 
-                posthog.CaptureException(
+                posthog?.CaptureException(
                     exception,
                     userId,
                     EventProperties(anonymous, new() { ["route"] = "/profile" }));

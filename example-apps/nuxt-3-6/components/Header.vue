@@ -29,6 +29,8 @@ const user = computed(() => auth.user.value)
 const { $posthog: posthog } = useNuxtApp()
 
 const handleLogout = () => {
+  // Only capture logout and reset PostHog when logging out of an authenticated session.
+  if (!user.value) return
   posthog?.capture('user_logged_out')
   posthog?.reset()
   auth.logout()
