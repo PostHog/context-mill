@@ -19,7 +19,7 @@ posthog-python:
   commit: 82c9004c0f64dc0d437dbcc6a59ae73a63699c8b
 posthog-rs:
   repo: PostHog/posthog-rs
-  commit: null
+  commit: 0e693d21351841bf13cfaa788d4b1a200d5e5773
 posthog-com:
   repo: PostHog/posthog.com
   commit: 433efe56a892ac53ab13573e79e22c7e72e5bafa

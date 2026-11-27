@@ -15,7 +15,24 @@ const WINDOW_OVERLAP = 20;
 
 const TEST_OR_GEN_RE = /(\/tests?\/|\/__tests__\/|\.test\.|\.spec\.|\.stories\.|\/migrations\/|__init__\.py$|\/generated\/|\/harness\/|\/examples\/|vitest\.config|tsconfig\.json|package\.json|turbo\.json|\.scss$|\.md$)/i;
 
-export function classifyFileExclusion(repo, relPath, productConfig = {}) {
+export function isWatchedManifest(repo, relPath, productConfig = {}, contentOrDiff = '') {
+  for (const rule of productConfig.watched_manifests || []) {
+    if (rule.repo && rule.repo !== repo) continue;
+    const pathRe = rule.pattern instanceof RegExp ? rule.pattern : new RegExp(rule.pattern, 'i');
+    if (!pathRe.test(relPath)) continue;
+    if (rule.content_pattern) {
+      const contentRe = rule.content_pattern instanceof RegExp ? rule.content_pattern : new RegExp(rule.content_pattern, 'i');
+      if (!contentRe.test(relPath) && !contentRe.test(contentOrDiff)) continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+export function classifyFileExclusion(repo, relPath, productConfig = {}, contentOrDiff = '') {
+  if (isWatchedManifest(repo, relPath, productConfig, contentOrDiff)) {
+    return { excluded: false, decisionCode: null, reason: null };
+  }
   if (TEST_OR_GEN_RE.test(relPath)) {
     return {
       excluded: true,
@@ -182,6 +199,23 @@ export async function indexSourceFile({
   }
 
   const lines = norm.split('\n');
+  if ((ext === '.md' || ext === '.mdx') && isWatchedManifest(repo, relPath, productConfig, norm)) {
+    const ownLines = lines.map((_, idx) => idx + 1);
+    return [{
+      id: `${repo}:${relPath}#<release_manifest>`,
+      repo,
+      path: relPath,
+      symbol: '<release_manifest>',
+      kind: 'release_manifest',
+      surface,
+      start: 1,
+      end: lines.length,
+      ownLines,
+      lines: lines.length,
+      sliceText: norm,
+      pin: createDetachedPin({ commit, text: norm, ownLines }),
+    }];
+  }
   let rawDefs = null;
   if (typeof parseAst === 'function') {
     rawDefs = await parseAst({ repo, commit, path: relPath, ext, text: norm, lines });

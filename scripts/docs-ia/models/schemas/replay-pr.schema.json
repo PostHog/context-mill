@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReplayPrJudgeOutput",
+  "type": "object",
+  "required": [
+    "needs_docs",
+    "change_kind",
+    "affected_pages",
+    "contradicted_claim_codes",
+    "new_facts",
+    "reason"
+  ],
+  "properties": {
+    "needs_docs": { "type": "boolean" },
+    "change_kind": {
+      "type": ["string", "null"],
+      "enum": ["update", "create", "remove", null]
+    },
+    "affected_pages": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "contradicted_claim_codes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "new_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["def", "type", "sectionCode", "claim", "quote"],
+        "properties": {
+          "def": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fact", "schema", "guard", "input", "limit", "default",
+              "error", "branch", "control", "storage", "schedule", "wiring", "port"
+            ]
+          },
+          "sectionCode": { "type": "string" },
+          "claim": { "type": "string" },
+          "quote": { "type": "string" }
+        }
+      }
+    },
+    "reason": { "type": "string" }
+  }
+}

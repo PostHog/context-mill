@@ -10,15 +10,18 @@ Everything revolves around a single entry point, declarative top-level workflows
 facts/
 ├── repos.yml                        # Pinned repo commits
 ├── registries.yml                   # Closed product, surface, and tag registries
-└── products/<slug>.yml              # Per-product scope, surface rules, exclusions
+├── products/<slug>.yml              # Per-product scope, seams, watched manifests, surface rules, exclusions
+└── registers/<slug>/                # Permanent Dewey v3 registers, outlines, and verified PR replay scorecards
 
 scripts/docs-ia/
 ├── cli.mjs                          # Single entry point (`pnpm docs-ia <list|inspect|run|query|mcp-serve>`)
+├── data/                            # Historical PR replay event streams (`mcp-analytics-replay-events.mjs`)
 ├── workflows/                       # Top-level workflow DAGs (script -> agent -> script)
 │   ├── index.mjs                    # Registry of all workflows
 │   ├── build-ia.workflow.mjs        # Build pipeline: AST pins -> facts -> ports -> seams -> procedures -> Dewey v3
 │   ├── map-docs.workflow.mjs        # Docs mapping: MDX split -> candidates -> bind -> 2nd-pass judge -> coverage
 │   ├── refresh-drift.workflow.mjs   # Drift & lifecycle: 2-gate hash refresh -> MDX reconcile -> blast radius -> judge -> retire
+│   ├── replay-prs.workflow.mjs      # Historical PR replay: 2-gate diff -> MDX soft-drift -> section-windowed judge -> scorecard
 │   └── compile-skills.workflow.mjs  # Downstream: surface-sliced UC-* skills -> anchor check
 ├── prompts/                         # Shared Markdown prompts (`{{include:shared/...}}` + strict `{{var}}`)
 │   ├── loader.mjs
@@ -34,7 +37,8 @@ scripts/docs-ia/
 ├── tools/                           # Deterministic actions callable by scripts OR by agents over MCP
 │   ├── catalog.mjs                  # Single deterministic tool registry
 │   ├── mcp-server.mjs               # Step-scoped stdio JSON-RPC 2.0 MCP server (exposes ONLY bound tools)
-│   ├── ast-pins.mjs                 # Symbol/YAML pin indexer + pluggable Tree-sitter hook
+│   ├── ast-pins.mjs                 # Symbol/YAML/manifest pin indexer + pluggable Tree-sitter hook
+│   ├── tree-sitter-parser.mjs       # `web-tree-sitter` AST declaration walker + `foldMembers` adapter (zero-dep fallback)
 │   ├── port-linker.mjs              # 0-LLM port wiring + versioned platform PortContracts
 │   ├── mdx-splitter.mjs             # Source-first MDX splitter + 3-tier human soft-drift reconciler
 │   ├── blast-radius.mjs             # `symbol -> F -> PR -> UC -> C -> page` walk + thin lookup queries

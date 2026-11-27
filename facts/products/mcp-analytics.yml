@@ -11,16 +11,43 @@ surfaces:
   - PY
   - RS
 
+t0_commits:
+  posthog: 02102b70d69352418d0421b51bb426b3718ba9f2
+  posthog-js: 8c832754379204b17409f8a9b7238b22da591870
+  posthog-python: dca22075ced7f4beaca798a8dd155169eec50b4d
+  posthog-rs: 0e693d21351841bf13cfaa788d4b1a200d5e5773
+  posthog-com: d56ff45cbbc6f1c586367a24cfc35a04ef0691c5
+
 repo_prefixes:
   posthog:
     - products/mcp_analytics/
+    - services/mcp/
   posthog-js:
-    - packages/ai/src/mcp/
+    - packages/mcp/src/
     - packages/browser/src/extensions/webmcp
+    - packages/ai/src/mcp/
   posthog-python:
+    - posthog/mcp/
     - posthog/ai/mcp/
   posthog-rs:
+    - src/mcp/
     - posthog-rs/src/mcp
+
+seam_paths:
+  posthog:
+    - posthog/hogql/database/database.py
+    - posthog/taxonomy/taxonomy.py
+    - docs/published/docs/mcp-analytics/
+
+watched_manifests:
+  - repo: posthog-js
+    pattern: '^(packages/mcp/README\.md|(\.changeset|\.sampo/changesets)/.*\.md)$'
+    content_pattern: '\bmcp\b'
+  - repo: posthog-python
+    pattern: '^(posthog/mcp/README\.md|(\.changeset|\.sampo/changesets)/.*\.md)$'
+    content_pattern: '\bmcp\b'
+  - repo: posthog
+    pattern: '^docs/published/docs/mcp-analytics/.*\.(md|mdx)$'
 
 surface_rules:
   - repo: posthog

@@ -1,0 +1,1191 @@
+{
+  "generatedAt": "2026-11-27T05:28:41.461Z",
+  "datasetSize": 24,
+  "arms": {
+    "kw_baseline": {
+      "metrics": {
+        "arm": "kw_baseline",
+        "codePrCount": 22,
+        "humanDocsPrCount": 2,
+        "tp": 8,
+        "fp": 0,
+        "fn": 3,
+        "tn": 11,
+        "needsDocsPrecision": 1,
+        "needsDocsRecall": 0.727,
+        "needsDocsF1": 0.842,
+        "johnEvalAgreement": "7/8 (87.5%)",
+        "pageHitRatio": "13/29",
+        "pageRecall": 0.448,
+        "pagePrecision": 0.867,
+        "totalLlmCalls": 41,
+        "avgLlmCallsPerCodePr": 1.86,
+        "fastGateZeroLlmSkips": 0,
+        "prematureFlaggedFactsMinted": 0,
+        "internalNoiseFactsMinted": 0,
+        "orphanedClaimsAfterHumanEdit": 0,
+        "routingShadowDrops": 1,
+        "publishGateBlocksOrExtraPageFlags": 6,
+        "finalLiveFactsCount": 0,
+        "finalRetiredLeavesCount": 0,
+        "finalLiveClaimsCount": 0
+      },
+      "stepLogs": [
+        {
+          "id": "E01",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "This commit is a frontend UI layout bugfix that makes the model and harness share bar lists scroll vertically instead of stretching the adjacent chart, and sets a minimum plot height when legends wrap. It does not add, rename, remove, or change any documented features, workflows, or configuration options."
+        },
+        {
+          "id": "E02",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 4,
+          "reason": "This commit wires the existing shared internal/test users filter toggle (`McpInternalUsersFilter` / `filterTestAccounts`) into the Missing capabilities tab, its `MCPMissingCapabilitiesQuery` schema/runner, and its MCP tool wrapper description for parity with the other MCP Analytics tabs. None of the MCP Analytics docs pages document the internal users toggle or individual query parameters like `filterTestAccounts` or `dateRange`, and all existing page text remains accurate after this merge."
+        },
+        {
+          "id": "E03",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "This change is an internal backend infrastructure refactor that routes PostHog's internal LLM calls for MCP analytics failure classification and intent generation through the internal AI gateway (`posthog.llm.gateway_client`) instead of calling OpenAI and Gemini clients directly. It does not add, rename, remove, or change any customer-facing behavior, API, or configuration."
+        },
+        {
+          "id": "E04",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "The setup mode state and Kea logic are unreleased work gated behind the new `mcp-analytics-setup-mode` feature flag (with no user-facing UI wired up yet). The `refresh` query parameter added to the `activity_overview` endpoint is supporting infrastructure for setup mode polling to bypass the dashboard overview cache rather than a released customer-facing behavior change requiring public documentation updates."
+        },
+        {
+          "id": "E05",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 2,
+          "reason": "This commit only rewords the default description strings for the injected conversation_id and llm_model arguments and the get_more_tools and send_feedback virtual tools so directory reviews do not flag them as model instructions. No options, parameter names, tool names, events, or SDK behaviors changed, and the existing public docs pages (missing-capability and conversation-id) do not quote the old wording and remain accurate."
+        },
+        {
+          "id": "E06",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "contents/docs/mcp-analytics/intent.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 5,
+          "reason": "@posthog/mcp (TypeScript) now emits `$mcp_unknown_tool` (with `$mcp_tool_name`) for calls to unregistered tools instead of a failed `$mcp_tool_call`, adds `PostHogMCP.captureUnknownTool()`, generates a fresh `$session_id` per call when `sessionId` is omitted on `PostHogMCP` capture methods, marks failing calls as `$mcp_unknown_tool` when `resolveOriginalTool` returns `undefined`, and shortens the default `context` parameter description. This makes statements in `docs/mcp-analytics/events`, `docs/mcp-analytics/installation/typescript`, and `docs/mcp-analytics/intent` outdated."
+        },
+        {
+          "id": "E07",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 3,
+          "reason": "The Python SDK (`posthog.mcp`) now emits `$mcp_unknown_tool` (with `$mcp_tool_name` and no `$mcp_tool_call` or `$exception`) when `tools/call` names an unregistered tool, making the Go-and-Rust-only statements in `docs/mcp-analytics/events` outdated. In addition, FastMCP's stock middleware (logging, timing, error-handling, etc.) no longer disables `llm_model` injection on standalone `fastmcp.FastMCP`, making the middleware note in `docs/mcp-analytics/installation/python` outdated."
+        },
+        {
+          "id": "E08",
+          "needsDocs": false,
+          "pages": [],
+          "llmCalls": 0,
+          "reason": "no_code_changed"
+        },
+        {
+          "id": "E09",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/python.mdx",
+            "contents/docs/mcp-analytics/intent.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 4,
+          "reason": "This posthog-python change makes the injected `llm_model` parameter always optional across all server adapters and custom dispatchers, so `docs/mcp-analytics/installation/python` is outdated where it states that `llm_model` is advertised as optional only on raw low-level servers and standalone FastMCP. It also shortens `DEFAULT_CONTEXT_PARAMETER_DESCRIPTION`, making the quoted default `context` description in `docs/mcp-analytics/intent` inaccurate for Python. `docs/mcp-analytics/missing-capability` does not document virtual tool annotations and remains accurate."
+        },
+        {
+          "id": "E10",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/intent.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 3,
+          "reason": "The merge changes the default injected `context` argument description in posthog-rs to align with the MCP spec (\"A few words on why you are calling this tool, for the server developer's analytics. Describe people and things by role, such as \\\"a customer\\\". Do not quote the user or include names, emails, or other personal details.\"), which makes the quoted default description in docs/mcp-analytics/intent outdated. The other provided pages (docs/mcp-analytics/missing-capability and docs/mcp-analytics/surfaces/mcp) do not document the changed virtual tool annotations or llm_model requiredness and remain accurate."
+        },
+        {
+          "id": "E11",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 3,
+          "reason": "This GA customer-facing change adds custom harness naming (up to 20 rules per project, case-insensitive substring match against client name or User-Agent product, evaluated before built-in harness labels with longest-pattern priority). It requires updating: (1) docs/mcp-analytics/events under 'How the harness label is resolved' to document custom harness rules taking precedence over built-in labels and replacing 'Other'; (2) docs/mcp-analytics/surfaces/web-app to document the new Settings > Environment > MCP analytics > Custom harnesses UI; and (3) docs/mcp-analytics/surfaces/api to document the new custom_harnesses CRUD endpoint and its mcp_analytics:write scope requirement."
+        },
+        {
+          "id": "E12",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/queries.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 1,
+          "reason": "This GA customer-facing change wires team-configured custom MCP harness names (from Settings > Environment > MCP analytics > Custom harnesses) into the `$virt_mcp_harness` virtual property in HogQL/SQL queries, and notes that cached SQL queries or insights keep the old name until results refresh. The commit updates `docs/published/docs/mcp-analytics/harness-share.mdx`, which is not in the provided docs pages list; in the listed docs, this behavior should be documented in the property reference (`docs/mcp-analytics/events`) and SQL query guide (`docs/mcp-analytics/queries`). None of the existing sentences in `docs/mcp-analytics/queries` are factually contradicted, as it does not yet mention `$virt_mcp_harness`."
+        },
+        {
+          "id": "E13",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 2,
+          "reason": "The merge adds six read-only fields (exec_verb, exec_target_tool, input_keys, error_code, error_field, llm_model) from existing $mcp_tool_call event properties to the session tool calls serializer and displays them in the session tool call row UI and error context. Both docs/mcp-analytics/surfaces/web-app and docs/mcp-analytics/surfaces/api describe the Sessions view and API at a high level without enumerating individual tool-call fields, so their text remains accurate and no docs update is needed."
+        },
+        {
+          "id": "E14",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 3,
+          "reason": "The merge refines the existing Tool quality Failures table and drill-down modal to group failures by masked error-message cause (and adds cause filtering to the MCP failure-occurrences query and a Create fix task button in the failure modal). No new events, properties, settings, or tabs are introduced, and the existing high-level descriptions in docs/mcp-analytics/surfaces/web-app (\"the failure modes behind them. Select a tool to inspect its failed calls and error details\" and \"Create fix task\") and docs/mcp-analytics/surfaces/mcp (\"Recent failures, with error type and message\") remain accurate without changes."
+        },
+        {
+          "id": "E15",
+          "needsDocs": false,
+          "pages": [],
+          "llmCalls": 1,
+          "reason": "generated_only_gate"
+        },
+        {
+          "id": "E16",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "This is a frontend bug fix in mcpSessionsLogic that replaces individual filter action listeners with a Kea subscription on sharedQueryFilters so sessions reload when the team's test-account default changes. It restores expected UI behavior without adding, renaming, removing, or changing any documented feature, setting, or configuration."
+        },
+        {
+          "id": "E17",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/typescript.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 1,
+          "reason": "Adds two new public `instrument()` configuration options (`sessionId` and `clientInfo`) in `@posthog/mcp` so stateless per-request servers can supply per-request session IDs and client name/version. The TypeScript installation page documents `instrument()` options in its Configuration table and covers stateless per-request servers, so it needs to be updated to document both options."
+        },
+        {
+          "id": "E18",
+          "kind": "human_docs_pr",
+          "action": "ignored_no_ia",
+          "llmCalls": 0
+        },
+        {
+          "id": "E19",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "Internal frontend performance optimization in mcpSessionsLogic.ts that bounds tool-call queries for settled sessions (ended more than 1 hour ago with no explicit dateTo filter) using date_to = session_end. It does not add, remove, or change any customer-facing UI, configuration, or documented behavior."
+        },
+        {
+          "id": "E20",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+          ],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 1,
+          "reason": "This PR removes the MCP_ANALYTICS_LEADERBOARD_HOME feature flag and ships the leaderboard layout to GA as the only Dashboard tab layout in MCP Analytics, deleting the old overview layout (including the ToolUsageChart time series, recent activity card, and card customization menu) and exposing the leaderboard breakdowns (model, protocol version, tool, error type, lab/named-model users, and reliability). The Dashboard section of docs/mcp-analytics/surfaces/web-app still describes the old overview charts and should be updated to reflect the new leaderboard dashboard layout."
+        },
+        {
+          "id": "E21",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 2,
+          "reason": "Missing-capability reports now also include `$mcp_feedback` events of type `missing_capability` produced by the virtual `send_feedback` tool (`collectFeedback: true` in TypeScript, `collect_feedback=True` in Python), which is now the recommended setup for TypeScript and Python. `docs/mcp-analytics/missing-capability` only documents `reportMissing`/`get_more_tools`/`$mcp_missing_capability` and needs updating, while `docs/mcp-analytics/surfaces/mcp` only refers generically to missing-capability reports and remains accurate."
+        },
+        {
+          "id": "E22",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 3,
+          "reason": "The merge updates backend intent clustering (splitting recurring automated intents out of the semantic corpus, collapsing sub-threshold clusters into a long_tail aggregate, tuning the distance threshold, and enforcing property access control redaction on snapshots) and adds corresponding fields to the intent cluster snapshot API serializer and generated types. No web app UI or SDK behavior changed, and the high-level API overview page (docs/mcp-analytics/surfaces/api) does not document individual response fields and remains accurate as written (and notes that intent clustering is still rolling out). docs/mcp-analytics/intent and docs/mcp-analytics/privacy cover SDK-side capture and redaction and remain accurate."
+        },
+        {
+          "id": "E23",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 2,
+          "loadedCandidatePagesCount": 0,
+          "reason": "The products/mcp_analytics changes only expand internal query-time harness label mappings and dashboard registry entries (mcp_harness.py and harnessRegistry.ts) over existing event properties ($mcp_vendor_client, $mcp_client_name, $mcp_client_user_agent), without changing SDK APIs, event schemas, or customer-facing configuration. The remaining changes in services/mcp (dropping structuredContent by default via prefersFormattedText() and updating internal contributor/handbook docs) apply to PostHog's own MCP server rather than the MCP Analytics public docs."
+        },
+        {
+          "id": "E24",
+          "kind": "human_docs_pr",
+          "action": "ignored_no_ia",
+          "llmCalls": 0
+        }
+      ]
+    },
+    "ia_claims_only": {
+      "metrics": {
+        "arm": "ia_claims_only",
+        "codePrCount": 22,
+        "humanDocsPrCount": 2,
+        "tp": 3,
+        "fp": 0,
+        "fn": 8,
+        "tn": 11,
+        "needsDocsPrecision": 1,
+        "needsDocsRecall": 0.273,
+        "needsDocsF1": 0.429,
+        "johnEvalAgreement": "6/8 (75.0%)",
+        "pageHitRatio": "5/29",
+        "pageRecall": 0.172,
+        "pagePrecision": 0.714,
+        "totalLlmCalls": 21,
+        "avgLlmCallsPerCodePr": 0.95,
+        "fastGateZeroLlmSkips": 1,
+        "prematureFlaggedFactsMinted": 0,
+        "internalNoiseFactsMinted": 0,
+        "orphanedClaimsAfterHumanEdit": 0,
+        "routingShadowDrops": 0,
+        "publishGateBlocksOrExtraPageFlags": 0,
+        "finalLiveFactsCount": 2357,
+        "finalRetiredLeavesCount": 0,
+        "finalLiveClaimsCount": 503
+      },
+      "stepLogs": [
+        {
+          "id": "E01",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "This diff is purely a CSS/layout fix (adding an optional fillHeight prop, flex/min-h-0 layout classes, a min-h-[276px]! class on ShareOverTimeChart, and label props on ShareBarChart) so share lists scroll instead of stretching adjacent charts. None of the existing bound documentation claims (MCPA-UI-C-000001, MCPA-ALL-C-000098, MCPA-UI-C-000007) regarding unattributed/\"Other\" client handling or dashboard metrics/cards are contradicted or made outdated."
+        },
+        {
+          "id": "E02",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "This commit is purely additive: it adds an optional filterTestAccounts parameter to MCPMissingCapabilitiesQuery (backend, MCP tool description, and generated types) and renders the shared McpInternalUsersFilter toggle in the Missing Capabilities FilterBar. None of the existing bound documentation claims are contradicted, made factually wrong/outdated, or reference a removed UI element or option (e.g., MCPA-UI-C-000014 on web-app.mdx and MCPA-MCP-C-000021 on mcp.mdx remain literally true)."
+        },
+        {
+          "id": "E03",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The commit is an internal backend change that routes MCP Analytics LLM calls (failure classification and intent generation) through PostHog's internal AI gateway (posthog.llm.gateway_client) instead of direct OpenAI/Gemini clients. None of the existing bound documentation claims—which all cover client-side MCP SDK instrumentation, user identification, and event capture—are contradicted or made outdated by this diff."
+        },
+        {
+          "id": "E04",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims (MCPA-UI-C-000004, MCPA-UI-C-000009) are contradicted or made outdated by this diff. The diff is purely additive: it adds an optional `refresh` parameter with a 5-second cooldown to `activity_overview`, adds an in-flight guard to `mcpAnalyticsOnboardingLogic` polling, and introduces new feature-flagged setup mode logic files (`setupMode/`). Neither the web app overview views nor the sessions view ordering/behavior described in the bound claims are altered."
+        },
+        {
+          "id": "E05",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The diff only rewords LLM-facing parameter and tool description strings in TypeScript (`DEFAULT_MODEL_PARAMETER_DESCRIPTION`, `DEFAULT_CONVERSATION_ID_DESCRIPTION`, `DEFAULT_FEEDBACK_DESCRIPTION`, `CORE_FEEDBACK_SCHEMA_PROPERTIES.feedback_type.description`, and `getReportMissingToolDescriptor`'s `description`) without changing any tool names, parameters, schema enums, defaults, event names, or user-facing behavior. All existing bound documentation claims remain factually accurate."
+        },
+        {
+          "id": "E06",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/privacy.mdx"
+          ],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 3,
+          "reason": "The diff adds $mcp_unknown_tool support to @posthog/mcp (TypeScript) and applies free-text PII redaction (sanitizeFreeText) to the requested tool name on $mcp_unknown_tool events. This contradicts: (1) MCPA-ALL-C-000153 in installation/index.mdx, which marks TypeScript as 'No' for Unknown-tool calls ($mcp_unknown_tool); (2) MCPA-ALL-C-000038 in events.mdx, which states that only Go and Rust fire $mcp_unknown_tool instead of $mcp_tool_call for calls to an unregistered tool; and (3) MCPA-ALL-C-000274 in privacy.mdx, which states that the personal-data redaction pass applies only to intent and agent feedback text, whereas it now also applies to unknown tool names in sanitization.ts."
+        },
+        {
+          "id": "E07",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/privacy.mdx"
+          ],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 1,
+          "reason": "In posthog/mcp/_sanitization.py, sanitize_event now applies sanitize_free_text (the structured PII / personal data redaction pass) to resource_name (mapped to $mcp_tool_name in _posthog_events.py) on $mcp_unknown_tool events. This directly contradicts MCPA-ALL-C-000274 on contents/docs/mcp-analytics/privacy.mdx, which states that the personal data redaction pass applies only to intent ($mcp_intent) and agent feedback text. All other changes in the diff (adding the new $mcp_unknown_tool event, counting the truncation suffix within max_length in truncate_text, falling back to new_session_id() in PostHogMCP, and recognizing stock FastMCP middleware) are additive or internal and do not contradict any other listed bound claims."
+        },
+        {
+          "id": "E08",
+          "needsDocs": false,
+          "pages": [],
+          "llmCalls": 0,
+          "bumpedSameHashCount": 0,
+          "reason": "zero_llm_excl_or_out_of_scope_gate"
+        },
+        {
+          "id": "E09",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims are contradicted or made false by this posthog-python diff. (1) Updating the virtual tool annotations (readOnlyHint, openWorldHint, idempotentHint to False and removing title) on get_more_tools and send_feedback is not contradicted because no bound claim documents those annotation hints. (2) Shortening DEFAULT_CONTEXT_PARAMETER_DESCRIPTION is not contradicted because no bound claim specifies its wording or word count. (3) Making llm_model always optional in posthog-python does not contradict any bound Python claim: MCPA-PY-C-000038 (python.mdx) states that on raw low-level servers and standalone FastMCP, context and llm_model are advertised as optional, which remains literally true; MCPA-PY-C-000011 and MCPA-PY-C-000020 remain true; and MCPA-ALL-C-000190 (ruby.mdx) applies to the Ruby SDK, not posthog-python."
+        },
+        {
+          "id": "E10",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims are contradicted by this posthog-rs diff. The diff shortens CONTEXT_DESCRIPTION, makes the injected llm_model argument optional (while keeping context required and still stripping llm_model when injected), and updates get_more_tools MCP annotations (removing title and setting readOnlyHint, openWorldHint, and idempotentHint to false). None of the bound claims quote CONTEXT_DESCRIPTION, assert that llm_model is required in the Rust SDK (MCPA-ALL-C-000190 applies to ruby.mdx, and MCPA-RS-C-000008 only states that context is required), or document the get_more_tools annotation hints."
+        },
+        {
+          "id": "E11",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "This commit is a purely additive feature allowing teams to configure custom harness name rules (via a new MCPCustomHarness model, custom_harnesses API endpoint, settings UI, and optional custom_rules prepended to the harness label multiIf). The harness token derivation properties and priority order (HARNESS_TOKEN_SQL), existing API scopes/endpoints, event schemas, SDK APIs, and UI views referenced by all existing bound documentation claims remain unchanged and literally true. None of the existing bound claims are contradicted or outdated."
+        },
+        {
+          "id": "E12",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The diff wires team-level custom MCP harness rules into the `$virt_mcp_harness` HogQL virtual field in `posthog/hogql/database/database.py` (and updates `harness-share.mdx` accordingly). None of the 15 listed bound documentation claims—which cover SQL queries using `$mcp_client_name`/`$mcp_intent`, raw MCP event properties, SDK installation/capture behavior, and dashboard/MCP surface overviews—are contradicted, outdated, or made false by this change."
+        },
+        {
+          "id": "E13",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The diff is purely additive: it adds six read-only fields (exec_verb, exec_target_tool, input_keys, error_code, error_field, llm_model) to MCPToolCall, its ClickHouse query, serializer, and generated API types, displays them in MCPToolCallRow, and optionally includes error_code/error_field in formatErrorContext. No existing behavior, property, or UI element is removed or altered in a way that contradicts or invalidates any of the bound documentation claims."
+        },
+        {
+          "id": "E14",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims are contradicted or made outdated by this diff. The changes refine how tool failures are grouped (adding masked-message cause and sample_message alongside error_type and error_status, increasing the failures table limit from 20 to 50, moving the Failures table higher on the tool detail page, adding an optional cause filter to failure occurrences, and updating the modal date-range copy and footer CreateFixTaskButton). None of the bound live docs claims reference the old grouping details, the old limit of 20, or the old modal wording; high-level claims about inspecting per-tool failures, error types/messages, and creating fix tasks in web-app.mdx and mcp.mdx remain accurate."
+        },
+        {
+          "id": "E15",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "No existing bound documentation claims are contradicted or made outdated. The diff is a purely additive, backward-compatible performance optimization that adds an optional `date_to` query parameter (unbounded when omitted) to `list_mcp_tool_calls` and `MCPSessionViewSet.tool_calls`, plus updates the MCP tool description for `mcp-analytics-sessions-tool-calls`. All existing bound claims remain literally true."
+        },
+        {
+          "id": "E16",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The diff is an internal frontend state-management fix in mcpSessionsLogic.ts that replaces action listeners for shared filter actions with a Kea subscription on sharedQueryFilters so sessions reload when the team test-account default changes. None of the bound documentation claims (which cover TypeScript SDK setup/capture methods, $session_id guidance, intent context fallback, and privacy scope) are contradicted or made outdated by this change."
+        },
+        {
+          "id": "E17",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "Purely additive change adding two optional per-request callbacks (`sessionId` and `clientInfo`) to `MCPAnalyticsOptions` in the TypeScript MCP SDK. When omitted, all existing session resolution, client identity resolution, and event emission behavior is unchanged, and none of the existing bound documentation claims are contradicted or made factually wrong/outdated."
+        },
+        {
+          "id": "E18",
+          "kind": "human_docs_pr",
+          "action": "soft_drift_reconciled",
+          "stats": {
+            "prevTotal": 609,
+            "exactSamePage": 571,
+            "movedCrossPage": 0,
+            "humanEdited": 19,
+            "retiredDeleted": 19,
+            "unmappedNewPieces": 74
+          },
+          "llmCalls": 0
+        },
+        {
+          "id": "E19",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "The diff is an internal frontend query optimization in mcpSessionsLogic.ts that passes date_to (session_end) when fetching tool calls for settled sessions (>1 hour old). None of the five bound documentation claims—which cover TypeScript SDK installation/instrumentation (StreamableHTTPServerTransport, session header encoding, prepareToolCall, captureToolCall) and $session_id guidance in other-languages.mdx—are contradicted or made outdated."
+        },
+        {
+          "id": "E20",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims are contradicted or made outdated by this diff. Removing the legacy MCPAnalyticsDashboardOverview layout (along with its Customize cards menu, ProtocolVersionStrip, and ToolUsageChart) in favor of making MCPAnalyticsLeaderboardHome the sole dashboard layout preserves all metrics and elements referenced in the bound claims—including session counts, tool calls, error rates, p95 latency, harnesses/clients, tool usage, errors over time, and the Sessions flagged for review card (NotableSessionsTable) in MCPA-UI-C-000007. None of the bound claims mention the removed feature flag, Customize cards menu, or legacy overview-specific components."
+        },
+        {
+          "id": "E21",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx",
+            "contents/docs/mcp-analytics/missing-capability.mdx"
+          ],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 4,
+          "reason": "The commit expands missing-capability reporting in the backend (MCPMissingCapabilitiesQueryRunner, _query_activity_overview, MCPActivityStatsSerializer), MCP tool definitions, and web UI (MCPAnalyticsMissingCapabilities.tsx) to include `$mcp_feedback` events with `$mcp_feedback_type = 'missing_capability'` from the `send_feedback` virtual tool (`collectFeedback: true` / `collect_feedback=True`), and updates the UI empty state and in-repo missing-capability docs to recommend `send_feedback` for TypeScript/Python alongside `get_more_tools`. This makes the following bound live docs claims outdated/inaccurate: (1) MCPA-UI-C-000014 on surfaces/web-app.mdx states that Missing capabilities reports come from `get_more_tools`, omitting `send_feedback`; (2) MCPA-API-C-000025 on surfaces/api.mdx states the API reads capability gaps reported through `get_more_tools`, whereas it now also reads `$mcp_feedback` (`missing_capability`) reports from `send_feedback`; (3) MCPA-ALL-C-000239 and MCPA-API-C-000010 on missing-capability.mdx describe only `get_more_tools` and querying `event = '$mcp_missing_capability'`, which misses `send_feedback` (`$mcp_feedback`) missing-capability reports. Claims on language-specific SDK pages (Go, Ruby, Rust, TypeScript), events.mdx, intent.mdx, index.mdx, start-here.mdx, and surfaces/mcp.mdx remain literally true because `reportMissing` / `get_more_tools` / `$mcp_missing_capability` remain supported."
+        },
+        {
+          "id": "E22",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "None of the existing bound documentation claims are contradicted or made outdated by this diff. The commit raises the internal clustering distance threshold (0.2 to 0.4), splits recurring automated intents out of clustering into a new `recurring` field, collapses sub-threshold clusters into a new `long_tail` aggregate, and adds property access control redaction (`intent_text_redacted`) on the intent cluster snapshot. All existing high-level web app, API, event, privacy, intent, and SDK claims remain literally true."
+        },
+        {
+          "id": "E23",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "contradictedClaimsCount": 0,
+          "reason": "No existing bound documentation claims are contradicted or made outdated by this diff. The changes in products/mcp_analytics/backend/mcp_harness.py and products/mcp_analytics/frontend/dashboard/harnessRegistry.ts are purely additive (adding new harness labels, registry entries, and User-Agent-first product matches), while the existing claims in events.mdx, python.mdx, and other pages remain literally true and non-exhaustive. The changes in services/mcp/ (renaming isCliModeEnabled to prefersFormattedText and dropping structuredContent by default) are internal MCP server behavior not referenced by any of the bound MCP Analytics documentation claims."
+        },
+        {
+          "id": "E24",
+          "kind": "human_docs_pr",
+          "action": "soft_drift_reconciled",
+          "stats": {
+            "prevTotal": 590,
+            "exactSamePage": 394,
+            "movedCrossPage": 1,
+            "humanEdited": 108,
+            "retiredDeleted": 87,
+            "unmappedNewPieces": 154
+          },
+          "llmCalls": 0
+        }
+      ]
+    },
+    "kw_plus_ia_naive": {
+      "metrics": {
+        "arm": "kw_plus_ia_naive",
+        "codePrCount": 22,
+        "humanDocsPrCount": 2,
+        "tp": 10,
+        "fp": 0,
+        "fn": 1,
+        "tn": 11,
+        "needsDocsPrecision": 1,
+        "needsDocsRecall": 0.909,
+        "needsDocsF1": 0.952,
+        "johnEvalAgreement": "7/8 (87.5%)",
+        "pageHitRatio": "24/29",
+        "pageRecall": 0.828,
+        "pagePrecision": 0.889,
+        "totalLlmCalls": 21,
+        "avgLlmCallsPerCodePr": 0.95,
+        "fastGateZeroLlmSkips": 1,
+        "prematureFlaggedFactsMinted": 2,
+        "internalNoiseFactsMinted": 3,
+        "orphanedClaimsAfterHumanEdit": 717,
+        "routingShadowDrops": 1,
+        "publishGateBlocksOrExtraPageFlags": 17,
+        "finalLiveFactsCount": 2378,
+        "finalRetiredLeavesCount": 42,
+        "finalLiveClaimsCount": 609
+      },
+      "stepLogs": [
+        {
+          "id": "E01",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 5,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #126239 is a pure CSS/layout fix on presentational chart components (`ShareBarChart`, `HarnessBarChart`, `ModelBarChart`, `MCPAnalyticsLeaderboardHome`, `ShareOverTimeChart`) to scroll share lists via `fillHeight` instead of stretching adjacent charts and to keep a minimum plot height (`min-h-[276px]!`) when legends wrap. It does not contradict any live documentation claims or introduce any new user-facing capability or behavioral contract (presentational chart layout primitives are excluded under MCPA-UI-D-001)."
+        },
+        {
+          "id": "E02",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 27,
+          "mintedFactsThisStep": 2,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #125299 adds the standard shared internal/test users filter toggle (filterTestAccounts) to the Missing capabilities tab, its HogQL query runner, and the generated query-mcp-missing-capabilities MCP tool schema. Summary-level docs in surfaces/web-app.mdx, surfaces/mcp.mdx, and missing-capability.mdx remain completely accurate without enumerating per-tab filter toggles, and no live docs claims are contradicted. Seated two outside-in behavioral facts under MCPA-5.1 (excluding generated schemas per MCPA-ALL-D-001 and Kea logic wiring per MCPA-UI-D-002)."
+        },
+        {
+          "id": "E03",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 46,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 0,
+          "reason": "Internal backend plumbing only: routes MCP Analytics' internal LLM calls (failure classification, session intent summarization, and project intent digest) through PostHog's internal AI gateway (`posthog.llm.gateway_client`) instead of direct OpenAI/Gemini SDK clients. No customer-facing behavior, API contract, or live documentation claim is changed or contradicted."
+        },
+        {
+          "id": "E04",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 989,
+          "mintedFactsThisStep": 2,
+          "retiredLeavesTotal": 0,
+          "reason": "No public docs prose is contradicted or stale: the PR only adds internal Kea setup-mode state/logic behind a feature flag (no user-facing UI yet, excluded per MCPA-UI-D-002 and MCPA-UI-D-003), updates generated API schemas (excluded per MCPA-ALL-D-001), and adds an optional refresh boolean query parameter with a 5-second cooldown to the existing activity_overview endpoint, which surfaces/api.mdx only describes at summary level without enumerating query parameters. Seated the new refresh query parameter and 5-second cooldown limit into MCPA-7.2."
+        },
+        {
+          "id": "E05",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 34,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #5573 only rewords internal tool and injected argument description strings (llm_model, conversation_id, get_more_tools, send_feedback, and feedback_type) to avoid directory-review flags. No live public docs pages quote those exact strings or are contradicted, and no new user-facing option, API, or directory-review documentation guide is introduced."
+        },
+        {
+          "id": "E06",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "contents/docs/mcp-analytics/identifying-users.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 241,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #5583 adds $mcp_unknown_tool support to @posthog/mcp (high-level, low-level via resolveOriginalTool, and PostHogMCP.captureUnknownTool) and changes PostHogMCP baseEvent to auto-generate a ses_... session ID when sessionId is omitted. This directly contradicts the SDK support matrix in installation/index.mdx (TypeScript Unknown-tool calls is listed as No), the Go-and-Rust-only $mcp_unknown_tool / $mcp_tool_name / $mcp_tool_call statements in events.mdx, the custom dispatcher and resolveOriginalTool reference in installation/typescript.mdx, and the anonymous fallback behavior for manual captures in identifying-users.mdx."
+        },
+        {
+          "id": "E07",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 311,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 0,
+          "reason": "posthog-python PR #1199 adds $mcp_unknown_tool capture (including PostHogMCP.capture_unknown_tool() for custom dispatchers), which directly contradicts live docs statements in events.mdx ('Go and Rust SDKs only' for $mcp_unknown_tool and $mcp_tool_name, and '$mcp_tool_call' unregistered-tool note) and the Python column ('No') of the 'Unknown-tool calls ($mcp_unknown_tool)' support matrix row in installation/index.mdx, and adds custom-dispatcher unknown-tool capture to installation/python.mdx."
+        },
+        {
+          "id": "E08",
+          "needsDocs": false,
+          "pages": [],
+          "llmCalls": 0,
+          "bumpedSameHashCount": 0,
+          "reason": "zero_llm_excl_or_out_of_scope_gate"
+        },
+        {
+          "id": "E09",
+          "needsDocs": true,
+          "changeKind": "create",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/start-here.mdx",
+            "contents/docs/mcp-analytics/intent.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx",
+            "contents/docs/mcp-analytics/missing-capability.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 112,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 1,
+          "reason": "PR #1204 introduces explicit app-directory review disclosure guarantees across virtual tools (get_more_tools and send_feedback now declare readOnlyHint, destructiveHint, idempotentHint, and openWorldHint all false with no title via shared VIRTUAL_TOOL_HINTS) and aligns injected parameter descriptions with concise analytics disclosure wording. This warrants creating a new directory-review disclosure guide with cross-links from installation/index.mdx, start-here.mdx, and intent.mdx, updating missing-capability.mdx for virtual tool hints, and updating installation/python.mdx where claim MCPA-PY-C-000038 is contradicted because llm_model is now always optional on all Python server paths rather than only on raw low-level servers and standalone FastMCP."
+        },
+        {
+          "id": "E10",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/rust.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 18,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 1,
+          "reason": "PR #333 changes posthog-rs to inject llm_model as an optional argument (required = false) instead of adding it to the tool input schema's required list, directly contradicting the capture_model(bool) row in contents/docs/mcp-analytics/installation/rust.mdx (L134) which states it adds \"a required llm_model argument\". It also updates get_more_tools annotations (readOnlyHint, openWorldHint, idempotentHint set to false) and aligns CONTEXT_DESCRIPTION with the shared spec, which are seated as new IA facts."
+        },
+        {
+          "id": "E11",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/queries.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx",
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1234,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #124838 ships a new user-facing Custom Harnesses feature across three public surfaces: (1) a new CRUD REST resource at /api/projects/:project_id/mcp_analytics/custom_harnesses/ (missing from surfaces/api.mdx), (2) a new Settings > Environment > MCP analytics > Custom harnesses UI and custom harness labeling across dashboard/activity views (surfaces/web-app.mdx), and (3) custom harness rule precedence before built-in labels in harness resolution and the properties.$virt_mcp_harness HogQL virtual field (events.mdx and queries.mdx)."
+        },
+        {
+          "id": "E12",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/queries.mdx",
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 0,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #125824 wires team-level custom MCP harness rules into the HogQL $virt_mcp_harness virtual field on the events table and documents that custom harness names now appear in properties.$virt_mcp_harness in SQL (with caching caveats). Public docs in queries.mdx and events.mdx should be updated to document this HogQL virtual property capability and its custom harness resolution behavior."
+        },
+        {
+          "id": "E13",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1081,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #131278 adds granular session tool-call row details (exec command labels, argument-name fallback when parameter values are not captured, error code/field details, and model display) plus the backing serializer/query fields. Summary-level prose in surfaces/web-app.mdx and surfaces/api.mdx remains accurate with no contradicted claims, so no public docs update is needed, while 5 outside-in behavioral facts are seated in MCPA-6.4 and MCPA-7.2."
+        },
+        {
+          "id": "E14",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1003,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #131058 adds granular failure-cause grouping (masking IDs and numbers in $mcp_error_message), a cause drill-down filter on MCPToolFailureOccurrencesQuery / generated MCP tool definitions, a group-level Create fix task button in the drill-down modal, and role-level property restrictions on tool-detail HogQL runners. The summary-level prose in surfaces/web-app.mdx (\"Select a tool to inspect its failed calls and error details\") and surfaces/mcp.mdx (\"Recent failures, with error type and message\") remains completely accurate without contradiction, so no public .mdx update is needed, while the new outside-in behavioral facts are seated in MCPA-6.3."
+        },
+        {
+          "id": "E15",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1192,
+          "mintedFactsThisStep": 1,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #132113 is a query-window performance optimization that adds an optional lenient `date_to` upper-bound parameter to the session tool-calls endpoint (`MCPSessionToolCallsQuerySerializer` / `list_mcp_tool_calls`) and refreshes generated OpenAPI and MCP tool schemas. When omitted, the scan stays unbounded as before, and no live `.mdx` documentation pages or bound claims are contradicted or rendered stale."
+        },
+        {
+          "id": "E16",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 18,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 6,
+          "reason": "Internal Kea logic wiring bug fix in products/mcp_analytics/frontend/sessions/mcpSessionsLogic.ts replacing action listeners with a subscription on sharedQueryFilters so the Sessions tab reloads when the team test-account default changes instead of staying on a loading skeleton. Excluded from public docs and IA facts under MCPA-UI-D-002; no live .mdx pages or bound claims are contradicted."
+        },
+        {
+          "id": "E17",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 120,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #5597 adds two new public TypeScript SDK instrument() options on MCPAnalyticsOptions—sessionId and clientInfo—for stateless per-request servers, and updates session ID and client identity resolution precedence (options.sessionId takes highest priority ahead of conversation_id and transport sessions and is hashed into a ses_ ID; options.clientInfo overrides _meta, session token, and the initialize handshake body). installation/typescript.mdx needs these options documented for stateless servers, and events.mdx needs its session and client identity resolution reference updated."
+        },
+        {
+          "id": "E18",
+          "kind": "human_docs_pr",
+          "action": "unreconciled_drift",
+          "orphanedClaims": 286,
+          "llmCalls": 0
+        },
+        {
+          "id": "E19",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 14,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 6,
+          "reason": "Pure frontend performance optimization in internal Kea logic (mcpSessionsLogic.ts) that bounds tool-call query scans with date_to for settled sessions (ended over an hour ago without a fixed range end) and drops stale in-flight pages. No customer-facing behavior, API contract, or documented claim changes, and internal Kea query-window/perf bounds are excluded per MCPA-UI-D-002."
+        },
+        {
+          "id": "E20",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 27,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 39,
+          "reason": "PR #135656 ships MCPAnalyticsLeaderboardHome as the sole GA Dashboard layout and deletes MCPAnalyticsDashboardOverview, DashboardCardsMenu, ToolUsageChart, RecentToolCallsCard, and ProtocolVersionStrip. This directly contradicts MCPA-UI-C-000007 in contents/docs/mcp-analytics/surfaces/web-app.mdx (L26), which describes the old overview dashboard including \"tool usage, and errors over time\" rather than the leaderboard home layout."
+        },
+        {
+          "id": "E21",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1008,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 39,
+          "reason": "PR #126523 updates the Missing capabilities tab, activity overview counts, and `query-mcp-missing-capabilities` to read `$mcp_feedback` events with `$mcp_feedback_type = 'missing_capability'` (from `send_feedback` / `collectFeedback` / `collect_feedback`) alongside `$mcp_missing_capability` events from `get_more_tools`. This directly contradicts live docs claims in `events.mdx`, `missing-capability.mdx`, `installation/python.mdx`, `surfaces/web-app.mdx`, and `surfaces/api.mdx` that state the MCP Analytics views or missing-capability feed read only `$mcp_missing_capability` / `get_more_tools` / `report_missing` reports."
+        },
+        {
+          "id": "E22",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1315,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 42,
+          "reason": "PR #135724 tunes intent clustering (splitting recurring automated intents out of the corpus, collapsing sub-threshold clusters into a long_tail aggregate, raising the default distance threshold from 0.2 to 0.4) and adds snapshot read-path property access control plus corresponding fields (long_tail, recurring, intent_text_redacted) on the existing intent cluster snapshot serializer. No live .mdx page is factually contradicted or stale—surfaces/web-app.mdx and surfaces/api.mdx remain accurate at their summary level, and no new UI views, REST resources, or SDK options were introduced. Seated 4 outside-in behavioral facts into MCPA-4.2 and MCPA-7.2."
+        },
+        {
+          "id": "E23",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 14,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 42,
+          "reason": "PR #127287 updates harness resolution in products/mcp_analytics/backend/mcp_harness.py so $mcp_client_user_agent now overrides $mcp_client_name not only for Claude Code, but also for PostHog Wizard (posthog/wizard) and _UA_FIRST_PRODUCTS (grok, kimchi, devin, cloudflare-mcp-portal, opencode), while expanding recognized agent and SDK-default harness labels. This directly contradicts claim MCPA-API-C-000004 in contents/docs/mcp-analytics/events.mdx, which states that $mcp_client_user_agent identifies the Claude Code interface and is otherwise only a fallback when no client name is available. The remaining changes in services/mcp (dropping structuredContent by default and internal client-support tier docs) do not contradict any live MCP Analytics docs page."
+        },
+        {
+          "id": "E24",
+          "kind": "human_docs_pr",
+          "action": "unreconciled_drift",
+          "orphanedClaims": 431,
+          "llmCalls": 0
+        }
+      ]
+    },
+    "kw_plus_ia_continuous": {
+      "metrics": {
+        "arm": "kw_plus_ia_continuous",
+        "codePrCount": 22,
+        "humanDocsPrCount": 2,
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "tn": 11,
+        "needsDocsPrecision": 1,
+        "needsDocsRecall": 1,
+        "needsDocsF1": 1,
+        "johnEvalAgreement": "8/8 (100.0%)",
+        "pageHitRatio": "29/29",
+        "pageRecall": 1,
+        "pagePrecision": 1,
+        "totalLlmCalls": 21,
+        "avgLlmCallsPerCodePr": 0.95,
+        "fastGateZeroLlmSkips": 1,
+        "prematureFlaggedFactsMinted": 0,
+        "internalNoiseFactsMinted": 1,
+        "orphanedClaimsAfterHumanEdit": 0,
+        "routingShadowDrops": 0,
+        "publishGateBlocksOrExtraPageFlags": 0,
+        "finalLiveFactsCount": 2376,
+        "finalRetiredLeavesCount": 61,
+        "finalLiveClaimsCount": 503
+      },
+      "stepLogs": [
+        {
+          "id": "E01",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 5,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #126239 is a pure CSS layout fix (adding `fillHeight` flex-scrolling to `HarnessBarChart` and `ModelBarChart` in `MCPAnalyticsLeaderboardHome` and a `min-h-[276px]!` floor on `ShareOverTimeChart`) so share lists scroll instead of stretching adjacent charts. No documented behavior or live docs claims are contradicted or missing, and presentational chart layout primitives are excluded from IA facts under MCPA-UI-D-001."
+        },
+        {
+          "id": "E02",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 27,
+          "mintedFactsThisStep": 2,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #125299 adds the standard shared filterTestAccounts internal/test users toggle to the Missing capabilities tab, its HogQL query runner, and the generated query-mcp-missing-capabilities MCP tool schema. Summary-level prose in surfaces/web-app.mdx and surfaces/mcp.mdx remains accurate without enumerating per-tab filter toggles, so no public docs update is needed. Seated two outside-in behavioral facts in MCPA-5.1 for the backend filter input and UI filter control (excluding generated schemas per MCPA-ALL-D-001 and Kea logic wiring per MCPA-UI-D-002)."
+        },
+        {
+          "id": "E03",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 46,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 0,
+          "reason": "Internal backend plumbing that routes MCP Analytics LLM calls (failure classification, session intent summarization, and activity intent digest) through PostHog's internal AI gateway client helpers (build_openai_client, build_gemini_client, resolve_ai_gateway_config) instead of direct OpenAI/Gemini SDK clients. No customer-facing docs claims are contradicted or missing, and no new outside-in behavioral facts are introduced."
+        },
+        {
+          "id": "E04",
+          "needsDocs": false,
+          "pages": [],
+          "llmCalls": 0,
+          "bumpedSameHashCount": 0,
+          "reason": "deferred_behind_feature_flag_gate"
+        },
+        {
+          "id": "E05",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 34,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #5573 only rewords the internal description strings of injected parameters (llm_model, conversation_id) and virtual tools (get_more_tools, send_feedback) in @posthog/mcp so app directory reviews stop flagging them, without changing public options, wire schema, or contradicting any live .mdx documentation."
+        },
+        {
+          "id": "E06",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "contents/docs/mcp-analytics/identifying-users.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 241,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #5583 aligns @posthog/mcp with the v1 MCP analytics spec in ways that directly contradict live docs: (1) TypeScript now emits $mcp_unknown_tool (with $mcp_tool_name set) for unregistered tools and adds PostHogMCP.captureUnknownTool, contradicting the support matrix in installation/index.mdx (MCPA-ALL-C-000153), the Go/Rust-only claims in events.mdx (MCPA-ALL-C-000038, MCPA-ALL-C-000065), and the custom dispatcher method list and resolveOriginalTool docs in installation/typescript.mdx (MCPA-TS-C-000047); (2) PostHogMCP capture methods without sessionId now generate a fresh ses_... session ID and use it as distinct_id for anonymous calls instead of omitting $session_id or falling back to \"anonymous\", contradicting installation/typescript.mdx and identifying-users.mdx (MCPA-ALL-C-000106); (3) llm_model is now injected as optional rather than required, virtual tool annotations are all false with no title, and string truncation stops exactly at the limit including '...'."
+        },
+        {
+          "id": "E07",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx",
+            "contents/docs/mcp-analytics/identifying-users.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 311,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #1199 aligns posthog.mcp with the cross-SDK MCP spec, directly contradicting live docs: (1) Python now emits $mcp_unknown_tool for unregistered tool calls instead of failed $mcp_tool_call/$exception, making events.mdx ('Go and Rust SDKs only') and the installation/index.mdx support matrix ('No' for Python) stale; (2) manual capture without session_id now generates a fresh ses_ session ID and uses it as distinct_id instead of falling back to 'anonymous', requiring an update to identifying-users.mdx; and (3) installation/python.mdx needs updates for unknown-tool behavior, PostHogMCP.capture_unknown_tool(), and stock FastMCP middleware preserving llm_model injection."
+        },
+        {
+          "id": "E08",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/python.mdx",
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/start-here.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 0,
+          "mintedFactsThisStep": 1,
+          "retiredLeavesTotal": 0,
+          "reason": "PR #1200 promotes posthog.mcp (Python MCP Analytics) from beta to stable with API and $mcp_* event schema stability guarantees across minor and patch posthog releases. This directly contradicts the Beta SDK callout in installation/python.mdx (MCPA-PY-C-000058), the Python Support row in installation/index.mdx (MCPA-ALL-C-000164), and the beta callout in start-here.mdx (MCPA-ALL-C-000318)."
+        },
+        {
+          "id": "E09",
+          "needsDocs": true,
+          "changeKind": "create",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/index.mdx",
+            "contents/docs/mcp-analytics/start-here.mdx",
+            "contents/docs/mcp-analytics/intent.mdx",
+            "contents/docs/mcp-analytics/installation/python.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 112,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 1,
+          "reason": "PR #1204 introduces explicit app-directory review disclosure guarantees for MCP Analytics virtual tools and injected arguments (setting readOnlyHint, destructiveHint, idempotentHint, and openWorldHint to false with no title on get_more_tools and send_feedback, shortening the default context description to disclose analytics recording, and making llm_model always optional across all Python adapters). This warrants creating a new directory-review disclosure guide with cross-links from installation/index.mdx, start-here.mdx, and intent.mdx, and updating installation/python.mdx where L172 implies llm_model is only optional on raw low-level servers and standalone FastMCP."
+        },
+        {
+          "id": "E10",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/rust.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 18,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 1,
+          "reason": "PR #333 in posthog-rs makes the SDK-injected `llm_model` argument optional (no longer added to `inputSchema.required`), which directly contradicts the `capture_model(bool)` row in `contents/docs/mcp-analytics/installation/rust.mdx` (line 134, covered by claim MCPA-RS-C-000008) that states it adds \"a required `llm_model` argument\". The PR also updates `get_more_tools` MCP annotations (`readOnlyHint`, `openWorldHint`, `idempotentHint`, `destructiveHint` all `false`) and shortens the default `context` description, which are seated as IA facts without contradicting other live doc pages."
+        },
+        {
+          "id": "E11",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx",
+            "contents/docs/mcp-analytics/queries.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx",
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1172,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #124838 ships a new user-facing Custom Harnesses feature across the Settings UI (Settings > Environment > MCP analytics > Custom harnesses), a new CRUD REST API resource (custom_harnesses under mcp_analytics), and query-time HogQL harness resolution including properties.$virt_mcp_harness (up to 20 case-insensitive substring rules per project, checked before built-in labels with longest-pattern precedence). Live docs need updates in events.mdx (custom harness precedence in harness resolution), queries.mdx (properties.$virt_mcp_harness with custom harness rules), surfaces/api.mdx (new custom_harnesses REST resource), and surfaces/web-app.mdx (Custom harnesses settings and display across harness share/activity views)."
+        },
+        {
+          "id": "E12",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/queries.mdx",
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 0,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #125824 wires team custom MCP harness rules into HogQL's events.$virt_mcp_harness virtual field expression and updates in-repo docs to note that custom harness names now appear in properties.$virt_mcp_harness in SQL (subject to harness name and query result caching). This introduces a user-facing HogQL virtual property capability that should be documented in queries.mdx and events.mdx."
+        },
+        {
+          "id": "E13",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1042,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 5,
+          "reason": "PR #131278 adds granular session tool-call row details (exec command labels, fallback argument names from $mcp_input_keys, error_code/error_field failure details, and llm_model) plus corresponding read-only serializer fields. Summary-level docs in surfaces/web-app.mdx, surfaces/api.mdx, and surfaces/mcp.mdx remain completely accurate without enumerating individual session-row fields, so no public docs update is needed. Seated 5 outside-in behavioral facts into MCPA-6.4 and MCPA-7.2."
+        },
+        {
+          "id": "E14",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 972,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #131058 refines per-tool failure grouping (grouping by masked error message cause in addition to error type and status), adds cause-filtered drill-down and a fix-task button in the failure occurrences modal, passes user=self.user for HogQL property restrictions across tool-detail runners, and updates the MCP tool descriptions for query-mcp-tool-failures and query-mcp-tool-failure-occurrences. Summary-level docs in surfaces/web-app.mdx and surfaces/mcp.mdx remain completely accurate without contradiction, so no public .mdx update is needed, while 5 outside-in behavioral facts are seated in MCPA-6.3."
+        },
+        {
+          "id": "E15",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1119,
+          "mintedFactsThisStep": 1,
+          "retiredLeavesTotal": 6,
+          "reason": "This is a query-window performance optimization adding an optional `date_to` upper-bound query parameter to the session tool-calls endpoint (`MCPSessionToolCallsQuerySerializer`, `list_mcp_tool_calls`, and the regenerated `mcp-analytics-sessions-tool-calls` schema/description) so ClickHouse scans stop at `session_end` while returning identical rows. No live `.mdx` page is contradicted or stale, and summary-level `surfaces/api.mdx` and `surfaces/mcp.mdx` remain accurate without enumerating optional scan-bound query parameters."
+        },
+        {
+          "id": "E16",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 18,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #131998 is an internal Kea state-management bug fix in products/mcp_analytics/frontend/sessions/mcpSessionsLogic.ts that replaces action listeners with a kea-subscriptions watcher on sharedQueryFilters so the Sessions tab reloads when the team test-account default changes rather than staying on a loading skeleton. It restores expected UI behavior, contradicts no live .mdx claims, and falls under exclusion [MCPA-UI-D-002] (internal Kea logic wiring and loading skeletons), so no docs update or new IA facts are needed."
+        },
+        {
+          "id": "E17",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 120,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 6,
+          "reason": "PR #5597 adds two new public `instrument()` options (`sessionId` and `clientInfo`) to `@posthog/mcp` for stateless per-request servers, adding a highest-precedence host session ID step (hashed to `ses_`, ahead of `conversation_id` and transport sessions) and a highest-precedence host client identity callback (outranking `_meta`, session tokens, and the `initialize` handshake). Both `installation/typescript.mdx` (stateless/multi-pod & `instrument()` options) and `events.mdx` (session resolution and client identity precedence) need updates."
+        },
+        {
+          "id": "E18",
+          "kind": "human_docs_pr",
+          "action": "soft_drift_reconciled",
+          "stats": {
+            "prevTotal": 609,
+            "exactSamePage": 571,
+            "movedCrossPage": 0,
+            "humanEdited": 19,
+            "retiredDeleted": 19,
+            "unmappedNewPieces": 74
+          },
+          "llmCalls": 0
+        },
+        {
+          "id": "E19",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 14,
+          "mintedFactsThisStep": 0,
+          "retiredLeavesTotal": 25,
+          "reason": "Pure query-window performance optimization and cache-race guard inside internal frontend Kea logic (mcpSessionsLogic.ts) that sends date_to to the already-existing tool-calls endpoint for settled sessions (>1h old with no fixed date range end). No customer-facing docs claims are contradicted or stale, and internal Kea state-management/perf bounds are excluded under MCPA-UI-D-002, so no docs updates or new IA facts are needed."
+        },
+        {
+          "id": "E20",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 27,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 58,
+          "reason": "PR #135656 removes MCPAnalyticsDashboardOverview, DashboardCardsMenu, ToolUsageChart, and ProtocolVersionStrip, shipping MCPAnalyticsLeaderboardHome as the sole GA layout for the Dashboard tab. This directly contradicts claim MCPA-UI-C-000007 in contents/docs/mcp-analytics/surfaces/web-app.mdx (L26), which still describes the retired overview dashboard including 'tool usage, and errors over time'."
+        },
+        {
+          "id": "E21",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/missing-capability.mdx",
+            "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+            "contents/docs/mcp-analytics/surfaces/api.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 967,
+          "mintedFactsThisStep": 4,
+          "retiredLeavesTotal": 58,
+          "reason": "PR #126523 updates the Missing capabilities feed, Activity overview report count, and query-mcp-missing-capabilities tool to include $mcp_feedback events with $mcp_feedback_type = 'missing_capability' from send_feedback alongside $mcp_missing_capability events from get_more_tools, and updates the UI empty state and in-repo missing-capability doc to lead with collectFeedback/collect_feedback for TypeScript and Python. This directly contradicts the get_more_tools-only claims in surfaces/web-app.mdx (MCPA-UI-C-000014) and surfaces/api.mdx (MCPA-API-C-000025), and requires updating missing-capability.mdx to cover send_feedback missing-capability reports."
+        },
+        {
+          "id": "E22",
+          "needsDocs": false,
+          "changeKind": null,
+          "pages": [],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 1274,
+          "mintedFactsThisStep": 5,
+          "retiredLeavesTotal": 61,
+          "reason": "Clustering tuning (distance threshold 0.2 -> 0.4, collapsing sub-2-intent clusters into long_tail, splitting 3+-session verbatim recurring intents out of the corpus) and snapshot-read property access control redaction do not contradict any live .mdx documentation. Both surfaces/web-app.mdx and surfaces/api.mdx describe intent clustering at summary level without enumerating snapshot fields or clustering thresholds, and no new UI components or REST resources were added. Seated 5 outside-in behavioral facts into MCPA-4.2 and MCPA-7.2."
+        },
+        {
+          "id": "E23",
+          "needsDocs": true,
+          "changeKind": "update",
+          "pages": [
+            "contents/docs/mcp-analytics/events.mdx"
+          ],
+          "llmCalls": 1,
+          "bumpedSameHashCount": 14,
+          "mintedFactsThisStep": 3,
+          "retiredLeavesTotal": 61,
+          "reason": "PR #127287 changes query-time harness resolution in products/mcp_analytics/backend/mcp_harness.py so $mcp_client_user_agent now overrides $mcp_client_name for PostHog Wizard ('posthog/wizard') and _UA_FIRST_PRODUCTS ('grok', 'kimchi', 'devin', 'cloudflare-mcp-portal', 'opencode')—in addition to Claude Code—before falling back to $mcp_client_name and the generic User-Agent product token, and adds named harness labels for additional agents, PostHog surfaces, and SDK defaults. This directly contradicts MCPA-API-C-000004 in contents/docs/mcp-analytics/events.mdx (L80), which states that $mcp_client_user_agent only identifies Claude Code interfaces and acts as a fallback when no client name is available. The services/mcp structuredContent changes are internal to PostHog's own MCP server response formatting and do not affect MCP Analytics docs."
+        },
+        {
+          "id": "E24",
+          "kind": "human_docs_pr",
+          "action": "soft_drift_reconciled",
+          "stats": {
+            "prevTotal": 590,
+            "exactSamePage": 394,
+            "movedCrossPage": 1,
+            "humanEdited": 108,
+            "retiredDeleted": 87,
+            "unmappedNewPieces": 154
+          },
+          "llmCalls": 0
+        }
+      ]
+    }
+  }
+}

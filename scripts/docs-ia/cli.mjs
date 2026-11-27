@@ -8,7 +8,7 @@
 //   pnpm docs-ia run <workflow> --product <slug> [--dry-run] [--from <step>] [--to <step>] [--state <file>]
 //   pnpm docs-ia query <fact|symbol|page|audit> <target> --file <json-or-yml>
 //   pnpm docs-ia mcp-serve --tools <csv> [--state <file>]
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
@@ -16,6 +16,7 @@ import { describeWorkflow } from './models/workflow.mjs';
 import { runWorkflow } from './runtime/runner.mjs';
 import { queryAuditTrail, queryByPage, queryBySymbol, queryFact } from './tools/blast-radius.mjs';
 import { startStdioMcpServer } from './tools/mcp-server.mjs';
+import { createTreeSitterAstParser } from './tools/tree-sitter-parser.mjs';
 import { getWorkflow, WORKFLOWS } from './workflows/index.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -98,14 +99,21 @@ async function main() {
     const wf = getWorkflow(arg1);
     const product = flags.product ? loadProductConfig(flags.product) : { slug: 'default', code: 'IA', surfaces: ['API'] };
     const initialState = flags.state ? loadDataFile(resolve(flags.state)) : {};
+    const { parseAst } = await createTreeSitterAstParser();
     const res = await runWorkflow(wf, {
       product,
       initialState,
+      parseAst,
       dryRun: Boolean(flags['dry-run']),
       fromStep: flags.from || null,
       toStep: flags.to || null,
       log: msg => console.error(msg),
     });
+    if (flags.out) {
+      const outPath = resolve(flags.out);
+      mkdirSync(dirname(outPath), { recursive: true });
+      writeFileSync(outPath, JSON.stringify({ workflowId: res.workflowId, trace: res.trace, replayScorecard: res.state.replayScorecard ?? null }, null, 2));
+    }
     console.log(JSON.stringify({ workflowId: res.workflowId, trace: res.trace }, null, 2));
     return;
   }

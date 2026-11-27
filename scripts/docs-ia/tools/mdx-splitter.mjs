@@ -169,17 +169,29 @@ export function splitMdxFile(pagePath, rawText, { surfaceHints = [] } = {}) {
   return pieces;
 }
 
-function shingleSet(text) {
-  const words = String(text || '')
+function wordTokens(text) {
+  return String(text || '')
     .toLowerCase()
     .replace(/[`*_#>\[\]()]/g, ' ')
     .match(/[a-z0-9$_.@-]{2,}/g) || [];
-  if (words.length < 3) return new Set(words);
-  const out = new Set();
-  for (let i = 0; i <= words.length - 3; i++) {
-    out.add(`${words[i]} ${words[i + 1]} ${words[i + 2]}`);
-  }
-  return out;
+}
+
+function codeIdentifiers(rawText) {
+  return new Set([...String(rawText || '').matchAll(/`([^`\n]{2,60})`/g)].map(m => m[1].toLowerCase()));
+}
+
+function softDriftSimilarity(prevText, prevRaw, nextText, nextRaw) {
+  const wA = wordTokens(prevText);
+  const wB = wordTokens(nextText);
+  if (!wA.length || !wB.length) return 0;
+  const uni = jaccard(new Set(wA), new Set(wB));
+  const biA = new Set(wA.slice(0, -1).map((w, i) => `${w} ${wA[i + 1]}`));
+  const biB = new Set(wB.slice(0, -1).map((w, i) => `${w} ${wB[i + 1]}`));
+  const bi = biA.size && biB.size ? jaccard(biA, biB) : uni;
+  const idA = codeIdentifiers(prevRaw);
+  const idB = codeIdentifiers(nextRaw);
+  const idBonus = idA.size && idB.size ? 0.2 * jaccard(idA, idB) : 0;
+  return Math.min(1, 0.6 * uni + 0.4 * bi + idBonus);
 }
 
 function jaccard(a, b) {
@@ -199,9 +211,9 @@ function jaccard(a, b) {
 export function reconcileHumanMdxDrift({ prevClaims = [], nextPieces = [], docsCommit = null }) {
   const usedPieceIds = new Set();
   const nextByNorm = new Map();
-  const nextWithShingles = nextPieces.map(p => {
+  const nextWithTokens = nextPieces.map(p => {
     const norm = normalizeQuoteForIdentity(p.plainText || p.text);
-    const rec = { ...p, norm, shingles: shingleSet(p.plainText || p.text) };
+    const rec = { ...p, norm };
     if (norm) {
       if (!nextByNorm.has(norm)) nextByNorm.set(norm, []);
       nextByNorm.get(norm).push(rec);
@@ -248,14 +260,13 @@ export function reconcileHumanMdxDrift({ prevClaims = [], nextPieces = [], docsC
       continue;
     }
 
-    const clShingles = shingleSet(cl.plainText || cl.text);
     let best = null;
     let bestScore = 0;
-    for (const cand of nextWithShingles) {
+    for (const cand of nextWithTokens) {
       if (usedPieceIds.has(cand.pieceId)) continue;
       const samePage = cand.pagePath === cl.pagePath;
-      const sim = jaccard(clShingles, cand.shingles);
-      const threshold = samePage ? 0.38 : 0.65;
+      const sim = softDriftSimilarity(cl.plainText || cl.text, cl.text, cand.plainText || cand.text, cand.text);
+      const threshold = samePage ? 0.36 : 0.65;
       if (sim >= threshold && sim > bestScore) {
         best = cand;
         bestScore = sim;
@@ -282,9 +293,9 @@ export function reconcileHumanMdxDrift({ prevClaims = [], nextPieces = [], docsC
     }
   }
 
-  const unmappedNewPieces = nextWithShingles
+  const unmappedNewPieces = nextWithTokens
     .filter(p => !usedPieceIds.has(p.pieceId) && p.mappable)
-    .map(({ shingles, norm, ...rest }) => rest);
+    .map(({ norm, ...rest }) => rest);
 
   return {
     reconciledClaims,
