@@ -24,101 +24,73 @@ function isInProductScope(repo, relPath, diffChunk, product) {
   return false;
 }
 
+const GENERIC_STOPWORDS = new Set([
+  'return', 'const', 'export', 'import', 'function', 'class', 'async', 'await', 'default',
+  'interface', 'string', 'number', 'boolean', 'object', 'undefined', 'false', 'true', 'null',
+  'public', 'private', 'static', 'readonly', 'typeof', 'instanceof', 'switch', 'break', 'continue',
+  'catch', 'throw', 'finally', 'yield', 'super', 'extends', 'implements', 'package', 'module',
+  'require', 'props', 'state', 'value', 'values', 'index', 'length', 'items', 'result', 'results',
+  'error', 'errors', 'response', 'request', 'params', 'config', 'options', 'query', 'event', 'events',
+  'client', 'server', 'source', 'target', 'status', 'count', 'total', 'label', 'title', 'content',
+]);
+
+// Product-agnostic surface-scoped IA claim ranker (zero hardcoded product cues or page paths):
+//   0. Filter claims by IA surface (`ALL` or any surface touched by this PR)
+//   1. Direct code-pinned facts touched by changed/deleted symbols (+15)
+//   2. 1-hop port neighbors (+8)
+//   3. Shared Dewey capability sections (`sectionCodes`, +4)
+//   4. Generic distinctive identifiers extracted automatically from changed diff lines (+3/+5)
 function selectDiversifiedBoundClaims({
   claims,
   directFactCodes,
   portFactCodes,
+  touchedSectionCodes = new Set(),
+  touchedSurfaces = new Set(),
   diffText,
-  repo,
-  nonExcludedPaths,
-  hasReleaseManifestChange,
-  docsPrefix = 'contents/docs/mcp-analytics',
 }) {
   const changedLinesOnly = diffText
     .split('\n')
     .filter(l => (l.startsWith('+') || l.startsWith('-')) && !l.startsWith('+++') && !l.startsWith('---'))
     .join('\n');
 
-  const diffTokens = new Set(
-    [...changedLinesOnly.matchAll(/(\$virt_mcp_[a-z0-9_]+|\$mcp_[a-z0-9_]+|send_feedback|get_more_tools|llm_model|sessionId|clientInfo|structuredContent|readOnlyHint|destructiveHint|idempotentHint|openWorldHint|filterTestAccounts|anonymous|distinct_id|distinctId|generateSessionId|generate_session_id)/g)]
-      .map(m => m[1])
-  );
-  const lowerChanged = changedLinesOnly.toLowerCase();
-  const semanticCues = [];
-  if (lowerChanged.includes('missing_capability') || lowerChanged.includes('missingcapabilities')) {
-    semanticCues.push('missing-capability', 'missing capability', 'missing capabilities');
+  const rawTokens = changedLinesOnly.match(/(\$[a-z][a-z0-9_]{3,}|[a-z]+_[a-z0-9_]{3,}|[a-z]{2,}[A-Z][A-Za-z0-9]{2,})/g) || [];
+  const tokenFreq = new Map();
+  for (const tok of rawTokens) {
+    const low = tok.toLowerCase();
+    if (GENERIC_STOPWORDS.has(low) || low.length < 5) continue;
+    tokenFreq.set(low, (tokenFreq.get(low) || 0) + 1);
   }
-  if (lowerChanged.includes('filtertestaccounts') || lowerChanged.includes('internal and test')) {
-    semanticCues.push('internal', 'test account');
-  }
-  if (lowerChanged.includes('recurring') || lowerChanged.includes('clustering')) {
-    semanticCues.push('clustering', 'intent', 'recurring');
-  }
-  if (lowerChanged.includes('redact') || lowerChanged.includes('access_control')) {
-    semanticCues.push('privacy', 'redact', 'access control');
-  }
-  if (
-    lowerChanged.includes('custom_harness') ||
-    lowerChanged.includes('mcpcustomharness') ||
-    nonExcludedPaths.some(p => p.endsWith('mcp_harness.py'))
-  ) {
-    semanticCues.push('harness', 'fallback when no client name', '$mcp_client_user_agent', '$mcp_client_name');
-  }
-  if (/(anonymous|distinct_id|distinctid|generatesessionid|generate_session_id)/i.test(changedLinesOnly)) {
-    semanticCues.push('"anonymous"', 'picks distinct_id', 'how attribution works');
-  }
-  if (lowerChanged.includes('leaderboard')) semanticCues.push('leaderboard', 'overview');
-  if (lowerChanged.includes('directory review')) semanticCues.push('virtual tool', 'support', 'beta');
-  if (hasReleaseManifestChange && /\bstable\b/i.test(changedLinesOnly)) {
-    semanticCues.push('beta', 'experimental', '| support |');
-  }
+  const diffTokens = [...tokenFreq.entries()]
+    .sort((a, b) => (b[0].startsWith('$') ? 10 : 0) - (a[0].startsWith('$') ? 10 : 0) || b[1] - a[1])
+    .slice(0, 25)
+    .map(([t]) => t);
 
-  const preferredPages = new Set();
-  if (repo === 'posthog-js') {
-    preferredPages.add(`${docsPrefix}/installation/typescript.mdx`);
-    preferredPages.add(`${docsPrefix}/installation/index.mdx`);
-    if (/(anonymous|distinctid|generatesessionid)/i.test(changedLinesOnly)) {
-      preferredPages.add(`${docsPrefix}/identifying-users.mdx`);
-    }
-  } else if (repo === 'posthog-python') {
-    preferredPages.add(`${docsPrefix}/installation/python.mdx`);
-    preferredPages.add(`${docsPrefix}/installation/index.mdx`);
-    if (/(anonymous|distinct_id|generate_session_id)/i.test(changedLinesOnly)) {
-      preferredPages.add(`${docsPrefix}/identifying-users.mdx`);
-    }
-    if (hasReleaseManifestChange || lowerChanged.includes('directory review')) {
-      preferredPages.add(`${docsPrefix}/start-here.mdx`);
-    }
-  } else if (repo === 'posthog-rs') {
-    preferredPages.add(`${docsPrefix}/installation/rust.mdx`);
-    preferredPages.add(`${docsPrefix}/installation/index.mdx`);
-  } else if (repo === 'posthog') {
-    if (nonExcludedPaths.some(p => p.includes('/frontend/'))) preferredPages.add(`${docsPrefix}/surfaces/web-app.mdx`);
-    if (nonExcludedPaths.some(p => p.endsWith('api.py') || p.endsWith('serializers.py') || p.endsWith('models.py'))) {
-      preferredPages.add(`${docsPrefix}/surfaces/api.mdx`);
-    }
-    if (nonExcludedPaths.some(p => p.includes('hogql/'))) preferredPages.add(`${docsPrefix}/queries.mdx`);
-    if (nonExcludedPaths.some(p => p.endsWith('mcp_harness.py') || p.startsWith('services/mcp/'))) {
-      preferredPages.add(`${docsPrefix}/events.mdx`);
-    }
-  }
-
+  const hasSurfaceFilter = touchedSurfaces.size > 0;
   const scored = [];
   for (const c of claims) {
+    const claimSurf = String(c.surface || 'ALL').toUpperCase();
+    if (hasSurfaceFilter && claimSurf !== 'ALL' && !touchedSurfaces.has(claimSurf)) continue;
+
     let score = 0;
+    let graphHit = false;
     for (const fc of c.factCodes || []) {
-      if (directFactCodes.has(fc)) score += 12;
-      else if (portFactCodes.has(fc)) score += 6;
+      if (directFactCodes.has(fc)) { score += 15; graphHit = true; }
+      else if (portFactCodes.has(fc)) { score += 8; graphHit = true; }
     }
+    for (const sc of c.sectionCodes || []) {
+      if (touchedSectionCodes.has(sc)) { score += 4; graphHit = true; }
+    }
+    const lowerClaim = `${c.text || ''} ${c.plainText || ''}`.toLowerCase();
+    let identHits = 0;
     for (const tok of diffTokens) {
-      if ((c.text || c.plainText || '').includes(tok)) score += 5;
+      if (lowerClaim.includes(tok)) {
+        score += tok.startsWith('$') ? 5 : 3;
+        identHits++;
+      }
     }
-    const lowerClaim = String(c.plainText || c.text || '').toLowerCase();
-    for (const cue of semanticCues) {
-      if (lowerClaim.includes(cue)) score += 4;
+    if (score > 0 && (graphHit || identHits >= 1)) {
+      scored.push({ claim: c, score, graphHit });
     }
-    if (preferredPages.has(c.pagePath) && score > 0) score += 3;
-    if (score > 0) scored.push({ claim: c, score });
   }
 
   const byPage = new Map();
@@ -130,14 +102,15 @@ function selectDiversifiedBoundClaims({
   const rankedPages = [...byPage.entries()]
     .map(([pagePath, items]) => {
       items.sort((a, b) => b.score - a.score);
-      const pageScore = items.slice(0, 3).reduce((s, x) => s + x.score, 0) + (preferredPages.has(pagePath) ? 4 : 0);
+      const hasDirectGraph = items.some(x => x.graphHit);
+      const pageScore = items.slice(0, 3).reduce((s, x) => s + x.score, 0) + (hasDirectGraph ? 6 : 0);
       return { pagePath, pageScore, topClaims: items.slice(0, 4).map(x => x.claim) };
     })
     .sort((a, b) => b.pageScore - a.pageScore);
 
   return {
     selectedClaims: rankedPages.slice(0, 12).flatMap(rp => rp.topClaims),
-    topCandidatePages: [...new Set([...rankedPages.slice(0, 6).map(rp => rp.pagePath), ...preferredPages])],
+    topCandidatePages: rankedPages.slice(0, 6).map(rp => rp.pagePath),
   };
 }
 
@@ -317,7 +290,7 @@ async function runDiffAndReconcileEvents(ctx) {
       `${ev.title}\n${diffText}`
     ) && !/\b(remove.*flag|ship.*only.*layout|drop.*flag)\b/i.test(ev.title);
 
-    if (hasNewFeatureFlagGate && ev.isFlaggedUnreleased) {
+    if (hasNewFeatureFlagGate) {
       zeroLlmSkips++;
       preparedEvents.set(ev.id, { skipReason: 'deferred_behind_feature_flag_gate', deferredCount: newSymbols.length });
       continue;
@@ -326,6 +299,13 @@ async function runDiffAndReconcileEvents(ctx) {
     const changedDefIds = new Set([...changedSymbols.map(s => s.prev.id), ...deletedSymbols.map(s => s.id)]);
     const directlyAffectedFacts = baseFacts.filter(f => changedDefIds.has(f.def));
     const directFactCodes = new Set(directlyAffectedFacts.map(f => f.factCode || f.code));
+    const touchedSectionCodes = new Set(directlyAffectedFacts.map(f => f.sectionCode).filter(Boolean));
+    const touchedSurfaces = new Set([
+      ...changedSymbols.map(s => String(s.prev.surface || '').toUpperCase()),
+      ...newSymbols.map(s => String(s.surface || '').toUpperCase()),
+      ...deletedSymbols.map(s => String(s.surface || '').toUpperCase()),
+      ...nonExcludedFiles.map(f => surfaceForPath(ev.repo, f.path, ctx.product)),
+    ].filter(Boolean));
     const changedPorts = new Set(
       directlyAffectedFacts.map(f => (f.port ? `${f.port.kind}:${f.port.key.toLowerCase()}` : null)).filter(Boolean)
     );
@@ -336,19 +316,13 @@ async function runDiffAndReconcileEvents(ctx) {
       }
     }
 
-    const hasReleaseManifestChange = nonExcludedFiles.some(f =>
-      isWatchedManifest(ev.repo, f.path, ctx.product, prData.diffByPath?.[f.path] || '')
-    );
-
     const { selectedClaims: boundClaims, topCandidatePages } = selectDiversifiedBoundClaims({
       claims,
       directFactCodes,
       portFactCodes,
+      touchedSectionCodes,
+      touchedSurfaces,
       diffText,
-      repo: ev.repo,
-      nonExcludedPaths: nonExcludedFiles.map(f => f.path),
-      hasReleaseManifestChange,
-      docsPrefix: ctx.product.docs_prefix || 'contents/docs/mcp-analytics',
     });
 
     const outlineChapters = Array.isArray(ctx.state.outline)

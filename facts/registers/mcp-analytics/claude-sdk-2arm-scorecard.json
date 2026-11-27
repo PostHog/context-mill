@@ -1,0 +1,1513 @@
+{
+  "generatedAt": "2026-11-27T15:50:51.469Z",
+  "runtime": {
+    "sdk": "@anthropic-ai/claude-agent-sdk",
+    "model": "claude-sonnet-5-5",
+    "effort": "medium",
+    "authMethod": "claude.ai",
+    "subscriptionType": "team",
+    "maxTurns": 16,
+    "concurrency": 5,
+    "onlyIds": null
+  },
+  "humanMdxReconciliations": [
+    {
+      "id": "E18",
+      "suite": "real_replay",
+      "kind": "human_docs_pr",
+      "title": "docs(mcp-analytics): tighten copy after the GA accuracy pass (#21762)",
+      "docsCommit": "876c6debffddce7138486d8d9ef0d573cee126be",
+      "stats": {
+        "prevTotal": 609,
+        "exactSamePage": 570,
+        "movedCrossPage": 0,
+        "humanEdited": 20,
+        "retiredDeleted": 19,
+        "unmappedNewPieces": 74
+      }
+    },
+    {
+      "id": "E24",
+      "suite": "real_replay",
+      "kind": "human_docs_pr",
+      "title": "docs(mcp-analytics): trim the event reference, installation, concept and shared pages (#22541)",
+      "docsCommit": "a0eeda34da6c748df0fc1a909f902fe6b6fd8977",
+      "stats": {
+        "prevTotal": 590,
+        "exactSamePage": 394,
+        "movedCrossPage": 1,
+        "humanEdited": 107,
+        "retiredDeleted": 88,
+        "unmappedNewPieces": 155
+      }
+    },
+    {
+      "id": "H5a",
+      "suite": "planted_hard",
+      "kind": "human_docs_pr",
+      "title": "docs(mcp-analytics): add quick summary and reorganize identifying-users.mdx (#23901)",
+      "docsCommit": "planted-h5a-human-identifying-users-restructure",
+      "stats": {
+        "prevTotal": 502,
+        "exactSamePage": 502,
+        "movedCrossPage": 0,
+        "humanEdited": 0,
+        "retiredDeleted": 0,
+        "unmappedNewPieces": 161
+      }
+    }
+  ],
+  "suites": {
+    "real_replay": {
+      "baseline_agent": {
+        "codePrCount": 22,
+        "tp": 9,
+        "fp": 2,
+        "fn": 2,
+        "tn": 9,
+        "prPrecision": 0.818,
+        "prRecall": 0.818,
+        "prF1": 0.818,
+        "johnEvalAgreement": "8/8 (100.0%)",
+        "pageHitRatio": "15/29",
+        "totalEditedExistingPages": 18,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.517,
+        "pagePrecision": 0.833,
+        "pageF1": 0.638,
+        "llmRuns": 22,
+        "preGateSkips": 0,
+        "avgTurnsPerPr": 4.55,
+        "totalTurns": 100,
+        "totalToolCalls": 78,
+        "totalMcpCalls": 0,
+        "totalInputTokens": 154,
+        "totalOutputTokens": 26274,
+        "totalCacheReadTokens": 1089221,
+        "totalWallSec": 220.2,
+        "totalCostUsdEquivalent": 1.8151
+      },
+      "ia_assisted_agent": {
+        "codePrCount": 22,
+        "tp": 9,
+        "fp": 1,
+        "fn": 2,
+        "tn": 10,
+        "prPrecision": 0.9,
+        "prRecall": 0.818,
+        "prF1": 0.857,
+        "johnEvalAgreement": "8/8 (100.0%)",
+        "pageHitRatio": "17/29",
+        "totalEditedExistingPages": 19,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.586,
+        "pagePrecision": 0.895,
+        "pageF1": 0.708,
+        "llmRuns": 21,
+        "preGateSkips": 1,
+        "avgTurnsPerPr": 4.91,
+        "totalTurns": 108,
+        "totalToolCalls": 87,
+        "totalMcpCalls": 14,
+        "totalInputTokens": 136,
+        "totalOutputTokens": 25681,
+        "totalCacheReadTokens": 1245762,
+        "totalWallSec": 221.4,
+        "totalCostUsdEquivalent": 2.28
+      }
+    },
+    "planted_hard": {
+      "baseline_agent": {
+        "codePrCount": 5,
+        "tp": 3,
+        "fp": 0,
+        "fn": 1,
+        "tn": 1,
+        "prPrecision": 1,
+        "prRecall": 0.75,
+        "prF1": 0.857,
+        "pageHitRatio": "7/10",
+        "totalEditedExistingPages": 8,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.7,
+        "pagePrecision": 0.875,
+        "pageF1": 0.778,
+        "assertionsPassed": "7/11",
+        "llmRuns": 5,
+        "preGateSkips": 0,
+        "avgTurnsPerPr": 5.8,
+        "totalTurns": 29,
+        "totalToolCalls": 24,
+        "totalMcpCalls": 0,
+        "totalInputTokens": 36,
+        "totalOutputTokens": 7426,
+        "totalCacheReadTokens": 175420,
+        "totalWallSec": 58.7,
+        "totalCostUsdEquivalent": 0.2933
+      },
+      "ia_assisted_agent": {
+        "codePrCount": 5,
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "tn": 1,
+        "prPrecision": 1,
+        "prRecall": 1,
+        "prF1": 1,
+        "pageHitRatio": "8/10",
+        "totalEditedExistingPages": 8,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.8,
+        "pagePrecision": 1,
+        "pageF1": 0.889,
+        "assertionsPassed": "9/11",
+        "llmRuns": 5,
+        "preGateSkips": 0,
+        "avgTurnsPerPr": 6.6,
+        "totalTurns": 33,
+        "totalToolCalls": 28,
+        "totalMcpCalls": 3,
+        "totalInputTokens": 40,
+        "totalOutputTokens": 8085,
+        "totalCacheReadTokens": 255640,
+        "totalWallSec": 60.2,
+        "totalCostUsdEquivalent": 0.3664
+      }
+    },
+    "combined": {
+      "baseline_agent": {
+        "codePrCount": 27,
+        "tp": 12,
+        "fp": 2,
+        "fn": 3,
+        "tn": 10,
+        "prPrecision": 0.857,
+        "prRecall": 0.8,
+        "prF1": 0.828,
+        "johnEvalAgreement": "8/8 (100.0%)",
+        "pageHitRatio": "22/39",
+        "totalEditedExistingPages": 26,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.564,
+        "pagePrecision": 0.846,
+        "pageF1": 0.677,
+        "assertionsPassed": "7/11",
+        "llmRuns": 27,
+        "preGateSkips": 0,
+        "avgTurnsPerPr": 4.78,
+        "totalTurns": 129,
+        "totalToolCalls": 102,
+        "totalMcpCalls": 0,
+        "totalInputTokens": 190,
+        "totalOutputTokens": 33700,
+        "totalCacheReadTokens": 1264641,
+        "totalWallSec": 278.9,
+        "totalCostUsdEquivalent": 2.1084
+      },
+      "ia_assisted_agent": {
+        "codePrCount": 27,
+        "tp": 13,
+        "fp": 1,
+        "fn": 2,
+        "tn": 11,
+        "prPrecision": 0.929,
+        "prRecall": 0.867,
+        "prF1": 0.897,
+        "johnEvalAgreement": "8/8 (100.0%)",
+        "pageHitRatio": "25/39",
+        "totalEditedExistingPages": 27,
+        "totalCreatedPages": 0,
+        "pageRecall": 0.641,
+        "pagePrecision": 0.926,
+        "pageF1": 0.758,
+        "assertionsPassed": "9/11",
+        "llmRuns": 26,
+        "preGateSkips": 1,
+        "avgTurnsPerPr": 5.22,
+        "totalTurns": 141,
+        "totalToolCalls": 115,
+        "totalMcpCalls": 17,
+        "totalInputTokens": 176,
+        "totalOutputTokens": 33766,
+        "totalCacheReadTokens": 1501402,
+        "totalWallSec": 281.6,
+        "totalCostUsdEquivalent": 2.6464
+      }
+    }
+  },
+  "perEvent": [
+    {
+      "id": "E01",
+      "suite": "real_replay",
+      "date": "2026-11-02",
+      "repo": "posthog",
+      "prNumber": 126239,
+      "title": "fix(mcp-analytics): scroll share lists instead of stretching the chart beside them (#126239)",
+      "category": "ui_polish_noise",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "wallMs": 2540,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "mcpToolCalls": 0,
+        "wallMs": 3217,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E02",
+      "suite": "real_replay",
+      "date": "2026-11-04",
+      "repo": "posthog",
+      "prNumber": 125299,
+      "title": "feat(mcp-analytics): add internal users toggle to missing capabilities (#125299)",
+      "category": "ui_filter_and_generated_mcp_schema",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/surfaces/mcp.mdx",
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+        ],
+        "createdPages": [],
+        "turns": 7,
+        "totalToolCalls": 6,
+        "wallMs": 12624,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/surfaces/mcp.mdx": 12,
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/surfaces/mcp.mdx",
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+        ],
+        "createdPages": [],
+        "turns": 6,
+        "totalToolCalls": 5,
+        "mcpToolCalls": 0,
+        "wallMs": 10614,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/surfaces/mcp.mdx": 12,
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "E03",
+      "suite": "real_replay",
+      "date": "2026-11-04",
+      "repo": "posthog",
+      "prNumber": 128189,
+      "title": "feat(mcp-analytics): route llm calls through the ai gateway (#128189)",
+      "category": "internal_backend_plumbing",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "wallMs": 2903,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "mcpToolCalls": 0,
+        "wallMs": 4798,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E04",
+      "suite": "real_replay",
+      "date": "2026-11-05",
+      "repo": "posthog",
+      "prNumber": 128669,
+      "title": "feat(mcp-analytics): add setup mode state and logic behind a flag (#128669)",
+      "category": "flagged_unreleased_feature",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "wallMs": 4811,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": true,
+        "skipReason": "deferred_behind_feature_flag_gate",
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 0,
+        "wallMs": 0,
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E05",
+      "suite": "real_replay",
+      "date": "2026-11-05",
+      "repo": "posthog-js",
+      "prNumber": 5573,
+      "title": "fix(mcp): reword injected descriptions so directory review stops flagging them (#5573)",
+      "category": "cross_sdk_directory_review",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "wallMs": 6985,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "mcpToolCalls": 0,
+        "wallMs": 4236,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E06",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog-js",
+      "prNumber": 5583,
+      "title": "feat(mcp): align @posthog/mcp with the MCP analytics spec before 1.0 (#5583)",
+      "category": "john_eval_multi_page_contradiction",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/index.mdx",
+        "contents/docs/mcp-analytics/events.mdx",
+        "contents/docs/mcp-analytics/identifying-users.mdx",
+        "contents/docs/mcp-analytics/installation/typescript.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/installation/index.mdx"
+        ],
+        "createdPages": [],
+        "turns": 9,
+        "totalToolCalls": 8,
+        "wallMs": 19461,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 23,
+          "contents/docs/mcp-analytics/installation/index.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/installation/index.mdx"
+        ],
+        "createdPages": [],
+        "turns": 9,
+        "totalToolCalls": 8,
+        "mcpToolCalls": 1,
+        "wallMs": 13634,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 23,
+          "contents/docs/mcp-analytics/installation/index.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "E07",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog-python",
+      "prNumber": 1199,
+      "title": "feat(mcp): align posthog.mcp with the sdk-specs MCP spec (#1199)",
+      "category": "john_eval_multi_page_contradiction",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/index.mdx",
+        "contents/docs/mcp-analytics/events.mdx",
+        "contents/docs/mcp-analytics/identifying-users.mdx",
+        "contents/docs/mcp-analytics/installation/python.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/installation/index.mdx"
+        ],
+        "createdPages": [],
+        "turns": 12,
+        "totalToolCalls": 11,
+        "wallMs": 24332,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 23,
+          "contents/docs/mcp-analytics/installation/index.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/installation/index.mdx",
+          "contents/docs/mcp-analytics/installation/python.mdx"
+        ],
+        "createdPages": [],
+        "turns": 13,
+        "totalToolCalls": 12,
+        "mcpToolCalls": 1,
+        "wallMs": 23607,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 23,
+          "contents/docs/mcp-analytics/installation/index.mdx": 12,
+          "contents/docs/mcp-analytics/installation/python.mdx": 17
+        }
+      }
+    },
+    {
+      "id": "E08",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog-python",
+      "prNumber": 1200,
+      "title": "feat(mcp): declare posthog.mcp stable (#1200)",
+      "category": "john_eval_status_promotion",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/python.mdx",
+        "contents/docs/mcp-analytics/start-here.mdx",
+        "contents/docs/mcp-analytics/installation/index.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/index.mdx",
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 10,
+        "totalToolCalls": 9,
+        "wallMs": 16433,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/index.mdx": 11,
+          "contents/docs/mcp-analytics/installation/python.mdx": 15,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/index.mdx",
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 10,
+        "totalToolCalls": 9,
+        "mcpToolCalls": 1,
+        "wallMs": 14065,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/index.mdx": 11,
+          "contents/docs/mcp-analytics/installation/python.mdx": 15,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "E09",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog-python",
+      "prNumber": 1204,
+      "title": "feat(mcp): tell directory reviews what the virtual tools record (#1204)",
+      "category": "new_guide_page_needed",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/index.mdx",
+        "contents/docs/mcp-analytics/intent.mdx",
+        "contents/docs/mcp-analytics/start-here.mdx",
+        "contents/docs/mcp-analytics/installation/python.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/intent.mdx"
+        ],
+        "createdPages": [],
+        "turns": 7,
+        "totalToolCalls": 6,
+        "wallMs": 15021,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/python.mdx": 14,
+          "contents/docs/mcp-analytics/intent.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/intent.mdx"
+        ],
+        "createdPages": [],
+        "turns": 8,
+        "totalToolCalls": 7,
+        "mcpToolCalls": 1,
+        "wallMs": 19273,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/python.mdx": 14,
+          "contents/docs/mcp-analytics/intent.mdx": 21
+        }
+      }
+    },
+    {
+      "id": "E10",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog-rs",
+      "prNumber": 333,
+      "title": "feat(mcp): align virtual tool annotations, context text and llm_model with the spec (#333)",
+      "category": "sdk_spec_alignment",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/rust.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/rust.mdx"
+        ],
+        "createdPages": [],
+        "turns": 8,
+        "totalToolCalls": 7,
+        "wallMs": 14339,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/rust.mdx": 21
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/rust.mdx"
+        ],
+        "createdPages": [],
+        "turns": 5,
+        "totalToolCalls": 4,
+        "mcpToolCalls": 1,
+        "wallMs": 12160,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/rust.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "E11",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog",
+      "prNumber": 124838,
+      "title": "feat(mcp-analytics): let teams name their own harnesses (#124838)",
+      "category": "new_settings_and_api_surface",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+        "contents/docs/mcp-analytics/surfaces/api.mdx",
+        "contents/docs/mcp-analytics/events.mdx",
+        "contents/docs/mcp-analytics/queries.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx"
+        ],
+        "createdPages": [],
+        "turns": 6,
+        "totalToolCalls": 5,
+        "wallMs": 15231,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 25
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+        ],
+        "createdPages": [],
+        "turns": 6,
+        "totalToolCalls": 5,
+        "mcpToolCalls": 1,
+        "wallMs": 12386,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 12,
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "E12",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog",
+      "prNumber": 125824,
+      "title": "feat(hogql): apply custom mcp harness names to $virt_mcp_harness (#125824)",
+      "category": "cross_team_hogql_virtual_prop",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/queries.mdx",
+        "contents/docs/mcp-analytics/events.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 4,
+        "totalToolCalls": 3,
+        "wallMs": 10236,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "mcpToolCalls": 1,
+        "wallMs": 5096,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E13",
+      "suite": "real_replay",
+      "date": "2026-11-06",
+      "repo": "posthog",
+      "prNumber": 131278,
+      "title": "feat(mcp-analytics): show exec commands, argument names and failure details on session calls (#131278)",
+      "category": "john_eval_ui_detail_negative",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "wallMs": 6257,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 4,
+        "totalToolCalls": 3,
+        "mcpToolCalls": 1,
+        "wallMs": 9088,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E14",
+      "suite": "real_replay",
+      "date": "2026-11-09",
+      "repo": "posthog",
+      "prNumber": 131058,
+      "title": "feat(mcp-analytics): group tool failures by cause and drill into each one (#131058)",
+      "category": "john_eval_ui_detail_negative",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "wallMs": 4124,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 4,
+        "totalToolCalls": 3,
+        "mcpToolCalls": 1,
+        "wallMs": 8381,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E15",
+      "suite": "real_replay",
+      "date": "2026-11-09",
+      "repo": "posthog",
+      "prNumber": 132113,
+      "title": "perf(mcp-analytics): bound session tool calls by the session's end (#132113)",
+      "category": "john_eval_perf_generated_negative",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "wallMs": 4780,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "mcpToolCalls": 1,
+        "wallMs": 6142,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E16",
+      "suite": "real_replay",
+      "date": "2026-11-09",
+      "repo": "posthog",
+      "prNumber": 131998,
+      "title": "fix(mcp-analytics): reload sessions when the team test-account default changes (#131998)",
+      "category": "john_eval_bugfix_restores_behavior",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "wallMs": 3659,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "mcpToolCalls": 0,
+        "wallMs": 2999,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E17",
+      "suite": "real_replay",
+      "date": "2026-11-10",
+      "repo": "posthog-js",
+      "prNumber": 5597,
+      "title": "feat(mcp): per-request sessionId and clientInfo options (#5597)",
+      "category": "john_eval_sdk_options_and_precedence",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/typescript.mdx",
+        "contents/docs/mcp-analytics/events.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/typescript.mdx"
+        ],
+        "createdPages": [],
+        "turns": 5,
+        "totalToolCalls": 4,
+        "wallMs": 9929,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/typescript.mdx": 21
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx",
+          "contents/docs/mcp-analytics/installation/typescript.mdx"
+        ],
+        "createdPages": [],
+        "turns": 10,
+        "totalToolCalls": 9,
+        "mcpToolCalls": 1,
+        "wallMs": 23634,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 26,
+          "contents/docs/mcp-analytics/installation/typescript.mdx": 28
+        }
+      }
+    },
+    {
+      "id": "E19",
+      "suite": "real_replay",
+      "date": "2026-11-12",
+      "repo": "posthog",
+      "prNumber": 134803,
+      "title": "perf(mcp-analytics): bound settled sessions' tool calls by their end (#134803)",
+      "category": "perf_noise",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "wallMs": 2740,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "mcpToolCalls": 0,
+        "wallMs": 3302,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E20",
+      "suite": "real_replay",
+      "date": "2026-11-13",
+      "repo": "posthog",
+      "prNumber": 135656,
+      "title": "feat(mcp-analytics): ship the leaderboard as the only home layout (#135656)",
+      "category": "flag_removal_and_ui_retirement",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "wallMs": 8178,
+        "assertions": [],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "mcpToolCalls": 0,
+        "wallMs": 5765,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E21",
+      "suite": "real_replay",
+      "date": "2026-11-13",
+      "repo": "posthog",
+      "prNumber": 126523,
+      "title": "feat(mcp-analytics): list send_feedback missing-capability reports (#126523)",
+      "category": "routing_shadow_bug_and_contradiction",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/missing-capability.mdx",
+        "contents/docs/mcp-analytics/surfaces/web-app.mdx",
+        "contents/docs/mcp-analytics/surfaces/api.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/missing-capability.mdx",
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+        ],
+        "createdPages": [],
+        "turns": 7,
+        "totalToolCalls": 6,
+        "wallMs": 18275,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/missing-capability.mdx": 35,
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/missing-capability.mdx"
+        ],
+        "createdPages": [],
+        "turns": 10,
+        "totalToolCalls": 9,
+        "mcpToolCalls": 1,
+        "wallMs": 20536,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/missing-capability.mdx": 63
+        }
+      }
+    },
+    {
+      "id": "E22",
+      "suite": "real_replay",
+      "date": "2026-11-16",
+      "repo": "posthog",
+      "prNumber": 135724,
+      "title": "feat(mcp-analytics): split recurring automated intents out of clustering (#135724)",
+      "category": "backend_clustering_detail_negative",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx"
+        ],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "wallMs": 7871,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/surfaces/web-app.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 3,
+        "totalToolCalls": 2,
+        "mcpToolCalls": 1,
+        "wallMs": 6980,
+        "assertions": [],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "E23",
+      "suite": "real_replay",
+      "date": "2026-11-20",
+      "repo": "posthog",
+      "prNumber": 127287,
+      "title": "feat(mcp): name more harnesses and drop structuredContent by default (#127287)",
+      "category": "mcp_server_and_harness_resolver",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/events.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx"
+        ],
+        "createdPages": [],
+        "turns": 4,
+        "totalToolCalls": 3,
+        "wallMs": 9501,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx"
+        ],
+        "createdPages": [],
+        "turns": 5,
+        "totalToolCalls": 4,
+        "mcpToolCalls": 1,
+        "wallMs": 11488,
+        "assertions": [],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "H1",
+      "suite": "planted_hard",
+      "date": "2026-11-24",
+      "repo": "posthog-python",
+      "prNumber": 1401,
+      "title": "refactor(mcp): simplify argument ownership defaults in Python helper (#1401)",
+      "category": "planted_cross_sdk_silent_default_flip",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/python.mdx",
+        "contents/docs/mcp-analytics/start-here.mdx",
+        "contents/docs/mcp-analytics/privacy.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/sdk-v2.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 7,
+        "totalToolCalls": 6,
+        "wallMs": 13592,
+        "assertions": [
+          {
+            "id": "h1_python_default_false",
+            "page": "contents/docs/mcp-analytics/installation/python.mdx",
+            "description": "Updates capture_model default from True to False in installation/python.mdx",
+            "passed": true
+          },
+          {
+            "id": "h1_start_here_same_defaults_fixed",
+            "page": "contents/docs/mcp-analytics/start-here.mdx",
+            "description": "Fixes start-here.mdx L152 (\"Every SDK has the same defaults\") where capture_model is never named",
+            "passed": false
+          },
+          {
+            "id": "h1_privacy_default_fixed",
+            "page": "contents/docs/mcp-analytics/privacy.mdx",
+            "description": "Fixes privacy.mdx L26 (\"Model capture and conversation IDs are enabled by default\") where capture_model is never named",
+            "passed": false
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/python.mdx": 12,
+          "contents/docs/mcp-analytics/sdk-v2.mdx": 12,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/python.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 7,
+        "totalToolCalls": 6,
+        "mcpToolCalls": 1,
+        "wallMs": 10412,
+        "assertions": [
+          {
+            "id": "h1_python_default_false",
+            "page": "contents/docs/mcp-analytics/installation/python.mdx",
+            "description": "Updates capture_model default from True to False in installation/python.mdx",
+            "passed": true
+          },
+          {
+            "id": "h1_start_here_same_defaults_fixed",
+            "page": "contents/docs/mcp-analytics/start-here.mdx",
+            "description": "Fixes start-here.mdx L152 (\"Every SDK has the same defaults\") where capture_model is never named",
+            "passed": true
+          },
+          {
+            "id": "h1_privacy_default_fixed",
+            "page": "contents/docs/mcp-analytics/privacy.mdx",
+            "description": "Fixes privacy.mdx L26 (\"Model capture and conversation IDs are enabled by default\") where capture_model is never named",
+            "passed": false
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/python.mdx": 12,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "H2",
+      "suite": "planted_hard",
+      "date": "2026-11-24",
+      "repo": "posthog",
+      "prNumber": 140201,
+      "title": "chore(mcp-analytics): reorder client signal precedence and bump dated spec baseline (#140201)",
+      "category": "planted_deep_backend_hogql_seam",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/events.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 2,
+        "totalToolCalls": 1,
+        "wallMs": 5091,
+        "assertions": [
+          {
+            "id": "h2_events_client_name_first",
+            "page": "contents/docs/mcp-analytics/events.mdx",
+            "description": "Reorders $mcp_client_name ahead of $mcp_vendor_client in events.mdx harness resolution",
+            "passed": false
+          }
+        ],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/events.mdx"
+        ],
+        "createdPages": [],
+        "turns": 5,
+        "totalToolCalls": 4,
+        "mcpToolCalls": 1,
+        "wallMs": 10602,
+        "assertions": [
+          {
+            "id": "h2_events_client_name_first",
+            "page": "contents/docs/mcp-analytics/events.mdx",
+            "description": "Reorders $mcp_client_name ahead of $mcp_vendor_client in events.mdx harness resolution",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/events.mdx": 16
+        }
+      }
+    },
+    {
+      "id": "H3",
+      "suite": "planted_hard",
+      "date": "2026-11-25",
+      "repo": "posthog-js",
+      "prNumber": 5890,
+      "title": "chore(mcp): remove legacy get_more_tools virtual tool path (#5890)",
+      "category": "planted_silent_feature_deletion_5_pages",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/installation/typescript.mdx",
+        "contents/docs/mcp-analytics/installation/index.mdx",
+        "contents/docs/mcp-analytics/missing-capability.mdx",
+        "contents/docs/mcp-analytics/start-here.mdx",
+        "contents/docs/mcp-analytics/queries.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/typescript.mdx",
+          "contents/docs/mcp-analytics/missing-capability.mdx",
+          "contents/docs/mcp-analytics/queries.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 15,
+        "totalToolCalls": 14,
+        "wallMs": 28926,
+        "assertions": [
+          {
+            "id": "h3_ts_install_updated",
+            "page": "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "description": "Removes or updates reportMissing/missingCapabilityToolName on installation/typescript.mdx",
+            "passed": true
+          },
+          {
+            "id": "h3_install_index_matrix_updated",
+            "page": "contents/docs/mcp-analytics/installation/index.mdx",
+            "description": "Updates TypeScript column in installation/index.mdx support matrix for get_more_tools",
+            "passed": false
+          },
+          {
+            "id": "h3_missing_cap_updated",
+            "page": "contents/docs/mcp-analytics/missing-capability.mdx",
+            "description": "Updates TypeScript guidance in missing-capability.mdx to collectFeedback / send_feedback",
+            "passed": true
+          },
+          {
+            "id": "h3_start_here_updated",
+            "page": "contents/docs/mcp-analytics/start-here.mdx",
+            "description": "Updates TypeScript snippet in start-here.mdx off removed reportMissing",
+            "passed": true
+          },
+          {
+            "id": "h3_queries_updated",
+            "page": "contents/docs/mcp-analytics/queries.mdx",
+            "description": "Updates queries.mdx L114 heading off removed TS reportMissing: true",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/typescript.mdx": 48,
+          "contents/docs/mcp-analytics/missing-capability.mdx": 21,
+          "contents/docs/mcp-analytics/queries.mdx": 12,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/installation/typescript.mdx",
+          "contents/docs/mcp-analytics/missing-capability.mdx",
+          "contents/docs/mcp-analytics/queries.mdx",
+          "contents/docs/mcp-analytics/start-here.mdx"
+        ],
+        "createdPages": [],
+        "turns": 15,
+        "totalToolCalls": 14,
+        "mcpToolCalls": 0,
+        "wallMs": 25571,
+        "assertions": [
+          {
+            "id": "h3_ts_install_updated",
+            "page": "contents/docs/mcp-analytics/installation/typescript.mdx",
+            "description": "Removes or updates reportMissing/missingCapabilityToolName on installation/typescript.mdx",
+            "passed": true
+          },
+          {
+            "id": "h3_install_index_matrix_updated",
+            "page": "contents/docs/mcp-analytics/installation/index.mdx",
+            "description": "Updates TypeScript column in installation/index.mdx support matrix for get_more_tools",
+            "passed": false
+          },
+          {
+            "id": "h3_missing_cap_updated",
+            "page": "contents/docs/mcp-analytics/missing-capability.mdx",
+            "description": "Updates TypeScript guidance in missing-capability.mdx to collectFeedback / send_feedback",
+            "passed": true
+          },
+          {
+            "id": "h3_start_here_updated",
+            "page": "contents/docs/mcp-analytics/start-here.mdx",
+            "description": "Updates TypeScript snippet in start-here.mdx off removed reportMissing",
+            "passed": true
+          },
+          {
+            "id": "h3_queries_updated",
+            "page": "contents/docs/mcp-analytics/queries.mdx",
+            "description": "Updates queries.mdx L114 heading off removed TS reportMissing: true",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/installation/typescript.mdx": 48,
+          "contents/docs/mcp-analytics/missing-capability.mdx": 26,
+          "contents/docs/mcp-analytics/queries.mdx": 12,
+          "contents/docs/mcp-analytics/start-here.mdx": 12
+        }
+      }
+    },
+    {
+      "id": "H4",
+      "suite": "planted_hard",
+      "date": "2026-11-25",
+      "repo": "posthog-js",
+      "prNumber": 5891,
+      "title": "refactor(mcp): modernize capture event builders and tighten type aliases (#5891)",
+      "category": "planted_refactor_false_positive_trap",
+      "truthNeedsDocs": false,
+      "truthPages": [],
+      "baseline_agent": {
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "wallMs": 2411,
+        "assertions": [
+          {
+            "id": "h4_zero_edits",
+            "page": null,
+            "description": "Makes zero .mdx edits on a behavior-preserving internal refactor",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {}
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": false,
+        "editedPages": [],
+        "createdPages": [],
+        "turns": 1,
+        "totalToolCalls": 0,
+        "mcpToolCalls": 0,
+        "wallMs": 3688,
+        "assertions": [
+          {
+            "id": "h4_zero_edits",
+            "page": null,
+            "description": "Makes zero .mdx edits on a behavior-preserving internal refactor",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {}
+      }
+    },
+    {
+      "id": "H5b",
+      "suite": "planted_hard",
+      "date": "2026-11-26",
+      "repo": "posthog-python",
+      "prNumber": 1402,
+      "title": "fix(mcp): scope fallback actor id per server instead of global anonymous (#1402)",
+      "category": "planted_post_restructure_subtle_code_change",
+      "truthNeedsDocs": true,
+      "truthPages": [
+        "contents/docs/mcp-analytics/identifying-users.mdx"
+      ],
+      "baseline_agent": {
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/identifying-users.mdx"
+        ],
+        "createdPages": [],
+        "turns": 4,
+        "totalToolCalls": 3,
+        "wallMs": 8694,
+        "assertions": [
+          {
+            "id": "h5b_identifying_users_updated",
+            "page": "contents/docs/mcp-analytics/identifying-users.mdx",
+            "description": "Updates moved fallback section in identifying-users.mdx with mcp-anon-<server_name>",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/identifying-users.mdx": 12
+        }
+      },
+      "ia_assisted_agent": {
+        "skippedByPreGate": false,
+        "skipReason": null,
+        "needsDocs": true,
+        "editedPages": [
+          "contents/docs/mcp-analytics/identifying-users.mdx"
+        ],
+        "createdPages": [],
+        "turns": 5,
+        "totalToolCalls": 4,
+        "mcpToolCalls": 1,
+        "wallMs": 9930,
+        "assertions": [
+          {
+            "id": "h5b_identifying_users_updated",
+            "page": "contents/docs/mcp-analytics/identifying-users.mdx",
+            "description": "Updates moved fallback section in identifying-users.mdx with mcp-anon-<server_name>",
+            "passed": true
+          }
+        ],
+        "diffLineCounts": {
+          "contents/docs/mcp-analytics/identifying-users.mdx": 12
+        }
+      }
+    }
+  ]
+}
