@@ -1,0 +1,25 @@
+# Pinned upstream repository commits for Docs IA extraction and drift checks.
+posthog:
+  repo: PostHog/posthog
+  commit: 97bf79d0cc3bed5e7815b677d9ed5cdcd7cf075d
+posthog-js:
+  repo: PostHog/posthog-js
+  commit: 6ef60e8d3caf5ac58d0e7d83cf1e394155b414fc
+posthog-ios:
+  repo: PostHog/posthog-ios
+  commit: ba9fa9e4c09230afa1c620d5d76d7b304e8223c4
+posthog-android:
+  repo: PostHog/posthog-android
+  commit: 4c3c125da08c48fd09289ccd5a092ead9d59138d
+posthog-flutter:
+  repo: PostHog/posthog-flutter
+  commit: df97547d612967e99784ccd8e2c6fb0dd6155a5b
+posthog-python:
+  repo: PostHog/posthog-python
+  commit: 82c9004c0f64dc0d437dbcc6a59ae73a63699c8b
+posthog-rs:
+  repo: PostHog/posthog-rs
+  commit: null
+posthog-com:
+  repo: PostHog/posthog.com
+  commit: 433efe56a892ac53ab13573e79e22c7e72e5bafa
