@@ -94,8 +94,48 @@ describe('generateMarketplace', () => {
         const integrationSkillsDir = path.join(outputDir, 'marketplace', 'plugins', 'posthog-integration', 'skills');
         const megaSkillsDir = path.join(outputDir, 'marketplace', 'plugins', 'posthog-all', 'skills');
 
-        expect(fs.readdirSync(integrationSkillsDir).sort()).toEqual(['app', 'skill-only']);
+        expect(fs.readdirSync(integrationSkillsDir).sort()).toEqual(['integration-nextjs-app', 'integration-skill-only']);
         expect(fs.readdirSync(megaSkillsDir).sort()).toEqual(['integration-nextjs-app', 'integration-skill-only']);
         expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('keeps skills from two groups in one plugin apart when their shortIds match', () => {
+        const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+        const config = fs.readFileSync(path.join(configDir, 'marketplace.yaml'), 'utf8');
+        fs.writeFileSync(path.join(configDir, 'marketplace.yaml'), config.replace(
+            'plugins:\n',
+            'plugins:\n  omnibus:\n    name: posthog-integration\n    description: Integration skills\n    destination: skills/posthog/integration\n    keywords: [posthog]\n',
+        ));
+        const skills = [
+            { id: 'omnibus-all', shortId: 'all', category: 'omnibus', displayName: 'omnibus-all', description: 'omnibus-all' },
+            { id: 'integration-all', shortId: 'all', category: 'integration', displayName: 'integration-all', description: 'integration-all' },
+            { id: 'integration-django', shortId: 'django', category: 'integration', displayName: 'integration-django', description: 'integration-django' },
+        ];
+        for (const skill of skills) {
+            createBuiltSkill(skill.id);
+            fs.writeFileSync(path.join(tempDir, skill.id, `only-${skill.id}.md`), skill.id);
+        }
+
+        generateMarketplace({ skills, tempDir, version: '1.0.0', outputDir, configDir });
+
+        const skillsDir = path.join(outputDir, 'marketplace', 'plugins', 'posthog-integration', 'skills');
+        expect(fs.readdirSync(skillsDir).sort()).toEqual(['integration-all', 'integration-django', 'omnibus-all']);
+        for (const name of fs.readdirSync(skillsDir)) {
+            expect(fs.readdirSync(path.join(skillsDir, name)).sort()).toEqual(['SKILL.md', `only-${name}.md`]);
+            expect(fs.readFileSync(path.join(skillsDir, name, 'SKILL.md'), 'utf8')).toContain(`# ${name}`);
+        }
+        expect(log).toHaveBeenCalledWith('  ✓ posthog-integration (3 skills)');
+    });
+
+    it('counts only the skills it copied in the plugin log line', () => {
+        const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const present = { id: 'integration-django', shortId: 'django', category: 'integration', displayName: 'django', description: 'django' };
+        const missing = { ...present, id: 'integration-missing', shortId: 'missing' };
+        createBuiltSkill(present.id);
+
+        generateMarketplace({ skills: [present, missing], tempDir, version: '1.0.0', outputDir, configDir });
+
+        expect(log).toHaveBeenCalledWith('  ✓ posthog-integration (1 skills)');
     });
 });
