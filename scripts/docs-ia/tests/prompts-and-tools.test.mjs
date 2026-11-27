@@ -5,6 +5,7 @@ import { indexSourceFile } from '../tools/ast-pins.mjs';
 import { traceBlastRadius } from '../tools/blast-radius.mjs';
 import { createToolCatalog } from '../tools/catalog.mjs';
 import { createMcpDispatcher } from '../tools/mcp-server.mjs';
+import { insertFactsIntoDb, openFactsDb, queryFactsForPieces } from '../tools/facts-sqlite.mjs';
 import { reconcileHumanMdxDrift, splitMdxFile } from '../tools/mdx-splitter.mjs';
 import { checkPortContracts, wireDeterministicPorts } from '../tools/port-linker.mjs';
 import { compileUseCaseSkill, verifySkillAnchors } from '../tools/skill-compiler.mjs';
@@ -51,6 +52,48 @@ describe('tools (AST pins, port linker, MDX soft-drift, blast radius, skill comp
     expect(defs[0].surface).toBe('MCP');
     expect(defs[0].pin.commit).toBe('abc123');
     expect(defs[0].pin.code_hash).toHaveLength(32);
+
+    // 4-space indented tools.yaml (e.g. products/replay_vision/mcp/tools.yaml) must index every tool
+    const fourSpaceYaml = [
+      'category: Replay vision',
+      'tools:',
+      '    vision-alerts-create:',
+      '        operation: vision_alerts_create',
+      '        enabled: true',
+      '    vision-scanners-draft:',
+      '        operation: vision_scanners_draft',
+      '        enabled: true',
+    ].join('\n');
+    const rvDefs = await indexSourceFile({
+      repo: 'posthog',
+      commit: 'abc123',
+      path: 'products/replay_vision/mcp/tools.yaml',
+      text: fourSpaceYaml,
+    });
+    expect(rvDefs.map(d => d.symbol)).toEqual(['vision-alerts-create', 'vision-scanners-draft']);
+  });
+
+  it('retrieves exact identifiers and cross-product seams via local SQLite FTS5 BM25', () => {
+    const db = openFactsDb(':memory:');
+    try {
+      insertFactsIntoDb(db, 'replay-vision', [
+        { _idx: 0, factCode: 'RV-MCP-F-000001', leafKey: 'k0', def: 'posthog:tools.yaml#vision-scanners-draft', repo: 'posthog', path: 'products/replay_vision/mcp/tools.yaml', symbol: 'vision-scanners-draft', surface: 'MCP', claim: 'Drafts a scanner with budget and experiment_id options.', quote: 'vision-scanners-draft:' },
+        { _idx: 1, factCode: 'RV-UI-F-000001', leafKey: 'k1', def: 'posthog:Scanner.tsx#Scanner', repo: 'posthog', path: 'products/replay_vision/frontend/Scanner.tsx', symbol: 'Scanner', surface: 'UI', claim: 'Displays scanner list table.', quote: 'export function Scanner()' },
+      ]);
+      insertFactsIntoDb(db, 'ai-observability', [
+        { _idx: 0, factCode: 'AIO-PY-F-000001', leafKey: 'aio0', def: 'posthog-python:posthog/ai/otel/spans.py#set_trace', repo: 'posthog-python', path: 'posthog/ai/otel/spans.py', symbol: 'set_trace', surface: 'PY', claim: 'Sets $ai_trace_id on LLM spans for AI Observability correlation.', quote: '$ai_trace_id' },
+      ]);
+      const res = queryFactsForPieces(
+        db,
+        [{ headingPath: 'MCP Tools', text: 'Call `vision-scanners-draft` and correlate `$ai_trace_id`.', surfaceHint: 'MCP' }],
+        { product: 'replay-vision', limit: 10, crossProduct: true, crossLimit: 5 }
+      );
+      expect(res.inProductIndices[0]).toBe(0);
+      expect(res.crossHits).toHaveLength(1);
+      expect(res.crossHits[0].product).toBe('ai-observability');
+    } finally {
+      db.close();
+    }
   });
 
   it('wires exact ports, wildcard HTTP routes, implied model hooks, and PortContracts at 0 LLM calls', () => {
@@ -141,6 +184,68 @@ describe('tools (AST pins, port linker, MDX soft-drift, blast radius, skill comp
     expect(rec.reconciledClaims[0].claimCode).toBe('MCPA-ALL-C-000001');
     expect(rec.reconciledClaims[0].state).toBe('unverified_human');
     expect(rec.reconciledClaims[0].factCodes).toEqual(['MCPA-TS-F-000001']);
+  });
+
+  it('never inverts fenced code blocks inside <Steps>, <Step>, <MultiLanguage>, or <CalloutBox> wrappers', () => {
+    const longBody = Array.from({ length: 38 }, (_, idx) => `const stepLine${idx + 1} = ${idx + 1};`).join('\n');
+    const mdx = [
+      '---',
+      'title: Install Tracing',
+      '---',
+      '',
+      '<Steps>',
+      '<Step title="Configure exporter" badge="required">',
+      '',
+      'Configure OpenTelemetry to send spans to `/i/v1/traces`.',
+      '',
+      '```ts',
+      longBody,
+      '```',
+      '',
+      'Alternatively, set `OTEL_EXPORTER_OTLP_ENDPOINT` in your environment.',
+      '',
+      '</Step>',
+      '</Steps>',
+      '',
+      '<MultiLanguage>',
+      '',
+      '```python file=Python',
+      'posthog.capture("event")',
+      '```',
+      '',
+      '```ruby file=Ruby',
+      'posthog.capture(event: "event")',
+      '```',
+      '',
+      '</MultiLanguage>',
+      '',
+      '<ProductScreenshot',
+      '  imageLight="https://example.com/light.png"',
+      '  alt="Tracing waterfall"',
+      '/>',
+      '',
+      '<CalloutBox icon="IconInfo" title="Note">',
+      'Retention defaults to 14 days for trace spans.',
+      '</CalloutBox>',
+    ].join('\n');
+
+    const pieces = splitMdxFile('contents/docs/distributed-tracing/installation/node.mdx', mdx);
+    const codePieces = pieces.filter(p => p.kind === 'code');
+    expect(codePieces).toHaveLength(3);
+    expect(codePieces[0].text.startsWith('```ts\n')).toBe(true);
+    expect(codePieces[0].text).toContain('const stepLine38 = 38;');
+    expect(codePieces[1].text.startsWith('```python file=Python\n')).toBe(true);
+    expect(codePieces[2].text.startsWith('```ruby file=Ruby\n')).toBe(true);
+    // Zero inverted fences starting on a bare closing fence
+    expect(codePieces.filter(p => /^```(\s|$)/.test(p.text.trim()))).toEqual([]);
+    // Prose after long code block stays a mappable paragraph, never swallowed into an inverted fence
+    const afterProse = pieces.find(p => p.kind === 'paragraph' && p.text.includes('OTEL_EXPORTER_OTLP_ENDPOINT'));
+    expect(afterProse?.mappable).toBe(true);
+    // Multi-line screenshot stays unverified media; short CalloutBox stays one mappable jsx piece
+    expect(pieces.find(p => p.text.includes('ProductScreenshot'))?.preState).toBe('unverified');
+    expect(pieces.find(p => p.text.includes('Retention defaults to 14 days'))?.mappable).toBe(true);
+    // Closing tags are structural, never glued onto paragraphs
+    expect(pieces.filter(p => p.kind === 'paragraph' && /<\/(Step|Steps|MultiLanguage)>/.test(p.text))).toEqual([]);
   });
 
   it('traces blast radius and compiles surface-sliced UC skills with 0 broken anchors', () => {

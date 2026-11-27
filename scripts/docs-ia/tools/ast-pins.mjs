@@ -13,7 +13,7 @@ const MEGA_DEF_LINES = 500;
 const WINDOW_LINES = 380;
 const WINDOW_OVERLAP = 20;
 
-const TEST_OR_GEN_RE = /(\/tests?\/|\/__tests__\/|\.test\.|\.spec\.|\.stories\.|\/migrations\/|__init__\.py$|\/generated\/|\/harness\/|\/examples\/|vitest\.config|tsconfig\.json|package\.json|turbo\.json|\.scss$|\.md$)/i;
+const TEST_OR_GEN_RE = /(\/tests?\/|\/__tests__\/|\/__mocks__\/|\.test\.|\.spec\.|\.stories\.|\/migrations\/|__init__\.py$|(?<!\/tools)\/generated\/|\/harness\/|\/examples\/|\/testdata\/|_test\.go$|vitest\.config|tsconfig\.json|package\.json|turbo\.json|\.scss$|\.md$)/i;
 
 export function isWatchedManifest(repo, relPath, productConfig = {}, contentOrDiff = '') {
   for (const rule of productConfig.watched_manifests || []) {
@@ -76,6 +76,11 @@ export function surfaceForPath(repo, relPath, productConfig = {}) {
   if (repo === 'posthog-flutter') return 'FLT';
   if (repo === 'posthog-python') return 'PY';
   if (repo === 'posthog-rs') return 'RS';
+  if (repo === 'posthog-go') return 'GO';
+  if (repo === 'posthog-ruby') return 'RB';
+  if (repo === 'posthog-php') return 'PHP';
+  if (repo === 'posthog-dotnet') return 'CS';
+  if (repo === 'posthog-java') return 'JAVA';
   return 'API';
 }
 
@@ -87,14 +92,27 @@ function extractYamlTools(repo, commit, relPath, text, surface) {
 
   if (doc?.tools && typeof doc.tools === 'object') {
     const keys = Object.keys(doc.tools);
+    const toolsHeaderIdx = lines.findIndex(l => /^tools\s*:/.test(l));
+    const searchFrom = toolsHeaderIdx >= 0 ? toolsHeaderIdx + 1 : 0;
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      const startIdx = lines.findIndex(l => new RegExp(`^\\s{2}${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:`).test(l));
+      const keyRe = new RegExp(`^(\\s+)${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:`);
+      let startIdx = -1;
+      let indent = 2;
+      for (let idx = searchFrom; idx < lines.length; idx++) {
+        const m = keyRe.exec(lines[idx]);
+        if (m) {
+          startIdx = idx;
+          indent = m[1].length;
+          break;
+        }
+      }
       if (startIdx < 0) continue;
+      const siblingRe = new RegExp(`^\\s{${indent}}[a-zA-Z0-9_-]+\\s*:`);
       let endIdx = startIdx;
       while (endIdx + 1 < lines.length) {
         const nextLine = lines[endIdx + 1];
-        if (/^\S/.test(nextLine) || /^\s{2}[a-zA-Z0-9_-]+\s*:/.test(nextLine)) break;
+        if (/^\S/.test(nextLine) || siblingRe.test(nextLine)) break;
         endIdx++;
       }
       const ownLines = [];
@@ -139,22 +157,50 @@ function extractYamlTools(repo, commit, relPath, text, surface) {
 
 function extractHeuristicDecls(lines, ext) {
   const declStarts = [];
-  const isPy = ext === '.py';
-  const patterns = isPy
-    ? [/^(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/, /^class\s+([A-Za-z_][A-Za-z0-9_]*)/]
-    : [
-        /^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_$][A-Za-z0-9_$]*)/,
-        /^(?:export\s+)?(?:abstract\s+)?(?:class|interface|enum|type)\s+([A-Za-z_$][A-Za-z0-9_$]*)/,
-        /^(?:export\s+)?const\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=/,
-        /^(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:fn|struct|enum|trait)\s+([A-Za-z_][A-Za-z0-9_]*)/,
-      ];
+  let patterns;
+  if (ext === '.py') {
+    patterns = [/^(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/, /^class\s+([A-Za-z_][A-Za-z0-9_]*)/];
+  } else if (ext === '.go') {
+    patterns = [
+      /^func\s+(?:\([^)]+\)\s*)?([A-Za-z_][A-Za-z0-9_]*)\s*\(/,
+      /^type\s+([A-Za-z_][A-Za-z0-9_]*)\s+(?:struct|interface)\b/,
+      /^(?:const|var)\s+([A-Za-z_][A-Za-z0-9_]*)\b/,
+    ];
+  } else if (ext === '.rb') {
+    patterns = [
+      /^\s*(?:class|module)\s+([A-Za-z_][A-Za-z0-9_:]*)/,
+      /^\s*def\s+(?:self\.)?([A-Za-z_][A-Za-z0-9_?!]*)/,
+    ];
+  } else if (ext === '.php') {
+    patterns = [
+      /^\s*(?:final\s+|abstract\s+)?(?:class|interface|trait|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/,
+      /^\s*(?:public|protected|private)?\s*(?:static\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/,
+    ];
+  } else if (ext === '.cs' || ext === '.java') {
+    patterns = [
+      /^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+|final\s+)*(?:class|struct|record|interface|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/,
+      /^\s*(?:public|internal|protected)\s+(?:static\s+|async\s+|virtual\s+|override\s+)*[A-Za-z0-9_<>,?.\[\]]+\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/,
+    ];
+  } else {
+    patterns = [
+      /^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_$][A-Za-z0-9_$]*)/,
+      /^(?:export\s+)?(?:abstract\s+)?(?:class|interface|enum|type)\s+([A-Za-z_$][A-Za-z0-9_$]*)/,
+      /^(?:export\s+)?const\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=/,
+      /^(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:fn|struct|enum|trait)\s+([A-Za-z_][A-Za-z0-9_]*)/,
+    ];
+  }
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     for (const re of patterns) {
       const m = re.exec(line);
       if (m) {
-        declStarts.push({ lineIdx: i, symbol: m[1], kind: line.includes('class') ? 'class' : 'function' });
+        const kind = /\b(interface|type_alias)\b/.test(line)
+          ? 'interface'
+          : /\b(class|struct|module)\b/.test(line)
+            ? 'class'
+            : 'function';
+        declStarts.push({ lineIdx: i, symbol: m[1], kind });
         break;
       }
     }

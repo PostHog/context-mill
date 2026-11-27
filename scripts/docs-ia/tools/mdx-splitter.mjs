@@ -106,10 +106,14 @@ export function splitMdxFile(pagePath, rawText, { surfaceHints = [] } = {}) {
       continue;
     }
 
-    if (trimmed.startsWith('```')) {
+    const fenceMatch = /^(`{3,}|~{3,})/.exec(trimmed);
+    if (fenceMatch) {
+      const fenceChar = fenceMatch[1][0];
+      const fenceLen = fenceMatch[1].length;
+      const closeRe = new RegExp(`^${fenceChar}{${fenceLen},}\\s*$`);
       const start = i + 1;
       let end = i + 1;
-      while (end < lines.length && !lines[end].trim().startsWith('```')) end++;
+      while (end < lines.length && !closeRe.test(lines[end].trim())) end++;
       pushPiece('code', start, Math.min(end + 1, lines.length), lines.slice(i, Math.min(end + 1, lines.length)).join('\n'));
       i = end + 1;
       continue;
@@ -132,7 +136,7 @@ export function splitMdxFile(pagePath, rawText, { surfaceHints = [] } = {}) {
       while (
         end + 1 < lines.length &&
         lines[end + 1].trim() !== '' &&
-        !/^(?:[-*+]|\d+[.)]|#{1,6}|```|\|)\s*/.test(lines[end + 1].trim()) &&
+        !/^(?:[-*+]|\d+[.)]|#{1,6}|```|~~~|\||<\/?[A-Z])\s*/.test(lines[end + 1].trim()) &&
         /^\s{2,}/.test(lines[end + 1])
       ) end++;
       pushPiece('list_item', start, end + 1, lines.slice(i, end + 1).join('\n'));
@@ -140,18 +144,71 @@ export function splitMdxFile(pagePath, rawText, { surfaceHints = [] } = {}) {
       continue;
     }
 
+    // Standalone closing JSX tag (e.g. `</Steps>`, `</Step>`, `</MultiLanguage>`, `</CalloutBox>`)
+    if (/^<\/[A-Za-z][A-Za-z0-9_.]*\s*>$/.test(trimmed)) {
+      pushPiece('jsx', i + 1, i + 1, trimmed);
+      i++;
+      continue;
+    }
+
+    // Opening JSX component tag: scan opening tag attributes up to `>` / `/>` without ever crossing a code fence.
+    // Block wrappers (`<Steps>`, `<Step>`, `<MultiLanguage>`, `<QuestLog>`, `<Tab.*>`, or any tag wrapping
+    // markdown blocks/code fences) emit only the opening wrapper tag as structural `jsx` so inner markdown
+    // and fenced code blocks parse cleanly without fence inversion.
     if (/^<[A-Z]/.test(trimmed)) {
       const start = i + 1;
-      let end = i;
-      if (!/\/>$/.test(trimmed) && !/<\/[A-Z][^>]*>$/.test(trimmed)) {
-        const tag = /^<([A-Za-z0-9_.]+)/.exec(trimmed)?.[1];
-        while (end + 1 < lines.length && (!tag || !lines[end].includes(`</${tag}>`)) && !/\/>$/.test(lines[end].trim())) {
-          end++;
-          if (end - i > 30) break;
-        }
+      const tag = /^<([A-Za-z0-9_.]+)/.exec(trimmed)?.[1];
+      let openEnd = i;
+      while (
+        openEnd + 1 < lines.length &&
+        !/>$/.test(lines[openEnd].trim()) &&
+        !/^(`{3,}|~{3,})/.test(lines[openEnd + 1].trim()) &&
+        lines[openEnd + 1].trim() !== '' &&
+        openEnd - i < 20
+      ) {
+        openEnd++;
       }
-      pushPiece('jsx', start, end + 1, lines.slice(i, end + 1).join('\n'));
-      i = end + 1;
+      const openBlock = lines.slice(i, openEnd + 1).join('\n');
+      const isSelfClosedOrInlineClosed =
+        /\/>$/.test(lines[openEnd].trim()) ||
+        (tag && openBlock.includes(`</${tag}>`));
+
+      if (isSelfClosedOrInlineClosed) {
+        pushPiece('jsx', start, openEnd + 1, openBlock);
+        i = openEnd + 1;
+        continue;
+      }
+
+      const isKnownContainer = Boolean(
+        tag && /^(Steps|Step|MultiLanguage|QuestLog|QuestLogItem|Tab(\..+)?|OnboardingContentWrapper|OSButtonGroup)$/i.test(tag)
+      );
+
+      // For short inline-text JSX components (e.g. a 3-line <CalloutBox> or <CallToAction> with no code fences
+      // or nested block elements), keep the full component as one `jsx` piece; otherwise emit only the opening tag.
+      let closedEnd = -1;
+      if (!isKnownContainer && tag) {
+        let sawUnsafeInner = false;
+        for (let k = openEnd + 1; k < lines.length && k - i <= 12; k++) {
+          const kt = lines[k].trim();
+          if (/^(`{3,}|~{3,})/.test(kt) || /^#{1,6}\s/.test(kt) || /^<[A-Z]/.test(kt)) {
+            sawUnsafeInner = true;
+            break;
+          }
+          if (kt.includes(`</${tag}>`)) {
+            closedEnd = k;
+            break;
+          }
+        }
+        if (sawUnsafeInner) closedEnd = -1;
+      }
+
+      if (closedEnd >= 0) {
+        pushPiece('jsx', start, closedEnd + 1, lines.slice(i, closedEnd + 1).join('\n'));
+        i = closedEnd + 1;
+      } else {
+        pushPiece('jsx', start, openEnd + 1, openBlock);
+        i = openEnd + 1;
+      }
       continue;
     }
 
@@ -160,7 +217,7 @@ export function splitMdxFile(pagePath, rawText, { surfaceHints = [] } = {}) {
     while (
       end + 1 < lines.length &&
       lines[end + 1].trim() !== '' &&
-      !/^(?:#{1,6}\s|```|(?:[-*+]|\d+[.)])\s|\||<[A-Z]|import\s)/.test(lines[end + 1].trim())
+      !/^(?:#{1,6}\s|```|~~~|(?:[-*+]|\d+[.)])\s|\||<\/?[A-Z]|import\s)/.test(lines[end + 1].trim())
     ) end++;
     pushPiece('paragraph', start, end + 1, lines.slice(i, end + 1).join('\n'));
     i = end + 1;

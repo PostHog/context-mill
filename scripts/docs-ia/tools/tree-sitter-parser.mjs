@@ -19,6 +19,10 @@ export const SUPPORTED_GRAMMARS = Object.freeze({
   '.tsx': 'tsx',
   '.py': 'python',
   '.rs': 'rust',
+  '.go': 'go',
+  '.rb': 'ruby',
+  '.php': 'php',
+  '.cs': 'c_sharp',
   '.swift': 'swift',
   '.kt': 'kotlin',
   '.dart': 'dart',
@@ -215,12 +219,18 @@ function rustTypePath(node) {
 function classifyNodeDeclaration(node, language, scopes) {
   const type = node.type;
   if (language === 'typescript' || language === 'tsx') {
-    if (['class_declaration', 'abstract_class_declaration', 'interface_declaration', 'enum_declaration', 'internal_module'].includes(type)) {
-      return { name: nameOf(node), scope: true, kind: 'type' };
+    if (['class_declaration', 'abstract_class_declaration', 'internal_module'].includes(type)) {
+      return { name: nameOf(node), scope: true, kind: 'class' };
+    }
+    if (type === 'enum_declaration') {
+      return { name: nameOf(node), scope: true, kind: 'enum' };
+    }
+    if (type === 'interface_declaration') {
+      return { name: nameOf(node), scope: true, kind: 'interface' };
     }
     if (type === 'type_alias_declaration') {
       const obj = node.childForFieldName('value');
-      return { name: nameOf(node), scope: obj?.type === 'object_type', kind: 'type', objectNode: obj?.type === 'object_type' ? obj : undefined };
+      return { name: nameOf(node), scope: obj?.type === 'object_type', kind: 'type_alias', objectNode: obj?.type === 'object_type' ? obj : undefined };
     }
     if (type === 'variable_declarator') {
       for (let p = node.parent; p; p = p.parent) {
@@ -250,7 +260,7 @@ function classifyNodeDeclaration(node, language, scopes) {
   }
 
   if (language === 'python') {
-    if (type === 'class_definition') return { name: nameOf(node), scope: true, kind: 'type' };
+    if (type === 'class_definition') return { name: nameOf(node), scope: true, kind: 'class' };
     if (type === 'function_definition') return { name: nameOf(node), scope: true, kind: 'function' };
     if (type === 'assignment' && !scopes.some(s => s.kind === 'function')) {
       const left = node.childForFieldName('left');
@@ -260,16 +270,71 @@ function classifyNodeDeclaration(node, language, scopes) {
   }
 
   if (language === 'rust') {
-    if (['struct_item', 'enum_item', 'trait_item', 'type_item'].includes(type)) {
-      return { name: nameOf(node), scope: ['struct_item', 'enum_item', 'trait_item'].includes(type), kind: 'type' };
+    if (['struct_item', 'trait_item'].includes(type)) {
+      return { name: nameOf(node), scope: true, kind: 'class' };
+    }
+    if (type === 'enum_item') {
+      return { name: nameOf(node), scope: true, kind: 'enum' };
+    }
+    if (type === 'type_item') {
+      return { name: nameOf(node), scope: false, kind: 'type_alias' };
     }
     if (type === 'impl_item') {
       const rustPath = rustTypePath(node.childForFieldName('type'));
-      return { name: rustPath.at(-1), rustPath, scope: true, kind: 'type' };
+      return { name: rustPath.at(-1), rustPath, scope: true, kind: 'class' };
     }
     if (['function_item', 'function_signature_item'].includes(type)) return { name: nameOf(node), scope: true, kind: 'function' };
     if (['field_declaration', 'enum_variant', 'const_item'].includes(type)) return { name: nameOf(node), kind: 'member' };
     if (type === 'mod_item') return { name: nameOf(node), scope: true, kind: 'module', hidden: true };
+    return null;
+  }
+
+  if (language === 'go') {
+    if (type === 'function_declaration') return { name: nameOf(node), scope: true, kind: 'function' };
+    if (type === 'method_declaration') {
+      const recv = node.childForFieldName('receiver');
+      const recvType = firstDescendant(recv, new Set(['type_identifier']))?.text;
+      const nm = nameOf(node);
+      return nm ? { name: recvType ? `${recvType}.${nm}` : nm, scope: true, kind: 'function' } : null;
+    }
+    if (type === 'type_spec') return { name: nameOf(node), scope: true, kind: 'class' };
+    if (type === 'const_spec' && !scopes.some(s => s.kind === 'function')) {
+      return { name: nameOf(node), kind: 'member' };
+    }
+    return null;
+  }
+
+  if (language === 'ruby') {
+    if (type === 'class' || type === 'module') {
+      const cname = node.childForFieldName('name')?.text;
+      return cname ? { name: cname, scope: true, kind: 'class' } : null;
+    }
+    if (type === 'method' || type === 'singleton_method') {
+      const nm = node.childForFieldName('name')?.text;
+      return nm ? { name: nm, scope: true, kind: 'function' } : null;
+    }
+    if (type === 'assignment' && !scopes.some(s => s.kind === 'function')) {
+      const left = node.childForFieldName('left');
+      if (left?.type === 'constant') return { name: left.text, kind: 'member' };
+    }
+    return null;
+  }
+
+  if (language === 'php') {
+    if (['class_declaration', 'interface_declaration', 'trait_declaration', 'enum_declaration'].includes(type)) {
+      return { name: nameOf(node), scope: true, kind: type === 'interface_declaration' ? 'interface' : 'class' };
+    }
+    if (['method_declaration', 'function_definition'].includes(type)) return { name: nameOf(node), scope: true, kind: 'function' };
+    return null;
+  }
+
+  if (language === 'c_sharp') {
+    if (['class_declaration', 'struct_declaration', 'record_declaration', 'enum_declaration'].includes(type)) {
+      return { name: nameOf(node), scope: true, kind: 'class' };
+    }
+    if (type === 'interface_declaration') return { name: nameOf(node), scope: true, kind: 'interface' };
+    if (['method_declaration', 'constructor_declaration'].includes(type)) return { name: nameOf(node), scope: true, kind: 'function' };
+    if (type === 'property_declaration') return { name: nameOf(node), kind: 'member' };
     return null;
   }
 
