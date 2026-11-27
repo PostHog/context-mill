@@ -3,11 +3,13 @@ import { buildIaWorkflow } from './build-ia.workflow.mjs';
 import { compileSkillsWorkflow } from './compile-skills.workflow.mjs';
 import { mapDocsWorkflow } from './map-docs.workflow.mjs';
 import { refreshDriftWorkflow } from './refresh-drift.workflow.mjs';
+import { replayPrsWorkflow } from './replay-prs.workflow.mjs';
 
 export const WORKFLOWS = Object.freeze([
   buildIaWorkflow,
   mapDocsWorkflow,
   refreshDriftWorkflow,
+  replayPrsWorkflow,
   compileSkillsWorkflow,
 ]);
 

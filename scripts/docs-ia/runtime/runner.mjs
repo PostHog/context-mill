@@ -9,6 +9,7 @@ import { validateWorkflow } from '../models/workflow.mjs';
 import { PROMPTS_DIR, renderPrompt } from '../prompts/loader.mjs';
 import { createToolCatalog } from '../tools/catalog.mjs';
 import { executeAgyAgent, runPool } from './agent-adapter.mjs';
+import { createClaudeSdkExecutor } from './claude-sdk-adapter.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const SCHEMAS_DIR = resolve(HERE, '..', 'models', 'schemas');
@@ -45,7 +46,9 @@ export async function runWorkflow(
     initialState = {},
     git = null,
     parseAst = null,
-    agentExecutor = executeAgyAgent,
+    provider = 'agy',
+    claudeSdkOptions = {},
+    agentExecutor = null,
     dryRun = false,
     fromStep = null,
     toStep = null,
@@ -54,6 +57,9 @@ export async function runWorkflow(
     log = () => {},
   } = {}
 ) {
+  const resolvedExecutor =
+    agentExecutor ||
+    (provider === 'claude-sdk' ? createClaudeSdkExecutor(claudeSdkOptions) : executeAgyAgent);
   const state = { ...initialState };
   if (!state.defsById && Array.isArray(state.defs)) {
     state.defsById = new Map(state.defs.map(d => [d.id, d]));
@@ -160,7 +166,7 @@ export async function runWorkflow(
             },
             { promptsDir }
           );
-          const result = await agentExecutor({
+          const result = await resolvedExecutor({
             step,
             batch,
             promptText,

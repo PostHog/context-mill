@@ -76,7 +76,7 @@ async function main() {
       'Commands:',
       '  list                                          List all workflows and their step bindings',
       '  inspect <workflow> [--json]                   Inspect one workflow DAG and tool bindings',
-      '  run <workflow> --product <slug> [--dry-run]   Execute a workflow (supports --from, --to, --state)',
+      '  run <workflow> --product <slug> [--dry-run]   Execute a workflow (--provider agy|claude-sdk, --from, --to, --state)',
       '  query <fact|symbol|page|audit> <q> --file <p> Run a fast lookup against IA/coverage/register data',
       '  mcp-serve --tools <csv> [--state <path>]      Start scoped stdio MCP server for an agent step',
     ].join('\n'));
@@ -100,10 +100,16 @@ async function main() {
     const product = flags.product ? loadProductConfig(flags.product) : { slug: 'default', code: 'IA', surfaces: ['API'] };
     const initialState = flags.state ? loadDataFile(resolve(flags.state)) : {};
     const { parseAst } = await createTreeSitterAstParser();
+    const provider = flags.provider || 'agy';
     const res = await runWorkflow(wf, {
       product,
       initialState,
       parseAst,
+      provider,
+      claudeSdkOptions: {
+        ...(flags.model ? { model: flags.model } : {}),
+        ...(flags.effort ? { effort: flags.effort } : {}),
+      },
       dryRun: Boolean(flags['dry-run']),
       fromStep: flags.from || null,
       toStep: flags.to || null,
