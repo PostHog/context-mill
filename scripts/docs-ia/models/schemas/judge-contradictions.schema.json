@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JudgeContradictionsOutput",
+  "type": "object",
+  "required": ["verdicts"],
+  "properties": {
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["piece_id", "verdict", "reason"],
+        "properties": {
+          "piece_id": { "type": "string" },
+          "verdict": {
+            "type": "string",
+            "enum": ["confirmed_contradiction", "fresh", "partial_caveat", "unbound"]
+          },
+          "fact_codes": { "type": "array", "items": { "type": "string" } },
+          "proof_quote": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

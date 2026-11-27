@@ -1,0 +1,55 @@
+# Closed registries of public products, surfaces, and orthogonal concept tags.
+tools:
+  - slug: surveys
+    name: Surveys
+    code: SV
+    docs_path: /docs/surveys
+    status: ga
+  - slug: mcp-analytics
+    name: MCP Analytics
+    code: MCPA
+    docs_path: /docs/mcp-analytics
+    status: beta
+  - slug: product-analytics
+    name: Product Analytics
+    code: PA
+    docs_path: /docs/product-analytics
+    status: ga
+  - slug: feature-flags
+    name: Feature Flags
+    code: FF
+    docs_path: /docs/feature-flags
+    status: ga
+  - slug: session-replay
+    name: Session Replay
+    code: SR
+    docs_path: /docs/session-replay
+    status: ga
+  - slug: ai-observability
+    name: AI Observability
+    code: AIO
+    docs_path: /docs/ai-observability
+    status: ga
+
+surfaces:
+  - UI
+  - API
+  - MCP
+  - WEB
+  - TS
+  - PY
+  - RS
+  - RN
+  - IOS
+  - AND
+  - FLT
+
+tags:
+  - capture
+  - identify
+  - groups
+  - flags
+  - events
+  - webhooks
+  - privacy
+  - access-control

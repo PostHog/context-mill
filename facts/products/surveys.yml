@@ -1,0 +1,42 @@
+slug: surveys
+name: Surveys
+code: SV
+docs_prefix: contents/docs/surveys
+surfaces:
+  - UI
+  - API
+  - MCP
+  - WEB
+  - RN
+  - IOS
+  - AND
+  - FLT
+
+repo_prefixes:
+  posthog:
+    - products/surveys/
+    - frontend/src/scenes/surveys/
+    - posthog/tasks/surveys.py
+    - posthog/tasks/stop_surveys_reached_target.py
+    - rust/hypercache-server/src/api/surveys.rs
+  posthog-js:
+    - packages/browser/src/extensions/surveys
+    - packages/browser-common/src/surveys
+    - packages/react-native/src/surveys
+  posthog-ios:
+    - PostHog/Surveys/
+  posthog-android:
+    - posthog/src/main/java/com/posthog/surveys/
+    - posthog-android-surveys-compose/
+  posthog-flutter:
+    - lib/src/surveys/
+
+exclusions:
+  - code: SV-UI-D-EXCL-002
+    repo: posthog
+    pattern: 'frontend/.*(Skeleton|EmptyState|Badge|Icon|DragHandle)'
+    reason: Pure presentational UI primitives with no user-facing behavioral contract
+  - code: SV-API-D-EXCL-005
+    repo: posthog
+    pattern: 'backend/(llm|prompts|summarization/llm)/'
+    reason: Internal LLM prompt templates

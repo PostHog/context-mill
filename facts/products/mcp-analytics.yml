@@ -1,0 +1,112 @@
+slug: mcp-analytics
+name: MCP Analytics
+code: MCPA
+docs_prefix: contents/docs/mcp-analytics
+surfaces:
+  - UI
+  - API
+  - MCP
+  - TS
+  - WEB
+  - PY
+  - RS
+
+t0_commits:
+  posthog: 02102b70d69352418d0421b51bb426b3718ba9f2
+  posthog-js: 8c832754379204b17409f8a9b7238b22da591870
+  posthog-python: dca22075ced7f4beaca798a8dd155169eec50b4d
+  posthog-rs: 0e693d21351841bf13cfaa788d4b1a200d5e5773
+  posthog-com: d56ff45cbbc6f1c586367a24cfc35a04ef0691c5
+
+repo_prefixes:
+  posthog:
+    - products/mcp_analytics/
+    - services/mcp/
+  posthog-js:
+    - packages/mcp/src/
+    - packages/browser/src/extensions/webmcp
+    - packages/ai/src/mcp/
+  posthog-python:
+    - posthog/mcp/
+    - posthog/ai/mcp/
+  posthog-rs:
+    - src/mcp/
+    - posthog-rs/src/mcp
+
+seam_paths:
+  posthog:
+    - posthog/hogql/database/database.py
+    - posthog/taxonomy/taxonomy.py
+    - docs/published/docs/mcp-analytics/
+
+watched_manifests:
+  - repo: posthog-js
+    pattern: '^(packages/mcp/README\.md|(\.changeset|\.sampo/changesets)/.*\.md)$'
+    content_pattern: '\bmcp\b'
+  - repo: posthog-python
+    pattern: '^(posthog/mcp/README\.md|(\.changeset|\.sampo/changesets)/.*\.md)$'
+    content_pattern: '\bmcp\b'
+  - repo: posthog
+    pattern: '^docs/published/docs/mcp-analytics/.*\.(md|mdx)$'
+
+surface_rules:
+  - repo: posthog
+    pattern: '(/mcp/|tools\.yaml$)'
+    surface: MCP
+  - repo: posthog
+    pattern: '(/frontend/|manifest\.tsx$)'
+    surface: UI
+  - repo: posthog
+    surface: API
+  - repo: posthog-js
+    pattern: '(packages/browser/|webmcp)'
+    surface: WEB
+  - repo: posthog-js
+    surface: TS
+  - repo: posthog-python
+    surface: PY
+  - repo: posthog-rs
+    surface: RS
+
+doc_surface_hints:
+  - scope: path
+    pattern: '/typescript\.mdx$'
+    surface: TS
+  - scope: path
+    pattern: '/webmcp\.mdx$'
+    surface: WEB
+  - scope: path
+    pattern: '/python\.mdx$'
+    surface: PY
+  - scope: path
+    pattern: '/rust\.mdx$'
+    surface: RS
+  - scope: text
+    pattern: '\bwebmcp\b|navigator\.modelcontext'
+    surface: WEB
+  - scope: text
+    pattern: '@posthog/mcp|sendinitializeevent|sendtoolslistevent'
+    surface: TS
+  - scope: text
+    pattern: 'posthog\.mcp|fastmcp|send_initialize_event|send_tools_list_event'
+    surface: PY
+  - scope: text
+    pattern: 'posthog_rs|posthog-rs'
+    surface: RS
+
+exclusions:
+  - code: MCPA-API-D-EXCL-002
+    repo: posthog
+    pattern: 'backend/(agent_evals|management/commands)/'
+    reason: Internal Django management commands and offline eval runners
+  - code: MCPA-ALL-D-EXCL-003
+    repo: posthog
+    pattern: '/skills/'
+    reason: Bundled internal agent skill reference scripts
+  - code: MCPA-UI-D-EXCL-004
+    repo: posthog
+    pattern: 'frontend/.*(colors\.ts|seriesColors\.ts|brandMarks\.ts|BrandMark\.tsx|Card\.tsx|ChartTooltip\.tsx|ShareBarChart\.tsx|ShareBarLabels\.tsx|useShareBarChartConfig\.ts|TwoColumns\.tsx|Section\.tsx|LoadErrorMessage\.tsx|NoDataMessage\.tsx|TrendLineCard\.tsx|FacetShareCard\.tsx|MetricTile\.tsx|formatters\.ts|MCPToolCallPreview\.tsx|ClusteringSplitPane\.tsx|JourneyTooltip\.tsx|EntropyBadge\.tsx|QualityChangeMarker\.tsx|TrendCell\.tsx|SessionsCell\.tsx)'
+    reason: Pure presentational chart primitives, color palettes, and layout wrappers
+  - code: MCPA-ALL-D-EXCL-005
+    pattern: '(logger\.(ts|py)|mcp-sdk-compat\.ts|_compatibility\.py|tracing-helpers\.ts|internal\.(ts|py)|_internal\.py|version\.py)'
+    reason: Internal SDK logging, version constants, and wire compatibility shims
