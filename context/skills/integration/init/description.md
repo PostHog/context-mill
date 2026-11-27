@@ -65,19 +65,30 @@ and the diff looks complete while zero events send. Either:
   declares instead of loading it from the CDN — but bundling only covers the
   entry bundle. posthog-js lazy-loads the session-replay recorder, surveys, and
   toolbar from the PostHog assets CDN at runtime, so `script-src` must allow
-  the PostHog hosts even when bundled. Events still have to send: allow the
-  PostHog host in `connect-src`, or route everything through a same-origin
-  proxy. `connect-src` falls back to `default-src`, so a bare
-  `default-src 'self'` blocks sending too.
+  the PostHog hosts even when bundled. Events and remote config still have to
+  load: allow the API host and the assets host in `connect-src`, or route
+  everything through a same-origin proxy. `connect-src` falls back to
+  `default-src`, so a bare `default-src 'self'` blocks sending too.
 
 Whenever you extend a CSP, extend every directive the SDK needs in one pass —
 partial edits fail silently (events send but replay/surveys never load):
 
 ```
-script-src:  https://*.posthog.com   (lazy-loaded bundles, even when self-hosting the entry)
-connect-src: <the api host>          (event ingestion + feature flags)
-worker-src:  blob:                   (session replay's worker)
+script-src:  https://*.posthog.com                (lazy-loaded bundles, even when self-hosting the entry)
+connect-src: <the api host> <the assets host>     (ingestion + flags; remote config is fetched from the assets host)
+worker-src:  blob:                                (session replay's worker)
 ```
+
+The assets host is `us-assets.i.posthog.com` or `eu-assets.i.posthog.com`, in the
+project's region. posthog-js fetches its remote config from it with `fetch()`, so
+leaving it out of `connect-src` blocks the config without a console error: events
+still send, but replay, surveys, web vitals, and dead clicks never start.
+
+If `script-src` uses `'strict-dynamic'`, modern browsers ignore its host
+allowlist. The lazy-loaded bundles load only because a trusted (nonced or
+hashed) script inserts them, so make sure posthog-js itself loads through such a
+script. Keep the PostHog hosts in `script-src` for older browsers, but do not
+treat them as what makes the bundles load.
 
 Say in your handoff which you did — the review and the report need to know how
 events leave the page.
