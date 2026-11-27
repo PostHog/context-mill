@@ -35,10 +35,12 @@ about most:
   a meta tag or a server-sent header — verify it directive-by-directive; do
   not take the handoff's word that the policy is handled. Required:
   `script-src` allows the PostHog hosts (needed even when posthog-js is
-  bundled — replay/surveys/toolbar lazy-load from the assets CDN),
-  `connect-src` allows the API host (falls back to `default-src`, so a bare
-  `default-src 'self'` blocks sending), and `worker-src blob:` if session
-  replay is on. A partial CSP is the worst failure shape: events send, so the
+  bundled — replay/surveys/toolbar lazy-load from the assets CDN; with
+  `'strict-dynamic'` the hosts are ignored and posthog-js must load through a
+  nonced or hashed script instead), `connect-src` allows the API host and the
+  assets host (posthog-js fetches remote config from the assets host; it falls
+  back to `default-src`, so a bare `default-src 'self'` blocks sending), and
+  `worker-src blob:` if session replay is on. A partial CSP is the worst failure shape: events send, so the
   integration looks alive, while replay and surveys silently never load. Fix a
   missing directive; flag anything structural in `conflict`.
 
