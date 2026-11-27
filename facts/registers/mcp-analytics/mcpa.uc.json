@@ -1,0 +1,28 @@
+{
+  "tool": "UC",
+  "live": {
+    "UC-1": "instrument-existing-mcp-server",
+    "UC-2": "instrument-browser-webmcp",
+    "UC-3": "correlate-stateless-multi-pod-sessions",
+    "UC-4": "attribute-usage-to-users-and-orgs",
+    "UC-5": "understand-agent-intents-and-routing",
+    "UC-6": "enforce-pii-and-secret-redaction",
+    "UC-7": "discover-missing-tools-and-feedback",
+    "UC-8": "monitor-tool-reliability-and-fix-errors",
+    "UC-9": "set-up-alerts-and-weekly-digests",
+    "UC-10": "build-custom-mcp-queries-and-automations"
+  },
+  "titles": {
+    "UC-1": "Instrument an existing TypeScript, Python, or Rust MCP server and verify the first $mcp_tool_call in PostHog.",
+    "UC-2": "Track browser-exposed WebMCP tool calls in a frontend application using posthog-js.",
+    "UC-3": "Correlate multi-turn agent tool calls into sessions across stateless multi-pod HTTP servers on both legacy Mcp-Session-Id and 2026-07-28 MCP clients.",
+    "UC-4": "Attribute MCP tool usage to authenticated end users and B2B organizations without leaking auth headers or credentials into person profiles.",
+    "UC-5": "Capture agent intent, cluster sessions by goal, and diagnose overlapping or poorly discovered MCP tools.",
+    "UC-6": "Verify that PII in free-text intent, API credentials, URL tokens, and oversized binary payloads are redacted or bounded before capture.",
+    "UC-7": "Let agents report missing capabilities via get_more_tools and collect structured inline feedback via send_feedback.",
+    "UC-8": "Monitor tool error rates and p95 latency, inspect failing session timelines, and create GitHub fix tasks directly from failure context.",
+    "UC-9": "Configure instant alerts for failing MCP tool calls and weekly AI-generated intent roundups and tool health digests.",
+    "UC-10": "Query MCP tool calls, client harnesses, models, and protocol versions programmatically via HogQL, the REST API, or PostHog's MCP server."
+  },
+  "retired": []
+}

@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-11-27T04:57:01.865Z",
+  "t0Commits": {
+    "posthog": "02102b70d69352418d0421b51bb426b3718ba9f2",
+    "posthog-js": "8c832754379204b17409f8a9b7238b22da591870",
+    "posthog-python": "dca22075ced7f4beaca798a8dd155169eec50b4d",
+    "posthog-rs": "0e693d21351841bf13cfaa788d4b1a200d5e5773",
+    "posthog-com": "d56ff45cbbc6f1c586367a24cfc35a04ef0691c5"
+  },
+  "astDefinitionsCount": 2733,
+  "excludedInternalFilesCount": 203,
+  "factsCount": 2357,
+  "factsBySurface": {
+    "UI": 646,
+    "API": 497,
+    "MCP": 15,
+    "TS": 353,
+    "WEB": 30,
+    "PY": 466,
+    "RS": 350
+  },
+  "chaptersCount": 7,
+  "sectionsCount": 24,
+  "useCasesCount": 10,
+  "decisionsCount": 13,
+  "docsPagesCount": 22,
+  "claimsCount": 609,
+  "claimsByState": {
+    "fresh": 367,
+    "prose-backed": 240,
+    "contradicted": 2
+  },
+  "totalRegisterLeaves": 2979
+}
