@@ -3,24 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\PostHogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use PostHog\Laravel\Facades\PostHog;
 
 class BurritoController extends Controller
 {
-    public function consider(Request $request, PostHogService $posthog): JsonResponse
+    public function consider(Request $request): JsonResponse
     {
-        $user = Auth::user();
-
         // Increment session counter
         $burritoCount = session('burrito_count', 0) + 1;
         session(['burrito_count' => $burritoCount]);
 
         // PostHog: Track event
-        $posthog->identify($user->email, $user->getPostHogProperties());
-        $posthog->capture($user->email, 'burrito_considered', [
+        PostHog::capture('burrito_considered', [
             'total_considerations' => $burritoCount,
         ]);
 

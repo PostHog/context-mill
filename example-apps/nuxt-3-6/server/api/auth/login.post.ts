@@ -1,57 +1,58 @@
-import { getOrCreateUser } from '~/server/utils/users'
-import { PostHog } from 'posthog-node'
-import { useRuntimeConfig } from '#imports'
+import { getOrCreateUser, users } from '~/server/utils/users'
+import { useServerPostHog } from '~/server/utils/posthog'
 import { getHeader } from 'h3'
 
 export default defineEventHandler(async (event) => {
   if (event.node.req.method !== 'POST') {
     throw createError({
       statusCode: 405,
-      statusMessage: 'Method Not Allowed'
+      statusMessage: 'Method Not Allowed',
     })
   }
 
   const body = await readBody(event)
-  const { username, password } = body
+  const { username, password } = body || {}
+  const trimmedUsername = typeof username === 'string' ? username.trim() : ''
 
-  if (!username || !password) {
+  // Reject missing credentials early so login never creates or tracks a blank user identity.
+  if (!trimmedUsername || !password) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username and password required'
+      statusMessage: 'Username and password required',
     })
   }
 
-  // Fake auth - just get or create user
-  const user = getOrCreateUser(username)
+  const isNewUser = !users.has(trimmedUsername)
+  const user = getOrCreateUser(trimmedUsername)
 
-  const runtimeConfig = useRuntimeConfig()
+  // Read tracing headers forwarded automatically from posthog-js.
+  const sessionId = getHeader(event, 'x-posthog-session-id')?.trim()
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')?.trim()
+  const posthog = useServerPostHog()
 
-    // Relies on tracing_headers being set in the client-side SDK
-  const sessionId = getHeader(event, 'x-posthog-session-id')
-  const distinctId = getHeader(event, 'x-posthog-distinct-id')
+  // Only capture when x-posthog-distinct-id is present, never falling back to user.id or a shared anonymous string.
+  if (posthog && distinctId) {
+    await posthog.withContext(
+      { sessionId: sessionId || undefined, distinctId },
+      async () => {
+        posthog.capture({
+          event: 'server_login',
+          distinctId,
+          properties: {
+            $session_id: sessionId || undefined,
+            is_new_user: isNewUser,
+            source: 'api',
+          },
+        })
+      },
+    )
 
-  const posthog = new PostHog(
-    runtimeConfig.public.posthog.publicKey,
-    { 
-      host: runtimeConfig.public.posthog.host, 
-    }
-  )
-
-  await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    async () => {
-      posthog.capture({
-        event: 'server_login',
-        distinctId: distinctId ?? username,
-      })
-    }
-  )
-
-  // Always shutdown to ensure all events are flushed
-  await posthog.shutdown()
+    // Flush queued events in this short-lived handler and ignore delivery errors so login still succeeds.
+    await posthog.flush().catch(() => {})
+  }
 
   return {
     success: true,
-    user: { ...user }
+    user: { ...user },
   }
 })

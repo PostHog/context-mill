@@ -39,6 +39,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -73,8 +79,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "port": 3000,
-            "proxyConfig": "proxy.conf.json"
+            "port": 3000
           }
         },
         "test": {

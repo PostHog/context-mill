@@ -50,18 +50,6 @@
             ReferencedContainer = "container:BurritoConsiderationClient.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "POSTHOG_PROJECT_TOKEN"
-            value = "phc_jE9kXU0depRekiuabVROlxxkIXn95NqsNO3qB4qNKtl"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "POSTHOG_HOST"
-            value = "https://us.i.posthog.com"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

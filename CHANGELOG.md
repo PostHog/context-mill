@@ -1,5 +1,173 @@
 # Changelog
 
+## [1.69.0](https://github.com/PostHog/context-mill/compare/v1.68.0...v1.69.0) (2026-11-26)
+
+
+### Features
+
+* **build:** check every wizard framework resolves in each picked skill family ([#549](https://github.com/PostHog/context-mill/issues/549)) ([08af9c3](https://github.com/PostHog/context-mill/commit/08af9c3d68c98cd29751cc79494a0637bc324222))
+* **integration:** teach React Router error tracking ([#556](https://github.com/PostHog/context-mill/issues/556)) ([9fdf5a3](https://github.com/PostHog/context-mill/commit/9fdf5a372314a28a61e8a5830ac43cf54ef72a8c))
+
+
+### Bug Fixes
+
+* **migrate-email:** a fixed tracking enable wins, run-time clicks stay off templates ([#547](https://github.com/PostHog/context-mill/issues/547)) ([e7851f7](https://github.com/PostHog/context-mill/commit/e7851f709c78068b669cd2558ce2033240885d08))
+* **migrate-email:** open-event exception only when nobody knows, plain-text links need no sensitive mark ([#559](https://github.com/PostHog/context-mill/issues/559)) ([5ebdf4f](https://github.com/PostHog/context-mill/commit/5ebdf4fe06e0efe520056aa449d8e080eddf825a))
+* **skills:** fetch the iOS reference once ([#553](https://github.com/PostHog/context-mill/issues/553)) ([cb24aa8](https://github.com/PostHog/context-mill/commit/cb24aa8c41417082002620827e1e9bcf9fd963c4))
+
+## [1.68.0](https://github.com/PostHog/context-mill/compare/v1.67.0...v1.68.0) (2026-11-23)
+
+
+### Features
+
+* **migrate-email:** map provider tracking settings to tracking and sensitive ([#486](https://github.com/PostHog/context-mill/issues/486)) ([ee1402d](https://github.com/PostHog/context-mill/commit/ee1402d1fa3ae759e902c69664cb7c8a17542ff3))
+* **spend-audit:** add the spend audit agent flow ([#474](https://github.com/PostHog/context-mill/issues/474)) ([76a2515](https://github.com/PostHog/context-mill/commit/76a2515524ae9ac8882204d336792b2892883f23))
+
+
+### Bug Fixes
+
+* **error-tracking-upload-source-maps:** require the tls feature on the Rust blocking client ([#542](https://github.com/PostHog/context-mill/issues/542)) ([44f8572](https://github.com/PostHog/context-mill/commit/44f85725edb7f037bc8e8f5a487f048c044b8838))
+* **migrate-email:** leave send retries to PostHog's SDK ([#541](https://github.com/PostHog/context-mill/issues/541)) ([b4d7cd9](https://github.com/PostHog/context-mill/commit/b4d7cd95ace947803285f7f29757f2cef727db03))
+* **revenue-analytics:** preserve Stripe checkout references ([#543](https://github.com/PostHog/context-mill/issues/543)) ([e16d485](https://github.com/PostHog/context-mill/commit/e16d485fe4a15b344a700a19f4d5bba5416b9eed))
+
+## [1.67.0](https://github.com/PostHog/context-mill/compare/v1.66.0...v1.67.0) (2026-11-17)
+
+
+### Features
+
+* **agents:** stop publishing the orchestrator prompts ([#536](https://github.com/PostHog/context-mill/issues/536)) ([33b6cf2](https://github.com/PostHog/context-mill/commit/33b6cf278049fd2300deb88d7e66797d0f35cc02))
+* **integration:** publish each orchestrator step as one skill ([#537](https://github.com/PostHog/context-mill/issues/537)) ([333072f](https://github.com/PostHog/context-mill/commit/333072f629625524c702ba59e2f04c8fe87ff8dd))
+* **menu:** say which projects a skill serves in its tags alone ([#538](https://github.com/PostHog/context-mill/issues/538)) ([4a9250f](https://github.com/PostHog/context-mill/commit/4a9250fb9fb27df7f4efec967f0e9f5c9a9b0d23))
+* **skills:** move SendGrid sends to PostHog in every SDK language ([#459](https://github.com/PostHog/context-mill/issues/459)) ([45e6e07](https://github.com/PostHog/context-mill/commit/45e6e070b9928a6c8b2777c83954b788db02aa4a))
+* **skills:** publish sending-transactional-emails for the Wizard ([#456](https://github.com/PostHog/context-mill/issues/456)) ([8594917](https://github.com/PostHog/context-mill/commit/8594917edaac20cdc052175ecac20deab5c5f263))
+
+
+### Bug Fixes
+
+* **migrate-email:** collect before-cutover plan notes in Step 9 ([#525](https://github.com/PostHog/context-mill/issues/525)) ([24ee0ea](https://github.com/PostHog/context-mill/commit/24ee0ea2b5ae7fe82324c544f06c2e3527cde278))
+
+## [1.66.0](https://github.com/PostHog/context-mill/compare/v1.65.0...v1.66.0) (2026-11-16)
+
+
+### Features
+
+* **integration:** make the integration config a variant table with per-product pages ([#528](https://github.com/PostHog/context-mill/issues/528)) ([1c25a25](https://github.com/PostHog/context-mill/commit/1c25a25b4d748c1397b0daeee13da645f32af0bf))
+* **integration:** publish each step skill once, completed from the framework's pack ([#529](https://github.com/PostHog/context-mill/issues/529)) ([a2a8df4](https://github.com/PostHog/context-mill/commit/a2a8df465147e9e1bb2eebc695294a0d2d8919ee))
+
+
+### Bug Fixes
+
+* **skills:** read the project token and host from project-get ([#511](https://github.com/PostHog/context-mill/issues/511)) ([d5ba3bb](https://github.com/PostHog/context-mill/commit/d5ba3bb520629b4726155092787f594acb68fbd2))
+
+## [1.65.0](https://github.com/PostHog/context-mill/compare/v1.64.0...v1.65.0) (2026-11-13)
+
+
+### Features
+
+* **menu:** describe skills with title, description and tags ([#447](https://github.com/PostHog/context-mill/issues/447)) ([8a38619](https://github.com/PostHog/context-mill/commit/8a38619670b30ddc07828912fb524f43885ef565))
+* **migrate-email:** move Resend sends in every PostHog SDK's language ([#472](https://github.com/PostHog/context-mill/issues/472)) ([8cd7381](https://github.com/PostHog/context-mill/commit/8cd73810fa6ece1d62744b07e8acc80fe1708e9d))
+* **skills:** add instrument-reverse-proxy skill ([#512](https://github.com/PostHog/context-mill/issues/512)) ([66175c2](https://github.com/PostHog/context-mill/commit/66175c221ba18209619c931811efd9925e2bb752))
+* **skills:** add the migrate-email skill with a Resend variant ([#450](https://github.com/PostHog/context-mill/issues/450)) ([ff49233](https://github.com/PostHog/context-mill/commit/ff492334f81220b4010aad4c40655a578c1a4b4c))
+* **skills:** move Resend sends to posthog-node in migrate-email ([#451](https://github.com/PostHog/context-mill/issues/451)) ([a66a9fe](https://github.com/PostHog/context-mill/commit/a66a9fe79281c3ba51e788cf07ed9fc5c76d49aa))
+
+
+### Bug Fixes
+
+* use posthog-js directly in the Gatsby example ([#520](https://github.com/PostHog/context-mill/issues/520)) ([cdcd9e3](https://github.com/PostHog/context-mill/commit/cdcd9e3104c81e177f067133ed5d5cc39220bf5b))
+
+## [1.64.0](https://github.com/PostHog/context-mill/compare/v1.63.0...v1.64.0) (2026-11-11)
+
+
+### Features
+
+* install SDKs at the docs' version and keep agents on today's majors ([#502](https://github.com/PostHog/context-mill/issues/502)) ([e355882](https://github.com/PostHog/context-mill/commit/e35588261d7bee276ac37a800ce4712cbdc4a8a3))
+
+
+### Bug Fixes
+
+* **example-apps:** move the Go and Rust examples to the current SDK releases ([#506](https://github.com/PostHog/context-mill/issues/506)) ([e4ecff4](https://github.com/PostHog/context-mill/commit/e4ecff491455e4b1b63323f95c45d2451ffecc82))
+* **example-apps:** move the Python, Node and Laravel examples to the docs' pins ([#508](https://github.com/PostHog/context-mill/issues/508)) ([0281698](https://github.com/PostHog/context-mill/commit/02816989a2685d93127aeca4eba5b595d66bc812))
+* **integration-v2:** install the bare package name when the docs pin no version ([#505](https://github.com/PostHog/context-mill/issues/505)) ([665c2f3](https://github.com/PostHog/context-mill/commit/665c2f3d65b9ecf8e9fe8f5d48e73f2231acb5b8))
+* **integration-v2:** take the install version from the library doc ([#507](https://github.com/PostHog/context-mill/issues/507)) ([7dbcee7](https://github.com/PostHog/context-mill/commit/7dbcee75921f1be38a2304f6e4f097f645a60ace))
+
+## [1.63.0](https://github.com/PostHog/context-mill/compare/v1.62.0...v1.63.0) (2026-11-10)
+
+
+### Features
+
+* **examples:** use the posthog laravel sdk in the laravel example ([#497](https://github.com/PostHog/context-mill/issues/497)) ([45bf02f](https://github.com/PostHog/context-mill/commit/45bf02fa654c69e6ff5f50c6990ffadddf79f6ed))
+* **skills:** add eight framework examples to the install skills ([#495](https://github.com/PostHog/context-mill/issues/495)) ([2a62006](https://github.com/PostHog/context-mill/commit/2a620065ddeca32910aef6328ba7e613fa66ba52))
+* **skills:** add install rules and missing SDK docs to the install skills ([#494](https://github.com/PostHog/context-mill/issues/494)) ([5eedf2f](https://github.com/PostHog/context-mill/commit/5eedf2f630786ef48331b0c243b7c112f5b16736))
+* **skills:** add server examples to the install skills ([#492](https://github.com/PostHog/context-mill/issues/492)) ([68a6f1f](https://github.com/PostHog/context-mill/commit/68a6f1fec970fd6517402211ea56d9a4c04e2816))
+* **skills:** fold agent eval findings into the install skills ([#491](https://github.com/PostHog/context-mill/issues/491)) ([91732f1](https://github.com/PostHog/context-mill/commit/91732f16a8effd8ef1686206d9785e54964e49c3))
+* **skills:** refresh the browser examples the install skills copy ([#493](https://github.com/PostHog/context-mill/issues/493)) ([8e65b48](https://github.com/PostHog/context-mill/commit/8e65b4829366007f9b29381410c2b0f05fd65610))
+* **skills:** use a token and host the calling tool already provides ([#489](https://github.com/PostHog/context-mill/issues/489)) ([617999f](https://github.com/PostHog/context-mill/commit/617999f5b27284efcabe691be919ee5f76dad6cc))
+
+## [1.62.0](https://github.com/PostHog/context-mill/compare/v1.61.1...v1.62.0) (2026-11-10)
+
+
+### Features
+
+* **agents:** add support flow for wizard support ([#498](https://github.com/PostHog/context-mill/issues/498)) ([ddb882b](https://github.com/PostHog/context-mill/commit/ddb882bc18b079cae595f607c028b119a52b6d43))
+* **evals:** add Gauge evals for the omnibus install skills ([#490](https://github.com/PostHog/context-mill/issues/490)) ([229ae13](https://github.com/PostHog/context-mill/commit/229ae13249953c873bc2ee7f7d88cd8b154112e4))
+
+
+### Bug Fixes
+
+* **self-driving:** stop quoting a fixed $15 per PR in the connected-tools ask ([#499](https://github.com/PostHog/context-mill/issues/499)) ([68604e8](https://github.com/PostHog/context-mill/commit/68604e8b84316fcbdab334477beab069f33180a5))
+
+## [1.61.1](https://github.com/PostHog/context-mill/compare/v1.61.0...v1.61.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **integration-v2:** don't stop the run on a framework variant ([#482](https://github.com/PostHog/context-mill/issues/482)) ([4ced6c7](https://github.com/PostHog/context-mill/commit/4ced6c7c5ac82879507e3ae9265429448c67524f))
+
+## [1.61.0](https://github.com/PostHog/context-mill/compare/v1.60.1...v1.61.0) (2026-11-06)
+
+
+### Features
+
+* mcp analytics default run ([#476](https://github.com/PostHog/context-mill/issues/476)) ([eaffbc1](https://github.com/PostHog/context-mill/commit/eaffbc1030c76668ea3779d2e359dce52e465eec))
+
+## [1.60.1](https://github.com/PostHog/context-mill/compare/v1.60.0...v1.60.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **integration-v2:** bound review checks without skipping typechecking ([#470](https://github.com/PostHog/context-mill/issues/470)) ([52b72a0](https://github.com/PostHog/context-mill/commit/52b72a00091cffe59467e1ab7f4720054cc8e0c6))
+
+## [1.60.0](https://github.com/PostHog/context-mill/compare/v1.59.0...v1.60.0) (2026-11-05)
+
+
+### Features
+
+* **data-warehouse-destination:** add the warehouse destination setup skill ([#457](https://github.com/PostHog/context-mill/issues/457)) ([61a6f75](https://github.com/PostHog/context-mill/commit/61a6f750d0613daf19434b2b1a2864c27a6983b7))
+* **mcp-analytics:** add Go, Ruby, and Rust to the skill ([#419](https://github.com/PostHog/context-mill/issues/419)) ([1601f41](https://github.com/PostHog/context-mill/commit/1601f412077d7abcfd0fcef95520c05abb8b88d4))
+* **replay-vision:** fit scanner filters to volume and rework default scanners ([#449](https://github.com/PostHog/context-mill/issues/449)) ([ba6e2f2](https://github.com/PostHog/context-mill/commit/ba6e2f253c3e078282f1c323a009268d135365bc))
+
+
+### Bug Fixes
+
+* **error-tracking:** allow the Next.js 14 instrumentation flag, keep existing inits ([#446](https://github.com/PostHog/context-mill/issues/446)) ([6fc01bd](https://github.com/PostHog/context-mill/commit/6fc01bd58f883533a3dddec3660243e16df347e9))
+* **error-tracking:** init the Next.js browser SDK at the top level of instrumentation-client.ts ([#443](https://github.com/PostHog/context-mill/issues/443)) ([148f9b8](https://github.com/PostHog/context-mill/commit/148f9b831ff753bf9bd07cb1139c97ef29c8a8ed))
+* **mcp-analytics:** keep go build from dropping a binary in the project ([#458](https://github.com/PostHog/context-mill/issues/458)) ([3464174](https://github.com/PostHog/context-mill/commit/3464174f116fce985c893b157a497a3d4046b6a8))
+* **replay-vision:** say when replay is off or the change needs a deploy ([#448](https://github.com/PostHog/context-mill/issues/448)) ([dfabd13](https://github.com/PostHog/context-mill/commit/dfabd13a6171693a2b058eb3bd013a7403fee84d))
+
+## [1.59.0](https://github.com/PostHog/context-mill/compare/v1.58.0...v1.59.0) (2026-10-27)
+
+
+### Features
+
+* **skills:** add instrument-tracing skill ([#439](https://github.com/PostHog/context-mill/issues/439)) ([535aac8](https://github.com/PostHog/context-mill/commit/535aac808c70477ce107146e171ebbcd7423abf0))
+
+
+### Bug Fixes
+
+* **error-tracking:** explain the source maps key prompt and link the key page ([#442](https://github.com/PostHog/context-mill/issues/442)) ([c88b09c](https://github.com/PostHog/context-mill/commit/c88b09c4ef5ae20d36441a495066fd1cdcc59df8))
+* **integration-v2-warehouse:** connect sources through the secure connect link ([#441](https://github.com/PostHog/context-mill/issues/441)) ([016bf47](https://github.com/PostHog/context-mill/commit/016bf4713d12457dc9edfeecda39c3b041c4ff67))
+* **python:** use the framework integrations for exception capture ([#437](https://github.com/PostHog/context-mill/issues/437)) ([e141fc6](https://github.com/PostHog/context-mill/commit/e141fc6c8d2a6279bbdd93a01ed90d92357ef9d0))
+
 ## [1.58.0](https://github.com/PostHog/context-mill/compare/v1.57.0...v1.58.0) (2026-10-19)
 
 

@@ -1,2 +1,2 @@
-posthog>=3.0.0
+posthog>=8,<9
 python-dotenv>=1.0.0

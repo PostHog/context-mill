@@ -1,13 +1,12 @@
 """API endpoints demonstrating PostHog integration patterns."""
 
+from datetime import datetime, timezone
 from typing import Annotated
 
-import posthog
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import JSONResponse
-from posthog import capture
 
-from app.dependencies import RequiredUser
+from app.dependencies import PostHogClient, RequiredUser
 
 router = APIRouter()
 
@@ -17,13 +16,18 @@ MAX_BURRITO_COUNT = 10000
 @router.post("/burrito/consider")
 async def consider_burrito(
     current_user: RequiredUser,
+    posthog_client: PostHogClient,
     burrito_count: Annotated[int, Cookie()] = 0,
 ):
     """Track burrito consideration event."""
     safe_count = max(0, min(burrito_count, MAX_BURRITO_COUNT))
     new_count = safe_count + 1
 
-    capture("burrito_considered", properties={"total_considerations": new_count})
+    if posthog_client:
+        posthog_client.capture(
+            "burrito_considered",
+            properties={"total_considerations": new_count},
+        )
 
     response = JSONResponse({"success": True, "count": new_count})
     response.set_cookie(
@@ -38,6 +42,7 @@ async def consider_burrito(
 @router.post("/test-error")
 async def test_error(
     current_user: RequiredUser,
+    posthog_client: PostHogClient,
     capture_param: Annotated[str, Query(alias="capture")] = "true",
 ):
     """Test endpoint demonstrating manual exception capture in PostHog."""
@@ -47,7 +52,7 @@ async def test_error(
         raise Exception("Test exception from critical operation")
     except Exception as e:
         if should_capture:
-            event_id = posthog.capture_exception(e)
+            event_id = posthog_client.capture_exception(e) if posthog_client else None
             return JSONResponse(
                 {
                     "error": "Operation failed",
@@ -56,13 +61,13 @@ async def test_error(
                 },
                 status_code=500,
             )
-        else:
-            return JSONResponse({"error": "Operation failed"}, status_code=500)
+        return JSONResponse({"error": "Operation failed"}, status_code=500)
 
 
 @router.post("/trigger-error")
 async def trigger_error(
     current_user: RequiredUser,
+    posthog_client: PostHogClient,
     error_type: Annotated[str, Form()] = "generic",
 ):
     """Trigger different error types for testing error tracking."""
@@ -83,11 +88,12 @@ async def trigger_error(
         else:
             raise Exception(error_message)
     except Exception as e:
-        posthog.capture_exception(e)
-        capture(
-            "error_triggered",
-            properties={"error_type": safe_error_type, "error_message": error_message},
-        )
+        if posthog_client:
+            posthog_client.capture_exception(e)
+            posthog_client.capture(
+                "error_triggered",
+                properties={"error_type": safe_error_type, "error_message": error_message},
+            )
 
         return JSONResponse(
             {
@@ -101,6 +107,7 @@ async def trigger_error(
 @router.post("/reports/activity")
 async def generate_activity_report(
     current_user: RequiredUser,
+    posthog_client: PostHogClient,
     report_type: Annotated[str, Form()] = "summary",
 ):
     """Generate user activity report."""
@@ -116,21 +123,22 @@ async def generate_activity_report(
     }
 
     if safe_report_type == "detailed":
-        report_data["account_age_days"] = (
-            __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
-            - current_user.date_joined
-        ).days
+        joined = current_user.date_joined
+        if joined.tzinfo is None:
+            joined = joined.replace(tzinfo=timezone.utc)
+        report_data["account_age_days"] = (datetime.now(timezone.utc) - joined).days
 
     row_count = len(report_data)
 
-    capture(
-        "report_generated",
-        properties={
-            "report_type": safe_report_type,
-            "row_count": row_count,
-            "username": current_user.email,
-        },
-    )
+    # Omit email and username PII from event properties because request context already attributes to current_user.id.
+    if posthog_client:
+        posthog_client.capture(
+            "report_generated",
+            properties={
+                "report_type": safe_report_type,
+                "row_count": row_count,
+            },
+        )
 
     return JSONResponse(
         {

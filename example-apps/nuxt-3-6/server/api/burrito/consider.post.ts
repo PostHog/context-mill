@@ -1,64 +1,64 @@
 import { users, incrementBurritoConsiderations } from '~/server/utils/users'
-import { PostHog } from 'posthog-node'
-import { useRuntimeConfig } from '#imports'
+import { useServerPostHog } from '~/server/utils/posthog'
 import { getHeader } from 'h3'
 
 export default defineEventHandler(async (event) => {
   if (event.node.req.method !== 'POST') {
     throw createError({
       statusCode: 405,
-      statusMessage: 'Method Not Allowed'
+      statusMessage: 'Method Not Allowed',
     })
   }
 
   const body = await readBody(event)
-  const { username } = body
+  const { username } = body || {}
+  const trimmedUsername = typeof username === 'string' ? username.trim() : ''
 
-  if (!username) {
+  if (!trimmedUsername) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username required'
+      statusMessage: 'Username required',
     })
   }
 
-  if (!users.has(username)) {
+  if (!users.has(trimmedUsername)) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found'
+      statusMessage: 'User not found',
     })
   }
 
   // Increment burrito considerations (fake, in-memory)
-  const user = incrementBurritoConsiderations(username)
+  const user = incrementBurritoConsiderations(trimmedUsername)
 
-  const runtimeConfig = useRuntimeConfig()
+  // Read tracing headers forwarded automatically from posthog-js.
+  const sessionId = getHeader(event, 'x-posthog-session-id')?.trim()
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')?.trim()
+  const posthog = useServerPostHog()
 
-  // Relies on tracing_headers being set in the client-side SDK
-  const sessionId = getHeader(event, 'x-posthog-session-id')
-  const distinctId = getHeader(event, 'x-posthog-distinct-id')
+  // Only capture when x-posthog-distinct-id is present, never falling back to user.id or a shared anonymous string.
+  if (posthog && distinctId) {
+    await posthog.withContext(
+      { sessionId: sessionId || undefined, distinctId },
+      async () => {
+        posthog.capture({
+          event: 'burrito_considered',
+          distinctId,
+          properties: {
+            $session_id: sessionId || undefined,
+            total_considerations: user.burritoConsiderations,
+            source: 'api',
+          },
+        })
+      },
+    )
 
-  const posthog = new PostHog(
-    runtimeConfig.public.posthog.publicKey,
-    { 
-      host: runtimeConfig.public.posthog.host, 
-    }
-  )
-
-  await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    async () => {
-      posthog.capture({
-        event: 'burrito_considered',
-        distinctId: distinctId ?? username,
-      })
-    }
-  )
-
-  // Always shutdown to ensure all events are flushed
-  await posthog.shutdown()
+    // Flush queued events in this short-lived handler and ignore delivery errors so the request never stalls or fails.
+    await posthog.flush().catch(() => {})
+  }
 
   return {
     success: true,
-    user: { ...user }
+    user: { ...user },
   }
 })

@@ -5,9 +5,9 @@ A React Native Expo app demonstrating PostHog product analytics integration with
 ## Features
 
 - **Product Analytics**: Full PostHog integration with event tracking
-- **Autocapture**: Touch events and screen tracking
+- **Autocapture**: Touch events and manual Expo Router screen tracking
 - **Error Tracking**: Manual exception capture with `captureException`
-- **User Authentication**: Demo login with PostHog user identification
+- **User Authentication**: Demo login with stable user ID identification and session restore
 - **Session Persistence**: AsyncStorage for session management
 - **Modern React**: React 19 with React Compiler for automatic memoization
 - **File-based Routing**: Expo Router for navigation
@@ -18,20 +18,20 @@ A React Native Expo app demonstrating PostHog product analytics integration with
 ```
 example-apps/expo/
 ├── app/                          # Expo Router screens (file-based routing)
-│   ├── _layout.tsx               # Root layout with PostHogProvider + AuthProvider
+│   ├── _layout.tsx               # Root layout with conditional PostHogProvider + AuthProvider
 │   ├── index.tsx                 # Home screen (login/welcome)
 │   ├── burrito.tsx               # Burrito consideration screen
 │   └── profile.tsx               # User profile screen
 ├── src/
 │   ├── config/
-│   │   └── posthog.ts            # PostHog client configuration
+│   │   └── posthog.ts            # Optional PostHog client configuration
 │   ├── contexts/
 │   │   └── AuthContext.tsx       # Authentication context with PostHog
 │   ├── services/
 │   │   └── storage.ts            # AsyncStorage wrapper
 │   └── styles/
 │       └── theme.ts              # Shared style constants
-├── app.json                      # Expo configuration
+├── app.config.js                 # Expo configuration reading POSTHOG_* env vars
 ├── babel.config.js               # Babel config with React Compiler
 ├── eslint.config.js              # ESLint flat config
 ├── package.json                  # Dependencies
@@ -47,20 +47,12 @@ example-apps/expo/
 - iOS: Xcode (for iOS Simulator)
 - Android: Android Studio with emulator
 
-**For Android builds:** Set environment variables (required):
+**For Android builds:** Set environment variables in `~/.zshrc` or `~/.bashrc`:
 
-Add to `~/.zshrc` or `~/.bashrc`:
 ```bash
-# Java from Android Studio (required for Gradle)
 export JAVA_HOME="<path-to-android-studio-jdk>"
-
-# Android SDK location
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 ```
-
-Examples:
-- `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
-- `export ANDROID_HOME="$HOME/Library/Android/sdk"`
 
 Then run `source ~/.zshrc` to apply.
 
@@ -72,7 +64,7 @@ Then run `source ~/.zshrc` to apply.
    npm install
    ```
 
-2. Configure PostHog (optional):
+2. Configure PostHog:
    ```bash
    cp .env.example .env
    # Edit .env with your PostHog project token
@@ -86,13 +78,8 @@ Then run `source ~/.zshrc` to apply.
 ### Running the App
 
 ```bash
-# Start development server
 npx expo start
-
-# Run on iOS Simulator
 npx expo run:ios
-
-# Run on Android Emulator
 npx expo run:android
 ```
 
@@ -100,54 +87,84 @@ npx expo run:android
 
 ### Configuration
 
-PostHog is configured in `src/config/posthog.ts` using environment variables from `app.json`:
+PostHog is configured in `src/config/posthog.ts` using build-time environment variables exposed via `app.config.js` extras. When `POSTHOG_PROJECT_TOKEN` is missing or empty, `posthog` is `null`, development builds log an error, and `<PostHogProvider>` is skipped rather than constructing `PostHog` with a placeholder token:
 
 ```typescript
+import PostHog from 'posthog-react-native'
 import Constants from 'expo-constants'
 
-const projectToken = Constants.expoConfig?.extra?.posthogProjectToken
+const rawProjectToken = Constants.expoConfig?.extra?.posthogProjectToken as string | undefined
+const token = rawProjectToken?.trim() || undefined
+const rawHost = Constants.expoConfig?.extra?.posthogHost as string | undefined
+const host = rawHost?.trim() || 'https://us.i.posthog.com'
+
+if (!token && __DEV__) {
+  console.error(
+    'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
+  )
+}
+
+export const posthog: PostHog | null = token
+  ? new PostHog(token, {
+      host,
+      captureAppLifecycleEvents: true,
+    })
+  : null
+
+if (posthog && __DEV__) {
+  posthog.debug(true)
+}
 ```
 
 ### Event Tracking
 
-Events are captured with properties:
+Events carry non-PII context properties, guarded with optional chaining when PostHog is unconfigured:
 
 ```typescript
-posthog.capture('burrito_considered', {
+posthog?.capture('burrito_considered', {
   total_considerations: count,
-  username: user.username,
 })
 ```
 
 ### User Identification
 
-Users are identified on login:
+Users are identified with a stable `userData.id` both on login and when restoring a saved session on app launch, keeping `username` in `$set` person properties and out of `capture()` event properties:
 
 ```typescript
-posthog.identify(username, {
-  $set: { username },
+posthog?.identify(userData.id, {
+  $set: { username: trimmedUsername },
   $set_once: { first_login_date: new Date().toISOString() },
+})
+
+posthog?.capture('user_logged_in', {
+  login_method: 'username',
+  is_new_user: isNewUser,
 })
 ```
 
 ### Screen Tracking
 
-Manual screen tracking with Expo Router:
+Manual screen tracking with Expo Router avoids spreading raw route params that could contain PII:
 
 ```typescript
 useEffect(() => {
-  posthog.screen(pathname, {
-    previous_screen: previousPathname.current,
-  })
+  if (previousPathname.current !== pathname) {
+    posthog?.screen(pathname, {
+      previous_screen: previousPathname.current ?? null,
+    })
+    previousPathname.current = pathname
+  }
 }, [pathname])
 ```
 
 ### Error Tracking
 
-Manual exception capture:
+Manual exception capture without PII properties:
 
 ```typescript
-posthog.captureException(error)
+posthog?.captureException(error, {
+  screen: 'Profile',
+})
 ```
 
 ## Modern React Features
@@ -158,7 +175,7 @@ Automatic memoization is enabled via `babel-plugin-react-compiler`. No need for 
 
 ### React 19 `use` API
 
-The `useAuth` hook uses the new `use` API for context:
+The `useAuth` hook uses the `use` API for context:
 
 ```typescript
 export function useAuth() {
@@ -172,13 +189,13 @@ export function useAuth() {
 
 ### New Architecture
 
-Enabled in `app.json` for better performance:
+Enabled in `app.config.js` for better performance:
 
-```json
-{
-  "expo": {
-    "newArchEnabled": true
-  }
+```javascript
+export default {
+  expo: {
+    newArchEnabled: true,
+  },
 }
 ```
 
@@ -187,35 +204,22 @@ Enabled in `app.json` for better performance:
 Use EAS Build for production builds:
 
 ```bash
-# Install EAS CLI
 npm install -g eas-cli
-
-# Configure EAS
 eas build:configure
-
-# Build for iOS
 eas build --platform ios
-
-# Build for Android
 eas build --platform android
 ```
 
-## Performance Debugging
-
-1. Press `J` in Expo CLI to open Chrome DevTools
-2. Go to: **Profiler > [Gear icon] > "Highlight updates when components render"**
-3. Interact with your app to see which components re-render
-
 ## Tech Stack
 
-- **Expo SDK 54** - Managed workflow
-- **React 19** - Latest React with Compiler support
-- **React Native 0.81** - Latest stable
-- **Expo Router 6** - File-based navigation
-- **PostHog** - Product analytics
-- **TypeScript** - Strict mode enabled
-- **React Native Reanimated** - Smooth animations
-- **React Native Gesture Handler** - Native gestures
+- **Expo SDK 54**, managed workflow
+- **React 19**, latest React with Compiler support
+- **React Native 0.81**, latest stable
+- **Expo Router 6**, file-based navigation
+- **PostHog**, product analytics
+- **TypeScript**, strict mode enabled
+- **React Native Reanimated**, smooth animations
+- **React Native Gesture Handler**, native gestures
 
 ## License
 

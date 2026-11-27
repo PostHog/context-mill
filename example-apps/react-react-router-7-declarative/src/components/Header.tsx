@@ -7,7 +7,11 @@ export default function Header() {
   const posthog = usePostHog();
 
   const handleLogout = () => {
-    posthog?.reset();
+    // Only capture logout and reset PostHog when logging out of an authenticated session.
+    if (user) {
+      posthog?.capture('user_logged_out');
+      posthog?.reset();
+    }
     logout();
   };
 

@@ -33,44 +33,68 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
+const rawPosthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+const posthogToken =
+  typeof rawPosthogToken === 'string' && rawPosthogToken.trim()
+    ? rawPosthogToken.trim()
+    : undefined
+
+// Only emit the browser console error on the client in development when the token is unconfigured.
+if (typeof window !== 'undefined' && !posthogToken && import.meta.env.DEV) {
+  console.error(
+    'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
+  )
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const app = (
+    <AuthProvider>
+      <Header />
+      {children}
+      <TanStackDevtools
+        config={{
+          position: 'bottom-right',
+        }}
+        plugins={[
+          {
+            name: 'Tanstack Router',
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
+      />
+    </AuthProvider>
+  )
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <PostHogProvider
-          apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!}
-          options={{
-            api_host: '/ingest',
-            ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
-            defaults: '2025-05-24',
-            capture_exceptions: true,
-            debug: import.meta.env.DEV,
-            // Automatically add X-POSTHOG-SESSION-ID and X-POSTHOG-DISTINCT-ID
-            // headers to same-origin requests so server-side events join the
-            // same session. Guarded for SSR, where `window` is undefined.
-            tracing_headers:
-              typeof window !== 'undefined' ? [window.location.hostname] : [],
-          }}
-        >
-          <AuthProvider>
-            <Header />
-            {children}
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
+        {/* Skip PostHogProvider when the project token is missing instead of passing an empty or placeholder apiKey. */}
+        {posthogToken ? (
+          <PostHogProvider
+            apiKey={posthogToken}
+            options={{
+              api_host: '/ingest',
+              ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST?.includes('eu.')
+                ? 'https://eu.posthog.com'
+                : 'https://us.posthog.com',
+              defaults: '2026-08-30',
+              capture_exceptions: true,
+              debug: import.meta.env.DEV,
+              // Automatically add X-POSTHOG-SESSION-ID and X-POSTHOG-DISTINCT-ID
+              // headers to same-origin requests so server-side events join the
+              // same session. Guarded for SSR, where window is undefined.
+              tracing_headers:
+                typeof window !== 'undefined' ? [window.location.hostname] : [],
             }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-          </AuthProvider>
-        </PostHogProvider>
+          >
+            {app}
+          </PostHogProvider>
+        ) : (
+          app
+        )}
         <Scripts />
       </body>
     </html>

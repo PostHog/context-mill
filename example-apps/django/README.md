@@ -5,10 +5,10 @@ This is a [Django](https://djangoproject.com) example demonstrating PostHog inte
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **Error tracking**: Capture and track exceptions automatically
-- **User identification**: Associate events with authenticated users via context
+- **Error tracking**: Capture and track unhandled and handled exceptions
+- **User identification**: Associate events with authenticated users via request context and auth signals
 - **Feature flags**: Control feature rollouts with PostHog feature flags
-- **Server-side tracking**: All tracking happens server-side with the Python SDK
+- **Server-side tracking**: All tracking happens server-side with an instance-based `Posthog` client
 - **Context middleware**: Automatic session and user context extraction
 
 ## Getting started
@@ -16,19 +16,23 @@ This is a [Django](https://djangoproject.com) example demonstrating PostHog inte
 ### 1. Install dependencies
 
 ```bash
-pip install posthog
+pip install -r requirements.txt
 ```
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and fill in your PostHog project token:
 
 ```bash
-POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+cp .env.example .env
+```
+
+```bash
+POSTHOG_PROJECT_TOKEN=
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). If `POSTHOG_PROJECT_TOKEN` is left unset, the app skips PostHog initialization cleanly and logs a development warning instead of failing on startup.
 
 ### 3. Run migrations
 
@@ -54,19 +58,20 @@ django/
 ├── .gitignore
 ├── posthog_example/
 │   ├── __init__.py
-│   ├── settings.py              # Django settings with PostHog config
+│   ├── settings.py              # Django settings and POSTHOG_MW_CLIENT setup
 │   ├── urls.py                  # URL routing
 │   ├── wsgi.py                  # WSGI application
 │   └── asgi.py                  # ASGI application
 └── core/
     ├── __init__.py
-    ├── apps.py                  # AppConfig with PostHog initialization
+    ├── apps.py                  # AppConfig wiring auth signals
+    ├── signals.py               # user_logged_in signal for context identity
     ├── views.py                 # Views with event tracking examples
     ├── urls.py                  # App URL patterns
     └── templates/
         └── core/
             ├── base.html        # Base template
-            ├── home.html        # Home/login page
+            ├── home.html        # Home and login page
             ├── burrito.html     # Burrito page with event tracking
             ├── dashboard.html   # Dashboard with feature flag example
             └── profile.html     # Profile page
@@ -74,122 +79,162 @@ django/
 
 ## Key integration points
 
-### PostHog initialization (core/apps.py)
+### Django settings configuration (`posthog_example/settings.py`)
 
 ```python
-import posthog
-from django.conf import settings
-
-class CoreConfig(AppConfig):
-    name = 'core'
-
-    def ready(self):
-        posthog.api_key = settings.POSTHOG_PROJECT_TOKEN
-        posthog.host = settings.POSTHOG_HOST
-```
-
-### Django settings configuration (settings.py)
-
-```python
+import atexit
+import logging
 import os
+from posthog import Posthog
 
-# PostHog configuration
-POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN', '<ph_project_token>')
+logger = logging.getLogger(__name__)
+
+# Leave the token as None when unset rather than defaulting to a placeholder key.
+POSTHOG_PROJECT_TOKEN = os.environ.get('POSTHOG_PROJECT_TOKEN')
 POSTHOG_HOST = os.environ.get('POSTHOG_HOST', 'https://us.i.posthog.com')
+POSTHOG_DISABLED = os.environ.get('POSTHOG_DISABLED', 'False').lower() == 'true'
+
+_posthog_token = (POSTHOG_PROJECT_TOKEN or '').strip()
+if not POSTHOG_DISABLED and _posthog_token:
+    POSTHOG_MW_CLIENT = Posthog(
+        _posthog_token,
+        host=POSTHOG_HOST,
+        enable_exception_autocapture=True,
+        debug=DEBUG,
+    )
+    atexit.register(POSTHOG_MW_CLIENT.shutdown)
+else:
+    POSTHOG_MW_CLIENT = None
+    if DEBUG and not POSTHOG_DISABLED:
+        logger.warning(
+            'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, '
+            'this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
+        )
 
 MIDDLEWARE = [
-    # ... other middleware
-    'posthog.integrations.django.PosthogContextMiddleware',
+    # ... other middleware including AuthenticationMiddleware
 ]
+
+if POSTHOG_MW_CLIENT is not None:
+    MIDDLEWARE.append('posthog.integrations.django.PosthogContextMiddleware')
 ```
 
 ### Built-in context middleware
 
-The PostHog SDK includes a Django middleware that automatically wraps all requests with a context. It extracts session and user information from request headers and tags all events captured during the request.
-
-The middleware automatically extracts:
+`PosthogContextMiddleware` wraps each request in a PostHog context and captures unhandled view exceptions using `POSTHOG_MW_CLIENT`. It extracts:
 
 - **Session ID** from the `X-POSTHOG-SESSION-ID` header
-- **Distinct ID** from the `X-POSTHOG-DISTINCT-ID` header
+- **Distinct ID** from the `X-POSTHOG-DISTINCT-ID` header or `str(request.user.pk)` when authenticated
 - **Current URL** as `$current_url`
 - **Request method** as `$request_method`
 
-### User identification (core/views.py)
+### Login signal identification (`core/signals.py`)
+
+Because the middleware reads `request.user` before the view runs, a login POST starts out unauthenticated. Hooking `user_logged_in` updates the active request context and sets person properties via `client.set()` without putting PII on event properties:
 
 ```python
-import posthog
+from django.conf import settings
+from django.contrib.auth.signals import user_logged_in
+from django.dispatch import receiver
+from posthog import identify_context
 
-def login_view(request):
-    # ... authentication logic
-    if user:
-        with posthog.new_context():
-            posthog.identify_context(str(user.id))
-            posthog.tag('email', user.email)
-            posthog.tag('username', user.username)
-            posthog.capture('user_logged_in', properties={
-                'login_method': 'email',
-            })
+@receiver(user_logged_in)
+def identify_posthog_user(sender, request, user, **kwargs):
+    if user is None or user.pk is None:
+        return
+
+    user_id = str(user.pk)
+    identify_context(user_id)
+
+    client = settings.POSTHOG_MW_CLIENT
+    if client:
+        client.set(
+            distinct_id=user_id,
+            properties={
+                'email': user.email,
+                'username': user.username,
+                'is_staff': user.is_staff,
+            },
+        )
 ```
 
-### Event tracking (core/views.py)
+### Event tracking (`core/views.py`)
+
+In authenticated views, the middleware has already identified the context with `request.user.pk`, so `client.capture()` needs no manual wrapper or fallback ID:
 
 ```python
-import posthog
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
-def consider_burrito(request):
-    user_id = str(request.user.id) if request.user.is_authenticated else 'anonymous'
+@login_required
+def consider_burrito_view(request):
+    count = request.session.get('burrito_count', 0) + 1
+    request.session['burrito_count'] = count
 
-    with posthog.new_context():
-        posthog.identify_context(user_id)
-        posthog.capture('burrito_considered', properties={
-            'total_considerations': request.session.get('burrito_count', 0),
+    client = settings.POSTHOG_MW_CLIENT
+    if client:
+        client.capture('burrito_considered', properties={
+            'total_considerations': count,
         })
 ```
 
-### Feature flags (core/views.py)
+### Feature flags (`core/views.py`)
 
 ```python
-import posthog
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def dashboard_view(request):
-    user_id = str(request.user.id) if request.user.is_authenticated else 'anonymous'
+    user_id = str(request.user.pk)
+    client = settings.POSTHOG_MW_CLIENT
 
-    show_new_feature = posthog.feature_enabled(
-        'new-dashboard-feature',
-        distinct_id=user_id
+    show_new_feature = (
+        client.feature_enabled(
+            'new-dashboard-feature',
+            distinct_id=user_id,
+            person_properties={
+                'email': request.user.email,
+                'is_staff': request.user.is_staff,
+            },
+        )
+        if client
+        else False
     )
 
     return render(request, 'core/dashboard.html', {
-        'show_new_feature': show_new_feature
+        'show_new_feature': show_new_feature,
     })
 ```
 
-### Error tracking (core/views.py)
+### Error tracking (`core/views.py`)
 
-Capture exceptions manually using `capture_exception()`:
+Unhandled view exceptions are captured automatically by `PosthogContextMiddleware`. Handled exceptions can also be captured manually:
 
 ```python
-import posthog
+from django.conf import settings
 
-def profile_view(request):
+def trigger_error_view(request):
     try:
         risky_operation()
     except Exception as e:
-        posthog.capture_exception(e)
+        client = settings.POSTHOG_MW_CLIENT
+        if client:
+            client.capture_exception(e)
 ```
 
 ## Frontend integration (optional)
 
-If you're using PostHog's JavaScript SDK on the frontend, enable tracing headers to connect frontend sessions with backend events:
+If you also initialize `posthog-js` in the browser, configure `tracing_headers` with your backend hostname so `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` are sent on requests:
 
 ```javascript
-posthog.init('<ph_project_token>', {
-    api_host: 'https://us.i.posthog.com',
-    tracing_headers: ['your-backend-domain.com'],
-})
+if (posthogProjectToken) {
+    posthog.init(posthogProjectToken, {
+        api_host: 'https://us.i.posthog.com',
+        tracing_headers: [window.location.hostname],
+    })
+}
 ```
-
-This automatically adds `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers to requests, which the Django middleware extracts to maintain context.
 
 ## Learn more
 

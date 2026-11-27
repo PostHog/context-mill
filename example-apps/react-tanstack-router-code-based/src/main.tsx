@@ -25,37 +25,53 @@ const rootRoute = createRootRoute({
   component: RootComponent,
 })
 
+// Read the project token without a fallback value. When it is missing, render the app
+// without PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
+
+if (!posthogToken && import.meta.env.DEV) {
+  console.error(
+    'VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
+  )
+}
+
 function RootComponent() {
-  return (
+  const app = (
+    <AuthProvider>
+      <Header />
+      <main>
+        <Outlet />
+      </main>
+      <TanStackDevtools
+        config={{
+          position: 'bottom-right',
+        }}
+        plugins={[
+          {
+            name: 'Tanstack Router',
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
+      />
+    </AuthProvider>
+  )
+
+  return posthogToken ? (
     <PostHogProvider
-      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!}
+      apiKey={posthogToken}
       options={{
-        api_host: '/ingest',
-        ui_host:
-          import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com',
-        defaults: '2026-01-30',
+        api_host:
+          import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
+          'https://us.i.posthog.com',
+        defaults: '2026-08-30',
         capture_exceptions: true,
         debug: import.meta.env.DEV,
       }}
     >
-      <AuthProvider>
-        <Header />
-        <main>
-          <Outlet />
-        </main>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
-      </AuthProvider>
+      {app}
     </PostHogProvider>
+  ) : (
+    app
   )
 }
 
@@ -115,8 +131,15 @@ function Home() {
     e.preventDefault()
     setError('')
 
+    // Trim username before login so blank input never triggers user identification or events.
+    const trimmedUsername = username.trim()
+    if (!trimmedUsername || !password) {
+      setError('Please provide both username and password')
+      return
+    }
+
     try {
-      const success = await login(username, password)
+      const success = await login(trimmedUsername, password)
       if (success) {
         setUsername('')
         setPassword('')
@@ -211,11 +234,9 @@ function BurritoPage() {
     setHasConsidered(true)
     setTimeout(() => setHasConsidered(false), 2000)
 
-    // Capture burrito consideration event
-    console.log('posthog', posthog)
-    posthog.capture('burrito_considered', {
+    // Capture burrito consideration event without PII such as username in event properties.
+    posthog?.capture('burrito_considered', {
       total_considerations: user.burritoConsiderations + 1,
-      username: user.username,
     })
   }
 
@@ -231,7 +252,8 @@ function BurritoPage() {
 
         {hasConsidered && (
           <p className="success">
-            Thank you for your consideration! Count: {user.burritoConsiderations}
+            Thank you for your consideration! Count:{' '}
+            {user.burritoConsiderations}
           </p>
         )}
       </div>
@@ -269,7 +291,7 @@ function ProfilePage() {
     try {
       throw new Error('Test error for PostHog error tracking')
     } catch (err) {
-      posthog.captureException(err)
+      posthog?.captureException(err)
       console.error('Captured error:', err)
       alert('Error captured and sent to PostHog!')
     }
@@ -324,7 +346,11 @@ function ProfilePage() {
 // Route Tree & Router Setup
 // ============================================================================
 
-const routeTree = rootRoute.addChildren([indexRoute, burritoRoute, profileRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  burritoRoute,
+  profileRoute,
+])
 
 const router = createRouter({
   routeTree,

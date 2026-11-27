@@ -7,7 +7,7 @@ This is a [Next.js](https://nextjs.org) Pages Router example demonstrating PostH
 - **Product Analytics**: Track user events and behaviors
 - **Session Replay**: Record and replay user sessions
 - **Error Tracking**: Capture and track errors
-- **User Authentication**: Demo login system with PostHog user identification
+- **User Authentication**: Demo login system with PostHog user identification and session restore
 - **Server-side & Client-side Tracking**: Examples of both tracking methods
 - **Reverse Proxy**: PostHog ingestion through Next.js rewrites
 
@@ -23,14 +23,14 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Create a `.env.local` file in the root directory:
+Copy `.env.example` to `.env.local` in the root directory and fill in your PostHog project token:
 
 ```bash
-NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). `.env.example` lists the variable names. If the token is missing, the app still builds and runs, and logs an error in development instead of initializing PostHog.
 
 ### 3. Run the Development Server
 
@@ -74,29 +74,45 @@ instrumentation-client.ts    # Client-side PostHog initialization
 ```typescript
 import posthog from "posthog-js"
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-  api_host: "/ingest",
-  ui_host: "https://us.posthog.com",
-  defaults: '2026-01-30',
-  capture_exceptions: true,
-  debug: process.env.NODE_ENV === "development",
-});
+const rawToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const token = rawToken?.trim()
+
+if (token) {
+  posthog.init(token, {
+    api_host: "/ingest",
+    ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST?.includes("eu.") ? "https://eu.posthog.com" : "https://us.posthog.com",
+    defaults: '2026-08-30',
+    capture_exceptions: true,
+    debug: process.env.NODE_ENV === "development",
+  });
+} else if (process.env.NODE_ENV === "development") {
+  console.error("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured")
+}
 ```
 
-### User identification (AuthContext.tsx)
+### User identification and logout (AuthContext.tsx)
+
+Identify with the user's stable UUID on login and when restoring a persisted session on reload, keep `username` in person properties rather than `capture()` event properties, and capture `user_logged_out` before calling `reset()`:
 
 ```typescript
-posthog.identify(username, {
-  username: username,
+posthog.identify(user.id, {
+  username: user.username,
 });
+
+posthog.capture('user_logged_in', {
+  login_method: 'username',
+});
+
+// On logout from an authenticated session, capture before reset()
+posthog.capture('user_logged_out');
+posthog.reset();
 ```
 
 ### Event tracking (burrito.tsx)
 
 ```typescript
 posthog.capture('burrito_considered', {
-  total_considerations: count,
-  username: username,
+  total_considerations: nextCount,
 });
 ```
 
@@ -110,12 +126,22 @@ posthog.captureException(error);
 
 ```typescript
 const posthog = getPostHogClient();
-posthog.capture({
-  distinctId: username,
+posthog?.capture({
+  distinctId: user.id,
   event: 'server_login',
-  properties: { ... }
+  properties: {
+    isNewUser,
+    source: 'api',
+  },
 });
+await posthog?.flush().catch(() => {});
 ```
+
+## Reverse proxy
+
+Ad blockers drop events sent to PostHog's domain. This example sends events through your own domain instead. `next.config.ts` rewrites `/ingest/static/*` and `/ingest/array/*` to PostHog's assets host and every other `/ingest/*` request to PostHog's ingestion host. `instrumentation-client.ts` sets `api_host: "/ingest"` so the SDK uses that path, and `ui_host` keeps toolbar links pointing at PostHog. `skipTrailingSlashRedirect` stops Next.js from redirecting PostHog's trailing-slash API paths.
+
+The proxy follows the region in `NEXT_PUBLIC_POSTHOG_HOST`: `https://us.i.posthog.com` or `https://eu.i.posthog.com`. It derives the ingestion host, the assets host (`-assets.i.posthog.com`), and `ui_host` (`https://us.posthog.com` or `https://eu.posthog.com`) from that one value, so an EU project only needs to set `NEXT_PUBLIC_POSTHOG_HOST`. Pick a proxy path unique to your app rather than a common name such as `/analytics` or `/telemetry`. If your host doesn't support rewrites, use the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy).
 
 ## Pages router differences from app router
 

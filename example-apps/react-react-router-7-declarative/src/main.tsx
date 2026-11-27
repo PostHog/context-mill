@@ -1,39 +1,52 @@
-import './globals.css'
+import './globals.css';
 
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router';
 import Root from './routes/Root';
 import Home from './routes/Home';
 import Burrito from './routes/Burrito';
 import Profile from './routes/Profile';
 
 import posthog from 'posthog-js';
-import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
+import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react';
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  defaults: '2026-01-30',
-});
+// Read the project token without a fallback value. When it is missing, leave the client uninitialized()
+// and PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 
-const root = document.getElementById("root");
-if (!root) throw new Error("Root element not found");
+if (posthogToken) {
+  posthog.init(posthogToken, {
+    api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+    defaults: '2026-08-30',
+  });
+} else if (import.meta.env.DEV) {
+  console.error('VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured');
+}
+
+const root = document.getElementById('root');
+if (!root) throw new Error('Root element not found');
+
+const app = (
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Root />}>
+        <Route index element={<Home />} />
+        <Route path="burrito" element={<Burrito />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
+    </Routes>
+  </BrowserRouter>
+);
 
 ReactDOM.createRoot(root).render(
   <StrictMode>
-    <PostHogProvider client={posthog}>
-    <PostHogErrorBoundary>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Root />}>
-          <Route index element={<Home />} />
-          <Route path="burrito" element={<Burrito />} />
-          <Route path="profile" element={<Profile />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      </PostHogErrorBoundary> 
-    </PostHogProvider>
+    {posthogToken ? (
+      <PostHogProvider client={posthog}>
+        <PostHogErrorBoundary>{app}</PostHogErrorBoundary>
+      </PostHogProvider>
+    ) : (
+      app
+    )}
   </StrictMode>,
 );
-

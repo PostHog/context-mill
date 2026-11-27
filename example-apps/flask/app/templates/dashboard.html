@@ -5,7 +5,7 @@
 {% block content %}
 <div class="card">
     <h1>Dashboard</h1>
-    <p>Welcome back, {{ current_user.username }}!</p>
+    <p>Welcome back, {{ current_user.email }}!</p>
 </div>
 
 <div class="card">
@@ -26,20 +26,19 @@
 
     <h3 style="margin-top: 20px;">Code Example</h3>
     <pre>
-# Check if feature flag is enabled
-show_new_feature = posthog.feature_enabled(
-    'new-dashboard-feature',
-    user_id,
-    person_properties={
-        'email': current_user.email,
-        'is_staff': current_user.is_staff
-    }
-)
-
-# Get feature flag payload
-feature_config = posthog.get_feature_flag_payload(
-    'new-dashboard-feature',
-    user_id
-)</pre>
+posthog_client = current_app.extensions.get('posthog')
+if posthog_client:
+    show_new_feature = posthog_client.feature_enabled(
+        'new-dashboard-feature',
+        str(current_user.id),
+        person_properties={
+            'email': current_user.email,
+            'is_staff': current_user.is_staff,
+        },
+    )
+    feature_config = posthog_client.get_feature_flag_payload(
+        'new-dashboard-feature',
+        str(current_user.id),
+    )</pre>
 </div>
 {% endblock %}

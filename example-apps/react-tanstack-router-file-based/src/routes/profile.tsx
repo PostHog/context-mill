@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { usePostHog } from 'posthog-js/react'
+import { usePostHog } from '@posthog/react'
 import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/profile')({
@@ -21,7 +21,7 @@ function ProfilePage() {
     try {
       throw new Error('Test error for PostHog error tracking')
     } catch (err) {
-      posthog.captureException(err)
+      posthog?.captureException(err)
       console.error('Captured error:', err)
       alert('Error captured and sent to PostHog!')
     }

@@ -1,0 +1,23 @@
+# Aggregated tracing skill - all platforms in one skill
+type: skill
+template: description.md
+category: tracing
+description: Add PostHog distributed tracing to see how requests flow through services and where time goes. Use after implementing features or reviewing PRs to ensure request entry points, outbound calls, and background jobs produce spans, or when asked to add tracing or spans. Also handles pointing existing OpenTelemetry tracing at PostHog and initial OTLP exporter setup.
+tags: [tracing]
+shared_docs:
+  - https://posthog.com/docs/distributed-tracing/start-here.md
+  - https://posthog.com/docs/distributed-tracing/basics.md
+variants:
+  - id: all
+    display_name: all supported platforms
+    tags: []
+    docs_urls:
+      - https://posthog.com/docs/distributed-tracing/installation/nodejs.md
+      - https://posthog.com/docs/distributed-tracing/installation/nextjs.md
+      - https://posthog.com/docs/distributed-tracing/installation/python.md
+      - https://posthog.com/docs/distributed-tracing/installation/go.md
+      - https://posthog.com/docs/distributed-tracing/installation/java.md
+      - https://posthog.com/docs/distributed-tracing/installation/dotnet.md
+      - https://posthog.com/docs/distributed-tracing/installation/php.md
+      - https://posthog.com/docs/distributed-tracing/installation/ruby.md
+      - https://posthog.com/docs/distributed-tracing/installation.md

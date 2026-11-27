@@ -11,6 +11,11 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showError = false
 
+    private var hasBlankInput: Bool {
+        username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         Form {
             Section("Login") {
@@ -29,7 +34,7 @@ struct LoginView: View {
                         showError = true
                     }
                 }
-                .disabled(username.isEmpty || password.isEmpty)
+                .disabled(hasBlankInput)
             }
         }
         .formStyle(.grouped)

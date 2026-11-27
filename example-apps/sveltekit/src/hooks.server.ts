@@ -1,4 +1,5 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
+import { env } from '$env/dynamic/public';
 import { getPostHogClient } from '$lib/server/posthog';
 
 // Handle requests - includes reverse proxy for PostHog
@@ -7,8 +8,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// Reverse proxy for PostHog - route /ingest requests to PostHog servers
 	if (pathname.startsWith('/ingest')) {
-		const useAssetHost = pathname.startsWith('/ingest/static/') || pathname.startsWith('/ingest/array/')
-		const hostname = useAssetHost ? 'us-assets.i.posthog.com' : 'us.i.posthog.com';
+		const useAssetHost = pathname.startsWith('/ingest/static/') || pathname.startsWith('/ingest/array/');
+		// Proxy to the region in PUBLIC_POSTHOG_HOST: us.i.posthog.com or eu.i.posthog.com
+		const apiHostname = new URL(env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com').hostname;
+		const hostname = useAssetHost ? apiHostname.replace('.i.posthog.com', '-assets.i.posthog.com') : apiHostname;
 
 		const url = new URL(event.request.url);
 		url.protocol = 'https:';
@@ -18,6 +21,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		const headers = new Headers(event.request.headers);
 		headers.set('host', hostname);
+		// Remove cookies before forwarding to PostHog
+		headers.delete('cookie');
+		// Forward PostHog keys (Bearer phc_, phs_ or phx_), which the SDKs need. Strip any other credentials.
+		if (!/^Bearer ph[csx]_/.test(headers.get('authorization') ?? '')) {
+			headers.delete('authorization');
+		}
 		headers.set('accept-encoding', '');
 
 		const clientIp = event.request.headers.get('x-forwarded-for') || event.getClientAddress();
@@ -40,21 +49,31 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 // Capture server-side errors with PostHog
-export const handleError: HandleServerError = async ({ error, status, message }) => {
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
 	const posthog = getPostHogClient();
 
-	posthog.capture({
-		distinctId: 'server',
-		event: 'server_error',
-		properties: {
-			error: error instanceof Error ? error.message : String(error),
-			status,
-			message
-		}
-	});
+	if (posthog) {
+		const headerDistinctId = event.request.headers.get('x-posthog-distinct-id')?.trim();
+		const sessionId = event.request.headers.get('x-posthog-session-id')?.trim();
 
-	// handleError runs per request; flush so the enqueued event sends before it returns
-	await posthog.flush();
+		// Never use a shared literal ID like 'server' or 'anonymous', which merges unrelated visitors into one profile.
+		// When the client tracing header is absent on an unhandled error, generate a per-request UUID with personless processing.
+		const distinctId = headerDistinctId ? headerDistinctId : crypto.randomUUID();
+		const options = headerDistinctId ? undefined : { process_person_profile: false };
+
+		posthog.captureException(error, {
+			distinctId,
+			properties: {
+				$session_id: sessionId || undefined,
+				status,
+				message
+			},
+			options
+		});
+
+		// handleError runs per request, so flush queued events and ignore delivery errors before returning.
+		await posthog.flush().catch(() => {});
+	}
 
 	return {
 		message,

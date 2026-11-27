@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import posthog from 'posthog-js';
@@ -5,12 +6,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const router = useRouter();
 
-  // Redirect to home if not logged in
+  // Redirect to home once session restoration completes if no user is logged in.
+  useEffect(() => {
+    if (isReady && !user) {
+      router.push('/');
+    }
+  }, [isReady, user, router]);
+
   if (!user) {
-    router.push('/');
     return null;
   }
 

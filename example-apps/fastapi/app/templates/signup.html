@@ -27,23 +27,28 @@
 
 <div class="card">
     <h2>PostHog Integration</h2>
-    <p>When you sign up, the following PostHog events are captured:</p>
+    <p>When you sign up, the following PostHog actions run:</p>
     <ul style="margin-left: 20px; color: #666;">
-        <li><code>identify_context()</code> - Associates your email with the context</li>
-        <li><code>tag()</code> - Sets person properties (email, etc.)</li>
-        <li><code>user_signed_up</code> event - Tracks the signup action</li>
+        <li><code>identify_context()</code> - Associates your stable user ID with the request context</li>
+        <li><code>posthog_client.set()</code> - Sets person properties such as email on the person profile</li>
+        <li><code>user_signed_up</code> event - Tracks the signup action without PII in event properties</li>
     </ul>
 
     <h3 style="margin-top: 20px;">Code Example</h3>
     <pre>
 # After creating the user
-with new_context():
-    identify_context(user.email)
-
-    tag('email', user.email)
-    tag('is_staff', user.is_staff)
-    tag('date_joined', user.date_joined.isoformat())
-
-    capture('user_signed_up', properties={'signup_method': 'form'})</pre>
+if posthog_client:
+    user_id = str(user.id)
+    with new_context(client=posthog_client):
+        identify_context(user_id)
+        posthog_client.set(
+            distinct_id=user_id,
+            properties={
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'date_joined': user.date_joined.isoformat(),
+            },
+        )
+        posthog_client.capture('user_signed_up', properties={'signup_method': 'form'})</pre>
 </div>
 {% endblock %}

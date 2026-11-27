@@ -1,0 +1,21 @@
+# Email migration skill group - move transactional email from another provider to PostHog, one variant per provider
+type: skill
+template: description.md
+category: migrate
+description: Migrate transactional email from {display_name} to PostHog. Use when asked to migrate from {display_name}, replace {display_name} with PostHog, switch email providers, or re-import the {display_name} suppression list into PostHog after a migration. It finds every {display_name} send in the code, sets up the sender and DNS next to the records the app sends with now, imports the suppression list, moves each send PostHog can take to PostHog's SDK for its language (Node.js, Python, Go, Ruby, PHP, .NET, Rust, or Elixir), and writes a migration report that lists the sends that stay.
+tags: [migration, workflows]
+cli:
+  role: command
+  parentCommand: migrate
+references:
+  preamble: "**Read ONLY this file.** Do not read any other reference file until this one tells you to."
+shared_docs:
+  - https://posthog.com/docs/workflows/transactional-emails.md
+  - https://posthog.com/docs/workflows/transactional-emails/api.md
+variants:
+  - id: resend
+    display_name: Resend
+    tags: [resend]
+  - id: sendgrid
+    display_name: SendGrid
+    tags: [sendgrid]

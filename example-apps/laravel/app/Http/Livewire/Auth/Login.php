@@ -2,9 +2,9 @@
 
 namespace App\Http\Livewire\Auth;
 
-use App\Services\PostHogService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use PostHog\Laravel\Facades\PostHog;
 
 class Login extends Component
 {
@@ -17,18 +17,23 @@ class Login extends Component
         'password' => 'required',
     ];
 
-    public function login(PostHogService $posthog)
+    public function login()
     {
         $this->validate();
 
+        // Only identify and capture when authentication succeeds with a real user primary key,
+        // keeping PII such as email in identify() person properties rather than event properties.
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             $user = Auth::user();
-
-            // PostHog: Identify and track login
-            $posthog->identify($user->email, $user->getPostHogProperties());
-            $posthog->capture($user->email, 'user_logged_in', [
-                'login_method' => 'password',
-            ]);
+            if ($user !== null) {
+                PostHog::identify([
+                    'distinctId' => $user->getPostHogDistinctId(),
+                    'properties' => $user->getPostHogProperties(),
+                ]);
+                PostHog::capture('user_logged_in', [
+                    'login_method' => 'password',
+                ], $user->getPostHogDistinctId());
+            }
 
             session()->regenerate();
 

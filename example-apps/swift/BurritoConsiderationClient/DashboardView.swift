@@ -11,9 +11,11 @@ struct DashboardView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Welcome back, \(userState.username ?? "")!")
-                .font(.largeTitle)
-                .padding(.top, 40)
+            if let username = userState.username {
+                Text("Welcome back, \(username)!")
+                    .font(.largeTitle)
+                    .padding(.top, 40)
+            }
 
             Text("You are logged in. Feel free to explore:")
                 .foregroundStyle(.secondary)
@@ -28,11 +30,6 @@ struct DashboardView: View {
         }
         .padding()
         .navigationTitle("Home")
-        .onAppear {
-            // PostHog: Track dashboard view
-            PostHogSDK.shared.capture("dashboard_viewed", properties: [
-                "username": userState.username ?? "unknown",
-            ])
-        }
+        .postHogScreenView("Dashboard")
     }
 }

@@ -2,7 +2,7 @@
 
 This is a [Nuxt 3.6](https://nuxt.com) example demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
-Nuxt 3.0 - 3.6 **does not** support the `@posthog/nuxt` package. You must use the `posthog-js` and `posthog-node` packages directly instead. This example also does not cover automatic source map uploads, only available through the `@posthog/nuxt` package.
+Nuxt 3.0 through 3.6 **does not** support the `@posthog/nuxt` package. You must use the `posthog-js` and `posthog-node` packages directly instead. This example also does not cover automatic source map uploads, which are only available through the `@posthog/nuxt` package.
 
 Nuxt 2.x is also distinctly different, [follow this guide instead](https://posthog.com/docs/libraries/nuxt-js-2).
 
@@ -27,14 +27,14 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and set your project token:
 
 ```bash
-NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN=
 NUXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings). Leave `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN` blank until you have a real token. When the token is unset, the app still builds and boots: outside production `nuxt.config.ts` logs a warning naming `NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, the client plugin logs an error in development, and PostHog is not initialized.
 
 ### 3. Run the Development Server
 
@@ -55,7 +55,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ├── components/
 │   └── Header.vue            # Navigation header with auth state
 ├── composables/
-│   └── useAuth.ts            # Authentication composable
+│   └── useAuth.ts            # Authentication composable with session restore
 ├── pages/
 │   ├── index.vue             # Home/Login page
 │   ├── burrito.vue           # Demo feature page with event tracking
@@ -68,27 +68,46 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 │   │   │   └── login.post.ts # Login API with server-side tracking
 │   │   └── burrito/
 │   │       └── consider.post.ts # Burrito API with server-side tracking
+│   ├── routes/
+│   │   └── burrito-relay/
+│   │       └── [...path].ts  # Reverse proxy to PostHog
 │   └── utils/
+│       ├── posthog.ts        # Shared server-side PostHog client singleton
 │       └── users.ts          # In-memory user storage utilities
 ├── types/
 │   └── nuxt-app.d.ts          # TypeScript declarations for PostHog
-├── app.vue                    # Root component with error handling
+├── app.vue                    # Root component
 └── nuxt.config.ts             # Nuxt configuration
 ```
 
 ## Key Integration Points
 
-### Client-side initialization (plugins/posthog.client.ts)
+### Client-side initialization (`plugins/posthog.client.ts`)
 
 ```typescript
+import { defineNuxtPlugin, useRuntimeConfig } from '#imports'
 import posthog from 'posthog-js'
 import type { PostHog, PostHogInterface } from 'posthog-js'
 
 export default defineNuxtPlugin((nuxtApp) => {
   const runtimeConfig = useRuntimeConfig()
-  const posthogClient = posthog.init(runtimeConfig.public.posthog.publicKey, {
-    api_host: runtimeConfig.public.posthog.host,
+  const rawKey = runtimeConfig.public.posthog?.publicKey
+  const publicKey = typeof rawKey === 'string' && rawKey.trim() ? rawKey.trim() : undefined
+
+  if (!publicKey) {
+    if (import.meta.env.DEV) {
+      console.error(
+        'NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
+      )
+    }
+    return { provide: { posthog: undefined as PostHog | undefined } }
+  }
+
+  const posthogClient = posthog.init(publicKey, {
+    api_host: '/burrito-relay',
+    ui_host: String(runtimeConfig.public.posthog.host || '').includes('eu.') ? 'https://eu.posthog.com' : 'https://us.posthog.com',
     defaults: runtimeConfig.public.posthog.posthogDefaults as any,
+    tracing_headers: [window.location.hostname],
     loaded: (posthog: PostHogInterface) => {
       if (import.meta.env.MODE === 'development') posthog.debug()
     },
@@ -106,113 +125,128 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers when `tracing_headers` is configured in the PostHog initialization.
+The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers when `tracing_headers` is configured in `posthog.init`.
 
-**Important**: do not identify users on the server-side.
+### User identification (`pages/index.vue` and `composables/useAuth.ts`)
 
-### User identification (pages/index.vue)
-
-The user is identified when the user logs in on the **client-side**.
+Identify the user with their stable user ID on login and when restoring a logged-in session from `localStorage` on page reload, keeping `username` in person properties:
 
 ```typescript
 const { $posthog: posthog } = useNuxtApp()
 
 const handleSubmit = async () => {
-  const success = await auth.login(username.value, password.value)
-  if (success) {
-    // Identifying the user once on login/sign up is enough.
-    posthog?.identify(username.value)
-    
-    // Capture login event
+  const trimmedUsername = username.value.trim()
+  if (!trimmedUsername || !password.value) return
+
+  const success = await auth.login(trimmedUsername, password.value)
+  if (success && auth.user.value?.id) {
+    posthog?.identify(auth.user.value.id, { username: auth.user.value.username })
     posthog?.capture('user_logged_in')
   }
 }
 ```
 
-The session and distinct ID are automatically passed to the backend via the `X-POSTHOG-SESSION-ID` and `X-POSTHOG-DISTINCT-ID` headers because we set the `tracing_headers` option in the PostHog initialization.
+Do not call `identify()` on the server when the client already identifies the user and forwards tracing headers.
 
-**Important**: do not identify users on the server-side.
+### Server-side PostHog singleton (`server/utils/posthog.ts`)
 
-### Server-side API routes (server/api/auth/login.post.ts, server/api/burrito/consider.post.ts)
-
-Server-side API routes create a PostHog Node client for each request and extract session and user context from request headers:
+Create one `posthog-node` client per server process and return `null` when the token is unconfigured:
 
 ```typescript
 import { PostHog } from 'posthog-node'
-import { getHeader } from 'h3'
+import { useRuntimeConfig } from '#imports'
 
-export default defineEventHandler(async (event) => {
+let posthogClient: PostHog | null = null
+let hasWarnedMissingToken = false
+
+export function useServerPostHog(): PostHog | null {
   const runtimeConfig = useRuntimeConfig()
+  const rawKey = runtimeConfig.public.posthog?.publicKey
+  const publicKey = typeof rawKey === 'string' && rawKey.trim() ? rawKey.trim() : undefined
 
-  // Relies on tracing_headers being set in the client-side SDK
-  const sessionId = getHeader(event, 'x-posthog-session-id')
-  const distinctId = getHeader(event, 'x-posthog-distinct-id')
-
-  const posthog = new PostHog(
-    runtimeConfig.public.posthog.publicKey,
-    { 
-      host: runtimeConfig.public.posthog.host, 
+  if (!publicKey) {
+    if (process.env.NODE_ENV !== 'production' && !hasWarnedMissingToken) {
+      hasWarnedMissingToken = true
+      console.warn(
+        'NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured',
+      )
     }
-  )
+    return null
+  }
 
-  await posthog.withContext(
-    { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-    async () => {
-      posthog.capture({
-        event: 'server_login',
-        distinctId: distinctId ?? username,
-      })
-    }
-  )
-
-  // Always shutdown to ensure all events are flushed
-  await posthog.shutdown()
-})
-```
-
-**Key Points:**
-- Creates a new PostHog Node client for each request
-- Extracts `sessionId` and `distinctId` from request headers using `getHeader()` from `h3`
-- Uses `withContext()` to associate server-side events with the correct session/user
-- Properly shuts down the client after each request to ensure events are flushed
-
-### Event tracking (pages/burrito.vue)
-
-```typescript
-const { $posthog: posthog } = useNuxtApp()
-
-const handleConsideration = () => {
-  if (user.value) {
-    auth.incrementBurritoConsiderations()
-    
-    posthog?.capture('burrito_considered', {
-      total_considerations: user.value?.burritoConsiderations + 1,
-      username: user.value?.username,
+  if (!posthogClient) {
+    posthogClient = new PostHog(publicKey, {
+      host: runtimeConfig.public.posthog?.host || 'https://us.i.posthog.com',
+      flushAt: 1,
+      flushInterval: 0,
+      requestTimeout: 2000,
+      fetchRetryCount: 0,
+      enableExceptionAutocapture: true,
     })
   }
+
+  return posthogClient
 }
 ```
 
-### Error tracking (app.vue, plugins/posthog.client.ts, pages/profile.vue)
+### Server-side API routes (`server/api/auth/login.post.ts`, `server/api/burrito/consider.post.ts`)
 
-Errors are captured in three ways:
+Server-side API routes reuse the singleton client and read `x-posthog-session-id` and `x-posthog-distinct-id` from incoming request headers, skipping capture when `distinctId` is absent instead of falling back to `user.id`:
 
-1. **Vue error hook** - The `vue:error` hook in `plugins/posthog.client.ts` automatically captures Vue errors:
+```typescript
+import { useServerPostHog } from '~/server/utils/posthog'
+import { getHeader } from 'h3'
+
+export default defineEventHandler(async (event) => {
+  const sessionId = getHeader(event, 'x-posthog-session-id')?.trim()
+  const distinctId = getHeader(event, 'x-posthog-distinct-id')?.trim()
+  const posthog = useServerPostHog()
+
+  if (posthog && distinctId) {
+    await posthog.withContext(
+      { sessionId: sessionId || undefined, distinctId },
+      async () => {
+        posthog.capture({
+          event: 'server_login',
+          distinctId,
+          properties: {
+            $session_id: sessionId || undefined,
+            is_new_user: isNewUser,
+            source: 'api',
+          },
+        })
+      },
+    )
+
+    await posthog.flush().catch(() => {})
+  }
+})
+```
+
+### Event tracking (`pages/burrito.vue`)
+
+Keep PII such as `username` out of event properties:
+
+```typescript
+const { $posthog } = useNuxtApp()
+
+$posthog?.capture('burrito_considered', {
+  total_considerations: response.user.burritoConsiderations,
+})
+```
+
+### Error tracking (`plugins/posthog.client.ts`, `pages/profile.vue`)
+
+Errors are captured on both unhandled Vue component errors and manual error boundaries:
+
+1. **Vue error hook**. The `vue:error` hook in `plugins/posthog.client.ts` automatically captures Vue errors:
 ```typescript
 nuxtApp.hook('vue:error', (error) => {
   posthogClient.captureException(error)
 })
 ```
 
-2. **Error boundary** - The `onErrorCaptured` in `app.vue` captures component errors:
-```typescript
-onErrorCaptured((error) => {
-  posthog?.captureException(error)
-  return false // Let the error propagate
-})
-```
-
-3. **Manual error capture** in components (pages/profile.vue):
+2. **Manual error capture** in components (`pages/profile.vue`):
 ```typescript
 const triggerTestError = () => {
   try {
@@ -222,37 +256,6 @@ const triggerTestError = () => {
   }
 }
 ```
-
-### Server-side tracking (server/api/auth/login.post.ts, server/api/burrito/consider.post.ts)
-
-Server-side events use a PostHog Node client created per request:
-
-```typescript
-const posthog = new PostHog(
-  runtimeConfig.public.posthog.publicKey,
-  { 
-    host: runtimeConfig.public.posthog.host, 
-  }
-)
-
-await posthog.withContext(
-  { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },
-  async () => {
-    posthog.capture({
-      event: 'server_login',
-      distinctId: distinctId ?? username,
-    })
-  }
-)
-
-await posthog.shutdown()
-```
-
-**Key Points:**
-- The PostHog Node client is created per request in each API route
-- Events are automatically associated with the correct user/session via `withContext()`
-- The `distinctId` and `sessionId` are extracted from request headers and used to maintain context between client and server
-- Always call `shutdown()` to ensure events are flushed
 
 ### Accessing PostHog in components
 
@@ -270,10 +273,16 @@ import type { PostHog } from 'posthog-js'
 
 declare module '#app' {
   interface NuxtApp {
-    $posthog: PostHog
+    $posthog: PostHog | undefined
   }
 }
 ```
+
+## Reverse proxy
+
+Ad blockers drop events sent to PostHog's domain. This example sends events to its own domain instead: the server route in `server/routes/burrito-relay/[...path].ts` forwards them to PostHog, and the client sets `api_host` to `/burrito-relay` and `ui_host` to your PostHog app URL so toolbar links still work. The route and `ui_host` follow the region in `NUXT_PUBLIC_POSTHOG_HOST`, so setting it to `https://eu.i.posthog.com` sends events to EU Cloud through `eu.i.posthog.com` and `eu-assets.i.posthog.com`. The proxy path is arbitrary, so pick your own and avoid names like `/posthog` or `/analytics`.
+
+Server routes don't exist with `nuxt generate`, and all PostHog traffic passes through your deployment. If your app can't proxy itself, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), which is free for PostHog Cloud users.
 
 ## Learn More
 

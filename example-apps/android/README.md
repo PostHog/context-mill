@@ -9,7 +9,7 @@ This example uses the PostHog Android SDK (`posthog-android`) to provide automat
 - **Product Analytics**: Track user events and behaviors
 - **Session Replay**: Record and replay user sessions
 - **Error Tracking**: Automatic error capture and crash reporting
-- **User Authentication**: Demo login system with PostHog user identification
+- **User Authentication**: Demo login system with stable UUID user identification
 - **Event Tracking**: Examples of custom event tracking throughout the app
 
 ## Getting Started
@@ -24,23 +24,12 @@ This example uses the PostHog Android SDK (`posthog-android`) to provide automat
 
 ### 2. Configure Environment Variables
 
-The PostHog configuration is stored in `local.properties` (this file is gitignored):
+Copy `local.properties.example` to `local.properties` (gitignored) and set your PostHog project token:
 
 ```properties
 # PostHog configuration
 posthog.projectToken=your_posthog_project_token
 posthog.host=https://us.i.posthog.com
-```
-
-Alternatively, you can configure PostHog in your `build.gradle` file:
-
-```gradle
-android {
-    defaultConfig {
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"your_posthog_project_token\""
-        buildConfigField "String", "POSTHOG_HOST", "\"https://us.i.posthog.com\""
-    }
-}
 ```
 
 Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
@@ -58,245 +47,216 @@ Get your PostHog project token from your [PostHog project settings](https://app.
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/example/posthog/
-│   │   │   │   ├── BurritoApplication.kt      # Application class with PostHog initialization
-│   │   │   │   ├── MainActivity.kt           # Main activity
+│   │   │   │   ├── BurritoApp.kt              # BurritoApplication: conditional PostHog initialization
+│   │   │   │   ├── MainActivity.kt            # Main activity
+│   │   │   │   ├── data/                      # User model (UUID + username) and repository
+│   │   │   │   ├── navigation/                # Navigation graph
 │   │   │   │   ├── ui/
-│   │   │   │   │   ├── screens/
-│   │   │   │   │   │   ├── LoginScreen.kt     # Login screen with user identification
-│   │   │   │   │   │   ├── BurritoScreen.kt   # Demo feature screen with event tracking
-│   │   │   │   │   │   └── ProfileScreen.kt   # User profile with error tracking demo
-│   │   │   │   │   └── components/            # Reusable UI components
-│   │   │   │   └── utils/
-│   │   │   │       └── PostHogHelper.kt       # PostHog utility functions
+│   │   │   │   │   ├── screens/               # Home, Burrito, and Profile screens
+│   │   │   │   │   ├── components/            # Reusable UI components
+│   │   │   │   │   └── theme/
+│   │   │   │   └── viewmodel/
+│   │   │   │       └── AuthViewModel.kt       # Login, session restore, logout, and event capture
 │   │   │   ├── res/                           # Resources (layouts, strings, etc.)
 │   │   │   └── AndroidManifest.xml            # App manifest
 │   │   └── test/                              # Unit tests
-│   └── build.gradle                           # App-level Gradle configuration
-├── build.gradle                               # Project-level Gradle configuration
-├── settings.gradle                            # Gradle settings
-└── local.properties                           # Local configuration (gitignored)
+│   └── build.gradle.kts                       # App-level Gradle configuration
+├── gradle/libs.versions.toml                  # Dependency versions, including posthog-android
+├── build.gradle.kts                           # Project-level Gradle configuration
+├── settings.gradle.kts                        # Gradle settings
+└── local.properties.example                   # Local configuration template
 ```
 
 ## Key Integration Points
 
-### Application Initialization (BurritoApplication.kt)
+### Application Initialization (BurritoApp.kt)
 
-PostHog is initialized in the `Application` class to ensure it's available throughout the app lifecycle:
+PostHog is initialized in the `Application` class when `BuildConfig.POSTHOG_PROJECT_TOKEN` is configured. When missing or blank, the app skips `PostHogAndroid.setup` rather than initializing with an empty string, and logs an error in debug builds:
 
 ```kotlin
 class BurritoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        
-        val posthogConfig = PostHogConfig(
-            projectToken = BuildConfig.POSTHOG_PROJECT_TOKEN,
-            host = BuildConfig.POSTHOG_HOST
-        ).apply {
-            // Enable session replay
-            sessionReplay = true
-            
-            // Enable automatic exception capture
-            captureApplicationLifecycleEvents = true
-            captureDeepLinks = true
-            captureScreenViews = true
+
+        val token: String? = BuildConfig.POSTHOG_PROJECT_TOKEN?.trim()
+        if (token.isNullOrBlank()) {
+            if (BuildConfig.DEBUG) {
+                Log.e(
+                    "PostHog",
+                    "posthog.projectToken variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once posthog.projectToken is configured"
+                )
+            }
+            return
         }
-        
-        PostHog.setup(this, posthogConfig)
+
+        val config = PostHogAndroidConfig(
+            projectToken = token,
+            host = BuildConfig.POSTHOG_HOST,
+        ).apply {
+            debug = BuildConfig.DEBUG
+            errorTrackingConfig.autoCapture = true
+        }
+
+        PostHogAndroid.setup(this, config)
     }
 }
 ```
 
 **Key Points:**
-- PostHog is initialized in `onCreate()` to ensure it's initialized as early as possible
-- Configuration is loaded from `BuildConfig` (set in `build.gradle`)
-- Session replay, lifecycle events, and screen views are enabled
-- The Application class must be registered in `AndroidManifest.xml`
+- PostHog is initialized in `onCreate()` as early as possible when a project token is present
+- `BuildConfig.POSTHOG_PROJECT_TOKEN` emits `null` when unset in `local.properties` so unconfigured builds never pass `""` to `PostHogAndroidConfig`
+- `PostHogAndroid.setup()` runs once, and subsequent calls go through the static `PostHog` object
+- Application lifecycle events, deep links, and screen views are captured by default
+- The Application class is registered in `AndroidManifest.xml`
 
-### User Identification (LoginScreen.kt)
+### User Identification (AuthViewModel.kt)
 
-Users are identified when they log in:
+Users are identified with a stable `UUID` (`user.id`) both when signing in and when restoring a persisted session on app launch, passing `username` in `userProperties`:
 
 ```kotlin
-val posthog = PostHog.getInstance()
+private fun loadCurrentUser() {
+    viewModelScope.launch {
+        val user = repository.getCurrentUser()
+        _currentUser.value = user
+        _isAuthenticated.value = user != null
+        if (user != null) {
+            PostHog.identify(
+                distinctId = user.id,
+                userProperties = mapOf("username" to user.username)
+            )
+        }
+    }
+}
 
-fun handleLogin(username: String, password: String) {
-    // Authenticate user
-    val success = authenticateUser(username, password)
-    
-    if (success) {
-        // Identify the user once on login/sign up
-        posthog.identify(
-            distinctId = username,
+fun login(username: String) {
+    val trimmedUsername = username.trim()
+    if (trimmedUsername.isEmpty()) return
+
+    viewModelScope.launch {
+        val existingUser = repository.getUser(trimmedUsername)
+        val isNewUser = existingUser == null
+        val user = existingUser ?: User(username = trimmedUsername, burritoConsiderations = 0)
+        repository.saveUser(user)
+        _currentUser.value = user
+        _isAuthenticated.value = true
+
+        PostHog.identify(
+            distinctId = user.id,
+            userProperties = mapOf("username" to user.username)
+        )
+        PostHog.capture(
+            event = "user_logged_in",
             properties = mapOf(
-                "username" to username,
-                "login_method" to "password"
+                "login_method" to "username",
+                "is_new_user" to isNewUser
             )
         )
-        
-        // Capture login event
-        posthog.capture("user_logged_in", mapOf(
-            "username" to username
-        ))
+    }
+}
+
+fun logout() {
+    viewModelScope.launch {
+        if (_currentUser.value == null) return@launch
+        PostHog.capture("user_logged_out")
+        PostHog.reset()
+        repository.clearCurrentUser()
+        _currentUser.value = null
+        _isAuthenticated.value = false
     }
 }
 ```
 
 **Key Points:**
-- `identify()` is called once when the user logs in or signs up
-- User properties can be set during identification
-- Events are captured using `capture()` with event names and properties
-- The `distinctId` should be a unique identifier for the user
+- Always pass a stable UUID or database ID as `distinctId`, never a username or email
+- Put `username` in `userProperties` on `PostHog.identify()`, and re-identify when restoring a persisted session on app launch
+- Capture `user_logged_out` before `PostHog.reset()`, and only call `reset()` when logging out of an authenticated session
 
-### Event Tracking (BurritoScreen.kt)
+### Event Tracking (AuthViewModel.kt)
 
-Custom events are tracked throughout the app:
+Custom events carry non-PII context properties:
 
 ```kotlin
-val posthog = PostHog.getInstance()
+fun incrementBurritoCount() {
+    viewModelScope.launch {
+        val user = _currentUser.value ?: return@launch
+        val updatedUser = user.copy(burritoConsiderations = user.burritoConsiderations + 1)
+        repository.saveUser(updatedUser)
+        _currentUser.value = updatedUser
 
-fun handleBurritoConsideration() {
-    // Track custom event
-    posthog.capture("burrito_considered", mapOf(
-        "total_considerations" to considerationCount,
-        "username" to currentUser.username,
-        "timestamp" to System.currentTimeMillis()
-    ))
-    
-    // Update user properties
-    posthog.setUserProperties(mapOf(
-        "last_burrito_consideration" to System.currentTimeMillis(),
-        "total_burrito_considerations" to considerationCount
-    ))
+        PostHog.capture(
+            event = "burrito_considered",
+            properties = mapOf(
+                "total_considerations" to updatedUser.burritoConsiderations
+            )
+        )
+    }
 }
 ```
-
-**Key Points:**
-- Events are captured with `capture()` method
-- Event properties provide context about the event
-- User properties can be updated with `setUserProperties()`
-- Properties can be strings, numbers, booleans, or dates
 
 ### Error Tracking
 
-Errors are captured automatically and can also be tracked manually:
-
-**Automatic Error Capture:**
-PostHog automatically captures uncaught exceptions when configured:
+PostHog captures uncaught exceptions when `errorTrackingConfig.autoCapture` is enabled, and supports manual exception capture:
 
 ```kotlin
-val posthogConfig = PostHogConfig(
-    projectToken = BuildConfig.POSTHOG_PROJECT_TOKEN,
-    host = BuildConfig.POSTHOG_HOST
-).apply {
-    // Automatic exception capture is enabled by default
-    captureApplicationLifecycleEvents = true
-}
-```
-
-**Manual Error Capture:**
-```kotlin
-val posthog = PostHog.getInstance()
-
 try {
-    // Risky operation
     performRiskyOperation()
 } catch (e: Exception) {
-    // Capture exception manually
-    posthog.captureException(e, mapOf(
-        "context" to "burrito_consideration",
-        "user_id" to currentUser.id
-    ))
+    PostHog.captureException(
+        e,
+        properties = mapOf("context" to "burrito_consideration")
+    )
 }
 ```
 
 ### Screen View Tracking
 
-Screen views are automatically tracked when `captureScreenViews` is enabled. You can also manually track screen views:
+Screen views are tracked automatically while `captureScreenViews` is on (the default). You can also track screen views manually:
 
 ```kotlin
-val posthog = PostHog.getInstance()
-
-// Manual screen view tracking
-posthog.screen("BurritoScreen", mapOf(
-    "screen_category" to "features",
-    "user_type" to "premium"
-))
+PostHog.screen(
+    screenTitle = "BurritoScreen",
+    properties = mapOf("screen_category" to "features")
+)
 ```
 
 ### Session Replay
 
-Session replay is enabled in the PostHog configuration:
+Session replay can be enabled in the PostHog configuration once you confirm your project replay and masking settings:
 
 ```kotlin
-val posthogConfig = PostHogConfig(
-    projectToken = BuildConfig.POSTHOG_PROJECT_TOKEN,
-    host = BuildConfig.POSTHOG_HOST
+val config = PostHogAndroidConfig(
+    projectToken = token,
+    host = BuildConfig.POSTHOG_HOST,
 ).apply {
     sessionReplay = true
-    sessionReplayConfig = SessionReplayConfig(
-        maskAllInputs = false, // Set to true to mask all input fields
-        maskAllText = false    // Set to true to mask all text
-    )
+    sessionReplayConfig.maskAllTextInputs = true
+    sessionReplayConfig.maskAllImages = true
 }
 ```
-
-### Accessing PostHog in Components
-
-PostHog is accessed via the singleton instance:
-
-```kotlin
-val posthog = PostHog.getInstance()
-posthog.capture("event_name", mapOf("property" to "value"))
-```
-
-The instance is available throughout your application after initialization.
 
 ## Gradle Configuration
 
-### App-level build.gradle
+### Reading from local.properties (app/build.gradle.kts)
 
-```gradle
-android {
-    defaultConfig {
-        // PostHog configuration
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${project.findProperty("posthog.projectToken") ?: ""}\""
-        buildConfigField "String", "POSTHOG_HOST", "\"${project.findProperty("posthog.host") ?: "https://us.i.posthog.com"}\""
-    }
-}
+```kotlin
+val rawPostHogToken = localProperties.getProperty("posthog.projectToken")?.trim()
+val postHogTokenLiteral =
+    if (rawPostHogToken.isNullOrEmpty()) "null" else "\"$rawPostHogToken\""
+val rawPostHogHost = localProperties.getProperty("posthog.host")?.trim()
+val postHogHost =
+    if (rawPostHogHost.isNullOrEmpty()) "https://us.i.posthog.com" else rawPostHogHost
 
-dependencies {
-    // PostHog Android SDK
-    implementation 'com.posthog:posthog-android:3.+'
-    
-    // Other dependencies...
-}
-```
-
-### Reading from local.properties
-
-The `local.properties` file is automatically read by Gradle:
-
-```gradle
-def localProperties = new Properties()
-localProperties.load(new FileInputStream(rootProject.file("local.properties")))
-
-android {
-    defaultConfig {
-        buildConfigField "String", "POSTHOG_PROJECT_TOKEN", "\"${localProperties.getProperty("posthog.projectToken", "")}\""
-        buildConfigField "String", "POSTHOG_HOST", "\"${localProperties.getProperty("posthog.host", "https://us.i.posthog.com")}\""
-    }
-}
+buildConfigField("String", "POSTHOG_PROJECT_TOKEN", postHogTokenLiteral)
+buildConfigField("String", "POSTHOG_HOST", "\"$postHogHost\"")
 ```
 
 ## Best Practices
 
-1. **Initialize Early**: Initialize PostHog in your `Application.onCreate()` method
-2. **Identify Once**: Call `identify()` once when the user logs in or signs up
-3. **Use Meaningful Event Names**: Use clear, descriptive event names (e.g., `user_logged_in` instead of `login`)
-4. **Include Context**: Add relevant properties to events for better analysis
-5. **Handle Errors Gracefully**: Don't let PostHog errors break your app
-6. **Test in Development**: Use a separate PostHog project for development/testing
-7. **Respect Privacy**: Be mindful of PII (Personally Identifiable Information) in events and properties
+1. **Initialize Early**: Initialize PostHog in `Application.onCreate()` when a project token is configured
+2. **Use Stable User IDs**: Identify users with a persisted UUID on login and session restore, keeping `username` in person properties
+3. **Use Meaningful Event Names**: Use clear, descriptive event names like `user_logged_in` and `burrito_considered`
+4. **Keep PII Out of Event Properties**: Never pass usernames or emails in `PostHog.capture()` properties
+5. **Handle Missing Config Cleanly**: Emit `null` when `posthog.projectToken` is unset so debug builds log a clear error without initializing a broken client
 
 ## Learn More
 

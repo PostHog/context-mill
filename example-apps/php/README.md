@@ -11,11 +11,11 @@ This example serves as:
 
 ## Features Demonstrated
 
-- **SDK initialization** - Uses `PostHog::init(...)` once with environment-based configuration
-- **Event tracking** - Captures user actions with `distinctId` and properties
-- **User identification** - Associates properties with users via `PostHog::identify(...)`
-- **Error tracking** - Enables automatic PHP error tracking and manually captures handled exceptions
-- **Proper flushing** - Calls `PostHog::flush()` before CLI exit
+- **SDK initialization**: Calls `PostHog::init(...)` once when `POSTHOG_PROJECT_TOKEN` is configured
+- **Event tracking**: Captures user actions with a persistent UUID `distinctId` and non-PII properties
+- **User identification**: Calls `PostHog::identify(...)` once when first creating the installation user record
+- **Error tracking**: Enables automatic PHP error tracking and manually captures handled exceptions
+- **Safe flushing**: Wraps `PostHog::flush()` in `try / catch` before CLI exit
 
 ## Quick Start
 
@@ -31,8 +31,8 @@ composer install
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your PostHog project token
-# POSTHOG_PROJECT_TOKEN=phc_your_project_token_here
+# Edit .env and set POSTHOG_PROJECT_TOKEN
+# POSTHOG_PROJECT_TOKEN=
 # POSTHOG_HOST=https://us.i.posthog.com
 ```
 
@@ -66,7 +66,7 @@ The app tracks these events in PostHog:
 | `todo_completed` | `todo_id`, `time_to_complete_hours` | When user completes a todo |
 | `todo_deleted` | `todo_id`, `was_completed` | When user deletes a todo |
 | `stats_viewed` | `total_todos`, `completed_todos`, `pending_todos` | When user views stats |
-| `$exception` | exception details and command context | When handled errors occur |
+| `$exception` | Exception details and command context | When handled errors occur |
 
 ## Code Structure
 
@@ -81,34 +81,39 @@ example-apps/php/
 
 ## Key Implementation Patterns
 
-### 1. Initialize Once
+### 1. Guarded Initialization
 
 ```php
-PostHog::init($projectToken, [
-    'host' => $host,
-    'error_tracking' => [
-        'enabled' => true,
-    ],
-]);
+$projectToken = trim((string) ($_ENV['POSTHOG_PROJECT_TOKEN'] ?? getenv('POSTHOG_PROJECT_TOKEN') ?: ''));
+if ($projectToken !== '') {
+    PostHog::init($projectToken, [
+        'host' => $host,
+        'error_tracking' => [
+            'enabled' => true,
+        ],
+    ]);
+}
 ```
 
 ### 2. Event Tracking Pattern
 
 ```php
 PostHog::capture([
-    'distinctId' => 'user_123',
-    'event' => 'event_name',
-    'properties' => ['key' => 'value'],
+    'distinctId' => $userId,
+    'event' => 'todo_added',
+    'properties' => ['todo_id' => 1, 'todo_length' => 13, 'total_todos' => 1],
 ]);
 ```
 
-### 3. Identifying Users
+### 3. Identifying Users Once on Creation
 
 ```php
-PostHog::identify([
-    'distinctId' => 'user_123',
-    'properties' => ['app_language' => 'php'],
-]);
+if ($isNewUser && $posthogEnabled) {
+    PostHog::identify([
+        'distinctId' => $userId,
+        'properties' => ['app_language' => 'php', 'app_type' => 'cli'],
+    ]);
+}
 ```
 
 ### 4. Exception Tracking
@@ -117,27 +122,31 @@ PostHog::identify([
 try {
     riskyOperation();
 } catch (Throwable $e) {
-    PostHog::captureException($e, 'user_123', [
-        'command' => 'example_command',
+    PostHog::captureException($e, $userId, [
+        'command' => $command,
     ]);
 }
 ```
 
-### 5. Flush Before CLI Exit
+### 5. Safe Flush Before CLI Exit
 
 ```php
-PostHog::flush();
+try {
+    PostHog::flush();
+} catch (Throwable) {
+    // Analytics flush failures must never fail the CLI command.
+}
 ```
 
 ## Running Without PostHog
 
-The app works fine without PostHog configured - it simply won't track analytics. You'll see a warning message but the app continues to function normally.
+When `POSTHOG_PROJECT_TOKEN` is unset, the CLI writes a warning to `STDERR` outside production, skips `PostHog::init`, and executes commands normally.
 
 ## Next Steps
 
 - Modify `todo.php` to experiment with PostHog tracking
 - Add new commands and track their usage
-- Explore feature flags: `PostHog::isFeatureEnabled('flag-name', 'user_id')`
+- Explore feature flags: `PostHog::isFeatureEnabled('flag-name', $userId)`
 - Check your PostHog dashboard to see tracked events
 
 ## Learn More

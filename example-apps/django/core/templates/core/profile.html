@@ -51,12 +51,13 @@
 
 <div class="card">
     <h3>How error tracking works</h3>
-    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>import posthog
+    <pre style="background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>client = settings.POSTHOG_MW_CLIENT
 
 try:
     risky_operation()
 except Exception as e:
-    posthog.capture_exception(e)</code></pre>
+    if client:
+        client.capture_exception(e)</code></pre>
 </div>
 {% endblock %}
 

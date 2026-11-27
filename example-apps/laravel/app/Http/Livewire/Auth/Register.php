@@ -3,9 +3,9 @@
 namespace App\Http\Livewire\Auth;
 
 use App\Models\User;
-use App\Services\PostHogService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use PostHog\Laravel\Facades\PostHog;
 
 class Register extends Component
 {
@@ -18,7 +18,7 @@ class Register extends Component
         'password' => 'required|min:6|confirmed',
     ];
 
-    public function register(PostHogService $posthog)
+    public function register()
     {
         $validated = $this->validate();
 
@@ -28,11 +28,15 @@ class Register extends Component
             'is_staff' => false,
         ]);
 
-        // PostHog: Identify new user and track signup
-        $posthog->identify($user->email, $user->getPostHogProperties());
-        $posthog->capture($user->email, 'user_signed_up', [
-            'signup_method' => 'form',
+        // Identify the newly created user by stable primary key and keep email in person properties,
+        // omitting PII from capture() event properties.
+        PostHog::identify([
+            'distinctId' => $user->getPostHogDistinctId(),
+            'properties' => $user->getPostHogProperties(),
         ]);
+        PostHog::capture('user_signed_up', [
+            'signup_method' => 'form',
+        ], $user->getPostHogDistinctId());
 
         Auth::login($user);
 

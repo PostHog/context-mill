@@ -56,15 +56,18 @@ function loadYaml(configPath) {
 // of `<configDir>/shared/name.md` (frontmatter stripped), so shared prose like
 // the MCP tool-calling grammar lives in one canonical file and every skill that
 // includes it stays in sync.
-const PARTIAL_DIRECTIVE = /^[ \t]*\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
+const PARTIAL_DIRECTIVE = /^([ \t]*)\{\{>\s*([a-z0-9-]+)\s*\}\}[ \t]*$/gm;
 
 function expandPartials(body, configDir) {
-    return body.replace(PARTIAL_DIRECTIVE, (_match, name) => {
+    return body.replace(PARTIAL_DIRECTIVE, (_match, indent, name) => {
         const partialPath = path.join(configDir, 'shared', `${name}.md`);
         if (!fs.existsSync(partialPath)) {
             throw new Error(`Partial include {{> ${name}}} references missing file ${partialPath}`);
         }
-        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim();
+        return matter(fs.readFileSync(partialPath, 'utf8')).content.trim()
+            .split('\n')
+            .map(line => (line ? indent + line : line))
+            .join('\n');
     });
 }
 
@@ -176,7 +179,13 @@ function loadSkillsConfig(configDir) {
         const configFile = path.join(dir, 'config.yaml');
         if (fs.existsSync(configFile)) {
             const localConfig = loadYaml(configFile);
-            if (localConfig?.variants || localConfig?.variants_from) {
+            // A config that kept one of these would list no variants of its own and build nothing.
+            for (const key of ['variants_from', 'packaging']) {
+                if (localConfig?.[key] !== undefined) {
+                    throw new Error(`${configFile}: ${key} is no longer read; list the skill's variants under variants`);
+                }
+            }
+            if (localConfig?.variants) {
                 config[keyParts.join('/')] = localConfig;
             }
         }
@@ -208,8 +217,13 @@ function loadCommandments(configDir) {
 /**
  * Load a skill description template from the directory identified by composite key.
  */
+/** The file a group's template is read from. `templateFile` is relative to the group's folder, and may point into another group's. */
+function skillTemplatePath(configDir, compositeKey, templateFile) {
+    return path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+}
+
 function loadSkillTemplate(configDir, compositeKey, templateFile) {
-    const filePath = path.join(configDir, 'skills', ...compositeKey.split('/'), templateFile);
+    const filePath = skillTemplatePath(configDir, compositeKey, templateFile);
     if (!fs.existsSync(filePath)) {
         throw new Error(`Template "${templateFile}" not found for key "${compositeKey}"`);
     }
@@ -225,58 +239,289 @@ function normalizeExamplePaths(value) {
     return Array.isArray(value) ? value : [value];
 }
 
+const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** A match key is a trait name as the wizard spells it, such as `framework` or `frameworkVariant`. */
+const TRAIT_NAME = /^[a-z][A-Za-z0-9]*$/;
+
+/** The match key for the framework a variant serves, when present. */
+const FRAMEWORK_KEY = 'framework';
+
+/** A variant's `match` with `framework` first when present, the order its tags and `variant.json` are written in. */
+function orderedMatch(match) {
+    if (!(FRAMEWORK_KEY in match)) return { ...match };
+    const { [FRAMEWORK_KEY]: framework, ...rest } = match;
+    return { [FRAMEWORK_KEY]: framework, ...rest };
+}
+
 /**
- * Resolve `variants_from` references: a group may borrow another group's
- * variant matrix instead of duplicating it. Only the framework identity comes
- * across — id, display_name, tags, docs_urls, framework, default — never
- * example paths, templates, cli blocks, or shared docs, which stay the
- * borrowing group's own concern. One level only; a source group must declare
- * its variants literally. Pure — returns a new config, never mutates the input.
+ * Return the list of match values for `{supported_versions}` / `{supported_versions_note}`.
+ * Requires a single match key with at least one non-empty string value so unrelated keys
+ * (such as `framework` + `frameworkVariant`) or empty matches fail loudly.
  */
-function resolveVariantsFrom(config) {
-    const resolved = {};
-    for (const [key, group] of Object.entries(config)) {
-        if (!group.variants_from) {
-            resolved[key] = group;
+function supportedVersionsValues(match, where = 'Skill') {
+    const entries = Object.entries(match || {});
+    if (entries.length === 0) {
+        throw new Error(`${where} uses {supported_versions} but match has no values`);
+    }
+    if (entries.length > 1) {
+        throw new Error(
+            `${where} uses {supported_versions} but match mixes multiple keys (${entries.map(([k]) => k).join(', ')})`,
+        );
+    }
+    // A value is `<package>@<major>`; one major can list several package names.
+    const values = [...new Set([entries[0][1]].flat()
+        .filter(v => typeof v === 'string' && v.length > 0)
+        .map(v => v.slice(v.lastIndexOf('@') + 1)))];
+    if (values.length === 0) {
+        throw new Error(`${where} uses {supported_versions} but match has no values`);
+    }
+    return values;
+}
+
+/** The versions a variant's `match` serves, as the skill text says them: "0.x", "major 1", or "majors 3, 4, 5, 6, 7". */
+function supportedVersionsText(match, where) {
+    const values = supportedVersionsValues(match, where);
+    if (values.length === 1) {
+        return values[0] === '0' ? '0.x' : `major ${values[0]}`;
+    }
+    return `majors ${values.join(', ')}`;
+}
+
+/**
+ * The reference-scope sentence paired with `{supported_versions}` in non-default SDK skills.
+ * Adapts singular/plural phrasing and notes minor-version differences (and Cargo `0.y` semantics for Rust).
+ */
+function supportedVersionsNote(skill, where) {
+    const values = supportedVersionsValues(skill.match, where);
+    const isRust = Object.values(skill.match || {}).flat().some(v => String(v).startsWith('posthog-rs@'));
+    const displayName = skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name;
+    if (skill.reference_version) {
+        const installedScope = values.length > 1
+            ? `one of majors ${values.join(', ')}`
+            : values[0] === '0'
+                ? '`0.x`'
+                : `major ${values[0]}`;
+        return `No archived **${displayName}** reference page exists on posthog.com, so the bundled reference targets **${skill.reference_version}** while the project already uses ${installedScope}. Rely on \`references/*/api-notes.md\` and \`references/*/migration.md\` for ${installedScope} rules, and never copy ${skill.reference_version}-only syntax.`;
+    }
+    if (values.length > 1) {
+        return `The bundled reference is written for the newest of them, **${displayName}**; the project already has one of these majors installed (older minors within a major can also differ).`;
+    }
+    if (values[0] === '0') {
+        const cargoNote = isRust
+            ? ', and Cargo treats each `0.y` minor as breaking'
+            : '';
+        return `The bundled reference covers the latest **${displayName}** release, and the project already uses \`0.x\` (older \`0.x\` minors can still differ from the reference${cargoNote}).`;
+    }
+    return `The bundled reference covers the latest **${displayName}** release, and the project already has major ${values[0]} installed (older \`${values[0]}.x\` minors can still differ from the reference).`;
+}
+
+/** The file at a pack's root that lists what a variant table row built: its match keys, its rules and each product's pages. */
+const VARIANT_FILE = 'variant.json';
+
+/**
+ * What a skill with `framework_references` leaves for its consumer to fill from a framework's pack:
+ * the framework's name inline, and one line each where the pack's pages and its rules file are listed.
+ */
+const FRAMEWORK_NAME = '{framework_name}';
+const FRAMEWORK_DOCS = '{framework_docs}';
+const FRAMEWORK_RULES = '{framework_rules}';
+
+/** How SKILL.md lists one file of `references/`. A consumer that completes a skill writes its lines the same way. */
+const referenceLine = (filename, description) => `- \`references/${filename}\` - ${description}`;
+
+/** The rules file a skill ships, as SKILL.md and a pack's `variant.json` list it. */
+const RULES_REFERENCE = { filename: 'COMMANDMENTS.md', description: 'Framework-specific rules the integration must follow' };
+
+/** The product whose pages are a variant's own `docs_urls`. A variant table cannot declare it again. */
+const INTEGRATION_PRODUCT = 'integration';
+
+/** A page is a URL, or `{ url, title }` to override the title the build reads from the page. */
+const isDocEntry = entry =>
+    typeof entry === 'string' || (entry && typeof entry === 'object' && typeof entry.url === 'string');
+
+/**
+ * Validate a variant table: a group that declares `products`. Each variant lists
+ * every product's pages under `docs`, or names the product under `gaps`.
+ * `match` is checked on every group, since any variant may declare it. It is
+ * the one place a variant says which projects it serves.
+ */
+function validateVariantTable(key, group) {
+    const products = group.products;
+    if (products !== undefined) {
+        const valid = Array.isArray(products) && products.every(p => typeof p === 'string' && KEBAB.test(p));
+        if (!valid) {
+            throw new Error(`Skill group "${key}": products must be a list of kebab-case names`);
+        }
+        if (products.includes(INTEGRATION_PRODUCT)) {
+            throw new Error(`Skill group "${key}": "${INTEGRATION_PRODUCT}" is every variant's docs_urls, not a product to list`);
+        }
+        if (new Set(products).size !== products.length) {
+            throw new Error(`Skill group "${key}": products lists a name twice`);
+        }
+    }
+    const groupUsesFramework = (group.variants || []).some(
+        v => v.match && typeof v.match === 'object' && v.match[FRAMEWORK_KEY] !== undefined,
+    );
+    const claimedNonFrameworkMatches = new Map();
+    const frameworkDefaults = new Map();
+    const defaultVariants = [];
+    for (const variant of group.variants || []) {
+        const where = `Skill group "${key}", variant "${variant.id}"`;
+        if (variant.default !== undefined && typeof variant.default !== 'boolean') {
+            throw new Error(`${where}: default must be a boolean`);
+        }
+        if (
+            variant.reference_version !== undefined &&
+            (typeof variant.reference_version !== 'string' || variant.reference_version.trim().length === 0)
+        ) {
+            throw new Error(`${where}: reference_version must be a non-empty string`);
+        }
+        if (variant.default === true) {
+            defaultVariants.push(variant);
+        }
+        if (variant.framework !== undefined) {
+            throw new Error(`${where}: name the framework under match, as match: { framework: ${variant.framework} }`);
+        }
+        if (variant.match !== undefined) {
+            const entries = variant.match && typeof variant.match === 'object' && !Array.isArray(variant.match)
+                ? Object.entries(variant.match)
+                : null;
+            // A tag splits at its first `:`, so a value may hold one, as a Maven `group:artifact` does.
+            const validValue = v => typeof v === 'string' && v.length > 0;
+            if (!entries || entries.length === 0 || entries.some(([k, v]) => !TRAIT_NAME.test(k) || !(Array.isArray(v) ? v.length > 0 && v.every(validValue) : validValue(v)))) {
+                throw new Error(`${where}: match must map trait names, such as frameworkVariant, to non-empty strings or non-empty lists of strings`);
+            }
+            for (const [k, v] of entries) {
+                if (Array.isArray(v) && new Set(v).size !== v.length) {
+                    throw new Error(`${where}: match.${k} lists duplicate values`);
+                }
+            }
+            const needsFramework = products !== undefined || groupUsesFramework || variant.match.frameworkVariant !== undefined;
+            if (needsFramework && variant.match[FRAMEWORK_KEY] === undefined) {
+                throw new Error(`${where}: match must name the framework, as match: { framework: … }`);
+            }
+            if (!groupUsesFramework) {
+                for (const [k, v] of entries) {
+                    for (const value of Array.isArray(v) ? v : [v]) {
+                        const claim = `${k}:${value}`;
+                        const existingOwner = claimedNonFrameworkMatches.get(claim);
+                        if (existingOwner !== undefined) {
+                            throw new Error(`${where}: match ${claim} is already claimed by variant "${existingOwner}"`);
+                        }
+                        claimedNonFrameworkMatches.set(claim, variant.id);
+                    }
+                }
+            }
+        }
+        if (groupUsesFramework && variant.default === true) {
+            const rawFramework = variant.match?.[FRAMEWORK_KEY];
+            if (rawFramework === undefined) {
+                throw new Error(`${where}: default: true in a framework group requires match.framework`);
+            }
+            for (const fw of Array.isArray(rawFramework) ? rawFramework : [rawFramework]) {
+                const existingDefault = frameworkDefaults.get(fw);
+                if (existingDefault !== undefined) {
+                    throw new Error(`${where}: framework "${fw}" already marks variant "${existingDefault}" as default`);
+                }
+                frameworkDefaults.set(fw, variant.id);
+            }
+        }
+        if (products === undefined) {
+            if (variant.docs !== undefined || variant.gaps !== undefined) {
+                throw new Error(`${where}: docs and gaps need the group to declare products`);
+            }
             continue;
         }
-        if (group.variants) {
-            throw new Error(`Skill group "${key}": declare either variants or variants_from, not both`);
+        const docs = variant.docs ?? {};
+        const gaps = variant.gaps ?? [];
+        if (typeof docs !== 'object' || Array.isArray(docs) || !Array.isArray(gaps)) {
+            throw new Error(`${where}: docs must map products to pages, and gaps must be a list`);
         }
-        const source = config[group.variants_from];
-        if (!source) {
-            throw new Error(`Skill group "${key}": variants_from "${group.variants_from}" does not name a skill group`);
+        const unknown = [...Object.keys(docs), ...gaps].filter(p => !products.includes(p));
+        if (unknown.length > 0) {
+            throw new Error(`${where}: ${unknown.join(', ')} is not in the group's products`);
         }
-        if (source.variants_from) {
-            throw new Error(`Skill group "${key}": variants_from cannot chain ("${group.variants_from}" also uses variants_from)`);
+        for (const product of products) {
+            const pages = docs[product];
+            const listed = Array.isArray(pages) && pages.length > 0 && pages.every(isDocEntry);
+            if (pages !== undefined && !listed) {
+                throw new Error(`${where}: docs.${product} must be a non-empty list of pages`);
+            }
+            if (listed === gaps.includes(product)) {
+                throw new Error(
+                    listed
+                        ? `${where}: ${product} has pages and is also named under gaps`
+                        : `${where}: no ${product} pages. List them under docs, or name ${product} under gaps`,
+                );
+            }
         }
-        const variants = source.variants.map(v => {
-            const variant = { id: v.id, display_name: v.display_name };
-            if (v.tags) variant.tags = [...v.tags];
-            if (v.docs_urls) variant.docs_urls = [...v.docs_urls];
-            if (v.framework) variant.framework = v.framework;
-            if (v.default) variant.default = v.default;
-            return variant;
-        });
-        // Drop the reference key — the resolved copy declares variants literally.
-        const { variants_from: _from, ...rest } = group;
-        resolved[key] = { ...rest, variants };
     }
-    return resolved;
+    if (!groupUsesFramework && defaultVariants.length > 1) {
+        throw new Error(`Skill group "${key}": at most one variant may set default: true`);
+    }
+    // Same fallback as expandSkillGroups: a group under sdk/ is an sdk group even without `category: sdk`.
+    const category = group.category || key.split('/')[0];
+    if (category === 'sdk') {
+        if (defaultVariants.length !== 1) {
+            throw new Error(`Skill group "${key}": sdk groups must mark exactly one variant with default: true`);
+        }
+        let sharedMatchKey = null;
+        for (const variant of group.variants || []) {
+            const keys = variant.match ? Object.keys(variant.match) : [];
+            if (keys.length !== 1 || keys[0] === FRAMEWORK_KEY) {
+                throw new Error(
+                    `Skill group "${key}", variant "${variant.id}": sdk variants must declare one shared non-framework match key`,
+                );
+            }
+            sharedMatchKey ??= keys[0];
+            if (keys[0] !== sharedMatchKey) {
+                throw new Error(
+                    `Skill group "${key}", variant "${variant.id}": sdk variants must declare one shared non-framework match key`,
+                );
+            }
+        }
+    }
+}
+
+/**
+ * Validate `framework_references`. A group with it is one skill, written once for every framework:
+ * it names the product whose pages a consumer adds from the framework's pack.
+ */
+function validateFrameworkReferences(config) {
+    const products = new Set([INTEGRATION_PRODUCT]);
+    for (const group of Object.values(config)) {
+        for (const product of Array.isArray(group.products) ? group.products : []) products.add(product);
+    }
+    for (const [key, group] of Object.entries(config)) {
+        if (group.framework_references === undefined) continue;
+        const where = `Skill group "${key}"`;
+        const single = group.variants?.length === 1 && group.variants[0].id === 'all';
+        if (!single) {
+            throw new Error(`${where}: framework_references needs exactly one variant, with id "all"`);
+        }
+        if (!products.has(group.framework_references)) {
+            throw new Error(`${where}: framework_references "${group.framework_references}" is no product of a variant table`);
+        }
+        if ((group.variants[0].docs_urls || []).length > 0) {
+            throw new Error(`${where}: a skill with framework_references ships its own pages as shared_docs`);
+        }
+    }
 }
 
 /**
  * Expand grouped skill config into a flat array of skill objects.
  * Each top-level key (except shared_docs) is a skill group with
- * base properties and a variants array (literal or via variants_from).
+ * base properties and a variants array.
  */
 function expandSkillGroups(config, configDir) {
     const skills = [];
-    const resolvedConfig = resolveVariantsFrom(config);
+    validateFrameworkReferences(config);
 
-    for (const [key, group] of Object.entries(resolvedConfig)) {
+    for (const [key, group] of Object.entries(config)) {
         if (key === 'shared_docs') continue;
         if (!group.variants) continue;
+        validateVariantTable(key, group);
 
         const baseTemplate = group.template ? loadSkillTemplate(configDir, key, group.template) : null;
         const baseTags = group.tags || [];
@@ -284,8 +529,6 @@ function expandSkillGroups(config, configDir) {
         const baseSharedDocs = group.shared_docs || [];
         const baseExamplePaths = normalizeExamplePaths(group.example_paths);
         const baseCli = parseCliBlock(group.cli, `Skill group "${key}"`);
-        // `packaging: bundle` ships the group as one JSON whose variants live inside.
-        const bundled = group.packaging === 'bundle';
 
         // Category is the first segment of the composite key, or an explicit override
         const category = group.category || key.split('/')[0];
@@ -303,7 +546,11 @@ function expandSkillGroups(config, configDir) {
             const mergedTags = [...new Set([...baseTags, ...(variation.tags || [])])];
             let description = variation.description;
             if (!description && baseDescription) {
-                description = baseDescription.replace(/{display_name}/g, variation.display_name);
+                // A skill written once for every framework names the framework its consumer fills in.
+                description = baseDescription.replace(
+                    /{display_name}/g,
+                    group.framework_references ? FRAMEWORK_NAME : variation.display_name,
+                );
             }
 
             // Support per-variation template override
@@ -327,6 +574,7 @@ function expandSkillGroups(config, configDir) {
 
             skills.push({
                 ...variation,
+                ...(variation.match ? { match: orderedMatch(variation.match) } : {}),
                 id: skillId,
                 _shortId: variation.id,
                 _category: category,
@@ -337,25 +585,28 @@ function expandSkillGroups(config, configDir) {
                 _sharedDocs: sharedDocs,
                 _examplePaths: [...baseExamplePaths, ...normalizeExamplePaths(variation.example_paths)],
                 _references: group.references || null,
+                _products: group.products || null,
+                _frameworkReferences: group.framework_references || null,
+                _templatePath: skillTemplatePath(configDir, key, variation.template || group.template || ''),
                 _group: key,
-                _bundle: bundled,
                 _cli: cli,
             });
         }
     }
 
+    skills.forEach(validateDocFilenames);
     return skills;
 }
 
 /**
- * Derive a filename from a URL
- * e.g., https://posthog.com/docs/libraries/next-js.md → next-js.md
+ * Derive a filename from the last `parts` parts of a URL's path
+ * e.g., https://posthog.com/docs/libraries/next-js.md → next-js.md, or libraries-next-js.md from two parts
  */
-function urlToFilename(url) {
+function urlToFilename(url, parts = 1) {
     try {
         const parsed = new URL(url);
         const pathParts = parsed.pathname.split('/').filter(Boolean);
-        let filename = pathParts[pathParts.length - 1] || 'doc';
+        let filename = pathParts.slice(-parts).join('-') || 'doc';
 
         // Ensure .md extension
         if (!filename.endsWith('.md')) {
@@ -365,6 +616,49 @@ function urlToFilename(url) {
         return filename;
     } catch (e) {
         return 'doc.md';
+    }
+}
+
+const docUrl = docEntry => (typeof docEntry === 'string' ? docEntry : docEntry.url);
+const chosenFilename = docEntry => (typeof docEntry === 'object' && docEntry.filename) || null;
+
+/**
+ * The file name of each page written to one folder, in the pages' order.
+ * A page whose entry names a `filename` takes it: a plain `.md` name other than
+ * `COMMANDMENTS.md`. Any other page takes the last part of its URL. When two such
+ * pages share it, each takes its parent part too: `installation/python.md` and
+ * `libraries/python.md` become `installation-python.md` and `libraries-python.md`.
+ * Throws when two pages still share a name, since the second would replace the first.
+ */
+function docFilenames(docEntries, where) {
+    const urls = docEntries.map(docUrl);
+    const chosen = docEntries.map(chosenFilename);
+    chosen.forEach((name, i) => {
+        if (name !== null && (!/^[^/\\]+\.md$/.test(name) || name === RULES_REFERENCE.filename)) {
+            throw new Error(`${where}: ${urls[i]} names filename "${name}"; it must be a plain .md name other than ${RULES_REFERENCE.filename}`);
+        }
+    });
+    const short = urls.map(url => urlToFilename(url));
+    const derived = short.filter((_, i) => chosen[i] === null);
+    const names = urls.map((url, i) => {
+        if (chosen[i] !== null) return chosen[i];
+        return derived.filter(name => name === short[i]).length > 1 ? urlToFilename(url, 2) : short[i];
+    });
+    const written = new Map();
+    names.forEach((name, i) => {
+        if (written.has(name)) {
+            throw new Error(`${where}: ${written.get(name)} and ${urls[i]} would both be written as ${name}`);
+        }
+        written.set(name, urls[i]);
+    });
+    return names;
+}
+
+/** Throws when two pages of a skill would be written under one name, before any page is fetched. */
+function validateDocFilenames(skill) {
+    docFilenames([...(skill.docs_urls || []), ...(skill._sharedDocs || [])], `Skill "${skill.id}"`);
+    for (const product of skill._products || []) {
+        docFilenames(skill.docs?.[product] ?? [], `Skill "${skill.id}", ${product} pages`);
     }
 }
 
@@ -477,6 +771,21 @@ async function fetchDocOnce(url) {
     const content = await response.text();
     const title = extractTitle(content) || inferDescription(url);
     return { content, title };
+}
+
+/**
+ * Extract the top `## Checklist` section from a migration guide markdown document.
+ * Drops leading intro text so the non-default SKILL.md receives only the checklist items.
+ * Returns null when the heading or bullet items are absent so callers fall back cleanly.
+ */
+function extractMigrationChecklist(markdown) {
+    const match = markdown.match(/^## Checklist[ \t]*\r?\n([\s\S]*?)(?=\r?\n##\s|(?![\s\S]))/m);
+    if (!match) return null;
+    const lines = match[1]
+        .split(/\r?\n/)
+        .map(line => line.trimEnd())
+        .filter(line => /^\*\*[^*]+\*\*$|^-\s+/.test(line.trim()));
+    return lines.some(line => /^\s*-\s+/.test(line)) ? lines.join('\n') : null;
 }
 
 /**
@@ -594,6 +903,14 @@ function generateFrontmatter(skill, version) {
     return '---\n' + yaml.dump(frontmatter) + '---\n\n';
 }
 
+function markdownReferenceNames(dir, prefix) {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+        .map(entry => path.posix.join(prefix, entry.name))
+        .sort((a, b) => a.localeCompare(b));
+}
+
 /**
  * Generate a complete skill package
  *
@@ -618,6 +935,7 @@ async function generateSkill({
     commandmentsConfig,
     skillTemplate,
     sharedDocs,
+    fetchDocFn = fetchDoc,
 }) {
     const skillDir = path.join(outputDir, skill.id);
     const referencesDir = path.join(skillDir, 'references');
@@ -628,6 +946,7 @@ async function generateSkill({
 
     // Track reference files for the SKILL.md listing
     const references = [];
+    const localPages = [];
 
     // Track workflow step files (local references with `next_step:` frontmatter)
     // for the {workflow} template placeholder. Ordered by filename.
@@ -667,21 +986,22 @@ async function generateSkill({
     // Group config injects a shared `preamble`; per-file `next_step` frontmatter drives continuation links.
     const sourceReferencesDir = path.join(configDir, 'skills', ...skill._group.split('/'), 'references');
     if (fs.existsSync(sourceReferencesDir)) {
-        const localReferences = fs.readdirSync(sourceReferencesDir, { withFileTypes: true })
-            .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
-            .sort((a, b) => a.name.localeCompare(b.name));
+        const localReferences = [
+            ...markdownReferenceNames(sourceReferencesDir, ''),
+            ...markdownReferenceNames(path.join(sourceReferencesDir, skill._shortId), skill._shortId),
+        ];
 
         const refsConfig = skill._references || {};
 
         for (const reference of localReferences) {
-            const sourcePath = path.join(sourceReferencesDir, reference.name);
+            const sourcePath = path.join(sourceReferencesDir, reference);
             const parsed = matter(fs.readFileSync(sourcePath, 'utf8'));
             const nextFile = parsed.data.next_step;
             const isWorkflowStep = 'next_step' in parsed.data;
             let body = expandPartials(parsed.content, configDir).replace(/^\n+/, '').replace(/\s+$/, '');
             const headingMatch = body.match(/^#\s+(.+)$/m);
-            const displayTitle = parsed.data.title || headingMatch?.[1] || reference.name;
-            const displayDescription = parsed.data.description || headingMatch?.[1] || reference.name;
+            const displayTitle = parsed.data.title || headingMatch?.[1] || reference;
+            const displayDescription = parsed.data.description || headingMatch?.[1] || reference;
 
             if (nextFile) {
                 if (refsConfig.preamble && headingMatch) {
@@ -699,58 +1019,63 @@ async function generateSkill({
                 ? `---\n${yaml.dump(emittedFrontmatter, { lineWidth: -1 })}---\n\n${body}`
                 : body;
 
-            fs.writeFileSync(
-                path.join(referencesDir, reference.name),
-                fileContent,
-                'utf8'
-            );
+            const targetPath = path.join(referencesDir, reference);
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.writeFileSync(targetPath, fileContent, 'utf8');
 
             references.push({
-                filename: reference.name,
+                filename: reference,
                 description: displayDescription,
+            });
+            localPages.push({
+                filename: reference,
+                content: body,
             });
 
             if (isWorkflowStep) {
                 workflowSteps.push({
-                    filename: reference.name,
+                    filename: reference,
                     title: displayTitle,
                 });
             }
         }
     }
 
-    // Helper to process a doc entry (string URL or {url, title} object).
-    // fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits
-    // are silent.
-    async function processDoc(docEntry) {
-        const url = typeof docEntry === 'string' ? docEntry : docEntry.url;
-        const titleOverride = typeof docEntry === 'object' ? docEntry.title : null;
-
-        const result = await fetchDoc(url);
-        if (result) {
-            const filename = urlToFilename(url);
-            fs.writeFileSync(
-                path.join(referencesDir, filename),
-                result.content,
-                'utf8'
-            );
-
-            references.push({
-                filename,
-                description: titleOverride || result.title,
+    // Writes the pages of one folder: `references/`, or `subfolder` under it. Each doc entry is a URL
+    // or `{ url, title }`. fetchDoc logs `Fetching doc:` only on a real network fetch — cache hits are silent.
+    async function writeDocs(docEntries, where, subfolder = '') {
+        const names = docFilenames(docEntries, where);
+        docEntries.forEach((docEntry, i) => {
+            const filename = path.posix.join(subfolder, names[i]);
+            if (chosenFilename(docEntry) !== null && references.some(ref => ref.filename === filename)) {
+                throw new Error(`${where}: ${docUrl(docEntry)} names filename "${names[i]}", which another reference already uses`);
+            }
+        });
+        const written = [];
+        for (const [i, docEntry] of docEntries.entries()) {
+            const result = await fetchDocFn(docUrl(docEntry));
+            const dir = path.join(referencesDir, subfolder);
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, names[i]), result.content, 'utf8');
+            written.push({
+                filename: path.posix.join(subfolder, names[i]),
+                description: (typeof docEntry === 'object' && docEntry.title) || result.title,
+                content: result.content,
             });
         }
+        return written;
     }
 
-    if (skill.docs_urls && skill.docs_urls.length > 0) {
-        for (const docEntry of skill.docs_urls) {
-            await processDoc(docEntry);
-        }
+    // A skill written once for every framework lists the framework's pages where a variant's own would go.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_DOCS });
     }
 
-    for (const docEntry of sharedDocs) {
-        await processDoc(docEntry);
-    }
+    // The variant's own pages come first and are kept for the variant table's `integration` product.
+    const variantDocUrls = skill.docs_urls || [];
+    const pages = await writeDocs([...variantDocUrls, ...sharedDocs], `Skill "${skill.id}"`);
+    references.push(...pages);
+    const variantDocs = pages.slice(0, variantDocUrls.length);
 
     // Collect commandments for this skill's tags.
     const rules = collectCommandments(skill.tags || [], commandmentsConfig);
@@ -759,35 +1084,100 @@ async function generateSkill({
     // Also emit them as a reference file. The orchestrator installs this skill
     // as the framework reference and points its task agents at individual
     // files, so the rules must exist outside the SKILL.md body.
-    if (rules.length > 0) {
+    // A skill written once for every framework takes its rules from the framework's pack.
+    if (skill._frameworkReferences) {
+        references.push({ placeholder: FRAMEWORK_RULES });
+    } else if (rules.length > 0) {
         fs.writeFileSync(
-            path.join(referencesDir, 'COMMANDMENTS.md'),
+            path.join(referencesDir, RULES_REFERENCE.filename),
             `# Framework rules\n\nFollow these when integrating PostHog into this framework.\n\n${commandmentsText}\n`,
             'utf8',
         );
-        references.push({
-            filename: 'COMMANDMENTS.md',
-            description: 'Framework-specific rules the integration must follow',
-        });
+        references.push({ ...RULES_REFERENCE });
+    }
+
+    // A variant table row also ships each product's pages and a `variant.json` that lists them.
+    // Neither joins `references`, so SKILL.md reads as it did before the row had products.
+    if (skill._products) {
+        const products = {
+            [INTEGRATION_PRODUCT]: variantDocs.map(ref => ({
+                file: `references/${ref.filename}`,
+                description: ref.description,
+            })),
+        };
+        for (const product of skill._products) {
+            const written = await writeDocs(skill.docs?.[product] ?? [], `Skill "${skill.id}", ${product} pages`, product);
+            products[product] = written.map(ref => ({ file: `references/${ref.filename}`, description: ref.description }));
+        }
+        const variant = {
+            id: skill._shortId,
+            displayName: skill.display_name,
+            match: skill.match ?? {},
+            rules: rules.length > 0
+                ? { file: `references/${RULES_REFERENCE.filename}`, description: RULES_REFERENCE.description }
+                : null,
+            products,
+        };
+        fs.writeFileSync(path.join(skillDir, VARIANT_FILE), JSON.stringify(variant, null, 2) + '\n', 'utf8');
     }
 
     // Build references list for SKILL.md
     const referencesText = references
-        .map(ref => `- \`references/${ref.filename}\` - ${ref.description}`)
+        .map(ref => ref.placeholder ?? referenceLine(ref.filename, ref.description))
         .join('\n');
 
     // Format workflow steps for skills that use the {workflow} placeholder
     const workflowText = formatWorkflowSteps(workflowSteps);
 
+    let migrationChecklistText = '';
+    if (skillTemplate.includes('{migration_checklist}')) {
+        const variantLocalMigration = skill._shortId
+            ? localPages.find(page => page.filename === path.posix.join(skill._shortId, 'migration.md'))
+            : null;
+        const migrationPage =
+            pages.find(page => page.filename === 'migration.md')
+            || variantLocalMigration
+            || localPages.find(page => page.filename === 'migration.md');
+        if (!migrationPage) {
+            console.warn(`  [WARN] Skill "${skill.id}": no migration.md found; omitting migration checklist`);
+            migrationChecklistText = '_No migration guide bundled for this version; rely on the installed package and reference files below._';
+        } else {
+            const checklist = extractMigrationChecklist(migrationPage.content);
+            if (checklist) {
+                migrationChecklistText = checklist;
+            } else {
+                console.warn(`  [WARN] Skill "${skill.id}": migration checklist not found in ${migrationPage.filename}; linking references/${migrationPage.filename}`);
+                migrationChecklistText = `_See \`references/${migrationPage.filename}\` for the breaking-change checklist._`;
+            }
+        }
+    }
+
     // Build SKILL.md content
     let skillContent = generateFrontmatter(skill, version);
 
-    // Apply template substitutions
-    let body = skillTemplate
-        .replace(/{display_name}/g, skill.display_name)
-        .replace(/{references}/g, referencesText)
-        .replace(/{commandments}/g, commandmentsText)
-        .replace(/{workflow}/g, workflowText);
+    // Apply template substitutions in a single pass via a replacer callback so `$&` / `` $` `` in
+    // fetched docs or nested `{placeholder}` text cannot corrupt or re-expand the template.
+    const usesSupportedVersions =
+        skillTemplate.includes('{supported_versions}') || skillTemplate.includes('{supported_versions_note}');
+    const displayName = skill._frameworkReferences ? FRAMEWORK_NAME : skill.display_name;
+    const replacements = {
+        display_name: displayName,
+        reference_version: skill.reference_version || displayName,
+        supported_versions: usesSupportedVersions
+            ? supportedVersionsText(skill.match, `Skill "${skill.id}"`)
+            : '',
+        supported_versions_note: usesSupportedVersions
+            ? supportedVersionsNote(skill, `Skill "${skill.id}"`)
+            : '',
+        references: referencesText,
+        commandments: commandmentsText,
+        workflow: workflowText,
+        migration_checklist: migrationChecklistText,
+    };
+    let body = skillTemplate.replace(
+        /\{(display_name|reference_version|supported_versions|supported_versions_note|references|commandments|workflow|migration_checklist)\}/g,
+        (_, key) => replacements[key],
+    );
     body = expandPartials(body, configDir);
 
     skillContent += body;
@@ -813,14 +1203,14 @@ function serializeSkill(s) {
         description: s.description,
         tags: s.tags || [],
     };
-    if (s.framework) {
-        result.framework = s.framework;
-    }
     if (s.default) {
         result.default = true;
     }
-    if (s._bundle) {
-        result.bundle = true;
+    if (s.match) {
+        result.match = s.match;
+    }
+    if (s._frameworkReferences) {
+        result.frameworkReferences = s._frameworkReferences;
     }
     if (s._cli) {
         result.cli = s._cli;
@@ -945,6 +1335,11 @@ async function generateAllSkills({
 }
 
 export {
+    VARIANT_FILE,
+    FRAMEWORK_NAME,
+    FRAMEWORK_DOCS,
+    FRAMEWORK_RULES,
+    referenceLine,
     loadSkillsConfig,
     loadCommandments,
     loadSkillTemplate,
@@ -957,6 +1352,7 @@ export {
     generateSkillsByIds,
     serializeSkill,
     fetchDoc,
+    extractMigrationChecklist,
     parseCliBlock,
     resolveVariantCli,
     expandPartials,

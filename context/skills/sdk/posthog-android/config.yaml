@@ -1,0 +1,22 @@
+# PostHog Android SDK — exact-major reference & migration skills
+type: docs-only
+category: sdk
+cli:
+  role: internal
+description: PostHog Android SDK {display_name} reference
+variants:
+  - id: v3
+    display_name: 3.x.x
+    template: ../non-default-major.md
+    match: { posthogSdks: ["maven:com.posthog:posthog-android@1", "maven:com.posthog:posthog-android@2", "maven:com.posthog:posthog-android@3"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/android/3.x.x.md
+      - https://posthog.com/docs/libraries/android/migration.md
+
+  - id: v4
+    default: true
+    display_name: 4.x.x
+    template: ../default-major.md
+    match: { posthogSdks: ["maven:com.posthog:posthog-android@4"] }
+    docs_urls:
+      - https://posthog.com/docs/libraries/android/4.x.x.md

@@ -5,21 +5,25 @@
   <h1>🌯 Burrito app</h1>
 
   <div th:if="${userId}">
-    <p>Logged in as <strong th:text="${userId}">user</strong>.</p>
-    <ul>
-      <li><a href="/dashboard">Dashboard (feature flag)</a></li>
-      <li><a href="/profile">Profile (error reporting)</a></li>
-    </ul>
-    <form method="post" action="/burrito">
-      <button type="submit">Consider a burrito (track event)</button>
+    <p>Logged in with user ID <strong th:text="${userId}">user</strong>.</p>
+    <form method="post" action="/logout">
+      <button type="submit">Log out</button>
     </form>
   </div>
 
   <form th:unless="${userId}" method="post" action="/login">
     <p>Log in to identify yourself with PostHog:</p>
-    <input name="userId" placeholder="user id" required />
-    <input name="email" placeholder="email" type="email" />
+    <input name="username" placeholder="username" required />
+    <input name="email" placeholder="email (optional)" type="email" />
     <button type="submit">Log in</button>
+  </form>
+
+  <ul>
+    <li><a href="/dashboard">Dashboard (feature flag)</a></li>
+    <li><a href="/profile">Profile (error reporting)</a></li>
+  </ul>
+  <form method="post" action="/burrito">
+    <button type="submit">Consider a burrito (track event)</button>
   </form>
 </body>
 </html>

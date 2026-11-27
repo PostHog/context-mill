@@ -8,7 +8,7 @@ XcodeGen-managed project.
 ## The one rule that matters
 
 In an XcodeGen project the `.xcodeproj` (including `project.pbxproj`) is a
-**build artifact** — it is not committed, and `xcodegen generate` recreates it
+**build artifact** that is not committed, and `xcodegen generate` recreates it
 from `project.yml` every time. Any dependency added by editing the pbxproj
 directly (or through Xcode's *File > Add Package Dependencies* UI) is silently
 wiped by the next generate.
@@ -19,7 +19,7 @@ So the PostHog SPM dependency lives in `project.yml`:
 packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
-    from: 3.64.1   # check github.com/PostHog/posthog-ios/releases for the latest
+    from: 4.0.0   # check github.com/PostHog/posthog-ios/releases for the latest
 
 targets:
   BurritoStand:
@@ -31,11 +31,13 @@ targets:
 ```
 
 How to tell a project is XcodeGen-managed: a `project.yml` at the repo root
-with top-level `targets:` and/or `packages:` keys (the filename alone is not
-enough — `project.yml` is a generic name), and typically no committed
+with top-level `targets:` or `packages:` keys (the filename alone is not
+enough since `project.yml` is a generic name), and typically no committed
 `.xcodeproj`.
 
 ## Getting started
+
+Requires Xcode 26 or later, which posthog-ios 4.x needs.
 
 ### 1. Generate the Xcode project
 
@@ -46,13 +48,15 @@ xcodegen generate
 
 ### 2. Set your PostHog project token
 
-Open `BurritoStand/BurritoStandApp.swift` and replace the
-`<your-project-token>` placeholder with your project token from your
+Open `BurritoStand/BurritoStandApp.swift` and set `posthogProjectToken` to your
+`"phc_..."` project token from your
 [PostHog project settings](https://app.posthog.com/project/settings).
 
-The PostHog project token is a **public client-side key** — it is designed to
-ship in the app binary — so hardcoding it is safe and is the recommended
-approach for iOS distribution.
+The PostHog project token is a **public client-side key** designed to ship in
+the app binary, so setting it directly in code is safe and is the recommended
+approach for iOS distribution. Until configured, `posthogProjectToken` stays
+`nil` so debug builds log a clear error and skip `PostHogSDK.shared.setup`
+instead of initializing with a placeholder string.
 
 ### 3. Build and run
 
@@ -63,10 +67,10 @@ Simulator. Xcode resolves the PostHog package automatically.
 
 ```
 swift-xcodegen/
-├── project.yml                    # XcodeGen spec — the source of truth,
+├── project.yml                    # XcodeGen spec, the source of truth
 │                                  # including the PostHog SPM dependency
 └── BurritoStand/
-    ├── BurritoStandApp.swift      # App entry point with PostHog initialization
+    ├── BurritoStandApp.swift      # App entry point with conditional PostHog setup
     └── ContentView.swift          # Event capture and screen view tracking
 ```
 
@@ -75,16 +79,34 @@ swift-xcodegen/
 ### Dependency declaration (project.yml)
 
 The package is declared in the `packages:` block and referenced from the
-target's `dependencies:` — never in the pbxproj. See the snippet above.
+target's `dependencies:`, never in `project.pbxproj`. See the snippet above.
 
 ### PostHog initialization (BurritoStandApp.swift)
 
 ```swift
+import OSLog
 import PostHog
+import SwiftUI
 
-let config = PostHogConfig(projectToken: "<your-project-token>", host: "https://us.i.posthog.com")
-config.captureApplicationLifecycleEvents = true
-PostHogSDK.shared.setup(config)
+// Set your "phc_..." project token here so it ships in the app binary per iOS best practice.
+// Leave this nil until configured rather than passing a placeholder string to PostHogConfig.
+private let posthogProjectToken: String? = nil
+private let posthogHost = "https://us.i.posthog.com"
+
+if let token = configuredToken, !token.isEmpty {
+    let config = PostHogConfig(projectToken: token, host: host)
+    config.captureApplicationLifecycleEvents = true
+    config.errorTrackingConfig.autoCapture = true
+    #if DEBUG
+    config.debug = true
+    #endif
+    PostHogSDK.shared.setup(config)
+} else {
+    #if DEBUG
+    Logger(subsystem: Bundle.main.bundleIdentifier ?? "BurritoStand", category: "PostHog")
+        .error("posthogProjectToken variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once posthogProjectToken is configured")
+    #endif
+}
 ```
 
 ### Event capture (ContentView.swift)

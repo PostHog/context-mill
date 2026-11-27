@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type PostHog from 'posthog-react-native'
 import { usePostHog } from 'posthog-react-native'
 import { useAuth } from '../contexts/AuthContext'
 import { RootStackParamList } from '../navigation/RootNavigator'
@@ -22,14 +23,13 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
  * Profile Screen
  *
  * Displays user information and demonstrates PostHog error tracking.
- * The test error button shows how to capture exceptions manually.
  *
  * @see https://posthog.com/docs/libraries/react-native#error-tracking
  */
 export default function ProfileScreen() {
   const { user } = useAuth()
   const navigation = useNavigation<ProfileScreenNavigationProp>()
-  const posthog = usePostHog()
+  const posthog: PostHog | undefined = usePostHog()
 
   // Redirect to home if not logged in
   useEffect(() => {
@@ -43,11 +43,7 @@ export default function ProfileScreen() {
   }
 
   /**
-   * Triggers a test error and captures it in PostHog
-   *
-   * This demonstrates manual exception capture via captureException.
-   * In production, you would typically set up automatic exception capture
-   * or use the before_send callback for customization.
+   * Triggers a test error and captures it in PostHog without attaching PII.
    *
    * @see https://posthog.com/docs/libraries/react-native#error-tracking
    */
@@ -57,8 +53,7 @@ export default function ProfileScreen() {
     } catch (err) {
       const error = err as Error
 
-      posthog.captureException(error, {
-        username: user.username,
+      posthog?.captureException(error, {
         screen: 'Profile',
       })
 
@@ -104,7 +99,7 @@ export default function ProfileScreen() {
         </View>
 
         {/*
-          testID is captured by PostHog autocapture for touch events
+          testID is captured by PostHog autocapture for touch events.
           @see https://posthog.com/docs/libraries/react-native#autocapture
         */}
         <TouchableOpacity

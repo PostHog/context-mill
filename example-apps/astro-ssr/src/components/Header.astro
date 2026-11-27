@@ -41,13 +41,15 @@
 
   function handleLogout() {
     const currentUser = localStorage.getItem('currentUser');
+    // Only capture logout and reset PostHog when transitioning out of an authenticated session.
     if (currentUser) {
       window.posthog?.capture('user_logged_out');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('burritoConsiderations');
+      // Reset the PostHog instance to clear the user session
+      window.posthog?.reset();
     }
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('burritoConsiderations');
-    // IMPORTANT: Reset the PostHog instance to clear the user session
-    window.posthog?.reset();
     window.location.href = '/';
   }
 

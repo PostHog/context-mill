@@ -5,10 +5,10 @@ This is a [Spring Boot](https://spring.io/projects/spring-boot) example demonstr
 ## Features
 
 - **Product analytics**: Track user events and behaviors
-- **User identification**: Associate events with authenticated users via person properties
+- **User identification**: Associate events with a stable UUID via person properties, while signed-out visitors get a random session UUID and personless events
 - **Feature flags**: Control feature rollouts with PostHog feature flags
 - **Server-side tracking**: All tracking happens server-side with the `posthog-server` SDK
-- **Single client bean**: One PostHog client for the whole app, flushed on shutdown
+- **Single client bean**: One PostHog client for the whole app when configured, flushed on shutdown
 
 > **Note on error tracking:** the PostHog Java server SDK does not have automatic
 > exception capture. This example reports failures as an explicit `error_occurred`
@@ -45,16 +45,16 @@ java-spring-boot/
 ├── .gitignore
 └── src/main/
     ├── resources/
-    │   ├── application.properties   # Binds POSTHOG_* env vars into config
+    │   ├── application.properties   # Binds POSTHOG_HOST into config
     │   └── templates/               # Thymeleaf pages
-    │       ├── home.html            # Home / login page
+    │       ├── home.html            # Home and login page
     │       ├── burrito.html         # Event tracking
     │       ├── dashboard.html       # Feature flag example
     │       └── profile.html         # Error reporting
     └── java/com/posthog/example/
         ├── Application.java         # Spring Boot entry point
         ├── config/
-        │   └── PostHogConfiguration.java   # The single PostHog client bean
+        │   └── PostHogConfiguration.java   # Optional singleton PostHog client bean
         └── controller/
             └── BurritoController.java      # Events, identify, flags, errors
 ```
@@ -63,66 +63,103 @@ java-spring-boot/
 
 ### PostHog client bean (config/PostHogConfiguration.java)
 
-Create **one client per process** and expose it as a singleton bean. `destroyMethod = "close"` makes Spring flush queued events when the app shuts down.
+Read `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` from Spring `Environment` so secrets never live in source. When the token is missing or blank, log a warning outside `prod` and `production` profiles and return `null` rather than calling `PostHogConfig.builder("")`. When configured, expose **one client per process** with `destroyMethod = "close"` so Spring flushes queued events on shutdown.
 
 ```java
 @Bean(destroyMethod = "close")
-public PostHogInterface posthog(
-        @Value("${posthog.project-token:}") String projectToken,
-        @Value("${posthog.host:https://us.i.posthog.com}") String host) {
+@Nullable
+public PostHogInterface posthog(Environment environment) {
+    String rawToken = environment.getProperty("POSTHOG_PROJECT_TOKEN");
+    if (rawToken == null || rawToken.isBlank()) {
+        rawToken = environment.getProperty("posthog.project-token");
+    }
+    String projectToken = rawToken == null ? null : rawToken.trim();
 
-    PostHogConfig config = PostHogConfig
-            .builder(projectToken)
-            .host(host)
-            .build();
+    if (projectToken == null || projectToken.isBlank()) {
+        if (!environment.matchesProfiles("prod", "production")) {
+            log.warn("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured");
+        }
+        return null;
+    }
 
+    String rawHost = environment.getProperty("POSTHOG_HOST");
+    if (rawHost == null || rawHost.isBlank()) {
+        rawHost = environment.getProperty("posthog.host");
+    }
+    String host = (rawHost == null || rawHost.isBlank())
+            ? "https://us.i.posthog.com"
+            : rawHost.trim();
+
+    PostHogConfig config = PostHogConfig.builder(projectToken).host(host).build();
     return PostHog.with(config);
 }
 ```
 
-### Configuration from the environment (application.properties)
-
-Read the token and host from the environment so secrets never live in source:
-
-```properties
-posthog.project-token=${POSTHOG_PROJECT_TOKEN:}
-posthog.host=${POSTHOG_HOST:https://us.i.posthog.com}
-```
-
 ### User identification (controller/BurritoController.java)
 
-The server SDK identifies a user by attaching person properties to a capture with `userProperty(...)`. The `distinctId` (first argument) must match the id your frontend `identify` call uses.
+Validate login input and skip session creation and event capture when blank. Map each login account to a stable UUID in memory so `distinctId` is never raw PII, and attach `email` or `username` via `userProperty(...)` only when non-blank.
 
 ```java
-posthog.capture(
-        userId,
-        "user_logged_in",
-        PostHogCaptureOptions
-                .builder()
-                .userProperty("email", email)
-                .property("login_method", "email")
-                .build());
+String distinctId = usersByAccount.computeIfAbsent(
+        accountKey.toLowerCase(Locale.ROOT),
+        ignored -> UUID.randomUUID().toString());
+session.setAttribute("userId", distinctId);
+
+if (posthog != null) {
+    PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+            .builder()
+            .property("login_method", loginMethod);
+    if (!trimmedEmail.isEmpty()) {
+        options.userProperty("email", trimmedEmail);
+    }
+    if (!trimmedUsername.isEmpty()) {
+        options.userProperty("username", trimmedUsername);
+    }
+    posthog.capture(distinctId, "user_logged_in", options.build());
+}
 ```
+
+### Signed-out visitors (controller/BurritoController.java)
+
+The `visitor` helper returns the distinct id and whether the visitor is anonymous. Signed-in users keep their stable UUID from the session. For everyone else it generates a random UUID, stores it in the cookie-backed session so it is reused for the rest of the visit, and sets `$process_person_profile` to `false` on their events so PostHog does not create a person profile for them.
+
+```java
+Visitor visitor = visitor(session);
+
+if (posthog != null) {
+    PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+            .builder()
+            .property("total_considerations", count);
+    if (visitor.anonymous()) {
+        options.property("$process_person_profile", false);
+    }
+    posthog.capture(visitor.id(), "burrito_considered", options.build());
+}
+```
+
+Feature flags use the same visitor id, so flag evaluation works for anonymous visitors too.
 
 ### Event tracking (controller/BurritoController.java)
 
 ```java
-posthog.capture(
-        userId,
-        "burrito_considered",
-        PostHogCaptureOptions
-                .builder()
-                .property("total_considerations", count)
-                .build());
+Visitor visitor = visitor(session);
+if (posthog != null) {
+    PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+            .builder()
+            .property("total_considerations", count);
+    posthog.capture(visitor.id(), "burrito_considered", withPersonProfile(options, visitor).build());
+}
 ```
 
 ### Feature flags (controller/BurritoController.java)
 
-Evaluate flags once per request, then read individual flags off the snapshot. Avoid the deprecated per-flag helpers.
+Evaluate flags once per request when `posthog != null`, then read individual flags off the snapshot. Avoid the deprecated per-flag helpers.
 
 ```java
-PostHogFeatureFlagEvaluations flags = posthog.evaluateFlags(userId);
-boolean showNewFeature = flags.isEnabled("new-dashboard-feature");
+if (posthog != null) {
+    PostHogFeatureFlagEvaluations flags = posthog.evaluateFlags(userId);
+    showNewFeature = flags.isEnabled("new-dashboard-feature");
+}
 ```
 
 ### Error reporting (controller/BurritoController.java)
@@ -133,25 +170,24 @@ There is no automatic exception capture in the Java server SDK, so report failur
 try {
     riskyOperation();
 } catch (RuntimeException e) {
-    posthog.capture(
-            userId,
-            "error_occurred",
-            PostHogCaptureOptions
-                    .builder()
-                    .property("error_type", e.getClass().getSimpleName())
-                    .property("error_message", e.getMessage())
-                    .build());
+    if (posthog != null) {
+        PostHogCaptureOptions.Builder options = PostHogCaptureOptions
+                .builder()
+                .property("error_type", e.getClass().getSimpleName())
+                .property("error_message", e.getMessage())
+                .property("source", "profile_view");
+        posthog.capture(userId, "error_occurred", withPersonProfile(options, visitor).build());
+    }
 }
 ```
 
 ### Flush and shutdown
 
-`destroyMethod = "close"` on the bean handles this for you at shutdown. If you ever
-manage the client yourself, flush and close explicitly:
+`destroyMethod = "close"` on the bean handles flushing at shutdown when PostHog is configured. If you manage the client yourself, flush and close explicitly:
 
 ```java
-posthog.flush(); // send any remaining events
-posthog.close(); // shut down the client
+posthog.flush();
+posthog.close();
 ```
 
 ## Learn more

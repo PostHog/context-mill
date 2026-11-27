@@ -1,27 +1,27 @@
 # PostHog Flutter example
 
-A [Flutter](https://flutter.dev/) example app demonstrating PostHog integration with product analytics, user identification, screen tracking, and error tracking across Android, iOS, Web, and macOS — the platforms the [posthog_flutter](https://pub.dev/packages/posthog_flutter) SDK supports.
+A [Flutter](https://flutter.dev/) example app demonstrating PostHog integration with product analytics, user identification, screen tracking, and error tracking across Android, iOS, Web, and macOS, the platforms the [posthog_flutter](https://pub.dev/packages/posthog_flutter) SDK supports.
 
 ## Features
 
 - **Product analytics**: Track user events and behaviors with `Posthog().capture()`
 - **Screen tracking**: Automatic `$screen` events for named routes via `PosthogObserver`
 - **Error tracking**: Manual `captureException()` plus autocapture of uncaught Flutter errors
-- **User authentication**: Demo login flow with PostHog `identify()`/`reset()`
+- **User authentication**: Demo login flow with stable UUIDv4 `identify()` and `reset()`
 - **Manual SDK setup**: Dart-side configuration with native auto-init disabled (required for session replay and surveys)
 
 **Flutter Web initializes separately.** `Posthog().setup()` is a no-op on web, so
 an app that ships a `web/` target needs the posthog-js snippet in `web/index.html`
-as well — a Dart-side setup alone leaves web builds capturing nothing. See
+as well, since a Dart-side setup alone leaves web builds capturing nothing. See
 `web/index.html` in this example.
 
 ## Prerequisites
 
-1. **Flutter SDK** — follow the [install guide](https://docs.flutter.dev/get-started/install) for your OS, then verify with:
+1. **Flutter SDK 3.41+** (3.44+ enables Swift Package Manager by default). Follow the [install guide](https://docs.flutter.dev/get-started/install) for your OS, then verify with:
    ```bash
    flutter doctor
    ```
-2. **For iOS/macOS**: a Mac with Xcode and [CocoaPods](https://guides.cocoapods.org/using/getting-started.html) (`brew install cocoapods`)
+2. **For iOS and macOS**: a Mac with Xcode 26+ (`posthog_flutter` 6.x installs via Swift Package Manager only and has no CocoaPods podspec)
 3. **For Android**: Android Studio with an emulator or a connected device
 4. **For Web**: Chrome
 
@@ -34,37 +34,35 @@ flutter create --platforms=android,ios,web,macos .
 flutter pub get
 ```
 
-Binary launcher/app icons are deliberately not committed. The `flutter create` step regenerates them — it only adds missing files and never overwrites the committed configs.
+Binary launcher and app icons are not committed. The `flutter create` step regenerates them without overwriting committed configs.
 
 ### 2. Configure your PostHog project token
 
 Get your project token from your [PostHog project settings](https://app.posthog.com/settings/project).
 
-For **Android, iOS, and macOS**, the token is embedded at build time via `--dart-define` (no file to edit):
+For **Android, iOS, and macOS**, pass the token at build time via `--dart-define`:
 
 ```bash
 flutter run \
-  --dart-define=POSTHOG_PROJECT_TOKEN=phc_your_project_token_here \
+  --dart-define=POSTHOG_PROJECT_TOKEN=your_posthog_project_token \
   --dart-define=POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 `POSTHOG_HOST` is optional and defaults to `https://us.i.posthog.com` (use `https://eu.i.posthog.com` for EU Cloud).
 
-For **Web**, edit `web/index.html` and replace `phc_your_project_token_here` in the posthog-js snippet — Flutter Web is initialized by that snippet, not by the Dart config.
+For **Web**, edit `web/index.html` and replace `undefined` on `posthogProjectToken` with your `"phc_..."` project token in the posthog-js snippet. Never pass a placeholder string to `posthog.init`.
 
-> **Note:** The app still runs without a token — analytics are simply disabled (a warning is logged).
+> **Note:** When no token is configured, `setupPostHog()` and `web/index.html` skip SDK initialization and log an error in debug or localhost builds.
 
 ### 3. Run per platform
 
 ```bash
-flutter devices                      # list available targets
+flutter devices
 
-flutter run --dart-define=POSTHOG_PROJECT_TOKEN=phc_...              # default device
-flutter run -d chrome                                                 # Web (token comes from web/index.html)
-flutter run -d macos --dart-define=POSTHOG_PROJECT_TOKEN=phc_...     # macOS
+flutter run --dart-define=POSTHOG_PROJECT_TOKEN=phc_...
+flutter run -d chrome
+flutter run -d macos --dart-define=POSTHOG_PROJECT_TOKEN=phc_...
 ```
-
-For iOS, install pods first (first time only): `cd ios && pod install && cd ..`
 
 ## Project structure
 
@@ -75,42 +73,53 @@ lib/
 ├── posthog/
 │   └── posthog.dart             # PostHog configuration (manual setup)
 ├── auth/
-│   └── auth_state.dart          # Fake auth with identify()/reset()
+│   └── auth_state.dart          # Demo auth with UUIDv4 identify() and reset()
 └── screens/
-    ├── home_screen.dart         # Home/login screen
+    ├── home_screen.dart         # Home and login screen
     ├── burrito_screen.dart      # Demo feature screen with event capture
     └── profile_screen.dart      # Profile with error tracking demo
 
 test/
-├── mocks.dart                   # FakePosthogPlatform: records identify/capture/
-│                                # screen/captureException calls for assertions
+├── mocks.dart                   # FakePosthogPlatform: records identify, capture,
+│                                # screen, and captureException calls for assertions
 ├── posthog/                     # SDK setup config tests
-├── auth/                        # identify()/reset() lifecycle tests
+├── auth/                        # identify() and reset() lifecycle tests
 └── screens/                     # Event capture + error tracking widget tests
 
 android/                         # AUTO_INIT disabled in AndroidManifest.xml
-ios/                             # AUTO_INIT disabled in Runner/Info.plist; Podfile pins iOS 13+
+ios/                             # AUTO_INIT disabled in Runner/Info.plist (iOS 15+, SwiftPM)
 web/                             # posthog-js snippet in index.html
-macos/                           # AUTO_INIT disabled in Runner/Info.plist;
-                                 # network.client entitlement for the app sandbox
+macos/                           # AUTO_INIT disabled in Runner/Info.plist (macOS 12+, SwiftPM)
 ```
 
 ## Key integration points
 
 ### Manual SDK setup (lib/posthog/posthog.dart)
 
-PostHog is configured once in Dart. Manual setup (instead of the native auto-init path) is required for session replay and surveys, so the native layers disable auto-init with `com.posthog.posthog.AUTO_INIT: false`:
+PostHog is configured once in Dart when `POSTHOG_PROJECT_TOKEN` is non-empty. When missing or blank, `setupPostHog()` skips `Posthog().setup(config)` and logs an error in `kDebugMode`:
 
 ```dart
-final config = PostHogConfig(PosthogEnv.projectToken);
-config.host = PosthogEnv.host;
+final trimmedToken = projectToken.trim();
+if (trimmedToken.isEmpty) {
+  if (kDebugMode) {
+    developer.log(
+      'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured',
+      name: 'PostHog',
+      level: 1000,
+    );
+  }
+  return;
+}
+
+final config = PostHogConfig(trimmedToken);
+config.host = trimmedHost;
 config.debug = kDebugMode;
 config.errorTrackingConfig.captureFlutterErrors = true;
 config.errorTrackingConfig.capturePlatformDispatcherErrors = true;
 await Posthog().setup(config);
 ```
 
-On Flutter Web, `setup()` is a no-op — the posthog-js snippet in `web/index.html` initializes the SDK instead.
+On Flutter Web, `setup()` is a no-op, and the posthog-js snippet in `web/index.html` initializes the SDK when `posthogProjectToken` is configured.
 
 ### Screen tracking (lib/main.dart)
 
@@ -129,22 +138,31 @@ MaterialApp(
 
 ### User identification (lib/auth/auth_state.dart)
 
-Identify users as soon as they log in; person data goes in `userProperties` (`$set`) / `userPropertiesSetOnce` (`$set_once`), not event properties. Call `reset()` on logout:
+Identify users with a stable UUID (`resolvedUserId`), never a username or email. Put person data in `userProperties` (`$set`) and `userPropertiesSetOnce` (`$set_once`), not event properties, and call `reset()` when logging out of an authenticated session:
 
 ```dart
 await Posthog().identify(
-  userId: username, // in a real app, use your database user ID here
-  userProperties: {'username': username},
+  userId: resolvedUserId,
+  userProperties: {'username': trimmedUsername},
   userPropertiesSetOnce: {'first_login_date': DateTime.now().toIso8601String()},
 );
 
-// on logout
+await Posthog().capture(
+  eventName: 'user_logged_in',
+  properties: {
+    'login_method': 'demo_form',
+    'is_new_user': isNewUser,
+  },
+);
+
+// On logout from an authenticated session, capture before reset
+await Posthog().capture(eventName: 'user_logged_out');
 await Posthog().reset();
 ```
 
 ### Event capture (lib/screens/burrito_screen.dart)
 
-Capture custom events with properties. We recommend a `[object] [verb]` format for event names:
+Capture custom events with non-PII properties:
 
 ```dart
 await Posthog().capture(
@@ -176,18 +194,17 @@ try {
 
 `Application Installed`, `Application Updated`, `Application Opened`, and `Application Backgrounded` are captured automatically (`captureApplicationLifecycleEvents` is enabled by default).
 
+## Reverse proxy
+
+On the web build, ad blockers often drop requests sent to PostHog's own domain. Set `POSTHOG_HOST` (and the `api_host` in `web/index.html`) to a reverse proxy to keep those events, for example PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy.md). The iOS and Android builds aren't affected by browser ad blockers, so they can keep the default host.
+
 ## Testing
 
 ```bash
 flutter test
 ```
 
-The tests show how to verify a PostHog integration without a network or a
-device. `test/mocks.dart` installs a fake `PosthogFlutterPlatformInterface`
-that records every `identify`, `capture`, `screen`, `reset`, and
-`captureException` call, so tests assert on exactly what would be sent to
-PostHog. The fake must `extend` the platform interface (not `implement` it) —
-`PlatformInterface.verifyToken` rejects generated mockito/mocktail mocks.
+The tests verify the PostHog integration without a network or a device. `test/mocks.dart` installs a fake `PosthogFlutterPlatformInterface` that records every `identify`, `capture`, `screen`, `reset`, and `captureException` call so tests assert on what would be sent to PostHog. The fake extends the platform interface rather than implementing it because `PlatformInterface.verifyToken` rejects generated mocks.
 
 ## Learn more
 

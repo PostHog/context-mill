@@ -1,4 +1,5 @@
 interface User {
+  id: string
   username: string
   burritoConsiderations: number
 }
@@ -11,6 +12,7 @@ export function getOrCreateUser(username: string): User {
   
   if (!user) {
     user = { 
+      id: crypto.randomUUID(),
       username, 
       burritoConsiderations: 0 
     }

@@ -1,4 +1,3 @@
-import { usePostHog } from '@posthog/react';
 import {
   isRouteErrorResponse,
   Links,
@@ -65,9 +64,6 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
-
-  const posthog = usePostHog();
-  posthog.captureException(error);
 
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error";

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getPostHogClient } from '@/lib/posthog-server';
 
-const users = new Map<string, { username: string; burritoConsiderations: number }>();
+const users = new Map<string, { id: string; username: string; burritoConsiderations: number }>();
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,8 +11,10 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { username, password } = req.body;
+  const username = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
+  // Reject missing credentials early so we never capture or identify with a fallback distinctId.
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
   }
@@ -21,32 +23,32 @@ export default async function handler(
   const isNewUser = !user;
 
   if (!user) {
-    user = { username, burritoConsiderations: 0 };
+    user = { id: crypto.randomUUID(), username, burritoConsiderations: 0 };
     users.set(username, user);
   }
 
-  // Capture server-side login event
+  // Attribute server events to the authenticated user's stable UUID, never a username or literal fallback id.
   const posthog = getPostHogClient();
-  posthog.capture({
-    distinctId: username,
+  posthog?.capture({
+    distinctId: user.id,
     event: 'server_login',
     properties: {
       isNewUser: isNewUser,
-      source: 'api'
-    }
+      source: 'api',
+    },
   });
 
-  // Identify user on server side
-  posthog.identify({
-    distinctId: username,
+  // Store person attributes like username via identify rather than event properties.
+  posthog?.identify({
+    distinctId: user.id,
     properties: {
       username: username,
-      createdAt: isNewUser ? new Date().toISOString() : undefined
-    }
+      createdAt: isNewUser ? new Date().toISOString() : undefined,
+    },
   });
 
-  // This handler is short-lived; flush so the enqueued events send before it returns
-  await posthog.flush();
+  // API handlers are short-lived, so flush queued events and swallow transport errors so PostHog outages never fail login.
+  await posthog?.flush().catch(() => {});
 
   return res.status(200).json({ success: true, user });
 }

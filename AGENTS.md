@@ -20,6 +20,7 @@ User-facing intro: [README.md](README.md). Contributor handbook:
 | Skill descriptor / CLI role declarations | `context/skills/<name>/config.yaml` |
 | Build pipeline | `scripts/lib/` (skill generator, build phases, change router) |
 | Build entrypoints | `scripts/build.js` (full) and `scripts/dev-server.js` (partial / watch) |
+| What the wizard picks skills with (detected frameworks, match keys, task-named skills) | `scripts/lib/wizard-skill-picks.js`, read by the [resolvability check](README.md#the-resolvability-check) |
 | Tests | `scripts/lib/tests/` and `scripts/plugins/tests/` (vitest) |
 | Manifest output | `dist/skills/manifest.json`, `dist/skills/skill-menu.json` (CLI entries live under `cliEntries`) |
 | Per-skill ZIPs | `dist/skills/<id>.zip` |
@@ -72,11 +73,12 @@ longer exist — only some keep an alias.
 | `wizard integrate` | `wizard` (default flow) | command removed |
 | `wizard events-audit` | `wizard audit events` | moved into `audit` family |
 | `wizard audit` (single) | `wizard audit <subcommand>` | now a family — see audit subcommands below |
+| `wizard migrate` (single) | `wizard migrate <vendor>` | becomes a family with the wizard's family command — see migrate subcommands below |
 | `wizard audit-3000` | *removed* | retired |
 | `wizard revenue` | `wizard revenue-analytics` | renamed (old `revenue` removed) |
 | `wizard upload-sourcemaps` | `wizard upload-source-maps` | renamed; `upload-sourcemaps` kept as alias |
 
-**Audit subcommands** — the one family today backed by skills from this repo:
+**Audit subcommands**, backed by skills from this repo:
 
 | Subcommand | Backing skill |
 |---|---|
@@ -87,6 +89,14 @@ longer exist — only some keep an alias.
 | `wizard audit identify` | `audit-identify` |
 | `wizard audit session-replay` | `audit-session-replay` |
 | `wizard audit web-analytics` | *(wizard-native, not a skill here)* |
+
+**Migrate subcommands**, published as `cliEntries` with `parentCommand: migrate`. They run once the wizard runs `migrate` as a family. Until then, `wizard migrate` stays a flat command that runs `migrate-statsig`, and the wizard rejects a vendor after it:
+
+| Subcommand | Backing skill |
+|---|---|
+| `wizard migrate statsig` | `migrate-statsig` |
+| `wizard migrate resend` | `migrate-email-resend` |
+| `wizard migrate sendgrid` | `migrate-email-sendgrid` |
 
 **Commands vs. skills:** those audit subcommands **are** skills, promoted to
 commands via `cli: role: command`. A `role: skill` skill is reachable only via

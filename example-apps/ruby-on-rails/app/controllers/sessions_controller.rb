@@ -4,12 +4,21 @@ class SessionsController < ApplicationController
   end
 
   def create
-    user = User.find_by(email: params[:email])
+    email = params[:email].to_s.strip
+    password = params[:password].to_s
 
-    if user&.authenticate(params[:password])
+    # Reject empty credentials before authentication and omit analytics calls when login fails.
+    if email.empty? || password.empty?
+      flash[:error] = 'Email and password are required'
+      render :new, status: :unprocessable_entity
+      return
+    end
+
+    user = User.find_by(email: email)
+
+    if user&.authenticate(password)
       session[:user_id] = user.id
 
-      # PostHog: Identify the user and capture login event
       PostHog.identify(
         distinct_id: user.posthog_distinct_id,
         properties: user.posthog_properties
@@ -29,12 +38,13 @@ class SessionsController < ApplicationController
   end
 
   def destroy
+    # Only capture logout and trigger browser posthog.reset() when signing out an authenticated user.
     if current_user
-      # PostHog: Track logout before session ends
       PostHog.capture(
         distinct_id: current_user.posthog_distinct_id,
         event: 'user_logged_out'
       )
+      flash[:posthog_reset] = true
     end
 
     session.delete(:user_id)

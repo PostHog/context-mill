@@ -2,6 +2,7 @@ package com.example.posthog.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.util.UUID
 import org.json.JSONObject
 
 class UserRepository(context: Context) {
@@ -17,17 +18,26 @@ class UserRepository(context: Context) {
     }
 
     fun getCurrentUsername(): String? {
-        return prefs.getString(KEY_CURRENT_USERNAME, null)
+        return prefs.getString(KEY_CURRENT_USERNAME, null)?.trim()?.takeIf { it.isNotEmpty() }
     }
 
     fun getUser(username: String): User? {
-        val json = prefs.getString("$KEY_USER_DATA_PREFIX$username", null) ?: return null
+        val trimmed = username.trim()
+        if (trimmed.isEmpty()) return null
+        val json = prefs.getString("$KEY_USER_DATA_PREFIX$trimmed", null) ?: return null
         return try {
             val obj = JSONObject(json)
-            User(
+            val savedId = obj.optString("id", "").trim()
+            val resolvedId = savedId.ifEmpty { UUID.randomUUID().toString() }
+            val user = User(
+                id = resolvedId,
                 username = obj.getString("username"),
                 burritoConsiderations = obj.getInt("burritoConsiderations")
             )
+            if (savedId.isEmpty()) {
+                saveUser(user)
+            }
+            user
         } catch (e: Exception) {
             null
         }
@@ -35,6 +45,7 @@ class UserRepository(context: Context) {
 
     fun saveUser(user: User) {
         val json = JSONObject().apply {
+            put("id", user.id)
             put("username", user.username)
             put("burritoConsiderations", user.burritoConsiderations)
         }.toString()

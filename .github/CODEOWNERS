@@ -8,23 +8,20 @@
 
 # Skill trees owned by product teams.
 /context/skills/error-tracking/                         @PostHog/team-error-tracking
-/context/agents/error-tracking/                         @PostHog/team-error-tracking
 /context/skills/error-tracking-upload-source-maps/      @PostHog/team-error-tracking
 /context/skills/error-tracking-link-releases/           @PostHog/team-error-tracking
 /context/skills/self-driving/                           @PostHog/team-self-driving
 /context/skills/data-warehouse-source/                  @PostHog/team-warehouse-sources
+/context/skills/data-warehouse-destination/             @PostHog/team-warehouse-sources
 /context/skills/mcp-analytics/                          @PostHog/mcp-analytics
 /context/skills/metrics/                                @PostHog/team-apm
-/context/agents/metrics/                                @PostHog/team-apm
+/context/skills/omnibus/instrument-tracing/             @PostHog/team-apm
 /context/skills/revenue-analytics/                      @PostHog/team-web-analytics
 /context/skills/web-analytics/                          @PostHog/team-web-analytics
 /context/skills/integration/                            @PostHog/team-growth
-/context/skills/integration-v2/                         @PostHog/team-growth
-/context/agents/integration-v2/                         @PostHog/team-growth
 /context/skills/migrate/                                @PostHog/team-fde
 /context/skills/audit*/                                 @PostHog/team-fde
 /context/skills/events-audit/                           @PostHog/team-fde
 /context/skills/replay-vision*/                         @PostHog/team-replay
-/context/agents/replay-vision/                          @PostHog/team-replay
 /context/skills/ai-observability/                       @PostHog/team-ai-observability
 /context/skills/llm-analytics/                          @PostHog/team-ai-observability

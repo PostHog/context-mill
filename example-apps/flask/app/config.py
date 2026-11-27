@@ -15,8 +15,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # PostHog configuration
-    POSTHOG_PROJECT_TOKEN = os.environ.get("POSTHOG_PROJECT_TOKEN", "<ph_project_token>")
+    # Leave the PostHog token as None when unset rather than defaulting to an empty or placeholder key,
+    # so create_app() skips SDK initialization cleanly when PostHog is unconfigured.
+    POSTHOG_PROJECT_TOKEN = os.environ.get("POSTHOG_PROJECT_TOKEN")
     POSTHOG_HOST = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
     POSTHOG_DISABLED = os.environ.get("POSTHOG_DISABLED", "False").lower() == "true"
 

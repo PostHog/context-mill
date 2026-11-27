@@ -6,11 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Entry point for the PostHog Spring Boot example.
  *
- * <p>The interesting integration code lives in:
+ * <p>The integration code lives in:
  * <ul>
- *   <li>{@link com.posthog.example.config.PostHogConfiguration} &mdash; the single
- *       PostHog client, exposed as a Spring bean and flushed on shutdown.</li>
- *   <li>{@link com.posthog.example.controller.BurritoController} &mdash; where events,
+ *   <li>{@link com.posthog.example.config.PostHogConfiguration}, the optional singleton
+ *       PostHog client bean flushed on shutdown.</li>
+ *   <li>{@link com.posthog.example.controller.BurritoController}, where events,
  *       user identification, feature flags, and error reporting happen.</li>
  * </ul>
  */

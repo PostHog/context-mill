@@ -19,7 +19,7 @@ const DESCRIPTION = readFileSync(
 
 /** The skill the install flow's seeded `warehouse` task loads. */
 const STEP_SKILL = readFileSync(
-    join(CONFIG_DIR, 'skills', 'integration-v2', 'warehouse', 'description.md'),
+    join(CONFIG_DIR, 'skills', 'integration', 'warehouse', 'description.md'),
     'utf8',
 );
 
@@ -92,7 +92,7 @@ describe('data-warehouse-source reporting contract', () => {
     });
 });
 
-describe('integration-v2 warehouse step skill', () => {
+describe('integration warehouse step skill', () => {
     it('tells the seeded install task to ask once per source, tagged with a subject', () => {
         expect(STEP_SKILL).toMatch(/One `wizard_ask` call per source, tagged with `subject`/);
         expect(STEP_SKILL).toMatch(/counts its batching guard per subject/);
@@ -111,6 +111,17 @@ describe('integration-v2 warehouse step skill', () => {
     it('scopes a cancellation to one source instead of ending the round', () => {
         expect(STEP_SKILL).toMatch(/A decline answers one source, not the run/);
         expect(STEP_SKILL).toMatch(/Stop asking only after two cancellations/);
+    });
+
+    it('keeps every credential out of the agent and its tool arguments', () => {
+        // The gateway operator prompt forbids secrets in tool arguments, so an
+        // agent that collects typed credentials reports itself blocked.
+        expect(STEP_SKILL).toMatch(/No secret passes through you/);
+        expect(STEP_SKILL).toMatch(/`data-warehouse-source-connect-link`/);
+        expect(STEP_SKILL).toMatch(/`data-warehouse-stored-credentials-list`/);
+        expect(STEP_SKILL).toMatch(/payload: \{ "credential_id": "<id>" \}/);
+        expect(STEP_SKILL).not.toMatch(/plain `text` answers/);
+        expect(STEP_SKILL).not.toMatch(/`external-data-sources-create`/);
     });
 
     it('requires a connected-count line and a matching complete_task status', () => {

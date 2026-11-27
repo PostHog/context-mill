@@ -2,7 +2,7 @@
 
 A minimal [React](https://react.dev) application built with [Vite](https://vite.dev), demonstrating PostHog integration with product analytics, session replay, feature flags, and error tracking.
 
-This example uses no client-side router, making it the simplest possible React + PostHog setup.
+This example uses no client-side router, making it the simplest possible React and PostHog setup.
 
 ## Features
 
@@ -24,14 +24,15 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the root directory and set your project token:
 
 ```bash
-VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your PostHog project token from your [PostHog project settings](https://app.posthog.com/project/settings).
+If the project token is not set, the app skips PostHog initialization and logs an error in development.
 
 ### 3. Run the Development Server
 
@@ -48,12 +49,12 @@ Open [http://localhost:5173](http://localhost:5173) with your browser to see the
 ```
 src/
 ├── components/
-│   └── Header.jsx           # Navigation header with auth state
+│   └── Header.jsx            # Navigation header with auth state and pageview tracking
 ├── contexts/
-│   └── AuthContext.jsx       # Authentication context
+│   └── AuthContext.jsx       # Authentication context with PostHog identification
 ├── pages/
-│   ├── Home.jsx              # Home/Login page with event tracking
-│   ├── Burrito.jsx           # Demo page with feature flags
+│   ├── Home.jsx              # Home/Login page
+│   ├── Burrito.jsx           # Demo page with event tracking and feature flags
 │   └── Profile.jsx           # User profile page
 ├── main.jsx                  # Entry point with PostHog initialization
 ├── App.jsx                   # App component with page routing
@@ -68,31 +69,55 @@ src/
 import posthog from 'posthog-js'
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  defaults: '2026-01-30',
-})
+// Read the project token without a fallback value. When it is missing, leave the client uninitialized()
+// and PostHogProvider rather than initializing the SDK with a placeholder key.
+const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim()
 
-<PostHogProvider client={posthog}>
-  <PostHogErrorBoundary>
-    <App />
-  </PostHogErrorBoundary>
-</PostHogProvider>
+if (posthogToken) {
+  posthog.init(posthogToken, {
+    api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+    defaults: '2026-08-30',
+  })
+}
+
+{posthogToken ? (
+  <PostHogProvider client={posthog}>
+    <PostHogErrorBoundary>{app}</PostHogErrorBoundary>
+  </PostHogProvider>
+) : (
+  app
+)}
 ```
 
-### User identification (Home.jsx)
+### User identification (AuthContext.jsx, Header.jsx)
+
+Users are identified with a stable UUID (`localUser.id`) on login and when restoring a persisted session from `localStorage` on reload. `username` is sent only as a person property, never as `distinctId` or in `capture()` event properties.
 
 ```javascript
-posthog.identify(username, { name: username })
-posthog.capture('user_logged_in')
+posthog?.identify(localUser.id, { username: localUser.username })
+posthog?.capture('user_logged_in', { is_new_user: isNewUser })
 ```
 
-### Feature flags (Burrito.jsx)
+On logout from an active session, capture `user_logged_out` before calling `reset()`:
 
 ```javascript
-import { useFeatureFlagEnabled } from '@posthog/react'
+if (user) {
+  posthog?.capture('user_logged_out')
+  posthog?.reset()
+}
+```
 
+### Event tracking and feature flags (Burrito.jsx)
+
+```javascript
+import { useFeatureFlagEnabled, usePostHog } from '@posthog/react'
+
+const posthog = usePostHog()
 const showSpecialBurrito = useFeatureFlagEnabled('special-burrito')
+
+posthog?.capture('burrito_considered', {
+  total_considerations: updatedUser.burritoConsiderations,
+})
 ```
 
 ### Pageview tracking (Header.jsx)
@@ -100,8 +125,18 @@ const showSpecialBurrito = useFeatureFlagEnabled('special-burrito')
 Without a router, manually capture pageviews on navigation:
 
 ```javascript
-posthog.capture('$pageview', { $current_url: `/${target}` })
+posthog?.capture('$pageview', { $current_url: `/${target}` })
 ```
+
+## Reverse proxy
+
+Ad blockers drop requests sent to PostHog's domain, so some events never arrive. A reverse proxy sends events through your own domain instead.
+
+The recommended option is the [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), which PostHog hosts for you. You create a subdomain in your [organization proxy settings](https://app.posthog.com/settings/organization-proxy) and add a CNAME record at your DNS provider.
+
+If you prefer to run your own, PostHog has guides for [Vercel](https://posthog.com/docs/advanced/proxy/vercel), [Netlify](https://posthog.com/docs/advanced/proxy/netlify) and [Cloudflare](https://posthog.com/docs/advanced/proxy/cloudflare), among others. See [Deploy a reverse proxy](https://posthog.com/docs/advanced/proxy) for the full list.
+
+Once the proxy is live, set `VITE_PUBLIC_POSTHOG_HOST` to the proxy URL, for example `https://yoursubdomain.myapp.com`. Also add `ui_host` to the `posthog.init` options, set to your PostHog app URL (`https://us.posthog.com` or `https://eu.posthog.com`), so the toolbar and links into PostHog keep working.
 
 ## Learn More
 

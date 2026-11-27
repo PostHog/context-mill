@@ -16,48 +16,58 @@ require 'posthog'
 DATA_FILE = File.join(Dir.home, '.todo_app.json')
 
 def initialize_posthog
-  # Initialize PostHog with instance-based API.
-  # Returns PostHog client or nil if project token not configured.
-  project_token = ENV['POSTHOG_PROJECT_TOKEN']
+  # In Ruby an empty string is truthy, so check both nil? and empty? and return nil
+  # rather than passing a blank or placeholder key to PostHog::Client.new.
+  project_token = ENV['POSTHOG_PROJECT_TOKEN']&.strip
 
-  unless project_token
-    puts 'WARNING: PostHog not configured (POSTHOG_PROJECT_TOKEN not set)'
-    puts '         App will work but analytics won\'t be tracked'
+  if project_token.nil? || project_token.empty?
+    env = ENV.fetch('RUBY_ENV', ENV.fetch('RAILS_ENV', 'development'))
+    unless env == 'production'
+      $stderr.puts 'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
+    end
     return nil
   end
 
+  host = ENV['POSTHOG_HOST']&.strip
+  host = 'https://us.i.posthog.com' if host.nil? || host.empty?
+
   PostHog::Client.new(
     api_key: project_token,
-    host: ENV.fetch('POSTHOG_HOST', 'https://us.i.posthog.com'),
-    on_error: proc { |status, msg| puts "PostHog error: #{status} - #{msg}" }
+    host: host,
+    on_error: proc { |status, msg| $stderr.puts "PostHog error: #{status} - #{msg}" }
   )
 end
 
 def get_user_id
-  # Get or create a user ID for this installation.
-  # Uses a UUID stored in the data file to represent this user.
+  data = { 'todos' => [] }
   if File.exist?(DATA_FILE)
     data = JSON.parse(File.read(DATA_FILE))
-    return data['user_id'] if data['user_id']
+    existing_id = data['user_id']&.to_s&.strip
+    return existing_id unless existing_id.nil? || existing_id.empty?
   end
 
-  "user_#{SecureRandom.hex(4)}"
+  # Persist the generated UUID immediately on first creation so read-only commands
+  # and error handlers reuse one stable distinct_id instead of splitting across calls.
+  user_id = SecureRandom.uuid
+  data['user_id'] = user_id
+  data['todos'] ||= []
+  save_todos(data)
+  user_id
 end
 
 def load_todos
-  # Load todos from disk.
-  return { 'user_id' => get_user_id, 'todos' => [] } unless File.exist?(DATA_FILE)
-
-  JSON.parse(File.read(DATA_FILE))
+  user_id = get_user_id
+  data = JSON.parse(File.read(DATA_FILE))
+  data['user_id'] = user_id
+  data['todos'] ||= []
+  data
 end
 
 def save_todos(data)
-  # Save todos to disk.
   File.write(DATA_FILE, JSON.pretty_generate(data))
 end
 
 def track_event(posthog, event_name, properties = {})
-  # Track an event with PostHog.
   return unless posthog
 
   posthog.capture(
@@ -68,7 +78,6 @@ def track_event(posthog, event_name, properties = {})
 end
 
 def cmd_add(text, posthog)
-  # Add a new todo item.
   data = load_todos
 
   todo = {
@@ -91,7 +100,6 @@ def cmd_add(text, posthog)
 end
 
 def cmd_list(posthog)
-  # List all todos.
   data = load_todos
 
   if data['todos'].empty?
@@ -115,7 +123,6 @@ def cmd_list(posthog)
 end
 
 def cmd_complete(id, posthog)
-  # Mark a todo as completed.
   data = load_todos
 
   todo = data['todos'].find { |t| t['id'] == id }
@@ -145,7 +152,6 @@ def cmd_complete(id, posthog)
 end
 
 def cmd_delete(id, posthog)
-  # Delete a todo.
   data = load_todos
 
   todo = data['todos'].find { |t| t['id'] == id }
@@ -167,7 +173,6 @@ def cmd_delete(id, posthog)
 end
 
 def cmd_stats(posthog)
-  # Show usage statistics.
   data = load_todos
 
   total = data['todos'].length
@@ -202,17 +207,16 @@ def print_usage
 end
 
 # Main entry point
+command = ARGV[0]
+unless command
+  print_usage
+  exit 0
+end
+
 posthog = nil
 
 begin
   posthog = initialize_posthog
-
-  command = ARGV[0]
-
-  unless command
-    print_usage
-    exit 0
-  end
 
   case command
   when 'add'
@@ -249,13 +253,16 @@ begin
     exit 1
   end
 rescue StandardError => e
-  puts "ERROR: #{e.message}"
+  $stderr.puts "ERROR: #{e.message}"
 
-  # Manually capture handled errors
   posthog&.capture_exception(e, get_user_id)
 
   exit 1
 ensure
-  # IMPORTANT: Always shutdown PostHog to flush events
-  posthog&.shutdown
+  # Flush queued events before exit without failing if PostHog is unreachable.
+  begin
+    posthog&.shutdown
+  rescue StandardError
+    nil
+  end
 end

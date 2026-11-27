@@ -1,69 +1,47 @@
 import PostHog from 'posthog-react-native'
 import Constants from 'expo-constants'
 
-// Configuration loaded from app.config.js extras via expo-constants
-// Environment variables are read at build time in app.config.js
-const projectToken = Constants.expoConfig?.extra?.posthogProjectToken as string | undefined
-const host = (Constants.expoConfig?.extra?.posthogHost as string) || 'https://us.i.posthog.com'
-const isPostHogConfigured = projectToken && projectToken !== 'phc_your_project_token_here'
+// Read the project token optionally from app.config.js extras and never construct PostHog
+// with a dummy placeholder token or disabled flag when POSTHOG_PROJECT_TOKEN is unset.
+const rawProjectToken = Constants.expoConfig?.extra?.posthogProjectToken as string | undefined
+const token = rawProjectToken?.trim() || undefined
+const rawHost = Constants.expoConfig?.extra?.posthogHost as string | undefined
+const host = rawHost?.trim() || 'https://us.i.posthog.com'
 
-if (__DEV__) {
-  console.log('PostHog config:', {
-    projectToken: projectToken ? `SET` : 'NOT SET',
-    host,
-    isConfigured: isPostHogConfigured,
-  })
-}
-
-if (!isPostHogConfigured) {
-  console.warn(
-    'PostHog project token not configured. Analytics will be disabled. ' +
-      'Set POSTHOG_PROJECT_TOKEN in your .env file to enable analytics.'
+if (!token && __DEV__) {
+  console.error(
+    'POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured'
   )
 }
 
 /**
- * PostHog client instance for Expo
+ * PostHog client instance for Expo. Returns null when POSTHOG_PROJECT_TOKEN is unset.
  *
- * Configuration loaded from app.config.js extras via expo-constants.
+ * Configuration is loaded from app.config.js extras via expo-constants.
  * Required peer dependencies: expo-file-system, expo-application,
- * expo-device, expo-localization
- *
- * For React Native Web targets, use @react-native-async-storage/async-storage
- * instead of expo-file-system (Web and macOS targets not supported by expo-file-system).
+ * expo-device, expo-localization, react-native-svg.
  *
  * @see https://posthog.com/docs/libraries/react-native
  */
-export const posthog = new PostHog(projectToken || 'placeholder_key', {
-  // PostHog API host
-  host,
+export const posthog: PostHog | null = token
+  ? new PostHog(token, {
+      host,
+      captureAppLifecycleEvents: true,
+      flushAt: 20,
+      flushInterval: 10000,
+      maxBatchSize: 100,
+      maxQueueSize: 1000,
+      preloadFeatureFlags: true,
+      sendFeatureFlagEvent: true,
+      featureFlagsRequestTimeoutMs: 10000,
+      requestTimeout: 10000,
+      fetchRetryCount: 3,
+      fetchRetryDelay: 3000,
+    })
+  : null
 
-  // Enable PostHog only when a project token is configured
-  disabled: !isPostHogConfigured,
+if (posthog && __DEV__) {
+  posthog.debug(true)
+}
 
-  // Capture app lifecycle events:
-  // - Application Installed, Application Updated
-  // - Application Opened, Application Became Active, Application Backgrounded
-  captureAppLifecycleEvents: true,
-
-  // Enable debug mode in development for verbose logging
-  debug: __DEV__,
-
-  // Batching: queue events and flush periodically to optimize battery usage
-  flushAt: 20,              // Number of events to queue before sending
-  flushInterval: 10000,     // Interval in ms between periodic flushes
-  maxBatchSize: 100,        // Maximum events per batch
-  maxQueueSize: 1000,       // Maximum queued events (oldest dropped when full)
-
-  // Feature flags
-  preloadFeatureFlags: true,        // Load flags on initialization
-  sendFeatureFlagEvent: true,       // Track getFeatureFlag calls for experiments
-  featureFlagsRequestTimeoutMs: 10000, // Timeout for flag requests (prevents blocking)
-
-  // Network settings
-  requestTimeout: 10000,    // General request timeout in ms
-  fetchRetryCount: 3,       // Number of retry attempts for failed requests
-  fetchRetryDelay: 3000,    // Delay between retries in ms
-})
-
-export const isPostHogEnabled = isPostHogConfigured
+export const isPostHogEnabled = posthog !== null

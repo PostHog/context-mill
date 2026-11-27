@@ -5,10 +5,12 @@ defmodule PostHogExampleWeb.BurritoHTML do
   def home(assigns) do
     ~H"""
     <h1>🌯 Burrito app</h1>
-    <p>Signed in as: <strong><%= @distinct_id %></strong></p>
+    <p :if={!@anonymous?}>Signed in as distinct id: <strong><%= @distinct_id %></strong></p>
+    <p :if={@anonymous?}>Browsing as visitor: <strong><%= @distinct_id %></strong></p>
+    <p :if={@message}><em><%= @message %></em></p>
     <form method="post" action="/login">
       <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
-      <label>Username <input type="text" name="username" value="burrito_fan" /></label>
+      <label>Username <input type="text" name="username" placeholder="Enter a username" required /></label>
       <button type="submit">Log in</button>
     </form>
     """

@@ -2,11 +2,11 @@
 
 This is an [Astro](https://astro.build/) example demonstrating PostHog integration with [View Transitions](https://docs.astro.build/en/guides/view-transitions/) (ClientRouter) for SPA-like navigation.
 
-It uses the PostHog web snippet with special handling to prevent stack overflow errors during soft navigation, and shows how to:
+It uses the PostHog web snippet with an initialization guard to prevent stack overflow errors during soft navigation, and shows how to:
 
 - Initialize PostHog with an initialization guard for View Transitions
 - Track pageviews automatically during soft navigation
-- Identify users after login
+- Identify users on login and restore identity on full page reloads
 - Track custom events from pages
 - Capture errors via `posthog.captureException()`
 - Reset PostHog state on logout
@@ -32,14 +32,14 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and set your project token:
 
 ```bash
-PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+PUBLIC_POSTHOG_PROJECT_TOKEN=
 PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Get your PostHog project token from your project settings in PostHog.
+Get your PostHog project token from your project settings in PostHog. Leave `PUBLIC_POSTHOG_PROJECT_TOKEN` blank until you have a real token. When the token is unset, the app still builds and runs: in development it logs an error naming the variable and skips PostHog initialization.
 
 ### 3. Run the development server
 
@@ -56,7 +56,7 @@ Open `http://localhost:4321` in your browser.
 ```text
 src/
   components/
-    posthog.astro      # PostHog snippet WITH initialization guard
+    posthog.astro      # PostHog snippet with initialization guard
     Header.astro       # Navigation + logout, uses astro:page-load event
   layouts/
     PostHogLayout.astro # Root layout with <ClientRouter /> and PostHog
@@ -74,25 +74,31 @@ src/
 
 ### PostHog initialization with View Transitions (`src/components/posthog.astro`)
 
-When using Astro's View Transitions (ClientRouter), you **must** wrap the PostHog initialization with a guard to prevent stack overflow errors:
+When using Astro's View Transitions (ClientRouter), wrap the PostHog initialization with a guard to prevent stack overflow errors, and only initialize when `PUBLIC_POSTHOG_PROJECT_TOKEN` is configured:
 
 ```astro
-<script is:inline>
-  // IMPORTANT: Guard against multiple initializations during view transitions
+<script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST, isDev: import.meta.env.DEV }}>
+  // Guard against multiple initializations during view transitions
   if (!window.__posthog_initialized) {
     window.__posthog_initialized = true;
     !function(t,e){...}(document,window.posthog||[]);
-    posthog.init('<ph_project_token>', {
-      api_host: 'https://us.i.posthog.com',
-      defaults: '2026-01-30',
-      // IMPORTANT: Use 'history_change' for automatic pageview tracking during soft navigation
-      capture_pageview: 'history_change'
-    })
+    if (apiKey && apiKey.trim()) {
+      posthog.init(apiKey, {
+        api_host: apiHost || 'https://us.i.posthog.com',
+        defaults: '2026-08-30',
+        // Use 'history_change' for automatic pageview tracking during soft navigation
+        capture_pageview: 'history_change'
+      })
+      const currentUser = localStorage.getItem('currentUser')
+      if (currentUser) {
+        posthog.identify(getUserId(currentUser), { username: currentUser })
+      }
+    }
   }
 </script>
 ```
 
-Without this guard, ClientRouter's soft navigation can re-execute the inline script during page transitions, causing a stack overflow error.
+Without this guard, ClientRouter's soft navigation can re-execute the inline script during page transitions and cause a stack overflow error.
 
 The `capture_pageview: 'history_change'` option ensures pageviews are tracked automatically as users navigate between pages.
 
@@ -116,7 +122,7 @@ import PostHog from '../components/posthog.astro';
 
 ### Handling View Transitions in scripts
 
-When using View Transitions, you need to set up event listeners after each page navigation:
+When using View Transitions, set up event listeners after each page navigation:
 
 ```javascript
 function setupPage() {
@@ -132,32 +138,34 @@ document.addEventListener("astro:page-load", setupPage);
 
 ### User identification (`src/pages/index.astro`)
 
-After a successful "login", the app identifies the user and captures a login event:
+After a successful login, the app identifies the user with a stable user ID and captures a login event:
 
 ```javascript
-window.posthog?.identify(username);
+window.posthog?.identify(getUserId(username), { username });
 window.posthog?.capture("user_logged_in");
 ```
 
 ### Event tracking (`src/pages/burrito.astro`)
 
-The burrito page tracks a custom event when a user "considers" the burrito:
+The burrito page tracks a custom event when a user considers a burrito, keeping PII out of event properties:
 
 ```javascript
 window.posthog?.capture("burrito_considered", {
   total_considerations: newCount,
-  username: currentUser,
 });
 ```
 
 ### Logout and session reset (`src/components/Header.astro`)
 
-On logout, both the local auth state and PostHog state are cleared:
+When logging out of an authenticated session, capture the logout event before resetting PostHog:
 
 ```javascript
-window.posthog?.capture("user_logged_out");
-localStorage.removeItem("currentUser");
-window.posthog?.reset();
+if (currentUser) {
+  window.posthog?.capture("user_logged_out");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("burritoConsiderations");
+  window.posthog?.reset();
+}
 ```
 
 ## Scripts
@@ -172,6 +180,12 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+## Reverse proxy
+
+Ad blockers drop events sent to PostHog's domain. Routing events through your own domain avoids that.
+
+This example does not proxy requests: it has no server to run a proxy on, so the browser sends events straight to `PUBLIC_POSTHOG_HOST`. To use a proxy, point `PUBLIC_POSTHOG_HOST` at a proxy you host (for example on Cloudflare) and set `ui_host` in `posthog.init` to your PostHog app URL so toolbar links still work. If your app can't proxy requests itself, use PostHog's [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy), which is free for PostHog Cloud users.
 
 ## Learn more
 
